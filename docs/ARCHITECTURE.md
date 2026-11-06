@@ -88,7 +88,7 @@ flowchart LR
 
 ## 4. CMake target、公共头文件与文件结构（设计候选）
 
-本 HLD 负责给出**无环依赖的库边界**，文件树和完整候选类清单以 [PLAN.md](../PLAN.md) §4 与 [OBJECT_MODEL.md](OBJECT_MODEL.md) 为规划入口。正式 include/src 路径应在 P0.8 冻结；以下名字不表示仓库已创建目标。
+本 HLD 负责给出**无环依赖的库边界**；工程目录概览见 [PLAN.md](../PLAN.md) §4，具体对象与 MATLAB 函数的映射由 [OBJECT_MODEL.md](OBJECT_MODEL.md) 统一维护，模块内部合同见 [design/](design/README.md)。正式 include/src 路径应在 P0.8 冻结；以下 target 名称不表示仓库已经创建对应库。
 
 | 拟议 target | 公开边界 | 依赖 | 私有实现/禁止逆向依赖 |
 |---|---|---|---|
