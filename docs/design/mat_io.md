@@ -1,6 +1,6 @@
 # MAT I/O、路径安全与原始数据合同——详细设计草案
 
-> **LLD v0.3，未冻结、未实现、未完成 MAT 全量字典。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
+> **LLD v0.4，未冻结。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 Golden 仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
 
 ## 1. 原始行为、文件身份和支持版本
 
@@ -10,22 +10,18 @@
 - **旧脚本兼容读取**：按原脚本的路径/后缀解析规则取得数据，只有在确认 MATLAB 首变量枚举规则后才能冻结多变量行为。不能随意以名称字典排序代替原行为。
 - **inspect**：列出全部变量元数据而不读取成算法领域类型或更改文件。
 
-目前仅**抽样**发现 MATLAB 5.0 MAT-file 和 miCOMPRESSED；这意味着需要 matio+zlib，但不能据此断言所有 582 文件完全同构。是否需要 HDF5、MAT v7.3 由 DEC-001/002 全量扫描确定。
+**现有归档的格式已经实测**：`src/mat_data_dict_probe.cpp` 在 Ubuntu 24.04/matio 1.5.26 以 `Mat_Open(..., MAT_ACC_RDONLY)` 和 `Mat_VarRead` 读取全部 582 MAT/582 变量，失败 0；每个源 MAT 是 v5/zlib 压缩、单变量 class=double/data_type=double，flags 均为 `-`。详见 [MAT_DATA_SCHEMA.md](../MAT_DATA_SCHEMA.md)。当前数据不需要 HDF5；future 扩展到 v7.3 时再单独审核。
 
-### 1.1 MAT 类型支持决策矩阵（尚未验证）
+### 1.1 已确认的数据类型支持边界（基于 582/582 实测）
 
-| MAT class / 元素形态 | 当前要求的行为 | 当前证明 |
-|---|---|---|
-| 普通实数 double | 读取形状、数值、列主序；优先验证 Golden | MAT v5 压缩头抽样，仅元素类型未全部验证 |
-| 普通实数 single | 如实际存在则明确读取原类型，不能静默升级 | 待 582 文件全量检查 |
-| 有符号/无符号整数 | 如存在须保留宽度和符号或显式拒绝 | 待全量检查 |
-| 逻辑 logical | 如存在须在接口中明确布尔语义或显式拒绝 | 待全量检查 |
-| 复数 complex | 实/虚部、数据类型、内存布局须核验；未实现不得伪造实数 | 待全量检查 |
-| struct / cell | 递归字段与子项需独立合同，确认实际需求后实现 | 待全量检查 |
-| sparse / 高维数组 | 索引、稀疏模式、rank/dims 与列主序须明确；未实现则拒绝 | 待全量检查 |
-| MAT v7.3/HDF5 | 仅在真实源文件存在时评估是否加入 | 未发现证据；不得宣称不可能存在 |
+| MATLAB class / MAT dtype | 实测变量数 | 业务读取决定 |
+|---|---:|---|
+| double / double（实数、压缩 MAT v5） | **582** | **当前必需**：保留变量名、rank/dims、列主序和 double 数值，实测探针已读；生产接口与数值 copy/Map 仍待验收 |
+| single/int8…uint64/logical | 0 | **不是本归档必需输入**；遇到新输入须显式类型化读取或报 UnsupportedClassOrType，不允许偷偷转 double |
+| cell/struct/object/char/sparse/complex | 0 | **不是本归档必需输入**；未实现的类型必须拒绝，不能伪称兼容 |
+| MAT v7.3 / HDF5 | 0 | **当前不需要引入**；只在将来出现真实 v7.3 输入时走变更审批 |
 
-上述矩阵是**类型判定策略**，不是“已支持的功能列表”。真实支持状态必须在 docs/MAT_DATA_SCHEMA.md 中逐类型更新。
+目前已观察到的五种变量形状仅为 **10×1（80）、10×3（480）、35×1（4）、600×1（14）、600×4（4）**。每个文件恰有一个与 `.mat` basename 相同的变量；数据物理字节数均为元素数×8。此结论只覆盖当前归档，不是对未来任意 MAT 类型支持的承诺。
 
 ## 2. 候选 C++17 类接口与资源所有权
 
@@ -95,18 +91,32 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 
 ## 4. MAT 数据字典和 Golden 来源
 
-docs/MAT_DATA_SCHEMA.md 在 P0.5/P1.8 形成前只能作为待填模板。每个源文件应记录：
+**正式 matio 全量字典已存在**：[MAT_DATA_SCHEMA.md](../MAT_DATA_SCHEMA.md)，逐文件列出 FNV64、版本、变量、class/type、dims、flags 和读取结果。以下表格区分已记录证据与仍需开发的业务 Reader/数值验收：
 
 | 字段 | 预期内容 | 状态 |
 |---|---|---|
-| 相对路径、Git blob SHA、文件字节数 | 基于 origin/** 的实际树 | 目录已知，逐文件表未生成 |
-| MAT 版本、是否压缩、字节序 | 逐文件头和解压检查 | 部分样本头已检查 |
-| 变量名、MAT class、元素类型、rank、dims | matio 原始数据 | 尚未 582 文件全量读取 |
-| 数值范围/非有限/元素 hash | 在可读类型上实际遍历 | 尚未执行 |
+| 相对路径、文件字节数与 FNV64（报告） | 已由探针生成 | **582/582 已记录；FNV 不是 Git SHA/密码学 SHA-256** |
+| MAT 版本、压缩、只读加载 | Mat_GetVersion、Mat_VarRead | **582/582 MAT v5+zlib，READ_OK** |
+| 变量名、MAT class、物理 data_type、rank/dims | Mat_VarRead 后读取 matvar_t 元数据 | **582/582 double/double，五种 shape** |
+| 数值范围、NaN/Inf、逐元素 MATLAB Golden/加密哈希 | 生产 Reader 按值遍历及独立对照 | **尚未验证**；探针成功读取不能替代数值等价 |
 | 严格/兼容读取策略、分析依赖 | 源 load/getflowfield 和数据字典映射 | 待冻结 |
 | 解码状态、错误码、是否受版权限制 | 成功/失败/不支持/权限阻塞 | 待验证 |
 
 输出合同：Bias 每目录 xwerte、ywerte1…6；Adaptive 使用初始化四类结果、600 点比较五类结果和更新频率三类当前源码结果。**历史 MAT 的额外文件属于归档证据，不得视为当前脚本已经写出。**
+
+### 4.1 已确认的历史结果变量和真实尺寸
+
+| 归档组 | 实测字段 | 类型与 shape |
+|---|---|---|
+| occluded_regions（40 次） | 每次 xwerte + ywerte1…6 | xwerte `double[10×1]`（40 个），六个 ywerte 各 `double[10×3]`（240 个） |
+| proportional_error（40 次） | 同上 | xwerte `double[10×1]`（40 个），六个 ywerte 各 `double[10×3]`（240 个） |
+| initialization | allemit/ohne × trans/rot 四个变量 | 均 `double[35×1]` |
+| without_errors | 四误差字段与 rottransratio | 均 `double[600×1]` |
+| with_errors | 上述五字段 + alleadaprotfehler / alleadaptransfehler | 均 `double[600×1]` |
+| many_parameter | allemittransfehler、allemitrotfehler、alleadaptransfehler、alleadaprotfehler | 均 `double[600×4]` |
+| many_parameter | akrot、rottransratio | 均 `double[600×1]` |
+
+历史归档中额外存在的 `alleadap*` / `rottransratio` 的**来源尚未归因**，不得依据它们擅自改变当前 MATLAB 生成入口的 `save` 合同。
 
 ## 5. 接口与测试矩阵
 
@@ -117,7 +127,7 @@ docs/MAT_DATA_SCHEMA.md 在 P0.5/P1.8 形成前只能作为待填模板。每个
 
 ## 6. 待决与冻结门槛
 
-精确的 matio 版本、CMake target、class 类型清单、数组拷贝/映射方法、错误枚举、CLI 错误码、Result<T,E> 实现、具体 Golden 文件及哈希、输出安全方案、峰值内存测量、DEC-001/002/005 均未完成审核。**不把候选接口当作已经建成的 C++ 程序。**
+实测 matio 版本 **1.5.26**、归档 class/dtype/rank/dims 已确认。**仍待**：完整业务 Reader 的数据复制/映射、CMake target、异常与 CLI 合同、Result<T,E>、文件名/首变量兼容规则、Golden 逐值对照、输出写入与路径安全、DEC-005 容差和 P10.4 独立复核。**不把候选接口当作已经建成的 C++ 程序。**
 
 
 ## 7. API 的前置/后置条件与错误映射（编码候选）
@@ -170,10 +180,10 @@ Writer::saveNewVariable:
 | 验证点 | 可审查的计算 | 当前证据 |
 |---|---|---|
 | rank/dims | 维度为非负整数，逐项检查，使用乘法溢出保护计算元素总数；N×6 不等于 6×N | 待 P1 测试 |
-| 非复杂 double | MAT dtype 与 Eigen double 对应，列主序拷贝不转置 | 类型支持尚未全量确认 |
-| single/int/logical | 不允许默认 reinterpret_cast<double*>；只能显式类型化读取或拒绝 | 582 全量字典待 P1 |
-| complex/struct/cell/sparse | 不与普通密集实数同接口误读，必须有类型校验和独立失败语义 | 真实源类型待审计 |
-| MAT 压缩 | 每个变量实际解压成功，不把文件头已读取当成可用数据 | 抽样 MAT v5/miCOMPRESSED；全量未测 |
+| 非复杂 double | MAT dtype=double；元素数×8 与 data_bytes 匹配，需保持列主序 | **582/582 实测归档；生产 Eigen 映射尚未测** |
+| single/int/logical | 不允许默认 reinterpret_cast<double*>；只能显式类型化读取或拒绝 | **归档出现次数 0；拒绝负例待测** |
+| complex/struct/cell/sparse | 不与普通密集实数同接口误读，必须有类型校验和独立失败语义 | **归档出现次数 0；扩展无需预先实现** |
+| MAT 压缩 | 582 个压缩变量实际完成 Mat_VarRead 解码 | **582/582 zlib READ_OK** |
 | 读后生存 | 关闭 MatFileHandle、MatVariableHandle 后，返回的 MatDenseArray 仍能正确访问 | 合同测试待写 |
 
 MAT 类支持范围的**最终**记录应由 docs/MAT_DATA_SCHEMA.md 单一维护；本表只描述决策和检查方法。
@@ -185,4 +195,4 @@ MAT 类支持范围的**最终**记录应由 docs/MAT_DATA_SCHEMA.md 单一维�
 - 写路径：新 RunId 成功回读、重复 RunId、输出位于 origin、输出经过符号链接回指 origin、相对路径穿越、中文空格路径、模拟写入失败。不得用真实 origin 作为破坏性测试目标。
 - 证据：TC-F-MAT-001…004、TC-D-MAT-001、TC-I-MAT-001、TC-DC-IO-001、TC-NF-SAFETY-001；未取得 Golden 元素值/批准容差前，状态一律“未验证”。
 
-**模块就绪状态：数据类型/路径错误合同已具体描述；全量字典、接口最终签名、matio 版本绑定、Golden、实际自动测试均未完成。**
+**模块就绪状态：独立 matio 1.5.26 探针已在 Ubuntu 24.04 运行，582/582 MAT 文件/变量解码成功，格式与维度合同明确。** 但业务 Reader/Writer、接口最终签名、异常负例、列主序值对照、Golden、CTest、P10.4 独立审核仍未完成。
