@@ -1,0 +1,48 @@
+This is the data publication corresponding to the paper
+"Insect-Inspired Self-Motion Estimation with Dense Flow Fields-
+An Adaptive Matched Filter Approach".
+
+The Data and the written Matlab functions are ordered in three sections
+(keep in mind, that all functions are written under Linux and possibly does not run under Windows):
+
+1) Bias-test
+In this section it is shown that the original Koenderink van Doorn algorithm
+for self-motion estimation has a bias and a modified version not. The folder
+"data_generation" has two functions. In function "bias_test_nonspherical"
+the optical flow vectors are not spherically distributed. The data produced with
+this function and plotted in the paper is stored in "produced_data/occluded_regions".
+
+In function "bias_test_spherical_prop_error" the optical flow vectors are spherically
+distributed, but this time the added gaussian error is proportional to each flow vector.
+The data produced with this function and plotted in the paper is stored in "produced_data/proportional_error".
+
+The function which produces the graphs is the same for both simulations and stored in
+"data_analysis/graphs_bias_test".
+
+
+2) Adaptive matched filter test
+In the paper a new adaptive version of a commonly unadaptive matched filter was developed.
+In this section the adaptive algorithm is tested against the unadaptive one.
+The function "agent_in_sphere_initialization_test" shows the initialization
+beavior of the adaptive algorithm. The corrssponding data produced with this function
+is "produced_data/initialization". The graph is plotted with "data_analysis/
+graph_agent_in_sphere_initialization".
+
+With the function "agent_in_sphere_adaptive_matched_filter_test" two different runs are tested.
+One without an added error "produced_data/without_errors" and one with an added
+gaussian error "produced_data/with_errors". The plotting function for both runs are the same
+"data_analysis/graph_agent_in_sphere_adaptive_matched_filter_test".
+
+The function "agent_in_sphere_adaptive_matched_filter_many_parameter" tested the adaptive
+matched filter with different update rates of the adaptation. The corresponding data
+is stored in "produced_data/many_parameter". The plotting function is
+"data_analysis/graph_agent_in_sphere_adaptive_matched_filter_many_parameter".
+
+
+3) Illustrations
+In the paper an expansion of the nearnesses with spherical harmonic function are done.
+The function "spherical_harmonic_illustration" illustrate these spherical harmoninics.
+
+In the test of the adaptive matched filter a virtuell agent flies inside a sphere. The curves
+the agent takes are illustrated with "circle_curve_in_the_sphere" and "sinosodial_curve_in_the_sphere".
+
