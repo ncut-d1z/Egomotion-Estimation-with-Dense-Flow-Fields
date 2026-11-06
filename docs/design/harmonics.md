@@ -67,7 +67,7 @@ a_{lm}=a_{lm}^{num}/a_{lm}^{den}.
 
 ~~~cpp
 // 仅设计草案，不是可调用的已实现 API。
-using HarmonicMatrix = Eigen::Matrix<double, 3, 5, Eigen::ColMajor>;
+// HarmonicMatrix 类型别名统一由 contracts.md 维护。
 // HarmonicCoefficients 与 HarmonicMatrix 的唯一合同见 contracts.md。
 // 使用共享 NumericalErrorCode，不另建重复错误类型。
 class RealSphericalHarmonics {
