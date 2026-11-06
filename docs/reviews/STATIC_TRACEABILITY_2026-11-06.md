@@ -54,3 +54,11 @@ bash scripts/check_docs_traceability.sh
 ```
 
 上述命令**尚未在本轮容器中执行成功**，不得把本报告写成 Bash/CTest 通过。正式复核时应保存 stdout/stderr、退出码、源 commit SHA、执行环境与日志路径，并在新记录中明确标记执行者和日期。真实 CMake target 编译验证仍待 P1.1；DEC-003/005/007/008 及真实 Golden/数值容差仍保持开放。
+
+## 5. 文档交叉引用更新后的再次核查（2026-11-06）
+
+- 固定目标提交：`5f6b831977157f5bb7ea431d361bf40e7b33e345`（含 SRS/HLD/LLD/TEST_PLAN 修正、PROGRESS 与静态核查链接）。
+- 再次通过 GitHub 连接器读取该提交的 **实际文件内容和递归源树**，执行 JS 集合检查；**非 Bash/CTest 执行**，没有克隆或编译仓库。
+- 结果：**PASS，错误 0**。REQ 66、TC 66、P 98；原始 MATLAB 45 个，SRS/OBJECT_MODEL 均 45/45；HLD DAG 26 条边无环；MAT 字典 582 行均 READ_OK（未重新解压原 MAT）。
+- 额外核验：LLD 索引 10 份文档表述；TEST_PLAN 的 40 个 10×1 形状；PROGRESS 里程碑索引存在。
+- 现场 Bash 检查器仍待网络可达或实际完整工作树环境执行；任何未执行的步骤均不计为通过。
