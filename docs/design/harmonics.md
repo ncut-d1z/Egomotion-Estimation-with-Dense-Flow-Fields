@@ -1,6 +1,6 @@
 # 实球谐、近度拟合及系数旋转——详细设计草案
 
-> **LLD v0.2，未冻结、未实现。** 来源：winkelausvektor.m、kugelflfunc2.m、near_aus_koeff.m、koeff_aus_near.m、transfor_koeff.m、SHRotate.m。第三方版权与 Golden 尚未完整核验。关联 REQ-F-SH-001/002、REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001、P7.1–P7.6/P7.10。
+> **LLD v0.3，未冻结、未实现。** 来源：winkelausvektor.m、kugelflfunc2.m、near_aus_koeff.m、koeff_aus_near.m、transfor_koeff.m、SHRotate.m。第三方版权与 Golden 尚未完整核验。关联 REQ-F-SH-001/002、REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001、P7.1–P7.6/P7.10。
 
 ## 1. 坐标系、角度与原实球谐表达式
 
@@ -138,3 +138,89 @@ public:
 - C++17 精确签名、错误枚举、异常行为、目标 CMake target 和测试用例未冻结。
 
 **本文件是详细设计草案；没有 C++ 实现、MATLAB 运行或数值验收证据。**
+
+
+## 6. l≤2 九个实球谐分量的显式公式（待 MATLAB Golden 核符号）
+
+取归一化方向 \(x=\sin\theta\cos\phi\)、\(y=\sin\theta\sin\phi\)、\(z=\cos\theta\)，并**按原 MATLAB 的 legendre 默认相位**（含 Condon–Shortley 相位）展开。下列是从 §1 通式得到的数学等价表示，只有经过源 MATLAB 数值检查才能成为冻结的公式 Golden：
+
+| (l,m) | 按源代码约定的 \(Y_{lm}^{real}\) |
+|---|---|
+| (0,0) | \(1/\sqrt{4\pi}\) |
+| (1,−1) | \(-\sqrt{3/(4\pi)}\,y\) |
+| (1,0) | \(+\sqrt{3/(4\pi)}\,z\) |
+| (1,+1) | \(-\sqrt{3/(4\pi)}\,x\) |
+| (2,−2) | \(+\sqrt{15/(4\pi)}\,xy\) |
+| (2,−1) | \(-\sqrt{15/(4\pi)}\,yz\) |
+| (2,0) | \(+\sqrt{5/(16\pi)}(3z^2-1)\) |
+| (2,+1) | \(-\sqrt{15/(4\pi)}\,xz\) |
+| (2,+2) | \(+\sqrt{15/(16\pi)}(x^2-y^2)\) |
+
+**注意**：MATLAB 的函数调用约定含 φ 的 sin/cos 正负号，不可用默认的量子力学 \(Y_l^m\) 次序替换。测试应包含六个坐标轴方向、一般方向 \((1,2,3)/\sqrt{14}\) 和方位角正负边界，逐项核对九个结果及正交/符号关系。
+
+## 7. SHRotate 的旋转块元素与递推生成合同
+
+### 7.1 第 1 阶 R3 的**实际位置映射**
+
+令输入物理旋转矩阵为 \(r=[r_{ij}]_{3\times3}\)，使用 MATLAB 1-based 的 \(r_{ij}\) 表示原始元素。根据 SHRotate.m 对 R{2} 的九处赋值：
+
+\[
+R_3(r)=
+\begin{bmatrix}
+r_{22}&r_{32}&r_{12}\\
+r_{23}&r_{33}&r_{13}\\
+r_{21}&r_{31}&r_{11}
+\end{bmatrix}.
+\]
+
+旋转系数按原顺序 \((m=-1,0,1)\) 组成列向量，再执行 \(a'_1=R_3a_1\)。例如输入
+\(r=R_z(\gamma)=\left[\begin{smallmatrix}\cos\gamma&-\sin\gamma&0\\\sin\gamma&\cos\gamma&0\\0&0&1\end{smallmatrix}\right]\)，得到
+
+\[
+R_3(R_z(\gamma))=
+\begin{bmatrix}\cos\gamma&0&-\sin\gamma\\0&1&0\\\sin\gamma&0&\cos\gamma\end{bmatrix}.
+\]
+
+这是一组**可由源码逐元素交叉检查**的预期矩阵，不能未经说明交换 R3 的行/列。
+
+### 7.2 第 2 阶 R5 的递推合同
+
+源 SHRotate.m 对 degree=2 循环 \(m,n\in\{-2,-1,0,1,2\}\)，以先构造的 \(R_3\) 与下一阶递推函数生成所有 25 个 \(R_5(m,n)\)。
+
+\[
+R_5(m,n)=u_{2mn}U_{2mn}+v_{2mn}V_{2mn}+w_{2mn}W_{2mn}.
+\]
+
+其中 \(D_{ln}=2l(2l-1)\)（当 \(|n|=l\)），否则 \(D_{ln}=l^2-n^2\)；\(d_m=1\) 当 \(m=0\)，否则 \(0\)，相应系数：
+
+\[
+u=\sqrt{(l^2-m^2)/D_{ln}},\quad
+v=\frac{1-2d_m}{2}\sqrt{\frac{(1+d_m)(l+|m|-1)(l+|m|)}{D_{ln}}},
+\]
+\[
+w=-\frac{1-d_m}{2}\sqrt{\frac{(l-|m|-1)(l-|m|)}{D_{ln}}}.
+\]
+
+U/V/W 在不同 m 与 n 边界上组合上一阶 \(R_3\) 条目与递推辅助 P；其**完整分段定义**仍须在 P7.5 审阅源 SHRotate 的第三方版权并建立允许使用的数学描述之后冻结。不能仅把这三行权重当作已经足以实现 R5。验收需对**全部 25 个元素**及其索引和符号提供源 MATLAB Golden，不能只检查正交性或往返。
+
+### 7.3 旋转样本与方向性判定
+
+| 案例 | 预期数学性质 | 需要的源 Golden |
+|---|---|---|
+| SH-R00 | r=I 时 R3=I3、R5=I5 | 34 个元素，源 SHA |
+| SH-RZ | 物理 r 绕 z 轴旋转小角及 90° | 输入 r、R3、R5、九个系数 before/after |
+| SH-RXY | 绕 x/y 轴和两轴复合旋转 | 各矩阵 34 元素、向量范数、近度值 |
+| SH-INV | 先 r 后 r⁻¹ | 九个系数和方向采样下近度变化 |
+| SH-BAD | 非正交或非有限输入 | 原函数实际结果及 C++ 明确状态 |
+
+**授权状态**：只可以在合法来源和已审核实现范围内实现算法；SHRotate.m 和 rodrigues.m 的第三方文件头仍是版权审核项目。无需复制原程序的代码文本即可描述这些数学关系，但不能用数学等价的猜测代替实测。
+
+## 8. 异常、生命周期与接口合同
+
+- 输入 l∈{0,1,2} 且 |m|≤l；方向有限、单位化规则经批准；输入 3×5 系数的非有效位置不应参与计算。
+- 近度拟合遇 \(b_{lm}=0\) 时明确失败；数学输入为 NaN、Inf、零向量或非正交 r 时须输出具体 NumericalErrorCode/细节，不得伪造通过。
+- RealSphericalHarmonics、HarmonicFitter、HarmonicRotator 可为无跨帧可变状态服务；球谐系数是自拥有值对象，由 Session 管理历史。
+- 正式的 Result、HarmonicCoefficients、NumericalErrorCode 以 [contracts.md](contracts.md) 为单一候选；具体 API 签名和 const/复制行为由 P0.8 确认。
+- TC-F-SH-001、TC-F-SH-002、TC-D-SOURCE-002 均需记录 MATLAB 来源函数 SHA、固定输入/输出、逐元素 atol/rtol、条件数和未定义样本数；DEC-003/005/007 未关闭时不得冻结。
+
+**本模块的已知内容：9 项索引与数学公式、R3 九项映射、R5 的递推结构；缺口：R5 分段递推合法实现、全量 Golden、批准容差与真实代码/CTest。**
