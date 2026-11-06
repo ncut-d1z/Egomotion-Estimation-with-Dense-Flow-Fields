@@ -78,15 +78,17 @@ flowchart LR
 | 组件 | 对外提供的能力 | 所需依赖 | 主要数据合同 | 错误边界 |
 |---|---|---|---|---|
 | domain/math | N×6 FlowField 和 3D 数学、运动估计值 | Eigen | 三维向量、列主序、坐标与单位 | 无效维度、零范数与非有限输入 |
-| sampling | 八面体、缺损八面体、二十面体方向采样 | domain/math | 顺序确定的 N×3 单位视线 | 非法细分级别、数目溢出 |
-| simulation | 球内近度、光流合成、随机噪声、轨迹 | domain/math、采样、显式 RNG | 近度、t、ω、三维切向光流 | 无效几何、随机源异常 |
+| sampling | 八面体、缺损八面体、二十面体方向采样及注入 RNG 的 getvektor | domain/math、**contracts**（IDirectionSampler/IRandomSource） | 顺序确定的 N×3 单位视线 | 非法细分级别、数目溢出、随机源错误 |
+| simulation | 球内近度、光流合成、随机噪声、轨迹 | domain/math、sampling、**contracts**（IRandomSource/IFlowNoiseModel） | 近度、t、ω、三维切向光流 | 无效几何、随机源异常 |
 | harmonics | 实球谐基函数、近度拟合/重建、系数旋转 | domain/math | l≤2、3×5 以及 3×3/5×5 旋转块 | 系数形状、归一化与旋转失败 |
 | estimators | Franz、Original/Modified KvD、Adaptive 单步估计 | domain/math、harmonics（Adaptive） | FlowField、近度/系数、运动估计与计算状态 | 退化、奇异系统、非有限值 |
-| mat_io | 原始 MAT 只读元数据/变量读取与新 MAT 输出 | matio/zlib、domain 值类型 | rank、dims、class、dtype、列主序、变量名 | 文件/解压/类型错误、路径拒绝 |
-| experiments | 五类 MATLAB 原实验的参数编排、独立 RunId 与状态 | simulation、estimators、写入窄接口 | 参数、seed、结果 MAT、有效/失败样本数 | 缺配置、数值失败、输出冲突 |
-| analysis | 四类 MATLAB 结果分析的数据统计与曲线序列 | MAT 读取窄接口、domain | xwerte/ywerte、Adaptive 错误序列、曲线索引 | 缺变量、shape 冲突、无定义统计 |
+| mat_io | 原始 MAT 只读元数据/变量读取与新 MAT 输出；实现 IResultReader/IResultWriter | matio/zlib、domain 值类型、**contracts** | rank、dims、class、dtype、列主序、变量名 | 文件/解压/类型错误、路径拒绝 |
+| experiments | 五类 MATLAB 原实验的参数编排、独立 RunId 与状态 | domain、**contracts**（写入窄接口）、**sampling**、simulation、estimators | 参数、seed、结果 MAT、有效/失败样本数 | 缺配置、数值失败、输出冲突 |
+| analysis | 四类 MATLAB 结果分析的数据统计与曲线序列 | domain、**contracts**（IResultReader；不直接链接 matio） | xwerte/ywerte、Adaptive 错误序列、曲线索引 | 缺变量、shape 冲突、无定义统计 |
 | plotting（可选） | 统计结果的 2D/3D 可视化 | analysis | 绘图数组、单位、图例与区间 | 后端缺失；不得修改原始数值 |
-| cli/composition | 命令、参数检查、状态/退出码和对象装配 | experiments、analysis、mat_io | 只读输入路径、独立输出根 | 参数、源/输出冲突、执行失败 |
+| cli/composition | 命令、参数检查、状态/退出码和对象装配 | experiments、analysis、mat_io、**contracts**；plotting 可选 | 只读输入路径、独立输出根 | 参数、源/输出冲突、执行失败 |
+
+**组件依赖一致性**：本节依赖集合与 §4 target 表、§4.1 的 26 条直接 DAG 边一一对照；本次是**文档合同**，尚不能等同真实 CMake target 的编译/链接。实际 C++ 实现可能需要修改依赖时，须同时维护三处与 ADR-008。
 
 **边界不变量**：求解器不 include matio 或绘图库；I/O 不持有求解器；实验 Runner 不重复数学公式；分析/绘图不修改求解结果。实验参数按 MATLAB 的五个入口分别定义，禁止以一个未经核准的全局默认值覆盖其差异。
 
