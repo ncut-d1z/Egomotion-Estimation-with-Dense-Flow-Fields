@@ -62,3 +62,11 @@ bash scripts/check_docs_traceability.sh
 - 结果：**PASS，错误 0**。REQ 66、TC 66、P 98；原始 MATLAB 45 个，SRS/OBJECT_MODEL 均 45/45；HLD DAG 26 条边无环；MAT 字典 582 行均 READ_OK（未重新解压原 MAT）。
 - 额外核验：LLD 索引 10 份文档表述；TEST_PLAN 的 40 个 10×1 形状；PROGRESS 里程碑索引存在。
 - 现场 Bash 检查器仍待网络可达或实际完整工作树环境执行；任何未执行的步骤均不计为通过。
+
+## 6. 文档执行口径与引用修复后的再次静态核查
+
+- **被审查 Git 提交**：`cb0a6e8cccec9d2326f35f1d60d9ed44432b0390`。
+- **已执行动作**：通过 GitHub 连接器按该 SHA 读取 SRS、HLD、PLAN、TEST_PLAN、OBJECT_MODEL、MAT_DATA_SCHEMA、AGENTS、CLI/公共合同、审批申请表及递归 Git 树，以 JavaScript 断言检查集合和依赖关系。**未运行 Bash、CTest、完整 CMake 构建或数值 Golden**。
+- **结果**：REQ=66、TC=66、P=98、源 `.m`=45、SRS/OBJECT_MODEL 两份映射均为 45、HLD target DAG=26 条边且无环；MAT_DATA_SCHEMA 中原有 582 条记录均 `READ_OK`；所有一致性检查错误 **0**。**未重新解压原始 MAT 文件**。
+- **文档状态检查**：TEST_PLAN §8.1 已将 Bash 现场命令明确标为“待授权、未执行”，并分表列出已执行连接器静态审查及未执行 Bash/CTest；`cli.md` 与人类审批表的章节引用格式已修正。
+- **审批状态**：`docs/approval/HUMAN_APPROVAL_REQUEST.md` 的 H-01～H-16 仍全为待决定，`AGENTS.md` §10 的人类审批门禁仍有效。**此条记录不是 H-11 Bash 执行授权，不构成 DEC/CLI/Golden/CTest 的批准或验收**。
