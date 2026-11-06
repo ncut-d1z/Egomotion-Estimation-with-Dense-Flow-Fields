@@ -142,27 +142,7 @@ return (mean(near) * t, omega, near, k)
 
 ## 4. 候选 C++17 接口合同（尚未批准）
 
-~~~cpp
-// 仅接口设计候选，不是仓库中的已实现代码。
-struct KvDParameters;            // stop、epsilon 等从原 MATLAB 入口提供
-struct KvDIterationSnapshot;     // k、near、t/omega、新 t、RMS、delta、threshold
-struct KvDResult;                // t、omega、near、iteration_count、status、snapshots
-struct KvDError;
-template<class Value, class Error> class Result; // 项目内 C++17 结果类型，尚未设计
-
-class FranzMatchedFilter {
-public:
-    Result<MotionEstimate, KvDError> estimate(const FlowField&) const;
-};
-class OriginalKvDEstimator {
-public:
-    Result<KvDResult, KvDError> estimate(const FlowField&, const KvDParameters&) const;
-};
-class ModifiedKvDEstimator {
-public:
-    Result<KvDResult, KvDError> estimate(const FlowField&, const KvDParameters&) const;
-};
-~~~
+**唯一接口候选定义在本文件 §7**，公共 Result<T,E> / NumericalErrorCode 以 [contracts.md](contracts.md) 为准。此处不重复声明 KvDParameters、KvDResult 和估计器类型，以避免签名矛盾。
 
 **前置条件候选**：N>0；每个 d 可归一化且流场列数为 6；数据有限；合法源精度。**后置条件**：所有返回的 t、ω、near、残差及迭代次数有明确状态；无效输入及零范数/NaN/Inf 不返回伪造的成功值。错误类别建议 InvalidShape、ZeroNorm、SingularGeometry、NonFinite，需与 MatError 分离并由 P0.8 正式定义。
 
