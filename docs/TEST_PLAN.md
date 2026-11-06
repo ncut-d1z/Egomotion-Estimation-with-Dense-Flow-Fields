@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **草案，未冻结。** 测试标识 TC 均为拟定名称；下面的测试文件、CTest 前缀均为未来可能的产物，尚未建立。需求参见 [REQUIREMENTS.md](REQUIREMENTS.md)，实施参见 [PLAN.md](PLAN.md)。本轮未写 C++、未构建、未运行测试。
+> **草案，未冻结。** 测试标识 TC 均为拟定名称；下面的测试文件、CTest 前缀均为未来可能的产物，尚未建立。需求参见 [REQUIREMENTS.md](REQUIREMENTS.md)，实施参见 [PLAN.md](PLAN.md)。已编写并在 Ubuntu 24.04 上编译运行**独立 C++17 matio 数据字典探针**，582/582 MAT 均 `READ_OK`；**未创建完整业务 C++/CTest，也未执行业务级或数值 Golden 测试**。
 
 ## 1. 验证分层和前提
 
@@ -199,7 +199,7 @@
 
 ### 5.3 数据合同变更与试验数据基准
 
-MAT 全量字典的字段定义和状态见 [design/mat_io.md](design/mat_io.md) 与 SRS 中 DEC-001/002。验收前需生成 docs/MAT_DATA_SCHEMA.md 及来源证据。测试文档中的“582 份 MAT 均可用”仍是**目标而非事实**。
+MAT 全量字典和来源证据**已经生成**：见 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md) 和 [design/mat_io.md](design/mat_io.md)。在 Ubuntu 24.04、matio 1.5.26 环境下，独立探针对原始归档 582/582 MAT、582/582 变量执行读取，均为 `READ_OK`，失败 0，这是**已取得的特定数据读取事实**。但它不代表生产 Reader/Writer、MAT 字节与 MATLAB 逐值 Golden、异常负例、数据来源独立核查或 P10.4 已通过；不得由此扩大推断到其他 MAT 格式和未来输入。
 
 ## 6. Debian/Ubuntu 环境与配置矩阵
 
