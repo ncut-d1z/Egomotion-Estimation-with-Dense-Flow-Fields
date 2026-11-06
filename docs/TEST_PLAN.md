@@ -48,9 +48,9 @@
 
 ## 3. TC → 实体/CTest → AC 规划矩阵
 
-下列测试源路径和 CTest 分组名称**全部是拟议名称**；P1–P10 实施时必须用实际文件、测试函数、CTest 名称与运行证据替代。人工审查项明确标为非 CTest。
+下列表格共 66 项，与 SRS v0.2 逐项对应。源文件、测试函数、CTest 名称全部只是**拟议实体**，不代表已经创建或执行；人工审查项与自动测试区分。原始 45 个 MATLAB 源文件映射请参见 [REQUIREMENTS.md §9.2](REQUIREMENTS.md)。
 
-| TC ID | REQ | 候选测试文件或文档 | 候选 CTest / 审核类型 | AC | 状态 |
+| TC ID | REQ | 候选测试文件或审核文档 | CTest/审核 | AC | 状态 |
 |---|---|---|---|---|---|
 | TC-F-CLI-001 | REQ-F-CLI-001 | tests/integration/test_cli.cpp | egomotion.cli.* | AC-F-CLI-001 | 未编写/未运行 |
 | TC-F-MAT-001 | REQ-F-MAT-001 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-F-MAT-001 | 未编写/未运行 |
@@ -82,34 +82,42 @@
 | TC-F-EXP-003 | REQ-F-EXP-003 | tests/integration/test_adaptive_experiments.cpp | egomotion.experiments.* | AC-F-EXP-003 | 未编写/未运行 |
 | TC-F-AN-001 | REQ-F-AN-001 | tests/golden/test_analysis.cpp | egomotion.analysis.* | AC-F-AN-001 | 未编写/未运行 |
 | TC-F-AN-002 | REQ-F-AN-002 | tests/golden/test_analysis.cpp | egomotion.analysis.* | AC-F-AN-002 | 未编写/未运行 |
-| TC-D-SOURCE-001 | REQ-D-SOURCE-001 | docs/SOURCE_INVENTORY.md | 人工审查（不注册） | AC-D-SOURCE-001 | 未编写/未运行 |
-| TC-D-SOURCE-002 | REQ-D-SOURCE-002 | docs/SOURCE_INVENTORY.md | 人工审查（不注册） | AC-D-SOURCE-002 | 未编写/未运行 |
+| TC-D-SOURCE-001 | REQ-D-SOURCE-001 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-D-SOURCE-001 | 未编写/未运行 |
+| TC-D-SOURCE-002 | REQ-D-SOURCE-002 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-D-SOURCE-002 | 未编写/未运行 |
 | TC-D-MAT-001 | REQ-D-MAT-001 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-D-MAT-001 | 未编写/未运行 |
 | TC-D-MAT-002 | REQ-D-MAT-002 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-D-MAT-002 | 未编写/未运行 |
 | TC-D-MAT-003 | REQ-D-MAT-003 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-D-MAT-003 | 未编写/未运行 |
-| TC-I-DOMAIN-001 | REQ-I-DOMAIN-001 | tests/contracts/test_interfaces.cpp | egomotion.contracts.* | AC-I-DOMAIN-001 | 未编写/未运行 |
-| TC-I-IO-001 | REQ-I-IO-001 | tests/contracts/test_interfaces.cpp | egomotion.contracts.* | AC-I-IO-001 | 未编写/未运行 |
-| TC-I-RNG-001 | REQ-I-RNG-001 | tests/contracts/test_interfaces.cpp | egomotion.contracts.* | AC-I-RNG-001 | 未编写/未运行 |
-| TC-I-NOISE-001 | REQ-I-NOISE-001 | tests/contracts/test_interfaces.cpp | egomotion.contracts.* | AC-I-NOISE-001 | 未编写/未运行 |
-| TC-I-KVD-001 | REQ-I-KVD-001 | tests/unit/test_estimators.cpp | egomotion.estimators.* | AC-I-KVD-001 | 未编写/未运行 |
-| TC-I-ADAPT-001 | REQ-I-ADAPT-001 | tests/unit/test_adaptive_mfa.cpp | egomotion.adaptive.* | AC-I-ADAPT-001 | 未编写/未运行 |
-| TC-I-EXPERIMENT-001 | REQ-I-EXPERIMENT-001 | tests/integration/test_adaptive_experiments.cpp | egomotion.experiments.* | AC-I-EXPERIMENT-001 | 未编写/未运行 |
-| TC-I-ANALYSIS-001 | REQ-I-ANALYSIS-001 | tests/contracts/test_interfaces.cpp | egomotion.contracts.* | AC-I-ANALYSIS-001 | 未编写/未运行 |
+| TC-DC-DOMAIN-001 | REQ-DC-DOMAIN-001 | docs/OBJECT_MODEL.md / docs/SOURCE_INVENTORY.md | 人工设计/来源评审；部分接口需合同测试 | AC-DC-DOMAIN-001 | 未编写/未运行 |
+| TC-DC-IO-001 | REQ-DC-IO-001 | docs/OBJECT_MODEL.md / docs/SOURCE_INVENTORY.md | 人工设计/来源评审；部分接口需合同测试 | AC-DC-IO-001 | 未编写/未运行 |
+| TC-DC-RNG-001 | REQ-DC-RNG-001 | docs/OBJECT_MODEL.md / docs/SOURCE_INVENTORY.md | 人工设计/来源评审；部分接口需合同测试 | AC-DC-RNG-001 | 未编写/未运行 |
+| TC-DC-NOISE-001 | REQ-DC-NOISE-001 | docs/OBJECT_MODEL.md / docs/SOURCE_INVENTORY.md | 人工设计/来源评审；部分接口需合同测试 | AC-DC-NOISE-001 | 未编写/未运行 |
+| TC-DC-KVD-001 | REQ-DC-KVD-001 | tests/unit/test_estimators.cpp | egomotion.estimators.* | AC-DC-KVD-001 | 未编写/未运行 |
+| TC-DC-ADAPT-001 | REQ-DC-ADAPT-001 | tests/unit/test_adaptive_mfa.cpp | egomotion.adaptive.* | AC-DC-ADAPT-001 | 未编写/未运行 |
+| TC-DC-EXPERIMENT-001 | REQ-DC-EXPERIMENT-001 | tests/integration/test_adaptive_experiments.cpp | egomotion.experiments.* | AC-DC-EXPERIMENT-001 | 未编写/未运行 |
+| TC-DC-ANALYSIS-001 | REQ-DC-ANALYSIS-001 | tests/golden/test_analysis.cpp | egomotion.analysis.* | AC-DC-ANALYSIS-001 | 未编写/未运行 |
 | TC-NF-PLATFORM-001 | REQ-NF-PLATFORM-001 | tests/integration/test_deployment.cpp | egomotion.deployment.* | AC-NF-PLATFORM-001 | 未编写/未运行 |
 | TC-NF-DEPS-001 | REQ-NF-DEPS-001 | tests/integration/test_deployment.cpp | egomotion.deployment.* | AC-NF-DEPS-001 | 未编写/未运行 |
 | TC-NF-SAFETY-001 | REQ-NF-SAFETY-001 | tests/contracts/test_output_safety.cpp | egomotion.safety.* | AC-NF-SAFETY-001 | 未编写/未运行 |
 | TC-NF-NUM-001 | REQ-NF-NUM-001 | tests/golden/test_numerical_equivalence.cpp | egomotion.numerics.* | AC-NF-NUM-001 | 未编写/未运行 |
 | TC-NF-NUM-002 | REQ-NF-NUM-002 | tests/golden/test_numerical_equivalence.cpp | egomotion.numerics.* | AC-NF-NUM-002 | 未编写/未运行 |
-| TC-NF-TRACE-001 | REQ-NF-TRACE-001 | docs/REQUIREMENTS.md | 人工矩阵检查（不注册） | AC-NF-TRACE-001 | 未编写/未运行 |
+| TC-PROC-TRACE-001 | REQ-PROC-TRACE-001 | docs/REQUIREMENTS.md | 人工追踪审查 | AC-PROC-TRACE-001 | 未编写/未运行 |
 | TC-NF-RNG-001 | REQ-NF-RNG-001 | tests/golden/test_numerical_equivalence.cpp | egomotion.numerics.* | AC-NF-RNG-001 | 未编写/未运行 |
 | TC-NF-LOG-001 | REQ-NF-LOG-001 | tests/contracts/test_runlog.cpp | egomotion.logging.* | AC-NF-LOG-001 | 未编写/未运行 |
 | TC-NF-OOP-001 | REQ-NF-OOP-001 | tests/contracts/test_state_isolation.cpp | egomotion.isolation.* | AC-NF-OOP-001 | 未编写/未运行 |
 | TC-NF-HEADLESS-001 | REQ-NF-HEADLESS-001 | tests/integration/test_headless.cpp | egomotion.headless.* | AC-NF-HEADLESS-001 | 未编写/未运行 |
 | TC-NF-RECOVERY-001 | REQ-NF-RECOVERY-001 | tests/contracts/test_output_safety.cpp | egomotion.safety.* | AC-NF-RECOVERY-001 | 未编写/未运行 |
 | TC-NF-PORTABLE-001 | REQ-NF-PORTABLE-001 | tests/integration/test_deployment.cpp | egomotion.deployment.* | AC-NF-PORTABLE-001 | 未编写/未运行 |
-| TC-NF-RUNTIME-001 | REQ-NF-RUNTIME-001 | tests/benchmarks/benchmark_original_runs.cpp | Benchmark，非强制 CTest | AC-NF-RUNTIME-001 | 未编写/未运行 |
-| TC-NF-THREAD-001 | REQ-NF-THREAD-001 | tests/contracts/test_state_isolation.cpp | egomotion.isolation.* | AC-NF-THREAD-001 | 未编写/未运行 |
-| TC-NF-COPYRIGHT-001 | REQ-NF-COPYRIGHT-001 | docs/SOURCE_INVENTORY.md | 人工审查（不注册） | AC-NF-COPYRIGHT-001 | 未编写/未运行 |
+| TC-NF-RUNTIME-001 | REQ-NF-RUNTIME-001 | tests/benchmarks/benchmark_original_runs.cpp | 非 CTest 基准 | AC-NF-RUNTIME-001 | 未编写/未运行 |
+| TC-NF-SESSION-001 | REQ-NF-SESSION-001 | tests/contracts/test_state_isolation.cpp | egomotion.isolation.* | AC-NF-SESSION-001 | 未编写/未运行 |
+| TC-NF-COPYRIGHT-001 | REQ-NF-COPYRIGHT-001 | docs/OBJECT_MODEL.md / docs/SOURCE_INVENTORY.md | 人工设计/来源评审；部分接口需合同测试 | AC-NF-COPYRIGHT-001 | 未编写/未运行 |
+| TC-F-CLI-002 | REQ-F-CLI-002 | tests/integration/test_cli.cpp | egomotion.cli.* | AC-F-CLI-002 | 未编写/未运行 |
+| TC-F-CLI-003 | REQ-F-CLI-003 | tests/integration/test_cli.cpp | egomotion.cli.* | AC-F-CLI-003 | 未编写/未运行 |
+| TC-F-CLI-004 | REQ-F-CLI-004 | tests/integration/test_cli.cpp | egomotion.cli.* | AC-F-CLI-004 | 未编写/未运行 |
+| TC-F-CLI-005 | REQ-F-CLI-005 | tests/integration/test_cli.cpp | egomotion.cli.* | AC-F-CLI-005 | 未编写/未运行 |
+| TC-I-CLI-001 | REQ-I-CLI-001 | tests/integration/test_cli.cpp | egomotion.cli.* | AC-I-CLI-001 | 未编写/未运行 |
+| TC-I-MAT-001 | REQ-I-MAT-001 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-I-MAT-001 | 未编写/未运行 |
+| TC-I-RESULT-001 | REQ-I-RESULT-001 | tests/integration/test_adaptive_experiments.cpp | egomotion.experiments.* | AC-I-RESULT-001 | 未编写/未运行 |
+| TC-I-ANALYSIS-001 | REQ-I-ANALYSIS-001 | tests/golden/test_analysis.cpp | egomotion.analysis.* | AC-I-ANALYSIS-001 | 未编写/未运行 |
 
 ## 4. 非功能指标和验收记录格式
 
@@ -134,4 +142,4 @@
 
 任何更改 MATLAB 对应公式、输出变量、MAT 读取边界、随机数处理、数值容差或实验输入都必须更新 REQ/TC/AC 对照并重新生成对照证据；不能通过跳过失败样本、修改阈值或者仅重新绘图来宣布结果通过。真实构建与 CTest 开始之前须遵守 AGENTS.md 的远程检查点规则。
 
-**当前状态：58 个 TC 均未创建真实测试函数或 CTest，不能计为通过。**
+**当前状态：66 个 TC 均未创建真实测试函数或 CTest，不能计为通过。**
