@@ -189,7 +189,7 @@ stateDiagram-v2
 
 本文件只提供设计审查材料。**未编译、未创建类、未通过测试；P0.7/P0.8 尚未完成。**
 
-## 6. 原 MATLAB 45 文件 → 预定 C++ 类方法/自由函数映射（P0.7）
+## 7. 原 MATLAB 45 文件 → 预定 C++ 类方法/自由函数映射（P0.7）
 
 **这是设计分配表，不是实现清单。** MATLAB 文件名和路径已在源树核对；右列只是拟定责任归属与能力名称，未创建 C++ 类、方法或测试。具体函数签名、参数、source SHA 与对应 REQ/TC 见 SRS §9.2 及模块 LLD，后续要逐项冻结。
 
@@ -211,12 +211,12 @@ stateDiagram-v2
 | `help_functions/erzeugerichtungsvektoren.m` | OctahedralSampler::sample | 已定位 / 合同待 P0 核验 |
 | `help_functions/erzeugerichtungsvektoren_loch.m` | OccludedOctahedralSampler::sample | 已定位 / 合同待 P0 核验 |
 | `help_functions/findeDreiecke.m` | sampling::subdivideTriangle (私有自由函数) | 已定位 / 合同待 P0 核验 |
-| `help_functions/fixed_kugel_symmetric_perfectpoints_randomnear.m` | BiasSceneGenerator::makeOccludedScene | 已定位 / 合同待 P0 核验 |
-| `help_functions/fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m` | BiasSceneGenerator::makeProportionalScene | 已定位 / 合同待 P0 核验 |
+| `help_functions/fixed_kugel_symmetric_perfectpoints_randomnear.m` | BiasExperimentRunner::synthesizeOccludedInput（组合采样、FlowSynthesizer、噪声策略） | 已定位 / 合同待 P0 核验 |
+| `help_functions/fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m` | BiasExperimentRunner::synthesizeProportionalInput（组合采样、FlowSynthesizer、噪声策略） | 已定位 / 合同待 P0 核验 |
 | `help_functions/franzeigen.m` | FranzMatchedFilter::estimate | 已定位 / 合同待 P0 核验 |
 | `help_functions/getflowfield.m` | MatResultReader::readFirstCompatible | 已定位 / 合同待 P0 核验 |
 | `help_functions/getnear_in_kugel_Drehung.m` | SphereEnvironment::nearness | 已定位 / 合同待 P0 核验 |
-| `help_functions/getvektor.m` | SphericalRandomDirection::sample (RNG 注入) | 已定位 / 合同待 P0 核验 |
+| `help_functions/getvektor.m` | sampling::randomUnitDirection(IRandomSource&)（无状态自由函数） | 已定位 / 合同待 P0 核验 |
 | `help_functions/koeff_aus_near.m` | HarmonicFitter::fit | 已定位 / 合同待 P0 核验 |
 | `help_functions/kreis_trajektorie.m` | TrajectoryGenerator::circle | 已定位 / 合同待 P0 核验 |
 | `help_functions/kreuzprodukt.m` | math::cross (自由函数) | 已定位 / 合同待 P0 核验 |
@@ -246,7 +246,23 @@ stateDiagram-v2
 - `rodrigues.m` 与 `SHRotate.m` 有外部来源；C++ 实现范围与授权须在复制原代码前另行核验。
 - 对一份 MATLAB 文件内多个辅助函数或附加可调用模式，P0.2 必须另列到方法级迁移表；本表仅记录每个文件的首要职责，不等于逐函数审计已全部完成。
 
-## 7. 类方法签名冻结门禁
+### 7.1 名称一致性与职责边界
+
+- `fixed_kugel_symmetric_perfectpoints_randomnear.m` 和 `fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m` 的场景编排暂归 `BiasExperimentRunner`；实际三维光流仍由 `FlowSynthesizer`、采样器和噪声模型分别承担，避免引入未定义的额外 `BiasSceneGenerator`。
+- `getvektor.m` 暂归 `sampling::randomUnitDirection(IRandomSource&)`，以注入的随机源生成单个球面单位方向；无需人为建立持有可变状态的 `SphericalRandomDirection` 类。
+- 以上是**规划名称统一**，不代表实际头文件、方法签名已存在。若 P0.7 评审后需要调整实现名称，应在同一次文档变更中同步修改本文件、HLD、相关 LLD 和 45 文件追踪矩阵，不更改 MATLAB 源路径或数值合同。
+
+### 7.2 对象模型门禁与 LLD 门禁区别
+
+| 门禁 | 最小判定内容 | 当前状态 |
+|---|---|---|
+| 对象模型评审（P0.7） | 45 文件职责归属、对象是否有状态、所有者、主要依赖方向、生命期和可替换边界 | 形成草案，未批准 |
+| HLD 架构评审（P0.8） | 组件接口、CMake target DAG、运行时数据流、ADR、平台与不可逆数据边界 | 形成草案，未批准 |
+| LLD 模块签名冻结（P0.8 后、实施该模块前） | C++17 完整签名/类型、前后置条件、错误码、公式/伪代码、Golden/容差、真实 MAT 类型 | 未冻结，按模块在 docs/design/ 记录 |
+
+前两项可先评审其**独立于待测 MAT 数值的已知部分**；这不等于第三项已达到编码基线。无 Golden 和已批准容差的数值模块不得因对象模型图通过而标记数值验收成功。
+
+## 8. 类方法签名冻结门禁
 
 | 设计特性 | 待冻结合同 | 证据 |
 |---|---|---|
