@@ -9,6 +9,7 @@
 - [OBJECT_MODEL.md](../OBJECT_MODEL.md)：类职责、所有权及 45 MATLAB 文件→拟议方法的唯一维护位置。
 - [TEST_PLAN.md](../TEST_PLAN.md)：Golden、证据、测试环境与候选 CTest 的唯一来源。
 - [PLAN.md](../PLAN.md)：98 个 P0–P10 最小工作项、任务依赖、风险与里程碑。
+- [PROGRESS.md](../PROGRESS.md)：阶段及里程碑的实际证据、角色/批准状态、缺失退出条件；已核对的静态审查另见 [2026-11-06 记录](../reviews/STATIC_TRACEABILITY_2026-11-06.md)。
 - [contracts.md](contracts.md)：C++17 领域值类型、Result<T,E>、错误分类、资源生命周期与跨模块接口的**统一候选合同**。
 - 本目录每份文档是**对应模块的 LLD 草案**，具体签名、公式、错误处理、数据布局应在 P0.8 以后逐个确认。
 
