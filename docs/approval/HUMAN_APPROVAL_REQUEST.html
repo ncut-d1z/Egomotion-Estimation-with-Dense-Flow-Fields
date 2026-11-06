@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>人类审批与执行授权申请表 · Egomotion</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;color:#1a2b38;background:#f4f7fa;font-size:15px}
+*{box-sizing:border-box}body{margin:0;line-height:1.6}
+a{color:#155e99;text-decoration:none}a:hover{text-decoration:underline}
+button,input,select,textarea{font:inherit}button{cursor:pointer}
+.site{max-width:1200px;margin:auto;padding:0 24px 60px}
+.hero{background:#132d47;color:#fff;padding:34px max(24px,calc((100vw - 1152px)/2));border-bottom:5px solid #28b5a5}
+.eyebrow{color:#97e4d8;font-size:.78rem;letter-spacing:.12em;font-weight:750}
+h1{font-size:clamp(1.5rem,3vw,2.2rem);margin:7px 0 6px;font-weight:750;line-height:1.3}
+.hero p{color:#d9e5f1;max-width:900px;margin:7px 0 0}
+.hero .hero-tags{display:flex;gap:9px;flex-wrap:wrap;margin-top:17px}
+.tag{border:1px solid #7390aa;border-radius:30px;padding:4px 10px;color:#e5eff7;font-size:.77rem}
+.nav{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0}.nav a{font-size:.85rem;background:#fff;border:1px solid #dce5ed;border-radius:8px;padding:7px 12px}
+.card{background:#fff;border:1px solid #dbe4ec;border-radius:13px;box-shadow:0 3px 18px #132b430a;padding:23px;margin:16px 0}
+.section-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+h2{font-size:1.21rem;margin:0 0 15px}h3{font-size:1rem;margin:0 0 10px}
+.subtle{color:#5a7082;font-size:.86rem}.help{color:#546a7b;font-size:.85rem;margin:5px 0 10px}
+.notice{border-left:4px solid #c39237;background:#fff9ed;border-radius:4px;padding:12px 15px;margin:13px 0;color:#594420}
+.oknote{border-left:4px solid #419f85;background:#f0faf7;padding:10px 13px;margin:10px 0}
+.form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.form-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+label.field{display:block;color:#384c5d;font-size:.84rem;font-weight:600}
+.field input,.field select,.field textarea{margin-top:5px;width:100%;border:1px solid #bfcdda;border-radius:7px;padding:10px 11px;background:#fff;color:#172c3c;outline-offset:2px;font-weight:400}
+.field textarea{min-height:86px;resize:vertical}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:#227aa8;outline:2px solid #227aa82c}
+.field input[readonly]{background:#edf2f7;color:#617382}
+.span-all{grid-column:1/-1}
+.statbar{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 13px}
+.stat{padding:8px 13px;border:1px solid #d9e3ec;border-radius:9px;background:#f8fafc;min-width:122px}
+.stat b{font-size:1.12rem;display:block;color:#1d486a;font-variant-numeric:tabular-nums}
+.stat small{font-size:.76rem;color:#617585}
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.filters input,.filters select{border:1px solid #c1cfdb;border-radius:7px;padding:8px 11px;max-width:100%;min-width:170px}
+.approval-item{border:1px solid #d7e1e9;border-radius:10px;margin:13px 0;background:#fff;overflow:hidden}
+.item-main{padding:17px 18px}
+.item-top{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.item-code{background:#e9f2f9;color:#1f5077;border-radius:6px;font-size:.82rem;font-weight:750;padding:5px 8px;white-space:nowrap}
+.item-title{font-size:1.04rem;font-weight:700;flex:1;min-width:175px}
+.item-state{font-size:.77rem;border-radius:20px;padding:3px 10px;background:#eef1f5;color:#526273;white-space:nowrap}
+.item-state.approved{color:#146046;background:#e1f4ec}.item-state.incomplete{color:#8a5619;background:#fff0d3}
+.item-desc{margin:9px 0 7px;font-size:.85rem;color:#4b6071}
+.item-meta{font-size:.79rem;color:#617385;margin-bottom:10px}
+.choice-row{display:flex;gap:8px;flex-wrap:wrap}
+.choice{border:1px solid #ced8e1;border-radius:7px;padding:6px 10px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:.83rem}
+.choice input{accent-color:#166c9b}
+.choice:has(input:checked){background:#e8f3fa;border-color:#5c9cb8;color:#12577e;font-weight:650}
+.item-details{border-top:1px solid #e4ebf1;background:#f8fafc}
+.item-details summary{cursor:pointer;padding:10px 18px;font-weight:650;font-size:.87rem;color:#246185}
+.detail-body{padding:16px 18px 20px}
+#items:empty::after{content:"暂无项目";color:#667}
+.block-title{margin-top:18px;border-bottom:1px solid #e5edf3;padding-bottom:8px}
+.table-wrap{overflow:auto}
+.data-table{width:100%;border-collapse:collapse;min-width:790px}
+.data-table th,.data-table td{padding:11px 9px;border-bottom:1px solid #e2e9ee;text-align:left;vertical-align:top}
+.data-table th{background:#f1f5f8;font-size:.82rem;color:#3d5b70}
+.data-table td:first-child{font-size:.84rem;font-weight:600;min-width:200px}
+.data-table input,.data-table textarea{width:100%;min-width:100px;border:1px solid #bfced8;border-radius:6px;padding:8px;font:inherit}
+.data-table textarea{min-height:64px;resize:vertical}
+.choice-check{display:flex;align-items:center;gap:8px;border:1px solid #d8e2ea;border-radius:8px;padding:9px 11px;font-size:.88rem}
+.choice-check input{width:17px;height:17px;accent-color:#236b92}
+.checkgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.btn{border:1px solid #b7c9d7;background:white;color:#215070;border-radius:8px;padding:9px 15px;font-weight:650}
+.btn:hover{background:#ecf4f9}.btn-primary{background:#147a84;border-color:#147a84;color:#fff;padding:12px 25px}
+.btn-primary:hover{background:#0e636d}.btn:disabled{opacity:.5;cursor:default}
+.savebar{position:sticky;bottom:0;z-index:10;background:#fff;border:1px solid #ccdce5;border-radius:12px;padding:14px 18px;box-shadow:0 -5px 24px #102b4220;display:flex;gap:15px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.savebar .hint{font-size:.79rem;color:#536c7b;flex:1;min-width:280px}
+.inline-row{display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.statusline{font-size:.86rem;min-height:20px;margin-top:10px}
+.statusline.error{color:#ac3027}.statusline.success{color:#126d4a}
+details.guide{margin:8px 0 0}.guide summary{cursor:pointer;font-weight:600}
+.footer{font-size:.79rem;color:#6b7e8d;margin:20px 0}
+[hidden]{display:none!important}
+@media(max-width:800px){.form-grid,.form-grid.two,.checkgrid{grid-template-columns:1fr}.site{padding:0 12px 48px}.hero{padding:22px 18px}.card{padding:17px}.item-main{padding:14px}.savebar{position:static}.nav a{padding:6px 9px}}
+@media print{.hero{background:white;color:black}.hero p{color:#333}.nav,.savebar,.filters,#pickDirectory,#loadButton{display:none!important}.card,.approval-item{box-shadow:none;break-inside:avoid}.item-details{display:block}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="eyebrow">EGOMOTION · HUMAN REVIEW</div>
+  <h1>人类审批与执行授权申请表</h1>
+  <p>逐项审核 H-01～H-16，填写技术判断与执行授权，最后保存为 JSON。所有决定默认待审；保存文件本身不代表需求、算法或项目基线已验收。</p>
+  <div class="hero-tags"><span class="tag">离线运行 · 无外部依赖</span><span class="tag">逐项审核</span><span class="tag">JSON 导出 / 导入</span><span class="tag">禁止自动批准</span></div>
+</header>
+<div class="site">
+<nav class="nav" aria-label="页面导航">
+  <a href="#application">申请信息</a><a href="#approvals">逐项审批</a><a href="#tolerances">数值容差</a><a href="#rights">版权与发布</a><a href="#contracts">CLI 与 Golden</a><a href="#execution">执行权限</a><a href="#save">保存 JSON</a>
+</nav>
+<div class="notice"><strong>审批与执行是两个独立门槛。</strong> 只有你明确选择“批准”并填写审批人、角色、日期及其时区、所批准的 SHA、范围和证据后，该条记录才可能形式完整；系统不核验真实身份，也不会关闭 DEC、执行测试或提交 Git。未批准、退回和暂缓的记录也可保存。</div>
+<form id="approvalForm" novalidate>
+<section class="card" id="application">
+  <h2>一、申请登记</h2>
+  <div class="form-grid">
+    <label class="field">申请编号<input id="applicationId" value="HAR-2026-11-06-001" maxlength="100"></label>
+    <label class="field">仓库<input id="repository" value="ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields" readonly></label>
+    <label class="field">目标开发分支<input id="branch" value="dev-plan-P0-P1-mat-dictionary-probe" maxlength="200"></label>
+    <label class="field">本申请所依据的 commit SHA<input id="applicationCommit" placeholder="填写已核验的 Git commit SHA" spellcheck="false"></label>
+    <label class="field">项目所有者 / 联系人<input id="owner" placeholder="由人类填写"></label>
+    <label class="field">其他审核人及角色<input id="otherReviewers" placeholder="由人类填写"></label>
+    <label class="field">本次审批范围（H 编号）<input id="scopeIds" placeholder="例如：H-03、H-08"></label>
+    <label class="field">下次复核日期<input id="nextReviewDate" type="date"></label>
+    <label class="field">申请总状态<select id="applicationStatus"><option value="待逐项审批">待逐项审批</option><option value="部分已填">部分已填</option><option value="待提交复核">待提交复核</option></select></label>
+    <label class="field span-all">审批补充说明<textarea id="applicationNotes" rows="3" placeholder="备注、风险、例外条款；不在此代填审批决定"></textarea></label>
+  </div>
+  <p class="help">规则文件：<a href="../../AGENTS.md" target="_blank" rel="noopener">AGENTS.md §10</a> · <a href="../REQUIREMENTS.md" target="_blank" rel="noopener">需求与 DEC</a> · <a href="../PROGRESS.md" target="_blank" rel="noopener">进度与证据</a></p>
+</section>
+
+<section class="card" id="approvals">
+  <div class="section-head"><h2>二、16 项独立审批</h2><span class="subtle">选择意见后填写该项专属的审批依据</span></div>
+  <div class="statbar">
+    <div class="stat"><b id="statPending">16</b><small>待决定</small></div>
+    <div class="stat"><b id="statApproved">0</b><small>选择批准</small></div>
+    <div class="stat"><b id="statComplete">0</b><small>批准记录形式完整</small></div>
+    <div class="stat"><b id="statOther">0</b><small>退回 / 暂缓 / 拒绝</small></div>
+  </div>
+  <div class="filters">
+    <label class="field">查找事项<input id="search" type="search" placeholder="H-01、DEC、版权、Golden" aria-label="搜索审批事项"></label>
+    <label class="field">筛选状态<select id="filter"><option value="all">全部事项</option><option value="pending">待决定</option><option value="approved">选择批准</option><option value="incomplete">批准但记录不完整</option><option value="other">退回 / 暂缓 / 拒绝</option></select></label>
+    <button type="button" class="btn" id="expandAll">展开记录</button>
+    <button type="button" class="btn" id="collapseAll">折叠记录</button>
+  </div>
+  <div id="items"></div>
+  <p class="help">“形式完整”只表示必填字段齐备、SHA 格式合理，不等于人类身份已验证、审批产生法律效力、DEC 已关闭或对应执行已经完成。</p>
+</section>
+
+<section class="card" id="tolerances">
+  <h2>三、H-01 / DEC-005：数值容差与 Golden</h2>
+  <p class="help">全部阈值默认为空，不能把空白当成 0 或预设通过阈值；只有经过合法 Golden 和人类批准才能成为正式基线。</p>
+  <div class="table-wrap"><table class="data-table">
+    <thead><tr><th>模块 / 场景</th><th>atol</th><th>rtol</th><th>统计 / 退化判据</th><th>Golden 来源 / SHA</th></tr></thead>
+    <tbody id="toleranceRows"></tbody>
+  </table></div>
+  <div class="form-grid two" style="margin-top:14px">
+    <label class="field">统计噪声样本量及比较方法<textarea data-extra="noiseComparison" placeholder="待数值负责人提案"></textarea></label>
+    <label class="field">失败 / 未定义样本处理规则<textarea data-extra="invalidSamples" placeholder="待人类批准"></textarea></label>
+  </div>
+</section>
+
+<section class="card" id="rights">
+  <h2>四、H-02 / H-14 / H-16：版权与发布范围</h2>
+  <div class="form-grid two" id="rightsFields">
+    <label class="field">rodrigues.m 来源、许可、可移植范围<textarea data-extra="rodriguesRights" placeholder="来源、版本、授权范围、证据"></textarea></label>
+    <label class="field">SHRotate.m / R5 来源与合法实现路线<textarea data-extra="shRotateRights" placeholder="来源、版权与独立实现选择"></textarea></label>
+    <label class="field">原始 .m/.mat 与 Golden 的可存储 / 公开范围<textarea data-extra="archiveRights" placeholder="区分原始数据、重新实现代码及参考数值"></textarea></label>
+    <label class="field">版权 / 来源审查证据<textarea data-extra="rightsEvidence" placeholder="链接、文件、审核意见；勿填写密钥或私有凭证"></textarea></label>
+    <label class="field">是否允许建立项目 LICENSE<select data-extra="licenseDecision"><option value="">待决定</option><option value="不得建立">不得建立</option><option value="批准指定许可证">批准指定许可证（需明确文本及范围）</option><option value="暂缓">暂缓</option></select></label>
+    <label class="field">若批准，具体许可证及适用范围<input data-extra="licenseScope" placeholder="许可证名称、文件、所适用代码"></label>
+  </div>
+</section>
+
+<section class="card" id="contracts">
+  <h2>五、H-03 / H-08 / H-09：CLI、Golden 与文件身份</h2>
+  <div class="form-grid two">
+    <label class="field">受审 CLI / contracts 文档 commit SHA<input data-extra="cliSha" placeholder="受审合同版本 SHA"></label>
+    <label class="field">RunId 命名和并发创建规则<textarea data-extra="runIdPolicy"></textarea></label>
+    <label class="field">诊断输出序列化<select data-extra="diagnostics"><option value="">待决定</option><option value="JSONL">JSON Lines (JSONL)</option><option value="KV">转义键值行</option><option value="OTHER">其他（在备注中写明）</option></select></label>
+    <label class="field">负噪声系数语义<select data-extra="negativeNoise"><option value="">待决定</option><option value="拒绝">拒绝</option><option value="允许并保留源码符号">允许，保留原始符号</option><option value="按原源码再核验">按原 MATLAB 再核验</option></select></label>
+    <label class="field">错误枚举、退出码与诊断字段的批准范围<textarea data-extra="errorMapping"></textarea></label>
+    <label class="field">TC → 测试文件 / CTest 名 → AC 与 Golden identity<textarea data-extra="testMapping"></textarea></label>
+    <label class="field">归档身份哈希标准<select data-extra="hashPolicy"><option value="">待决定</option><option value="FNV64">FNV64（需明确风险）</option><option value="SHA-256">SHA-256</option><option value="FNV64+SHA-256">FNV64 + SHA-256</option></select></label>
+    <label class="field">MATLAB 环境、采集脚本 blob SHA、参考 SHA-256<textarea data-extra="goldenEnvironment"></textarea></label>
+  </div>
+  <p class="help">区分 Git 源树/commit SHA、源 .m blob SHA、探针参数 source_sha、Golden 采集脚本 blob SHA、参考数值文件 SHA-256。</p>
+</section>
+
+<section class="card" id="execution">
+  <h2>六、H-04 / H-10 / H-11 / H-12 / H-15：执行授权和资源</h2>
+  <p class="notice">这里的勾选是人类拟授予的<strong>具体操作范围</strong>，并不因某个 H 项“批准”而自动全选；H-10/11/16 的记录是否形式完整将检查相应勾选。所有原始 origin/** 文件始终只读。</p>
+  <div class="checkgrid" id="permissions"></div>
+  <div class="form-grid two" style="margin-top:16px">
+    <label class="field">允许修改的分支、源码文件与输出目录<textarea data-extra="allowedPaths" placeholder="准确限定，禁止覆盖 origin/**"></textarea></label>
+    <label class="field">允许执行的命令、用例及异常处理<textarea data-extra="allowedCommands" placeholder="实际 CMake / CTest / Bash / MATLAB 命令及范围"></textarea></label>
+    <label class="field">Debian/Ubuntu 版本、GCC/Clang、CPU/RAM<textarea data-extra="platformResources" placeholder="版本/资源；未批准时留空"></textarea></label>
+    <label class="field">性能阈值、墙钟/CPU/内存预算<textarea data-extra="performanceBudget" placeholder="不能编造性能门槛"></textarea></label>
+    <label class="field">负责人、审查人及授权环境<textarea data-extra="executorInfo"></textarea></label>
+    <label class="field">执行证据的路径及保管要求<textarea data-extra="executionEvidence" placeholder="Git SHA、RunId、stdout/stderr、退出码、数据哈希"></textarea></label>
+  </div>
+  <h3 class="block-title">M0–M5 里程碑（待人类决定）</h3>
+  <div class="table-wrap"><table class="data-table"><thead><tr><th>里程碑</th><th>责任人</th><th>目标日期</th><th>预算 / 资源 / 备注</th></tr></thead><tbody id="milestoneRows"></tbody></table></div>
+</section>
+
+<section class="card" id="save">
+  <h2>七、保存或载入 JSON</h2>
+  <p class="help">所有数据只在当前浏览器页面中处理，不会发送到服务器。保存文件由你自行选择目录和文件名；页面不能未经授权自行写入 HTML 所在的磁盘目录。</p>
+  <div class="form-grid two">
+    <label class="field">JSON 文件名（默认）<input id="filename" value="HUMAN_APPROVAL_REQUEST.json" spellcheck="false" autocomplete="off"></label>
+    <label class="field">建议保存目录（HTML 同目录，仅为提示）<input id="suggestedDirectory" readonly></label>
+  </div>
+  <div class="inline-row" style="margin-top:15px">
+    <button type="button" class="btn" id="pickDirectory">选择文件夹（可选）</button>
+    <button type="button" class="btn" id="loadButton">导入已有 JSON</button>
+    <input type="file" id="loadFile" accept=".json,application/json" hidden>
+  </div>
+  <p class="help" id="selectedDirectory">尚未选定文件夹。点击底部“保存”会优先打开浏览器系统保存对话框；请选 HTML 所在的 docs/approval 目录。</p>
+  <details class="guide"><summary>关于浏览器保存路径的限制</summary><p class="help">浏览器不能直接把 HTML 所在文件夹设成无须选择的写入目录。支持 File System Access API 的浏览器可以通过系统“另存为”对话框选择任意合法路径；也可以先点击“选择文件夹”，由你授权写入。若浏览器不支持，页面会下载 JSON，具体位置由浏览器的下载设置决定；请开启“每次下载前询问保存位置”或事后移动到 docs/approval。</p></details>
+</section>
+</form>
+<div class="savebar">
+  <div class="hint"><strong id="dirtyLabel">尚未保存 JSON</strong><div>保存部分填写内容也可以；所有待决定项目维持待决定，不会自动批准。</div></div>
+  <button type="button" class="btn" id="validateButton">检查记录完整性</button>
+  <button type="button" id="saveButton" class="btn btn-primary">保存 JSON</button>
+</div>
+<div id="saveStatus" class="statusline" role="status" aria-live="polite"></div>
+<p class="footer">审批申请 · HAR-2026-11-06-001 · 仅供人类填写和本地保存 · C++/MATLAB、CTest、Bash 等真实运行须遵循 AGENTS.md 的独立授权门禁。</p>
+</div>
+<script>
+(function(){
+"use strict";
+const ITEMS=[
+["H-01","DEC-005：数值容差","REQ-NF-NUM-001 · TEST_PLAN · 逐模块 LLD","候选 atol/rtol、统计噪声方法、退化与失败判据。","数值验证负责人提出/核验，项目所有者批准逐模块阈值和例外。"],
+["H-02","DEC-003/007：第三方版权与再分发","rodrigues.m · SHRotate.m · harmonics · trajectory","审计来源、版权头、许可及独立重写路径。","权利审核人员及项目所有者确认复制、移植与发布范围。"],
+["H-03","DEC-008：CLI / CTest / Golden 映射","cli.md · contracts.md · TEST_PLAN","整理命令、诊断格式、RunId、测试实体与 Golden 身份候选。","批准 CLI / 错误合同、CTest 名称、Golden identity 与冻结门槛。"],
+["H-04","DEC-006：平台与性能预算","Debian/Ubuntu · GCC/Clang · CPU/RAM","准备支持版本与 wall/CPU/RSS、构建时间测量方案。","确认支持环境、资源上限、预算与性能阈值。"],
+["H-05","SRS 的需求义务、AC、优先级和范围","REQUIREMENTS.md · REQ/TC/AC","提供变更差异与追踪矩阵，不擅改验收门槛。","项目所有者批准实质性需求修改及适用版本。"],
+["H-06","HLD / LLD / ADR 与 CLI 合同冻结","ARCHITECTURE.md · OBJECT_MODEL.md · design/","准备架构、错误、状态、接口候选及开放例外清单。","批准对应 SHA、ADR、合同以及明确的冻结范围。"],
+["H-07","DEC-004：历史 MAT 额外字段归因","experiments.md · alleadap* · rottransratio","列明历史归档、当前 save 和分析依赖差异。","数据审计负责人/所有者决定归因与兼容口径。"],
+["H-08","DEC-001/002：MAT 支持与哈希标准","MAT_DATA_SCHEMA.md · mat_io.md","提供 582/582 READ_OK、FNV64 和 SHA-256 补充方案。","批准 Reader 支持边界、身份哈希与独立复核要求。"],
+["H-09","真实 MATLAB Golden 生成与保存","TEST_PLAN §5.2 · 固定输入 · SHA-256","整理输入、采集脚本、字段与 Golden 来源。","提供合法环境与运行、存储、再分发授权。"],
+["H-10","生产 C++ / CMake / CTest 与真实测试","PLAN P1–P10 · Reader/Writer · 负例","拟定源码、命令、写回读、负例与资源测试范围。","逐项授权分支、环境、可执行命令及输出目录；不代签验收。"],
+["H-11","Bash 追踪脚本现场执行","scripts/check_docs_traceability.sh · TEST_PLAN","可做连接器只读静态检查和现场命令准备。","提供完整工作树并授权真正运行 Bash，留存 stdout/stderr/exit/SHA。"],
+["H-12","MAT 原子发布、路径与软链接防护","mat_io.md · P1.9","准备不可覆盖、TOCTOU、写后回读的安全候选。","人类授权负例测试并审核实际安全结果。"],
+["H-13","KvD / Adaptive 异常与状态提交","kvd.md · adaptive_mfa.md","比较 MATLAB NaN/Inf 与提交、回滚、终止候选。","数值验证人/所有者批准失败后处理与原版差异。"],
+["H-14","实球谐 R5 的合法实现路线","harmonics.md · SHRotate.m","列明 R3/R5、递推与独立实现候选。","版权审核后批准实现范围，再以 Golden/容差核验。"],
+["H-15","人员分派、里程碑、资源与预算","PLAN §6 · PROGRESS.md","准备 WBS、责任角色、M0–M5 空白进度模板。","有权人员填写角色、日期、CPU/RAM、预算和时间承诺。"],
+["H-16","PR 合并、发布、许可证与最终签字","AGENTS.md · Draft PR · SRS/HLD/LLD","准备提交、风险、发布及基线冻结检查表。","针对指定 PR/commit、许可证和发布范围明确授权。"]
+];
+const STATUSES=[["pending","待决定"],["approved","批准"],["revise","退回修改"],["deferred","暂缓"],["rejected","拒绝"]];
+const ROLES=["项目所有者","数值验证负责人","版权审查负责人","数据审计负责人","架构审查负责人","维护/集成负责人","开发负责人","其他"];
+const TOLERANCES=[
+["Franz、Original/Modified KvD（逐轮）","kvd"],
+["实球谐 9 项、R3/R5、近度拟合","harmonics"],
+["Adaptive M1–M4、6×6、MSE、Session","adaptive"],
+["采样、光流、噪声、RNG","sampling"],
+["轨迹、旋转、球内近度","trajectory"],
+["MAT 读写、统计分析","matAnalysis"]
+];
+const PERMISSIONS=[
+["runCMake","允许 CMake 配置与编译"],
+["runCTest","允许执行选定 CTest"],
+["runMatlab","允许执行 MATLAB / 采集 Golden"],
+["writeMat","允许在隔离目录做 MAT 写回读/负例"],
+["runBash","允许实际运行 Bash 追踪检查器"],
+["measurePerformance","允许性能、CPU/RAM/时间测量"],
+["mergePR","允许合并指定 PR"],
+["publish","允许正式发布"],
+["createLicense","允许按指定范围创建 LICENSE"],
+["freezeBaseline","允许签署指定 SRS/HLD/LLD 冻结"]
+];
+const MILESTONES=["M0：源资料与设计评审","M1：MAT 读写与构建","M2：Bias 计算与统计","M3：Adaptive 数值闭环","M4：分析/绘图与复现","M5：交付与验收"];
+const $=id=>document.getElementById(id);
+let chosenDirectory=null;
+let edited=false;
+function esc(t){return String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function t(s){return String(s==null?"":s);}
+function makeSelect(name,options){return '<select data-field="'+name+'"><option value="">请选择</option>'+options.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("")+'</select>';}
+function field(label,name,type){return '<label class="field">'+label+(type==="textarea"?'<textarea data-field="'+name+'" rows="2"></textarea>':type==="role"?makeSelect(name,ROLES):type==="timezone"?'<input data-field="'+name+'" placeholder="如 Europe/Berlin / UTC" list="tzOptions">':'<input data-field="'+name+'" type="'+type+'" autocomplete="off">')+'</label>';}
+function itemNode(item){
+ const id=item[0];
+ const choices=STATUSES.map((x,n)=>'<label class="choice"><input type="radio" name="decision-'+id+'" value="'+x[0]+'" '+(n===0?"checked":"")+'><span>'+x[1]+'</span></label>').join("");
+ const detail='<div class="form-grid two">'+field("审批人姓名 *","reviewer","text")+field("审批人角色 *","role","role")+field("审批日期及时间 *","reviewedAt","datetime-local")+field("时区 *","timezone","timezone")+field("批准对象 commit / blob SHA *","sha","text")+field("审批依据 / 证据链接或文件 *","evidence","textarea")+field("适用范围及明确授权的内容 *","scope","textarea")+field("条件 / 例外条款","conditions","textarea")+field("审核意见和原因","notes","textarea")+'</div>';
+ return '<article class="approval-item" data-id="'+id+'" data-search="'+esc(item.join(" ").toLowerCase())+'"><div class="item-main"><div class="item-top"><span class="item-code">'+id+'</span><span class="item-title">'+esc(item[1])+'</span><span class="item-state">待决定</span></div><div class="item-meta">'+esc(item[2])+'</div><p class="item-desc"><strong>AI 可准备：</strong>'+esc(item[3])+'<br><strong>人类需决定：</strong>'+esc(item[4])+'</p><div class="choice-row" role="radiogroup" aria-label="'+id+' 审批意见">'+choices+'</div></div><details class="item-details"><summary>填写审批人、SHA、证据和范围（选择“批准”后必须填写）</summary><div class="detail-body">'+detail+'</div></details></article>';
+}
+$("items").innerHTML=ITEMS.map(itemNode).join("");
+$("toleranceRows").innerHTML=TOLERANCES.map(row=>'<tr data-tolerance="'+row[1]+'"><td>'+esc(row[0])+'</td><td><input data-tol-field="atol" inputmode="decimal" placeholder="未定"></td><td><input data-tol-field="rtol" inputmode="decimal" placeholder="未定"></td><td><textarea data-tol-field="criterion" placeholder="统计及退化判据"></textarea></td><td><textarea data-tol-field="golden" placeholder="来源 / SHA / 证据"></textarea></td></tr>').join("");
+$("permissions").innerHTML=PERMISSIONS.map(x=>'<label class="choice-check"><input type="checkbox" data-permission="'+x[0]+'"><span>'+esc(x[1])+'</span></label>').join("");
+$("milestoneRows").innerHTML=MILESTONES.map((x,i)=>'<tr data-milestone="M'+i+'"><td>'+esc(x)+'</td><td><input data-milestone-field="owner" placeholder="未分派"></td><td><input data-milestone-field="date" type="date"></td><td><textarea data-milestone-field="resources" placeholder="未批准"></textarea></td></tr>').join("");
+function getValue(root,name){const node=root.querySelector('[data-field="'+name+'"]');return node?node.value.trim():"";}
+function getDecision(root){return root.querySelector('input[type="radio"]:checked')?.value||"pending";}
+function getApproval(root){
+ const record={id:root.dataset.id,decision:getDecision(root)};
+ for(const name of ["reviewer","role","reviewedAt","timezone","sha","evidence","scope","conditions","notes"])record[name]=getValue(root,name);
+ return record;
+}
+function missing(record){
+ if(record.decision!=="approved")return [];
+ const fields=[["reviewer","审批人"],["role","审批角色"],["reviewedAt","审批时间"],["timezone","时区"],["scope","授权范围"],["evidence","证据"]];
+ const problems=fields.filter(x=>!record[x[0]]).map(x=>x[1]);
+ if(!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/i.test(record.sha))problems.push("40/64 位 Git SHA");
+ const perms=readPermissions();
+ if(record.id==="H-10"&&!["runCMake","runCTest","writeMat","measurePerformance"].some(x=>perms[x]))problems.push("至少一项生产/测试执行权限");
+ if(record.id==="H-11"&&!perms.runBash)problems.push("Bash 现场执行权限");
+ if(record.id==="H-09"&&!perms.runMatlab)problems.push("MATLAB 实际执行权限");
+ if(record.id==="H-16"&&!["mergePR","publish","createLicense","freezeBaseline"].some(x=>perms[x]))problems.push("至少一项发布/冻结授权");
+ return problems;
+}
+function readPermissions(){const out={};document.querySelectorAll("[data-permission]").forEach(x=>out[x.dataset.permission]=x.checked);return out;}
+function applyFilter(){
+ const q=$("search").value.trim().toLowerCase(),f=$("filter").value;
+ document.querySelectorAll(".approval-item").forEach(el=>{
+ const rec=getApproval(el),miss=missing(rec);
+ const statusMatch=f==="all"||(f==="pending"&&rec.decision==="pending")||(f==="approved"&&rec.decision==="approved")||(f==="other"&&!["pending","approved"].includes(rec.decision))||(f==="incomplete"&&rec.decision==="approved"&&miss.length>0);
+ el.hidden=!statusMatch||!el.dataset.search.includes(q);
+ });
+}
+function updateStats(){
+ let pending=0,approved=0,complete=0,other=0;
+ document.querySelectorAll(".approval-item").forEach(el=>{
+ const rec=getApproval(el),miss=missing(rec),badge=el.querySelector(".item-state");
+ badge.className="item-state";
+ if(rec.decision==="pending"){pending++;badge.textContent="待决定";}
+ else if(rec.decision==="approved"){approved++;if(miss.length){badge.textContent="批准 · 待补 "+miss.length+" 项";badge.classList.add("incomplete");}else{badge.textContent="批准 · 记录形式完整";badge.classList.add("approved");complete++;}}
+ else{other++;badge.textContent=STATUSES.find(x=>x[0]===rec.decision)?.[1]||"待决定";}
+ });
+ $("statPending").textContent=pending;
+ $("statApproved").textContent=approved;
+ $("statComplete").textContent=complete;
+ $("statOther").textContent=other;
+ applyFilter();
+}
+function setDirty(){edited=true;$("dirtyLabel").textContent="有尚未确认保存的更改";}
+$("approvalForm").addEventListener("change",e=>{
+ if(e.target.matches('input[type="radio"]')){const p=e.target.closest(".approval-item");if(e.target.value!=="pending")p.querySelector("details").open=true;}
+ setDirty();updateStats();
+});
+$("approvalForm").addEventListener("input",e=>{setDirty();if(e.target.closest(".approval-item"))updateStats();});
+$("search").addEventListener("input",applyFilter);$("filter").addEventListener("change",applyFilter);
+$("expandAll").onclick=()=>document.querySelectorAll(".item-details").forEach(x=>x.open=true);
+$("collapseAll").onclick=()=>document.querySelectorAll(".item-details").forEach(x=>x.open=false);
+function showMessage(message,kind){const node=$("saveStatus");node.textContent=message;node.className="statusline "+(kind||"");}
+$("validateButton").onclick=()=>{
+ const all=[...document.querySelectorAll(".approval-item")].map(getApproval),problems=all.filter(x=>x.decision==="approved"&&missing(x).length);
+ if(problems.length){showMessage("批准记录尚有缺项："+problems.map(x=>x.id+"（"+missing(x).join("、")+"）").join("；")+"。可先保存草案。","error");}
+ else showMessage("静态表单检查完成：已选择批准的事项没有必填字段缺项。此检查不核验身份、证据真实性或是否获得正式批准。","success");
+};
+const DISPLAY_FIELDS=["applicationId","repository","branch","applicationCommit","owner","otherReviewers","scopeIds","nextReviewDate","applicationStatus","applicationNotes"];
+function readExtra(){const out={};document.querySelectorAll("[data-extra]").forEach(el=>{out[el.dataset.extra]=el.value.trim()});return out;}
+function tolerances(){return [...document.querySelectorAll("[data-tolerance]")].map(el=>{const x={id:el.dataset.tolerance,name:TOLERANCES.find(t=>t[1]===el.dataset.tolerance)?.[0]||""};el.querySelectorAll("[data-tol-field]").forEach(y=>x[y.dataset.tolField]=y.value.trim());return x;});}
+function milestones(){return [...document.querySelectorAll("[data-milestone]")].map(el=>{const x={id:el.dataset.milestone};el.querySelectorAll("[data-milestone-field]").forEach(y=>x[y.dataset.milestoneField]=y.value.trim());return x;});}
+function exportData(){
+ const app={};DISPLAY_FIELDS.forEach(id=>app[id]=$(id).value.trim());
+ const approvals=[...document.querySelectorAll(".approval-item")].map(el=>{const r=getApproval(el);r.recordCompleteness=r.decision==="approved"?(missing(r).length?"incomplete":"fields_present_unverified"):"not_approved";r.missingFields=missing(r);return r;});
+ return {schema:"egomotion.human-approval.v1",exportedAt:new Date().toISOString(),sourceHtml:"docs/approval/HUMAN_APPROVAL_REQUEST.html",notice:"JSON is a human-entered draft/record; export alone does not approve DEC, authorize execution, freeze design or demonstrate tests.",application:app,approvals:approvals,technicalDetails:{tolerances:tolerances(),...readExtra(),permissions:readPermissions(),milestones:milestones()}};
+}
+function validFilename(v){
+ let name=v.trim();
+ if(!name||name==="."||name===".."||/[\\/:*?"<>|\x00-\x1f]/.test(name))throw new Error("文件名不能为空，且不得含路径分隔符或非法字符。路径请在保存对话框选择。");
+ if(!/\.json$/i.test(name))name+=".json";
+ return name;
+}
+function friendlyDirectory(){
+ if(window.location.protocol==="file:"){
+   let p=decodeURIComponent(window.location.pathname||"");
+   if(/^\/[A-Za-z]:\//.test(p))p=p.slice(1);
+   return p.replace(/[^/]*$/,"").replace(/\//g,window.navigator.platform?.startsWith("Win")?"\\":"/")||"docs/approval/";
+ }
+ return "docs/approval/（建议，与 HTML 同目录）";
+}
+$("suggestedDirectory").value=friendlyDirectory();
+$("pickDirectory").onclick=async()=>{
+ if(!window.showDirectoryPicker){showMessage("当前浏览器不支持选择文件夹 API，请直接点击“保存 JSON”并在原生另存为对话框中选择目录。","error");return;}
+ try{
+  chosenDirectory=await window.showDirectoryPicker({mode:"readwrite"});
+  $("selectedDirectory").textContent="已由你授权选定文件夹："+chosenDirectory.name+"。保存时会写入该文件夹（浏览器不会暴露完整绝对路径）。";
+  showMessage("目录选择成功；JSON 文件名可以在上方输入框修改。","");
+ }catch(err){if(err.name!=="AbortError")showMessage("目录选择失败："+err.message,"error");}
+};
+async function saveToFolder(name,text){
+ let exists=false;
+ try{await chosenDirectory.getFileHandle(name,{create:false});exists=true;}catch(err){if(err.name!=="NotFoundError")throw err;}
+ if(exists&&!window.confirm("该文件夹中已存在 "+name+"。确认覆盖这个 JSON 文件吗？"))return false;
+ const file=await chosenDirectory.getFileHandle(name,{create:true});
+ const writer=await file.createWritable();
+ try{await writer.write(text);await writer.close();}catch(err){try{await writer.abort();}catch(_e){}throw err;}
+ return true;
+}
+async function saveViaPicker(name,text){
+ const handle=await window.showSaveFilePicker({suggestedName:name,types:[{description:"JSON 文件",accept:{"application/json":[".json"]}}]});
+ const writer=await handle.createWritable();
+ try{await writer.write(text);await writer.close();}catch(err){try{await writer.abort();}catch(_e){}throw err;}
+ return true;
+}
+function fallbackDownload(name,text){
+ const blob=new Blob([text],{type:"application/json;charset=utf-8"});
+ const url=URL.createObjectURL(blob),link=document.createElement("a");
+ link.href=url;link.download=name;document.body.appendChild(link);link.click();link.remove();
+ window.setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+$("saveButton").onclick=async()=>{
+ const button=$("saveButton");if(button.disabled)return;
+ let name;try{name=validFilename($("filename").value);}catch(err){showMessage(err.message,"error");$("filename").focus();return;}
+ const body=JSON.stringify(exportData(),null,2)+"\n";
+ button.disabled=true;
+ try{
+  if(chosenDirectory){const ok=await saveToFolder(name,body);if(!ok){showMessage("已取消覆盖，未写入文件。","");return;}edited=false;showMessage("已将 JSON 写入你选定的文件夹："+name+"。保存不代表已完成审批。","success");}
+  else if(window.showSaveFilePicker){await saveViaPicker(name,body);edited=false;showMessage("浏览器报告 JSON 已写入你在保存对话框选择的位置："+name+"。审批状态以记录为准。","success");}
+  else {fallbackDownload(name,body);showMessage("已触发 JSON 下载："+name+"。最终保存路径由浏览器设置决定，请确认文件存在；需要自行选择 docs/approval 目录。","");}
+  $("dirtyLabel").textContent=edited?"浏览器已发起下载，请核对文件":"JSON 已保存；新更改需再次保存";
+ }catch(err){if(err.name==="AbortError")showMessage("已取消保存，没有写入 JSON。","");else showMessage("保存失败："+err.message+"。可尝试在支持原生文件保存的浏览器中打开 HTML。","error");}
+ finally{button.disabled=false;}
+};
+$("loadButton").onclick=()=>$("loadFile").click();
+$("loadFile").onchange=async()=>{
+ const file=$("loadFile").files?.[0];if(!file)return;
+ if(file.size>4*1024*1024){showMessage("JSON 超过 4 MiB，请检查文件。","error");return;}
+ if(edited&&!window.confirm("导入将覆盖当前表单填写内容。是否继续？"))return;
+ try{
+  const data=JSON.parse(await file.text());
+  if(data.schema!=="egomotion.human-approval.v1"||!Array.isArray(data.approvals)||!data.application||!data.technicalDetails)throw new Error("文件 schema 不匹配或缺少审批数据");
+  const app=data.application;
+  DISPLAY_FIELDS.forEach(id=>{if(id==="repository")return;if(Object.prototype.hasOwnProperty.call(app,id))$(id).value=t(app[id]);});
+  const byId=new Map(data.approvals.filter(x=>x&&typeof x.id==="string").map(x=>[x.id,x]));
+  document.querySelectorAll(".approval-item").forEach(el=>{
+   const d=byId.get(el.dataset.id)||{};
+   const decision=STATUSES.some(x=>x[0]===d.decision)?d.decision:"pending";
+   el.querySelectorAll('input[type="radio"]').forEach(r=>r.checked=r.value===decision);
+   for(const field of ["reviewer","role","reviewedAt","timezone","sha","evidence","scope","conditions","notes"]){
+    const node=el.querySelector('[data-field="'+field+'"]');if(!node)continue;node.value=t(d[field]);
+   }
+   el.querySelector("details").open=decision!=="pending";
+  });
+  const technical=data.technicalDetails;
+  document.querySelectorAll("[data-extra]").forEach(node=>{node.value=t(technical[node.dataset.extra]);});
+  const tol=new Map((Array.isArray(technical.tolerances)?technical.tolerances:[]).filter(x=>x&&x.id).map(x=>[x.id,x]));
+  document.querySelectorAll("[data-tolerance]").forEach(el=>{const d=tol.get(el.dataset.tolerance)||{};el.querySelectorAll("[data-tol-field]").forEach(x=>x.value=t(d[x.dataset.tolField]));});
+  const milestones=new Map((Array.isArray(technical.milestones)?technical.milestones:[]).filter(x=>x&&x.id).map(x=>[x.id,x]));
+  document.querySelectorAll("[data-milestone]").forEach(el=>{const d=milestones.get(el.dataset.milestone)||{};el.querySelectorAll("[data-milestone-field]").forEach(x=>x.value=t(d[x.dataset.milestoneField]));});
+  document.querySelectorAll("[data-permission]").forEach(node=>node.checked=technical.permissions?.[node.dataset.permission]===true);
+  edited=true;$("dirtyLabel").textContent="已导入 JSON，尚未另存当前更改";
+  updateStats();showMessage("已导入 "+file.name+"。请复核所有人工审批决定后点击底部保存；导入不会自动授予权限。","success");
+ }catch(err){showMessage("JSON 导入失败："+err.message,"error");}
+ finally{$("loadFile").value="";}
+};
+window.addEventListener("beforeunload",event=>{if(edited){event.preventDefault();event.returnValue="";}});
+updateStats();
+})();
+</script>
+</body>
+</html>
