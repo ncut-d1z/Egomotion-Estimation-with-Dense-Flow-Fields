@@ -126,30 +126,7 @@ single_step(old_coeff, flow):
 
 ## 4. 候选 C++17 公开接口（未批准）
 
-~~~cpp
-// 仅 LLD 接口草案，非实际源代码。
-struct AdaptiveMfaStepInput {
-    HarmonicCoefficients previous_coefficients;
-    FlowField flow;
-};
-struct AdaptiveMfaStepResult {
-    HarmonicCoefficients updated_coefficients;
-    MotionEstimate motion;
-    double error_mse;
-    // 可另保存 rms_residual = sqrt(error_mse)，不可覆盖原始字段。
-};
-class AdaptiveMfaStepSolver {
-public:
-    Result<AdaptiveMfaStepResult, NumericalError> solve(
-        const AdaptiveMfaStepInput&) const;
-};
-
-class AdaptiveMfaSession {
-public:
-    Result<FrameResult, SessionError> processFrame(
-        const FlowField&, const FrameMotionContext&);
-};
-~~~
+**单步和 Session 的唯一候选签名在本文件 §8**；其共用值类型、Result、NumericalErrorCode 和 ExperimentErrorCode 由 [contracts.md](contracts.md) 维护。避免在同一 LLD 中同时引入 AdaptiveMfaStepResult / AdaptiveStepResult 或 NumericalError / NumericalErrorCode 两套名称。
 
 Result<T,E>、FlowField、FrameMotionContext、状态枚举及构造注入方式在 P0.7/P0.8 后冻结。单步求解器不强制继承 KvD，也不持有主 akkoeff 的跨帧可变状态。
 
