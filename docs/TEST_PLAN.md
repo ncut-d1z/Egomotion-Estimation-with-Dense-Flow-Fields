@@ -44,9 +44,9 @@
 
 **数据字典已通过独立 C++ matio 探针实际扫描**：Ubuntu 24.04 / matio 1.5.26，582/582 源 MAT 全部被逐变量 `Mat_VarRead` 解码，582 个变量均 `READ_OK`，失败 0。原始目录以 `MAT_ACC_RDONLY` 打开；见 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md)。P0.5/0.6 的文档合同、正式业务 Reader/Writer 与负例仍需测试；P10.4 独立复核尚未完成。
 
-对 Original/Modified KvD 的 near、t、ω、终止条件逐轮比对；Adaptive 比对 6×6 系统各子块、右端、旋转、残差与球谐系数更新。 **特别核验：Adaptive oneit 返回的 error 是 MSE，sqrt(error) 在 MATLAB 内部另算但没有返回；测试记录必须分列 error_mse 和仅用于诊断的 rms，不得将二者互作。**double/1e-10 是先前候选相对容差，尚未冻结；应按模块记录绝对误差、相对误差、条件数和样本有效性，再由维护者批准。不对零向量、NaN、Inf 或未定义方向误差计入成功。
+对 Original/Modified KvD 的 near、t、ω、终止条件逐轮比对；Adaptive 比对 6×6 系统各子块、右端、旋转、残差与球谐系数更新。 **特别核验：Adaptive oneit 返回的 error 是 MSE，sqrt(error) 在 MATLAB 内部另算但没有返回；测试记录必须分列 error_mse 和仅用于诊断的 rms，不得将二者互作。** double/1e-10 是先前候选相对容差，尚未冻结；应按模块记录绝对误差、相对误差、条件数和样本有效性，再由维护者批准。不对零向量、NaN、Inf 或未定义方向误差计入成功。
 
-### 2.7 已执行 matio 全量探针的证据与限制
+### 2.6 已执行 matio 全量探针的证据与限制
 
 | 证据项 | 实测结果 | 当前验收边界 |
 |---|---|---|
@@ -59,7 +59,7 @@
 
 详细记录以 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md) 的 582 条逐变量表为准，以下的 TC 状态仅表明**相关子能力有实测证据**，而非整个接口合同正式验收。
 
-### 2.6 更新频率实验与四种分析入口（TC-F-EXP-003、TC-F-AN-001）
+### 2.7 更新频率实验与四种分析入口（TC-F-EXP-003、TC-F-AN-001）
 
 - 更新率当前脚本：600 点、二十面体等级 2、**1/5/11/21 帧**，输出 600×4 的 allemittransfehler、allemitrotfehler，以及 600×1 的 akrot；历史 many_parameter 额外出现 alleadaprotfehler、alleadaptransfehler、rottransratio，需分别记“当前生成/归档存在/分析消费/来源状态”，不补造。
 - 初始化分析图：allemittransfehler(1:13,1) 与 allemitrotfehler(:,1) 的数值、索引、对数纵轴语义；数据被读取不代表一定进入图线。
@@ -178,12 +178,12 @@
 
 | 原数据分组 | 当前文件数量 | 角色 | 全量核验 | 开发期代表性样本 |
 |---|---:|---|---|---|
-| bias_test/produced_data/occluded_regions | 280（40×7） | 非球形 Bias 统计基准 | 280/280 的存在、解码、变量/shape、源哈希 | 编号 1、中间编号、40（实际字段需审计） |
-| bias_test/produced_data/proportional_error | 280（40×7） | 球形比例噪声 Bias 统计基准 | 280/280 同上 | 编号 1、中间编号、40 |
-| adaptive_matched_filter_test/produced_data/initialization | 4 | 初始化已保存结果 | 4/4 同上 | 4 个文件 |
-| adaptive_matched_filter_test/produced_data/without_errors | 5 | 无噪声对比 | 5/5 同上 | 5 个文件 |
-| adaptive_matched_filter_test/produced_data/with_errors | 7 | 带噪声对比及历史额外字段 | 7/7 同上 | 7 个文件 |
-| adaptive_matched_filter_test/produced_data/many_parameter | 6 | 多更新率与历史额外字段 | 6/6 同上 | 6 个文件 |
+| bias_test/produced_data/occluded_regions | 280（40×7） | 非球形 Bias 统计基准 | **matio 280/280 READ_OK**；xwerte 40×10×1，ywerte 240×10×3，class/type 均 double；独立复核待做 | 编号 1、中间编号、40 |
+| bias_test/produced_data/proportional_error | 280（40×7） | 球形比例噪声 Bias 统计基准 | **matio 280/280 READ_OK**；xwerte 40×10×1，ywerte 240×10×3，double/double；独立复核待做 | 编号 1、中间编号、40 |
+| adaptive_matched_filter_test/produced_data/initialization | 4 | 初始化已保存结果 | **matio 4/4 READ_OK**；全部 double[35×1] | 4 个文件 |
+| adaptive_matched_filter_test/produced_data/without_errors | 5 | 无噪声对比 | **matio 5/5 READ_OK**；全部 double[600×1] | 5 个文件 |
+| adaptive_matched_filter_test/produced_data/with_errors | 7 | 带噪声对比及历史额外字段 | **matio 7/7 READ_OK**；全部 double[600×1]，含两份历史独有 alleadap* | 7 个文件 |
+| adaptive_matched_filter_test/produced_data/many_parameter | 6 | 多更新率与历史额外字段 | **matio 6/6 READ_OK**；四个 double[600×4]、两个 double[600×1] | 6 个文件 |
 | **合计** | **582** | 原作者静态参考数据 | **matio 已读 582/582（582 变量、0 失败）；独立复核未完成** | 实际全量结果见 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md) |
 
 **数据保护**：origin/** 作为只读输入；测试只产生新目录或测试专属副本；不得向原目录写入、覆盖、删除或以 git add -f 强制提交忽略内容。样本选择和目录哈希应随源仓库提交 SHA 固定。
