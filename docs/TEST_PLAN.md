@@ -251,13 +251,13 @@ MAT 全量字典和来源证据**已经生成**：见 [MAT_DATA_SCHEMA.md](MAT_D
 
 ### 8.1 文档追踪静态一致性检查（不等同于执行测试）
 
-每次 REQ、P、TC、AC 或源 MATLAB 文件映射改变后，使用已提交的只读检查器对**实际当前检出分支**执行：
+**A. 规范要求：待人类授权的 Bash 现场执行（本项未执行）。** 需要完整的 Debian/Ubuntu 仓库检出环境、获准运行和可保存的真实日志。在 REQ、P、TC、AC 或 MATLAB 源文件映射变化后，应使用下列命令执行现场审查：
 
 ~~~bash
 bash scripts/check_docs_traceability.sh
 ~~~
 
-该脚本只依赖 Debian/Ubuntu 的 Bash、awk、find、sed、sort 和 git；核验下述文档级集合，不编译 C++、不注册或运行 CTest，也不判定算法数值等价。检查器源文件已提交，但新脚本自身的现场执行记录和真实 CTest 仍是**不同的证据门槛**。
+该脚本只依赖 Debian/Ubuntu 的 Bash、awk、find、sed、sort 和 git；核验下述文档级集合，不编译 C++、不注册或运行 CTest，也不判定算法数值等价。**上面的命令是待执行的操作规程，绝非本次已运行命令。** 现场运行须按 [AGENTS.md §10](../AGENTS.md) 与 [人类授权申请 H-11](approval/HUMAN_APPROVAL_REQUEST.md) 获得适用授权，并保留 stdout、stderr、实际退出码、HEAD SHA、系统/工具版本及执行人。
 
 1. 解析 REQUIREMENTS §4 的全部 REQ ID，每个 ID 唯一且有对应的 `AC-`；解析 §9 的正向追踪，不允许不存在的需求 ID 或空 P/TC/AC。
 2. 解析 TEST_PLAN §3 的 TC ID，检查 TC 集合严格等于 `{ "TC-" + REQ[4:] }`；对每个 TC 校验其引用的 REQ 和 AC 也完全匹配。人工核查类型不必注册 CTest，但必须有真实证据路径。
@@ -266,7 +266,16 @@ bash scripts/check_docs_traceability.sh
 5. 数据文件数量、版本和哈希应来自真实 Git 树，不从对话旧表复制；只有实际完整解码后才检查 AC-D-MAT-001 的值域/类型/维度合同。
 6. 将每轮静态审查报告记录为：源 Git SHA、REQ/P/TC/AC 和 .m 文件数量、唯一性、漏项、环数量、被审阅文件清单。只读检查成功不应标为 CTest、Golden 或需求已通过。
 
-**审查证据**：已用 GitHub 连接器按指定 SHA 读取真实文档与 Git 树，执行同等范围的 JavaScript 静态断言并留存 [2026-11-06 追踪审查记录](reviews/STATIC_TRACEABILITY_2026-11-06.md)，结果为 66 REQ、66 TC、98 P、45 .m、26 条 target 依赖边、错误 0。**这不是 Bash 脚本本体的现场执行**；本轮容器无法解析 github.com，Bash 检查器需在完整检出的 Debian/Ubuntu 工作区实际运行后另附原始 stdout/stderr/exit 日志。也不等同于 CMake、CTest 或 MAT 数值 Golden。
+**B. 已执行与未执行证据（不得合并统计）。**
+
+| 证据类别 | 当前状态 | 可核查的来源与未覆盖范围 |
+|---|---|---|
+| GitHub 连接器＋JavaScript 只读静态断言 | **已执行（连接器静态检查）** | [2026-11-06 追踪审查记录](reviews/STATIC_TRACEABILITY_2026-11-06.md)：按固定 Git SHA 核对 66 REQ、66 TC、98 P、45 `.m`、26 条 HLD 边，未发现缺项/环；**没有执行 Bash** |
+| `bash scripts/check_docs_traceability.sh` 完整检出现场运行 | **待授权／未执行** | [H-11](approval/HUMAN_APPROVAL_REQUEST.md)；目前无现场 stdout、stderr、真实退出码和执行环境记录，不得写为 PASS |
+| 正式 CMake 业务 targets 的构建、链接与 CTest | **未建立／未执行** | 静态 DAG 无环不能证明真实构建成功；审批与执行记录见 H-10 / [PROGRESS.md](PROGRESS.md) |
+| 独立 matio 原始归档读取探针 | **此前已实测** | [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md) 已记录 582/582 READ_OK；**不代表**本次重新运行探针、生产 Reader/Writer、异常负例或数值 Golden 通过 |
+
+**实际现场执行的补录要求**：新建独立证据记录，附所执行命令、真实 HEAD SHA、工具链、stdin（若有）、stdout/stderr 路径、exit code、时间戳和执行人；经人类审阅后再同步 [PROGRESS.md](PROGRESS.md)，不能以本表的“应执行”替代“已执行”。
 
 **当前文档级检查口径**：66 条 REQ、66 项 TC、98 个 P 工作项、45 个 .m 映射是版本化的预期数量；检查器同时验证 ID 唯一性、配对关系、真实路径集合、P 依赖环和 ARCHITECTURE §4.1 target DAG 的**静态环**，不只比对计数。变更基线数量时须同步评审脚本期望值；**静态无环不等于真实 CMake target 已创建或编译通过**。
 
