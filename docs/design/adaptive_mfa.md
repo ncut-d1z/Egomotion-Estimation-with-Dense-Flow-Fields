@@ -1,35 +1,207 @@
-# Adaptive MFA 详细设计草案
+# Adaptive MFA 单步计算与轨迹状态——详细设计草案
 
-> **状态：待 P0.8/P7/P8 冻结，未有 C++ 实现。** 实际 MATLAB 入口 oneit_adaptiv_matched_filter.m、agent_in_sphere_initialization_test.m、agent_in_sphere_adaptive_matched_filter_test.m、agent_in_sphere_adaptive_matched_filter_many_parameter.m。
+> **LLD v0.2：未冻结、未实现、未测。** 已核对原 MATLAB 的 oneit_adaptiv_matched_filter.m 关键表达式，但仍须生成中间量 Golden、确定数值容差与异常状态合同才能进入编码基线。需求：REQ-F-ADAPT-001/002/003、REQ-F-EXP-001/002/003、REQ-DC-ADAPT-001；任务 P7.7–P7.11、P8.1–P8.9。
 
-## 单步求解器的数据合同（不持有跨帧状态）
+## 1. 单步输入/输出与接口候选
 
-输入：旧 3×5 球谐系数和 N×6 流场。输出：新系数、三维平移、三维旋转、残差与数值状态。单步调用应允许不创建轨迹 Session。
+原函数签名：oneit_adaptiv_matched_filter(altkoeff, setofpoints) → (neukoeff, trans, rot, error)。
 
-按 oneit_adaptiv_matched_filter.m 的实际计算次序：
-1. 由 near_aus_koeff 计算 near，执行平均符号与尺度归一（原代码的符号/除法顺序需逐式保留）。
-2. 构造由流场得到的六维右端向量与四个 3×3 块，形成 6×6 系统。
-3. 按原语义求出 t、ω 并归一 t；MATLAB 使用 real(inv(M))，任何 Eigen 解算优化必须先与原函数作数值对照。
-4. 使用 near、t、ω 计算预测光流与 RMS 残差；重算 near，再按二阶实球谐得到新 3×5 系数。
-5. 记录零近度均值、零 t、病态系统、非有限输出的异常状态，不以“得到数值”冒充有效解。
+| 字段 | MATLAB 合同 | C++ 设计约束 |
+|---|---|---|
+| altkoeff | 3×5，l≤2 球谐系数 | 输入值对象，不修改原对象 |
+| setofpoints | N×6，每行 d(3)、p(3) | FlowField，保留顺序 |
+| neukoeff | 3×5 新系数 | 输出独立值对象 |
+| trans、rot | 3×1 与 3×1 | 分别标记平移/旋转向量 |
+| error | **平均平方流场残差（MSE）** | **不是 RMS**；不可仅凭变量名称推断单位 |
 
-## 跨帧 Session 与更新策略
+**源码关键细节**：函数内部计算 error=mean(||p−p_pred||²)，随后另行定义 oneit_error=sqrt(error)，但返回列表返回的是 error 而不是 oneit_error。此处先按源代码保留 MSE；如需要 RMS 展示，须由调用方显式计算新字段，且不能替代原返回变量。
 
-- AdaptiveMfaSession 独占主 akkoeff 与前一帧旋转上下文；每次运行都应新建，不与其他运行共享内存或随机状态。
-- 每帧遵守原先后顺序：旋转 akkoeff 和用于比较的系数；根据策略保留/重置/刷新 baseline；计算对比输出；最后执行主 oneit 更新并提交 akkoeff。
-- InitializationRunner：35 个圆轨迹点、继承对照与每帧重置对照。
-- AdaptiveComparisonRunner：600 个正弦轨迹点、二十面体级别 4、八次重复，可含噪/无噪；输出 allemittransfehler、allemitrotfehler、alleohnetransfehler、alleohnerotfehler、rottransratio 五个 MAT 文件。
-- UpdateRateRunner：600 个轨迹点、级别 2、刷新间隔 **1、5、11、21**。历史 many_parameter/ MAT 与当前脚本 save 列表存在差异，必须登记，而非补造。
-- 当前 MATLAB 600 点比较中的前四个结果是八次重复平均；rottransratio 仅保留最后一次被覆盖的结果，忠实模式不能未经授权改变统计行为。
+## 2. 一次迭代的精确矩阵公式
 
-## 候选状态流
+令 \( \langle x\rangle=N^{-1}\sum_i x_i \)，方向为 \(\boldsymbol d_i\)，观测切向光流为 \(\boldsymbol p_i\)，恢复的近度为 \(\mu_i\)，旧 3×5 系数为 C。
 
-准备输入 → 上帧旋转 → 对比系数策略 → 计算对比值 → 单步计算主状态 → 提交 akkoeff → 下一帧。异常时是否提交、停止或跳过尚未核验和批准，不能假定采用某种滤波器回滚模型。
+### 2.1 近度与均值归一化（严格按源码顺序）
 
-## 验收与待冻结
+\[
+\mu_i\leftarrow\mathrm{near\_aus\_koeff}(C,\boldsymbol d_i),\quad
+s\leftarrow\langle\mu_i\rangle.
+\]
 
-- TC-F-ADAPT-001：单步矩阵块、右端、解、残差、近度与系数的逐项 Golden。
-- TC-F-ADAPT-002/003：连续会话旋转/刷新时序、独立状态、1/5/11/21 的准确触发时刻。
-- TC-F-EXP-001/002/003：三个实验入口按原参数和各 MAT 写出合同验收；不忽略失败/无定义样本。
-- TC-DC-ADAPT-001、TC-NF-SESSION-001：无 Session 的单步测试与两个交替 Session 隔离。
-- P0.8 后补齐精确 C++17 签名、前置/后置条件、失败枚举、主状态提交规则、Golden 来源和数值容差。本文件不构成已经完成的 LLD 基线。
+原始代码：
+
+~~~text
+s = mean(near)
+if s < 0: near = -near
+near = near / s
+~~~
+
+**特别审计点**：s 在符号翻转之前求得，符号翻转后没有重新求 s；负均值时这与先取绝对值归一化不等价。不得无说明地把它“纠正”为 abs(s) 或修改代码顺序。需要为 s>0、s<0、s≈0 分别建立原版对照与异常状态。
+
+### 2.2 6×6 块线性系统
+
+记 \([\boldsymbol v]_\times\) 为叉乘矩阵，即 \([\boldsymbol v]_\times\boldsymbol x=\boldsymbol v\times\boldsymbol x\)，I 为 3×3 单位矩阵。原 MATLAB 右端：
+
+\[
+\boldsymbol b_t=-\langle\boldsymbol p_i\rangle,\qquad
+\boldsymbol b_\omega=\langle\boldsymbol p_i\times\boldsymbol d_i\rangle.
+\]
+
+四个 3×3 块：
+
+\[
+M_1=I-\langle\mu_i\boldsymbol d_i\boldsymbol d_i^\top\rangle,
+\qquad M_4=I-\langle\boldsymbol d_i\boldsymbol d_i^\top\rangle,
+\]
+\[
+M_2=[-\langle\boldsymbol d_i\rangle]_\times,\qquad
+M_3=[\langle\mu_i\boldsymbol d_i\rangle]_\times.
+\]
+
+联立：
+
+\[
+M=\begin{bmatrix}M_1&M_2\\M_3&M_4\end{bmatrix},\quad
+\boldsymbol b=\begin{bmatrix}\boldsymbol b_t\\\boldsymbol b_\omega\end{bmatrix},
+\qquad
+\boldsymbol z=\operatorname{real}(M^{-1})\boldsymbol b.
+\]
+
+原版按以下方式解释：
+
+\[
+\boldsymbol t=\frac{\boldsymbol z_{1:3}}{\|\boldsymbol z_{1:3}\|},\qquad
+\boldsymbol\omega=\boldsymbol z_{4:6}.
+\]
+
+对应源码使用 real(inv(mgesamt)) * vekgesamt。Eigen 的 QR/LDLT/SVD 求解可以作为替代实现候选，但**必须先对固定输入的 M、b、z、t、ω 核对并另记改变**，不能暗中把原方程替换为正则化或其他模型。
+
+### 2.3 原返回 error、近度重新估计和系数更新
+
+给定已归一的近度和此前保存的 s，原版预测流：
+
+\[
+\widehat{\boldsymbol p}_i=
+-\mu_i\,s\left(\boldsymbol t-(\boldsymbol t^\top\boldsymbol d_i)\boldsymbol d_i\right)
+-\boldsymbol\omega\times\boldsymbol d_i.
+\]
+
+\[
+\text{error}=\langle\|\boldsymbol p_i-\widehat{\boldsymbol p}_i\|^2\rangle
+\quad(\text{MSE，源函数返回}),\qquad
+\text{oneit\_error}=\sqrt{\text{error}}\quad(\text{未返回}).
+\]
+
+然后按新的 t、ω 用原 MATLAB 的公式重新计算每个 near：
+
+\[
+\mu_i^{new}=
+-\frac{\boldsymbol t^\top(\boldsymbol p_i-\boldsymbol d_i\times\boldsymbol\omega)}
+{1-(\boldsymbol t^\top\boldsymbol d_i)^2+10^{-11}},
+\quad
+C^{new}=\mathrm{koeff\_aus\_near}(\mu^{new},\{\boldsymbol d_i\},2).
+\]
+
+注意 10^−11 是 Adaptive 单步的分母稳定常量，**不同于**两种 KvD 中的 10^−13。内部 result 应可同时保存 errorMse 和经明确变换产生的 rmsResidual，但原始 error 字段语义必须保留。
+
+## 3. 单步计算伪代码（仅设计）
+
+~~~text
+single_step(old_coeff, flow):
+    near = reconstruct_nearness(old_coeff, flow.d)
+    s = mean(near)
+    if s < 0: near = -near
+    near = near / s                 # 保留原版先翻 near 后除 s 的顺序
+    b = concat(-mean(flow.p), mean(cross(flow.p, flow.d)))
+    M = blocks(M1, M2, M3, M4)     # 确切定义见 §2.2
+    z = real(inverse(M)) * b       # 精度与分解替换需先对照
+    t = normalize(z[1:3])
+    omega = z[4:6]
+    error_mse = mean(square_norm(flow.p - predict(flow, near, s, t, omega)))
+    near_new = estimate_nearness(flow, t, omega, epsilon=1e-11)
+    new_coeff = fit_spherical_harmonics(near_new, degree=2)
+    return {new_coeff, t, omega, error_mse, status}
+~~~
+
+发生 s≈0、t≈0、M 奇异或 NaN/Inf 时，不得假称返回成功；原 MATLAB 若产生非有限值，需保留数值行为证据，并在新 C++ 的显式失败状态中报告差异。
+
+## 4. 候选 C++17 公开接口（未批准）
+
+~~~cpp
+// 仅 LLD 接口草案，非实际源代码。
+struct AdaptiveMfaStepInput {
+    HarmonicCoefficients previous_coefficients;
+    FlowField flow;
+};
+struct AdaptiveMfaStepResult {
+    HarmonicCoefficients updated_coefficients;
+    MotionEstimate motion;
+    double error_mse;
+    // 可另保存 rms_residual = sqrt(error_mse)，不可覆盖原始字段。
+};
+class AdaptiveMfaStepSolver {
+public:
+    Result<AdaptiveMfaStepResult, NumericalError> solve(
+        const AdaptiveMfaStepInput&) const;
+};
+
+class AdaptiveMfaSession {
+public:
+    Result<FrameResult, SessionError> processFrame(
+        const FlowField&, const FrameMotionContext&);
+};
+~~~
+
+Result<T,E>、FlowField、FrameMotionContext、状态枚举及构造注入方式在 P0.7/P0.8 后冻结。单步求解器不强制继承 KvD，也不持有主 akkoeff 的跨帧可变状态。
+
+## 5. 三个实验 Runner 的实际状态时序差异
+
+**初始化入口** agent_in_sphere_initialization_test.m（35 个圆轨迹点）：
+- 每帧构造 ohnekoeff（零阶常数 1）与 mitkoeff（继承上一轮的 akkoeff），分别调用 oneit；随后单独更新主 akkoeff。
+- **当前这个入口没有调用 transfor_koeff 进行前一帧旋转**；不得因为其他两个入口有旋转就强行加入。
+
+**带/不带噪声对比入口** agent_in_sphere_adaptive_matched_filter_test.m（600 位置、等级 4、8 次运行）：
+- 每帧先按上一帧相对旋转执行 transfor_koeff(akkoeff, R)；然后设置 ohnekoeff/mitkoeff、分别执行单步，最后再更新主 akkoeff。
+- 先生成合成光流，再按 addederror 调用 nonpropfehler；保留无噪时参数为零仍会消耗随机调用的事实（需核对执行细节）。
+- 四个误差 MAT 为逐运行求和后除以 8；rottransratio 是循环内赋值的**最后一次运行值**，不在同样位置求八次平均。
+
+**更新频率入口** agent_in_sphere_adaptive_matched_filter_many_parameter.m（600 位置、等级 2、单次运行）：
+- 每帧旋转主 akkoeff 和四组 mitkoeff；在 mod(i, [1,5,11,21])==0 时把对应 mitkoeff 刷新为主 akkoeff，然后分别调用单步，再更新主 akkoeff。
+- 当前源脚本实际保存 allemittransfehler、allemitrotfehler、akrot 三类 MAT；历史目录还含 alleadaprotfehler、alleadaptransfehler、rottransratio，**历史额外文件不得伪造为当前运行输出**。
+
+### 5.1 会话状态/异常提交合同
+
+~~~text
+Per-run Session (one owner of akkoeff)
+    Setup(constant coefficient at (1,1))
+    for each valid trajectory index:
+        optionally rotate coefficient state according to entry-specific script
+        apply entry-specific comparison coefficient policy
+        run comparator oneit calls
+        run main oneit and record next akkoeff
+        record errors/ratios and preserve file-output contract
+~~~
+
+**仍需 DEC/Golden 证据**：原 MATLAB 数值无效时是否进行下一轮、是否保留非有限系数、如何处理用户期望的错误状态。不能在忠实模式中默认替换为滤波器“失败回滚”机制。
+
+## 6. 每一步 Golden 跟踪表及验收
+
+| 计算节点 | 必需量 | 数值对照来源 |
+|---|---|---|
+| near 原始与归一 | C_old、near_before、s、near_after_sign、near_normalized | oneit 第 19–29 行 |
+| 右端、矩阵 | b_t、b_ω、M1/M2/M3/M4、M(6×6)、det/condition（新诊断） | oneit 第 32–91 行 |
+| 线性求解 | z(6)、t_raw、t_norm、ω、失败状态 | oneit 第 95–105 行 |
+| 残差 | 每个 p_pred、error_mse、sqrt(error_mse) 的独立诊断 | oneit 第 108–117 行 |
+| 更新 | near_new、C_new(3×5) | oneit 第 120–132 行 |
+| 会话 | 前一帧 R、主/基线系数 before/after、频率策略、i、输出误差 | 三个 Adaptive 生成脚本 |
+
+所有黄金值必须有来自原 MATLAB 的输入/输出、对应源 SHA、数值容差及原始结果身份，不能只以 C++ 自算值验证 C++。
+
+关联 TC-F-ADAPT-001/002/003、TC-F-EXP-001/002/003、TC-DC-ADAPT-001、TC-NF-SESSION-001；更完整的证据设计见 [TEST_PLAN.md](../TEST_PLAN.md)。
+
+## 7. 阻塞与批准事项
+
+- 精确 C++ 接口、数值错误枚举、状态机异常提交、Golden 输入、DEC-005 容差及第三方版权尚未冻结。
+- 本文的伪代码和公式是静态源码审计设计材料；没有编译、MAT 变量全量验证或数值运行证据。
+- **源函数返回 error=MSE，而非 RMS**，未来任何与之不符的计划/SRS/TC 都必须修正后才能作为对照基线。
+
+**本文件不能直接宣称达到 LLD 的最终冻结标准。**
