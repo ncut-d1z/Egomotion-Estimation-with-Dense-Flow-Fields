@@ -31,12 +31,7 @@
 
 ~~~cpp
 // 尚未创建、尚未编译；Result<T,E> 为计划中的项目内部结果类型。
-enum class MatError {
-    MissingFile, PermissionDenied, InvalidHeader, DecompressionFailed,
-    MissingVariable, AmbiguousVariable, UnsupportedClass,
-    InvalidRankOrShape, SizeOverflow, InvalidEncoding,
-    ForbiddenOutputPath, OutputAlreadyExists, WriteOrReadbackFailed
-};
+// MatErrorCode 统一在 contracts.md 声明，不在此重复定义。
 struct MatVariableInfo {
     std::string name;
     std::vector<std::size_t> dimensions;  // 按 MATLAB 原 rank/dims
@@ -50,16 +45,16 @@ class MatFileHandle;                      // move-only, 对应 mat_t* 资源所�
 class MatVariableHandle;                  // move-only, 对应 matvar_t* 资源所有权
 class MatResultReader {
 public:
-    Result<std::vector<MatVariableInfo>, MatError> inspect(
+    Result<std::vector<MatVariableInfo>, MatErrorCode> inspect(
         const std::filesystem::path& source) const;
-    Result<MatDenseArray, MatError> readNamed(
+    Result<MatDenseArray, MatErrorCode> readNamed(
         const std::filesystem::path& source, std::string_view variable) const;
-    Result<MatDenseArray, MatError> readFirstCompatible(
+    Result<MatDenseArray, MatErrorCode> readFirstCompatible(
         const std::filesystem::path& source) const;
 };
 class RunMatWriter {
 public:
-    Result<void, MatError> saveNewVariable(
+    Status<MatErrorCode> saveNewVariable(
         const std::filesystem::path& output_root,
         std::string_view run_id,
         std::string_view mat_variable_name,
@@ -67,7 +62,7 @@ public:
 };
 ~~~
 
-C++17 的 Result<void,E> 需要项目自定义特化或选用其他经批准的结果方式；**这些是拟议的签名和枚举，不是已经冻结的 API**。对 matio 的资源操作建议使用 Mat_Open/Mat_Close 与 Mat_VarRead/Mat_VarFree 等 C API，但调用细节须根据项目选定的 matio 版本核准。
+C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现须经项目审定；**这些是拟议的签名和枚举，不是已经冻结的 API**。对 matio 的资源操作建议使用 Mat_Open/Mat_Close 与 Mat_VarRead/Mat_VarFree 等 C API，但调用细节须根据项目选定的 matio 版本核准。
 
 ### 2.1 内存所有权、shape 与类型合同
 
