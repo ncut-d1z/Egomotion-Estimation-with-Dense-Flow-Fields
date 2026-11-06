@@ -55,8 +55,9 @@ struct DirectionSet; struct FlowField;
 class IRandomSource {
 public:
     virtual ~IRandomSource() = default;
-    virtual double uniform() = 0;
-    virtual double normal() = 0;
+    // 返回 Result 而不是无效 double，错误类型与上下文由 contracts.md 管理。
+    virtual Result<Scalar, NumericalErrorCode> uniform() = 0;
+    virtual Result<Scalar, NumericalErrorCode> normal() = 0;
 };
 class IDirectionSampler {
 public:
@@ -71,7 +72,51 @@ public:
 };
 ~~~
 
-存在三种采样器、两种原加噪模型及 NoNoise；具体对象由 Composition Root 创建。FlowField 拥有 N×6 列主序，方向只读，算法不得修改外部 MAT 文件。无随机全局单例，固定 RNG 测试替身用于确定性 Golden。
+### 3.1 三种具体采样器的候选类合同
+
+~~~cpp
+class OctahedralSampler final : public IDirectionSampler {
+public:
+    Result<DirectionSet, NumericalErrorCode> sample(int level) const override;
+};
+class OccludedOctahedralSampler final : public IDirectionSampler {
+public:
+    Result<DirectionSet, NumericalErrorCode> sample(int level) const override;
+};
+class IcosahedralSampler final : public IDirectionSampler {
+public:
+    Result<DirectionSet, NumericalErrorCode> sample(int level) const override;
+};
+~~~
+
+| 类型 | 原 MATLAB 对应 | 固定输入/算法 | 输出与有效性 |
+|---|---|---|---|
+| OctahedralSampler | erzeugerichtungsvektoren.m + findeDreiecke.m | i ≥ 0；八面体原 8 面按顺序逐层 A/B/C/D 四分，末层面心归一 | `DirectionSet` 为 N×3，N=8·4^i；须保留逐行顺序 |
+| OccludedOctahedralSampler | erzeugerichtungsvektoren_loch.m + findeDreiecke.m | 同一八面体但仅使用原 MATLAB 初始面编号 2/3/5/6/7/8 | N=6·4^i；不补回缺损面、不改变行序 |
+| IcosahedralSampler | richtungsvektoren_icosahedron.m + findeDreiecke.m | 固定原 12 个顶点/20 个面及其递归顺序 | N=20·4^i；不以另一库的顶点面排列代替 |
+
+**接口约束**：构造无需持有 RNG 或跨次状态；只返回自拥有的 N×3 方向，不自行添加噪声、距离或最终 N×6 流场。原 MATLAB 初始方向生成的 N×6 setofpoints 若包含后三列的占位值，须在 `FlowField` 转换边界保持该语义，不能把 N×3 类型误当最终 N×6。采样前验证 `level >= 0`、`base * 4^level` 不发生整数溢出及实际分配可行性。具体内存预算未批准，不引入任意固定最大 level。
+
+**错误枚举与最小负例**：
+
+| 场景 | 返回候选 NumericalErrorCode | 必须核对的 TC |
+|---|---|---|
+| level 为负 | InvalidSubdivisionLevel | TC-F-GEOM-002/003 |
+| 采样数乘以 4 溢出 | SampleCountOverflow | TC-F-GEOM-002/003 |
+| 请求内存无法满足 | ResourceLimitExceeded | TC-F-GEOM-001/002/003 |
+| 面中心零范数、NaN/Inf/非单位方向 | ZeroNorm / InvalidDirection / NonFiniteInput | TC-F-GEOM-001/002/003 |
+| FixedSequenceRandomSource 耗尽或返回非法值 | RandomSourceExhausted / InvalidRandomSample | TC-DC-RNG-001 |
+| 噪声乘数非有限、光流非有限 | NonFiniteInput / NonFiniteResult | TC-F-FLOW-003、TC-DC-NOISE-001 |
+
+上述枚举及错误到退出码的映射**统一引用 [contracts.md §3.1–3.2](contracts.md)**，不在此文件独立定义重复的 enum。调用者收到失败必须停止当前计算路径并附上位置/参数；实验整体的回滚/部分结果提交规则待 P0.8 和 Golden 审议。以安全显式错误取代 MATLAB NaN/Inf 传播可能导致行为差异，必须在回归报告单独标注。
+
+### 3.2 RNG 抽样合同与对象职责
+
+`IRandomSource::uniform()` 成功输出有限 [0,1) double；`normal()` 成功输出有限 double。固定序列测试源超出已提供样本返回 RandomSourceExhausted；超范围 uniform、NaN/Inf 返回 InvalidRandomSample，**不得自动重抽或返回 0**。Runner 根据原脚本在固定运动生成后进行重新播种：由 RunContext 为下一阶段建立相同 seed 的新流，保留调用和重置轨迹。真实随机源的分布、固定序列异常及性能预算均属待批准/待执行内容。
+
+**噪声策略区别**：MeanMagnitudeGaussianNoise(coefficient=0) 在对应 `nonpropfehler(...,0)` 的运行路径仍然消耗 3N 个 normal；作为“完全不调用噪声函数”的独立 NoNoise 策略可以不消耗样本，但**不能用它替代该 MATLAB 无噪入口**。这两个语义不同，须分别通过固定源消费计数验收。
+
+具体对象由 Composition Root 创建。FlowField 拥有 N×6 列主序，方向只读，算法不得修改外部 MAT 文件。无随机全局单例，固定 RNG 测试替身用于确定性 Golden。
 
 ## 4. 失败、安全与验证
 
@@ -166,7 +211,7 @@ public:
 
 **前置条件**：细分级别非负、N=base·4^level 在 size_t 范围内且实际分配受资源限制；真值有限；所需方向可归一；生成的 near 有定义。对于 N=0、非有限方向、距离无效、数值溢出应返回可识别失败类别。原脚本即便在数值边界产生 NaN/Inf，也不能偷偷替换为看似成功的零值。
 
-公共 DirectionSet、FlowField 的生命周期和 const 规则由 [contracts.md](contracts.md) 管理；采样器可能无状态，RNG 必须是一次运行私有状态，不得把全局 rand/randn 偷偷复用到其他实验。
+公共 DirectionSet、FlowField 的生命周期与 const 规则由 [contracts.md](contracts.md) 管理。采样器无跨调用状态，RNG 由一次 RunContext 独占；`BiasFlowParameters` 只承载**单层级流场合成参数**，`experiments.md` 的 `BiasExperimentConfig` 独立负责实验 seed、最大细分级别、三个噪声乘数及输出。这两者是不同层次的类型，不能再重复声明同名 Config。 `IdealFlowResult` 是 FlowSynthesizer 的理想结果；`FlowSynthesisResult` 是包含近度与含噪/无噪数据的场景输出，实际组合由 BiasExperimentRunner 完成。不得把全局 rand/randn 复用到多个实验。
 
 ## 7. 逐层 Golden 和浮点顺序审查
 
