@@ -1,6 +1,6 @@
 # CLI 参数、退出码与诊断协议：详细设计草案
 
-> **候选 v0.1，未冻结、未编码、未执行 CTest。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS](../REQUIREMENTS.md) `6.1、[实验 LLD](experiments.md) 与 [公共错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
+> **候选 v0.1，未冻结、未编码、未执行 CTest。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
 
 ## 1. 语法与基本约束
 
@@ -35,6 +35,8 @@
 
 ## 3. 退出码、错误阶段与错误优先级（候选）
 
+**本表是面向命令行使用者的摘要，不是独立枚举映射表。** `MatErrorCode` / `NumericalErrorCode` / `ExperimentErrorCode` 到退出码的唯一候选来源是 [contracts.md §3.1](contracts.md)，不得从本表反向定义另一套错误编码；两表不一致时先记录待审差异，不擅自修改已批准的 SRS 义务。
+
 | exit | 类别 | 示例 |
 |---:|---|---|
 | 0 | 成功 | help、version 或正常完成 |
@@ -45,7 +47,7 @@
 | 6 | 输出路径/结果安全冲突 | origin 路径、已有 RunId、写失败、独立回读不一致 |
 | 7 | 可选功能不可用 | 仅 plot 绘图后端不存在 |
 
-阶段检查顺序为 **parse（2）→ input/read（3）→ decode/schema（4）→ output safety（6）→ solve/analyze（5）→ plot capability（7）**。如果一个请求包含多个问题，报告实际先触发的失败，保留原始错误码及上下文。具体 `MatErrorCode` 到退出码的映射应与 [contracts.md](contracts.md) 审批后保持单一来源。
+阶段检查顺序为 **parse（2）→ input/read（3）→ decode/schema（4）→ output safety（6）→ solve/analyze（5）→ plot capability（7）**。如果一个请求包含多个问题，报告实际先触发的失败，保留原始错误码及上下文。具体错误枚举映射直接引用 [contracts.md §3.1](contracts.md) 的候选表，待 P0.8/P1.2 人类批准后冻结。
 
 失败诊断最少包含稳定的 `error_code`、`exit_code`、`stage`、`message`；涉及 MAT 需附 `path` 与已知 `variable`，涉及实验需附 RunId、算法与样本下标。正常输出使用 stdout、错误使用 stderr，文件里仍保存原 MATLAB 兼容 MAT。**诊断序列化格式（JSONL/键值行）、stderr 转义规则和 RunId 生成方式尚未批准**，不得将候选协议称为可机读的已实现 API。
 
