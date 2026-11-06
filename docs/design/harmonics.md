@@ -1,27 +1,140 @@
-# 实球谐及旋转详细设计草案
+# 实球谐、近度拟合及系数旋转——详细设计草案
 
-> **状态：待 P0.4/P0.8、P7 冻结。** 第三方来源/版权未经核查前，不直接复制 rodrigues.m 或 SHRotate.m 的实现。来源函数 winkelausvektor.m、kugelflfunc2.m、koeff_aus_near.m、near_aus_koeff.m、SHRotate.m、transfor_koeff.m。
+> **LLD v0.2，未冻结、未实现。** 来源：winkelausvektor.m、kugelflfunc2.m、near_aus_koeff.m、koeff_aus_near.m、transfor_koeff.m、SHRotate.m。第三方版权与 Golden 尚未完整核验。关联 REQ-F-SH-001/002、REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001、P7.1–P7.6/P7.10。
 
-## 数学表示与原源码约定
+## 1. 坐标系、角度与原实球谐表达式
 
-- 单位方向向量转球坐标：theta = acos(z)、phi = atan2(y,x)。必须保持 MATLAB 方向和弧度约定。
-- kugelflfunc2 使用 MATLAB legendre、相应归一化系数；m<0 用 sin(|m|phi)，m>0 用 cos(m phi)，m=0 不带方位角因子。关联勒让德函数的符号约定/是否有相位必须通过黄金值核对，不能套用其他库默认规范。
-- HarmonicCoefficients 以 3×5 矩阵存放 l≤2 的系数：零阶 1 个，一阶 3 个，二阶 5 个（合计 9 个有效项）。原脚本初值是系数位置 (1,1)=1；其余初始化为 0。
-- near_aus_koeff 在给定方向上逐项计算加权和。koeff_aus_near 以各自基函数的平方范数单独归一，不擅自替换成一次联合最小二乘。
-- transfor_koeff 保持零阶项，以 SHRotate(r,2) 产生的一阶 3×3、二阶 5×5 旋转块分别变换对应系数。旋转方向、列/行系数约定应有单独对照。
+由单位方向 \(\boldsymbol d=(x,y,z)^\top\) 计算：
 
-## 分工与候选合同
+\[
+\theta=\arccos(z),\qquad \phi=\operatorname{atan2}(y,x)
+\]
+（\(\theta\)：极角；\(\phi\)：方位角；单位：rad）。本公式依原 MATLAB 原样记录；对于非单位输入和 acos 越界须单独定义失败状态，不能静默改变原样本。
 
-| 单元 | 责任 | 约束 |
-|---|---|---|
-| RealSphericalHarmonics | 从方向计算 real Y_lm 与近度重建 | 无状态、确定性、固定顺序 |
-| HarmonicFitter | 从离散近度求相应 3×5 系数 | 分母为零时明示异常 |
-| HarmonicRotator | 依据 Rodrigues 旋转矩阵更新 l=1,2 系数 | 保留原 SHRotate 编码/顺序语义 |
-| HarmonicCoefficients | 拥有 3×5 值矩阵与有效项合同 | 不持有 MAT 句柄和实验状态 |
+令 \(q=|m|\)，\(P_l^q(\cos\theta)\) 是 **MATLAB legendre(l,cos(theta)) 返回的 q 阶值**，并保留其相位/符号约定（不能直接采用另一库默认的无 Condon–Shortley 相位定义）。
 
-## 数值验证与版权门禁
+\[
+A_{lq}=\sqrt{\frac{2l+1}{4\pi}\frac{(l-q)!}{(l+q)!}},
+\]
+\[
+Y_{lm}^{real}(\theta,\phi)=
+\begin{cases}
+\sqrt 2\,A_{lq}\,P_l^q(\cos\theta)\sin(q\phi), &m<0,\\
+A_{l0}\,P_l^0(\cos\theta),&m=0,\\
+\sqrt 2\,A_{lq}\,P_l^q(\cos\theta)\cos(q\phi),&m>0.
+\end{cases}
+\]
 
-- TC-F-SH-001：固定三维方向，分别验证 l=0/1/2 和 m 正、负、零的原 MATLAB 基函数值；核对近度重建与拟合。
-- TC-F-SH-002：对绕 x/y/z 的不同已知旋转及复合旋转，逐块核对 3×3、5×5 的系数变换；测试旋转/逆旋转恢复近度。
-- TC-D-SOURCE-002、TC-NF-COPYRIGHT-001：审查 SHRotate.m 和 rodrigues.m 中外部代码来源、通知和可移植范围；无授权结论时保留阻塞，不新增 LICENSE。
-- 正式容差、Golden 数据与 C++17 头文件签名待 P0/P7 审查，不得因写出本计划就宣称已通过。
+上式直接对应 kugelflfunc2.m 的 factorial、legendre、sin/cos 分支；未以 MATLAB 固定黄金值验证每个负 m 的符号前，不得把显式多项式实现当作已验证。
+
+### 1.1 3×5 系数的九个有效索引
+
+| l | m | MATLAB 的 (row,col)，1-based | C++ 0-based (row,col) | 基函数类型 |
+|---:|---:|---|---|---|
+| 0 | 0 | (1,1) | (0,0) | \(Y_{00}\) |
+| 1 | −1 | (2,1) | (1,0) | \(\sin\phi\) |
+| 1 | 0 | (2,2) | (1,1) | 无 φ 因子 |
+| 1 | +1 | (2,3) | (1,2) | \(\cos\phi\) |
+| 2 | −2 | (3,1) | (2,0) | \(\sin(2\phi)\) |
+| 2 | −1 | (3,2) | (2,1) | \(\sin\phi\) |
+| 2 | 0 | (3,3) | (2,2) | 无 φ 因子 |
+| 2 | +1 | (3,4) | (2,3) | \(\cos\phi\) |
+| 2 | +2 | (3,5) | (2,4) | \(\cos(2\phi)\) |
+
+其余 3×5 存储位置不参与 l≤2 有效系数求和。原脚本初始化 (1,1)=1、其余为零，**不能将九项完整表示与八项可独立更新的非零阶信息混淆**。
+
+## 2. 从系数到近度与从近度拟合系数
+
+**near_aus_koeff.m** 逐点重建：
+
+\[
+\mu(\boldsymbol d_i)=\sum_{l=0}^{2}\sum_{m=-l}^{l}a_{lm}Y_{lm}^{real}(\theta_i,\phi_i).
+\]
+
+**koeff_aus_near.m** 对每个有效 (l,m) **独立计算**：
+
+\[
+a_{lm}^{num}=\frac{4\pi}{N}\sum_{i=1}^{N}\mu_iY_{lm}^{real}(\theta_i,\phi_i),\qquad
+a_{lm}^{den}=\frac{4\pi}{N}\sum_{i=1}^{N}(Y_{lm}^{real}(\theta_i,\phi_i))^2,
+\]
+\[
+a_{lm}=a_{lm}^{num}/a_{lm}^{den}.
+\]
+
+这不是把九个系数一起求解的正规方程/联合最小二乘；如果改变了基函数间的耦合关系，可能改变原始实验结果。即使两个 4π 因子可在代数上相消，也应先对照 MATLAB 原先的乘除顺序及浮点误差。
+
+### 2.1 拟议输入输出与不变量
+
+~~~cpp
+// 仅设计草案，不是可调用的已实现 API。
+using HarmonicMatrix = Eigen::Matrix<double, 3, 5, Eigen::ColMajor>;
+struct HarmonicCoefficients { HarmonicMatrix values; };
+struct HarmonicError;
+class RealSphericalHarmonics {
+public:
+    Result<double, HarmonicError> evaluate(int l, int m,
+                                            double theta_rad, double phi_rad) const;
+    Result<Eigen::VectorXd, HarmonicError> reconstruct(
+        const HarmonicCoefficients&, const DirectionSet&) const;
+};
+class HarmonicFitter {
+public:
+    Result<HarmonicCoefficients, HarmonicError> fit(
+        const DirectionSet&, const Eigen::VectorXd& nearness) const;
+};
+~~~
+
+冻结前需决定 DirectionSet 定义、shape 校验、N=0、基函数范数零、非有限 near、非单位方向及异常时数据保持策略。上述 Result<T,E> 是项目建议的 C++17 显式结果约定，非标准库 std::expected。
+
+## 3. l≤2 的球谐系数旋转
+
+**SHRotate.m** 的现有 MATLAB 输入是 3×3 旋转矩阵 r 和 degree=2，输出包含 l=0 的 1×1、l=1 的 3×3、l=2 的 5×5 块；transfor_koeff.m 使用：
+
+\[
+a'_{0,0}=a_{0,0},\quad
+\boldsymbol a'_1=R_3(r)\boldsymbol a_1,\quad
+\boldsymbol a'_2=R_5(r)\boldsymbol a_2.
+\]
+
+两个系数向量以 MATLAB 原存储顺序读取并写回：\((-1,0,+1)\) 与 \((-2,-1,0,+1,+2)\)。不能因为 SHRotate 的 R1 是原矩阵的一个排列，就直接把 R1 替换为通常坐标轴顺序下的 r。
+
+### 3.1 转动块生成规则的可验证边界
+
+- 先处理 l=0 常数块，l=1 依据源 SHRotate 的轴排列构造 R3（注意行、列和符号）。
+- l=2 的 R5 使用 SHRotate 递归辅助函数 M/U/V/W/P 与上一阶旋转块生成；**第三方代码复制与重写的授权状态尚未确认**。
+- 先用对 z 轴的已知旋转检查 m 正负的相位，再分别用 x/y 轴和复合旋转检查 R3/R5 全部元素、正交性、往返一致性和基函数变换方向。
+- “R3/R5 元素/递推系数的逐式复刻”必须建立 Golden 表：旋转向量、输入 R、源输出 R3/R5、输入/输出系数、误差及源 SHA；在版权确认前不从第三方程序逐行照搬公式或实现。
+- 对第二阶旋转的任何替代生成算法，须证明与作者 SHRotate 数值行为和系数顺序一致，并有合法的原创或兼容授权基础。
+
+### 3.2 旋转类接口候选
+
+~~~cpp
+struct HarmonicRotationBlocks {
+    Eigen::Matrix3d degree_one;
+    Eigen::Matrix<double, 5, 5> degree_two;
+};
+class HarmonicRotator {
+public:
+    Result<HarmonicRotationBlocks, HarmonicError> blocks(
+        const Eigen::Matrix3d& rotation) const;
+    Result<HarmonicCoefficients, HarmonicError> rotate(
+        const HarmonicCoefficients&, const Eigen::Matrix3d&) const;
+};
+~~~
+
+需明确是否接受不严格正交的 r、是否允许投影回 SO(3)、奇异输入与未定义旋转的返回状态；**不应未经许可擅自修改原算法**。
+
+## 4. 依赖、资源和可复现测试
+
+- RealSphericalHarmonics、HarmonicFitter、HarmonicRotator 均不持有 MAT 文件句柄和跨帧轨迹状态；Adaptive Session 独占系数历史。
+- 固定球面方向数组 Golden：所有 9 个 l,m 配对值、均匀/非均匀采样下拟合的系数、旋转前后近度差异。
+- 多组旋转 Golden：单位 R、绕 x/y/z 不同角度、复合旋转和逆变换；在指定系数顺序下逐元素检查 R3、R5 的全部 34 个块元素。
+- 测试必须绑定源脚本 SHA、MATLAB 参考输出和经 DEC-005 批准的数值容差；原数据/Golden 若无法合法提交可使用受控外部存储与可审查哈希。
+
+## 5. 冻结与授权阻塞
+
+- 仍需对源关联勒让德相位、SHRotate 块递推、真实黄金样本做独立核验。
+- 第三方 SHRotate.m、rodrigues.m 的代码来源与权利范围待 DEC-003/007；不能仅凭资料页数据库许可推断这些代码可直接复制。
+- C++17 精确签名、错误枚举、异常行为、目标 CMake target 和测试用例未冻结。
+
+**本文件是详细设计草案；没有 C++ 实现、MATLAB 运行或数值验收证据。**
