@@ -1,35 +1,51 @@
-# 详细设计（LLD）文档索引
+# 分模块详细设计（LLD）索引、完成度与冻结标准
 
-> **状态：预设计草案，所有模块均未冻结、未实现。** 本目录仅记录从真实 MATLAB 源码已经核实的计算步骤、数据约定与待落实的详细设计合同。不能把这些材料当成已有 C++ 类、CMake 目标、测试或性能结果。
+> **设计状态：草案，未冻结、未编译、未验证。** 索引中的文件已实际创建，但其中的候选 C++17 接口、数学步骤、测试路径和错误枚举没有对应已实现代码。源 MATLAB 文件和已保存 MAT 仍由 origin/** 只读保存。
 
-## 文档分工
+## 文档职责
 
-- [../REQUIREMENTS.md](../REQUIREMENTS.md)：系统应满足什么行为；REQ、AC、TC 与状态（SRS v0.2）。
-- [../ARCHITECTURE.md](../ARCHITECTURE.md)：HLD，模块、依赖、对象和运行时数据流。
-- [../OBJECT_MODEL.md](../OBJECT_MODEL.md)：值对象、不变量、所有权和类的候选关系。
-- [../../PLAN.md](../../PLAN.md)：P0–P10 的 98 项实施任务、依赖与审计证据。
-- [../TEST_PLAN.md](../TEST_PLAN.md)：测试实体、Golden 参考、测试层级与候选容差。
+- [REQUIREMENTS.md](../REQUIREMENTS.md)：SRS 中 REQ/AC/TC 与可验证行为的唯一来源。
+- [ARCHITECTURE.md](../ARCHITECTURE.md)：HLD 组件边界、target DAG、部署和 ADR 的唯一来源。
+- [OBJECT_MODEL.md](../OBJECT_MODEL.md)：类职责、所有权及 45 MATLAB 文件→拟议方法的唯一维护位置。
+- [TEST_PLAN.md](../TEST_PLAN.md)：Golden、证据、测试环境与候选 CTest 的唯一来源。
+- [PLAN.md](../../PLAN.md)：98 个 P0–P10 最小工作项、任务依赖、风险与里程碑。
+- 本目录每份文档是**对应模块的 LLD 草案**，具体签名、公式、错误处理、数据布局应在 P0.8 以后逐个确认。
 
-## 分模块详细设计草案
+## LLD 模块覆盖矩阵
 
-| 文件 | 主要 MATLAB 来源 | 当前状态 | 相关 REQ |
-|---|---|---|---|
-| [mat_io.md](mat_io.md) | getflowfield、load/save、582 个 MAT | 设计待冻结 | F-MAT、D-MAT、I-MAT、DC-IO |
-| [kvd.md](kvd.md) | franz、norm_koenderink、mue_norm | 设计待冻结 | F-FILTER、F-KVD、F-ERROR、DC-KVD |
-| [harmonics.md](harmonics.md) | kugelflfunc2、SHRotate、near、koeff | 设计待冻结；SHRotate 版权待核 | F-SH、D-SOURCE |
-| [adaptive_mfa.md](adaptive_mfa.md) | oneit、三个 sphere experiment | 设计待冻结 | F-ADAPT、F-EXP、DC-ADAPT |
+| 模块 | 对应文档 | 源 MATLAB 范围 | 数学/数据约定 | 候选 API | Golden/实测 | 冻结状态 |
+|---|---|---|---|---|---|---|
+| MAT I/O | [mat_io.md](mat_io.md) | getflowfield、各入口 load/save、582 MAT | 类型边界/路径安全已描述，全量字典缺失 | 有待核准的签名/错误码 | 未测 | 阻塞 DEC-001/002 |
+| 基础采样与噪声 | [sampling_noise.md](sampling_noise.md) | findeDreiecke、各采样/流/噪声函数 | 已列数量、顺序、噪声方程 | 候选接口 | 未测 | 未冻结 |
+| 几何与轨迹 | [trajectory.md](trajectory.md) | Kreis/Sinus/trajectory、球内近度与旋转 | 已列离散轨迹/求交公式 | 候选接口 | 未测 | 第三方 Rodrigues 来源待审 |
+| Franz / KvD | [kvd.md](kvd.md) | zellendefinieren、franzeigen、两种 KvD、误差 | 已列各平移公式、RMS、终止规则 | 候选接口 | 未测 | 阻塞 DEC-005 |
+| 实球谐 | [harmonics.md](harmonics.md) | kugelflfunc2、near/koeff、SHRotate | 已列 9 项索引/公式及旋转块合同 | 候选接口 | 未测 | 阻塞 DEC-003/005/007 |
+| Adaptive 单步/Session | [adaptive_mfa.md](adaptive_mfa.md) | oneit、3 个 Adaptive 入口 | 已列 M1–M4、RHS、MSE 及会话差异 | 候选接口 | 未测 | 阻塞 DEC-005 |
+| 实验 Runner | [experiments.md](experiments.md) | 2 Bias + 3 Adaptive 数据生成入口 | 已列参数与各 save 文件 | 候选接口 | 未测 | 数据字段需核验 |
+| 分析与可选绘图 | [analysis_plotting.md](analysis_plotting.md) | 4 分析入口、kurveglaetten、3 插图 | 已列数据/索引/阈值/窗口 | 候选接口 | 未测 | Golden 及绘图后端未定 |
 
-其他低阶设计（采样/噪声、轨迹、实验 runner、结果分析、绘图）将在对应 P2/P3/P6/P8/P9 开始前按同一模板补齐。本轮没有为它们编造未经核验的方法签名。
+覆盖范围是**模块文档存在性**，不是代码/接口实现比例。无论数值公式写得多完整，缺少 Golden 和批准容差就不能把相应模块标为已完成。
 
-## 正式 LLD 冻结的最低格式
+## 模块 LLD 的标准模板与通过条件
 
-每个模块最终均必须填写：
-1. 对应源 MATLAB 完整相对路径、源 Git SHA、公式或行号、已核对的输入/输出数据形状与单位。
-2. 经批准的 C++17 类型、精确头文件/API 签名、构造依赖、所有权、复制/移动和线程安全约束。
-3. 前置条件、后置条件、不变量、错误状态枚举、异常/失败处理及资源释放。
-4. 可审查的算法伪代码或关键公式、索引约定、符号与数值顺序、与原版差异（如有）。
-5. 关联 REQ/AC/TC、拟建测试文件、固定 Golden 数值、批准容差、已测结果。
-6. 构建 target、依赖版本、运行示例、跨模块序列和 ADR 归属。
-7. **冻结审批**：项目所有者批准、commit SHA、被阻塞/未验证条目。审批前绝不标“完成”。
+每份 LLD 在进入正式编码前应具有：
 
-本目录不强制所有数学运算都实现为类；对纯函数保留命名空间自由函数的做法参照 HLD。
+1. **来源**：每个实际 MATLAB 函数的完整路径、原始 blob SHA、函数调用关系和可能的第三方来源。
+2. **精确合同**：候选 C++17 类/方法最终签名、所有权/异常/复制移动/线程边界、输入输出单位与 shape。
+3. **算法**：逐步公式或伪代码、固定顺序、数值阈值、源 MATLAB 与 C++ 索引差异；对原版明显异常单独记录。
+4. **资源**：谁创建、谁销毁、谁可写；原始 MAT 不可写、输出新目录不可覆盖、RNG/Session 不跨运行共享。
+5. **测试**：REQ→AC→TC→实际测试文件/函数/CTest、Golden 输入输出 SHA、批准容差、正常/异常路径和真实测试日志。
+6. **构建**：target、公开/私有头文件、依赖库/编译器版本，避免逆向依赖。
+7. **批准**：项目所有者/维护者批准、Git SHA、日期、开放风险及 DEC 处理决定。
+
+### 进度状态字典
+
+- **草案已创建**：已有文字设计，但不能据此创建“完成”百分比。
+- **待核验**：来源、MAT 字典、算法细节、接口或 Golden 缺失。
+- **可评审**：必填字段已准备且所有待决事项明确；尚不表示通过。
+- **已冻结**：审阅人批准具体 SHA、合同、Golden、容差和开放例外。
+- **已实现/已测试**：分别需要代码提交及实际执行证据，是与设计冻结独立的两个状态。
+
+## 当前阻塞汇总
+
+MAT 数据的 **582 文件全量变量字典**、两份外部来源代码的权利核查、CLI/error schema、正式数值容差、真实 Golden 与 CTest 名称、Debian/Ubuntu 实测平台矩阵均未闭环。因此，本目录八份模块设计可以用于进一步评审和实施准备，但均**不是正式冻结的 LLD 编码基线**。
