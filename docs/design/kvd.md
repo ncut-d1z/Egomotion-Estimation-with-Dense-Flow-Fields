@@ -207,6 +207,11 @@ struct KvDResult {
     std::size_t iteration_count;
     std::vector<KvDIterationTrace> trace; // 可按设置输出；Golden 模式必须可见
 };
+class FranzMatchedFilter {
+public:
+    Result<MotionEstimate, NumericalErrorCode> estimate(
+        const FlowField&) const;
+};
 class OriginalKvDEstimator {
 public:
     Result<KvDResult, NumericalErrorCode> estimate(
