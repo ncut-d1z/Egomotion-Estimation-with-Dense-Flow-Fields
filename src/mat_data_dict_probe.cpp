@@ -19,6 +19,7 @@ constexpr std::size_t kExpectedFiles = 582;
 constexpr std::uint64_t kOffset = UINT64_C(14695981039346656037);
 constexpr std::uint64_t kPrime = UINT64_C(1099511628211);
 constexpr char kMarker[] = "<!-- generated-by: mat_data_dict_probe.cpp -->";
+constexpr char kPreliminaryMarker[] = "<!-- preliminary-mat-data-schema: github-archive-inspection -->";
 struct MatCloser { void operator()(mat_t* p) const { if (p) Mat_Close(p); } };
 struct VarCloser { void operator()(matvar_t* p) const { if (p) Mat_VarFree(p); } };
 using MatHandle = std::unique_ptr<mat_t, MatCloser>;
@@ -86,7 +87,8 @@ Config options(int argc, char** argv) {
         std::ifstream old(c.output);
         std::string first;
         std::getline(old, first);
-        if (first != kMarker) throw std::invalid_argument("Refusing non-generated report overwrite");
+        if (first != kMarker && first != kPreliminaryMarker)
+            throw std::invalid_argument("Refusing non-generated report overwrite");
     }
     return c;
 }
