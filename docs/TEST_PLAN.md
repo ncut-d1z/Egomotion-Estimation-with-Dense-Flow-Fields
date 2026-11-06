@@ -178,8 +178,8 @@
 
 | 原数据分组 | 当前文件数量 | 角色 | 全量核验 | 开发期代表性样本 |
 |---|---:|---|---|---|
-| bias_test/produced_data/occluded_regions | 280（40×7） | 非球形 Bias 统计基准 | **matio 280/280 READ_OK**；xwerte 40×10×1，ywerte 240×10×3，class/type 均 double；独立复核待做 | 编号 1、中间编号、40 |
-| bias_test/produced_data/proportional_error | 280（40×7） | 球形比例噪声 Bias 统计基准 | **matio 280/280 READ_OK**；xwerte 40×10×1，ywerte 240×10×3，double/double；独立复核待做 | 编号 1、中间编号、40 |
+| bias_test/produced_data/occluded_regions | 280（40×7） | 非球形 Bias 统计基准 | **matio 280/280 READ_OK**；xwerte **40 个 10×1 MAT 数组**，ywerte **240 个 10×3 MAT 数组**，class/type 均 double；独立复核待做 | 编号 1、中间编号、40 |
+| bias_test/produced_data/proportional_error | 280（40×7） | 球形比例噪声 Bias 统计基准 | **matio 280/280 READ_OK**；xwerte **40 个 10×1 MAT 数组**，ywerte **240 个 10×3 MAT 数组**，double/double；独立复核待做 | 编号 1、中间编号、40 |
 | adaptive_matched_filter_test/produced_data/initialization | 4 | 初始化已保存结果 | **matio 4/4 READ_OK**；全部 double[35×1] | 4 个文件 |
 | adaptive_matched_filter_test/produced_data/without_errors | 5 | 无噪声对比 | **matio 5/5 READ_OK**；全部 double[600×1] | 5 个文件 |
 | adaptive_matched_filter_test/produced_data/with_errors | 7 | 带噪声对比及历史额外字段 | **matio 7/7 READ_OK**；全部 double[600×1]，含两份历史独有 alleadap* | 7 个文件 |
