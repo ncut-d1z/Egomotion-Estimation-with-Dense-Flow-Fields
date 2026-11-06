@@ -27,7 +27,7 @@
 | 实验 Runner | [experiments.md](experiments.md) | 2 Bias + 3 Adaptive 数据生成入口 | 已列参数与各 save 文件 | 候选接口 | 未测 | 数据字段需核验 |
 | 分析与可选绘图 | [analysis_plotting.md](analysis_plotting.md) | 4 分析入口、kurveglaetten、3 插图 | 已列数据/索引/阈值/窗口 | 候选接口 | 未测 | Golden 及绘图后端未定 |
 
-覆盖范围是**10 份详细设计文档（1 份跨模块合同 + 9 份模块 LLD）的存在性**，不是代码/接口实现比例。无论数值公式写得多完整，缺少 Golden 和批准容差就不能把相应模块标为已完成。
+覆盖范围是**10 份文档：1 份跨模块合同（contracts.md）和 9 份模块 LLD（含 cli.md）**的存在性，不是代码/接口实现比例。无论数值公式写得多完整，缺少 Golden 和批准容差就不能把相应模块标为已完成。
 
 ## 模块 LLD 的标准模板与通过条件
 
@@ -51,7 +51,7 @@
 
 ## 当前阻塞汇总
 
-MAT 数据的 **582 文件全量 matio 字典已实际生成并提交**，包含 582 个 `READ_OK`、0 失败，以及 MATLAB class/data_type/dims/压缩和文件指纹。未完成的事项是生产 Reader/Writer/写回读、负例、P10.4 独立复核、两份第三方代码版权确认、CLI/error schema、数值 Golden 与正式容差，以及完整 Debian/Ubuntu 业务构建矩阵。因此，本目录九份模块设计可以用于进一步评审和实施准备，但均**不是正式冻结的 LLD 编码基线**。
+MAT 数据的 **582 文件全量 matio 字典已实际生成并提交**，包含 582 个 `READ_OK`、0 失败，以及 MATLAB class/data_type/dims/压缩和文件指纹。未完成的事项是生产 Reader/Writer/写回读、负例、P10.4 独立复核、两份第三方代码版权确认、CLI/error schema、数值 Golden 与正式容差，以及完整 Debian/Ubuntu 业务构建矩阵。因此，本目录除跨模块合同外的 **9 份模块 LLD** 可以用于进一步评审和实施准备，但均**不是正式冻结的 LLD 编码基线**。
 
 
 ## LLD 证据就绪度与源 MATLAB 核查重点
