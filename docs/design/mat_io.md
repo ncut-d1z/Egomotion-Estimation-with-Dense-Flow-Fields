@@ -1,6 +1,6 @@
 # MAT I/O、路径安全与原始数据合同——详细设计草案
 
-> **LLD v0.2，未冻结、未实现、未完成 MAT 全量字典。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
+> **LLD v0.3，未冻结、未实现、未完成 MAT 全量字典。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
 
 ## 1. 原始行为、文件身份和支持版本
 
@@ -123,3 +123,71 @@ docs/MAT_DATA_SCHEMA.md 在 P0.5/P1.8 形成前只能作为待填模板。每个
 ## 6. 待决与冻结门槛
 
 精确的 matio 版本、CMake target、class 类型清单、数组拷贝/映射方法、错误枚举、CLI 错误码、Result<T,E> 实现、具体 Golden 文件及哈希、输出安全方案、峰值内存测量、DEC-001/002/005 均未完成审核。**不把候选接口当作已经建成的 C++ 程序。**
+
+
+## 7. API 的前置/后置条件与错误映射（编码候选）
+
+公共类型与错误枚举的单一维护位置为 [contracts.md](contracts.md)。第 2 节的示例签名是拟议 API；本节补充**可用来审查方法的完整行为合同**，并不表示实现已创建。
+
+| 方法 | 前置条件 | 后置条件 | 非成功分类 | 关联 TC |
+|---|---|---|---|---|
+| inspect(path) | 输入为存在的普通文件，且 Reader 不持有写权限 | 按 MAT 文件真实变量记录返回 name/class/dtype/rank/dims/complex，绝不变更输入 | MissingFile、InvalidMatHeader、CorruptCompressedData | TC-F-MAT-002 |
+| readNamed(path,name) | name 非空；所需 class 已受支持 | 对**唯一指定变量**读取完整自拥有数据，源文件句柄销毁后结果仍有效 | MissingVariable、UnsupportedClassOrType、InvalidShape | TC-F-MAT-001/003 |
+| readFirstCompatible(path) | 路径可按原 MATLAB load 规则解析；变量顺序已核验 | 首变量数据与 getflowfield MATLAB 输出一致，省略后缀时按确认后的规则补全 | AmbiguousVariable（规则未确定时）、MissingVariable | TC-F-MAT-003 |
+| saveNewVariable(root,RunId,name,data) | root 与 origin 不重叠；RunId 和变量名合法；输出不存在 | 新建结果 MAT，写后回读同名变量的 dtype/rank/dims/数据，并保存 manifest | OutputPathForbidden、OutputExists、WriteFailed、ReadbackMismatch | TC-F-MAT-004 |
+| 句柄析构/移动 | 只允许单一所有者持有 mat_t*/matvar_t* | 释放恰好一次；move 后源句柄变为无所有权状态 | 不通过异常伪装成功；记录资源失败 | TC-DC-IO-001 |
+
+### 7.1 具体 matio 调用边界
+
+~~~text
+Reader::inspect:
+    f = Mat_Open(path, MAT_ACC_RDONLY)
+    iterate Mat_VarReadNextInfo(f) until EOF
+    copy metadata to stable value objects
+    Mat_VarFree(info); Mat_Close(f)
+Reader::readNamed:
+    f = Mat_Open(path, MAT_ACC_RDONLY)
+    v = Mat_VarRead(f, variable_name)
+    validate class_type, data_type, isComplex, rank, dims, data size
+    copy numeric buffer with correct column-major order
+    Mat_VarFree(v); Mat_Close(f)
+Writer::saveNewVariable:
+    validate destination and obtain isolated RunId directory
+    build matvar_t via Mat_VarCreate (type/shape checked)
+    create temporary MAT path through Mat_CreateVer
+    Mat_VarWrite; Mat_Close; verify write result
+    publish to previously absent final filename without overwriting
+    reopen through Reader and compare data + record SHA
+~~~
+
+以上为 API 调用责任示意，具体 matio 函数的错误返回、压缩 flag、版本宏及 read-next-info 的所有权需对**选定的真实 matio 版本**核验，不能按未经核实的头文件约定实现。第一个变量的确定顺序也不能仅假设为字母序。
+
+### 7.2 只读路径与写出路径的 TOCTOU 处理
+
+1. 先记录 origin 根目录的 canonical 路径、设备/目录身份，拒绝在其中写出；并将所有期望输出路径限定在独立的新 RunId 目录内。
+2. 检查路径组件是否包含符号链接、父目录逃逸、绝对路径形式的 RunId 或异常文件名。Linux 上只用 lexical_normal/canonical **并不能防御并发替换符号链接**。
+3. 若安全目标要求抵御并发目录替换，实施者必须评估并使用 dirfd、openat/O_NOFOLLOW、O_EXCL 或等价的 Linux 文件描述符约束；matio 创建临时文件的路径式 API 与最终不可覆盖发布（例如受控制的原子 link/rename-no-replace）须组合审查。**在此验证之前不得宣称写出流程抗竞态。**
+4. 写入临时文件后校验新 MAT 再发布到最终名称。发生部分写入、崩溃或验证失败时记录临时文件身份；按 AGENTS.md 保护失败证据，不清理未知用户文件。
+5. 对用户传入的中文/空格路径使用 C++17 std::filesystem 在 Debian/Ubuntu 上进行实际测试；对输入编码、非法路径、只读用户身份及不可信软链接分别建负例。
+
+### 7.3 形状与 MAT 类型扩展策略
+
+| 验证点 | 可审查的计算 | 当前证据 |
+|---|---|---|
+| rank/dims | 维度为非负整数，逐项检查，使用乘法溢出保护计算元素总数；N×6 不等于 6×N | 待 P1 测试 |
+| 非复杂 double | MAT dtype 与 Eigen double 对应，列主序拷贝不转置 | 类型支持尚未全量确认 |
+| single/int/logical | 不允许默认 reinterpret_cast<double*>；只能显式类型化读取或拒绝 | 582 全量字典待 P1 |
+| complex/struct/cell/sparse | 不与普通密集实数同接口误读，必须有类型校验和独立失败语义 | 真实源类型待审计 |
+| MAT 压缩 | 每个变量实际解压成功，不把文件头已读取当成可用数据 | 抽样 MAT v5/miCOMPRESSED；全量未测 |
+| 读后生存 | 关闭 MatFileHandle、MatVariableHandle 后，返回的 MatDenseArray 仍能正确访问 | 合同测试待写 |
+
+MAT 类支持范围的**最终**记录应由 docs/MAT_DATA_SCHEMA.md 单一维护；本表只描述决策和检查方法。
+
+## 8. 可复现测试样例定义（真实文件与数值尚未登记）
+
+- 正例：一个含压缩实数数组的源 MAT；必须记录源相对路径、Git blob SHA、MAT 变量名、rank/dims/dtype、至少两个指定线性索引处的值。
+- 负例：不存在文件、损坏压缩数据（从**测试副本**制造）、未支持 class、shape 冲突、多个变量的兼容选择不确定、读后析构、只读文件。
+- 写路径：新 RunId 成功回读、重复 RunId、输出位于 origin、输出经过符号链接回指 origin、相对路径穿越、中文空格路径、模拟写入失败。不得用真实 origin 作为破坏性测试目标。
+- 证据：TC-F-MAT-001…004、TC-D-MAT-001、TC-I-MAT-001、TC-DC-IO-001、TC-NF-SAFETY-001；未取得 Golden 元素值/批准容差前，状态一律“未验证”。
+
+**模块就绪状态：数据类型/路径错误合同已具体描述；全量字典、接口最终签名、matio 版本绑定、Golden、实际自动测试均未完成。**
