@@ -68,18 +68,18 @@ a_{lm}=a_{lm}^{num}/a_{lm}^{den}.
 ~~~cpp
 // 仅设计草案，不是可调用的已实现 API。
 using HarmonicMatrix = Eigen::Matrix<double, 3, 5, Eigen::ColMajor>;
-struct HarmonicCoefficients { HarmonicMatrix values; };
-struct HarmonicError;
+// HarmonicCoefficients 与 HarmonicMatrix 的唯一合同见 contracts.md。
+// 使用共享 NumericalErrorCode，不另建重复错误类型。
 class RealSphericalHarmonics {
 public:
-    Result<double, HarmonicError> evaluate(int l, int m,
+    Result<double, NumericalErrorCode> evaluate(int l, int m,
                                             double theta_rad, double phi_rad) const;
-    Result<Eigen::VectorXd, HarmonicError> reconstruct(
+    Result<Eigen::VectorXd, NumericalErrorCode> reconstruct(
         const HarmonicCoefficients&, const DirectionSet&) const;
 };
 class HarmonicFitter {
 public:
-    Result<HarmonicCoefficients, HarmonicError> fit(
+    Result<HarmonicCoefficients, NumericalErrorCode> fit(
         const DirectionSet&, const Eigen::VectorXd& nearness) const;
 };
 ~~~
@@ -115,9 +115,9 @@ struct HarmonicRotationBlocks {
 };
 class HarmonicRotator {
 public:
-    Result<HarmonicRotationBlocks, HarmonicError> blocks(
+    Result<HarmonicRotationBlocks, NumericalErrorCode> blocks(
         const Eigen::Matrix3d& rotation) const;
-    Result<HarmonicCoefficients, HarmonicError> rotate(
+    Result<HarmonicCoefficients, NumericalErrorCode> rotate(
         const HarmonicCoefficients&, const Eigen::Matrix3d&) const;
 };
 ~~~
