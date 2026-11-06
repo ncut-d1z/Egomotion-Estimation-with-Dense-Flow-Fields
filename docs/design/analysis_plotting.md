@@ -146,4 +146,17 @@ PlotExporter 仅消费 AnalysisDataset，输出图形位置必须在独立 RunId
 
 所有参考数据须来自原 MATLAB 文件/历史 MAT、带源 SHA 与明确 Golden 版本。图像像素一致性不要求，但**数据值、MATLAB 索引、绘图分段、单位和有效数量必须可审查**。
 
-**当前状态**：分析的索引、分段和平滑合同已列出；历史 MAT 全量解包、实际 Golden、批准容差、绘图后端和 C++ 测试均未完成。
+**当前状态**：分析的索引、分段和平滑合同已列出；**历史 582 个 MAT 已由 matio 实测 READ_OK，真实形状与类型见下表**。实际曲线数值 Golden、批准容差、绘图后端、C++ 分析程序与 CTest 仍未完成。
+
+## 8. matio 已确认的历史分析输入合同
+
+[MAT_DATA_SCHEMA.md](../MAT_DATA_SCHEMA.md) 是当前作者归档中 MAT 变量名、class/type、真实 dims 和读取状态的唯一事实来源。所有历史文件为 MAT v5/zlib、class=double/data_type=double，**582/582 文件/变量读取成功**；不能因此直接判定曲线计算正确。
+
+| MATLAB 分析脚本 | 历史 MAT 输入变量及真实 shape | 约束 |
+|---|---|---|
+| graphs_bias_test | 两类归档各 40 运行；每运行 xwerte `10×1`，ywerte1…6 各 `10×3` | 原图分析主要使用 ywerte3…6，且 xwerte 按作者存储值而非实际完整球面 N |
+| graph_agent_in_sphere_initialization_test | 四个 allemit/alleohne trans/rot 变量，均 `35×1` | 1..13 与全行索引按源脚本控制，不因 dtype/shape 合法而省略索引测试 |
+| graph_agent_in_sphere_adaptive_matched_filter_test | without_errors 的四误差和 rottransratio 均 `600×1`；with_errors 另有 alleadaprot/alleadaptrans，亦 `600×1` | 当前源码不写 `alleadap*`，历史额外数据来源仍需追踪 |
+| graph_agent_in_sphere_adaptive_matched_filter_many_parameter | 现存 allemittrans/allemitrot/alleadaptrans/alleadaprot 均 `600×4`；akrot/rottransratio 均 `600×1` | 当前多频率生成脚本实际只保存两个 allemit 字段及 akrot；分析又读取历史 rottransratio，不能虚构其生成来源 |
+
+后续验收要分别进行：(1) `Mat_VarRead` 正常读取、rank/dims 解析（**已有独立探针证据**）；(2) 业务 Reader 将 MAT 列主序数据正确映射到分析数组；(3) 分段、窗口、指标及数值曲线与原 MATLAB 的 Golden 逐项相符；(4) 可选绘图输出。只有 (1) 有实际完成证据，其余仍未实施。
