@@ -123,9 +123,11 @@ flowchart BT
   D[egomotion_domain] --> E[Eigen 3]
   K[egomotion_contracts / INTERFACE] --> D
   S[egomotion_sampling] --> D
+  S --> K
   H[egomotion_harmonics] --> D
   V[egomotion_simulation] --> D
   V --> S
+  V --> K
   A[egomotion_estimators] --> D
   A --> H
   I[egomotion_matio] --> D
@@ -133,16 +135,18 @@ flowchart BT
   I --> M[matio / zlib]
   X[egomotion_experiments] --> V
   X --> A
+  X --> S
   X --> K
   N[egomotion_analysis] --> K
   P[egomotion_plotting] --> N
   C[egomotion_cli] --> X
   C --> N
   C --> I
+  C --> K
   C --> P
 ~~~
 
-箭头方向为**依赖者指向依赖项**；plotting 只有启用时链接。**egomotion_contracts 是拟议的纯接口 target**：`egomotion_experiments` 和 `egomotion_analysis` 只依赖接口声明与 domain 值类型；`egomotion_matio` 实现这些接口，只有 `egomotion_cli` 的 Composition Root 依赖具体 MAT target 并负责注入。这样消除“文字说抽象、target DAG 却链接具体 MAT”的不一致。需要更细分库或因实际编译发现循环依赖，应出具 ADR 并更新此图，不得用巨大单一库掩盖耦合。
+箭头方向为**依赖者指向依赖项**；plotting 只有启用时链接。**egomotion_contracts 是拟议的纯接口 target**：`egomotion_experiments` 和 `egomotion_analysis` 只依赖接口声明与 domain 值类型；`egomotion_matio` 实现这些接口，只有 `egomotion_cli` 的 Composition Root 依赖具体 MAT target 并负责注入。这样消除“文字说抽象、target DAG 却链接具体 MAT”的不一致。图中明确列出 sampling / simulation 对 RNG、采样抽象所在 contracts target 的接口依赖、experiments 对 sampling 的直接依赖，以及 CLI 对 contracts 的直接依赖；这些仍为**拟议 target 链接关系**。使用 `bash scripts/check_docs_traceability.sh` 可做**文档 DAG 无环静态检查**；目前开发分支尚未建立完整 CMake 业务 targets，因此**无法宣称完成真实编译、链接或跨 target 测试替身验证**。需要更细分库或因实际编译发现循环依赖，应出具 ADR 并更新此图，不得用巨大单一库掩盖耦合。
 
 ### 4.2 公有/私有边界检查
 
@@ -228,7 +232,7 @@ P0.7/P0.8 需校验本 HLD、[OBJECT_MODEL.md](OBJECT_MODEL.md)、MAT schema、L
 | ADR-005 | 分析与可选绘图隔离，核心无图形运行 | 方向已定、后端待选 | 分析模块维护者 + 所有者 |
 | ADR-006 | SHRotate/Rodrigues 第三方来源单独审查 | 待 DEC-003/007 | 所有者与版权审查相关方 |
 | ADR-007 | 固定输入原 MATLAB 行为优先于“改善”数值稳定性 | 方向已定；测试/容差未冻结 | 数值验证负责人 + 所有者 |
-| ADR-008 | target DAG 分层及公共/私有边界以 §4 为候选；明确 contracts 声明 target 与 matio 实现 target 分离 | 未验证实际编译、链接或跨 target 替身，无完成记录 | P0.8 架构审查者 + 所有者 |
+| ADR-008 | target DAG 分层及公共/私有边界以 §4 为候选；明确 contracts 声明 target 与 matio 实现 target 分离 | 可用 scripts/check_docs_traceability.sh 静态检查 DAG 无环；**尚未创建完整 CMake 业务 target，未验证实际编译、链接或跨 target 替身** | P0.8 架构审查者 + 所有者 |
 
 **批准登记格式**：ADR ID、关联 REQ-DC/NF、批准人/日期、批准范围、证据文件与源 Git SHA、仍未解决的风险。表中角色只是拟议责任人，并非已有签名或授权记录。只有项目所有者明确确认后才可标为“架构已冻结”。
 
