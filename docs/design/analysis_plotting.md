@@ -58,3 +58,91 @@ public:
 - 每一种输出曲线必须从具体 MAT 变量、原始 MATLAB 索引（1-based）和读出 shape 追踪到 C++ 结构化曲线；逐元素误差与数值统计独立于颜色/图例验证。
 - 对缺失 rottransratio 或历史额外 MAT 的情况，报告缺字段及其来源，不为了生成图像而伪造比值。
 - TC-F-BIAS-003、TC-F-AN-001/002、TC-I-ANALYSIS-001、TC-F-CLI-004/005；当前无 Golden 数值、无签名冻结、无实际 CTest。
+
+
+## 5. 四种分析入口的可编码索引/统计算法合同
+
+| 来源分析函数 | MATLAB 索引与算法 | 结构化结果（建议） | 特别验证 |
+|---|---|---|---|
+| graphs_bias_test | 按 k=1..number_of_cores 读取 xwerte 和 ywerte3…6，四组求和再除以个数；从 anfang=3 到 ende=iterationnumber+1；参考线 y=100/sqrt(xwerte) | 每个噪声系数、Original/Modified 的平移/旋转四条原曲线，x=原 xwerte 和理论参考 | 不能把独立运行 40 份混成单次内部循环；ywerte1/2 在分析里被注释 |
+| graph_agent_in_sphere_initialization_test | mittrans 的 MATLAB 1..13 行、mitrot 的全部行；semilogy | curve_id、x 的 MATLAB 1-based 下标、y 数组、log-y 语义 | 这两条曲线长度不同，不能强行补齐尾部 |
+| graph_agent_in_sphere_adaptive_matched_filter_test | x=50:550（501 点），rottransratio 参与右纵轴与阈值 0.01 分段；绘制 mit/ohne 的旋转及平移误差 | 数值曲线 + 左轴 angle_deg/右轴 ratio、段边界及原始样本 | 不能用 SO(3) 测地角替换原脚本方向角度误差 |
+| graph_agent_in_sphere_adaptive_matched_filter_many_parameter | x=50:550，rottransratio 阈值 0.02，四种刷新频率对应的曲线；后 3 组用半窗 2、5、10 平滑 | 每个频率一组 curve、应用的窗口/段范围/非有限标志 | 多更新率当前源码不保存 rottransratio，但**现有历史 MAT 包含**，两种数据来源必须区分 |
+
+### 5.1 分段选择逻辑（保留 MATLAB 规则）
+
+原两个 Adaptive 分析脚本均采用 3 个分段区域的设置和 4 组 begin/end 数组，先设置 begin(1)=50，然后逐个 i=50..550 检查：
+- ratio(i) < threshold **且**先前 zone==0：将当前 i 写入 end(j)，j+1，zone←1；
+- ratio(i) > threshold **且**先前 zone==1：将当前 i 写入 begin(j)，zone←0；
+- 将第四段 end(4)=550；threshold=0.01（comparison）或 0.02（many_parameter）。
+- **等于阈值不会触发任一分支**，不能自行改成 ≤/≥。
+
+该脚本假设预期的阈值穿越次数和有效段数；当历史数据不满足条件时，部分 begin/end 可能为零，导致 MATLAB 索引无效。忠实模式需首先记录真实分段和失败行为，不能悄悄使用“自动发现所有片段”的新算法替代作者的四区域逻辑；改进策略属于单独需求。
+
+### 5.2 平滑窗口的完整边界行为
+
+原 kurveglaetten(kurve,fenster)：
+
+\[
+y_i=\operatorname{mean}(x_{i-f:i+f}),\quad
+i=f+1,\ldots,N-f;
+\qquad
+y_i=0\text{ （原始 zeros 预分配的其余边缘）}.
+\]
+
+这里的 i 是 MATLAB 1-based，f 是**半窗宽**而不是总窗长。分析脚本再对部分段选择 begin+f..end−f 进行绘图。C++ 数值输出要保留原 y 边缘零值和“被实际绘制的有效子段”，不能默默改为镜像延拓、全长卷积或在边缘计算更短窗口。
+
+### 5.3 Bias xwerte 的原版兼容约束
+
+两个 Bias **生成脚本**都写 xwerte(i+1)=6·4^i，然而完整球面生成函数的实际视线数量为 8·4^i。分析脚本对原存 xwerte 求 100/sqrt(xwerte)。因此：
+- **原始复现视图**必须使用历史文件的 xwerte 和理论曲线，不把 x 替换成真实 N；
+- 如另行输出物理实际样本数，应使用 separate actual_flow_count 元信息及新的、明确标注的图表，不能把新图伪装成原论文结果；
+- 需求与结果解释中应记录这一差异，待项目所有者决定是否保留另一种对照图。
+
+## 6. 候选 CurveSeries 输出 schema 与 C++17 错误合同
+
+~~~cpp
+// 设计合同，不是已实现类；公共 Result/Error 在 contracts.md。
+enum class AxisScale { Linear, Log10 };
+struct SeriesProvenance {
+    std::string original_mat_relative_path;
+    std::string original_mat_variable;
+    std::string source_blob_sha;
+};
+struct CurveSeries {
+    SeriesProvenance provenance;
+    std::string curve_id;
+    std::string x_unit, y_unit;
+    AxisScale x_scale, y_scale;
+    Eigen::VectorXd x_values, y_values;
+    std::size_t source_index_first_matlab;
+    std::size_t source_index_last_matlab;
+    std::size_t smoothing_half_window;
+    std::vector<std::pair<std::size_t, std::size_t>> plotted_segments;
+    std::vector<std::size_t> invalid_indices;
+};
+struct AnalysisDataset { std::vector<CurveSeries> curves; };
+enum class AnalysisErrorCode {
+    MissingResult, MissingVariable, ShapeMismatch, InvalidSegment,
+    NonFiniteInput, UndefinedStatistic, UnsupportedExperiment
+};
+~~~
+
+前置条件：源目录可只读加载、每条曲线要求的变量存在且形状可核实；任何 1-based→0-based 的转换必须在 Analyzer 内显式处理。后置条件：曲线数据自拥有且可在 MAT 文件关闭后独立消费；错误不得诱发求解器运行或写回源 MAT。
+
+PlotExporter 仅消费 AnalysisDataset，输出图形位置必须在独立 RunId 中且不得覆盖原数据；禁用绘图或没有图形终端时 CLI analyze 仍可返回全部数值与分析状态。
+
+## 7. 对应 Golden、边界数据与测试映射
+
+| 计划 Golden | 输入来源与核验内容 | 对应 TC |
+|---|---|---|
+| AN-G01 | 40-run 两组 Bias 的 xwerte、ywerte3…6，四组平均和 100/sqrt(x) | TC-F-BIAS-003 |
+| AN-G02 | init 的 1..13 与 1..35 原样索引，两个不等长度序列 | TC-F-AN-001 |
+| AN-G03 | comparison x=50..550、阈值 0.01、旋转/平移曲线、右轴 ratio 和各分段 | TC-F-AN-001 |
+| AN-G04 | many_parameter 的四组曲线、阈值 0.02、窗口 f=2/5/10、分段裁剪 | TC-F-AN-001 |
+| AN-G05 | rottransratio 缺失、NaN/Inf、穿越区域不足、f 超过数据长度、MAT 形状错误 | TC-I-ANALYSIS-001、TC-NF-HEADLESS-001 |
+| AN-G06 | 单位球圆/正弦轨迹、l≤2 实球谐三种插图数据 | TC-F-AN-002 |
+
+所有参考数据须来自原 MATLAB 文件/历史 MAT、带源 SHA 与明确 Golden 版本。图像像素一致性不要求，但**数据值、MATLAB 索引、绘图分段、单位和有效数量必须可审查**。
+
+**当前状态**：分析的索引、分段和平滑合同已列出；历史 MAT 全量解包、实际 Golden、批准容差、绘图后端和 C++ 测试均未完成。
