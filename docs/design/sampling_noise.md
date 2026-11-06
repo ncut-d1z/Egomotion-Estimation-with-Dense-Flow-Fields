@@ -136,6 +136,10 @@ struct FlowSynthesisResult {
     Scalar mean_translational_magnitude;
     Scalar mean_rotational_magnitude;
 };
+class SphericalRandomDirection {
+public:
+    Result<Vector3, NumericalErrorCode> sample(IRandomSource&) const;
+};
 class BiasSceneGenerator {
 public:
     Result<FlowSynthesisResult, NumericalErrorCode> makeOccluded(
