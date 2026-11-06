@@ -133,11 +133,13 @@ flowchart BT
   I[egomotion_matio] --> D
   I --> K
   I --> M[matio / zlib]
-  X[egomotion_experiments] --> V
+  X[egomotion_experiments] --> D
+  X --> V
   X --> A
   X --> S
   X --> K
-  N[egomotion_analysis] --> K
+  N[egomotion_analysis] --> D
+  N --> K
   P[egomotion_plotting] --> N
   C[egomotion_cli] --> X
   C --> N
