@@ -51,8 +51,7 @@ generate_bias_flow(level, truth_t, truth_omega, noise_kind, rng):
 ~~~cpp
 // 文档接口草案，不是实现。
 struct DirectionSet; struct FlowField;
-struct BiasSimulationInput;
-struct BiasSimulationOutput;
+// 具体 BiasFlowParameters / FlowSynthesisResult 见 §6。
 class IRandomSource {
 public:
     virtual ~IRandomSource() = default;
@@ -62,12 +61,12 @@ public:
 class IDirectionSampler {
 public:
     virtual ~IDirectionSampler() = default;
-    virtual Result<DirectionSet, SamplingError> sample(int level) const = 0;
+    virtual Result<DirectionSet, NumericalErrorCode> sample(int level) const = 0;
 };
 class IFlowNoiseModel {
 public:
     virtual ~IFlowNoiseModel() = default;
-    virtual Result<FlowField, NoiseError> apply(
+    virtual Result<FlowField, NumericalErrorCode> apply(
         const FlowField&, double coefficient, IRandomSource&) const = 0;
 };
 ~~~
