@@ -24,21 +24,22 @@ kurveglaetten.m 使用窗口内均值；原代码在头尾保留零值。该行�
 // 候选 LLD 约束，不是已实现类。
 struct CurveSeries;
 struct AnalysisDataset;
-struct AnalysisError;
+enum class AnalysisErrorCode;
+enum class PlotErrorCode { BackendUnavailable, InvalidSeries, OutputForbidden, WriteFailed };
 class BiasResultAnalyzer {
 public:
-    Result<AnalysisDataset, AnalysisError> aggregate(
+    Result<AnalysisDataset, AnalysisErrorCode> aggregate(
         const std::filesystem::path& read_only_result_root) const;
 };
 class AdaptiveResultAnalyzer {
 public:
-    Result<AnalysisDataset, AnalysisError> analyze(
+    Result<AnalysisDataset, AnalysisErrorCode> analyze(
         ExperimentKind kind, const std::filesystem::path& read_only_result_root) const;
 };
 class IPlotExporter {
 public:
     virtual ~IPlotExporter() = default;
-    virtual Result<void, PlotError> exportPlot(
+    virtual Status<PlotErrorCode> exportPlot(
         const AnalysisDataset&, const std::filesystem::path& output_file) = 0;
 };
 ~~~
