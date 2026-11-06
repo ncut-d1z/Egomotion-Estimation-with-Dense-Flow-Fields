@@ -17,7 +17,7 @@
 | 模块 | 对应文档 | 源 MATLAB 范围 | 数学/数据约定 | 候选 API | Golden/实测 | 冻结状态 |
 |---|---|---|---|---|---|---|
 | 跨模块 C++17 合同 | [contracts.md](contracts.md) | SRS/OBJECT_MODEL/全部模块 | 值类型/错误/线程与所有权语义已列，需批准 | Result/Status 候选 | 未测 | 未冻结 |
-| MAT I/O | [mat_io.md](mat_io.md) | getflowfield、各入口 load/save、582 MAT | 类型边界/路径安全已描述，全量字典缺失 | 有待核准的签名/错误码 | 未测 | 阻塞 DEC-001/002 |
+| MAT I/O | [mat_io.md](mat_io.md) | getflowfield、各入口 load/save、582 MAT | **582/582 真实 v5+zlib/double 类型字典已获得**；生产 Reader/Writer、路径安全仍待验收 | 候选签名/错误码 | **独立探针已执行，非 CTest** | DEC-001/002 格式事实已证实，接口未冻结 |
 | 基础采样与噪声 | [sampling_noise.md](sampling_noise.md) | findeDreiecke、各采样/流/噪声函数 | 已列数量、顺序、噪声方程 | 候选接口 | 未测 | 未冻结 |
 | 几何与轨迹 | [trajectory.md](trajectory.md) | Kreis/Sinus/trajectory、球内近度与旋转 | 已列离散轨迹/求交公式 | 候选接口 | 未测 | 第三方 Rodrigues 来源待审 |
 | Franz / KvD | [kvd.md](kvd.md) | zellendefinieren、franzeigen、两种 KvD、误差 | 已列各平移公式、RMS、终止规则 | 候选接口 | 未测 | 阻塞 DEC-005 |
@@ -50,7 +50,7 @@
 
 ## 当前阻塞汇总
 
-MAT 数据的 **582 文件全量变量字典**、两份外部来源代码的权利核查、CLI/error schema、正式数值容差、真实 Golden 与 CTest 名称、Debian/Ubuntu 实测平台矩阵均未闭环。因此，本目录八份模块设计可以用于进一步评审和实施准备，但均**不是正式冻结的 LLD 编码基线**。
+MAT 数据的 **582 文件全量 matio 字典已实际生成并提交**，包含 582 个 `READ_OK`、0 失败，以及 MATLAB class/data_type/dims/压缩和文件指纹。未完成的事项是生产 Reader/Writer/写回读、负例、P10.4 独立复核、两份第三方代码版权确认、CLI/error schema、数值 Golden 与正式容差，以及完整 Debian/Ubuntu 业务构建矩阵。因此，本目录八份模块设计可以用于进一步评审和实施准备，但均**不是正式冻结的 LLD 编码基线**。
 
 
 ## LLD 证据就绪度与源 MATLAB 核查重点
@@ -58,14 +58,14 @@ MAT 数据的 **582 文件全量变量字典**、两份外部来源代码的权�
 | 文档 | 已文档化的可执行设计检查点 | 尚缺的冻结证据 |
 |---|---|---|
 | contracts.md | FlowField N×6、3×5 近度系数、Result/MatError/NumericalError 候选及生命周期 | 代码内实际类型、错误码批准、线程合同测试 |
-| mat_io.md | MAT 类型判定、matio API 责任、路径保护、防竞态候选、回读合同 | 582 MAT 全量变量字典、选定 matio 版本、路径安全实测 |
+| mat_io.md | MAT v5+zlib/double 类型与形状已实测，选定探针环境 matio 1.5.26；路径保护和 Reader/Writer 候选 API | **仍缺**业务接口、写入/回读、安全负例、Golden 按值检查与 P10.4 复核 |
 | kvd.md | 原始/修正平移与旋转公式、最低/最大迭代、逐轮 trace 字段 | MATLAB 逐轮 Golden、病态边界、正式容差 |
 | harmonics.md | 9 项 l≤2 实球谐公式、3×5 索引、R3 元素、R5 递推结构 | R5 完整合法实现、外部版权、Golden 与精度 |
 | adaptive_mfa.md | M1–M4、rhs、MSE 返回、Frame/Session 更新时序差异 | 逐节点 Golden、异常提交决定、容差 |
 | sampling_noise.md | 三种采样顺序、噪声方程、rand/randn 调用顺序、source seed 重置 | 固定 RNG Golden 与样本全序核对 |
 | trajectory.md | 圆/正弦公式、方向→旋转奇异性、Rᵀ 局部运动、球内求交 | 旋转矩阵 Golden、零模/反向边界、Rodrigues 权利 |
-| experiments.md | 五个 Runner 的原参数及输出、Bias 原始 xwerte 与实际 N 不同 | MAT 实际 dtype/shape、源输出差异归因、RunContext 测试 |
-| analysis_plotting.md | 四分析入口、1-based 索引、分段阈值、半窗平滑、CurveSeries schema | 已保存 MAT 全量解码、曲线 Golden、绘图后端批准 |
+| experiments.md | 五个 Runner 原参数及输出、历史 MAT 的 double/double 和五种实测 shape、Bias 原 xwerte 与真实 N 不同 | **仍缺**当前/历史输出差异归因、RunContext、C++ 新结果测试 |
+| analysis_plotting.md | 四分析入口与历史 MAT 的真实 shape、1-based 索引、分段阈值、半窗平滑 | **仍缺**数值曲线 Golden、绘图后端批准及 C++ 分析测试 |
 
 ### 评审与完成状态的强制区分
 
@@ -76,10 +76,10 @@ MAT 数据的 **582 文件全量变量字典**、两份外部来源代码的权�
 
 ## 本期未完成的先决工作
 
-1. P0.5/P1.8/P10.4：全部 582 个 MAT 文件的元数据、解压、变量 shape/type/数值状态。
+1. **已完成的独立子能力**：582/582 MAT 已通过 matio 解压/变量元数据检查；**尚待** P1 生产 Reader/Writer 按值加载、错误负例及 P10.4 独立结果审核。
 2. P0.4/DEC-003/007：rodrigues.m、SHRotate.m 的第三方版权及可移植实现范围。
 3. P0.8/DEC-008：统一 C++17 API、状态/错误、CLI schema、组件 target 和测试实体的批准。
 4. DEC-005/006：固定源 MATLAB Golden、逐模块容差、目标 Debian/Ubuntu 环境、wall/CPU/RSS 预算。
 5. P1–P10：真实 C++ 类、CTest、运行结果及按 TC/AC 记录的证据。
 
-**目前所有模块均为设计草案；本期尚未实施 C++ 或真实数值实验。**
+**当前模块 LLD 均未冻结**：独立 C++17 matio 扫描器确已编译运行，但无生产业务模块、CTest、逐元素 Golden 或算法数值实验。不能将数据字典扫描通过扩大为整项目或 LLD 验收通过。
