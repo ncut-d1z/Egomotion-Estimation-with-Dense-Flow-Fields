@@ -2,7 +2,7 @@
 
 > **本文件为实际 MATLAB 源码审计后的修订计划，不代表任何 C++ 功能已经实现。**
 >
-> 审计依据：本仓库 main 分支的 origin/egomotion_estimation_dense_flow_fields_matlab_scripts/、AGENTS.md、原始资料自带 readme 和 2015 年论文。原始文件的目录和函数名均已在 GitHub 上核对；MAT 数据的文件头已抽样读取，但全部变量的二进制内容尚未逐个解压、验证。
+> 审计依据：本仓库 main 分支的 origin/egomotion_estimation_dense_flow_fields_matlab_scripts/、AGENTS.md、原始资料自带 readme 和 2015 年论文。原始文件的目录和函数名均已在 GitHub 上核对；MAT 变量已由独立 C++17 matio 探针在 Ubuntu 24.04 上完整读取：582 个文件、582 个变量全部 `READ_OK`，见 [docs/MAT_DATA_SCHEMA.md](docs/MAT_DATA_SCHEMA.md)。这不等于 MATLAB/C++ 算法数值等价。
 >
 > 本文件仅用于规划和跟踪，不构成启动 C++ 开发的授权。后续修改以 AGENTS.md 的工作区、提交、源数据保护及用户授权要求为准；本文档中出现的测试与运行入口均不能视为已实现。
 
@@ -65,7 +65,7 @@
 - adaptive_matched_filter_test/produced_data/many_parameter/：6 个。
 - 合计 280 + 280 + 4 + 5 + 7 + 6 = **582**。
 
-已用 GitHub 直接读取多个代表性 .mat 的 base64 内容和文件头：样本均标识 **MATLAB 5.0 MAT-file**，数据块出现 miCOMPRESSED（类型 15）。所以本项目的 **matio + zlib** 是实际必需路径；**暂不引入 HDF5**，只有在完整清单中查出 MAT v7.3 文件时再依其需求增加。尚未解压检查全部变量的维度和类型，不能将推断的输出结构冒充已经完成的数据校验。
+**matio 全量读取实测**：[docs/MAT_DATA_SCHEMA.md](docs/MAT_DATA_SCHEMA.md) 显示 582/582 MAT v5 + zlib，582 个变量全部 MATLAB class=double、data_type=double、单文件一个同名变量，均 `READ_OK`、失败 0。真实维度分布：10×1（80）、10×3（480）、35×1（4）、600×1（14）、600×4（4）。本批归档无需 HDF5，也不存在需读取的 cell/struct/sparse/complex 类型。独立扫描器不是正式业务 Reader/Writer，未验证列主序值拷贝、异常负例或算法数值等价。
 
 ### 2.2 源文件对应的功能清单（计划中的一对一追踪依据）
 
@@ -163,14 +163,16 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 | P0.2 | 对 33 个辅助函数及 12 个入口/绘图文件逐一形成函数签名、被谁调用、是否实际用于实验、输入维度、输出变量清单 | P0.1 | REQ-D-SOURCE-001 | TC-D-SOURCE-001 / AC-D-SOURCE-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
 | P0.3 | 建立两套 bias 与四套 adaptive 归档子目录的结果文件清单；对照 MATLAB 的 save、load 和 getflowfield 调用 | P0.1 | REQ-D-SOURCE-001 | TC-D-SOURCE-001 / AC-D-SOURCE-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
 | P0.4 | 核查 rodrigues.m、SHRotate.m 的第三方来源和可移植范围；记录未能确认的版权问题，不擅自添加 LICENSE | P0.1 | REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001 | TC-D-SOURCE-002、TC-NF-COPYRIGHT-001 / AC-D-SOURCE-002、AC-NF-COPYRIGHT-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
-| P0.5 | 制定 582 个 MAT 的文件身份清单、抽样检查、matio/zlib 批量解码和变量字典审计方案；只交付审计规程及未决项。**本项不验收 AC-D-MAT-001 的全量解码结果**，须待 P1.8 实际核验及 P10.4 复核 | P0.1 | REQ-F-MAT-002、REQ-D-MAT-001 | TC-F-MAT-002、TC-D-MAT-001 / AC-F-MAT-002、AC-D-MAT-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
-| P0.6 | 建立/更新 SOURCE_INVENTORY、MAT_DATA_SCHEMA、MIGRATION_MATRIX 的来源清单和**待全量解码**模板，标注每个字段已确认/未核查；关联旧计划参数差异。P0 阶段不得将字典草案误记为 AC-D-MAT-001 已通过 | P0.2、P0.3、P0.5 | REQ-D-MAT-001、REQ-PROC-TRACE-001 | TC-D-MAT-001、TC-PROC-TRACE-001 / AC-D-MAT-001、AC-PROC-TRACE-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
+| P0.5 | 维护原始 MAT 文件身份、元数据字段及扫描失败分类方案；**MAT_DATA_SCHEMA 已由真实 matio 全量探针生成**。本 P0 审计任务与 AC-D-MAT-001 的完整实测/复核验收分开记录 | P0.1 | REQ-F-MAT-002、REQ-D-MAT-001 | TC-F-MAT-002、TC-D-MAT-001 / AC-F-MAT-002、AC-D-MAT-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
+| P0.6 | 维护 SOURCE_INVENTORY、**真实 MAT_DATA_SCHEMA**、MIGRATION_MATRIX 的追踪与来源；将已实测文件字段与尚需数值/授权/错误合同确认的内容区分。SOURCE_INVENTORY、MIGRATION_MATRIX 尚未完成，不自动视为全项验收 | P0.2、P0.3、P0.5 | REQ-D-MAT-001、REQ-PROC-TRACE-001 | TC-D-MAT-001、TC-PROC-TRACE-001 / AC-D-MAT-001、AC-PROC-TRACE-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
 | P0.7 | 复核并完善已有 docs/OBJECT_MODEL.md **草案**，覆盖 45 个 MATLAB 文件→候选方法及对象所有权，不把已有文件视为任务完成 | P0.2 | REQ-DC-DOMAIN-001、REQ-NF-OOP-001 | TC-DC-DOMAIN-001、TC-NF-OOP-001 / AC-DC-DOMAIN-001、AC-NF-OOP-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
 | P0.8 | 评审 HLD/对象模型/LLD 的最小接口与错误合同，明确当前已冻结范围和未决 DEC；不因 582 MAT 尚未全量解码而虚报数据合同冻结 | P0.6、P0.7 | REQ-DC-DOMAIN-001、REQ-NF-OOP-001、REQ-I-CLI-001 | TC-DC-DOMAIN-001、TC-NF-OOP-001、TC-I-CLI-001 / AC-DC-DOMAIN-001、AC-NF-OOP-001、AC-I-CLI-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
 
-**P0 状态**：原始目录/部分函数和文件头已经人工核查，SRS、HLD、OBJECT_MODEL、TEST_PLAN、八份模块 LLD **草案已存在但未冻结**；SOURCE_INVENTORY、MAT_DATA_SCHEMA、MIGRATION_MATRIX 的全量内容尚未完成。P0.5/P0.6 只要求审计规程与字典草案；`AC-D-MAT-001` 的**582 文件实际完整解码与结果记录**由 P1.8 交付，P10.4 进行复核后才能验收。P0 文档审计与 P1 工具实现是不同的通过条件，避免形成 P0↔P1 循环依赖。
+**P0/P1 数据审计现状**：源文件与归档已核对，MAT_DATA_SCHEMA 是**582 文件全量真实 matio 数据字典**；SRS、HLD、OBJECT_MODEL、TEST_PLAN、LLD 仍为未冻结草案，SOURCE_INVENTORY 与 MIGRATION_MATRIX 的全量内容未完成。P0 的文档合同、独立 P1 探针执行、生产 Reader/Writer 和 P10.4 审核均为独立门禁，不以扫描器成功替代整阶段验收。
 
 ### P1 — 独立构建、CLI 与 MAT 文件访问
+
+> **已有局部实测**：独立 `src/mat_data_dict_probe.cpp` 已在 Ubuntu 24.04/GCC 13/matio 1.5.26 上编译运行；582 个 MAT 成功解码。完整 CMake 工程、业务 CLI、Reader/Writer、错误路径、写回读和 CTest 尚未验证。
 
 | ID | 单一子任务与验收要点 | 前置 P | REQ | TC / AC | 证据要求与当前状态 |
 |---|---|---|---|---|---|
@@ -178,10 +180,10 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 | P1.2 | 建立 CLI 参数解析、退出码与独立输出路径；允许只执行 inspect 而不加载算法 | P1.1 | REQ-F-CLI-001、REQ-DC-EXPERIMENT-001、REQ-NF-PORTABLE-001、REQ-F-CLI-002、REQ-F-CLI-003、REQ-F-CLI-004、REQ-F-CLI-005、REQ-I-CLI-001 | TC-F-CLI-001、TC-DC-EXPERIMENT-001、TC-NF-PORTABLE-001、TC-F-CLI-002、TC-F-CLI-003、TC-F-CLI-004、TC-F-CLI-005、TC-I-CLI-001 / AC-F-CLI-001、AC-DC-EXPERIMENT-001、AC-NF-PORTABLE-001、AC-F-CLI-002、AC-F-CLI-003、AC-F-CLI-004、AC-F-CLI-005、AC-I-CLI-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
 | P1.3 | 封装 matio 只读文件句柄和变量句柄的 RAII；错误路径无资源泄漏且不会写源文件 | P1.1 | REQ-F-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001、REQ-I-MAT-001 | TC-F-MAT-001、TC-DC-IO-001、TC-NF-SAFETY-001、TC-I-MAT-001 / AC-F-MAT-001、AC-DC-IO-001、AC-NF-SAFETY-001、AC-I-MAT-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
 | P1.4 | 通过 MAT v5+zlib 读取数值变量的真实 rank、dims、类型、字节数及列主序内容；不静默转置或单精度升级 | P1.3 | REQ-F-CLI-001、REQ-F-MAT-001、REQ-D-MAT-002 | TC-F-CLI-001、TC-F-MAT-001、TC-D-MAT-002 / AC-F-CLI-001、AC-F-MAT-001、AC-D-MAT-002 | 源外构建/IO 合同、测试日志；未实施/未验收 |
-| P1.5 | 递进实现真实数据需要的 struct/cell、复数、逻辑或稀疏类型；未要求的类型明确拒绝，禁止伪称全部支持 | P1.4 | REQ-F-MAT-002 | TC-F-MAT-002 / AC-F-MAT-002 | 源外构建/IO 合同、测试日志；未实施/未验收 |
+| P1.5 | 按已核实的源 MAT v5/zlib + double/double + 五种二维形状确定实际读取范围；对非目标 cell/struct/complex/sparse/MAT v7.3 实现清晰的 UnsupportedClassOrType 拒绝和负例测试，避免无需求的扩展 | P1.4 | REQ-F-MAT-002 | TC-F-MAT-002 / AC-F-MAT-002 | 源外构建/IO 合同、测试日志；未实施/未验收 |
 | P1.6 | 实现明确变量名加载和 getflowfield 兼容读取（首变量/自动 .mat 后缀）；分别测试，不能混淆 | P1.4 | REQ-F-CLI-001、REQ-F-MAT-003、REQ-I-MAT-001 | TC-F-CLI-001、TC-F-MAT-003、TC-I-MAT-001 / AC-F-CLI-001、AC-F-MAT-003、AC-I-MAT-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
 | P1.7 | 实现**仅向新结果目录**写入 MATLAB 兼容 MAT 的结果文件，写后读取检查变量名、维度与数值 | P1.3 | REQ-F-MAT-004、REQ-NF-SAFETY-001、REQ-I-MAT-001、REQ-I-RESULT-001 | TC-F-MAT-004、TC-NF-SAFETY-001、TC-I-MAT-001、TC-I-RESULT-001 / AC-F-MAT-004、AC-NF-SAFETY-001、AC-I-MAT-001、AC-I-RESULT-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
-| P1.8 | 先用代表样本核对 matio 解码合同，继而**遍历全部 582 份 MAT** 执行真实解压、变量枚举、数据类型/形状/读取状态核查，生成带文件路径、来源 SHA 和失败清单的 MAT_DATA_SCHEMA；AC-D-MAT-001 在该全量检查及 P10.4 复核后才有判定依据 | P1.4 | REQ-F-MAT-001、REQ-D-MAT-001、REQ-NF-RUNTIME-001 | TC-F-MAT-001、TC-D-MAT-001、TC-NF-RUNTIME-001 / AC-F-MAT-001、AC-D-MAT-001、AC-NF-RUNTIME-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
+| P1.8 | **已有独立 matio 探针的 582/582 `READ_OK` 正式字典**（文件/变量/class/dtype/dims/压缩/FNV64）；后续核对业务 Reader 的类型/索引/复制/异常处理及独立数据复核，P10.4 完成审查后再判定 AC-D-MAT-001；不得把探针成功算作 Reader 完成 | P1.4 | REQ-F-MAT-001、REQ-D-MAT-001、REQ-NF-RUNTIME-001 | TC-F-MAT-001、TC-D-MAT-001、TC-NF-RUNTIME-001 / AC-F-MAT-001、AC-D-MAT-001、AC-NF-RUNTIME-001 | **扫描子任务已实测；生产 Reader/复核/性能未验收** |
 | P1.9 | 建立 move-only MatFileHandle/MatVariableHandle 与 MatResultReader、RunMatWriter；验证 RAII、无悬垂 Eigen Map、只读原始数据和拒绝覆盖 origin/历史 RunId | P1.3、P1.7 | REQ-F-MAT-001、REQ-F-MAT-004、REQ-DC-IO-001、REQ-NF-SAFETY-001 | TC-F-MAT-001、TC-F-MAT-004、TC-DC-IO-001、TC-NF-SAFETY-001 / AC-F-MAT-001、AC-F-MAT-004、AC-DC-IO-001、AC-NF-SAFETY-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
 | P1.10 | 建立 IResultReader/IResultWriter 的窄接口与内存测试替身，在 composition root 注入；验证 CLI 和求解器均不直接依赖 matio C 指针 | P1.6、P1.7 | REQ-DC-IO-001 | TC-DC-IO-001 / AC-DC-IO-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
 
@@ -348,7 +350,7 @@ flowchart LR
 | 里程碑 | 交付范围 | 进入条件 | 退出条件和证据 |
 |---|---|---|---|
 | M0 源资料与设计评审门禁 | P0.1–P0.8 的可评审资料、SRS/HLD/LLD 草案 | 原资料目录可只读访问、AGENTS 已核对 | 45 文件来源清单、MAT **全量审计方案但非全量解码结果**、最小接口批准范围和开放 DEC；**当前尚未正式验收** |
-| M1 MAT 只读/新结果写入闭环 | P1 + P2 基础值类型 | M0 最小合同审查、开发分支远程检查点 | MAT 读取、**582 文件完整解压与元数据字典**、类型/shape、路径保护与回写回读的真实测试日志；P10.4 尚须独立复核 |
+| M1 MAT 只读/新结果写入闭环 | P1 + P2 基础值类型 | M0 最小合同审查、开发分支远程检查点 | MAT 读取、**582 文件 matio 全量数据字典已由独立探针提供；仍需业务读取/异常负例/写回读验收**、类型/shape、路径保护与回写回读的真实测试日志；P10.4 尚须独立复核 |
 | M2 Bias 计算与统计 | P2–P5 的共享数学、噪声、Franz、KvD、Bias | M1 + 相关数学/采样合同 | Original/Modified 每轮对照和两个 40-run 统计，含失败样本 |
 | M3 Adaptive 数值闭环 | P6–P8 轨迹、球谐和自适应 Session | 所需旋转/球谐代码及基准可用，版权障碍已处理 | 35/600 点与 1/5/11/21 更新率实验，合同及错误数有证据 |
 | M4 图表和原文复现 | P9–P10 | M2/M3 必须输出可校验 MAT | 四种分析、三幅插图与论文相关曲线数据复现；容差与例外批准 |
@@ -397,7 +399,7 @@ flowchart LR
 
 | 风险 ID | 对应 DEC/需求 | 风险信号 | 实施响应、责任角色与状态 |
 |---|---|---|---|
-| R-01 | DEC-001/002，REQ-D-MAT-001 | 某 MAT 文件不能被当前 matio+zlib 解析 | P1.4/P1.8 补实际类型字典、保持只读和失败数；数据审计负责人；待验证 |
+| R-01 | DEC-001/002，REQ-D-MAT-001 | 现存归档已 582/582 读取成功，但新增 MAT 或正式 Reader 可能出现未支持类型/形状 | 当前数据边界已经确认；P1.5/1.9 做拒绝负例与 Reader 合同，P10.4 独立复核；未全部验收 |
 | R-02 | DEC-003/007，REQ-D-SOURCE-002 | rodrigues/SHRotate 存在外部版权/来源障碍 | P0.4/P10.7 追踪来源并审查可移植范围；项目所有者批准；未解决 |
 | R-03 | DEC-004，REQ-D-MAT-003 | 历史 MAT 与当前 save 列表不一致 | P8.7 三方字段差异表，不补造数据；数值负责人；待归因 |
 | R-04 | DEC-005，REQ-NF-NUM-001 | MATLAB/Eigen 计算顺序与奇异边界导致误差 | P4.8/P7.9 固定输入逐轮对照，容差按条件数批准；未冻结 |
@@ -414,7 +416,7 @@ flowchart LR
 - MATLAB 原始资料：**Egomotion Estimation with Dense Flow Fields: MATLAB Scripts**，https://doi.org/10.4119/unibi/2736885
 - 本仓库原始文件目录：origin/egomotion_estimation_dense_flow_fields_matlab_scripts/
 - 本项目规则：[AGENTS.md](AGENTS.md)
-- **审计深度**：此前已经逐个读取全部 45 个 MATLAB 文件和 readme；通过 GitHub 仓库树核对 582 个 MAT 路径，抽样检查多个 MAT 文件头；本次复核现有计划及 AGENTS，补齐 OOP 设计；尚未通过 matio 解包校验全部 MAT 变量，也没有编译、运行 MATLAB/C++ 或重做实验。
+- **审计深度**：45 份 MATLAB 文件与原始目录已核对；独立 matio C++ 探针已在 Ubuntu 24.04 编译运行并逐文件读取 **582/582 MAT、582/582 变量，失败 0**；来源及字段见 [MAT_DATA_SCHEMA.md](docs/MAT_DATA_SCHEMA.md)。**尚未**运行原 MATLAB 求解器、编译完整 C++ 业务项目、建立 CTest、复现数值算法或审查完整第三方版权。
 - 本计划只代表后续可执行工作拆分，不视为任何阶段已交付。后续开发须对照实际源码进一步填充函数/数据对照文档，并在产生新事实时以独立提交更新计划。
 
 **最终架构决策：C++17 + Eigen 3 + matio/zlib + CMake；以值对象、RAII、窄接口、策略组合、无状态求解器和有状态实验会话实现面向对象架构；无状态数学公式保留函数形式；保留原始 MAT 文件与完整原始资料目录；按模块移植 45 个 MATLAB 文件所涵盖的数值和分析流程；每个子任务独立验证后集成；目标仅 Debian/Ubuntu。**
