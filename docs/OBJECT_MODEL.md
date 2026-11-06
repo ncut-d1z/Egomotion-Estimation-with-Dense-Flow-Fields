@@ -188,3 +188,73 @@ stateDiagram-v2
 - [ ] 由项目维护者批准对象模型和约束后，才在详细设计和 C++ 头文件中固定方法签名。
 
 本文件只提供设计审查材料。**未编译、未创建类、未通过测试；P0.7/P0.8 尚未完成。**
+
+## 6. 原 MATLAB 45 文件 → 预定 C++ 类方法/自由函数映射（P0.7）
+
+**这是设计分配表，不是实现清单。** MATLAB 文件名和路径已在源树核对；右列只是拟定责任归属与能力名称，未创建 C++ 类、方法或测试。具体函数签名、参数、source SHA 与对应 REQ/TC 见 SRS §9.2 及模块 LLD，后续要逐项冻结。
+
+| 原始文件（相对于 origin 数据根目录） | 拟定拥有职责的类/函数 | 设计/验证状态 |
+|---|---|---|
+| `adaptive_matched_filter_test/data_analysis/graph_agent_in_sphere_adaptive_matched_filter_many_parameter.m` | AdaptiveResultAnalyzer::updateRates | 已定位 / 合同待 P0 核验 |
+| `adaptive_matched_filter_test/data_analysis/graph_agent_in_sphere_adaptive_matched_filter_test.m` | AdaptiveResultAnalyzer::comparison | 已定位 / 合同待 P0 核验 |
+| `adaptive_matched_filter_test/data_analysis/graph_agent_in_sphere_initialization_test.m` | AdaptiveResultAnalyzer::initialization | 已定位 / 合同待 P0 核验 |
+| `adaptive_matched_filter_test/data_generation/agent_in_sphere_adaptive_matched_filter_many_parameter.m` | UpdateRateRunner::run | 已定位 / 合同待 P0 核验 |
+| `adaptive_matched_filter_test/data_generation/agent_in_sphere_adaptive_matched_filter_test.m` | AdaptiveComparisonRunner::run | 已定位 / 合同待 P0 核验 |
+| `adaptive_matched_filter_test/data_generation/agent_in_sphere_initialization_test.m` | InitializationRunner::run | 已定位 / 合同待 P0 核验 |
+| `bias_test/data_analysis/graphs_bias_test.m` | BiasResultAnalyzer::aggregate | 已定位 / 合同待 P0 核验 |
+| `bias_test/data_generation/bias_test_nonspherical.m` | BiasExperimentRunner::runOccluded | 已定位 / 合同待 P0 核验 |
+| `bias_test/data_generation/bias_test_spherical_prop_error.m` | BiasExperimentRunner::runProportional | 已定位 / 合同待 P0 核验 |
+| `help_functions/SHRotate.m` | HarmonicRotator / buildRotationBlocks | 已定位 / 合同待 P0 核验 |
+| `help_functions/drehvektor_aus_zwei_vektoren.m` | math::rotationVectorBetween (自由函数) | 已定位 / 合同待 P0 核验 |
+| `help_functions/erzeugeflussausnear.m` | FlowSynthesizer::synthesize | 已定位 / 合同待 P0 核验 |
+| `help_functions/erzeugekreuzproduktmatrix.m` | math::crossMatrix (自由函数) | 已定位 / 合同待 P0 核验 |
+| `help_functions/erzeugerichtungsvektoren.m` | OctahedralSampler::sample | 已定位 / 合同待 P0 核验 |
+| `help_functions/erzeugerichtungsvektoren_loch.m` | OccludedOctahedralSampler::sample | 已定位 / 合同待 P0 核验 |
+| `help_functions/findeDreiecke.m` | sampling::subdivideTriangle (私有自由函数) | 已定位 / 合同待 P0 核验 |
+| `help_functions/fixed_kugel_symmetric_perfectpoints_randomnear.m` | BiasSceneGenerator::makeOccludedScene | 已定位 / 合同待 P0 核验 |
+| `help_functions/fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m` | BiasSceneGenerator::makeProportionalScene | 已定位 / 合同待 P0 核验 |
+| `help_functions/franzeigen.m` | FranzMatchedFilter::estimate | 已定位 / 合同待 P0 核验 |
+| `help_functions/getflowfield.m` | MatResultReader::readFirstCompatible | 已定位 / 合同待 P0 核验 |
+| `help_functions/getnear_in_kugel_Drehung.m` | SphereEnvironment::nearness | 已定位 / 合同待 P0 核验 |
+| `help_functions/getvektor.m` | SphericalRandomDirection::sample (RNG 注入) | 已定位 / 合同待 P0 核验 |
+| `help_functions/koeff_aus_near.m` | HarmonicFitter::fit | 已定位 / 合同待 P0 核验 |
+| `help_functions/kreis_trajektorie.m` | TrajectoryGenerator::circle | 已定位 / 合同待 P0 核验 |
+| `help_functions/kreuzprodukt.m` | math::cross (自由函数) | 已定位 / 合同待 P0 核验 |
+| `help_functions/kugelflfunc2.m` | RealSphericalHarmonics::evaluate | 已定位 / 合同待 P0 核验 |
+| `help_functions/kurveglaetten.m` | analysis::windowMean (自由函数) | 已定位 / 合同待 P0 核验 |
+| `help_functions/mue_norm_koenderink_iteration.m` | ModifiedKvDEstimator::estimate | 已定位 / 合同待 P0 核验 |
+| `help_functions/near_aus_koeff.m` | RealSphericalHarmonics::reconstructNearness | 已定位 / 合同待 P0 核验 |
+| `help_functions/nonpropfehler.m` | MeanMagnitudeGaussianNoise::apply | 已定位 / 合同待 P0 核验 |
+| `help_functions/norm_koenderink_iteration.m` | OriginalKvDEstimator::estimate | 已定位 / 合同待 P0 核验 |
+| `help_functions/normrelfehler.m` | metrics::directionAngleDeg | 已定位 / 合同待 P0 核验 |
+| `help_functions/oneit_adaptiv_matched_filter.m` | AdaptiveMfaStepSolver::solve | 已定位 / 合同待 P0 核验 |
+| `help_functions/richtungsvektoren_icosahedron.m` | IcosahedralSampler::sample | 已定位 / 合同待 P0 核验 |
+| `help_functions/rodrigues.m` | math::rodrigues (实验实际使用的向量→矩阵分支) | 已定位 / 合同待 P0 核验 |
+| `help_functions/sinuskurve_trajektorie.m` | TrajectoryGenerator::sine | 已定位 / 合同待 P0 核验 |
+| `help_functions/skalarprodukt.m` | math::dot (自由函数) | 已定位 / 合同待 P0 核验 |
+| `help_functions/trajektorie_aus_punkten.m` | TrajectoryKinematics::fromPoints | 已定位 / 合同待 P0 核验 |
+| `help_functions/transfehler_div.m` | metrics::scaleAlignedVectorError | 已定位 / 合同待 P0 核验 |
+| `help_functions/transfor_koeff.m` | HarmonicRotator::rotateCoefficients | 已定位 / 合同待 P0 核验 |
+| `help_functions/winkelausvektor.m` | math::directionToAngles | 已定位 / 合同待 P0 核验 |
+| `help_functions/zellendefinieren.m` | FranzMatchedFilter::axisTemplates | 已定位 / 合同待 P0 核验 |
+| `illustrations/circle_curve_in_the_sphere.m` | IPlotExporter::drawCircleInSphere (可选) | 已定位 / 合同待 P0 核验 |
+| `illustrations/sinosodial_curve_in_the_sphere.m` | IPlotExporter::drawSineInSphere (可选) | 已定位 / 合同待 P0 核验 |
+| `illustrations/spherical_harmonic_illustration.m` | IPlotExporter::drawHarmonic (可选) | 已定位 / 合同待 P0 核验 |
+
+- 无状态的点积、叉积、采样递归、误差公式优先使用自由函数，**不要为了“45/45 面向对象”而强行创建 45 个类**。
+- 实验入口统一由 Runner 调度，但必须保留各自独立的参数和存储合同。历史 MAT 结果的分析与绘图不反向依赖求解器。
+- `rodrigues.m` 与 `SHRotate.m` 有外部来源；C++ 实现范围与授权须在复制原代码前另行核验。
+- 对一份 MATLAB 文件内多个辅助函数或附加可调用模式，P0.2 必须另列到方法级迁移表；本表仅记录每个文件的首要职责，不等于逐函数审计已全部完成。
+
+## 7. 类方法签名冻结门禁
+
+| 设计特性 | 待冻结合同 | 证据 |
+|---|---|---|
+| 数据输入 | 参数名称、单位、维度、存储主序、空输入和归一化约束 | 固定 MATLAB 基准样本 |
+| 数据输出 | 结果值的类型、有效性、生命周期、必要残差和中间量 | SRS/TC 对照 |
+| 资源拥有 | unique 句柄、复制/移动/异常清理、不可覆盖原始 MAT | 资源测试、只读文件 hash |
+| 状态与线程 | RunContext / Session 唯一写入者，跨帧更新次序，单 Session 并发不承诺 | 独立 Session 回归 |
+| 错误处理 | 业务类别与精确 C++17 result/error 约定，CLI 状态映射 | 含失败路径的合同测试 |
+| 批准 | 原 MATLAB SHA、评审人、批准日期、受影响 REQ/TC、开放 DEC | 架构审查记录 |
+
+**状态仍为草案：本文件尚不包含经批准的可编译类签名，P0.7/P0.8 不能记为完成。**
