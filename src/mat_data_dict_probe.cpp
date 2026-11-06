@@ -136,13 +136,35 @@ std::string typeOf(enum matio_types t) {
     const auto it = names.find(n);
     return it == names.end() ? "unknown#" + std::to_string(n) : it->second;
 }
+std::string classOf(enum matio_classes c) {
+    switch (c) {
+        case MAT_C_EMPTY: return "empty";
+        case MAT_C_CELL: return "cell";
+        case MAT_C_STRUCT: return "struct";
+        case MAT_C_OBJECT: return "object";
+        case MAT_C_CHAR: return "char";
+        case MAT_C_SPARSE: return "sparse";
+        case MAT_C_DOUBLE: return "double";
+        case MAT_C_SINGLE: return "single";
+        case MAT_C_INT8: return "int8";
+        case MAT_C_UINT8: return "uint8";
+        case MAT_C_INT16: return "int16";
+        case MAT_C_UINT16: return "uint16";
+        case MAT_C_INT32: return "int32";
+        case MAT_C_UINT32: return "uint32";
+        case MAT_C_INT64: return "int64";
+        case MAT_C_UINT64: return "uint64";
+        case MAT_C_FUNCTION: return "function";
+        case MAT_C_OPAQUE: return "opaque";
+        default: return "unknown#" + std::to_string(static_cast<int>(c));
+    }
+}
 Variable readVariable(mat_t* mat, const std::string& name) {
     Variable v;
     v.name = name;
     VarHandle handle(Mat_VarRead(mat, name.c_str())); // 加载完整数据，而不只读头。
     if (!handle) { v.status = "READ_FAILED"; return v; }
-    const char* class_name = Mat_VarGetClassName(handle.get());
-    v.cls = class_name ? class_name : "unknown";
+    v.cls = classOf(handle->class_type);
     v.dtype = typeOf(handle->data_type);
     v.bytes = handle->nbytes;
     v.compression = handle->compression == MAT_COMPRESSION_ZLIB ? "zlib" : "none/other";
