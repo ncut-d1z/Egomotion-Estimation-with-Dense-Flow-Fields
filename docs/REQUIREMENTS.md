@@ -171,6 +171,8 @@
 
 ### 6.1 拟议 CLI 参数 schema 与退出码（待 P0.8/P1.2 冻结）
 
+逐命令选项类型、合法范围、错误优先级、RunId/诊断输出的明确候选见 [design/cli.md](design/cli.md)。本节保持外部需求概览，**CLI 细节仍待批准，不等于已实现或已冻结**。
+
 | 入口 | 必填或关键实参 | 可核验的输出 |
 |---|---|---|
 | inspect-mat | --file PATH；可选 --variable NAME、--mode strict/compat | 不写输入文件，显示 MAT 变量与错误诊断 |
