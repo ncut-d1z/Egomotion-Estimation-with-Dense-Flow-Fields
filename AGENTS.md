@@ -1,14 +1,14 @@
 # AI Agent 开发规范
 
-> 本文件根据 [FastMono2 的 AGENTS.md](https://github.com/ncut-d1z/FastMono2/blob/main/AGENTS.md) 选取通用规则，并针对本项目的 [PLAN.md](PLAN.md) 改写。它不是原文件的逐字复制。FastMono2 专属的 ESKF、EuRoC、ROS、FloatType 命名、C++20/23 及其 Issue 编号和分支名称不适用于本仓库。
+> 本文件根据 [FastMono2 的 AGENTS.md](https://github.com/ncut-d1z/FastMono2/blob/main/AGENTS.md) 选取通用规则，并针对本项目的 [PLAN.md](docs/PLAN.md) 改写。它不是原文件的逐字复制。FastMono2 专属的 ESKF、EuRoC、ROS、FloatType 命名、C++20/23 及其 Issue 编号和分支名称不适用于本仓库。
 
 ## 一、适用范围与任务边界
 
 - 本规范适用于参与本仓库的 AI Agent、子 Agent、自动化脚本及其使用的 GitHub 连接器。主 Agent 必须将相关约束传递给受委派任务，不得通过其他工具绕过规则。
-- **执行前先核查当前状态**：阅读本文件、[PLAN.md](PLAN.md)、相关源码、最新任务进度以及有关的 Issue/PR；检查实际工作区、分支和远端状态。既往对话或旧报告不能替代当前证据。
+- **执行前先核查当前状态**：阅读本文件、[PLAN.md](docs/PLAN.md)、相关源码、最新任务进度以及有关的 Issue/PR；检查实际工作区、分支和远端状态。既往对话或旧报告不能替代当前证据。
 - **明确授权优先**：用户要求计划、审查或只读分析时，不得修改仓库、提交文件或改变 Issue/PR。现有计划不构成自动启动后续阶段的授权。
 - 本仓库的目标是忠实移植 Strübbe、Stürzl、Egelhaaf 的 MATLAB 数值实验，而不是重新设计新的自运动估计算法。不能把“改进算法”冒充“忠实移植”。
-- 若 README、旧记录与用户最新明确决定不一致，应先核实并说明差异；本项目当前以 [PLAN.md](PLAN.md) 中的 **直接读取原始 MAT 文件** 方案为准，不擅自引入已经放弃的 NPZ 转换路径。
+- 若 README、旧记录与用户最新明确决定不一致，应先核实并说明差异；本项目当前以 [PLAN.md](docs/PLAN.md) 中的 **直接读取原始 MAT 文件** 方案为准，不擅自引入已经放弃的 NPZ 转换路径。
 
 ## 二、语言与代码可读性
 
