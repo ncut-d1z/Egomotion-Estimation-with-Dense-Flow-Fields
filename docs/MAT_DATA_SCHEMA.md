@@ -7,16 +7,31 @@
 - 源目录 Git 树：70ee155131c24a50169346d0ffbaff0c01b1c547
 - 已核对文件数：582；matio 已读取文件数：0；待验证：582。
 
+## 归档分组及独立样本
+
+四份样本由独立二进制解析方式核实，进行了 MAT v5 zlib 解压、Adler-32 检查及变量 shape/class/dtype 提取。**没有运行 matio。**其余 578 个文件的变量内容未逐一解码。
+
+| 分组 | 文件数 |
+|---|---:|
+| bias_test/produced_data/occluded_regions | 280 |
+| bias_test/produced_data/proportional_error | 280 |
+| adaptive_matched_filter_test/produced_data/initialization | 4 |
+| adaptive_matched_filter_test/produced_data/without_errors | 5 |
+| adaptive_matched_filter_test/produced_data/with_errors | 7 |
+| adaptive_matched_filter_test/produced_data/many_parameter | 6 |
+
+## MAT 文件与变量清单（完整 582 文件）
+
 | MAT 相对路径 | 文件字节数 | Git blob SHA | 变量名 | class | dtype | dims | matio 状态 |
 |---|---:|---|---|---|---|---|---|
 | adaptive_matched_filter_test/produced_data/initialization/allemitrotfehler.mat | 473 | 36a7a39078077f5f971682f8243ebf13eb22b85c | 待扫描 | 待扫描 | 待扫描 | 待扫描 | NOT_RUN |
-| adaptive_matched_filter_test/produced_data/initialization/allemittransfehler.mat | 315 | 80062632b3f2ba2925547669e16ddc904ebe25cd | 待扫描 | 待扫描 | 待扫描 | 待扫描 | NOT_RUN |
+| adaptive_matched_filter_test/produced_data/initialization/allemittransfehler.mat | 315 | 80062632b3f2ba2925547669e16ddc904ebe25cd | allemittransfehler | double | double | 35×1 | INDEPENDENT_BINARY_SAMPLE / MATIO_NOT_RUN |
 | adaptive_matched_filter_test/produced_data/initialization/alleohnerotfehler.mat | 239 | dff63cc44f18ae74d8c1993425be607283113ec7 | 待扫描 | 待扫描 | 待扫描 | 待扫描 | NOT_RUN |
 | adaptive_matched_filter_test/produced_data/initialization/alleohnetransfehler.mat | 244 | c52db01e9dc86ad87143d4b591462eeb41f5574d | 待扫描 | 待扫描 | 待扫描 | 待扫描 | NOT_RUN |
 | adaptive_matched_filter_test/produced_data/many_parameter/akrot.mat | 2177 | 4304751c6f74f214396149fd66698df008f1c1a0 | 待扫描 | 待扫描 | 待扫描 | 待扫描 | NOT_RUN |
 | adaptive_matched_filter_test/produced_data/many_parameter/alleadaprotfehler.mat | 17830 | 9e418020cf33ecf61a31da34bb62eb5e2ed9238b | 待扫描 | 待扫描 | 待扫描 | 待扫描 | NOT_RUN |
 | adaptive_matched_filter_test/produced_data/many_parameter/alleadaptransfehler.mat | 17780 | a4158a63c694a557ff7a1901561c0a9344c0f3f1 | 待扫描 | 待扫描 | 待扫描 | 待扫描 | NOT_RUN |
-| adaptive_matched_filter_test/produced_data/many_parameter/allemitrotfehler.mat | 17796 | 4ec42297cdd86d91e07f99d6822fc3e84f143514 | 待扫描 | 待扫描 | 待扫描 | 待扫描 | NOT_RUN |
+| adaptive_matched_filter_test/produced_data/many_parameter/allemitrotfehler.mat | 17796 | 4ec42297cdd86d91e07f99d6822fc3e84f143514 | allemitrotfehler | double | double | 600×4 | INDEPENDENT_BINARY_SAMPLE / MATIO_NOT_RUN |
 | adaptive_matched_filter_test/produced_data/many_parameter/allemittransfehler.mat | 17708 | 28c3cc64f3a390bc9459167cec890de8c9657b91 | 待扫描 | 待扫描 | 待扫描 | 待扫描 | NOT_RUN |
 | adaptive_matched_filter_test/produced_data/many_parameter/rottransratio.mat | 4806 | d29b7480178864817e4ef4750145469e6427b205 | 待扫描 | 待扫描 | 待扫描 | 待扫描 | NOT_RUN |
 | adaptive_matched_filter_test/produced_data/with_errors/alleadaprotfehler.mat | 4771 | 790b2de5a90e6dc89bf0fc3bc3169dde6f58616c | 待扫描 | 待扫描 | 待扫描 | 待扫描 | NOT_RUN |
@@ -31,10 +46,10 @@
 | adaptive_matched_filter_test/produced_data/without_errors/alleohnerotfehler.mat | 4796 | dd1993fac3fae3fb6b9ae2e215780231091e3142 | 待扫描 | 待扫描 | 待扫描 | 待扫描 | NOT_RUN |
 | adaptive_matched_filter_test/produced_data/without_errors/alleohnetransfehler.mat | 4739 | bb0b7d9be02167f3b08c23a2bf66c407b96661ab | 待扫描 | 待扫描 | 待扫描 | 待扫描 | NOT_RUN |
 | adaptive_matched_filter_test/produced_data/without_errors/rottransratio.mat | 4808 | 69b939bd575255026c9d3aa321a282968f7ecbb6 | 待扫描 | 待扫描 | 待扫描 | 待扫描 | NOT_RUN |
-| bias_test/produced_data/occluded_regions/1/xwerte.mat | 184 | 96bc296609d30fb7525a31b3efc0a35425e2eb0c | 待扫描 | 待扫描 | 待扫描 | 待扫描 | NOT_RUN |
+| bias_test/produced_data/occluded_regions/1/xwerte.mat | 184 | 96bc296609d30fb7525a31b3efc0a35425e2eb0c | xwerte | double | int32 (stored) | 10×1 | INDEPENDENT_BINARY_SAMPLE / MATIO_NOT_RUN |
 | bias_test/produced_data/occluded_regions/1/ywerte1.mat | 437 | d74e109487d506320757ae8406801d6346e189f0 | 待扫描 | 待扫描 | 待扫描 | 待扫描 | NOT_RUN |
 | bias_test/produced_data/occluded_regions/1/ywerte2.mat | 434 | 4d57a1c48e81790d52d93a3a5948d3f536065225 | 待扫描 | 待扫描 | 待扫描 | 待扫描 | NOT_RUN |
-| bias_test/produced_data/occluded_regions/1/ywerte3.mat | 435 | 39c0756eea519fedad6b3792f4289f25acc362b4 | 待扫描 | 待扫描 | 待扫描 | 待扫描 | NOT_RUN |
+| bias_test/produced_data/occluded_regions/1/ywerte3.mat | 435 | 39c0756eea519fedad6b3792f4289f25acc362b4 | ywerte3 | double | double | 10×3 | INDEPENDENT_BINARY_SAMPLE / MATIO_NOT_RUN |
 | bias_test/produced_data/occluded_regions/1/ywerte4.mat | 436 | 866010388eae94ed7f51e8f318a2c2bd775d9069 | 待扫描 | 待扫描 | 待扫描 | 待扫描 | NOT_RUN |
 | bias_test/produced_data/occluded_regions/1/ywerte5.mat | 437 | c970f8044f57753ac8ba907b4e23a7aa1ae2861a | 待扫描 | 待扫描 | 待扫描 | 待扫描 | NOT_RUN |
 | bias_test/produced_data/occluded_regions/1/ywerte6.mat | 437 | ff881a945ec4f2e3748a0054da449e97303014d7 | 待扫描 | 待扫描 | 待扫描 | 待扫描 | NOT_RUN |
