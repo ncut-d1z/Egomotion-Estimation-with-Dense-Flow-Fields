@@ -163,12 +163,12 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 | P0.2 | 对 33 个辅助函数及 12 个入口/绘图文件逐一形成函数签名、被谁调用、是否实际用于实验、输入维度、输出变量清单 | P0.1 | REQ-D-SOURCE-001 | TC-D-SOURCE-001 / AC-D-SOURCE-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
 | P0.3 | 建立两套 bias 与四套 adaptive 归档子目录的结果文件清单；对照 MATLAB 的 save、load 和 getflowfield 调用 | P0.1 | REQ-D-SOURCE-001 | TC-D-SOURCE-001 / AC-D-SOURCE-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
 | P0.4 | 核查 rodrigues.m、SHRotate.m 的第三方来源和可移植范围；记录未能确认的版权问题，不擅自添加 LICENSE | P0.1 | REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001 | TC-D-SOURCE-002、TC-NF-COPYRIGHT-001 / AC-D-SOURCE-002、AC-NF-COPYRIGHT-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
-| P0.5 | 对 582 个 MAT 建立文件身份、格式抽样、批量解码核查方案及待测项；**不以尚不存在的 matio C++ 工具作为 P0 的强制前置**，实际全量变量解码由 P1.8/P10.4 执行 | P0.1 | REQ-F-MAT-002、REQ-D-MAT-001 | TC-F-MAT-002、TC-D-MAT-001 / AC-F-MAT-002、AC-D-MAT-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
-| P0.6 | 维护 SOURCE_INVENTORY、MAT_DATA_SCHEMA、MIGRATION_MATRIX 的**待完成/已确认**状态；将现有 SRS/HLD/LLD 草案和旧计划参数差异关联到证据，不标为已冻结 | P0.2、P0.3、P0.5 | REQ-D-MAT-001、REQ-PROC-TRACE-001 | TC-D-MAT-001、TC-PROC-TRACE-001 / AC-D-MAT-001、AC-PROC-TRACE-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
+| P0.5 | 制定 582 个 MAT 的文件身份清单、抽样检查、matio/zlib 批量解码和变量字典审计方案；只交付审计规程及未决项。**本项不验收 AC-D-MAT-001 的全量解码结果**，须待 P1.8 实际核验及 P10.4 复核 | P0.1 | REQ-F-MAT-002、REQ-D-MAT-001 | TC-F-MAT-002、TC-D-MAT-001 / AC-F-MAT-002、AC-D-MAT-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
+| P0.6 | 建立/更新 SOURCE_INVENTORY、MAT_DATA_SCHEMA、MIGRATION_MATRIX 的来源清单和**待全量解码**模板，标注每个字段已确认/未核查；关联旧计划参数差异。P0 阶段不得将字典草案误记为 AC-D-MAT-001 已通过 | P0.2、P0.3、P0.5 | REQ-D-MAT-001、REQ-PROC-TRACE-001 | TC-D-MAT-001、TC-PROC-TRACE-001 / AC-D-MAT-001、AC-PROC-TRACE-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
 | P0.7 | 复核并完善已有 docs/OBJECT_MODEL.md **草案**，覆盖 45 个 MATLAB 文件→候选方法及对象所有权，不把已有文件视为任务完成 | P0.2 | REQ-DC-DOMAIN-001、REQ-NF-OOP-001 | TC-DC-DOMAIN-001、TC-NF-OOP-001 / AC-DC-DOMAIN-001、AC-NF-OOP-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
 | P0.8 | 评审 HLD/对象模型/LLD 的最小接口与错误合同，明确当前已冻结范围和未决 DEC；不因 582 MAT 尚未全量解码而虚报数据合同冻结 | P0.6、P0.7 | REQ-DC-DOMAIN-001、REQ-NF-OOP-001、REQ-I-CLI-001 | TC-DC-DOMAIN-001、TC-NF-OOP-001、TC-I-CLI-001 / AC-DC-DOMAIN-001、AC-NF-OOP-001、AC-I-CLI-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
 
-**P0 状态**：原始目录/部分函数和文件头已经人工核查，SRS、HLD、OBJECT_MODEL、TEST_PLAN、八份模块 LLD **草案已存在但未冻结**；SOURCE_INVENTORY、MAT_DATA_SCHEMA、MIGRATION_MATRIX 的全量内容尚未完成。P0.5 只要求设计并冻结数据审计方案；MAT 变量全量解码需 P1 的 reader，避免形成 P0↔P1 循环依赖。
+**P0 状态**：原始目录/部分函数和文件头已经人工核查，SRS、HLD、OBJECT_MODEL、TEST_PLAN、八份模块 LLD **草案已存在但未冻结**；SOURCE_INVENTORY、MAT_DATA_SCHEMA、MIGRATION_MATRIX 的全量内容尚未完成。P0.5/P0.6 只要求审计规程与字典草案；`AC-D-MAT-001` 的**582 文件实际完整解码与结果记录**由 P1.8 交付，P10.4 进行复核后才能验收。P0 文档审计与 P1 工具实现是不同的通过条件，避免形成 P0↔P1 循环依赖。
 
 ### P1 — 独立构建、CLI 与 MAT 文件访问
 
@@ -181,7 +181,7 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 | P1.5 | 递进实现真实数据需要的 struct/cell、复数、逻辑或稀疏类型；未要求的类型明确拒绝，禁止伪称全部支持 | P1.4 | REQ-F-MAT-002 | TC-F-MAT-002 / AC-F-MAT-002 | 源外构建/IO 合同、测试日志；未实施/未验收 |
 | P1.6 | 实现明确变量名加载和 getflowfield 兼容读取（首变量/自动 .mat 后缀）；分别测试，不能混淆 | P1.4 | REQ-F-CLI-001、REQ-F-MAT-003、REQ-I-MAT-001 | TC-F-CLI-001、TC-F-MAT-003、TC-I-MAT-001 / AC-F-CLI-001、AC-F-MAT-003、AC-I-MAT-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
 | P1.7 | 实现**仅向新结果目录**写入 MATLAB 兼容 MAT 的结果文件，写后读取检查变量名、维度与数值 | P1.3 | REQ-F-MAT-004、REQ-NF-SAFETY-001、REQ-I-MAT-001、REQ-I-RESULT-001 | TC-F-MAT-004、TC-NF-SAFETY-001、TC-I-MAT-001、TC-I-RESULT-001 / AC-F-MAT-004、AC-NF-SAFETY-001、AC-I-MAT-001、AC-I-RESULT-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
-| P1.8 | 以原始归档的代表样本为 golden 只读验证，记录源文件哈希、输出形状、误差及实际命令 | P1.4 | REQ-F-MAT-001、REQ-D-MAT-001、REQ-NF-RUNTIME-001 | TC-F-MAT-001、TC-D-MAT-001、TC-NF-RUNTIME-001 / AC-F-MAT-001、AC-D-MAT-001、AC-NF-RUNTIME-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
+| P1.8 | 先用代表样本核对 matio 解码合同，继而**遍历全部 582 份 MAT** 执行真实解压、变量枚举、数据类型/形状/读取状态核查，生成带文件路径、来源 SHA 和失败清单的 MAT_DATA_SCHEMA；AC-D-MAT-001 在该全量检查及 P10.4 复核后才有判定依据 | P1.4 | REQ-F-MAT-001、REQ-D-MAT-001、REQ-NF-RUNTIME-001 | TC-F-MAT-001、TC-D-MAT-001、TC-NF-RUNTIME-001 / AC-F-MAT-001、AC-D-MAT-001、AC-NF-RUNTIME-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
 | P1.9 | 建立 move-only MatFileHandle/MatVariableHandle 与 MatResultReader、RunMatWriter；验证 RAII、无悬垂 Eigen Map、只读原始数据和拒绝覆盖 origin/历史 RunId | P1.3、P1.7 | REQ-F-MAT-001、REQ-F-MAT-004、REQ-DC-IO-001、REQ-NF-SAFETY-001 | TC-F-MAT-001、TC-F-MAT-004、TC-DC-IO-001、TC-NF-SAFETY-001 / AC-F-MAT-001、AC-F-MAT-004、AC-DC-IO-001、AC-NF-SAFETY-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
 | P1.10 | 建立 IResultReader/IResultWriter 的窄接口与内存测试替身，在 composition root 注入；验证 CLI 和求解器均不直接依赖 matio C 指针 | P1.6、P1.7 | REQ-DC-IO-001 | TC-DC-IO-001 / AC-DC-IO-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
 
@@ -323,7 +323,7 @@ flowchart LR
   C --> D["P1.1 CMake 工程"]
   D --> E["P1.3 MAT RAII"]
   E --> F["P1.4 MAT 压缩读取"]
-  F --> G["P1.8 全量读/Golden"]
+  F --> G["P1.8 582 文件解码/字典"]
   C --> H["P2.2 数学/向量"]
   H --> I["P4.2 Franz"]
   I --> J["P4.3 KvD 公共步骤"]
@@ -347,8 +347,8 @@ flowchart LR
 
 | 里程碑 | 交付范围 | 进入条件 | 退出条件和证据 |
 |---|---|---|---|
-| M0 源资料与设计基线 | P0.1–P0.8 的可评审资料，SRS/HLD/LLD 草案 | 原资料目录可只读访问、AGENTS 已核对 | 45 文件来源清单、MAT 审计方案、最小接口批准范围和开放 DEC；**当前尚未正式验收** |
-| M1 MAT 只读/新结果写入闭环 | P1 + P2 基础值类型 | M0 最小合同审查、开发分支远程检查点 | MAT 读取、类型/shape、路径保护与回写回读的真实测试日志 |
+| M0 源资料与设计评审门禁 | P0.1–P0.8 的可评审资料、SRS/HLD/LLD 草案 | 原资料目录可只读访问、AGENTS 已核对 | 45 文件来源清单、MAT **全量审计方案但非全量解码结果**、最小接口批准范围和开放 DEC；**当前尚未正式验收** |
+| M1 MAT 只读/新结果写入闭环 | P1 + P2 基础值类型 | M0 最小合同审查、开发分支远程检查点 | MAT 读取、**582 文件完整解压与元数据字典**、类型/shape、路径保护与回写回读的真实测试日志；P10.4 尚须独立复核 |
 | M2 Bias 计算与统计 | P2–P5 的共享数学、噪声、Franz、KvD、Bias | M1 + 相关数学/采样合同 | Original/Modified 每轮对照和两个 40-run 统计，含失败样本 |
 | M3 Adaptive 数值闭环 | P6–P8 轨迹、球谐和自适应 Session | 所需旋转/球谐代码及基准可用，版权障碍已处理 | 35/600 点与 1/5/11/21 更新率实验，合同及错误数有证据 |
 | M4 图表和原文复现 | P9–P10 | M2/M3 必须输出可校验 MAT | 四种分析、三幅插图与论文相关曲线数据复现；容差与例外批准 |
