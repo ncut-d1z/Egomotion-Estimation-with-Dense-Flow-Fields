@@ -69,7 +69,7 @@
 
 ## 3. TC → 实体/CTest → AC 规划矩阵
 
-下列表格共 66 项，与 SRS v0.2 逐项对应。**独立 matio 探针已编写并执行**，但绝大多数拟议测试源文件、测试函数和 CTest 名称尚未创建；探针不是 CTest 注册项。人工审查项与自动测试区分。原始 45 个 MATLAB 源文件映射请参见 [REQUIREMENTS.md §9.2](REQUIREMENTS.md)。
+下列表格共 66 项，与 SRS v0.3 逐项对应。**独立 matio 探针已编写并执行**，但绝大多数拟议测试源文件、测试函数和 CTest 名称尚未创建；探针不是 CTest 注册项。人工审查项与自动测试区分。原始 45 个 MATLAB 源文件映射请参见 [REQUIREMENTS.md §9.2](REQUIREMENTS.md)。
 
 | TC ID | REQ | 候选测试文件或审核文档 | CTest/审核 | AC | 状态 |
 |---|---|---|---|---|---|
