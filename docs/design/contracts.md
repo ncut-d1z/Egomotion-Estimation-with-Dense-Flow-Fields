@@ -104,3 +104,19 @@ template<class Error> class Status;                // void 成功/失败合同
 | testcase / ctest / runlog | TC ID、真实文件、CTest、SHA、执行记录 | 目前 TC 仅标识符 |
 
 **冻结门槛**：全部使用本合同的模块必须对齐类型/错误/所有权；如确有需要增加 enum 值或改变数据布局，须更新相关 REQ-DC、TC、HLD 和模块 LLD。当前文档的具体声明不构成已经运行的接口或正式编译通过证据。
+
+
+## 6. 公共合同到 TC/AC 的验收对应
+
+| 候选公共合同 | 需求/测试编号 | 首个证明场景 | 当前状态 |
+|---|---|---|---|
+| FlowField/DirectionSet N×6/N×3、HarmonicCoefficients 3×5 | REQ-DC-DOMAIN-001 / TC-DC-DOMAIN-001 | 合法/非法形状、元素顺序、值拥有 | 未编码、未运行 |
+| MAT RAII、读写接口和自拥有缓冲区 | REQ-DC-IO-001 / TC-DC-IO-001 | move-only 释放恰好一次、MatFileHandle 销毁后数据安全 | 未编码、未运行 |
+| 显式 RNG 与独立运行上下文 | REQ-DC-RNG-001 / TC-DC-RNG-001 | 两组固定 RNG 序列按调用顺序重放 | 未编码、未运行 |
+| KvD 原始/修正独立求解入口 | REQ-DC-KVD-001 / TC-DC-KVD-001 | 同一流场下两规则不串扰 | 未编码、未运行 |
+| Adaptive StepSolver / Session 状态隔离 | REQ-DC-ADAPT-001 / TC-DC-ADAPT-001 | 单步脱离 Session、两个 Session 交替执行 | 未编码、未运行 |
+| 对象所有权与层间依赖 | REQ-NF-OOP-001 / TC-NF-OOP-001 | 不向求解器暴露 matio、组件 target 无反向依赖 | 未编码、未运行 |
+| 结果目录与历史文件保护 | REQ-NF-SAFETY-001 / TC-NF-SAFETY-001 | 重复 RunId/路径逃逸/失败写入时源 hash 不变 | 未编码、未运行 |
+| Session 非并发使用边界 | REQ-NF-SESSION-001 / TC-NF-SESSION-001 | 两个 RunContext 互相隔离；同一 Session 的线程安全未承诺 | 未编码、未运行 |
+
+完整的测试文件/CTest 候选位置由 [TEST_PLAN.md](../TEST_PLAN.md) 统一管理；不能因为本表列有 TC 就认定测试已经实现、执行或通过。
