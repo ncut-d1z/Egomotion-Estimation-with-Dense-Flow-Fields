@@ -4,7 +4,7 @@
 >
 > 审计依据：本仓库 main 分支的 origin/egomotion_estimation_dense_flow_fields_matlab_scripts/、AGENTS.md、原始资料自带 readme 和 2015 年论文。原始文件的目录和函数名均已在 GitHub 上核对；MAT 数据的文件头已抽样读取，但全部变量的二进制内容尚未逐个解压、验证。
 >
-> 本轮工作只修订 PLAN.md，不创建、运行或编译 C++ 代码，不修改 origin、README、AGENTS 或数据文件。
+> 本文件仅用于规划和跟踪，不构成启动 C++ 开发的授权。后续修改以 AGENTS.md 的工作区、提交、源数据保护及用户授权要求为准；本文档中出现的测试与运行入口均不能视为已实现。
 
 ## 0. 文档定位、需求基线与优先级
 
