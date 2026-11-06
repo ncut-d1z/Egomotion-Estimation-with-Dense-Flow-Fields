@@ -49,19 +49,19 @@ class AdaptiveComparisonRunner;
 class UpdateRateRunner;
 ~~~
 
-原始输入/输出维度与类型需要 MAT 数据字典核定，不可仅根据 zeros 预分配断定历史文件的真实 dtype/rank。
+**历史 MAT 的类型和 shape 已由 matio 1.5.26 实测**：582 个源文件/变量均为 v5+zlib、double/double，按下方数据契约读取；新 C++ Runner 尚未生成任何结果，未来 MAT 写出仍需回读/数值验收。
 
 ## 4. Golden、异常、验收和未决
 
 - 新输出的所有变量必须通过 matio 回读并与原 MAT 的 shape、统计含义核对；不应要求不同语言在随机数不等价时逐样本完全一致。
 - CLI 错误类含参数缺失、非法细分、零模向量、MAT 写失败/覆盖冲突、数值非有限和部分运行失败；具体退出码在 SRS/TEST_PLAN 冻结。
 - TC-F-BIAS-001/002/003、TC-F-EXP-001/002/003、TC-F-CLI-002/003、TC-I-RESULT-001、TC-NF-LOG-001；相关异常/性能在 P10 执行。
-- 当前 MAT 全量变量字典、独立 Golden、总墙钟/CPU/RSS 预算和版权核查未完成，LLD 不可冻结。
+- **真实历史 MAT 全量变量字典已完成读取**；独立算法 Golden、MATLAB 数值等价、总墙钟/CPU/RSS 预算、版权和新的 C++ 输出回读仍未完成，LLD 不可冻结。
 
 
 ## 5. 五个入口的参数 schema 与源文件差异
 
-| 入口 | 参数/原始默认值（MATLAB 代码） | MATLAB 循环/样本 | 输出 schema（**推自 save 与 zeros，尚待 MAT 全量字典核验**） |
+| 入口 | 参数/原始默认值（MATLAB 代码） | MATLAB 循环/样本 | **当前 MATLAB save 合同与已归档 MAT 的实测类型/shape** |
 |---|---|---|---|
 | bias occluded | corenumber、iterationnumber、savestring；noise=[0.6,2.4,9.6]；durchlaeufe=1 | level=0..iterationnumber；样本 N=6·4^level | xwerte:(level_count+1)×1；每个 ywerte1…6:(level_count+1)×3 |
 | bias proportional | 同上，完整八面体 N=8·4^level | level=0..iterationnumber | xwerte、ywerte1…6 同形状 |
@@ -156,6 +156,22 @@ public:
 | EX-G04 | 更新率 1/5/11/21、600×4/600×1、三个现有源 save 字段 | TC-F-EXP-003 |
 | EX-G05 | 输出目录冲突、MAT 写失败、无效近度/solver 失败 | TC-NF-SAFETY-001、TC-NF-RECOVERY-001 |
 
-Golden 真实来源、逐节点数值、容差、MAT 类型字典、CLI schema 与 CTest 名称仍未建立；测试目标和当前源表达式不能互相替代。
+历史 **MAT 类型/shape 字典已实测**；但算法 Golden 中间量、容差、CLI schema、生产写入/回读与 CTest 仍未建立，不能以最终结果文件能够被读取替代算法真实性测试。
 
-**状态**：五类入口参数和当前 save 契约已文档化，实际输出 shape 待全量 MAT 核验；C++ Runner、Golden、实测及接口冻结均未完成。
+**状态**：五类入口参数与当前 save 契约已文档化，**历史输出 dtype/shape 已由 582/582 matio 数据字典确认**；C++ Runner、新输出、逐节点 Golden、误差容差及接口冻结仍未完成。
+
+## 9. 原作者归档字段的实测数据合同
+
+本节仅引用已在 [MAT_DATA_SCHEMA.md](../MAT_DATA_SCHEMA.md) 中经 `Mat_VarRead` 读取成功的**历史 MAT 文件内容**。`MATLAB class=double`、`data_type=double`、压缩 MAT v5/zlib；以下尺寸不再是作者 `zeros` 预分配的推测。
+
+| 历史结果组 | 实测变量 | 实测形状与文件数 | 与当前 MATLAB 生成脚本的关系 |
+|---|---|---|---|
+| occluded_regions | 40 个 xwerte；每个 ywerte1…6 各 40 个 | xwerte: 40×(10×1)，ywerte: 240×(10×3) | 40 个独立结果目录，与两种算法的误差统计关联 |
+| proportional_error | 同上 | xwerte: 40×(10×1)，ywerte: 240×(10×3) | 真实输入方向是完整球面，但原 xwerte 仍写为 6·4^i；不得更改 |
+| initialization | allemittransfehler、allemitrotfehler、alleohnetransfehler、alleohnerotfehler | 4×(35×1) | 与当前源 save 四种误差字段名一致 |
+| without_errors | 四误差变量、rottransratio | 5×(600×1) | 与当前对比实验 save 五字段对应 |
+| with_errors | 四误差变量、rottransratio；另有 alleadaprotfehler/alleadaptransfehler | 7×(600×1) | **后两字段是归档额外结果，当前生成入口无对应 save**，来源待归因 |
+| many_parameter | allemitrotfehler、allemittransfehler、alleadaprotfehler、alleadaptransfehler | 4×(600×4) | 只有前两项在当前生成脚本保存，后两项为历史额外结果 |
+| many_parameter | akrot、rottransratio | 2×(600×1) | akrot 为当前脚本输出，rottransratio 是历史额外结果，当前分析脚本依赖它 |
+
+**验证边界**：这些历史文件被 matio 读取成功，但没有证明 C++ 新生成的对应数值、RNG 顺序或误差曲线与 MATLAB 一致。仍需 TC-F-EXP-001/002/003、TC-I-RESULT-001 的具体结果回读、比较和差异归因。
