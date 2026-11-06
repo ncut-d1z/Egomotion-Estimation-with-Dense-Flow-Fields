@@ -1,6 +1,6 @@
 # 系统概要设计（HLD）— MATLAB 自运动估计 C++ 移植
 
-> **状态：架构评审草案 v0.2，未冻结；无 C++ 实现与构建证据。** 来源是已核对的 MATLAB 源码和原 PLAN §3/4/6。需求依据见 [REQUIREMENTS.md](REQUIREMENTS.md)，类职责附件见 [OBJECT_MODEL.md](OBJECT_MODEL.md)，详细设计待定见 [design/README.md](design/README.md)，执行安排见 [PLAN.md](../PLAN.md)。以 [AGENTS.md](../AGENTS.md) 和项目所有者批准为准。
+> **状态：架构评审草案 v0.2，未冻结；无 C++ 实现与构建证据。** 来源是已核对的 MATLAB 源码和原 PLAN §3/4/6。需求依据见 [REQUIREMENTS.md](REQUIREMENTS.md)，类职责附件见 [OBJECT_MODEL.md](OBJECT_MODEL.md)，详细设计待定见 [design/README.md](design/README.md)，执行安排见 [PLAN.md](PLAN.md)。以 [AGENTS.md](../AGENTS.md) 和项目所有者批准为准。
 
 ## 1. 架构目标、质量属性和约束
 
@@ -99,7 +99,7 @@ flowchart LR
 
 ## 4. CMake target、公共头文件与文件结构（设计候选）
 
-本 HLD 负责给出**无环依赖的库边界**；工程目录概览见 [PLAN.md](../PLAN.md) §4，具体对象与 MATLAB 函数的映射由 [OBJECT_MODEL.md](OBJECT_MODEL.md) 统一维护，模块内部合同见 [design/](design/README.md)。正式 include/src 路径应在 P0.8 冻结；以下 target 名称不表示仓库已经创建对应库。
+本 HLD 负责给出**无环依赖的库边界**；工程目录概览见 [PLAN.md](PLAN.md) §4，具体对象与 MATLAB 函数的映射由 [OBJECT_MODEL.md](OBJECT_MODEL.md) 统一维护，模块内部合同见 [design/](design/README.md)。正式 include/src 路径应在 P0.8 冻结；以下 target 名称不表示仓库已经创建对应库。
 
 | 拟议 target | 公开边界 | 依赖 | 私有实现/禁止逆向依赖 |
 |---|---|---|---|
@@ -198,7 +198,7 @@ sequenceDiagram
 
 ## 6. 实施依赖与并行约束（引用单一来源）
 
-**P0–P10 的阶段/子任务依赖图、并行工作区、里程碑及进入退出准则以 [PLAN.md](../PLAN.md) 为单一维护位置。** HLD 只约束 target DAG 和接口依赖方向，不在此复制计划的 P 任务图，避免不同文档产生相互矛盾的依赖和时间表。
+**P0–P10 的阶段/子任务依赖图、并行工作区、里程碑及进入退出准则以 [PLAN.md](PLAN.md) 为单一维护位置。** HLD 只约束 target DAG 和接口依赖方向，不在此复制计划的 P 任务图，避免不同文档产生相互矛盾的依赖和时间表。
 
 P0.7/P0.8 需校验本 HLD、[OBJECT_MODEL.md](OBJECT_MODEL.md)、MAT schema、LLD 契约之间不存在反向依赖或冲突；任何架构改变先调整 ADR 和 REQ-DC，再同步修订 PLAN 关联任务。
 
