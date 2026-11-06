@@ -55,7 +55,7 @@
 |---|---|---|
 | DEC-001/002 当前 MAT 格式和类型 | 归档事实已有 582/582 证据；支持范围尚待审阅 | 当前数据限定 v5/double 与拒绝未知类型的具体 Reader/负例 |
 | DEC-003/007 第三方版权 | **未关闭** | Rodrigues、SHRotate 来源/许可链、可重写范围和项目所有者决定 |
-| DEC-005 数值容差 | **未关闭** | 条件数/数值尺度分组、固定独立 MATLAB Golden、逐字段误差及批准门槛 |
+| DEC-005 数值容差 | **未关闭** | 条件数/数值尺度分组、固定独立 MATLAB Golden、逐字段误差及批准门槛；人类可通过 [HTML 审批页](approval/HUMAN_APPROVAL_REQUEST.html) 记录决定并自行保存 JSON（不自动等同正式批准） |
 | DEC-006 平台与资源 | **未关闭** | 实际 Debian/Ubuntu 业务构建/测量矩阵；不使用探针结果替代 |
 | DEC-008 CLI/CTest/Golden 映射 | **未关闭** | 批准 [cli.md](design/cli.md) 参数及错误序列化，真实测试文件/注册名、Golden identity、执行证据 |
 | Bash 现场检查 | **尚未执行** | 完整检出并运行 `bash scripts/check_docs_traceability.sh`，保存 stdout/stderr/exit/SHA；本轮只有 E-DOC-001 的连接器等价检查 |
