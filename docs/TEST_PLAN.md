@@ -266,6 +266,8 @@ bash scripts/check_docs_traceability.sh
 5. 数据文件数量、版本和哈希应来自真实 Git 树，不从对话旧表复制；只有实际完整解码后才检查 AC-D-MAT-001 的值域/类型/维度合同。
 6. 将每轮静态审查报告记录为：源 Git SHA、REQ/P/TC/AC 和 .m 文件数量、唯一性、漏项、环数量、被审阅文件清单。只读检查成功不应标为 CTest、Golden 或需求已通过。
 
+**审查证据**：已用 GitHub 连接器按指定 SHA 读取真实文档与 Git 树，执行同等范围的 JavaScript 静态断言并留存 [2026-11-06 追踪审查记录](reviews/STATIC_TRACEABILITY_2026-11-06.md)，结果为 66 REQ、66 TC、98 P、45 .m、26 条 target 依赖边、错误 0。**这不是 Bash 脚本本体的现场执行**；本轮容器无法解析 github.com，Bash 检查器需在完整检出的 Debian/Ubuntu 工作区实际运行后另附原始 stdout/stderr/exit 日志。也不等同于 CMake、CTest 或 MAT 数值 Golden。
+
 **当前文档级检查口径**：66 条 REQ、66 项 TC、98 个 P 工作项、45 个 .m 映射是版本化的预期数量；检查器同时验证 ID 唯一性、配对关系、真实路径集合、P 依赖环和 ARCHITECTURE §4.1 target DAG 的**静态环**，不只比对计数。变更基线数量时须同步评审脚本期望值；**静态无环不等于真实 CMake target 已创建或编译通过**。
 
 ## 9. 变更与冻结条件
