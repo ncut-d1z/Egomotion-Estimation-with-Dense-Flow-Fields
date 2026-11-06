@@ -42,9 +42,22 @@
 
 ### 2.5 原始 MAT、数值容差和失败判定
 
-**P0.5/P0.6 只交付全量审计方案与字典模板，不执行 AC-D-MAT-001 的最终验收。P1.8 在 MAT Reader 就绪后负责实际遍历 582 个文件，P10.4 负责复核。** 582 份原始 MAT 应逐文件只读验证文件哈希、解压、变量名、dtype、shape 和完整读取结果；两个 Bias 目录合计 560 份，Adaptive 四个目录合计 22 份。记录失败与未支持类型的精确数量。
+**数据字典已通过独立 C++ matio 探针实际扫描**：Ubuntu 24.04 / matio 1.5.26，582/582 源 MAT 全部被逐变量 `Mat_VarRead` 解码，582 个变量均 `READ_OK`，失败 0。原始目录以 `MAT_ACC_RDONLY` 打开；见 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md)。P0.5/0.6 的文档合同、正式业务 Reader/Writer 与负例仍需测试；P10.4 独立复核尚未完成。
 
 对 Original/Modified KvD 的 near、t、ω、终止条件逐轮比对；Adaptive 比对 6×6 系统各子块、右端、旋转、残差与球谐系数更新。 **特别核验：Adaptive oneit 返回的 error 是 MSE，sqrt(error) 在 MATLAB 内部另算但没有返回；测试记录必须分列 error_mse 和仅用于诊断的 rms，不得将二者互作。**double/1e-10 是先前候选相对容差，尚未冻结；应按模块记录绝对误差、相对误差、条件数和样本有效性，再由维护者批准。不对零向量、NaN、Inf 或未定义方向误差计入成功。
+
+### 2.7 已执行 matio 全量探针的证据与限制
+
+| 证据项 | 实测结果 | 当前验收边界 |
+|---|---|---|
+| 平台与工具 | Ubuntu 24.04，GCC 13，matio 1.5.26；源参数 SHA `48c590ba2564e4bdd293d2cbecd2eef83b291452` | 独立源文件 `src/mat_data_dict_probe.cpp` 已编译运行；非正式 CMake/CTest |
+| 读取 | 582/582 MAT、582/582 变量、失败 0 | `Mat_Open(MAT_ACC_RDONLY)` + `Mat_GetDir` + `Mat_VarRead`；未做数据逐元素 MATLAB Golden |
+| 格式与类别 | 全部 MAT v5 / zlib / MATLAB double、存储 double | 当前数据不需要 HDF5、cell、struct、complex、sparse 适配；新增数据另评审 |
+| 形状分布 | 10×1:80，10×3:480，35×1:4，600×1:14，600×4:4 | 真实历史结果 shape；不代表所有未来输出或算法形状 |
+| 文件身份 | 582 个文件各有 FNV-1a 64 位指纹 | FNV 非 SHA-256；尚须 P10.4 独立目录/文件身份审核 |
+| 未运行的验收 | 严格/兼容读取、类型拒绝负例、写回读、RAII 下异常、原文件哈希比对、C++ 求解器/CTest | 不能用探针的 exit=0 将这些 TC 标为通过 |
+
+详细记录以 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md) 的 582 条逐变量表为准，以下的 TC 状态仅表明**相关子能力有实测证据**，而非整个接口合同正式验收。
 
 ### 2.6 更新频率实验与四种分析入口（TC-F-EXP-003、TC-F-AN-001）
 
@@ -56,13 +69,13 @@
 
 ## 3. TC → 实体/CTest → AC 规划矩阵
 
-下列表格共 66 项，与 SRS v0.2 逐项对应。源文件、测试函数、CTest 名称全部只是**拟议实体**，不代表已经创建或执行；人工审查项与自动测试区分。原始 45 个 MATLAB 源文件映射请参见 [REQUIREMENTS.md §9.2](REQUIREMENTS.md)。
+下列表格共 66 项，与 SRS v0.2 逐项对应。**独立 matio 探针已编写并执行**，但绝大多数拟议测试源文件、测试函数和 CTest 名称尚未创建；探针不是 CTest 注册项。人工审查项与自动测试区分。原始 45 个 MATLAB 源文件映射请参见 [REQUIREMENTS.md §9.2](REQUIREMENTS.md)。
 
 | TC ID | REQ | 候选测试文件或审核文档 | CTest/审核 | AC | 状态 |
 |---|---|---|---|---|---|
 | TC-F-CLI-001 | REQ-F-CLI-001 | tests/integration/test_cli.cpp | egomotion.cli.* | AC-F-CLI-001 | 未编写/未运行 |
-| TC-F-MAT-001 | REQ-F-MAT-001 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-F-MAT-001 | 未编写/未运行 |
-| TC-F-MAT-002 | REQ-F-MAT-002 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-F-MAT-002 | 未编写/未运行 |
+| TC-F-MAT-001 | REQ-F-MAT-001 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-F-MAT-001 | 独立 matio 探针 582/582 已实测；业务 TC/CTest 及 P10.4 复核未完成 |
+| TC-F-MAT-002 | REQ-F-MAT-002 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-F-MAT-002 | 独立 matio 探针 582/582 已实测；业务 TC/CTest 及 P10.4 复核未完成 |
 | TC-F-MAT-003 | REQ-F-MAT-003 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-F-MAT-003 | 未编写/未运行 |
 | TC-F-MAT-004 | REQ-F-MAT-004 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-F-MAT-004 | 未编写/未运行 |
 | TC-F-GEOM-001 | REQ-F-GEOM-001 | tests/unit/test_sampling.cpp | egomotion.geometry.* | AC-F-GEOM-001 | 未编写/未运行 |
@@ -92,7 +105,7 @@
 | TC-F-AN-002 | REQ-F-AN-002 | tests/golden/test_analysis.cpp | egomotion.analysis.* | AC-F-AN-002 | 未编写/未运行 |
 | TC-D-SOURCE-001 | REQ-D-SOURCE-001 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-D-SOURCE-001 | 未编写/未运行 |
 | TC-D-SOURCE-002 | REQ-D-SOURCE-002 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-D-SOURCE-002 | 未编写/未运行 |
-| TC-D-MAT-001 | REQ-D-MAT-001 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-D-MAT-001 | 未编写/未运行 |
+| TC-D-MAT-001 | REQ-D-MAT-001 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-D-MAT-001 | 独立 matio 探针 582/582 已实测；业务 TC/CTest 及 P10.4 复核未完成 |
 | TC-D-MAT-002 | REQ-D-MAT-002 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-D-MAT-002 | 未编写/未运行 |
 | TC-D-MAT-003 | REQ-D-MAT-003 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-D-MAT-003 | 未编写/未运行 |
 | TC-DC-DOMAIN-001 | REQ-DC-DOMAIN-001 | docs/OBJECT_MODEL.md / docs/SOURCE_INVENTORY.md | 人工设计/来源评审；部分接口需合同测试 | AC-DC-DOMAIN-001 | 未编写/未运行 |
@@ -152,7 +165,7 @@
 |---|---|---|---|
 | T0（必须、快速） | FlowField 形状、叉积/球面采样 i=0/1、固定随机序列、最小 Franz/KvD/Adaptive 单步 | 每个相关模块提交后；Debian/Ubuntu 一台开发环境即可；具体 CPU/内存/耗时未知 | 阻止将相应模块标为验证通过，保存最小输入和日志 |
 | T1（必须、数据合同） | matio/zlib 元数据、只读保护、结果新目录写回读、异常输入/路径冲突 | P1 MAT Reader/Writer 可用后；只读原始 MAT 与独立写目录 | 保留所有失败文件和原因，绝不修改 origin |
-| T2（必须、全量） | **582 个源 MAT 的逐文件真实解码/数据字典**及 45 个 .m 的功能归属 | P1.8 实施；P10.4 复核；需要完整仓库原始归档 | 失败/不支持的文件计入完整报告，不能仅输出成功样本 |
+| T2（必须、全量） | **582 个 MAT、582 变量的全量读取/字典**及 45 个 .m 的功能归属 | 独立 matio 探针在 Ubuntu 已实际执行、全部 READ_OK；P1 业务 Reader 与 P10.4 复核尚待实施 | 582/582 无读取失败是**已获得的子项证据**，不可扩展宣称所有类型负例、原 MATLAB Golden 或项目整体验收通过 |
 | T3（必须、数值 Golden） | KvD 逐轮、SH 旋转块、Adaptive M1–M4 和 MSE | 固定 MATLAB/独立参考数据以及 DEC-005 容差批准后 | 未取得参考/容差时明确阻塞，不能用 C++ 自算结果替代 |
 | T4（必须、实验复现） | 两种 Bias、三种 Adaptive、四类分析及原论文曲线 | P5/P8/P9/P10 入口实际可执行后；性能资源按首轮实测安排 | 保留统计分母、失败/无定义样本、运行命令和真实耗时 |
 | T5（应该、附加） | 可选绘图、额外编译器/CPU 组合、扩大性能测试 | 在必须需求有证据后，按项目所有者授权分期 | 明示未执行，不阻塞未要求的功能 |
@@ -171,7 +184,7 @@
 | adaptive_matched_filter_test/produced_data/without_errors | 5 | 无噪声对比 | 5/5 同上 | 5 个文件 |
 | adaptive_matched_filter_test/produced_data/with_errors | 7 | 带噪声对比及历史额外字段 | 7/7 同上 | 7 个文件 |
 | adaptive_matched_filter_test/produced_data/many_parameter | 6 | 多更新率与历史额外字段 | 6/6 同上 | 6 个文件 |
-| **合计** | **582** | 原作者静态参考数据 | **582/582 是计划，当前未执行** | 代表性样本不能代替全量验收 |
+| **合计** | **582** | 原作者静态参考数据 | **matio 已读 582/582（582 变量、0 失败）；独立复核未完成** | 实际全量结果见 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md) |
 
 **数据保护**：origin/** 作为只读输入；测试只产生新目录或测试专属副本；不得向原目录写入、覆盖、删除或以 git add -f 强制提交忽略内容。样本选择和目录哈希应随源仓库提交 SHA 固定。
 
@@ -192,7 +205,7 @@ MAT 全量字典的字段定义和状态见 [design/mat_io.md](design/mat_io.md)
 
 | 环境组 | 发行版 / CPU 架构 | 编译器 | Eigen / matio / zlib | 当前状态 |
 |---|---|---|---|---|
-| LINUX-01 | Ubuntu LTS，具体版本待确认（候选 24.04）/ x86_64 | GCC 版本待记录 | 依赖版本待记录 | **未构建** |
+| LINUX-01 | **Ubuntu 24.04 / x86_64（用户提供的 VirtualBox 环境）** | **GCC 13**（已编译独立探针） | matio **1.5.26**、zlib1g-dev 已安装；Eigen/CMake 业务构建未验证 | **仅 matio 探针编译/运行成功**；非完整工程及 CTest |
 | LINUX-02 | Debian stable，具体版本待确认 / x86_64 | GCC 或 Clang，具体版本待记录 | 依赖版本待记录 | **未构建** |
 | LINUX-03（可选） | Debian/Ubuntu 的另一受支持编译器或 CPU 架构 | 由维护者决定 | 兼容性待核 | 未安排 |
 
@@ -216,7 +229,7 @@ MAT 全量字典的字段定义和状态见 [design/mat_io.md](design/mat_io.md)
 
 | 风险 | 缓解措施 / 状态 |
 |---|---|
-| 全量 MAT 变量可能存在未支持的 class/shape | P0/P1 完成数据字典后决定支持边界；未核查不冻结 |
+| 当前数据类型已明确；未来扩展可能带来其他 MAT class/shape | 当前归档 582/582 为 MAT v5 + zlib + double；仅需针对未来未知类型提供明确拒绝和负例，业务 Reader 未验收 |
 | MATLAB 随机数与 C++ 难以逐样本一致 | 使用固定输入 Golden 验证算法，单独验证统计分布与运行种子 |
 | 当前生成脚本和历史 MAT 字段不一致 | “当前源码/历史归档/分析依赖”三方差异表，不伪造字段 |
 | 无 MATLAB 运行环境或缺权利授权，难以生成中间量 Golden | 标为阻塞，先完成不依赖该 Golden 的读取/纯数学测试；不能以 C++ 自验代替 |
@@ -234,7 +247,7 @@ MAT 全量字典的字段定义和状态见 [design/mat_io.md](design/mat_io.md)
 | 论文复现 | 各入口和输出合同真实可执行、统计流程可用 | 每类实验的有效/失败数量、误差、曲线数据、差异说明和完整证据 |
 | 最终交付 | M 级要求及批准的 S 级范围有可追踪状态 | 项目所有者批准例外与未决项，PR/文档/测试/提交链路完整 |
 
-**注意**：不能因 P0.8 的 HLD/LLD 文档仍存在待审项目就直接声称进入“已完成”；本轮没有执行任何测试，测试的所有入口/退出门槛均尚未被实际满足。
+**状态区分**：独立 matio 探针在 Ubuntu 上确已编译运行且 582/582 读取成功；但**没有**由本项目注册/运行 CTest，也未完成正式 Reader/Writer、负例、逐元素 Golden 或论文复现。其余阶段的进入/退出门槛不得因这一项成功而视为满足。
 
 ### 8.1 文档追踪静态一致性检查（不等同于执行测试）
 
