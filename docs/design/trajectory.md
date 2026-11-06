@@ -55,25 +55,21 @@ c=\boldsymbol o^\top\boldsymbol o,\quad
 ## 4. 候选类型、失败及测试
 
 ~~~cpp
-// 接口草案（没有对应源码）
-struct TrajectoryPoints; // 自拥有 N×3 double 值数组
-struct FrameKinematics {
-    Eigen::Vector3d local_translation;
-    Eigen::Vector3d absolute_rotation;
-    Eigen::Vector3d relative_rotation;
-};
+// 候选签名；§6.1 定义 TrajectoryPoints / FrameKinematics 值对象。
+struct TrajectoryPoints;
+struct FrameKinematics;
 class TrajectoryGenerator {
 public:
-    Result<TrajectoryPoints, GeometryError> circle(
-        std::size_t count, double radius, double height) const;
-    Result<TrajectoryPoints, GeometryError> sinusoidal(
-        std::size_t count, double amplitude, double length,
-        std::size_t periods, double height) const;
+    Result<TrajectoryPoints, NumericalErrorCode> circle(
+        std::size_t count, Scalar radius, Scalar height) const;
+    Result<TrajectoryPoints, NumericalErrorCode> sinusoidal(
+        std::size_t count, Scalar amplitude, Scalar length,
+        std::size_t periods, Scalar height) const;
 };
 class TrajectoryKinematics {
 public:
-    Result<std::vector<FrameKinematics>, GeometryError>
-      fromPoints(const TrajectoryPoints&) const;
+    Result<std::vector<FrameKinematics>, NumericalErrorCode>
+        fromPoints(const TrajectoryPoints&) const;
 };
 ~~~
 
