@@ -83,7 +83,7 @@ flowchart LR
 
 - 外部可观察合同以 [REQUIREMENTS.md](REQUIREMENTS.md) 中 REQ-I-* 与 [TEST_PLAN.md](TEST_PLAN.md) 的 TC 为准；内部设计原则单独归入 REQ-DC-*，不将 RAII/继承选择误写成 CLI 用户需求。
 - 尚未确定的 C++17 方法签名、返回错误类型、固定矩阵布局、线程安全边界和 ABI 由 P0.7/P0.8 评审后在 LLD 逐模块冻结。
-- `IResultReader` / `IResultWriter` 为相互分离的窄接口，原始文件只读保障还必须体现在路径校验与不可覆盖测试中。跨层用自拥有值对象，MAT 缓冲区失效后不得持有 Eigen Map。
+- `IResultReader` / `IResultWriter` 在 `egomotion_contracts` 中分别声明，`egomotion_matio` 的具体实现由 Composition Root 注入实验/分析。原始文件只读保障还必须体现在路径校验与不可覆盖测试中。跨层用自拥有值对象，MAT 缓冲区失效后不得持有 Eigen Map。
 - 对 KvD 两条平移更新保留独立入口；Adaptive 的单步求解与多帧 Session 独立。**这些是已选设计方向，并非已验证实现**。
 
 ## 4. CMake target、公共头文件与文件结构（设计候选）
@@ -93,15 +93,16 @@ flowchart LR
 | 拟议 target | 公开边界 | 依赖 | 私有实现/禁止逆向依赖 |
 |---|---|---|---|
 | egomotion_domain | domain 值类型、向量/旋转及基本数学函数头 | Eigen 3 | 不引入 matio、experiment、CLI |
-| egomotion_sampling | 方向采样接口及实现 | domain | 内部递归实现可私有，不依赖 experiment |
+| egomotion_contracts（INTERFACE 候选） | IResultReader/IResultWriter、IRandomSource 等只声明领域依赖的窄接口 | domain | 不含 matio.h、不链接 I/O 实现、不提供 C 函数入口 |
+| egomotion_sampling | 方向采样接口及实现 | domain、contracts（仅在实际 API 使用接口时） | 内部递归实现可私有，不依赖 experiment |
 | egomotion_harmonics | l≤2 基函数、拟合/旋转接口 | domain | 第三方 SH 递归细节仅私有、须版权审查 |
 | egomotion_estimators | Franz、KvD、Adaptive 计算合同 | domain、harmonics | 不依赖 matio、CLI、plotting |
 | egomotion_simulation | 轨迹、噪声、场景/光流生成 | domain、sampling | RNG 内部策略只通过窄接口暴露 |
-| egomotion_matio | MAT Reader/Writer 与元数据 | domain、matio、zlib | 仅私有源码包含 matio.h；不依赖 estimators |
-| egomotion_experiments | 五类实验 Runner、RunContext | domain、sampling、simulation、estimators、mat_io 抽象 | 无原始 MAT 写权限；不依赖 plotting |
-| egomotion_analysis | 历史 MAT 数据分析与曲线序列 | domain、mat_io 的只读接口 | 不调用 estimators，不依赖 plotting |
+| egomotion_matio | MAT Reader/Writer 与元数据，**实现** Reader/Writer 合同 | contracts、domain、matio、zlib | 仅私有源码包含 matio.h；不依赖 estimators/experiments |
+| egomotion_experiments | 五类实验 Runner、RunContext | domain、contracts、sampling、simulation、estimators；**不链接 egomotion_matio** | 只通过 IResultWriter 使用写出能力；无原始 MAT 写权限、不依赖 plotting |
+| egomotion_analysis | 历史 MAT 数据分析与曲线序列 | domain、contracts；**不链接 egomotion_matio** | 仅 IResultReader；不调用 estimators，不依赖 plotting |
 | egomotion_plotting（可选） | 从分析结果绘图 | analysis | 可缺席、不得影响核心 targets |
-| egomotion_cli | 命令解析与 Composition Root | experiments、analysis、matio；可选 plotting | 仅入口实现类型选择 |
+| egomotion_cli | 命令解析与 Composition Root，唯一具体 I/O 装配处 | experiments、analysis、matio、contracts；可选 plotting | 构造 MatResultReader/RunMatWriter 再以接口传入，CLI 不实现数学公式 |
 | tests/benchmarks（后期） | 各 target 的回归、基准 | 按被测组件链接 | 禁止生产组件依赖测试 |
 
 ### 4.1 目标依赖有向无环图
@@ -109,6 +110,7 @@ flowchart LR
 ~~~mermaid
 flowchart BT
   D[egomotion_domain] --> E[Eigen 3]
+  K[egomotion_contracts / INTERFACE] --> D
   S[egomotion_sampling] --> D
   H[egomotion_harmonics] --> D
   V[egomotion_simulation] --> D
@@ -116,24 +118,26 @@ flowchart BT
   A[egomotion_estimators] --> D
   A --> H
   I[egomotion_matio] --> D
+  I --> K
   I --> M[matio / zlib]
   X[egomotion_experiments] --> V
   X --> A
-  X --> I
-  N[egomotion_analysis] --> I
+  X --> K
+  N[egomotion_analysis] --> K
   P[egomotion_plotting] --> N
   C[egomotion_cli] --> X
   C --> N
+  C --> I
   C --> P
 ~~~
 
-箭头方向为**依赖者指向依赖项**；plotting 只有启用时链接。需要更细分库或因实际编译发现循环依赖，应出具 ADR 并更新此图，不得用巨大单一库掩盖耦合。
+箭头方向为**依赖者指向依赖项**；plotting 只有启用时链接。**egomotion_contracts 是拟议的纯接口 target**：`egomotion_experiments` 和 `egomotion_analysis` 只依赖接口声明与 domain 值类型；`egomotion_matio` 实现这些接口，只有 `egomotion_cli` 的 Composition Root 依赖具体 MAT target 并负责注入。这样消除“文字说抽象、target DAG 却链接具体 MAT”的不一致。需要更细分库或因实际编译发现循环依赖，应出具 ADR 并更新此图，不得用巨大单一库掩盖耦合。
 
 ### 4.2 公有/私有边界检查
 
 - 对外 `include/egomotion/` 只暴露领域值对象、必须的领域接口及可公开算法合同；matio C API、递归实现、实验配置解析、具体绘图库适配放在 `src/` 私有实现。
 - `MatFileHandle` 作为内部资源管理器不需要由算法层持有；如公开类声明涉及 `mat_t`，须解释必要性或通过私有实现消除泄漏。
-- CMake 公开依赖/传递包含路径只用于真实 API 必需内容；源外构建、Debian/Ubuntu 平台与依赖版本可追踪。
+- CMake 公开依赖/传递包含路径只用于真实 API 必需内容；源外构建、Debian/Ubuntu 平台与依赖版本可追踪。**接口头文件不可传递 `matio.h`、`mat_t*` 或 `matvar_t*` 给实验/求解模块**。实际 target 的静态/共享链接类型、安装导出及依赖版本在 P0.8 决定。
 - 当真实 MAT 全量数据确认需要 HDF5 时，另行评审额外 target 依赖与功能范围；目前只确认抽样 MAT v5 压缩。
 
 ## 5. 关键数据流与运行时序
@@ -213,7 +217,7 @@ P0.7/P0.8 需校验本 HLD、[OBJECT_MODEL.md](OBJECT_MODEL.md)、MAT schema、L
 | ADR-005 | 分析与可选绘图隔离，核心无图形运行 | 方向已定、后端待选 | 分析模块维护者 + 所有者 |
 | ADR-006 | SHRotate/Rodrigues 第三方来源单独审查 | 待 DEC-003/007 | 所有者与版权审查相关方 |
 | ADR-007 | 固定输入原 MATLAB 行为优先于“改善”数值稳定性 | 方向已定；测试/容差未冻结 | 数值验证负责人 + 所有者 |
-| ADR-008 | target DAG 分层及公共/私有边界以 §4 为候选 | 未验证实际编译，无完成记录 | P0.8 架构审查者 + 所有者 |
+| ADR-008 | target DAG 分层及公共/私有边界以 §4 为候选；明确 contracts 声明 target 与 matio 实现 target 分离 | 未验证实际编译、链接或跨 target 替身，无完成记录 | P0.8 架构审查者 + 所有者 |
 
 **批准登记格式**：ADR ID、关联 REQ-DC/NF、批准人/日期、批准范围、证据文件与源 Git SHA、仍未解决的风险。表中角色只是拟议责任人，并非已有签名或授权记录。只有项目所有者明确确认后才可标为“架构已冻结”。
 
