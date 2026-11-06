@@ -59,7 +59,7 @@
 | REQ-F-EXP-001 | M | 确定 | 系统应复现 35 点圆形初始化实验，保存四类方向误差结果。 | AC-F-EXP-001：参数、数组形状、索引与历史 MAT 比较。 |
 | REQ-F-EXP-002 | M | 确定 | 系统应复现带/不带噪声 600 点正弦轨迹对比，保留八次运行与原输出。 | AC-F-EXP-002：分别使用 addederror=0 与批准的非零值，核验 600 点、二十面体等级 4、循环 i=2…599、8 次运行；按当前代码输出 allemittransfehler、allemitrotfehler、alleohnetransfehler、alleohnerotfehler、rottransratio 五个 600×1 MAT；前四项求八次平均，rottransratio 保留最后一次运行值，不伪造历史 alleadap*。 |
 | REQ-F-EXP-003 | M | 确定 | 系统应复现多更新频率实验，并显式登记历史 MAT 与当前脚本输出不一致项。 | AC-F-EXP-003：在 600 点正弦轨迹、二十面体等级 2 和刷新周期 [1,5,11,21] 下核验各周期的 600×4 误差矩阵、更新时刻与原脚本实际保存的 allemittransfehler.mat、allemitrotfehler.mat、akrot.mat；对历史归档额外的 alleadaprotfehler.mat、alleadaptransfehler.mat、rottransratio.mat 出具字段级差异记录（文件、变量、shape、生成者、分析依赖、来源状态），未知来源不得伪造。 |
-| REQ-F-FILTER-001 | M | 确定 | 系统应忠实实现 Franz 三轴匹配滤波的平移、旋转模板响应与归一化。 | AC-F-FILTER-001：逐点响应与最终运动结果固定输入对照。 |
+| REQ-F-FILTER-001 | M | 确定 | 系统应忠实实现 Franz 三轴匹配滤波的平移、旋转模板响应与归一化。 | AC-F-FILTER-001：依据 [design/kvd.md §2](design/kvd.md) 核对固定 N×6 输入下的三轴平移/旋转模板向量、每轴响应和平方范数累积、归一化系数及最终 t/ω；零范数退化要有独立状态。逐节点 MATLAB Golden SHA、实测绝对/相对误差及 DEC-005 批准容差齐备后方可判定。 |
 | REQ-F-FLOW-001 | M | 确定 | 系统应按原符号约定计算平移/旋转及其合成切向光流与平均模长。 | AC-F-FLOW-001：固定输入的三维流场、切向残差、统计量一致。 |
 | REQ-F-FLOW-002 | M | 确定 | 系统应使用原距离范围 [1,4]、归一化和随机近度方式生成 Bias 场景。 | AC-F-FLOW-002：固定随机序列下各步距离与近度可比较。 |
 | REQ-F-FLOW-003 | M | 确定 | 系统应区分平均流长尺度高斯扰动和逐分量高斯扰动，并投影回切平面。 | AC-F-FLOW-003：各模型用固定 Gaussian 序列逐项核对。 |
@@ -67,13 +67,13 @@
 | REQ-F-GEOM-001 | M | 确定 | 系统应以 N×6 数据表示单位视线和三维切向光流，正确执行原叉积与点积。 | AC-F-GEOM-001：固定矩阵和逐元素计算比较，形状错误可检测。 |
 | REQ-F-GEOM-002 | M | 确定 | 系统应按原递归顺序生成 8×4^i 全八面体与 6×4^i 缺损八面体视线。 | AC-F-GEOM-002：对 i=0、1、2 使用从原 MATLAB 生成的带来源 SHA 的**有序**黄金方向矩阵，检查 N、单位范数、缺损面和逐行分量；逐元素容差经 DEC-005 冻结，哈希只作文件身份检查。 |
 | REQ-F-GEOM-003 | M | 确定 | 系统应按原顶点/面表生成 20×4^i 二十面体视线。 | AC-F-GEOM-003：对 i=0、1、2 使用原 MATLAB 二十面体黄金矩阵逐行比较三维分量、顺序和 N=20·4^i；候选误差不冒充通过，最终容差经 DEC-005 冻结。 |
-| REQ-F-KVD-001 | M | 确定 | 系统应提供独立 Original KvD 和 Modified KvD 入口，保留各自不同的平移更新公式。 | AC-F-KVD-001：固定同一 MATLAB N×6 Golden（源脚本和 SHA 待 P0 确定），逐轮核验 Franz 初值、重估 near、符号翻转、Original/Modified 各自的平移更新三项均值、旧 t 计算的 ω、新 t、RMS 残差、迭代次数及最终近度尺度恢复；每个量列出维度、最大绝对/相对误差，容差经 DEC-005 批准后方可判定。 |
+| REQ-F-KVD-001 | M | 确定 | 系统应提供独立 Original KvD 和 Modified KvD 入口，保留各自不同的平移更新公式。 | AC-F-KVD-001：原始 MATLAB 函数已定位为 `help_functions/norm_koenderink_iteration.m` 与 `help_functions/mue_norm_koenderink_iteration.m`；归档探针的 source SHA 已记录为 `48c590ba2564e4bdd293d2cbecd2eef83b291452`，但**逐轮 Golden 的独立固定 N×6 输入、生成/采集脚本及其 SHA 仍待核验**。使用同一固定输入，逐轮核验 Franz 初值、重估 near、符号翻转、Original/Modified 各自的平移更新三项均值、旧 t 计算的 ω、新 t、RMS 残差、迭代次数及最终近度尺度恢复；每个量列出维度、最大绝对/相对误差，容差经 DEC-005 批准后方可判定。 |
 | REQ-F-KVD-002 | M | 确定 | 系统应保留 KvD 初始化、更新先后及至少 6 次、最多 200 次和动态/绝对阈值退出规则。 | AC-F-KVD-002：覆盖提前停止、最低次数、上限与异常输入。 |
 | REQ-F-MAT-001 | M | matio 探针 582/582 读取成功；核心 Reader 数值合同未验收 | 系统应使用 matio/zlib 在运行时解码已支持的原始压缩 MAT v5 数值变量并正确返回数据值，不能依赖 MATLAB/Python。 | AC-F-MAT-001：对每个归档源文件执行实际可解码性检查，在已支持类型上验证元素值、长度及列主序；失败必须计入数据字典但不能冒充成功。 |
 | REQ-F-MAT-002 | M | 582 个 MAT 变量元数据已实测；正式接口未实现 | 系统应提供变量枚举与诊断能力，读取 MAT 文件后返回各变量名称、类型、rank、dims、复数标志及不支持原因。 | AC-F-MAT-002：对所有源 MAT 输出元数据报告，按原始文件名准确定位不支持的类别/无效尺寸；其职责是运行时查询而非生成全量字典文档。 |
 | REQ-F-MAT-003 | M | 确定 | 系统应分别提供指定变量名的严格读取和 getflowfield 兼容的首变量/省略扩展名读取。 | AC-F-MAT-003：分别测试单变量、多变量、缺失变量、后缀处理。 |
 | REQ-F-MAT-004 | M | 确定 | 系统应在独立 RunId 输出目录写入变量名与尺寸兼容的 MAT 结果。 | AC-F-MAT-004：写后回读一致，拒绝覆盖原归档/历史 RunId。 |
-| REQ-F-SH-001 | M | 确定 | 系统应复现 l≤2 的实球谐基函数、3×5 系数、近度恢复与逐项拟合。 | AC-F-SH-001：正负 m、归一化、有效系数位置与数值对照。 |
+| REQ-F-SH-001 | M | 确定 | 系统应复现 l≤2 的实球谐基函数、3×5 系数、近度恢复与逐项拟合。 | AC-F-SH-001：依据 [design/harmonics.md §1–3](design/harmonics.md) 对固定方向逐项核查 l≤2 九个实球谐基函数的正/负 m 相位、归一化、3×5 有效位置、逐项 koeff 拟合与 near 重建；分别记录索引/维度、参考 SHA 和误差。没有源 MATLAB/独立 Golden 及 DEC-005 批准容差时保持未验收。 |
 | REQ-F-SH-002 | M | 待版权核查 | 系统应复现 l≤2 球谐旋转矩阵与系数旋转，保持原基函数顺序及旋转方向。 | AC-F-SH-002：3×3、5×5 旋转块固定样本对照；权利来源先核实。 |
 | REQ-F-TRAJ-001 | M | 确定 | 系统应按原参数生成圆轨迹、正弦轨迹和相邻点局部运动/旋转，不将绘图混入数据生成。 | AC-F-TRAJ-001：样本轨迹、旋转方向、端点和角度转换对照。 |
 
