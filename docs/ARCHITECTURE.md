@@ -105,10 +105,10 @@ flowchart LR
 |---|---|---|---|
 | egomotion_domain | domain 值类型、向量/旋转及基本数学函数头 | Eigen 3 | 不引入 matio、experiment、CLI |
 | egomotion_contracts（INTERFACE 候选） | IResultReader/IResultWriter、IRandomSource 等只声明领域依赖的窄接口 | domain | 不含 matio.h、不链接 I/O 实现、不提供 C 函数入口 |
-| egomotion_sampling | 方向采样接口及实现 | domain、contracts（仅在实际 API 使用接口时） | 内部递归实现可私有，不依赖 experiment |
+| egomotion_sampling | 方向采样接口及实现、注入 RNG 的随机球面方向函数 | **domain、contracts**（IDirectionSampler/IRandomSource 契约） | 内部递归实现可私有，不依赖 experiment；若后续接口移至别处须同步 ADR/DAG |
 | egomotion_harmonics | l≤2 基函数、拟合/旋转接口 | domain | 第三方 SH 递归细节仅私有、须版权审查 |
 | egomotion_estimators | Franz、KvD、Adaptive 计算合同 | domain、harmonics | 不依赖 matio、CLI、plotting |
-| egomotion_simulation | 轨迹、噪声、场景/光流生成 | domain、sampling | RNG 内部策略只通过窄接口暴露 |
+| egomotion_simulation | 轨迹、噪声、场景/光流生成 | **domain、sampling、contracts**（IFlowNoiseModel/IRandomSource） | RNG 通过 contracts 窄接口注入，不含全局 RNG；不依赖 CLI/matio |
 | egomotion_matio | MAT Reader/Writer 与元数据，**实现** Reader/Writer 合同 | contracts、domain、matio、zlib | 仅私有源码包含 matio.h；不依赖 estimators/experiments |
 | egomotion_experiments | 五类实验 Runner、RunContext | domain、contracts、sampling、simulation、estimators；**不链接 egomotion_matio** | 只通过 IResultWriter 使用写出能力；无原始 MAT 写权限、不依赖 plotting |
 | egomotion_analysis | 历史 MAT 数据分析与曲线序列 | domain、contracts；**不链接 egomotion_matio** | 仅 IResultReader；不调用 estimators，不依赖 plotting |
