@@ -1,6 +1,6 @@
 # Franz / Original KvD / Modified KvD 详细设计草案
 
-> **LLD v0.2（未冻结、未实现、未验证）**。下列伪代码和公式根据源 MATLAB 函数重新核对，仍需有 MATLAB 固定输入 Golden 与经 DEC-005 批准的容差后才能冻结。需求：REQ-F-FILTER-001、REQ-F-KVD-001/002、REQ-F-ERROR-001、REQ-DC-KVD-001、REQ-NF-NUM-001/002；任务：P4.1–P4.10。
+> **LLD v0.3（未冻结、未实现、未验证）**。下列伪代码和公式根据源 MATLAB 函数重新核对，仍需有 MATLAB 固定输入 Golden 与经 DEC-005 批准的容差后才能冻结。需求：REQ-F-FILTER-001、REQ-F-KVD-001/002、REQ-F-ERROR-001、REQ-DC-KVD-001、REQ-NF-NUM-001/002；任务：P4.1–P4.10。
 
 ## 1. 精确来源与函数合同
 
@@ -187,3 +187,100 @@ public:
 - 需求/测试：REQ-F-KVD-001/002、TC-F-KVD-001/002、TC-F-ERROR-001、TC-DC-KVD-001、TC-NF-NUM-001；详细执行计划见 [TEST_PLAN.md](../TEST_PLAN.md)。
 
 **本文件是更具体的 LLD 草案，不是可冻结的编码基线。**
+
+
+## 7. 统一类型与精确签名候选
+
+[contracts.md](contracts.md) 为值对象与 Result<T,E> 的单一候选定义；本节只定义 KvD 额外参数和逐轮记录，避免不同求解器私建互斥错误类型。
+
+~~~cpp
+namespace egomotion {
+struct KvDParameters {
+    Scalar nearness_denominator_epsilon = 1e-13;
+    Scalar initial_threshold = 1e-4;
+    Scalar absolute_threshold = 1e-7;
+    Scalar accuracy_factor = 1000.0;
+    std::size_t minimum_iterations = 6;
+    std::size_t nominal_maximum_iterations = 200;
+};
+struct KvDIterationTrace {
+    std::size_t k;
+    Vector3 translation_before_sign;
+    Vector3 translation_after_sign;
+    Vector3 rotation_before;
+    Eigen::VectorXd nearness_raw;
+    Eigen::VectorXd nearness_after_sign;
+    Vector3 translation_sum_a;
+    Vector3 translation_sum_b;
+    Vector3 translation_sum_c;
+    Vector3 translation_candidate;
+    Vector3 rotation_after;
+    Scalar residual_mse;
+    Scalar residual_rms;
+    Scalar previous_rms;
+    Scalar residual_change;
+    Scalar active_threshold;
+};
+struct KvDResult {
+    MotionEstimate motion;
+    Eigen::VectorXd final_nearness;
+    std::size_t iteration_count;
+    std::vector<KvDIterationTrace> trace; // 可按设置输出；Golden 模式必须可见
+};
+class OriginalKvDEstimator {
+public:
+    Result<KvDResult, NumericalErrorCode> estimate(
+        const FlowField&, const KvDParameters&) const;
+};
+class ModifiedKvDEstimator {
+public:
+    Result<KvDResult, NumericalErrorCode> estimate(
+        const FlowField&, const KvDParameters&) const;
+};
+}
+~~~
+
+**合同待定项**：NumericalErrorCode 单独 enum 是否足以携带上下文、Result 如何表达 NaN/Inf 的原版行为、trace 在性能模式是否可关闭，以及是否允许方法接收非单位视线。须依 P0.8 与实际 MATLAB Golden 冻结，不能仅凭该示例签名开始实现。
+
+## 8. 每轮状态、停止判据与异常路径表
+
+| 顺序 | 输入/可变状态 | 必须留下的证据 | MATLAB 对应关键代码 |
+|---|---|---|---|
+| I0 | 固定 N×6 流场 | Franz 的每轴积分、归一分母、t0、ω0 | franzeigen 的初始模板 |
+| I1 | t_before、ω_before | near_raw、分母是否接近 0 | norm_koenderink 的 near 循环 |
+| I2 | near_raw 与 t_before | sum(near_raw)、sign_flip、near_after、t_after_sign | near 和 t 同时翻转 |
+| I3 | near_after、t_old、ω_old | Original/Modified **分别**记录 a、b、c、t_candidate 与范数 | 两个不同的平移分支 |
+| I4 | t_old、near、ω_old、flow | a_omega、b_omega、c_omega、ω_new、所用旧 t 的副本 | 旋转更新必须先于 t_new 提交 |
+| I5 | t_new、ω_new、**本轮 near** | p_pred(i)、residual_mse、residual_rms | MATLAB 求平均平方再取根 |
+| I6 | previous_rms、current_rms | delta、threshold=rms/(1000N)、absolute_threshold、k 与 bool 判定 | 原 while 的 OR/AND 优先级 |
+| I7 | final t、final near | mean(final_near) 和最终 scale-adjusted t、x 次数 | 循环后缩放，不擅自重算 near |
+
+**特别检查**：原函数计算 near 时用的是该迭代开始的 t/ω；循环末尾不会再次计算 near。若重构为“先更新最终状态，再统一重算 near”，会改变输出，不能作为忠实模式的实现。
+
+候选失败集合：
+- 输入 N=0、非 6 列、非有限 d/p、非单位 d（默认拒绝还是校正待约定）；
+- Franz 各模板归一分母为 0；初始或后续 t 范数为 0；near 分母极小；输出出现 NaN/Inf；
+- 达到原最大预算：**不等于出错**，必须记录终止原因及最后有效性，而非统一当作失败；
+- 一部分原 MATLAB 输入会继续传播 NaN；显式返回 NumericalErrorCode 需要同时记录原版行为和安全模式的分歧，未经确认不可宣称逐值等价。
+
+## 9. 固定 Golden 的分层生成与测试数据格式
+
+建议 Golden 以**只读 MATLAB 参考导出**形式存为对照数据；不得把被测 C++ 结果拷贝成 Expected。每个测试案例至少保存：
+
+| 样本 ID（计划） | 条件 | MATLAB 采集内容 | 目标 |
+|---|---|---|---|
+| KVD-G01 | i=0 小采样、无噪声/固定 near、非退化 t/ω | Franz 中间响应、每轮 near、Original/Modified t/ω、残差、停止 | 符号和更新顺序 |
+| KVD-G02 | 符号翻转（sum near<0） | near_before/after、t_before/after 与最终 scale | 保留符号分支 |
+| KVD-G03 | 非零固定 Gaussian、近似噪声输入 | 两个估计器逐轮误差和次数 | 对照统计数据与容差 |
+| KVD-G04 | 人工零模或几何退化输入 | MATLAB 是报错、产生非有限值还是仍返回 | 明确 C++ 状态与忠实性差别 |
+| KVD-G05 | 能区分最低 6 次、提前停止和 200 次上限的输入 | k、每轮 delta/threshold/残差 | 验证完整 while 语义 |
+
+黄金记录字段应有源 Git blob SHA、原始函数名、MATLAB 版本、固定输入身份、输出每个字段的 shape/dtype/数值、允许误差和对应 TC-F-FILTER-001、TC-F-KVD-001/002、TC-F-ERROR-001。**上述 G01–G05 只是测试设计编号，当前没有数据文件或运行证据。**
+
+## 10. 与架构及开发工作的绑定
+
+- P4.1/P4.2 → FranzMatchedFilter，验证三轴六类响应；P4.3/P4.4/P4.5/P4.9 → 两条 KvD 平移规则；P4.6 → while 与停止统计；P4.7 → 两个不同误差计算；P4.8 → Golden；P4.10 → 多次调用的状态隔离。
+- 内部公共引擎仅负责 near、旋转、残差与停止检查，不能在某个布尔选项中悄悄消去 near²。
+- 方法接口与返回值的最终冻结由 [对象模型](../OBJECT_MODEL.md) 和 [测试计划](../TEST_PLAN.md) 一起审查；模块依赖保持 estimator → domain/math，不读取或写入 MAT。
+
+**就绪状态**：数学步骤和逐轮字段已列出；仍缺原 MATLAB Golden、批准容差、实现/编译、具体测试函数/CTest。文档可用于技术审查，不可据此标记模块已通过。
