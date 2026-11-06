@@ -35,6 +35,31 @@ flowchart TD
 4. `KvDIterationEngine` 可以共享计算流程，但不同平移更新规则必须可观察且不互换；不能硬造一个把 KvD 与 Adaptive 结果强行同构的“全能求解器”。
 5. `IResultReader` 与 `IResultWriter` 是分别收窄的边界。C++ 运行器无权通过读接口修改原始数据。
 
+### 2.1 部署视图（仅 Debian/Ubuntu，设计草案）
+
+```mermaid
+flowchart LR
+    subgraph host["Debian / Ubuntu GNU/Linux"]
+        cli["egomotion CLI"]
+        libs["C++17 domain / simulation / estimator / analyzer"]
+        io["matio + zlib (HDF5 仅按真实数据需求)"]
+        plot["可选绘图导出"]
+        cli --> libs
+        cli --> io
+        cli -.按需.-> plot
+        libs --> io
+    end
+    raw[("origin/** 原始 MAT / MATLAB")]
+    out[("results/<RunId> 新结果")]
+    raw -.只读输入.-> io
+    io -->|"仅新输出目录"| out
+```
+
+- 运行进程仅在 Debian/Ubuntu 构建；MAT 文件由本地文件系统提供，不要求网络或 MATLAB/Python 服务。
+- 原始输入目录的文件句柄只读、哈希不变；写入器不得通过软链接或路径穿越覆盖 origin。
+- 只有 `inspect-mat`、实验生成、数据分析是数值主路径；图形服务可缺失，不影响无界面运行。
+- 具体发行版最低版本、CMake/编译器版本及其性能边界待 DEC-006 实测与项目所有者批准，不在设计草案中虚构。
+
 ## 3. 自原 PLAN 提取的模块和接口职责
 
 ### 模块、对象和数据契约（原 PLAN §3）
