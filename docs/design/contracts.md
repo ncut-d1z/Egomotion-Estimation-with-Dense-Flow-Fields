@@ -55,18 +55,21 @@ enum class MatErrorCode {
 enum class NumericalErrorCode {
     EmptyInput, InvalidShape, NonFiniteInput, ZeroNorm,
     InvalidDirection, InvalidNearness, SingularSystem,
-    IllConditionedSystem, NonFiniteResult, UndefinedAngle
+    IllConditionedSystem, NonFiniteResult, UndefinedAngle,
+    InvalidSubdivisionLevel, SampleCountOverflow, ResourceLimitExceeded,
+    RandomSourceExhausted, InvalidRandomSample
 };
 enum class ExperimentErrorCode {
     InvalidParameters, SourceUnavailable, DataMismatch,
     SolverFailed, OutputFailed, IncompleteRun
 };
 struct ErrorDetail {
+    std::optional<RunId> run_id; // 可无 RunId 的 inspect / parse 仍可报告错误
     std::string stage;
     std::string message;
     std::string source_path;
     std::string variable;
-    std::size_t observation_index = 0;
+    std::optional<std::size_t> observation_index; // 无编号与 0-based 首个样本可区分
 };
 template<class Value, class Error> class Result;  // 拟由项目自行定义
 template<class Error> class Status;                // void 成功/失败合同
@@ -75,8 +78,36 @@ template<class Error> class Status;                // void 成功/失败合同
 
 - **Mat 错误**与**数值错误**分别归属 IO 与 solver，Runner 可以附带上下文，但不得吞掉原始错误。
 - **源算法与安全行为区别**：记录 MATLAB 在奇异、除零、NaN 等情况下实际产生的结果；C++ 默认可返回明确非成功状态，但任何“遇错继续/停止/回滚”必须通过入口专属合同评审，不能误标为数学等价。
-- **日志**：RunId、source SHA、输入文件/变量、字段维度、原参数、seed、失败阶段、退出码、stdout/stderr 位置。源文件原始 SHA 不因读操作改变。
-- **CLI 退出码候选**：0=成功，2=参数错误，3=MAT 文件错误，4=类型/形状错误，5=数值失败，6=结果路径冲突，7=可选绘图不可用。最终数值与优先级以 SRS REQ-I-CLI-001 和 P0.8 审查为准。
+- **错误上下文与 RunId**：`ErrorDetail::run_id` 候选为 C++17 `std::optional<RunId>`（实现须包含 `<optional>`）；仅当 RunContext 已分配独立运行身份时填充，`inspect-mat` 和参数解析可为空。RunContext 拥有唯一 RunId；各层传播错误时不得丢失或重新生成它。`observation_index` 也可为空，不与真实 0-based 第 0 个样本混淆。
+- **错误结构待冻结**：当前 `Result<Value, ErrorCode>` 为候选类型；P0.8 须明确统一承载枚举及 ErrorDetail 的方式（如 Result 的失败分支包装 `Failure<Code>{code, detail}`），不得依赖可丢失 RunId 的全局 `last_error`。
+- **日志**：区分 RunId、探针 `source_sha` 参数、MATLAB blob SHA、Golden 脚本/数据 SHA；另记输入变量、维度、参数、seed、失败阶段、退出码、stdout/stderr。原源文件读取不应改变其内容哈希。
+- **CLI 退出码候选**：错误枚举到 CLI 退出码的**唯一候选映射**见 §3.1；命令参数、阶段与诊断输出由 [cli.md §2–3](cli.md) 维护，SRS §6.1 仅作外部接口概览。签名/错误级别仍须 P0.8/P1.2 审批。
+
+### 3.1 错误枚举与 CLI 退出码：唯一候选映射
+
+本表是当前 LLD 的**候选单一来源**，[cli.md](cli.md) 不另行定义冲突枚举。按错误**来源层级**区分：MAT 解码/形状错误返回 4，求解器内部的 NumericalErrorCode::InvalidShape 返回 5。
+
+| 错误来源/枚举 | 候选 exit | 诊断阶段 |
+|---|---:|---|
+| 正常完成、help、version | 0 | success |
+| CLI 未知/缺少/重复选项、非法实参；ExperimentErrorCode::InvalidParameters | 2 | parse |
+| MatErrorCode::MissingFile、PermissionDenied、InvalidMatHeader、CorruptCompressedData、MissingVariable、AmbiguousVariable；ExperimentErrorCode::SourceUnavailable（读取输入） | 3 | read |
+| MatErrorCode::UnsupportedClassOrType、InvalidShape、SizeOverflow | 4 | decode/schema |
+| 全部 NumericalErrorCode（含 InvalidShape、RandomSourceExhausted、InvalidRandomSample、SampleCountOverflow、ResourceLimitExceeded）；ExperimentErrorCode::SolverFailed、DataMismatch、IncompleteRun | 5 | solve/simulation/analyze |
+| MatErrorCode::OutputPathForbidden、OutputExists、WriteFailed、ReadbackMismatch；ExperimentErrorCode::OutputFailed | 6 | output |
+| 可选 plot 后端不存在（CLI capability，非 MatErrorCode） | 7 | plot |
+
+**优先级候选**：解析参数 → 输入读取 → 数据解码 → 输出路径安全 → 数值计算/分析 → 仅 plot 命令的后端检查。以实际首先失败的阶段报告，不跨层改写错误为成功；保留底层 code、stage、path 和可用 RunId。上表仍未获项目所有者批准，未生成真实 CLI/CTest 证据。
+
+### 3.2 随机源接口与失败语义候选
+
+`IRandomSource::uniform()`、`IRandomSource::normal()` 统一返回 `Result<Scalar, NumericalErrorCode>`（见 [sampling_noise.md §3](sampling_noise.md)），不可用无状态的 `double` 返回掩盖错误：
+
+- uniform 成功值为有限 [0,1)，normal 为有限 double；NaN/Inf 或超界 uniform 返回 InvalidRandomSample，保留调用位置及已知样本索引。
+- FixedSequenceRandomSource 输入耗尽返回 RandomSourceExhausted，不重复末尾样本、不补随机数、不自动重试。
+- 一旦失败，本次数值路径立即传播错误；“继续/回滚/保留部分结果”是实验专属的开放决策，不能假装复现 MATLAB 的失败行为。
+- 原 Bias 的两次 seeding 由 RunContext 在相应阶段创建/重置随机源；须保持 motion 前的两组 uniform、reset 后的 N 次 uniform 与 3N 次 normal 的顺序。`nonpropfehler(...,0)` 仍须消费 3N 次 normal。
+- 每 RunId 独占 RNG，FixedSequence 测试覆盖数值、调用计数、提前耗尽、越界/非有限值；结果性能和 ABI 仍待批准。
 
 ## 4. 所有权、const、线程和错误传播
 
@@ -96,7 +127,9 @@ template<class Error> class Status;                // void 成功/失败合同
 
 | 字段 | 要求 | 当前状态 |
 |---|---|---|
-| source_file / source_blob_sha | 指向唯一原始 .m 函数版本 | 文件存在，个别 SHA 已读取 |
+| source_file / source_blob_sha | 原始 .m 函数的 Git blob SHA，不能用探针 source_sha 参数替代 | 文件存在，个别 SHA 已读取 |
+| probe_source_sha / verified_archive_git_sha | 探针运行参数与经独立核实的归档 Git tree/commit 分开保存，未验证二者等同则不能合并 | 已记录前者、未独立核实两者关系 |
+| golden_capture_script_blob_sha / reference_sha256 | Golden 采集脚本 Git blob SHA 与参考数值文件 SHA-256 分别保管 | 尚未建立 Golden |
 | fixed_input_identity | 确定性 N×6、near/coeff、参数及 RNG 固定序列 | 尚未建立完整 Golden |
 | expected_intermediates | MATLAB 逐轮 near/t/ω 或 M1–M4、b、z、error_mse | 尚未实际采集 |
 | target_method / unit | 确切数学合同、尺寸、rad/deg | 目前在模块 LLD 拟定 |
