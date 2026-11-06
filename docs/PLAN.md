@@ -166,7 +166,7 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 | P0.5 | 维护原始 MAT 文件身份、元数据字段及扫描失败分类方案；**MAT_DATA_SCHEMA 已由真实 matio 全量探针生成**。本 P0 审计任务与 AC-D-MAT-001 的完整实测/复核验收分开记录 | P0.1 | REQ-F-MAT-002、REQ-D-MAT-001 | TC-F-MAT-002、TC-D-MAT-001 / AC-F-MAT-002、AC-D-MAT-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
 | P0.6 | 维护 SOURCE_INVENTORY、**真实 MAT_DATA_SCHEMA**、MIGRATION_MATRIX 的追踪与来源；将已实测文件字段与尚需数值/授权/错误合同确认的内容区分。SOURCE_INVENTORY、MIGRATION_MATRIX 尚未完成，不自动视为全项验收 | P0.2、P0.3、P0.5 | REQ-D-MAT-001、REQ-PROC-TRACE-001 | TC-D-MAT-001、TC-PROC-TRACE-001 / AC-D-MAT-001、AC-PROC-TRACE-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
 | P0.7 | 复核并完善已有 docs/OBJECT_MODEL.md **草案**，覆盖 45 个 MATLAB 文件→候选方法及对象所有权，不把已有文件视为任务完成 | P0.2 | REQ-DC-DOMAIN-001、REQ-NF-OOP-001 | TC-DC-DOMAIN-001、TC-NF-OOP-001 / AC-DC-DOMAIN-001、AC-NF-OOP-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
-| P0.8 | 评审 HLD/对象模型/LLD 的最小接口与错误合同，明确当前已冻结范围和未决 DEC；不因 582 MAT 尚未全量解码而虚报数据合同冻结 | P0.6、P0.7 | REQ-DC-DOMAIN-001、REQ-NF-OOP-001、REQ-I-CLI-001 | TC-DC-DOMAIN-001、TC-NF-OOP-001、TC-I-CLI-001 / AC-DC-DOMAIN-001、AC-NF-OOP-001、AC-I-CLI-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
+| P0.8 | 评审 HLD/对象模型/LLD 的最小接口与错误合同，明确当前已冻结范围和未决 DEC；不得将独立探针已成功解码 582/582 误写为生产 Reader/Writer、错误合同、数值 Golden 或架构已冻结 | P0.6、P0.7 | REQ-DC-DOMAIN-001、REQ-NF-OOP-001、REQ-I-CLI-001 | TC-DC-DOMAIN-001、TC-NF-OOP-001、TC-I-CLI-001 / AC-DC-DOMAIN-001、AC-NF-OOP-001、AC-I-CLI-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
 
 **P0/P1 数据审计现状**：源文件与归档已核对，MAT_DATA_SCHEMA 是**582 文件全量真实 matio 数据字典**；SRS、HLD、OBJECT_MODEL、TEST_PLAN、LLD 仍为未冻结草案，SOURCE_INVENTORY 与 MIGRATION_MATRIX 的全量内容未完成。P0 的文档合同、独立 P1 探针执行、生产 Reader/Writer 和 P10.4 审核均为独立门禁，不以扫描器成功替代整阶段验收。
 
@@ -349,8 +349,8 @@ flowchart LR
 
 | 里程碑 | 交付范围 | 进入条件 | 退出条件和证据 |
 |---|---|---|---|
-| M0 源资料与设计评审门禁 | P0.1–P0.8 的可评审资料、SRS/HLD/LLD 草案 | 原资料目录可只读访问、AGENTS 已核对 | 45 文件来源清单、MAT **全量审计方案但非全量解码结果**、最小接口批准范围和开放 DEC；**当前尚未正式验收** |
-| M1 MAT 只读/新结果写入闭环 | P1 + P2 基础值类型 | M0 最小合同审查、开发分支远程检查点 | MAT 读取、**582 文件 matio 全量数据字典已由独立探针提供；仍需业务读取/异常负例/写回读验收**、类型/shape、路径保护与回写回读的真实测试日志；P10.4 尚须独立复核 |
+| M0 源资料与设计评审门禁 | P0.1–P0.8 的可评审资料、SRS/HLD/LLD 草案 | 原资料目录可只读访问、AGENTS 已核对 | 45 文件来源清单、**已生成的 582/582 MAT 全量 matio 字典及探针证据**、最小接口待批准范围和开放 DEC；**生产 Reader/Writer、异常负例、原始资料身份审查及 P10.4 独立复核尚未完成，M0 尚未正式验收** |
+| M1 MAT 只读/新结果写入闭环 | P1 + P2 基础值类型 | M0 最小合同审查、开发分支远程检查点 | **582/582 MAT 的独立探针读取及类型/shape 字典已有证据**；尚需生产 Reader/Writer、原始只读/结果写入路径保护、异常负例、值校验、写后回读的真实日志及 P10.4 独立复核 |
 | M2 Bias 计算与统计 | P2–P5 的共享数学、噪声、Franz、KvD、Bias | M1 + 相关数学/采样合同 | Original/Modified 每轮对照和两个 40-run 统计，含失败样本 |
 | M3 Adaptive 数值闭环 | P6–P8 轨迹、球谐和自适应 Session | 所需旋转/球谐代码及基准可用，版权障碍已处理 | 35/600 点与 1/5/11/21 更新率实验，合同及错误数有证据 |
 | M4 图表和原文复现 | P9–P10 | M2/M3 必须输出可校验 MAT | 四种分析、三幅插图与论文相关曲线数据复现；容差与例外批准 |
