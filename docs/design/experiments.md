@@ -42,14 +42,7 @@ enum class ExperimentKind {
     AdaptiveInitialization, AdaptiveComparison, AdaptiveUpdateRates
 };
 struct ExperimentConfig;    // 五种原入口参数分开表达
-struct RunReport {
-    ExperimentKind kind;
-    std::string run_id;
-    std::vector<std::string> produced_mat_variables;
-    std::size_t valid_samples;
-    std::size_t failed_samples;
-    // 实际参数、seed、source SHA、输出目录和错误记录由后续合同细化
-};
+// 结构化运行结果仅使用 §6 的 RunOutcome，避免 RunReport/RunOutcome 并存。
 class BiasExperimentRunner;
 class InitializationRunner;
 class AdaptiveComparisonRunner;
