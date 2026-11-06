@@ -218,6 +218,13 @@ struct AdaptiveFrameInput {
     Matrix3 rotation_from_previous_frame;
     FlowField observations;
 };
+struct FrameResult {
+    std::size_t matlab_frame_index;
+    AdaptiveStepResult primary_step;
+    std::vector<MotionEstimate> comparison_motion;
+    std::vector<Scalar> comparison_translation_error_deg;
+    std::vector<Scalar> comparison_rotation_error_deg;
+};
 class AdaptiveMfaSession {
 public:
     Result<FrameResult, ExperimentErrorCode> processFrame(
