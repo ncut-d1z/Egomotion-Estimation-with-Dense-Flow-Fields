@@ -42,7 +42,7 @@ flowchart LR
     subgraph host["Debian / Ubuntu GNU/Linux"]
         cli["egomotion CLI"]
         libs["C++17 domain / simulation / estimator / analyzer"]
-        io["matio + zlib (HDF5 仅按真实数据需求)"]
+        io["matio 1.5.26 + zlib；已读 582 MAT v5"]
         plot["可选绘图导出"]
         cli --> libs
         cli --> io
@@ -59,6 +59,17 @@ flowchart LR
 - 原始输入目录的文件句柄只读、哈希不变；写入器不得通过软链接或路径穿越覆盖 origin。
 - 只有 `inspect-mat`、实验生成、数据分析是数值主路径；图形服务可缺失，不影响无界面运行。
 - 具体发行版最低版本、CMake/编译器版本及其性能边界待 DEC-006 实测与项目所有者批准，不在设计草案中虚构。
+
+### 2.2 已实测的 MAT 数据合同
+
+| 来源范围 | matio 实际读取结果 | 架构影响 |
+|---|---|---|
+| 全部 582 MAT | MAT v5/zlib、class=double/data_type=double、582 个变量 READ_OK | 当前真实归档只需 v5 + zlib 的 double 数值读取；其他 class 保留明确拒绝路径 |
+| Bias 560 文件 | xwerte：80 个 10×1；ywerte1…6：480 个 10×3 | 使用真实 MAT rank/dims，不依据注释推测 |
+| Adaptive 22 文件 | 35×1：4、600×1：14、600×4：4 | 当前历史结果结构已明确，逐步算法 Golden 仍缺失 |
+| 文件身份 | 每份文件一个与 basename 同名的变量；FNV-1a64 指纹 | 原始输入只读；FNV 不是 SHA-256 |
+
+独立数据字典探针已经实测，但生产 `egomotion_matio` target、Reader/Writer 注入、错误负例、索引转换与写回读尚未验证。
 
 ## 3. 架构组件接口与职责（单一来源）
 
@@ -138,7 +149,7 @@ flowchart BT
 - 对外 `include/egomotion/` 只暴露领域值对象、必须的领域接口及可公开算法合同；matio C API、递归实现、实验配置解析、具体绘图库适配放在 `src/` 私有实现。
 - `MatFileHandle` 作为内部资源管理器不需要由算法层持有；如公开类声明涉及 `mat_t`，须解释必要性或通过私有实现消除泄漏。
 - CMake 公开依赖/传递包含路径只用于真实 API 必需内容；源外构建、Debian/Ubuntu 平台与依赖版本可追踪。**接口头文件不可传递 `matio.h`、`mat_t*` 或 `matvar_t*` 给实验/求解模块**。实际 target 的静态/共享链接类型、安装导出及依赖版本在 P0.8 决定。
-- 当真实 MAT 全量数据确认需要 HDF5 时，另行评审额外 target 依赖与功能范围；目前只确认抽样 MAT v5 压缩。
+- **MAT 格式与类型已有实测证据**：[MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md) 记录 582/582 MAT v5/zlib、double/double、五种二维 shape，全部 READ_OK；现存归档无需 MAT v7.3/HDF5 读取能力。新输入范围改变时再按 ADR 评审。
 
 ## 5. 关键数据流与运行时序
 
@@ -199,7 +210,7 @@ P0.7/P0.8 需校验本 HLD、[OBJECT_MODEL.md](OBJECT_MODEL.md)、MAT schema、L
 |---|---|---|---|
 | QA-01 数据完整性 | 用户把输出根目录设为 origin 子目录、软链接别名或旧 RunId | 拒绝写入；原数据不变 | 原始 582 MAT 与源 .m 哈希不变；TC-NF-SAFETY-001，设计已定、未测 |
 | QA-02 可复现性 | 相同固定 N×6 流场进入 Franz、KvD、Adaptive | 输出独立步骤/中间量与状态；RNG 不影响固定样本 | 逐轮向量/矩阵误差表；DEC-005 容差待核 |
-| QA-03 数据格式可恢复性 | MAT 变量缺失、压缩块损坏、shape 错误 | Reader 返回带文件/变量上下文的错误，不覆盖既有结果 | TC-F-MAT-* 与失败日志；未测 |
+| QA-03 数据格式可恢复性 | MAT 变量缺失、压缩块损坏、shape 错误 | Reader 返回带文件/变量上下文的错误，不覆盖既有结果 | 正常归档路径 582/582 已由探针验证；损坏输入负例与正式 Reader 的 TC-F-MAT-* 仍未测 |
 | QA-04 会话隔离 | 两个 Adaptive RunContext 交替执行，刷新频率不同 | akkoeff、mitkoeff、RNG、输出目录互不污染 | TC-NF-SESSION-001；同 Session 多线程安全**不在承诺范围** |
 | QA-05 无图形执行 | 只安装数值依赖且无 DISPLAY/绘图库 | inspect、run、analyze 仍独立运行 | TC-NF-HEADLESS-001，未测 |
 | QA-06 可维护性 | 增加采样器或噪声模型实现 | 不修改 KvD 和 Adaptive 数学公式，不引入依赖环 | 接口替身与 target DAG 审查，未测 |
@@ -210,7 +221,7 @@ P0.7/P0.8 需校验本 HLD、[OBJECT_MODEL.md](OBJECT_MODEL.md)、MAT schema、L
 
 | ADR | 决策（与原 MATLAB 和 SRS 对应） | 状态 | 拟审查责任人与批准记录 |
 |---|---|---|---|
-| ADR-001 | 原始 MAT 只读，matio/zlib 直接读取，不开发 NPZ | 用户已定方向；全量 MAT v7.3 需求待 DEC-001/002 | 所有者批准范围；P0 MAT 审计人提交文件字典 |
+| ADR-001 | 原始 MAT 只读、matio/zlib 直接读取、不开发 NPZ | **实测**：独立 matio 探针读取 582/582 MAT v5/double/zlib，失败 0；当前归档无需 HDF5。正式 Reader/Writer 合同未冻结 | [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md) 作为数据依据，项目所有者待批准支持范围 |
 | ADR-002 | Debian/Ubuntu、C++17/Eigen/CMake | 用户已定方向；具体发行版/编译器版本待 DEC-006 | 维护者提交实际 build 矩阵，所有者批准 |
 | ADR-003 | 值语义/RAII/窄接口/组合优先；纯数学自由函数 | HLD 提议，未冻结 | P0.7 对象设计评审者 + 所有者 |
 | ADR-004 | Adaptive StepSolver 与跨帧 Session 分离；KvD 双入口保真 | HLD 提议，未冻结 | 数值/接口评审者 + 所有者 |
@@ -225,7 +236,7 @@ P0.7/P0.8 需校验本 HLD、[OBJECT_MODEL.md](OBJECT_MODEL.md)、MAT schema、L
 
 **检查项由 P0.8 及项目所有者审查；下列项均未验收。**
 
-- [ ] 原始 45 个 .m → 模块/对象/无状态函数映射可追踪；MAT 数据字典和 582 个样本版本完成审计。
+- [ ] 原始 45 个 .m → 模块/对象/无状态函数映射可追踪；**582 MAT 的 matio 全量字典已生成**，但来源身份审查、负例、生产 Reader 兼容性与 P10.4 复核仍需完成。
 - [ ] 每个公共领域值对象、误差类型、抽象接口有明确约束、方向、所有权和必要的不变量。
 - [ ] CLI 参数 schema、错误码、RunId 与输出不可覆盖合同被批准。
 - [ ] CMake target 依赖图没有环，模块公共/私有头文件边界被批准。
