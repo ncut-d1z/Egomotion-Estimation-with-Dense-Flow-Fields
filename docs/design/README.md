@@ -9,12 +9,14 @@
 - [OBJECT_MODEL.md](../OBJECT_MODEL.md)：类职责、所有权及 45 MATLAB 文件→拟议方法的唯一维护位置。
 - [TEST_PLAN.md](../TEST_PLAN.md)：Golden、证据、测试环境与候选 CTest 的唯一来源。
 - [PLAN.md](../../PLAN.md)：98 个 P0–P10 最小工作项、任务依赖、风险与里程碑。
+- [contracts.md](contracts.md)：C++17 领域值类型、Result<T,E>、错误分类、资源生命周期与跨模块接口的**统一候选合同**。
 - 本目录每份文档是**对应模块的 LLD 草案**，具体签名、公式、错误处理、数据布局应在 P0.8 以后逐个确认。
 
 ## LLD 模块覆盖矩阵
 
 | 模块 | 对应文档 | 源 MATLAB 范围 | 数学/数据约定 | 候选 API | Golden/实测 | 冻结状态 |
 |---|---|---|---|---|---|---|
+| 跨模块 C++17 合同 | [contracts.md](contracts.md) | SRS/OBJECT_MODEL/全部模块 | 值类型/错误/线程与所有权语义已列，需批准 | Result/Status 候选 | 未测 | 未冻结 |
 | MAT I/O | [mat_io.md](mat_io.md) | getflowfield、各入口 load/save、582 MAT | 类型边界/路径安全已描述，全量字典缺失 | 有待核准的签名/错误码 | 未测 | 阻塞 DEC-001/002 |
 | 基础采样与噪声 | [sampling_noise.md](sampling_noise.md) | findeDreiecke、各采样/流/噪声函数 | 已列数量、顺序、噪声方程 | 候选接口 | 未测 | 未冻结 |
 | 几何与轨迹 | [trajectory.md](trajectory.md) | Kreis/Sinus/trajectory、球内近度与旋转 | 已列离散轨迹/求交公式 | 候选接口 | 未测 | 第三方 Rodrigues 来源待审 |
@@ -24,7 +26,7 @@
 | 实验 Runner | [experiments.md](experiments.md) | 2 Bias + 3 Adaptive 数据生成入口 | 已列参数与各 save 文件 | 候选接口 | 未测 | 数据字段需核验 |
 | 分析与可选绘图 | [analysis_plotting.md](analysis_plotting.md) | 4 分析入口、kurveglaetten、3 插图 | 已列数据/索引/阈值/窗口 | 候选接口 | 未测 | Golden 及绘图后端未定 |
 
-覆盖范围是**模块文档存在性**，不是代码/接口实现比例。无论数值公式写得多完整，缺少 Golden 和批准容差就不能把相应模块标为已完成。
+覆盖范围是**9 份详细设计文档（1 份跨模块合同 + 8 份模块 LLD）的存在性**，不是代码/接口实现比例。无论数值公式写得多完整，缺少 Golden 和批准容差就不能把相应模块标为已完成。
 
 ## 模块 LLD 的标准模板与通过条件
 
@@ -49,3 +51,35 @@
 ## 当前阻塞汇总
 
 MAT 数据的 **582 文件全量变量字典**、两份外部来源代码的权利核查、CLI/error schema、正式数值容差、真实 Golden 与 CTest 名称、Debian/Ubuntu 实测平台矩阵均未闭环。因此，本目录八份模块设计可以用于进一步评审和实施准备，但均**不是正式冻结的 LLD 编码基线**。
+
+
+## LLD 证据就绪度与源 MATLAB 核查重点
+
+| 文档 | 已文档化的可执行设计检查点 | 尚缺的冻结证据 |
+|---|---|---|
+| contracts.md | FlowField N×6、3×5 近度系数、Result/MatError/NumericalError 候选及生命周期 | 代码内实际类型、错误码批准、线程合同测试 |
+| mat_io.md | MAT 类型判定、matio API 责任、路径保护、防竞态候选、回读合同 | 582 MAT 全量变量字典、选定 matio 版本、路径安全实测 |
+| kvd.md | 原始/修正平移与旋转公式、最低/最大迭代、逐轮 trace 字段 | MATLAB 逐轮 Golden、病态边界、正式容差 |
+| harmonics.md | 9 项 l≤2 实球谐公式、3×5 索引、R3 元素、R5 递推结构 | R5 完整合法实现、外部版权、Golden 与精度 |
+| adaptive_mfa.md | M1–M4、rhs、MSE 返回、Frame/Session 更新时序差异 | 逐节点 Golden、异常提交决定、容差 |
+| sampling_noise.md | 三种采样顺序、噪声方程、rand/randn 调用顺序、source seed 重置 | 固定 RNG Golden 与样本全序核对 |
+| trajectory.md | 圆/正弦公式、方向→旋转奇异性、Rᵀ 局部运动、球内求交 | 旋转矩阵 Golden、零模/反向边界、Rodrigues 权利 |
+| experiments.md | 五个 Runner 的原参数及输出、Bias 原始 xwerte 与实际 N 不同 | MAT 实际 dtype/shape、源输出差异归因、RunContext 测试 |
+| analysis_plotting.md | 四分析入口、1-based 索引、分段阈值、半窗平滑、CurveSeries schema | 已保存 MAT 全量解码、曲线 Golden、绘图后端批准 |
+
+### 评审与完成状态的强制区分
+
+- “接口/算法已文档化”只表示具备静态评审材料；不等于签名可编译、Golden 已存在或数值结果正确。
+- “MATLAB 原代码具有某种边界行为”应标明它来自**源文件的静态阅读**还是实际 MATLAB 数值执行，不能混淆。
+- MATLAB 原始函数、原始 MAT 文件和版权 notice 一律不在文档维护任务中更改；尤其不能通过改动已有 MAT 获得“通过”。
+- 模块签名只有在 SRS/HLD、[contracts.md](contracts.md)、源 MATLAB、CLI/error schema、真实 MAT 数据合同之间一致且项目所有者批准后才能冻结。批准之前不应称这些草案为“编码基线”。
+
+## 本期未完成的先决工作
+
+1. P0.5/P1.8/P10.4：全部 582 个 MAT 文件的元数据、解压、变量 shape/type/数值状态。
+2. P0.4/DEC-003/007：rodrigues.m、SHRotate.m 的第三方版权及可移植实现范围。
+3. P0.8/DEC-008：统一 C++17 API、状态/错误、CLI schema、组件 target 和测试实体的批准。
+4. DEC-005/006：固定源 MATLAB Golden、逐模块容差、目标 Debian/Ubuntu 环境、wall/CPU/RSS 预算。
+5. P1–P10：真实 C++ 类、CTest、运行结果及按 TC/AC 记录的证据。
+
+**目前所有模块均为设计草案；本期尚未实施 C++ 或真实数值实验。**
