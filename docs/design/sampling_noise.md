@@ -136,18 +136,33 @@ struct FlowSynthesisResult {
     Scalar mean_translational_magnitude;
     Scalar mean_rotational_magnitude;
 };
-class SphericalRandomDirection {
-public:
-    Result<Vector3, NumericalErrorCode> sample(IRandomSource&) const;
+// 对应 getvektor.m：无状态函数，不制造多余的可变对象。
+namespace sampling {
+Result<Vector3, NumericalErrorCode> randomUnitDirection(IRandomSource& source);
+}
+
+// erzeugeflussausnear.m 的职责：纯理想流场及独立平移/旋转平均模长。
+// 不采样距离、不消耗随机数、不选择 Bias 实验类型。
+struct IdealFlowResult {
+    FlowField flow;
+    Scalar mean_translational_magnitude;
+    Scalar mean_rotational_magnitude;
 };
-class BiasSceneGenerator {
+class FlowSynthesizer {
 public:
-    Result<FlowSynthesisResult, NumericalErrorCode> makeOccluded(
-        const BiasFlowParameters&, IRandomSource&) const;
-    Result<FlowSynthesisResult, NumericalErrorCode> makeProportional(
-        const BiasFlowParameters&, IRandomSource&) const;
+    Result<IdealFlowResult, NumericalErrorCode> synthesize(
+        const DirectionSet& directions,
+        const Eigen::VectorXd& nearness,
+        const Vector3& truth_translation,
+        const Vector3& truth_rotation) const;
 };
+// fixed_* 的场景编排分别由 experiments.md 中同一
+// BiasExperimentRunner 的 occluded/proportional 参数模式承担。
+// Runner 注入 IDirectionSampler、IFlowNoiseModel、IRandomSource
+// 与 FlowSynthesizer，按 §5 的原始 RNG 顺序生成 FlowSynthesisResult。
 ~~~
+
+**与对象模型的一致性**：上述 `sampling::randomUnitDirection(IRandomSource&)` 与 [OBJECT_MODEL.md §7.1](../OBJECT_MODEL.md) 保持一致；不再另设 `SphericalRandomDirection` 或 `BiasSceneGenerator`。前者不拥有 RNG；后两项场景生成的唯一编排者是 `BiasExperimentRunner`，其类的完整入口/返回合同在 [experiments.md](experiments.md)。`IdealFlowResult` 为本模块的中间值对象，最终保存结果仍用 `FlowSynthesisResult`；两者不可混淆。
 
 **前置条件**：细分级别非负、N=base·4^level 在 size_t 范围内且实际分配受资源限制；真值有限；所需方向可归一；生成的 near 有定义。对于 N=0、非有限方向、距离无效、数值溢出应返回可识别失败类别。原脚本即便在数值边界产生 NaN/Inf，也不能偷偷替换为看似成功的零值。
 
