@@ -60,226 +60,81 @@ flowchart LR
 - 只有 `inspect-mat`、实验生成、数据分析是数值主路径；图形服务可缺失，不影响无界面运行。
 - 具体发行版最低版本、CMake/编译器版本及其性能边界待 DEC-006 实测与项目所有者批准，不在设计草案中虚构。
 
-## 3. 自原 PLAN 提取的模块和接口职责
+## 3. 架构组件接口与职责（单一来源）
 
-### 模块、对象和数据契约（原 PLAN §3）
+本节只定义**组件级**边界。具体类、值对象、所有权、状态机和 MATLAB 函数映射由 [OBJECT_MODEL.md](OBJECT_MODEL.md) 统一维护；精确函数签名、算法公式和错误枚举由 [design/](design/README.md) 的模块详细设计承担。不得把 HLD 中的“接口名称”误认为已经编译的 C++17 头文件。
 
-#### 3.1 必须分离的模块
+| 组件 | 对外提供的能力 | 所需依赖 | 主要数据合同 | 错误边界 |
+|---|---|---|---|---|
+| domain/math | N×6 FlowField 和 3D 数学、运动估计值 | Eigen | 三维向量、列主序、坐标与单位 | 无效维度、零范数与非有限输入 |
+| sampling | 八面体、缺损八面体、二十面体方向采样 | domain/math | 顺序确定的 N×3 单位视线 | 非法细分级别、数目溢出 |
+| simulation | 球内近度、光流合成、随机噪声、轨迹 | domain/math、采样、显式 RNG | 近度、t、ω、三维切向光流 | 无效几何、随机源异常 |
+| harmonics | 实球谐基函数、近度拟合/重建、系数旋转 | domain/math | l≤2、3×5 以及 3×3/5×5 旋转块 | 系数形状、归一化与旋转失败 |
+| estimators | Franz、Original/Modified KvD、Adaptive 单步估计 | domain/math、harmonics（Adaptive） | FlowField、近度/系数、运动估计与计算状态 | 退化、奇异系统、非有限值 |
+| mat_io | 原始 MAT 只读元数据/变量读取与新 MAT 输出 | matio/zlib、domain 值类型 | rank、dims、class、dtype、列主序、变量名 | 文件/解压/类型错误、路径拒绝 |
+| experiments | 五类 MATLAB 原实验的参数编排、独立 RunId 与状态 | simulation、estimators、写入窄接口 | 参数、seed、结果 MAT、有效/失败样本数 | 缺配置、数值失败、输出冲突 |
+| analysis | 四类 MATLAB 结果分析的数据统计与曲线序列 | MAT 读取窄接口、domain | xwerte/ywerte、Adaptive 错误序列、曲线索引 | 缺变量、shape 冲突、无定义统计 |
+| plotting（可选） | 统计结果的 2D/3D 可视化 | analysis | 绘图数组、单位、图例与区间 | 后端缺失；不得修改原始数值 |
+| cli/composition | 命令、参数检查、状态/退出码和对象装配 | experiments、analysis、mat_io | 只读输入路径、独立输出根 | 参数、源/输出冲突、执行失败 |
 
-- **mat_io**：原始 MAT 只读打开、压缩变量、类型/维度检查、变量名、MAT 结果独立写出；不依赖任何求解器或绘图。
-- **core_types**：方向/光流集合 N×6 的语义访问、参数、随机种子、状态、误差和失败码；不直接持有 MATLAB 文件句柄。
-- **math3d**：三维向量、叉积矩阵、Rodrigues 的实验实际使用子集；无实验状态。
-- **sampling**：递归三角形、八面体、缺损八面体、二十面体；输出顺序固定。
-- **flow_simulation**：正向光流、随机近度、球体内近度、两种明确的噪声模型；通过显式 RNG 注入。
-- **estimators/standard_filter**：zellendefinieren + franzeigen；可独立测试。
-- **estimators/kvd**：Original/Modified 共用公共运算但保留各自不同的平移更新和停止逻辑。
-- **harmonics**：向量→球角、关联勒让德、实球谐、近度重构、逐项系数拟合、球谐旋转；无实验读取。
-- **estimators/adaptive**：oneit_adaptiv_matched_filter 的单次迭代；输入旧系数和流场，输出新系数、t、ω、误差与有效性状态。
-- **trajectory**：圆轨迹、正弦轨迹、轨迹差分与相机朝向、球内求交；无 MAT I/O。
-- **experiments**：只负责原始参数组合、运行调度、状态更新、输出组织；不得重复实现数学公式。
-- **analysis**：加载历史/新 MAT 结果、跨 40 运行汇总、数值曲线数据及指标；与图像绘制分离。
-- **plotting**：2D、3D 图表导出。后期可评估 Debian/Ubuntu 可用的可选 gnuplot 后端，不将其变成数值核心的必需依赖，也不加入 Python。
+**边界不变量**：求解器不 include matio 或绘图库；I/O 不持有求解器；实验 Runner 不重复数学公式；分析/绘图不修改求解结果。实验参数按 MATLAB 的五个入口分别定义，禁止以一个未经核准的全局默认值覆盖其差异。
 
-#### 3.2 接口合同先于实现
+### 3.1 接口合同与设计冻结状态
 
-- 统一规范 setofpoints 行结构为 direction (3) + tangent_flow (3)，明确 **N×6、列主序、右手系、坐标系、角速度符号**；独立的 Eigen 数据访问层对外可提供结构化读取，不必把 N×6 传染到所有模块。
-- ExperimentConfig 以各原始入口的实参和实际常量为起点；**每个实验有独立默认值**，共享的只是明确有物理意义的可复用字段。若使用配置模板，遵守 AGENTS.md 对 configs/README.md 的要求。
-- RNG 由实验运行器显式创建并传入模拟器。原程序使用 RandStream mt19937ar 和 rand/randn；现代 C++ 同 seed 不保证 randn 样本逐项一致。因此定义：固定输入数值对照与随机分布/统计复现分别验收；不得虚报同种子逐位相等。
-- 核心数值 API 返回明确结果/状态，不把 NaN、Inf、零范数或奇异矩阵结果偷偷替换成 0 或伪造成功。原版失败行为需与后续安全防护区分记录。
-- 实验输出采用新结果根目录和 RunId；原始 origin/** 永远只读。当前 MATLAB 的 save 输出 **一个变量一个 MAT 文件**，首版兼容输出应优先保留变量名、矩阵形状和路径约定；已存历史文件不允许被重新生成结果覆盖。
-- 读取或写入 MAT 的图表程序不得改变任何求解结果；绘图不可用时数值实验和 MAT 回归仍能独立完成。
+- 外部可观察合同以 [REQUIREMENTS.md](REQUIREMENTS.md) 中 REQ-I-* 与 [TEST_PLAN.md](TEST_PLAN.md) 的 TC 为准；内部设计原则单独归入 REQ-DC-*，不将 RAII/继承选择误写成 CLI 用户需求。
+- 尚未确定的 C++17 方法签名、返回错误类型、固定矩阵布局、线程安全边界和 ABI 由 P0.7/P0.8 评审后在 LLD 逐模块冻结。
+- `IResultReader` / `IResultWriter` 为相互分离的窄接口，原始文件只读保障还必须体现在路径校验与不可覆盖测试中。跨层用自拥有值对象，MAT 缓冲区失效后不得持有 Eigen Map。
+- 对 KvD 两条平移更新保留独立入口；Adaptive 的单步求解与多帧 Session 独立。**这些是已选设计方向，并非已验证实现**。
 
+## 4. CMake target、公共头文件与文件结构（设计候选）
 
-#### 3.3 面向对象设计的基本原则（由实际 MATLAB 调用关系确定）
+本 HLD 负责给出**无环依赖的库边界**，文件树和完整候选类清单以 [PLAN.md](../PLAN.md) §4 与 [OBJECT_MODEL.md](OBJECT_MODEL.md) 为规划入口。正式 include/src 路径应在 P0.8 冻结；以下名字不表示仓库已创建目标。
 
-**本项目采用面向对象为主、无状态数学函数为辅的现代 C++17 设计。** 现有模块划分只说明职责分组，并不能自动保证面向对象；实施前必须明确封装边界、对象状态、资源所有权、依赖方向以及允许扩展的接口。
+| 拟议 target | 公开边界 | 依赖 | 私有实现/禁止逆向依赖 |
+|---|---|---|---|
+| egomotion_domain | domain 值类型、向量/旋转及基本数学函数头 | Eigen 3 | 不引入 matio、experiment、CLI |
+| egomotion_sampling | 方向采样接口及实现 | domain | 内部递归实现可私有，不依赖 experiment |
+| egomotion_harmonics | l≤2 基函数、拟合/旋转接口 | domain | 第三方 SH 递归细节仅私有、须版权审查 |
+| egomotion_estimators | Franz、KvD、Adaptive 计算合同 | domain、harmonics | 不依赖 matio、CLI、plotting |
+| egomotion_simulation | 轨迹、噪声、场景/光流生成 | domain、sampling | RNG 内部策略只通过窄接口暴露 |
+| egomotion_matio | MAT Reader/Writer 与元数据 | domain、matio、zlib | 仅私有源码包含 matio.h；不依赖 estimators |
+| egomotion_experiments | 五类实验 Runner、RunContext | domain、sampling、simulation、estimators、mat_io 抽象 | 无原始 MAT 写权限；不依赖 plotting |
+| egomotion_analysis | 历史 MAT 数据分析与曲线序列 | domain、mat_io 的只读接口 | 不调用 estimators，不依赖 plotting |
+| egomotion_plotting（可选） | 从分析结果绘图 | analysis | 可缺席、不得影响核心 targets |
+| egomotion_cli | 命令解析与 Composition Root | experiments、analysis、matio；可选 plotting | 仅入口实现类型选择 |
+| tests/benchmarks（后期） | 各 target 的回归、基准 | 按被测组件链接 | 禁止生产组件依赖测试 |
 
-1. **单一职责（SRP）**：MAT 访问、物理模拟、数值求解、轨迹状态更新、结果分析和绘图不得由同一个类实现。
-2. **组合优先**：仅当运行器确实需要替换采样器、噪声模型、随机源或更新规则时引入抽象接口；叉积、点积、球谐单点求值等无状态数学操作允许保留命名空间中的普通函数。不要为了 OOP 而机械地为每个 MATLAB 函数创建一个类或一个虚函数。
-3. **依赖倒置（DIP）**：实验运行器仅依赖领域数据、轻量接口及明确的求解器对象，不依赖 matio 原始指针、图表库或 CLI 全局变量。具体依赖在应用入口集中构造并注入。
-4. **开放封闭（OCP）**：新增另一种采样或噪声模型应通过新的实现接入，不要求改动已验证的原始算法公式。原始/修正 KvD 必须有可辨认的数学更新策略。
-5. **接口隔离（ISP）**：MAT 只读接口不得出现写入方法；单次 Adaptive MFA 求解器不得被强行塞入要求 KvD 近度迭代输出的通用基类。
-6. **值语义优先**：方向、流场、运动估计、球谐系数、实验参数和指标使用可复制/移动的结构化值对象，保留数学含义和维度；不因泛化而隐去固定 3D、3×5、6×6 约束。
-7. **无全局可变状态**：随机数发生器、算法历史、系数更新间隔和输出目录均由一次 RunContext / Session 明确拥有；不得使用隐式单例、进程全局 RNG 或跨实验复用的可变缓存。
-8. **忠实行为高于复用率**：抽取共享代码只能合并数学上确实相同的步骤；如果类抽象会掩盖 MATLAB 原版不同的更新次序、误差定义或输出合同，则保留独立实现。
+### 4.1 目标依赖有向无环图
 
-#### 3.4 对象模型与原 MATLAB 函数映射
-
-以下名称是**拟设计的 C++ 类或值类型**，尚未创建；接口细节需在 P0 调用关系与数据形状审计后固定。类型和方法名称只代表职责，不要求必须逐字采用。
-
-| 类/接口/值对象 | 必须封装的状态或职责 | MATLAB 来源与直接依赖 |
-|---|---|---|
-| **FlowField**（值对象） | 拥有 N×6 列主序流场；提供只读方向、切向光流访问及形状校验；不持有文件句柄 | 各脚本的 setofpoints；Eigen |
-| **MotionEstimate**、**SolverResult**（值对象） | 分别表示 t、ω、近度/迭代数和有限性/退化/失败状态；不借用临时数据 | KvD、franzeigen、oneit 的输出 |
-| **HarmonicCoefficients**（值对象） | 精确保留 3×5 存储及 1+3+5 有效位置；记录零阶项与 8 个非零阶参数的区别 | altkoeff、neukoeff、akkoeff、mitkoeff |
-| **MatFileHandle**、**MatVariableHandle**（RAII） | move-only；分别拥有 mat_t*、matvar_t*；禁止复制与越期借用；只读句柄不可转换成写句柄 | matio C API；禁止泄漏到领域层 |
-| **MatResultReader** / **RunMatWriter** | 前者只读原始及结果 MAT，支持按变量名读取与 getflowfield 兼容模式；后者只能写入明确的独立结果根目录 | getflowfield、load、save；由 RAII 提供访问 |
-| **IResultReader** / **IResultWriter**（窄接口） | 为实验/分析层提供按业务含义读取或写入数据的契约；测试可替换成内存存储 | MatResultReader、RunMatWriter；不暴露 matio |
-| **IRandomSource**（接口） | 产生 uniform / normal 样本；每次实验持有独立 RNG；支持固定序列测试替身 | RandStream、rand、randn；具体实现为 Mt19937RandomSource、FixedSequenceRandomSource |
-| **IDirectionSampler**（接口） | 按指定细分级别返回视线集合；实现 OctahedralSampler、OccludedOctahedralSampler、IcosahedralSampler | findeDreiecke 与三个入口采样函数 |
-| **IFlowNoiseModel**（接口） | 只负责从原始流场和随机源生成加噪流场；实现 MeanMagnitudeGaussianNoise、ComponentGaussianNoise、NoNoise | fixed_kugel...、fixed_propfehler...、nonpropfehler |
-| **FlowSynthesizer** | 合成平移/旋转切向光流及其平均模长；无跨帧状态 | erzeugeflussausnear；sampling、math3d |
-| **SphereEnvironment** | 单位球体内射线相交与近度计算；不管理轨迹状态 | getnear_in_kugel_Drehung |
-| **FranzMatchedFilter** | 执行三轴平移/旋转模板响应及原版归一化，返回明确运动估计值；无历史状态 | zellendefinieren、franzeigen |
-| **KvDIterationEngine** | 封装共享的初始化、近度重估、残差、旋转更新和停止逻辑，保留每次更新的顺序 | norm_koenderink_iteration、mue_norm_koenderink_iteration |
-| **IKvDTranslationRule**（内部策略）及 **OriginalKvDEstimator**、**ModifiedKvDEstimator** | 两种不同的平移更新法则与明确命名的求解器入口；不通过容易误设的布尔参数悄悄切换算法 | KvD 原始与修正方程；共享 KvDIterationEngine |
-| **RealSphericalHarmonics**、**HarmonicFitter**、**HarmonicRotator** | 分别负责基函数/近度重建、逐项拟合、l≤2 旋转；不持有实验历史状态 | kugelflfunc2、near_aus_koeff、koeff_aus_near、SHRotate、transfor_koeff |
-| **AdaptiveMfaStepSolver** | **无状态单轮计算**：从旧系数和 N×6 流场构造 6×6 系统并返回运动、残差、新系数；不继承 KvD | oneit_adaptiv_matched_filter |
-| **AdaptiveMfaSession** | 拥有一次轨迹运行中的当前 akkoeff；执行“上一帧旋转→本帧求解→提交后验系数”的确定时序 | adaptive 三种 data_generation 入口 |
-| **ICoefficientUpdatePolicy**（接口） | 维护只与基线对比相关的更新规则：每帧重置、每帧继承、按 1/5/11/21 帧刷新；不能偷改真正的 akkoeff 主状态 | ohnekoeff、mitkoeff、zeitkonstanten |
-| **TrajectoryGenerator**、**TrajectoryKinematics** | 分别生成圆/正弦点序列，以及绝对/相对旋转和局部平移；不用加载 MAT | kreis_trajektorie、sinuskurve_trajektorie、trajektorie_aus_punkten |
-| **BiasExperimentRunner**、**InitializationRunner**、**AdaptiveComparisonRunner**、**UpdateRateRunner** | **每个入口一个编排对象**；只组合模拟、估计、误差、保存服务，不重复具体算法方程 | 五个 MATLAB data_generation 入口；Bias 的两种模式共享 Runner + 明确配置 |
-| **BiasResultAnalyzer**、**AdaptiveResultAnalyzer** | 读取结果、统计 40 个偏差运行和三类自适应轨迹结果；输出可绘制的数值序列 | 四个 data_analysis 脚本 |
-| **IPlotExporter**（可选接口） | 仅接收分析后的绘图数据；不允许修改数值结果，不作为核心程序运行依赖 | graphs_*.m 与 illustrations/ |
-| **CommandDispatcher** / **ApplicationCompositionRoot** | CLI 解析、选择实验配置、建立对象依赖图；不持有算法公式、不把路径或原始 C 指针传入求解器 | 新项目的 C++ 应用入口 |
-
-**重要说明**：I 开头的接口只用于确有替换需求的依赖边界。对简单数学运算，应使用普通函数而不是建立继承体系；具体不变量和返回值规范需在实现子任务中确定，不应提前创建大而全的基类。
-
-#### 3.5 所有权、生命周期、错误与依赖注入合同
-
-| 运行实体 | 谁创建和拥有 | 生命周期及不可违反的规则 |
-|---|---|---|
-| 原始 MATLAB 目录 | 外部只读仓库数据，非 C++ 对象所有 | 原路径和原文件必须保持不变；不得通过其他输出路径、软链接或相对路径逃逸覆盖 |
-| MatFileHandle / MatVariableHandle | I/O 层局部对象 | 作用域结束立即释放；不得在返回给算法层的 Eigen 引用中保留已失效的内存 |
-| FlowField、MotionEstimate、HarmonicCoefficients | 由业务对象按值拥有 | 输出对象可在句柄销毁后独立存在；维度、坐标和存储顺序在构造时验证 |
-| IRandomSource 具体对象 | 每个实验运行的 RunContext | 只在本 RunId 内被消费；严格保留原版 rand/randn 调用先后次序；多运行/多线程不能共享隐式可变 RNG |
-| Estimator / StepSolver | 实验编排对象通过构造注入或组合持有 | 数学求解器尽量无状态；共享只读参数；不保存上一帧会话状态 |
-| AdaptiveMfaSession / 更新策略 | 一个轨迹实例一个会话 | 负责前一帧旋转、主系数状态、对比基线的独立系数、刷新时刻和当前帧结果提交 |
-| RunMatWriter / 结果目录 | 每个 RunContext 独占 | 输出位置在写入前确认不属于 origin/**；默认拒绝覆盖已有实验结果；失败日志独立保存 |
-| Analyzer / PlotExporter | 由相应分析命令创建 | 只消费数值结果；生成图表失败不得导致已经计算的结果丢失 |
-
-- **依赖方向**：CLI/实验运行器 → 领域值对象 + 窄接口 → 数学/求解器；MAT、绘图等第三方组件只在基础设施实现层出现；领域层与求解器不得 import/include matio。
-- **结果类型**：业务错误按类别明确返回（MAT 格式不符、找不到变量、维度错误、零范数、近度归一化失败、病态系统、非有限值、无效角度）；可用兼容 C++17 的显式结果值/错误对象，不把数值失败当作正常 0。保留 MATLAB 原版原始行为的证据，安全边界处理单独标注，不暗改基准结果。
-- **不制造通用求解器假象**：Franz 基线、KvD 完整迭代、Adaptive 单步的输入与输出不完全相同；可以共享 FlowField、MotionEstimate 等值对象，但不强制通过一个会丢失 near、coeff 或迭代状态的统一基类。
-- **构造时注入**：BiasExperimentRunner 由采样器、NoiseModel、Franz/KvD 求解器、随机源和结果写入器组成；Adaptive Runner 由轨迹、SphereEnvironment、采样器、StepSolver、状态会话、噪声策略和结果写入器组成。运行器不根据字符串自行 new 具体类型，具体选择集中在 ApplicationCompositionRoot。
-- **迭代和状态更新的顺序**：KvDIterationEngine 的每步残差/停止检查遵循 MATLAB 的原始顺序；AdaptiveMfaSession 在 i 帧首先旋转上一帧系数，再为各个基线按策略更新，然后分别调用无状态单步求解，最后更新主 akkoeff。策略不得越权修改主状态。
-- **测试替身**：纯算法和模拟器测试可以注入 FixedSequenceRandomSource、固定采样器、内存结果读写器；不依赖真实 MAT 文件；MAT 读写集成测试则必须使用原始归档或专门的测试 MAT 并明确测试范围。
-
-#### 3.6 面向对象设计验收门槛
-
-在开始大量移植函数之前，P0 应形成可审核的类职责表、接口/数据合同、对象生命周期表和依赖图。满足以下全部条件才可声称 OOP 设计落地：
-
-1. 每个有状态对象有唯一明确的写入所有者；原始 MAT 的读写隔离由对象权限保证，而不是仅靠约定。
-2. 每个 MATLAB 函数能够映射到确定的 C++ 类方法或无状态数学函数；不是“某个模块迟早会实现”。
-3. 原始/修正 KvD 各有显式的对外入口，共享引擎不会使两种方程混淆。
-4. Adaptive 单步求解可以不构造 Session 就独立验证；Session、刷新策略和主状态的组合可独立测试。
-5. 实验运行器可注入固定随机序列、方向集合、结果存储替身而不修改算法代码。
-6. CLI、matio、绘图、随机实现不能反向依赖求解器内部；数学层不依赖 I/O。
-7. 不为每个 MATLAB 函数机械创建独立对象，也不把整个项目包装成一个巨型 Egomotion 类；设计以真实职责和生命周期为准。
-8. 只有文档完成不能算作 OOP 功能已实现，须在后续任务中通过头文件/实现、独立测试和实际集成证明。
-
-> 本节列的是**拟议接口与类职责**，不是现有头文件。单个接口的精确签名、错误码和布局应在 P0.7/P0.8 经审阅后进入详细设计；不得在未核验 MAT 变量和第三方版权的条件下声称已经冻结。
-
-## 4. 建议文件与库边界
-
-### 目录与工程模块（原 PLAN §4）
-
-下列为**计划**，目前尚未创建。避免再复制一套 data/original/：已有原始文件以 origin/egomotion_estimation_dense_flow_fields_matlab_scripts/ 为唯一来源。生成结果应位于受保护的独立运行目录。
-
-~~~text
-Egomotion-Estimation-with-Dense-Flow-Fields/
-├── AGENTS.md
-├── PLAN.md
-├── README.md
-├── .gitignore
-├── CMakeLists.txt
-├── CMakePresets.json
-├── origin/egomotion_estimation_dense_flow_fields_matlab_scripts/  # 原样保留、只读
-├── include/egomotion/
-│   ├── domain/
-│   │   ├── flow_field.hpp          # FlowField 值对象
-│   │   ├── motion_estimate.hpp     # MotionEstimate / SolverResult
-│   │   ├── harmonic_coefficients.hpp
-│   │   └── experiment_config.hpp
-│   ├── contracts/                # 仅有替换需求的窄抽象接口
-│   │   ├── random_source.hpp
-│   │   ├── direction_sampler.hpp
-│   │   ├── flow_noise_model.hpp
-│   │   ├── result_reader.hpp
-│   │   ├── result_writer.hpp
-│   │   └── coefficient_update_policy.hpp
-│   ├── io/
-│   │   ├── mat_file_handle.hpp    # move-only RAII
-│   │   ├── mat_result_reader.hpp
-│   │   └── run_mat_writer.hpp
-│   ├── math/
-│   │   ├── vector_ops.hpp        # 无状态数学函数
-│   │   └── rotations.hpp
-│   ├── geometry/
-│   │   ├── direction_samplers.hpp
-│   │   └── flow_synthesizer.hpp
-│   ├── simulation/
-│   │   ├── random_sources.hpp
-│   │   ├── noise_models.hpp
-│   │   ├── sphere_environment.hpp
-│   │   └── trajectory.hpp
-│   ├── estimators/
-│   │   ├── franz_matched_filter.hpp
-│   │   ├── kvd_iteration_engine.hpp
-│   │   ├── kvd_translation_rules.hpp
-│   │   ├── kvd_estimators.hpp
-│   │   ├── adaptive_mfa_step_solver.hpp
-│   │   └── adaptive_mfa_session.hpp
-│   ├── harmonics/
-│   │   ├── real_spherical_harmonics.hpp
-│   │   ├── harmonic_fitter.hpp
-│   │   └── harmonic_rotator.hpp
-│   ├── experiments/
-│   │   ├── run_context.hpp
-│   │   ├── bias_experiment_runner.hpp
-│   │   ├── initialization_runner.hpp
-│   │   ├── adaptive_comparison_runner.hpp
-│   │   └── update_rate_runner.hpp
-│   └── analysis/
-│       ├── metrics.hpp
-│       ├── bias_result_analyzer.hpp
-│       └── adaptive_result_analyzer.hpp
-├── src/                          # 与 include 中的职责对应；实现不得反向依赖 CLI
-│   ├── domain/
-│   ├── io/
-│   ├── math/
-│   ├── geometry/
-│   ├── simulation/
-│   ├── estimators/
-│   ├── harmonics/
-│   ├── experiments/
-│   ├── analysis/
-│   ├── plotting/                 # 可选后端，后期启用
-│   └── cli/
-│       ├── composition_root.cpp  # 唯一应用装配位置
-│       └── main.cpp
-├── tests/
-│   ├── unit/                     # 值对象、数学、策略、单步求解
-│   ├── contracts/                # RNG、MAT、读写与接口替身
-│   ├── golden/                   # 原始 MAT 只读对照
-│   ├── integration/              # 运行器、状态会话和 MAT 闭环
-│   └── reproduction/             # 原论文统计与图表数据
-├── docs/
-│   ├── SOURCE_INVENTORY.md
-│   ├── MAT_DATA_SCHEMA.md
-│   ├── MIGRATION_MATRIX.md
-│   ├── OBJECT_MODEL.md          # 类职责、组合、依赖和所有权
-│   ├── NUMERICAL_EQUIVALENCE.md
-│   └── PROGRESS.md
-└── results/                      # 独立 RunId 输出，不得覆盖 origin
+~~~mermaid
+flowchart BT
+  D[egomotion_domain] --> E[Eigen 3]
+  S[egomotion_sampling] --> D
+  H[egomotion_harmonics] --> D
+  V[egomotion_simulation] --> D
+  V --> S
+  A[egomotion_estimators] --> D
+  A --> H
+  I[egomotion_matio] --> D
+  I --> M[matio / zlib]
+  X[egomotion_experiments] --> V
+  X --> A
+  X --> I
+  N[egomotion_analysis] --> I
+  P[egomotion_plotting] --> N
+  C[egomotion_cli] --> X
+  C --> N
+  C --> P
 ~~~
 
-建议一个主 CLI（例如 egomotion）由 ApplicationCompositionRoot 组装对象，通过 CommandDispatcher 提供 **inspect-mat、run-bias-occluded、run-bias-proportional、run-adaptive-init、run-adaptive-comparison、run-adaptive-update-rates、analyze、plot** 等子命令；实验数值计算与分析/绘图可以分别执行。子命令是规划中的接口名，不代表已实现。结果路径必须可配置，不能依赖执行时的当前工作目录。
+箭头方向为**依赖者指向依赖项**；plotting 只有启用时链接。需要更细分库或因实际编译发现循环依赖，应出具 ADR 并更新此图，不得用巨大单一库掩盖耦合。
 
-### 4.1 拟议 CMake target 拆分（未建立）
+### 4.2 公有/私有边界检查
 
-| Target（工作名） | 类型与职责 | 链接的内部依赖 | 不允许依赖 |
-|---|---|---|---|
-| `egomotion_domain` | 数值值对象、数学、采样、球谐、核心算法 | Eigen；无 I/O | matio、CLI、绘图 |
-| `egomotion_simulation` | 噪声、轨迹、光流场景 | domain | matio、plotting |
-| `egomotion_matio` | MAT RAII、读取、结果写入与字典工具 | domain 的必要数据合同、matio/zlib | estimator 实现与绘图 |
-| `egomotion_experiments` | 五类原入口编排及 RunContext | domain、simulation、I/O 窄接口 | 直接调用 matio C API |
-| `egomotion_analysis` | Bias/Adaptive 已有 MAT 的数据统计 | domain、I/O 窄接口 | solver 内部与绘图库 |
-| `egomotion_plotting` | 后期可选图表输出 | analysis | 反向控制 core |
-| `egomotion` | CLI、参数解析、对象装配 | 其他需要的 target | 自身实现算法公式 |
-| `egomotion_tests` | 单元/合同/金标准/集成与论文验证 | 被测 target | 未授权的真实数据写入 |
-
-target 名称/共享静态库安排仍为设计候选，需根据循环依赖检查和 Debian/Ubuntu 打包能力调整；所有依赖应明确声明，不新增仅“可能用到”的库。
+- 对外 `include/egomotion/` 只暴露领域值对象、必须的领域接口及可公开算法合同；matio C API、递归实现、实验配置解析、具体绘图库适配放在 `src/` 私有实现。
+- `MatFileHandle` 作为内部资源管理器不需要由算法层持有；如公开类声明涉及 `mat_t`，须解释必要性或通过私有实现消除泄漏。
+- CMake 公开依赖/传递包含路径只用于真实 API 必需内容；源外构建、Debian/Ubuntu 平台与依赖版本可追踪。
+- 当真实 MAT 全量数据确认需要 HDF5 时，另行评审额外 target 依赖与功能范围；目前只确认抽样 MAT v5 压缩。
 
 ## 5. 关键数据流与运行时序
 
@@ -326,50 +181,45 @@ sequenceDiagram
 
 结果至少区分输入验证、MAT 解码/形状、输出覆盖保护、数值退化（零范数、奇异系统、非有限值）、可选绘图缺失及实验部分完成。错误应携带调用阶段、源/目标变量、RunId 和上下文，不把 NaN/Inf 当作通过。具体枚举与 CLI 退出码须在 LLD + SRS 验收条款冻结。
 
-## 6. 既有计划的实施依赖和并行边界
+## 6. 实施依赖与并行约束（引用单一来源）
 
-### P0–P10 依赖图（原 PLAN §6）
+**P0–P10 的阶段/子任务依赖图、并行工作区、里程碑及进入退出准则以 [PLAN.md](../PLAN.md) 为单一维护位置。** HLD 只约束 target DAG 和接口依赖方向，不在此复制计划的 P 任务图，避免不同文档产生相互矛盾的依赖和时间表。
 
-~~~mermaid
-flowchart TD
-  P0[P0 源码、对象模型与合同审计] --> P1[P1 RAII MAT I/O、CLI 与装配]
-  P0 --> P2[P2 数学与采样]
-  P1 --> P5[P5 Bias 实验]
-  P2 --> P3[P3 FlowSynthesizer 与噪声策略]
-  P2 --> P4[P4 Franz 与 KvD 策略引擎]
-  P3 --> P5
-  P4 --> P5
-  P2 --> P6[P6 轨迹与旋转]
-  P2 --> P7[P7 球谐与无状态 Adaptive 单步]
-  P6 --> P7
-  P3 --> P8[P8 Adaptive 实验]
-  P6 --> P8
-  P7 --> P8
-  P1 --> P8
-  P5 --> P9[P9 数据分析与绘图]
-  P8 --> P9
-  P1 --> P9
-  P9 --> P10[P10 全量核验与交付]
-~~~
+P0.7/P0.8 需校验本 HLD、[OBJECT_MODEL.md](OBJECT_MODEL.md)、MAT schema、LLD 契约之间不存在反向依赖或冲突；任何架构改变先调整 ADR 和 REQ-DC，再同步修订 PLAN 关联任务。
 
-- P0 对象模型和窄接口合约先冻结；P1 MAT I/O、P2 纯数学、P6 轨迹和 P7 球谐基函数准备可在满足依赖后分派到不同**独立工作区/任务分支**，但同一文件与工作区不能由多个 Agent 并发写。P7 的球谐旋转功能依赖 P6 的旋转数学接口；**Adaptive 单步求解不依赖 KvD 的 C++ 实现**，不要因论文中的理论关系而人为耦合 P4 与 P7。
-- 每个子任务应是小范围、可验证、独立提交；不得因“同时开发更快”而先把未验证的共享 API 任意修改。变更共同类型或坐标合同先由集成负责人核对。
-- 每次编译、运行或实验前，先按 AGENTS.md 完成允许的代码提交/推送远程检查点。不得等待 GitHub Actions。
-- **本轮仅修订 PLAN.md；P0～P10 的任何 C++ 文件、构建、CTest、随机仿真和分析程序均尚未实施。**
+## 7. 架构质量属性场景（冻结前评审）
 
-## 7. 架构决策记录（ADR 草案）
+每个场景采用“**刺激/环境 → 必须响应 → 度量/证据**”结构，具体实现和测试见 SRS/TEST_PLAN。没有测过的性能或内存数字不得写为已满足阈值。
 
-| ADR | 决策 | 理由 | 状态 |
+| 场景 ID / 质量属性 | 刺激与环境 | 架构响应 | 度量/证据及状态 |
 |---|---|---|---|
-| ADR-001 | 原始 `.mat` 只读；`matio+zlib` 为唯一读取路径 | 保留作者数据并使用压缩 MAT v5；HDF5 按全量审计决定 | 已由用户定方向，格式边界待审计 |
-| ADR-002 | C++17/Eigen/CMake；仅 Debian/Ubuntu | 与 [AGENTS.md](../AGENTS.md) 一致 | 已确认 |
-| ADR-003 | 组合优先、少量窄接口、纯数学保留函数 | 避免为每个 MATLAB .m 制造类层次 | 设计草案，未冻结 |
-| ADR-004 | Adaptive 单步求解与跨帧 Session 分离 | 固定单步回归、隔离不同频率状态 | 设计草案，未冻结 |
-| ADR-005 | MAT 结果与绘图解耦 | 无图形下先保证数据数值一致 | 已确认方向，后端待选 |
-| ADR-006 | 不复制 rodrigues/SHRotate 第三方代码直至权利核验 | 文件头表明有其他作者来源 | 版权待核 |
-| ADR-007 | 原 MATLAB 行为优先；偏离行为要单独标注 | 忠实移植和数值回归为首要目标 | 已确认 |
+| QA-01 数据完整性 | 用户把输出根目录设为 origin 子目录、软链接别名或旧 RunId | 拒绝写入；原数据不变 | 原始 582 MAT 与源 .m 哈希不变；TC-NF-SAFETY-001，设计已定、未测 |
+| QA-02 可复现性 | 相同固定 N×6 流场进入 Franz、KvD、Adaptive | 输出独立步骤/中间量与状态；RNG 不影响固定样本 | 逐轮向量/矩阵误差表；DEC-005 容差待核 |
+| QA-03 数据格式可恢复性 | MAT 变量缺失、压缩块损坏、shape 错误 | Reader 返回带文件/变量上下文的错误，不覆盖既有结果 | TC-F-MAT-* 与失败日志；未测 |
+| QA-04 会话隔离 | 两个 Adaptive RunContext 交替执行，刷新频率不同 | akkoeff、mitkoeff、RNG、输出目录互不污染 | TC-NF-SESSION-001；同 Session 多线程安全**不在承诺范围** |
+| QA-05 无图形执行 | 只安装数值依赖且无 DISPLAY/绘图库 | inspect、run、analyze 仍独立运行 | TC-NF-HEADLESS-001，未测 |
+| QA-06 可维护性 | 增加采样器或噪声模型实现 | 不修改 KvD 和 Adaptive 数学公式，不引入依赖环 | 接口替身与 target DAG 审查，未测 |
+| QA-07 Debian/Ubuntu 适配 | 在所声明支持的 GNU/Linux 版本部署 | 依赖安装、CMake 源外构建与 CLI 可复现 | 发行版/编译器矩阵见 TEST_PLAN；DEC-006 版本下限待实测 |
+| QA-08 性能与资源 | 使用原作者最大配置进行 600 点/大量视线仿真 | 完整记录 wall/CPU/RSS、输入规模与失败数量 | 只定义测量方案，数值上限与加速比 TBD、不可通过性能验收 |
 
-## 8. HLD 评审冻结清单
+## 8. 架构决策记录（ADR 草案）
+
+| ADR | 决策（与原 MATLAB 和 SRS 对应） | 状态 | 拟审查责任人与批准记录 |
+|---|---|---|---|
+| ADR-001 | 原始 MAT 只读，matio/zlib 直接读取，不开发 NPZ | 用户已定方向；全量 MAT v7.3 需求待 DEC-001/002 | 所有者批准范围；P0 MAT 审计人提交文件字典 |
+| ADR-002 | Debian/Ubuntu、C++17/Eigen/CMake | 用户已定方向；具体发行版/编译器版本待 DEC-006 | 维护者提交实际 build 矩阵，所有者批准 |
+| ADR-003 | 值语义/RAII/窄接口/组合优先；纯数学自由函数 | HLD 提议，未冻结 | P0.7 对象设计评审者 + 所有者 |
+| ADR-004 | Adaptive StepSolver 与跨帧 Session 分离；KvD 双入口保真 | HLD 提议，未冻结 | 数值/接口评审者 + 所有者 |
+| ADR-005 | 分析与可选绘图隔离，核心无图形运行 | 方向已定、后端待选 | 分析模块维护者 + 所有者 |
+| ADR-006 | SHRotate/Rodrigues 第三方来源单独审查 | 待 DEC-003/007 | 所有者与版权审查相关方 |
+| ADR-007 | 固定输入原 MATLAB 行为优先于“改善”数值稳定性 | 方向已定；测试/容差未冻结 | 数值验证负责人 + 所有者 |
+| ADR-008 | target DAG 分层及公共/私有边界以 §4 为候选 | 未验证实际编译，无完成记录 | P0.8 架构审查者 + 所有者 |
+
+**批准登记格式**：ADR ID、关联 REQ-DC/NF、批准人/日期、批准范围、证据文件与源 Git SHA、仍未解决的风险。表中角色只是拟议责任人，并非已有签名或授权记录。只有项目所有者明确确认后才可标为“架构已冻结”。
+
+## 9. HLD 评审冻结清单
+
+**检查项由 P0.8 及项目所有者审查；下列项均未验收。**
 
 - [ ] 原始 45 个 .m → 模块/对象/无状态函数映射可追踪；MAT 数据字典和 582 个样本版本完成审计。
 - [ ] 每个公共领域值对象、误差类型、抽象接口有明确约束、方向、所有权和必要的不变量。
