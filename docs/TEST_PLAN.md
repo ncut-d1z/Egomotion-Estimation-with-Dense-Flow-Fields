@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **草案，未冻结。** 测试标识 TC 均为拟定名称；下面的测试文件、CTest 前缀均为未来可能的产物，尚未建立。需求参见 [REQUIREMENTS.md](REQUIREMENTS.md)，实施参见 [PLAN.md](../PLAN.md)。本轮未写 C++、未构建、未运行测试。
+> **草案，未冻结。** 测试标识 TC 均为拟定名称；下面的测试文件、CTest 前缀均为未来可能的产物，尚未建立。需求参见 [REQUIREMENTS.md](REQUIREMENTS.md)，实施参见 [PLAN.md](PLAN.md)。本轮未写 C++、未构建、未运行测试。
 
 ## 1. 验证分层和前提
 
