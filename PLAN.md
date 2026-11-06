@@ -153,193 +153,229 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 
 ## 5. 细粒度实施任务（每项均可单独检查并提交）
 
-**新增 OOP 执行要求**：P0 的对象模型与契约评审作为 P1–P10 实施前置条件。每次新增或调整类，都要标明所属模块、构造依赖、公开 API、不可变量、可变状态所有者和测试替身；代码审查按 3.3–3.6 的验收门槛逐项核对。保留原子提交，不把设计重构与算法公式修改混在同一提交。
+**本节是 WBS，不代表 C++ 工作已经开始。** 每个 P 任务显式关联 REQ→TC→AC，证据列只描述应收集的证据类别；初始状态均未验收。设计草案/源码可读取并不等价于完成 P 任务。所有完整测试数据与执行记录统一按 [TEST_PLAN.md](docs/TEST_PLAN.md) 管理。
 
-任务 ID 为相互独立的**最小交付单元**；建议按依赖顺序串行集成，同一阶段内部没有依赖的项可由隔离的 Agent 并行完成。每项至少给出：对应原始 .m、输入/输出契约、修改文件、单元或静态检查、是否满足验收；不准用“整个阶段已完成”代替单项证据。
+### P0 — 基线冻结与来源审计（原始资料/设计准备）
 
-### P0 — 基线冻结与来源审计（纯文档）
+| ID | 单一子任务与验收要点 | 前置 P | REQ | TC / AC | 证据要求与当前状态 |
+|---|---|---|---|---|---|
+| P0.1 | 固定本次源代码 commit SHA；清点 45 个 .m、1 个 readme、582 个 .mat，记录 SHA/大小，核验分类，不修改原归档 | — | REQ-D-SOURCE-001 | TC-D-SOURCE-001 / AC-D-SOURCE-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
+| P0.2 | 对 33 个辅助函数及 12 个入口/绘图文件逐一形成函数签名、被谁调用、是否实际用于实验、输入维度、输出变量清单 | P0.1 | REQ-D-SOURCE-001 | TC-D-SOURCE-001 / AC-D-SOURCE-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
+| P0.3 | 建立两套 bias 与四套 adaptive 归档子目录的结果文件清单；对照 MATLAB 的 save、load 和 getflowfield 调用 | P0.1 | REQ-D-SOURCE-001 | TC-D-SOURCE-001 / AC-D-SOURCE-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
+| P0.4 | 核查 rodrigues.m、SHRotate.m 的第三方来源和可移植范围；记录未能确认的版权问题，不擅自添加 LICENSE | P0.1 | REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001 | TC-D-SOURCE-002、TC-NF-COPYRIGHT-001 / AC-D-SOURCE-002、AC-NF-COPYRIGHT-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
+| P0.5 | 对 582 个 MAT 建立文件身份、格式抽样、批量解码核查方案及待测项；**不以尚不存在的 matio C++ 工具作为 P0 的强制前置**，实际全量变量解码由 P1.8/P10.4 执行 | P0.1 | REQ-F-MAT-002、REQ-D-MAT-001 | TC-F-MAT-002、TC-D-MAT-001 / AC-F-MAT-002、AC-D-MAT-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
+| P0.6 | 维护 SOURCE_INVENTORY、MAT_DATA_SCHEMA、MIGRATION_MATRIX 的**待完成/已确认**状态；将现有 SRS/HLD/LLD 草案和旧计划参数差异关联到证据，不标为已冻结 | P0.2、P0.3、P0.5 | REQ-D-MAT-001、REQ-PROC-TRACE-001 | TC-D-MAT-001、TC-PROC-TRACE-001 / AC-D-MAT-001、AC-PROC-TRACE-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
+| P0.7 | 复核并完善已有 docs/OBJECT_MODEL.md **草案**，覆盖 45 个 MATLAB 文件→候选方法及对象所有权，不把已有文件视为任务完成 | P0.2 | REQ-DC-DOMAIN-001、REQ-NF-OOP-001 | TC-DC-DOMAIN-001、TC-NF-OOP-001 / AC-DC-DOMAIN-001、AC-NF-OOP-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
+| P0.8 | 评审 HLD/对象模型/LLD 的最小接口与错误合同，明确当前已冻结范围和未决 DEC；不因 582 MAT 尚未全量解码而虚报数据合同冻结 | P0.6、P0.7 | REQ-DC-DOMAIN-001、REQ-NF-OOP-001、REQ-I-CLI-001 | TC-DC-DOMAIN-001、TC-NF-OOP-001、TC-I-CLI-001 / AC-DC-DOMAIN-001、AC-NF-OOP-001、AC-I-CLI-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
 
-| ID | 子任务 / 验收 |
-|---|---|
-| P0.1 | 固定本次源代码 commit SHA；清点 45 个 .m、1 个 readme、582 个 .mat，记录 SHA/大小，核验分类，不修改原归档 （需求：REQ-D-SOURCE-001） |
-| P0.2 | 对 33 个辅助函数及 12 个入口/绘图文件逐一形成函数签名、被谁调用、是否实际用于实验、输入维度、输出变量清单 （需求：REQ-D-SOURCE-001） |
-| P0.3 | 建立两套 bias 与四套 adaptive 归档子目录的结果文件清单；对照 MATLAB 的 save、load 和 getflowfield 调用 （需求：REQ-D-SOURCE-001） |
-| P0.4 | 核查 rodrigues.m、SHRotate.m 的第三方来源和可移植范围；记录未能确认的版权问题，不擅自添加 LICENSE （需求：REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001） |
-| P0.5 | 对压缩 MAT 完成全目录文件头、版本、压缩、变量名、类型、形状的只读审计（待 matio 检查工具可用时验证）；缺失项标记未核验 （需求：REQ-F-MAT-002、REQ-D-MAT-001） |
-| P0.6 | 将上述信息形成 SOURCE_INVENTORY、MAT_DATA_SCHEMA、MIGRATION_MATRIX，并记录已有旧计划的错误参数及历史结果/当前脚本不一致项 （需求：REQ-D-MAT-001、REQ-PROC-TRACE-001） |
-| P0.7 | 复核并完善现有 docs/OBJECT_MODEL.md **草案**：逐个 MATLAB 函数定位到类方法或纯函数；补齐可核验的输入输出、不变量、所有权和寿命，在批准前不标冻结 （需求：REQ-DC-DOMAIN-001、REQ-NF-OOP-001） |
-| P0.8 | 复核 docs/ARCHITECTURE.md / docs/OBJECT_MODEL.md 的类图、组件图、依赖与时序；冻结经核验的接口、错误合同和设计决定，未决事项单独记录 （需求：REQ-DC-DOMAIN-001、REQ-NF-OOP-001、REQ-I-CLI-001） |
-
-P0 当前仅完成一部分只读人工审计；以上文档尚未创建。源文件是否存在已确认，不等于 P0.5 的二进制变量检查已完成。
+**P0 状态**：原始目录/部分函数和文件头已经人工核查，SRS、HLD、OBJECT_MODEL、TEST_PLAN、八份模块 LLD **草案已存在但未冻结**；SOURCE_INVENTORY、MAT_DATA_SCHEMA、MIGRATION_MATRIX 的全量内容尚未完成。P0.5 只要求设计并冻结数据审计方案；MAT 变量全量解码需 P1 的 reader，避免形成 P0↔P1 循环依赖。
 
 ### P1 — 独立构建、CLI 与 MAT 文件访问
 
-| ID | 子任务 / 验收 |
-|---|---|
-| P1.1 | 建立仅针对 Debian/Ubuntu 的 CMake C++17 工程，声明 Eigen 3、matio、zlib 实际依赖；不编译 origin 下 MATLAB 文件 （需求：REQ-NF-PLATFORM-001、REQ-NF-DEPS-001） |
-| P1.2 | 建立 CLI 参数解析、退出码与独立输出路径；允许只执行 inspect 而不加载算法 （需求：REQ-F-CLI-001、REQ-DC-EXPERIMENT-001、REQ-NF-PORTABLE-001、REQ-F-CLI-002、REQ-F-CLI-003、REQ-F-CLI-004、REQ-F-CLI-005、REQ-I-CLI-001） |
-| P1.3 | 封装 matio 只读文件句柄和变量句柄的 RAII；错误路径无资源泄漏且不会写源文件 （需求：REQ-F-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001、REQ-I-MAT-001） |
-| P1.4 | 通过 MAT v5+zlib 读取数值变量的真实 rank、dims、类型、字节数及列主序内容；不静默转置或单精度升级 （需求：REQ-F-CLI-001、REQ-F-MAT-001、REQ-D-MAT-002） |
-| P1.5 | 递进实现真实数据需要的 struct/cell、复数、逻辑或稀疏类型；未要求的类型明确拒绝，禁止伪称全部支持 （需求：REQ-F-MAT-002） |
-| P1.6 | 实现明确变量名加载和 getflowfield 兼容读取（首变量/自动 .mat 后缀）；分别测试，不能混淆 （需求：REQ-F-CLI-001、REQ-F-MAT-003、REQ-I-MAT-001） |
-| P1.7 | 实现**仅向新结果目录**写入 MATLAB 兼容 MAT 的结果文件，写后读取检查变量名、维度与数值 （需求：REQ-F-MAT-004、REQ-NF-SAFETY-001、REQ-I-MAT-001、REQ-I-RESULT-001） |
-| P1.8 | 以原始归档的代表样本为 golden 只读验证，记录源文件哈希、输出形状、误差及实际命令 （需求：REQ-F-MAT-001、REQ-D-MAT-001、REQ-NF-RUNTIME-001） |
-| P1.9 | 建立 move-only MatFileHandle/MatVariableHandle 与 MatResultReader、RunMatWriter；验证 RAII、无悬垂 Eigen Map、只读原始数据和拒绝覆盖 origin/历史 RunId （需求：REQ-F-MAT-001、REQ-F-MAT-004、REQ-DC-IO-001、REQ-NF-SAFETY-001） |
-| P1.10 | 建立 IResultReader/IResultWriter 的窄接口与内存测试替身，在 composition root 注入；验证 CLI 和求解器均不直接依赖 matio C 指针 （需求：REQ-DC-IO-001） |
+| ID | 单一子任务与验收要点 | 前置 P | REQ | TC / AC | 证据要求与当前状态 |
+|---|---|---|---|---|---|
+| P1.1 | 建立仅针对 Debian/Ubuntu 的 CMake C++17 工程，声明 Eigen 3、matio、zlib 实际依赖；不编译 origin 下 MATLAB 文件 | P0.8 | REQ-NF-PLATFORM-001、REQ-NF-DEPS-001 | TC-NF-PLATFORM-001、TC-NF-DEPS-001 / AC-NF-PLATFORM-001、AC-NF-DEPS-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
+| P1.2 | 建立 CLI 参数解析、退出码与独立输出路径；允许只执行 inspect 而不加载算法 | P1.1 | REQ-F-CLI-001、REQ-DC-EXPERIMENT-001、REQ-NF-PORTABLE-001、REQ-F-CLI-002、REQ-F-CLI-003、REQ-F-CLI-004、REQ-F-CLI-005、REQ-I-CLI-001 | TC-F-CLI-001、TC-DC-EXPERIMENT-001、TC-NF-PORTABLE-001、TC-F-CLI-002、TC-F-CLI-003、TC-F-CLI-004、TC-F-CLI-005、TC-I-CLI-001 / AC-F-CLI-001、AC-DC-EXPERIMENT-001、AC-NF-PORTABLE-001、AC-F-CLI-002、AC-F-CLI-003、AC-F-CLI-004、AC-F-CLI-005、AC-I-CLI-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
+| P1.3 | 封装 matio 只读文件句柄和变量句柄的 RAII；错误路径无资源泄漏且不会写源文件 | P1.1 | REQ-F-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001、REQ-I-MAT-001 | TC-F-MAT-001、TC-DC-IO-001、TC-NF-SAFETY-001、TC-I-MAT-001 / AC-F-MAT-001、AC-DC-IO-001、AC-NF-SAFETY-001、AC-I-MAT-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
+| P1.4 | 通过 MAT v5+zlib 读取数值变量的真实 rank、dims、类型、字节数及列主序内容；不静默转置或单精度升级 | P1.3 | REQ-F-CLI-001、REQ-F-MAT-001、REQ-D-MAT-002 | TC-F-CLI-001、TC-F-MAT-001、TC-D-MAT-002 / AC-F-CLI-001、AC-F-MAT-001、AC-D-MAT-002 | 源外构建/IO 合同、测试日志；未实施/未验收 |
+| P1.5 | 递进实现真实数据需要的 struct/cell、复数、逻辑或稀疏类型；未要求的类型明确拒绝，禁止伪称全部支持 | P1.4 | REQ-F-MAT-002 | TC-F-MAT-002 / AC-F-MAT-002 | 源外构建/IO 合同、测试日志；未实施/未验收 |
+| P1.6 | 实现明确变量名加载和 getflowfield 兼容读取（首变量/自动 .mat 后缀）；分别测试，不能混淆 | P1.4 | REQ-F-CLI-001、REQ-F-MAT-003、REQ-I-MAT-001 | TC-F-CLI-001、TC-F-MAT-003、TC-I-MAT-001 / AC-F-CLI-001、AC-F-MAT-003、AC-I-MAT-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
+| P1.7 | 实现**仅向新结果目录**写入 MATLAB 兼容 MAT 的结果文件，写后读取检查变量名、维度与数值 | P1.3 | REQ-F-MAT-004、REQ-NF-SAFETY-001、REQ-I-MAT-001、REQ-I-RESULT-001 | TC-F-MAT-004、TC-NF-SAFETY-001、TC-I-MAT-001、TC-I-RESULT-001 / AC-F-MAT-004、AC-NF-SAFETY-001、AC-I-MAT-001、AC-I-RESULT-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
+| P1.8 | 以原始归档的代表样本为 golden 只读验证，记录源文件哈希、输出形状、误差及实际命令 | P1.4 | REQ-F-MAT-001、REQ-D-MAT-001、REQ-NF-RUNTIME-001 | TC-F-MAT-001、TC-D-MAT-001、TC-NF-RUNTIME-001 / AC-F-MAT-001、AC-D-MAT-001、AC-NF-RUNTIME-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
+| P1.9 | 建立 move-only MatFileHandle/MatVariableHandle 与 MatResultReader、RunMatWriter；验证 RAII、无悬垂 Eigen Map、只读原始数据和拒绝覆盖 origin/历史 RunId | P1.3、P1.7 | REQ-F-MAT-001、REQ-F-MAT-004、REQ-DC-IO-001、REQ-NF-SAFETY-001 | TC-F-MAT-001、TC-F-MAT-004、TC-DC-IO-001、TC-NF-SAFETY-001 / AC-F-MAT-001、AC-F-MAT-004、AC-DC-IO-001、AC-NF-SAFETY-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
+| P1.10 | 建立 IResultReader/IResultWriter 的窄接口与内存测试替身，在 composition root 注入；验证 CLI 和求解器均不直接依赖 matio C 指针 | P1.6、P1.7 | REQ-DC-IO-001 | TC-DC-IO-001 / AC-DC-IO-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
 
 ### P2 — 通用数学、递归采样与数据类型
 
-| ID | 子任务 / 验收 |
-|---|---|
-| P2.1 | 统一 setofpoints N×6 与单位视线、切向流、角速度、平移、角度单位的数据合同 （需求：REQ-F-GEOM-001、REQ-DC-DOMAIN-001） |
-| P2.2 | 对照 skalarprodukt、kreuzprodukt、erzeugekreuzproduktmatrix 实现向量基础运算与单元测试 （需求：REQ-F-GEOM-001） |
-| P2.3 | 按 findeDreiecke 复现递归四分与叶节点顺序、单位化、边界层级；验证 N 随级别增长 （需求：REQ-F-GEOM-002） |
-| P2.4 | 按 erzeugerichtungsvektoren 生成完整八面体 8×4^i 点，不改变排列顺序 （需求：REQ-F-GEOM-002） |
-| P2.5 | 按 erzeugerichtungsvektoren_loch 生成缺损八面体 6×4^i 点，保留被省略的具体面 （需求：REQ-F-GEOM-002） |
-| P2.6 | 按 richtungsvektoren_icosahedron 实现二十面体采样 20×4^i，保留原始顶点/面表 （需求：REQ-F-GEOM-003） |
-| P2.7 | 按 getvektor 实现球面随机单位方向，建立显式 RNG 接口并记录固定输入黄金样本 （需求：REQ-DC-RNG-001） |
-| P2.8 | 定义 FlowField、MotionEstimate、SolverResult、HarmonicCoefficients 的值语义和不变量；编写维度、复制/移动、生命周期与 MATLAB 列主序合同测试 （需求：REQ-F-GEOM-001、REQ-D-MAT-002） |
-| P2.9 | 抽象 IDirectionSampler 并实现三种具体采样器，固定同一层级输出点序；仅在实验组装层选择具体类 （需求：REQ-F-GEOM-003、REQ-DC-NOISE-001） |
+| ID | 单一子任务与验收要点 | 前置 P | REQ | TC / AC | 证据要求与当前状态 |
+|---|---|---|---|---|---|
+| P2.1 | 统一 setofpoints N×6 与单位视线、切向流、角速度、平移、角度单位的数据合同 | P0.8 | REQ-F-GEOM-001、REQ-DC-DOMAIN-001 | TC-F-GEOM-001、TC-DC-DOMAIN-001 / AC-F-GEOM-001、AC-DC-DOMAIN-001 | 单元 Golden、采样顺序；未实施/未验收 |
+| P2.2 | 对照 skalarprodukt、kreuzprodukt、erzeugekreuzproduktmatrix 实现向量基础运算与单元测试 | P2.1 | REQ-F-GEOM-001 | TC-F-GEOM-001 / AC-F-GEOM-001 | 单元 Golden、采样顺序；未实施/未验收 |
+| P2.3 | 按 findeDreiecke 复现递归四分与叶节点顺序、单位化、边界层级；验证 N 随级别增长 | P2.2 | REQ-F-GEOM-002 | TC-F-GEOM-002 / AC-F-GEOM-002 | 单元 Golden、采样顺序；未实施/未验收 |
+| P2.4 | 按 erzeugerichtungsvektoren 生成完整八面体 8×4^i 点，不改变排列顺序 | P2.3 | REQ-F-GEOM-002 | TC-F-GEOM-002 / AC-F-GEOM-002 | 单元 Golden、采样顺序；未实施/未验收 |
+| P2.5 | 按 erzeugerichtungsvektoren_loch 生成缺损八面体 6×4^i 点，保留被省略的具体面 | P2.3 | REQ-F-GEOM-002 | TC-F-GEOM-002 / AC-F-GEOM-002 | 单元 Golden、采样顺序；未实施/未验收 |
+| P2.6 | 按 richtungsvektoren_icosahedron 实现二十面体采样 20×4^i，保留原始顶点/面表 | P2.3 | REQ-F-GEOM-003 | TC-F-GEOM-003 / AC-F-GEOM-003 | 单元 Golden、采样顺序；未实施/未验收 |
+| P2.7 | 按 getvektor 实现球面随机单位方向，建立显式 RNG 接口并记录固定输入黄金样本 | P2.1 | REQ-DC-RNG-001 | TC-DC-RNG-001 / AC-DC-RNG-001 | 单元 Golden、采样顺序；未实施/未验收 |
+| P2.8 | 定义 FlowField、MotionEstimate、SolverResult、HarmonicCoefficients 的值语义和不变量；编写维度、复制/移动、生命周期与 MATLAB 列主序合同测试 | P2.1 | REQ-F-GEOM-001、REQ-D-MAT-002 | TC-F-GEOM-001、TC-D-MAT-002 / AC-F-GEOM-001、AC-D-MAT-002 | 单元 Golden、采样顺序；未实施/未验收 |
+| P2.9 | 抽象 IDirectionSampler 并实现三种具体采样器，固定同一层级输出点序；仅在实验组装层选择具体类 | P2.4、P2.5、P2.6 | REQ-F-GEOM-003、REQ-DC-NOISE-001 | TC-F-GEOM-003、TC-DC-NOISE-001 / AC-F-GEOM-003、AC-DC-NOISE-001 | 单元 Golden、采样顺序；未实施/未验收 |
 
 ### P3 — 球面光流、环境与噪声
 
-| ID | 子任务 / 验收 |
-|---|---|
-| P3.1 | erzeugeflussausnear：给定视线、近度、t、ω 计算平移/旋转/合成切向流和两种平均模长 （需求：REQ-F-FLOW-001） |
-| P3.2 | 固定随机深度生成：按原脚本距离区间 [1,4]、平均值 2.5 归一，并取倒数；保存随机调用顺序 （需求：REQ-F-FLOW-002） |
-| P3.3 | fixed_kugel...：非球形视场 + 基于全场平均光流模长的高斯噪声，最后投影回切平面 （需求：REQ-F-FLOW-003） |
-| P3.4 | fixed_propfehler...：完整球面 + 基于各光流分量的高斯扰动，最后投影回切平面 （需求：REQ-F-FLOW-003） |
-| P3.5 | nonpropfehler：独立实现轨迹实验所用的平均流长尺度高斯噪声；与 P3.3 区分数据来源但可共享底层公式 （需求：REQ-F-FLOW-003） |
-| P3.6 | getnear_in_kugel_Drehung：射线旋转、单位球内求交和近度公式，独立测试边界/非法输入 （需求：REQ-F-FLOW-004） |
-| P3.7 | 固定 RNG 输入和人工已知光流的确定性参考检查；随机统计再另做验证，不用不同语言的同种子直接逐元素比较 （需求：REQ-DC-RNG-001、REQ-NF-RNG-001） |
-| P3.8 | 设计 IRandomSource（均匀/正态）和 FixedSequenceRandomSource、Mt19937RandomSource；确保每 RunId 独占并可验证调用顺序 （需求：REQ-DC-RNG-001） |
-| P3.9 | 设计 IFlowNoiseModel 的平均流长、逐分量、无噪声实现，注入模拟器；保持 MATLAB 三处噪声入口的不同参数语义 （需求：REQ-F-FLOW-003、REQ-DC-NOISE-001） |
+| ID | 单一子任务与验收要点 | 前置 P | REQ | TC / AC | 证据要求与当前状态 |
+|---|---|---|---|---|---|
+| P3.1 | erzeugeflussausnear：给定视线、近度、t、ω 计算平移/旋转/合成切向流和两种平均模长 | P2.2、P2.8 | REQ-F-FLOW-001 | TC-F-FLOW-001 / AC-F-FLOW-001 | 固定 RNG、切向误差；未实施/未验收 |
+| P3.2 | 固定随机深度生成：按原脚本距离区间 [1,4]、平均值 2.5 归一，并取倒数；保存随机调用顺序 | P2.7 | REQ-F-FLOW-002 | TC-F-FLOW-002 / AC-F-FLOW-002 | 固定 RNG、切向误差；未实施/未验收 |
+| P3.3 | fixed_kugel...：非球形视场 + 基于全场平均光流模长的高斯噪声，最后投影回切平面 | P3.1、P3.2、P2.5 | REQ-F-FLOW-003 | TC-F-FLOW-003 / AC-F-FLOW-003 | 固定 RNG、切向误差；未实施/未验收 |
+| P3.4 | fixed_propfehler...：完整球面 + 基于各光流分量的高斯扰动，最后投影回切平面 | P3.1、P3.2、P2.4 | REQ-F-FLOW-003 | TC-F-FLOW-003 / AC-F-FLOW-003 | 固定 RNG、切向误差；未实施/未验收 |
+| P3.5 | nonpropfehler：独立实现轨迹实验所用的平均流长尺度高斯噪声；与 P3.3 区分数据来源但可共享底层公式 | P3.1、P2.7 | REQ-F-FLOW-003 | TC-F-FLOW-003 / AC-F-FLOW-003 | 固定 RNG、切向误差；未实施/未验收 |
+| P3.6 | getnear_in_kugel_Drehung：射线旋转、单位球内求交和近度公式，独立测试边界/非法输入 | P6.2、P2.2 | REQ-F-FLOW-004 | TC-F-FLOW-004 / AC-F-FLOW-004 | 固定 RNG、切向误差；未实施/未验收 |
+| P3.7 | 固定 RNG 输入和人工已知光流的确定性参考检查；随机统计再另做验证，不用不同语言的同种子直接逐元素比较 | P3.1、P3.3、P3.4 | REQ-DC-RNG-001、REQ-NF-RNG-001 | TC-DC-RNG-001、TC-NF-RNG-001 / AC-DC-RNG-001、AC-NF-RNG-001 | 固定 RNG、切向误差；未实施/未验收 |
+| P3.8 | 设计 IRandomSource（均匀/正态）和 FixedSequenceRandomSource、Mt19937RandomSource；确保每 RunId 独占并可验证调用顺序 | P2.7 | REQ-DC-RNG-001 | TC-DC-RNG-001 / AC-DC-RNG-001 | 固定 RNG、切向误差；未实施/未验收 |
+| P3.9 | 设计 IFlowNoiseModel 的平均流长、逐分量、无噪声实现，注入模拟器；保持 MATLAB 三处噪声入口的不同参数语义 | P3.3、P3.4、P3.5 | REQ-F-FLOW-003、REQ-DC-NOISE-001 | TC-F-FLOW-003、TC-DC-NOISE-001 / AC-F-FLOW-003、AC-DC-NOISE-001 | 固定 RNG、切向误差；未实施/未验收 |
 
 ### P4 — 基线匹配滤波与 KvD 两条路径
 
-| ID | 子任务 / 验收 |
-|---|---|
-| P4.1 | zellendefinieren：构造三个笛卡尔轴的模板与计数/响应存储 （需求：REQ-F-FILTER-001） |
-| P4.2 | franzeigen：逐点累加平移与旋转模板响应、归一化，输出两种 3D 运动估计 （需求：REQ-F-FILTER-001） |
-| P4.3 | 抽离 KvD 共享步骤：基线初始化、近度重估、平均近度符号、旋转更新、残差与迭代判定 （需求：REQ-F-KVD-001、REQ-NF-NUM-001） |
-| P4.4 | norm_koenderink_iteration：保留含额外 near 因子的**原始平移更新**、更新顺序和尺度恢复 （需求：REQ-F-KVD-001） |
-| P4.5 | mue_norm_koenderink_iteration：保留移除额外 near 因子的**修正平移更新**，不依靠一个容易误配的布尔选项隐藏差异 （需求：REQ-F-KVD-001） |
-| P4.6 | 精确复现两者至少 6 次迭代、最多 200 次、动态阈值和绝对阈值组合的退出逻辑；输出迭代次数/残差 （需求：REQ-F-KVD-002） |
-| P4.7 | transfehler_div 与 normrelfehler 分别实现与测试；特别验证零范数或 acos 越界的定义和状态 （需求：REQ-F-ERROR-001、REQ-NF-NUM-002） |
-| P4.8 | 用固定 N×6 流场比较 Franz、两种 KvD 的逐轮中间结果；数值等价检查先于批量实验 （需求：REQ-F-KVD-002、REQ-NF-NUM-001） |
-| P4.9 | 实现 KvDIterationEngine + IKvDTranslationRule 的组合以及 OriginalKvDEstimator、ModifiedKvDEstimator 两个明确入口；测试算法差异、状态不串扰和停止条件 （需求：REQ-F-KVD-001、REQ-DC-KVD-001） |
-| P4.10 | 将 FranzMatchedFilter 做成可独立实例化、无跨样本状态的求解服务，检查其模板存储私有性及 Run 之间的行为一致性 （需求：REQ-F-FILTER-001） |
+| ID | 单一子任务与验收要点 | 前置 P | REQ | TC / AC | 证据要求与当前状态 |
+|---|---|---|---|---|---|
+| P4.1 | zellendefinieren：构造三个笛卡尔轴的模板与计数/响应存储 | P2.2 | REQ-F-FILTER-001 | TC-F-FILTER-001 / AC-F-FILTER-001 | 逐轮近度/t/ω、残差；未实施/未验收 |
+| P4.2 | franzeigen：逐点累加平移与旋转模板响应、归一化，输出两种 3D 运动估计 | P4.1 | REQ-F-FILTER-001 | TC-F-FILTER-001 / AC-F-FILTER-001 | 逐轮近度/t/ω、残差；未实施/未验收 |
+| P4.3 | 抽离 KvD 共享步骤：基线初始化、近度重估、平均近度符号、旋转更新、残差与迭代判定 | P4.2 | REQ-F-KVD-001、REQ-NF-NUM-001 | TC-F-KVD-001、TC-NF-NUM-001 / AC-F-KVD-001、AC-NF-NUM-001 | 逐轮近度/t/ω、残差；未实施/未验收 |
+| P4.4 | norm_koenderink_iteration：保留含额外 near 因子的**原始平移更新**、更新顺序和尺度恢复 | P4.3 | REQ-F-KVD-001 | TC-F-KVD-001 / AC-F-KVD-001 | 逐轮近度/t/ω、残差；未实施/未验收 |
+| P4.5 | mue_norm_koenderink_iteration：保留移除额外 near 因子的**修正平移更新**，不依靠一个容易误配的布尔选项隐藏差异 | P4.3 | REQ-F-KVD-001 | TC-F-KVD-001 / AC-F-KVD-001 | 逐轮近度/t/ω、残差；未实施/未验收 |
+| P4.6 | 精确复现两者至少 6 次迭代、最多 200 次、动态阈值和绝对阈值组合的退出逻辑；输出迭代次数/残差 | P4.4、P4.5 | REQ-F-KVD-002 | TC-F-KVD-002 / AC-F-KVD-002 | 逐轮近度/t/ω、残差；未实施/未验收 |
+| P4.7 | transfehler_div 与 normrelfehler 分别实现与测试；特别验证零范数或 acos 越界的定义和状态 | P2.2 | REQ-F-ERROR-001、REQ-NF-NUM-002 | TC-F-ERROR-001、TC-NF-NUM-002 / AC-F-ERROR-001、AC-NF-NUM-002 | 逐轮近度/t/ω、残差；未实施/未验收 |
+| P4.8 | 用固定 N×6 流场比较 Franz、两种 KvD 的逐轮中间结果；数值等价检查先于批量实验 | P4.6、P4.7 | REQ-F-KVD-002、REQ-NF-NUM-001 | TC-F-KVD-002、TC-NF-NUM-001 / AC-F-KVD-002、AC-NF-NUM-001 | 逐轮近度/t/ω、残差；未实施/未验收 |
+| P4.9 | 实现 KvDIterationEngine + IKvDTranslationRule 的组合以及 OriginalKvDEstimator、ModifiedKvDEstimator 两个明确入口；测试算法差异、状态不串扰和停止条件 | P4.4、P4.5、P4.6 | REQ-F-KVD-001、REQ-DC-KVD-001 | TC-F-KVD-001、TC-DC-KVD-001 / AC-F-KVD-001、AC-DC-KVD-001 | 逐轮近度/t/ω、残差；未实施/未验收 |
+| P4.10 | 将 FranzMatchedFilter 做成可独立实例化、无跨样本状态的求解服务，检查其模板存储私有性及 Run 之间的行为一致性 | P4.2 | REQ-F-FILTER-001 | TC-F-FILTER-001 / AC-F-FILTER-001 | 逐轮近度/t/ω、残差；未实施/未验收 |
 
 ### P5 — Bias 实验及 40 目录结果分析
 
-| ID | 子任务 / 验收 |
-|---|---|
-| P5.1 | bias_test_nonspherical：按实参 corenumber、iterationnumber、savestring 运行，保持 3 个误差系数及 6 组输出 （需求：REQ-F-BIAS-001、REQ-F-CLI-002） |
-| P5.2 | bias_test_spherical_prop_error：与 P5.1 共用 runner 接口，保持完整球面和逐分量噪声差异 （需求：REQ-F-BIAS-002、REQ-F-CLI-002） |
-| P5.3 | 实现独立 corenumber/seed 的运行管理、实际重复数和结果目录，不把 40 个已存结果目录误作单次重复 （需求：REQ-F-BIAS-001、REQ-NF-RNG-001、REQ-NF-LOG-001、REQ-NF-RECOVERY-001、REQ-F-CLI-002） |
-| P5.4 | 为每次运行写 xwerte.mat 和 ywerte1…6.mat；保持 MATLAB 原有矩阵形状、列含义及输出变量名 （需求：REQ-F-BIAS-001、REQ-D-MAT-002、REQ-I-RESULT-001） |
-| P5.5 | graphs_bias_test 数值层：从 1…40 读取指定 xwerte、ywerte3…6，计算平均、理论 100/sqrt(N) 参考曲线，保留起始索引/范围 （需求：REQ-F-BIAS-003） |
-| P5.6 | 用 occluded_regions 和 proportional_error 的 560 个归档 MAT 对照输出，保留每个独立运行数据与汇总误差，不只看图 （需求：REQ-F-BIAS-003） |
-| P5.7 | 把两种 Bias 模式组合为注入采样器、噪声模型、RNG、求解器和 IResultWriter 的 BiasExperimentRunner；测试两模式配置相互隔离和 MAT 结果输出路径权限 （需求：REQ-F-BIAS-001、REQ-DC-EXPERIMENT-001） |
+| ID | 单一子任务与验收要点 | 前置 P | REQ | TC / AC | 证据要求与当前状态 |
+|---|---|---|---|---|---|
+| P5.1 | bias_test_nonspherical：按实参 corenumber、iterationnumber、savestring 运行，保持 3 个误差系数及 6 组输出 | P3.3、P4.9、P1.7 | REQ-F-BIAS-001、REQ-F-CLI-002 | TC-F-BIAS-001、TC-F-CLI-002 / AC-F-BIAS-001、AC-F-CLI-002 | MAT 写回读、Bias 统计；未实施/未验收 |
+| P5.2 | bias_test_spherical_prop_error：与 P5.1 共用 runner 接口，保持完整球面和逐分量噪声差异 | P3.4、P4.9、P1.7 | REQ-F-BIAS-002、REQ-F-CLI-002 | TC-F-BIAS-002、TC-F-CLI-002 / AC-F-BIAS-002、AC-F-CLI-002 | MAT 写回读、Bias 统计；未实施/未验收 |
+| P5.3 | 实现独立 corenumber/seed 的运行管理、实际重复数和结果目录，不把 40 个已存结果目录误作单次重复 | P1.2、P3.8 | REQ-F-BIAS-001、REQ-NF-RNG-001、REQ-NF-LOG-001、REQ-NF-RECOVERY-001、REQ-F-CLI-002 | TC-F-BIAS-001、TC-NF-RNG-001、TC-NF-LOG-001、TC-NF-RECOVERY-001、TC-F-CLI-002 / AC-F-BIAS-001、AC-NF-RNG-001、AC-NF-LOG-001、AC-NF-RECOVERY-001、AC-F-CLI-002 | MAT 写回读、Bias 统计；未实施/未验收 |
+| P5.4 | 为每次运行写 xwerte.mat 和 ywerte1…6.mat；保持 MATLAB 原有矩阵形状、列含义及输出变量名 | P1.7、P5.1、P5.2 | REQ-F-BIAS-001、REQ-D-MAT-002、REQ-I-RESULT-001 | TC-F-BIAS-001、TC-D-MAT-002、TC-I-RESULT-001 / AC-F-BIAS-001、AC-D-MAT-002、AC-I-RESULT-001 | MAT 写回读、Bias 统计；未实施/未验收 |
+| P5.5 | graphs_bias_test 数值层：从 1…40 读取指定 xwerte、ywerte3…6，计算平均、理论 100/sqrt(N) 参考曲线，保留起始索引/范围 | P1.6、P1.8 | REQ-F-BIAS-003 | TC-F-BIAS-003 / AC-F-BIAS-003 | MAT 写回读、Bias 统计；未实施/未验收 |
+| P5.6 | 用 occluded_regions 和 proportional_error 的 560 个归档 MAT 对照输出，保留每个独立运行数据与汇总误差，不只看图 | P5.5、P5.4 | REQ-F-BIAS-003 | TC-F-BIAS-003 / AC-F-BIAS-003 | MAT 写回读、Bias 统计；未实施/未验收 |
+| P5.7 | 把两种 Bias 模式组合为注入采样器、噪声模型、RNG、求解器和 IResultWriter 的 BiasExperimentRunner；测试两模式配置相互隔离和 MAT 结果输出路径权限 | P5.1、P5.2、P5.3 | REQ-F-BIAS-001、REQ-DC-EXPERIMENT-001 | TC-F-BIAS-001、TC-DC-EXPERIMENT-001 / AC-F-BIAS-001、AC-DC-EXPERIMENT-001 | MAT 写回读、Bias 统计；未实施/未验收 |
 
 ### P6 — 刚体旋转、运动轨迹与误差
 
-| ID | 子任务 / 验收 |
-|---|---|
-| P6.1 | drehvektor_aus_zwei_vektoren：方向间旋转轴角，处理近零与反向向量情形并记录原始 MATLAB 行为 （需求：REQ-F-TRAJ-001） |
-| P6.2 | rodrigues：优先忠实实现实验实际使用的旋转向量→3×3 旋转矩阵分支；未调用的逆向/Jacobian 功能另外登记，不宣称全函数已完整覆盖 （需求：REQ-F-TRAJ-001） |
-| P6.3 | kreis_trajektorie：圆轨迹点序列、半径、高度，避免生成函数含有绘图副作用 （需求：REQ-F-TRAJ-001） |
-| P6.4 | sinuskurve_trajektorie：正弦轨迹点序列、周期、幅值、长度、高度，保持离散分母和端点语义 （需求：REQ-F-TRAJ-001） |
-| P6.5 | trajektorie_aus_punkten：相邻位置推导平移、绝对/相对转动并转到原约定坐标系；保留两端未填写元素 （需求：REQ-F-TRAJ-001） |
-| P6.6 | 轨迹、矩阵和位置求交的已知输入黄金检查；确保点始终在单位球内（或明确报错） （需求：REQ-F-TRAJ-001） |
-| P6.7 | 通过 TrajectoryGenerator、TrajectoryKinematics、SphereEnvironment 细分职责；验证创建不同轨迹不修改现有 Session 状态，轨迹函数不得直接绘图 （需求：REQ-F-TRAJ-001） |
+| ID | 单一子任务与验收要点 | 前置 P | REQ | TC / AC | 证据要求与当前状态 |
+|---|---|---|---|---|---|
+| P6.1 | drehvektor_aus_zwei_vektoren：方向间旋转轴角，处理近零与反向向量情形并记录原始 MATLAB 行为 | P2.2 | REQ-F-TRAJ-001 | TC-F-TRAJ-001 / AC-F-TRAJ-001 | 轨迹/旋转黄金向量；未实施/未验收 |
+| P6.2 | rodrigues：优先忠实实现实验实际使用的旋转向量→3×3 旋转矩阵分支；未调用的逆向/Jacobian 功能另外登记，不宣称全函数已完整覆盖 | P2.2 | REQ-F-TRAJ-001 | TC-F-TRAJ-001 / AC-F-TRAJ-001 | 轨迹/旋转黄金向量；未实施/未验收 |
+| P6.3 | kreis_trajektorie：圆轨迹点序列、半径、高度，避免生成函数含有绘图副作用 | P2.1 | REQ-F-TRAJ-001 | TC-F-TRAJ-001 / AC-F-TRAJ-001 | 轨迹/旋转黄金向量；未实施/未验收 |
+| P6.4 | sinuskurve_trajektorie：正弦轨迹点序列、周期、幅值、长度、高度，保持离散分母和端点语义 | P2.1 | REQ-F-TRAJ-001 | TC-F-TRAJ-001 / AC-F-TRAJ-001 | 轨迹/旋转黄金向量；未实施/未验收 |
+| P6.5 | trajektorie_aus_punkten：相邻位置推导平移、绝对/相对转动并转到原约定坐标系；保留两端未填写元素 | P6.1、P6.2、P6.3、P6.4 | REQ-F-TRAJ-001 | TC-F-TRAJ-001 / AC-F-TRAJ-001 | 轨迹/旋转黄金向量；未实施/未验收 |
+| P6.6 | 轨迹、矩阵和位置求交的已知输入黄金检查；确保点始终在单位球内（或明确报错） | P6.5、P3.6 | REQ-F-TRAJ-001 | TC-F-TRAJ-001 / AC-F-TRAJ-001 | 轨迹/旋转黄金向量；未实施/未验收 |
+| P6.7 | 通过 TrajectoryGenerator、TrajectoryKinematics、SphereEnvironment 细分职责；验证创建不同轨迹不修改现有 Session 状态，轨迹函数不得直接绘图 | P6.5 | REQ-F-TRAJ-001 | TC-F-TRAJ-001 / AC-F-TRAJ-001 | 轨迹/旋转黄金向量；未实施/未验收 |
 
 ### P7 — 实球谐与 Adaptive MFA 单步求解
 
-| ID | 子任务 / 验收 |
-|---|---|
-| P7.1 | winkelausvektor：atan2 方位角与 acos 极角，保持轴约定 （需求：REQ-F-SH-001） |
-| P7.2 | kugelflfunc2：按 MATLAB legendre 的约定计算 l≤2 的实球谐，核对负 m 的 sin 与正 m 的 cos （需求：REQ-F-SH-001） |
-| P7.3 | near_aus_koeff：以 3×5 系数矩阵恢复离散近度；严格限定有效位置 （需求：REQ-F-SH-001） |
-| P7.4 | koeff_aus_near：逐项投影、4π 归一及范数除法，明确其与一般联合最小二乘的差异 （需求：REQ-F-SH-001） |
-| P7.5 | SHRotate：仅移植应用所需的 l=0/1/2 系数旋转，并做第三方来源/实现权核查与基函数顺序验证 （需求：REQ-F-SH-002） |
-| P7.6 | transfor_koeff：结合 Rodrigues 旋转矩阵和 SHRotate 的 3×3、5×5 块；检验正向/逆向旋转 （需求：REQ-F-SH-002） |
-| P7.7 | oneit_adaptiv_matched_filter 的右端向量、四个 3×3 子块与 6×6 联立系统：分别建立可独立对照的数值阶段 （需求：REQ-F-ADAPT-001） |
-| P7.8 | 单轮运动向量解析、平移归一化、残差、近度再计算、二阶球谐系数重估；明确状态输入/输出，不混成多帧类 （需求：REQ-F-ADAPT-001） |
-| P7.9 | 对照原始 inv/real 的行为和 Eigen 解算差异，记录奇异、零范数及非有限输出，不未经验证更改默认求解结果 （需求：REQ-F-ADAPT-001、REQ-NF-NUM-001、REQ-NF-NUM-002） |
-| P7.10 | 将球谐基函数、拟合和旋转分为 RealSphericalHarmonics、HarmonicFitter、HarmonicRotator；类只管理固定约定，不存多帧 mutable 状态 （需求：REQ-F-SH-001） |
-| P7.11 | 实现无状态 AdaptiveMfaStepSolver 的明确输入/输出合同，使其可单独用固定 FlowField + 旧 HarmonicCoefficients 测试，且不继承 KvD 求解器 （需求：REQ-F-ADAPT-001、REQ-DC-ADAPT-001） |
+| ID | 单一子任务与验收要点 | 前置 P | REQ | TC / AC | 证据要求与当前状态 |
+|---|---|---|---|---|---|
+| P7.1 | winkelausvektor：atan2 方位角与 acos 极角，保持轴约定 | P2.2 | REQ-F-SH-001 | TC-F-SH-001 / AC-F-SH-001 | 球谐与 6×6 中间量；未实施/未验收 |
+| P7.2 | kugelflfunc2：按 MATLAB legendre 的约定计算 l≤2 的实球谐，核对负 m 的 sin 与正 m 的 cos | P7.1 | REQ-F-SH-001 | TC-F-SH-001 / AC-F-SH-001 | 球谐与 6×6 中间量；未实施/未验收 |
+| P7.3 | near_aus_koeff：以 3×5 系数矩阵恢复离散近度；严格限定有效位置 | P7.2 | REQ-F-SH-001 | TC-F-SH-001 / AC-F-SH-001 | 球谐与 6×6 中间量；未实施/未验收 |
+| P7.4 | koeff_aus_near：逐项投影、4π 归一及范数除法，明确其与一般联合最小二乘的差异 | P7.2 | REQ-F-SH-001 | TC-F-SH-001 / AC-F-SH-001 | 球谐与 6×6 中间量；未实施/未验收 |
+| P7.5 | SHRotate：仅移植应用所需的 l=0/1/2 系数旋转，并做第三方来源/实现权核查与基函数顺序验证 | P7.2、P6.2 | REQ-F-SH-002 | TC-F-SH-002 / AC-F-SH-002 | 球谐与 6×6 中间量；未实施/未验收 |
+| P7.6 | transfor_koeff：结合 Rodrigues 旋转矩阵和 SHRotate 的 3×3、5×5 块；检验正向/逆向旋转 | P7.5 | REQ-F-SH-002 | TC-F-SH-002 / AC-F-SH-002 | 球谐与 6×6 中间量；未实施/未验收 |
+| P7.7 | oneit_adaptiv_matched_filter 的右端向量、四个 3×3 子块与 6×6 联立系统：分别建立可独立对照的数值阶段 | P7.3、P2.2 | REQ-F-ADAPT-001 | TC-F-ADAPT-001 / AC-F-ADAPT-001 | 球谐与 6×6 中间量；未实施/未验收 |
+| P7.8 | 单轮运动向量解析、平移归一化、残差、近度再计算、二阶球谐系数重估；明确状态输入/输出，不混成多帧类 | P7.4、P7.7 | REQ-F-ADAPT-001 | TC-F-ADAPT-001 / AC-F-ADAPT-001 | 球谐与 6×6 中间量；未实施/未验收 |
+| P7.9 | 对照原始 inv/real 的行为和 Eigen 解算差异，记录奇异、零范数及非有限输出，不未经验证更改默认求解结果 | P7.8 | REQ-F-ADAPT-001、REQ-NF-NUM-001、REQ-NF-NUM-002 | TC-F-ADAPT-001、TC-NF-NUM-001、TC-NF-NUM-002 / AC-F-ADAPT-001、AC-NF-NUM-001、AC-NF-NUM-002 | 球谐与 6×6 中间量；未实施/未验收 |
+| P7.10 | 将球谐基函数、拟合和旋转分为 RealSphericalHarmonics、HarmonicFitter、HarmonicRotator；类只管理固定约定，不存多帧 mutable 状态 | P7.2、P7.4、P7.6 | REQ-F-SH-001 | TC-F-SH-001 / AC-F-SH-001 | 球谐与 6×6 中间量；未实施/未验收 |
+| P7.11 | 实现无状态 AdaptiveMfaStepSolver 的明确输入/输出合同，使其可单独用固定 FlowField + 旧 HarmonicCoefficients 测试，且不继承 KvD 求解器 | P7.8 | REQ-F-ADAPT-001、REQ-DC-ADAPT-001 | TC-F-ADAPT-001、TC-DC-ADAPT-001 / AC-F-ADAPT-001、AC-DC-ADAPT-001 | 球谐与 6×6 中间量；未实施/未验收 |
 
 ### P8 — 三种 Adaptive MFA 实验驱动
 
-| ID | 子任务 / 验收 |
-|---|---|
-| P8.1 | agent_in_sphere_initialization_test：35 点圆轨迹，对比每帧零阶重置与继承系数，按脚本输出四个误差 MAT （需求：REQ-F-EXP-001、REQ-F-CLI-003） |
-| P8.2 | agent_in_sphere_adaptive_matched_filter_test：600 点正弦轨迹、级别 4、8 次重复，保留 addederror 参数和重置/继承两套曲线 （需求：REQ-F-EXP-002、REQ-F-CLI-003） |
-| P8.3 | P8.2 中的前一帧 Rodrigues 旋转与系数更新顺序单独实现并测试，不与当前帧求解顺序混淆 （需求：REQ-F-ADAPT-002） |
-| P8.4 | P8.2 独立 MAT 输出四种误差及 rottransratio，分别对照 with_errors 和 without_errors （需求：REQ-F-EXP-002、REQ-I-RESULT-001） |
-| P8.5 | agent_in_sphere_adaptive_matched_filter_many_parameter：级别 2、更新间隔 **1/5/11/21**、真实更新 akkoeff 与多组冻结/周期刷新 mitkoeff （需求：REQ-F-ADAPT-003、REQ-F-EXP-003、REQ-F-CLI-003） |
-| P8.6 | 比较“每步自身求解”和“独立 periodic baseline”的区别，并保存相应 MAT；不得将二者混成一组状态 （需求：REQ-F-ADAPT-003、REQ-F-EXP-003） |
-| P8.7 | 对照历史结果时显式列出脚本没有当前写入、但归档已有的 alleadap*、rottransratio 等文件；先检查来源再决定是否需要额外兼容导出，不能伪造数据 （需求：REQ-F-EXP-003、REQ-D-MAT-003、REQ-I-RESULT-001） |
-| P8.8 | 引入 AdaptiveMfaSession（唯一主系数所有者）与 ICoefficientUpdatePolicy（重置、继承、周期刷新），以测试替身检验旋转→基线更新→求解→主状态提交的逐帧时序 （需求：REQ-F-ADAPT-002、REQ-DC-ADAPT-001） |
-| P8.9 | 为 InitializationRunner、AdaptiveComparisonRunner、UpdateRateRunner 分别提供 RunContext 及独立会话；测试多组更新频率和多次重复运行间不共享可变状态 （需求：REQ-F-ADAPT-002、REQ-DC-ADAPT-001、REQ-NF-LOG-001、REQ-NF-SESSION-001） |
+| ID | 单一子任务与验收要点 | 前置 P | REQ | TC / AC | 证据要求与当前状态 |
+|---|---|---|---|---|---|
+| P8.1 | agent_in_sphere_initialization_test：35 点圆轨迹，对比每帧零阶重置与继承系数，按脚本输出四个误差 MAT | P7.11、P6.5、P3.1、P1.7 | REQ-F-EXP-001、REQ-F-CLI-003 | TC-F-EXP-001、TC-F-CLI-003 / AC-F-EXP-001、AC-F-CLI-003 | 逐帧会话及输出契约；未实施/未验收 |
+| P8.2 | agent_in_sphere_adaptive_matched_filter_test：600 点正弦轨迹、级别 4、8 次重复，保留 addederror 参数和重置/继承两套曲线 | P8.3、P3.5、P1.7 | REQ-F-EXP-002、REQ-F-CLI-003 | TC-F-EXP-002、TC-F-CLI-003 / AC-F-EXP-002、AC-F-CLI-003 | 逐帧会话及输出契约；未实施/未验收 |
+| P8.3 | P8.2 中的前一帧 Rodrigues 旋转与系数更新顺序单独实现并测试，不与当前帧求解顺序混淆 | P8.8、P7.6 | REQ-F-ADAPT-002 | TC-F-ADAPT-002 / AC-F-ADAPT-002 | 逐帧会话及输出契约；未实施/未验收 |
+| P8.4 | P8.2 独立 MAT 输出四种误差及 rottransratio，分别对照 with_errors 和 without_errors | P8.2、P1.7 | REQ-F-EXP-002、REQ-I-RESULT-001 | TC-F-EXP-002、TC-I-RESULT-001 / AC-F-EXP-002、AC-I-RESULT-001 | 逐帧会话及输出契约；未实施/未验收 |
+| P8.5 | agent_in_sphere_adaptive_matched_filter_many_parameter：级别 2、更新间隔 **1/5/11/21**、真实更新 akkoeff 与多组冻结/周期刷新 mitkoeff | P8.8、P7.11、P6.5 | REQ-F-ADAPT-003、REQ-F-EXP-003、REQ-F-CLI-003 | TC-F-ADAPT-003、TC-F-EXP-003、TC-F-CLI-003 / AC-F-ADAPT-003、AC-F-EXP-003、AC-F-CLI-003 | 逐帧会话及输出契约；未实施/未验收 |
+| P8.6 | 比较“每步自身求解”和“独立 periodic baseline”的区别，并保存相应 MAT；不得将二者混成一组状态 | P8.5 | REQ-F-ADAPT-003、REQ-F-EXP-003 | TC-F-ADAPT-003、TC-F-EXP-003 / AC-F-ADAPT-003、AC-F-EXP-003 | 逐帧会话及输出契约；未实施/未验收 |
+| P8.7 | 对照历史结果时显式列出脚本没有当前写入、但归档已有的 alleadap*、rottransratio 等文件；先检查来源再决定是否需要额外兼容导出，不能伪造数据 | P8.4、P8.6、P1.8 | REQ-F-EXP-003、REQ-D-MAT-003、REQ-I-RESULT-001 | TC-F-EXP-003、TC-D-MAT-003、TC-I-RESULT-001 / AC-F-EXP-003、AC-D-MAT-003、AC-I-RESULT-001 | 逐帧会话及输出契约；未实施/未验收 |
+| P8.8 | 引入 AdaptiveMfaSession（唯一主系数所有者）与 ICoefficientUpdatePolicy（重置、继承、周期刷新），以测试替身检验旋转→基线更新→求解→主状态提交的逐帧时序 | P7.11、P7.6 | REQ-F-ADAPT-002、REQ-DC-ADAPT-001 | TC-F-ADAPT-002、TC-DC-ADAPT-001 / AC-F-ADAPT-002、AC-DC-ADAPT-001 | 逐帧会话及输出契约；未实施/未验收 |
+| P8.9 | 为 InitializationRunner、AdaptiveComparisonRunner、UpdateRateRunner 分别提供 RunContext 及独立会话；测试多组更新频率和多次重复运行间不共享可变状态 | P8.1、P8.2、P8.5 | REQ-F-ADAPT-002、REQ-DC-ADAPT-001、REQ-NF-LOG-001、REQ-NF-SESSION-001 | TC-F-ADAPT-002、TC-DC-ADAPT-001、TC-NF-LOG-001、TC-NF-SESSION-001 / AC-F-ADAPT-002、AC-DC-ADAPT-001、AC-NF-LOG-001、AC-NF-SESSION-001 | 逐帧会话及输出契约；未实施/未验收 |
 
-### P9 — 结果分析、绘图与论文插图（与求解器隔离）
+### P9 — 结果分析、绘图与论文插图
 
-| ID | 子任务 / 验收 |
-|---|---|
-| P9.1 | graph_agent_in_sphere_initialization_test 的数据抽取、对数坐标和不同曲线取样区间 （需求：REQ-F-AN-001、REQ-F-CLI-004、REQ-I-ANALYSIS-001） |
-| P9.2 | graph_agent_in_sphere_adaptive_matched_filter_test 的旋转/平移误差、rottransratio 双纵轴以及分段规则，阈值 0.01 （需求：REQ-F-AN-001、REQ-I-ANALYSIS-001） |
-| P9.3 | graph_agent_in_sphere_adaptive_matched_filter_many_parameter 的四组曲线、平滑窗口 2/5/10、阈值 0.02、分段区间 （需求：REQ-F-AN-001、REQ-I-ANALYSIS-001） |
-| P9.4 | graphs_bias_test 的 40-run 平均和 log-log 曲线、参考 100/sqrt(N)，输入/输出与计算分层 （需求：REQ-F-BIAS-003、REQ-F-CLI-004、REQ-I-ANALYSIS-001） |
-| P9.5 | kurveglaetten 的边缘零值和窗口处理按原始行为验证；不自行修改为不同边界策略 （需求：REQ-F-AN-001） |
-| P9.6 | 评估可选 C++/gnuplot 等 Debian/Ubuntu 绘图后端，默认不影响无图形运行。导出数值与图像，保证对照曲线的索引、纵横坐标、单位一致 （需求：REQ-F-AN-002、REQ-NF-HEADLESS-001、REQ-F-CLI-005） |
-| P9.7 | circle_curve_in_the_sphere、sinosodial_curve_in_the_sphere、spherical_harmonic_illustration 三个展示脚本独立实现/记录视觉等价性；不依赖 MATLAB/Python （需求：REQ-F-AN-002、REQ-F-CLI-005） |
-| P9.8 | 用 BiasResultAnalyzer / AdaptiveResultAnalyzer 分离 MAT 读取与数值汇总；可选 IPlotExporter 仅消费分析结果，并用内存数据测试其不影响求解结果 （需求：REQ-F-AN-002、REQ-DC-ANALYSIS-001） |
+| ID | 单一子任务与验收要点 | 前置 P | REQ | TC / AC | 证据要求与当前状态 |
+|---|---|---|---|---|---|
+| P9.1 | graph_agent_in_sphere_initialization_test 的数据抽取、对数坐标和不同曲线取样区间 | P1.6、P1.8 | REQ-F-AN-001、REQ-F-CLI-004、REQ-I-ANALYSIS-001 | TC-F-AN-001、TC-F-CLI-004、TC-I-ANALYSIS-001 / AC-F-AN-001、AC-F-CLI-004、AC-I-ANALYSIS-001 | 历史 MAT 曲线/展示；未实施/未验收 |
+| P9.2 | graph_agent_in_sphere_adaptive_matched_filter_test 的旋转/平移误差、rottransratio 双纵轴以及分段规则，阈值 0.01 | P1.6、P1.8 | REQ-F-AN-001、REQ-I-ANALYSIS-001 | TC-F-AN-001、TC-I-ANALYSIS-001 / AC-F-AN-001、AC-I-ANALYSIS-001 | 历史 MAT 曲线/展示；未实施/未验收 |
+| P9.3 | graph_agent_in_sphere_adaptive_matched_filter_many_parameter 的四组曲线、平滑窗口 2/5/10、阈值 0.02、分段区间 | P1.6、P1.8 | REQ-F-AN-001、REQ-I-ANALYSIS-001 | TC-F-AN-001、TC-I-ANALYSIS-001 / AC-F-AN-001、AC-I-ANALYSIS-001 | 历史 MAT 曲线/展示；未实施/未验收 |
+| P9.4 | graphs_bias_test 的 40-run 平均和 log-log 曲线、参考 100/sqrt(N)，输入/输出与计算分层 | P5.5 | REQ-F-BIAS-003、REQ-F-CLI-004、REQ-I-ANALYSIS-001 | TC-F-BIAS-003、TC-F-CLI-004、TC-I-ANALYSIS-001 / AC-F-BIAS-003、AC-F-CLI-004、AC-I-ANALYSIS-001 | 历史 MAT 曲线/展示；未实施/未验收 |
+| P9.5 | kurveglaetten 的边缘零值和窗口处理按原始行为验证；不自行修改为不同边界策略 | P2.2 | REQ-F-AN-001 | TC-F-AN-001 / AC-F-AN-001 | 历史 MAT 曲线/展示；未实施/未验收 |
+| P9.6 | 评估可选 C++/gnuplot 等 Debian/Ubuntu 绘图后端，默认不影响无图形运行。导出数值与图像，保证对照曲线的索引、纵横坐标、单位一致 | P9.1、P9.2、P9.3、P9.4 | REQ-F-AN-002、REQ-NF-HEADLESS-001、REQ-F-CLI-005 | TC-F-AN-002、TC-NF-HEADLESS-001、TC-F-CLI-005 / AC-F-AN-002、AC-NF-HEADLESS-001、AC-F-CLI-005 | 历史 MAT 曲线/展示；未实施/未验收 |
+| P9.7 | circle_curve_in_the_sphere、sinosodial_curve_in_the_sphere、spherical_harmonic_illustration 三个展示脚本独立实现/记录视觉等价性；不依赖 MATLAB/Python | P6.3、P6.4、P7.2、P9.6 | REQ-F-AN-002、REQ-F-CLI-005 | TC-F-AN-002、TC-F-CLI-005 / AC-F-AN-002、AC-F-CLI-005 | 历史 MAT 曲线/展示；未实施/未验收 |
+| P9.8 | 用 BiasResultAnalyzer / AdaptiveResultAnalyzer 分离 MAT 读取与数值汇总；可选 IPlotExporter 仅消费分析结果，并用内存数据测试其不影响求解结果 | P9.1、P9.2、P9.3、P9.4 | REQ-F-AN-002、REQ-DC-ANALYSIS-001 | TC-F-AN-002、TC-DC-ANALYSIS-001 / AC-F-AN-002、AC-DC-ANALYSIS-001 | 历史 MAT 曲线/展示；未实施/未验收 |
 
 ### P10 — 端到端核验、文档与交付
 
-| ID | 子任务 / 验收 |
-|---|---|
-| P10.1 | 更新 README：删除旧 NumPy/.npz 迁移承诺，声明原始 MAT 直接访问和实际可运行入口，保留两份 DOI （需求：REQ-PROC-TRACE-001、REQ-NF-COPYRIGHT-001） |
-| P10.2 | 形成每个 MATLAB 函数至 C++ 模块的最终追踪表（45/45 有处理决定：已移植、仅展示、无调用但保留、受授权阻塞） （需求：REQ-PROC-TRACE-001） |
-| P10.3 | 逐层运行 MAT I/O、数学、采样、基线、KvD、球谐、自适应、实验和画图测试；记录命令、版本、退出码、日志 （需求：REQ-NF-NUM-001、REQ-NF-NUM-002、REQ-PROC-TRACE-001、REQ-NF-RECOVERY-001） |
-| P10.4 | 分别以原始归档的 560 个 bias MAT 和 22 个 adaptive MAT 核对结果契约；核对历史产物与当前源码的差异，不强求随机逐样本相等 （需求：REQ-D-MAT-001、REQ-D-MAT-003） |
-| P10.5 | 复现论文对应偏差、初始化、轨迹及更新频率实验的数值图表；每组注明实际样本/噪声/状态 （需求：REQ-NF-NUM-001、REQ-NF-RNG-001） |
-| P10.6 | 汇总 Debian/Ubuntu 的已执行构建、CTest 和实验结果，生成 NUMERICAL_EQUIVALENCE 与 PROGRESS；保留失败样本和未验证平台 （需求：REQ-NF-PLATFORM-001、REQ-NF-DEPS-001、REQ-NF-LOG-001、REQ-NF-HEADLESS-001、REQ-NF-PORTABLE-001、REQ-NF-RUNTIME-001） |
-| P10.7 | 核查第三方版权及 README 声明，不自动添加 LICENSE、不提交未经确认的新增数据副本 （需求：REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001） |
-| P10.8 | 创建或更新对应 Draft PR 供审查；不得自动合并 main，按 AGENTS.md 报告 SHA、状态及未办事项 （需求：REQ-PROC-TRACE-001） |
-| P10.9 | 验收 OOP 边界：接口可替换、对象所有权明确、无悬垂 MAT 内存、无跨实验状态泄漏、类方法到全部 MATLAB 函数追踪完整；记录类关系和测试证据 （需求：REQ-PROC-TRACE-001、REQ-NF-OOP-001、REQ-NF-SESSION-001） |
-| P10.10 | 检查无过度继承/巨型类/虚假统一求解器；保证纯数学函数不为 OOP 改变求解顺序、精度与实验结果合同 （需求：REQ-PROC-TRACE-001、REQ-NF-OOP-001） |
+| ID | 单一子任务与验收要点 | 前置 P | REQ | TC / AC | 证据要求与当前状态 |
+|---|---|---|---|---|---|
+| P10.1 | 更新 README：删除旧 NumPy/.npz 迁移承诺，声明原始 MAT 直接访问和实际可运行入口，保留两份 DOI | P1.2 | REQ-PROC-TRACE-001、REQ-NF-COPYRIGHT-001 | TC-PROC-TRACE-001、TC-NF-COPYRIGHT-001 / AC-PROC-TRACE-001、AC-NF-COPYRIGHT-001 | 需求验收、统计及 PR 记录；未实施/未验收 |
+| P10.2 | 形成每个 MATLAB 函数至 C++ 模块的最终追踪表（45/45 有处理决定：已移植、仅展示、无调用但保留、受授权阻塞） | P0.2、P8.9、P9.8 | REQ-PROC-TRACE-001 | TC-PROC-TRACE-001 / AC-PROC-TRACE-001 | 需求验收、统计及 PR 记录；未实施/未验收 |
+| P10.3 | 逐层运行 MAT I/O、数学、采样、基线、KvD、球谐、自适应、实验和画图测试；记录命令、版本、退出码、日志 | P1.8、P4.8、P7.9、P8.9 | REQ-NF-NUM-001、REQ-NF-NUM-002、REQ-PROC-TRACE-001、REQ-NF-RECOVERY-001 | TC-NF-NUM-001、TC-NF-NUM-002、TC-PROC-TRACE-001、TC-NF-RECOVERY-001 / AC-NF-NUM-001、AC-NF-NUM-002、AC-PROC-TRACE-001、AC-NF-RECOVERY-001 | 需求验收、统计及 PR 记录；未实施/未验收 |
+| P10.4 | 分别以原始归档的 560 个 bias MAT 和 22 个 adaptive MAT 核对结果契约；核对历史产物与当前源码的差异，不强求随机逐样本相等 | P1.8、P5.6、P8.7 | REQ-D-MAT-001、REQ-D-MAT-003 | TC-D-MAT-001、TC-D-MAT-003 / AC-D-MAT-001、AC-D-MAT-003 | 需求验收、统计及 PR 记录；未实施/未验收 |
+| P10.5 | 复现论文对应偏差、初始化、轨迹及更新频率实验的数值图表；每组注明实际样本/噪声/状态 | P9.8、P10.3、P10.4 | REQ-NF-NUM-001、REQ-NF-RNG-001 | TC-NF-NUM-001、TC-NF-RNG-001 / AC-NF-NUM-001、AC-NF-RNG-001 | 需求验收、统计及 PR 记录；未实施/未验收 |
+| P10.6 | 汇总 Debian/Ubuntu 的已执行构建、CTest 和实验结果，生成 NUMERICAL_EQUIVALENCE 与 PROGRESS；保留失败样本和未验证平台 | P10.5、P1.1 | REQ-NF-PLATFORM-001、REQ-NF-DEPS-001、REQ-NF-LOG-001、REQ-NF-HEADLESS-001、REQ-NF-PORTABLE-001、REQ-NF-RUNTIME-001 | TC-NF-PLATFORM-001、TC-NF-DEPS-001、TC-NF-LOG-001、TC-NF-HEADLESS-001、TC-NF-PORTABLE-001、TC-NF-RUNTIME-001 / AC-NF-PLATFORM-001、AC-NF-DEPS-001、AC-NF-LOG-001、AC-NF-HEADLESS-001、AC-NF-PORTABLE-001、AC-NF-RUNTIME-001 | 需求验收、统计及 PR 记录；未实施/未验收 |
+| P10.7 | 核查第三方版权及 README 声明，不自动添加 LICENSE、不提交未经确认的新增数据副本 | P0.4、P10.1 | REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001 | TC-D-SOURCE-002、TC-NF-COPYRIGHT-001 / AC-D-SOURCE-002、AC-NF-COPYRIGHT-001 | 需求验收、统计及 PR 记录；未实施/未验收 |
+| P10.8 | 创建或更新对应 Draft PR 供审查；不得自动合并 main，按 AGENTS.md 报告 SHA、状态及未办事项 | P10.6、P10.7 | REQ-PROC-TRACE-001 | TC-PROC-TRACE-001 / AC-PROC-TRACE-001 | 需求验收、统计及 PR 记录；未实施/未验收 |
+| P10.9 | 验收 OOP 边界：接口可替换、对象所有权明确、无悬垂 MAT 内存、无跨实验状态泄漏、类方法到全部 MATLAB 函数追踪完整；记录类关系和测试证据 | P10.3、P10.4 | REQ-PROC-TRACE-001、REQ-NF-OOP-001、REQ-NF-SESSION-001 | TC-PROC-TRACE-001、TC-NF-OOP-001、TC-NF-SESSION-001 / AC-PROC-TRACE-001、AC-NF-OOP-001、AC-NF-SESSION-001 | 需求验收、统计及 PR 记录；未实施/未验收 |
+| P10.10 | 检查无过度继承/巨型类/虚假统一求解器；保证纯数学函数不为 OOP 改变求解顺序、精度与实验结果合同 | P10.9 | REQ-PROC-TRACE-001、REQ-NF-OOP-001 | TC-PROC-TRACE-001、TC-NF-OOP-001 / AC-PROC-TRACE-001、AC-NF-OOP-001 | 需求验收、统计及 PR 记录；未实施/未验收 |
 
-## 6. 依赖图及并行边界
+## 6. 子任务依赖、并行、里程碑与进出准则
+
+本计划每个 P 子任务的**直接前置依赖**已在 §5 的表格中列出，共 98 个节点。当前依赖检查依据：每个前置 ID 存在，且图中没有环；这是一份静态的规划图检查，不等于已有 C++ 构建或实现。阶段编号并非实际严格串行顺序，例如 P3.6 的几何求交依赖 P6.2 的 Rodrigues 数学，允许跨阶段依赖。
+
+### 6.1 关键子任务依赖（摘要）
 
 ~~~mermaid
-flowchart TD
-  P0[P0 源码、对象模型与合同审计] --> P1[P1 RAII MAT I/O、CLI 与装配]
-  P0 --> P2[P2 数学与采样]
-  P1 --> P5[P5 Bias 实验]
-  P2 --> P3[P3 FlowSynthesizer 与噪声策略]
-  P2 --> P4[P4 Franz 与 KvD 策略引擎]
-  P3 --> P5
-  P4 --> P5
-  P2 --> P6[P6 轨迹与旋转]
-  P2 --> P7[P7 球谐与无状态 Adaptive 单步]
-  P6 --> P7
-  P3 --> P8[P8 Adaptive 实验]
-  P6 --> P8
-  P7 --> P8
-  P1 --> P8
-  P5 --> P9[P9 数据分析与绘图]
-  P8 --> P9
-  P1 --> P9
-  P9 --> P10[P10 全量核验与交付]
+flowchart LR
+  A["P0.1 原始清单"] --> B["P0.7 对象合同"]
+  B --> C["P0.8 设计评审"]
+  C --> D["P1.1 CMake 工程"]
+  D --> E["P1.3 MAT RAII"]
+  E --> F["P1.4 MAT 压缩读取"]
+  F --> G["P1.8 全量读/Golden"]
+  C --> H["P2.2 数学/向量"]
+  H --> I["P4.2 Franz"]
+  I --> J["P4.3 KvD 公共步骤"]
+  J --> K["P4.4/5 两种平移公式"]
+  H --> L["P7.2 实球谐"]
+  L --> M["P7.7 6×6 块"]
+  M --> N["P7.8 Adaptive 单步"]
+  N --> O["P8.8 Session"]
+  O --> P["P8.2/5 轨迹实验"]
+  G --> Q["P10.4 MAT 结果核对"]
+  P --> Q
+  K --> R["P5.1/2 Bias 实验"]
+  R --> Q
+  Q --> S["P10.5 论文复现"]
+  S --> T["P10.8 交付审查"]
 ~~~
 
-- P0 对象模型和窄接口合约先冻结；P1 MAT I/O、P2 纯数学、P6 轨迹和 P7 球谐基函数准备可在满足依赖后分派到不同**独立工作区/任务分支**，但同一文件与工作区不能由多个 Agent 并发写。P7 的球谐旋转功能依赖 P6 的旋转数学接口；**Adaptive 单步求解不依赖 KvD 的 C++ 实现**，不要因论文中的理论关系而人为耦合 P4 与 P7。
-- 每个子任务应是小范围、可验证、独立提交；不得因“同时开发更快”而先把未验证的共享 API 任意修改。变更共同类型或坐标合同先由集成负责人核对。
-- 每次编译、运行或实验前，先按 AGENTS.md 完成允许的代码提交/推送远程检查点。不得等待 GitHub Actions。
-- **本轮仅修订 PLAN.md；P0～P10 的任何 C++ 文件、构建、CTest、随机仿真和分析程序均尚未实施。**
+模块/target 的 DAG 与接口依赖另由 [ARCHITECTURE.md](docs/ARCHITECTURE.md) §4 维护，本节只负责 P 子任务依赖。多个 Agent 并行实施必须分别使用独立工作区及开发分支；严禁抢占共享 HEAD/暂存区或覆盖其他任务产物。
+
+### 6.2 里程碑与交付物
+
+| 里程碑 | 交付范围 | 进入条件 | 退出条件和证据 |
+|---|---|---|---|
+| M0 源资料与设计基线 | P0.1–P0.8 的可评审资料，SRS/HLD/LLD 草案 | 原资料目录可只读访问、AGENTS 已核对 | 45 文件来源清单、MAT 审计方案、最小接口批准范围和开放 DEC；**当前尚未正式验收** |
+| M1 MAT 只读/新结果写入闭环 | P1 + P2 基础值类型 | M0 最小合同审查、开发分支远程检查点 | MAT 读取、类型/shape、路径保护与回写回读的真实测试日志 |
+| M2 Bias 计算与统计 | P2–P5 的共享数学、噪声、Franz、KvD、Bias | M1 + 相关数学/采样合同 | Original/Modified 每轮对照和两个 40-run 统计，含失败样本 |
+| M3 Adaptive 数值闭环 | P6–P8 轨迹、球谐和自适应 Session | 所需旋转/球谐代码及基准可用，版权障碍已处理 | 35/600 点与 1/5/11/21 更新率实验，合同及错误数有证据 |
+| M4 图表和原文复现 | P9–P10 | M2/M3 必须输出可校验 MAT | 四种分析、三幅插图与论文相关曲线数据复现；容差与例外批准 |
+| M5 可审查交付 | P10 交付、需求/设计/测试映射 | M4 证据已收集或明确批准阻塞 | 真实 SHA/命令/环境/失败日志与 Draft PR 可复核，不自动合并 |
+
+任务没有固定工时承诺；里程碑也不代表已经开始。预算、性能、人员分工应以项目所有者确认的资源和首次实测为依据。
+
+### 6.3 角色与职责
+
+| 角色 | 需要承担的职责 | 是否已指定具体人员 |
+|---|---|---|
+| 项目所有者/需求批准人 | SRS/接口/DEC、权利范围及验收例外批准 | 角色已确定，具体审核记录待实际发生 |
+| 源码/数据审计负责人 | 原 45 个文件、MAT 数据字典、版权线索、脚本—结果差异 | 尚未正式分派 |
+| C++ 模块开发负责人 | 所属 P 子任务、接口、代码提交与实测记录 | 尚未正式分派 |
+| 数值验证负责人 | Golden 数据、容差提案、对照误差、复现实验 | 尚未正式分派 |
+| 集成/维护负责人 | 分支与工作区隔离、无环依赖、PR、最终证据审查 | 尚未正式分派 |
+
+不为尚未分派的工作编造个人姓名或已获批准的时间表。
+
+### 6.4 任务状态、完成度与阻塞口径
+
+状态使用：**未开始 / 进行中（有证据）/ 代码已提交未验证 / 已通过验证 / 因 DEC 阻塞 / 已验收**。文档已创建是“有审查素材”，不是“代码已完成”或“已验收”。
+
+- **完成百分比**按“经批准并有实际证据的 P 子任务数 / 98”计算；单项不因撰写草案而自动记作完成。必要时分别报审计/设计完成度与代码/测试完成度，不混用。
+- 对 M 级需求，数值容差、实际数据或版权待决导致的不可判定状态不能统计为验收通过。
+- 任何阶段退出需附该阶段实际 REQ/TC/AC/测试实体/输出 SHA 与失败数；未经真实构建的任务不写“编译成功”。
+- 当前可见的文档提交不代表 98 个 P 任务已验收。具体进行中状态及证据索引后续由 docs/PROGRESS.md 保存，当前文件尚未正式填报。
 
 ## 7. 数值等价与科学复现的验收标准
 
@@ -355,23 +391,22 @@ flowchart TD
 8. **状态透明**：生成代码、提交远端、构建、CTest、原始数据回归、论文复现、PR 交付均逐项报告，没有执行的内容不能写成通过。
 9. **面向对象合格**：每个持有可变状态的类有唯一所有者；业务运行器不包含数学公式/直接 matio 调用；算法可在固定输入和注入假对象下独立测试；OOP 重构不改变原始数值结果。
 
-## 8. 当前风险、阻塞与决策
+## 8. 实施风险、监测与 DEC 单一来源
 
-| 风险或发现 | 处理决定 |
-|---|---|
-| 源码由作者在 Linux 环境开发，存在历史 MATLAB API | Debian/Ubuntu 独立 C++17 实现，不加入 MATLAB Runtime；忠实记录 API 语义 |
-| 历史 MAT 文件是压缩 MAT v5（目前抽样确认） | matio + zlib 为 P1 实际要求；全量版本/变量校验仍待 P0.5 |
-| 原 MATLAB 函数调用有隐式全局随机状态 | RNG 通过实验 runner 显式持有；固定数据与统计层分别对照 |
-| 原始脚本的输出集合与归档文件名存在差异 | 建立“实际生成/已有归档/分析依赖”三方清单，未经核验不得补造或删除 |
-| 球谐/旋转存在符号、坐标、基函数顺序差异风险 | 分离基础函数、设置固定旋转样本、逐项系数对照，不直接套第三方球谐默认值 |
-| rodrigues.m、SHRotate.m 含第三方来源 | 独立版权和技术来源核查，未经确认不直接复制第三方代码段 |
-| 既有 README 与最新 MAT-only 决策不一致 | 计划 P10.1 更新；本轮只改 PLAN，不擅改其他文件 |
-| 旧计划只设两套实验执行器 | 调整为五类生成入口与四种分析入口，并单独处理三份插图 |
-| 原计划频率写成 1/5/10/20 | 明确修正为**1/5/11/21**，完全以当前 MATLAB 文件为准 |
-| 原生数值不稳定 | 先记录/复现原始行为；增强方案必须有独立需求和对照证明，不得在忠实模式下暗改 |
-| 模块化不等于面向对象 | 增加显式类职责、对象状态/所有权、依赖注入、组合关系、OOP 验收和分阶段任务；禁止为每个函数创建虚类 |
-| Adaptive 单步与多帧会话混合 | 无状态 StepSolver + Session + 独立的更新策略；主系数状态仅由 Session 拥有 |
-| MAT 指针泄漏到数学层或覆盖原始文件 | move-only RAII + 值对象 + 只读/写入分离；原始 MAT 路径不可作为输出路径 |
+需求与待决事项的**唯一正式 DEC 编号、状态和批准条件**见 [REQUIREMENTS.md](docs/REQUIREMENTS.md) §8；本节只列实施风险及应对工作，不复制另一套“已经批准”的决策表。
+
+| 风险 ID | 对应 DEC/需求 | 风险信号 | 实施响应、责任角色与状态 |
+|---|---|---|---|
+| R-01 | DEC-001/002，REQ-D-MAT-001 | 某 MAT 文件不能被当前 matio+zlib 解析 | P1.4/P1.8 补实际类型字典、保持只读和失败数；数据审计负责人；待验证 |
+| R-02 | DEC-003/007，REQ-D-SOURCE-002 | rodrigues/SHRotate 存在外部版权/来源障碍 | P0.4/P10.7 追踪来源并审查可移植范围；项目所有者批准；未解决 |
+| R-03 | DEC-004，REQ-D-MAT-003 | 历史 MAT 与当前 save 列表不一致 | P8.7 三方字段差异表，不补造数据；数值负责人；待归因 |
+| R-04 | DEC-005，REQ-NF-NUM-001 | MATLAB/Eigen 计算顺序与奇异边界导致误差 | P4.8/P7.9 固定输入逐轮对照，容差按条件数批准；未冻结 |
+| R-05 | DEC-006，REQ-NF-RUNTIME-001 | 原配置资源消耗大、内存或构建版本不兼容 | P10.6 首测 wall/CPU/RSS、Debian/Ubuntu 版本；未测 |
+| R-06 | REQ-DC-*、REQ-NF-OOP-001 | 状态、I/O 与计算模块耦合 | P0.7/P0.8 对象/target DAG 审查，独立测试；未冻结 |
+| R-07 | REQ-NF-SAFETY-001 | 结果路径与 origin 重叠或误覆盖旧结果 | P1.9 独占新 RunId 输出、符号链接负例；未测试 |
+| R-08 | REQ-NF-RNG-001 | MATLAB/C++ 同 seed 不是同样随机数 | P3.7、P10.5 固定输入和统计复现分开；已知风险，未验证 |
+
+风险发生后应记录对应 P 任务、证据 SHA、影响需求和已采取措施；真正的新缺陷按 AGENTS.md 检索 Issue 后处理，外部临时网络错误不创建项目 Issue。
 
 ## 9. 来源与版本声明
 
