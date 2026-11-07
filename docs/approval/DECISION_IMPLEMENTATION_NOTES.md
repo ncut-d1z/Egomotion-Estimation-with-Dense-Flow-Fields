@@ -46,3 +46,10 @@
 上传 JSON 的 `permissions` 中 `runCMake`、`runCTest`、`runMatlab`、`writeMat`、`runBash`、`measurePerformance`、`mergePR`、`publish`、`createLicense`、`freezeBaseline` **全为 false**。因此**本轮未执行任何上述动作**，只修改审查/实施方案以及 `.gitignore` 的新结果目录排除规则。
 
 **规则**：H-02/H-12/H-14 的具体技术方案选择不推翻 H-10 暂缓开发、H-11 暂缓现场运行，且不等于 H-16 的发布/许可证/基线冻结授权。此登记是文件内容审阅记录，**不是新的人类审批签名**。
+
+## 5. 实际进行的文档静态核对（非 Bash / 非数值测试）
+
+- **只读核对对象**：GitHub 连接器从固定提交 `b2a162fe762c60cb2a6b6e5e82df1da04aeb2f97` 读取真实 SRS、TEST_PLAN、PLAN、OBJECT_MODEL、ARCHITECTURE、.gitignore 及 Git 源树，并运行 JavaScript 集合/依赖断言。
+- **核对结果**：REQ **66**、TC **66**、P 工作项 **98**、原始 MATLAB `.m` **45**；SRS/对象模型均映射 45；内部 HLD target DAG **26** 条边且无环；关联 ID、映射及依赖检查错误 **0**。
+- **变更安全检查**：此轮源码/原始 `origin/**` 无修改；没有新增 `src/`、`include/` C++ 实现，也没有真实执行 CMake、CTest、Bash、MATLAB 或 MAT 写回读。根目录 `.gitignore` 有 `/output/`，没有通过 `*.mat` 全局忽略原始资料。
+- **证据限制**：以上属于 GitHub 内容读取后的**静态一致性检查**，**不**是 `scripts/check_docs_traceability.sh` 现场运行、真实 CMake target 链接、独立 MATLAB Golden、性能或逐元素数值等价的验收记录。
