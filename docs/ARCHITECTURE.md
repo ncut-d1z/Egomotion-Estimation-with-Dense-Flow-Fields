@@ -4,6 +4,8 @@
 
 ## 1. 架构目标、质量属性和约束
 
+**长期证据边界**：[无需 MATLAB 执行政策](golden/NO_MATLAB_EXECUTION_POLICY.md) 已取消 MATLAB/Octave 及 L1 逐节点 Golden 的冻结前置条件。HLD 部署视图不得引入 MATLAB Runtime，质量场景可采用 L2 最终 MAT、L3 独立逐节点参考及 L4 统计；无 L1 仅限制声称原版运行行为完整等价，**不是架构阻塞**。真实 CMake/CTest、版权、接口与指标审批门禁保持。
+
 - C++17、Eigen 3、matio/zlib、CMake；**仅 Debian/Ubuntu**；原始 MATLAB/MAT 只读；不依赖 MATLAB Runtime、Python/NumPy/NPZ、ROS、OpenCV 或 Windows。
 - 忠实保留三轴 Franz、Original/Modified KvD、Adaptive 单步、球谐旋转和五个实验数据生成入口的数学语义；观测为 N×6 三维球面光流而非图像或像素流。
 - 数据生成、原始 MAT 访问、新 MAT 结果写入、数值分析和可选绘图应能分别调用。图形输出失败不得撤销已成功生成的计算结果。
