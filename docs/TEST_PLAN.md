@@ -100,7 +100,7 @@
 
 ## 3. TC → 实体/CTest → AC 规划矩阵
 
-下列表格共 66 项，与 SRS **v0.9 草案**逐项对应；MAT I/O 的拟议数据结构、独立负例及测试文件映射详见 [mat_io.md §2、§5、§8–9](design/mat_io.md)。**独立 matio 探针已编写并执行**，但绝大多数拟议测试源文件、测试函数和 CTest 名称尚未创建；探针不是 CTest 注册项。人工审查项与自动测试区分。原始 45 个 MATLAB 源文件映射请参见 [REQUIREMENTS.md §9.2](REQUIREMENTS.md)。
+下列表格共 66 项，与 SRS **v0.10 草案**逐项对应；MAT I/O 的拟议数据结构、独立负例及测试文件映射详见 [mat_io.md §2、§5、§8–9](design/mat_io.md)。**独立 matio 探针已编写并执行**，但绝大多数拟议测试源文件、测试函数和 CTest 名称尚未创建；探针不是 CTest 注册项。人工审查项与自动测试区分。原始 45 个 MATLAB 源文件映射请参见 [REQUIREMENTS.md §9.2](REQUIREMENTS.md)。
 
 **L2/L3/L4 来源及测试文件唯一索引**：`contracts.md §3/§3.0`、`experiments.md §8.1`、`harmonics.md §4.1`、`sampling_noise.md §8`、`mat_io.md §5/§8` 仅补充对应模块的候选测试细节。本表仍是 66 项 TC 的单一归档，不产生新编号；其 test 文件、CTest 名称与来源证明尚未创建/批准，H-10/H-11 实际执行权限保持暂缓。
 
