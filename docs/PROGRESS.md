@@ -2,7 +2,7 @@
 
 > **2026-11-06 审批修订补充**：已新增 [HAR-2026-11-06-001 审查材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md)，把 H-01～H-16 分为已选技术路线、只供起草及暂缓执行三类，并提供具体静态源码证据、TC/Golden 对照和 M0～M5 候选退出证据。这是审查文档成果，**未改变 P/TC/AC 的验收状态**，也未解除全部 false 的执行权限。
 
- > **项目长期决定**：[不运行 MATLAB 的数值证据政策](golden/NO_MATLAB_EXECUTION_POLICY.md) 已根据项目所有者的最新明确要求写入 SRS/TEST_PLAN/LLD/AGENTS：原 .m **只读静态审查**，L1 原 MATLAB 运行逐节点 Golden **不再作为任何冻结/验收阻塞**；下一步用 L2/L3/L4，保留真实 C++/CTest、DEC-005/008、版权、数据保护与人工签署。**本决定不是生产实施或运行测试授权。**
+> **项目长期决定**：[不运行 MATLAB 的数值证据政策](golden/NO_MATLAB_EXECUTION_POLICY.md) 已根据项目所有者的最新明确要求写入 SRS/TEST_PLAN/LLD/AGENTS：原 .m **只读静态审查**，L1 原 MATLAB 运行逐节点 Golden **不再作为任何冻结/验收阻塞**；下一步用 L2/L3/L4，保留真实 C++/CTest、DEC-005/008、版权、数据保护与人工签署。**本决定不是生产实施或运行测试授权。**
 
 > **当前状态：审计及设计草案阶段；所有正式软件需求、P 任务及里程碑均未宣布验收完成。** 本文件只记录可定位的实际子成果和未决项。验收规则以 [REQUIREMENTS.md](REQUIREMENTS.md)、[TEST_PLAN.md](TEST_PLAN.md) 和 [PLAN.md](PLAN.md) 为准；不得把已有文档、matio 独立探针或静态集合检查折算为业务 C++ 功能完成率。
 
@@ -59,7 +59,7 @@
 | 数值验证者 | 独立 Golden、统计样本、批准容差下的逐轮对照 | 未指派、Golden 和 DEC-005 未冻结 |
 | 测试/集成维护者 | Debian/Ubuntu 构建、CTest、数据/资源记录、静态审计核查 | Ubuntu 探针已有记录；完整工程/CTest 未获验收 |
 
- > **Golden 证据等级最新状态**：依 [E-DOC-007](golden/NO_MATLAB_EXECUTION_POLICY.md)，L1 原 MATLAB 运行**永久非强制、非阻塞**；L2 作者 MAT 存在但独立 SHA-256/逐值复核仍缺，L3 的 AN-G01～12 仅为候选（完整逐轮/递归/一般输入仍待独立参考），L4 尚无新执行统计。故 KvD/Adaptive/RNG/SH/Session 的 AC 仍因**独立参考/真实 C++/CTest/容差批准不足**而未验收，**不是因为缺 L1**。候选 0.01/0.1 尚未批准。
+> **Golden 证据等级最新状态**：依 [E-DOC-007](golden/NO_MATLAB_EXECUTION_POLICY.md)，L1 原 MATLAB 运行**永久非强制、非阻塞**；L2 作者 MAT 存在但独立 SHA-256/逐值复核仍缺，L3 的 AN-G01～12 仅为候选（完整逐轮/递归/一般输入仍待独立参考），L4 尚无新执行统计。故 KvD/Adaptive/RNG/SH/Session 的 AC 仍因**独立参考/真实 C++/CTest/容差批准不足**而未验收，**不是因为缺 L1**。候选 0.01/0.1 尚未批准。
 
 ## 5. 未解决决策与验证阻塞
 
