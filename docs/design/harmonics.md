@@ -101,10 +101,22 @@ a'_{0,0}=a_{0,0},\quad
 ### 3.1 转动块生成规则的可验证边界
 
 - 先处理 l=0 常数块，l=1 依据源 SHRotate 的轴排列构造 R3（注意行、列和符号）。
-- l=2 的 R5 使用 SHRotate 递归辅助函数 M/U/V/W/P 与上一阶旋转块生成；**第三方代码复制与重写的授权状态尚未确认**。
+- l=2 的 R5 使用 Ivanic–Ruedenberg 递归生成。**用户 JSON H-14 已选择方案 A：参考 Don Williamson 原始 C++ SHRotation 的 `IvanicSHRotate` 实现，不再把未经审查的其他路线作为默认**；H-02 指定复用源码目录附近须保存来源 README 与上游 MIT LICENSE。H-10 暂缓，**本轮不复制/移植任何 C++ 文件**。
 - 先用对 z 轴的已知旋转检查 m 正负的相位，再分别用 x/y 轴和复合旋转检查 R3/R5 全部元素、正交性、往返一致性和基函数变换方向。
-- “R3/R5 元素/递推系数的逐式复刻”必须建立 Golden 表：旋转向量、输入 R、源输出 R3/R5、输入/输出系数、误差及源 SHA；在版权确认前不从第三方程序逐行照搬公式或实现。
+- 以选定的 Don Williamson C++ 核心递推为**待实施参考**，必须建立 Golden 表：旋转向量、输入 R、MATLAB 源输出 R3/R5、输入/输出系数、误差及源 SHA；不得以 C++ 自校验替代独立源 MATLAB Golden，也不得在本轮复制第三方代码。
 - 对第二阶旋转的任何替代生成算法，须证明与作者 SHRotate 数值行为和系数顺序一致，并有合法的原创或兼容授权基础。
+
+### 3.1.1 H-02/H-14：上游 C++ 复用路线与法律/构建边界
+
+| 核查项 | 已确认的上游事实或用户决定 | 实施要求（未执行） |
+|---|---|---|
+| 用户选定方案 | H-02：Don Williamson 原 C++ 替代 `SHRotate.m`；H-14：**方案 A** | 以 Ivanic–Ruedenberg 路线优先，非 Choi 路线；只须生成 l≤2 的三块 R0/R1/R2 |
+| 上游实际算法文件 | [`Source/IvanicSHRotate.cpp`](https://github.com/dwilliamson/SHRotation/blob/master/Source/IvanicSHRotate.cpp)、[`Source/IvanicSHRotate.h`](https://github.com/dwilliamson/SHRotation/blob/master/Source/IvanicSHRotate.h)；配套 `Source/SHRotateMatrix.h` | **`Source/SHRotation.h` 是依赖 sdla 的示例应用类，不是独立的核心递推 API**，不能只复制该头文件就宣称解决 R5 |
+| 底层依赖 | 上游 `IvanicSHRotate.cpp` 明确包含 `sdla/Matrix.h` 和 `sdla/Exception.h`；用户项目的目标是 Debian/Ubuntu + C++17/Eigen | 获取版权允许的必要实现和依赖，评估是否通过适配器将 `sdla` 类型转换为 Eigen，而非盲目引入整套示例图形/Windows 项目；任何实际改写须等 H-10 授权 |
+| 上游许可证 | [dwilliamson/SHRotation/LICENSE](https://github.com/dwilliamson/SHRotation/blob/master/LICENSE)，Don Williamson 的 MIT 形式版权/许可文本 | 若以后实际复用源文件，在**复用目录**（例如拟议 `third_party/SHRotation/`）保存 `README.md`，逐文件列出原始上游路径、版本/commit/blob SHA、用户确认的复用范围，保留版权声明与上游 `LICENSE`；该 LICENSE 是第三方告知文件，**不是**项目根许可证 |
+| 旋转块接口 | MATLAB `SHRotate(r,2)` 输出 R0=1×1、R1=3×3、R2=5×5 | 用 `HarmonicRotator` 把上游计算输出转换到源 MATLAB 的 `(-1,0,1)` 和 `(-2,-1,0,1,2)` 次序；核对原 MATLAB R1 九元素映射与 R2 全 25 元素、转置/相位和正交性 |
+
+**冻结条件**：H-02/H-14 的**方案选择已记录**，但还没有将外部 C++ 源码逐文件纳入或实际编译，更没有合法复用依赖闭包/Golden、批准 DEC-005 容差、P7.5/TC-F-SH-002 验收。文件中的原 `SHRotate.m` 继续只读，R5 的数学矩阵不能被“Eigen::Matrix3d 转一下”代替。
 
 ### 3.2 旋转类接口候选
 
@@ -134,7 +146,7 @@ public:
 ## 5. 冻结与授权阻塞
 
 - 仍需对源关联勒让德相位、SHRotate 块递推、真实黄金样本做独立核验。
-- 第三方 SHRotate.m、rodrigues.m 的代码来源与权利范围待 DEC-003/007；不能仅凭资料页数据库许可推断这些代码可直接复制。
+- **H-02 已限定选择 Sophus 和 Don Williamson C++（H-14 方案 A）**，上游 Sophus/SHRotation 许可证可查；复制范围、具体实现文件的许可保留、sdla 依赖消解及 C++ 源码纳入尚未发生。不得由此推断 `rodrigues.m`、`SHRotate.m` 的第三方版权头或整个 MATLAB 归档均获重新许可；DEC-003/007 仅记录**已决定的替代路线**，发布和业务验收仍待证据。
 - C++17 精确签名、错误枚举、异常行为、目标 CMake target 和测试用例未冻结。
 
 **本文件是详细设计草案；没有 C++ 实现、MATLAB 运行或数值验收证据。**
@@ -213,7 +225,7 @@ U/V/W 在不同 m 与 n 边界上组合上一阶 \(R_3\) 条目与递推辅助 P
 | SH-INV | 先 r 后 r⁻¹ | 九个系数和方向采样下近度变化 |
 | SH-BAD | 非正交或非有限输入 | 原函数实际结果及 C++ 明确状态 |
 
-**授权状态**：只可以在合法来源和已审核实现范围内实现算法；SHRotate.m 和 rodrigues.m 的第三方文件头仍是版权审核项目。无需复制原程序的代码文本即可描述这些数学关系，但不能用数学等价的猜测代替实测。
+**授权状态**：用户已确认 H-02/H-14 的限定替代来源（Sophus / Don Williamson Ivanic–Ruedenberg），但 H-10 暂缓生产代码实施，本轮不能据此自动复制原程序或外部程序；以后实施需保存第三方 README/LICENSE、核对依赖和源 MATLAB 数值参考。数学等价的推断不能取代实测。
 
 ## 8. 异常、生命周期与接口合同
 
