@@ -126,7 +126,7 @@ details.guide{margin:8px 0 0}.guide summary{cursor:pointer;font-weight:600}
     <button type="button" class="btn" id="collapseAll">折叠记录</button>
   </div>
   <div id="items"></div>
-  <p class="help">“形式完整”只表示必填字段齐备、SHA 格式合理，不等于人类身份已验证、审批产生法律效力、DEC 已关闭或对应执行已经完成。</p>
+  <p class="help">“形式完整”仅表示该事项的依据和授权范围已填写，不代表审批产生法律效力、DEC 已关闭或对应执行已经完成。</p>
 </section>
 
 <section class="card" id="tolerances">
@@ -137,7 +137,7 @@ details.guide{margin:8px 0 0}.guide summary{cursor:pointer;font-weight:600}
     <tbody id="toleranceRows"></tbody>
   </table></div>
   <div class="form-grid two" style="margin-top:14px">
-    <label class="field">统计噪声样本量及比较方法<textarea data-extra="noiseComparison" placeholder="待数值负责人提案"></textarea></label>
+    <label class="field">统计噪声样本量及比较方法<textarea data-extra="noiseComparison" placeholder="待填写"></textarea></label>
     <label class="field">失败 / 未定义样本处理规则<textarea data-extra="invalidSamples" placeholder="待人类批准"></textarea></label>
   </div>
 </section>
@@ -157,7 +157,7 @@ details.guide{margin:8px 0 0}.guide summary{cursor:pointer;font-weight:600}
 <section class="card" id="contracts">
   <h2>五、H-03 / H-08 / H-09：CLI、Golden 与文件身份</h2>
   <div class="form-grid two">
-    <label class="field">受审 CLI / contracts 文档 commit SHA<input data-extra="cliSha" placeholder="受审合同版本 SHA"></label>
+    
     <label class="field">RunId 命名和并发创建规则<textarea data-extra="runIdPolicy"></textarea></label>
     <label class="field">诊断输出序列化<select data-extra="diagnostics"><option value="">待决定</option><option value="JSONL">JSON Lines (JSONL)</option><option value="KV">转义键值行</option><option value="OTHER">其他（在备注中写明）</option></select></label>
     <label class="field">负噪声系数语义<select data-extra="negativeNoise"><option value="">待决定</option><option value="拒绝">拒绝</option><option value="允许并保留源码符号">允许，保留原始符号</option><option value="按原源码再核验">按原 MATLAB 再核验</option></select></label>
@@ -213,13 +213,13 @@ details.guide{margin:8px 0 0}.guide summary{cursor:pointer;font-weight:600}
 (function(){
 "use strict";
 const ITEMS=[
-["H-01","DEC-005：数值容差","REQ-NF-NUM-001 · TEST_PLAN · 逐模块 LLD","候选 atol/rtol、统计噪声方法、退化与失败判据。","数值验证负责人提出/核验，项目所有者批准逐模块阈值和例外。"],
+["H-01","DEC-005：数值容差","REQ-NF-NUM-001 · TEST_PLAN · 逐模块 LLD","候选 atol/rtol、统计噪声方法、退化与失败判据。","由你核验并决定逐模块阈值和例外。"],
 ["H-02","DEC-003/007：第三方版权与再分发","rodrigues.m · SHRotate.m · harmonics · trajectory","审计来源、版权头、许可及独立重写路径。","权利审核人员及项目所有者确认复制、移植与发布范围。"],
 ["H-03","DEC-008：CLI / CTest / Golden 映射","cli.md · contracts.md · TEST_PLAN","整理命令、诊断格式、RunId、测试实体与 Golden 身份候选。","批准 CLI / 错误合同、CTest 名称、Golden identity 与冻结门槛。"],
 ["H-04","DEC-006：平台与性能预算","Debian/Ubuntu · GCC/Clang · CPU/RAM","准备支持版本与 wall/CPU/RSS、构建时间测量方案。","确认支持环境、资源上限、预算与性能阈值。"],
 ["H-05","SRS 的需求义务、AC、优先级和范围","REQUIREMENTS.md · REQ/TC/AC","提供变更差异与追踪矩阵，不擅改验收门槛。","项目所有者批准实质性需求修改及适用版本。"],
 ["H-06","HLD / LLD / ADR 与 CLI 合同冻结","ARCHITECTURE.md · OBJECT_MODEL.md · design/","准备架构、错误、状态、接口候选及开放例外清单。","批准对应 SHA、ADR、合同以及明确的冻结范围。"],
-["H-07","DEC-004：历史 MAT 额外字段归因","experiments.md · alleadap* · rottransratio","列明历史归档、当前 save 和分析依赖差异。","数据审计负责人/所有者决定归因与兼容口径。"],
+["H-07","DEC-004：历史 MAT 额外字段归因","experiments.md · alleadap* · rottransratio","列明历史归档、当前 save 和分析依赖差异。","由你决定归因与兼容口径。"],
 ["H-08","DEC-001/002：MAT 支持与哈希标准","MAT_DATA_SCHEMA.md · mat_io.md","提供 582/582 READ_OK、FNV64 和 SHA-256 补充方案。","批准 Reader 支持边界、身份哈希与独立复核要求。"],
 ["H-09","真实 MATLAB Golden 生成与保存","TEST_PLAN §5.2 · 固定输入 · SHA-256","整理输入、采集脚本、字段与 Golden 来源。","提供合法环境与运行、存储、再分发授权。"],
 ["H-10","生产 C++ / CMake / CTest 与真实测试","PLAN P1–P10 · Reader/Writer · 负例","拟定源码、命令、写回读、负例与资源测试范围。","逐项授权分支、环境、可执行命令及输出目录；不代签验收。"],
@@ -269,7 +269,7 @@ function itemNode(item){
 $("items").innerHTML=ITEMS.map(itemNode).join("");
 $("toleranceRows").innerHTML=TOLERANCES.map(row=>'<tr data-tolerance="'+row[1]+'"><td>'+esc(row[0])+'</td><td><input data-tol-field="atol" inputmode="decimal" placeholder="未定"></td><td><input data-tol-field="rtol" inputmode="decimal" placeholder="未定"></td><td><textarea data-tol-field="criterion" placeholder="统计及退化判据"></textarea></td><td><textarea data-tol-field="golden" placeholder="来源 / SHA / 证据"></textarea></td></tr>').join("");
 $("permissions").innerHTML=PERMISSIONS.map(x=>'<label class="choice-check"><input type="checkbox" data-permission="'+x[0]+'"><span>'+esc(x[1])+'</span></label>').join("");
-$("milestoneRows").innerHTML=MILESTONES.map((x,i)=>'<tr data-milestone="M'+i+'"><td>'+esc(x)+'</td><td><input data-milestone-field="owner" placeholder="未分派"></td><td><textarea data-milestone-field="resources" placeholder="未批准"></textarea></td></tr>').join("");
+$("milestoneRows").innerHTML=MILESTONES.map((x,i)=>'<tr data-milestone="M'+i+'"><td>'+esc(x)+'</td><td><input data-milestone-field="owner" placeholder="实施备注（可选）"></td><td><textarea data-milestone-field="resources" placeholder="未批准"></textarea></td></tr>').join("");
 function getValue(root,name){const node=root.querySelector('[data-field="'+name+'"]');return node?node.value.trim():"";}
 function getDecision(root){return root.querySelector('input[type="radio"]:checked')?.value||"pending";}
 function getApproval(root){
