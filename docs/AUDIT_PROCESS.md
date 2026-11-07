@@ -68,3 +68,17 @@
 - **本台账现行状态**：AF-001a/001b 与 AF-002～012 共 **13 个「已整改」**；AF-013～020 共 **8 个「已整改」**；合计 **21 条整改目标全部在文档一致性意义上已整改**。本状态只代表问题条目对应的**文字和接口口径**已修订，不表示不存在未发现的新问题。
 - **仍未完成**：KvD、采样噪声、轨迹以及 Adaptive/球谐/分析中必要的原公式逐式核验、独立 L3/适用 L4 与真实 C++/CTest/TOCTOU 数值/安全测试、最终 DEC-005/006、正式 SRS/HLD/LLD 冻结。对应**文件审计三态**继续见 [AUDIT.md](AUDIT.md)。
 - **实施权限边界**：没有实施/编译 C++、没有运行 Bash/CMake/CTest/MATLAB/Octave、没有写入 MAT，也没有改变 H-10/H-11/合并/发布授权。本次仅文档修订与 GitHub 连接器静态核对。
+
+## 六、先审计：AF-021～AF-025 的新发现与初始整改状态
+
+> **已先完成独立审计，再进入整改。** 新问题的**固定审计输入 commit**：`af9198906cf89b6fb5162aea1d74683906740d78`；证据：[AUDIT_FOLLOWUP_SCAN_2026-11-07.md](reviews/AUDIT_FOLLOWUP_SCAN_2026-11-07.md)。下列整改行在未修改目标文件之前登记为**未整改**，与 AF-001～020 历史已整改事项分开。本次扫描只通过 GitHub 连接器读取当前资料及部分只读源 `.m`，不是实际 C++/CTest/实验验证。
+
+| 整改 ID | 文档文件相对路径（仓库根） | 具体整改目标 | 整改状态 | 审计依据 |
+|---|---|---|---|---|
+| AF-021 | `docs/ARCHITECTURE.md` | HLD §1 不再把**一般版权审批**写成研发门禁；保持实际上游文件已有来源/许可 notice 及真实 CMake/CTest、接口/指标和基线证据要求，项目原创 MIT 已确定 | 未整改 | [新扫描报告 AF-021](reviews/AUDIT_FOLLOWUP_SCAN_2026-11-07.md)，旧快照 `af9198906cf89b6fb5162aea1d74683906740d78`，HLD 第 7 行 |
+| AF-022 | `docs/REQUIREMENTS.md` | SRS DEC-001 把**首版仅支持二维、密集、实数、非 logical double 的 MAT v5/zlib**写为已由所有者选定的范围；将尚未完成的正式 Reader/负例和基线签署与已经确定的范围分开，不重复请求支持范围审批 | 未整改 | [新扫描报告 AF-022](reviews/AUDIT_FOLLOWUP_SCAN_2026-11-07.md)，SRS DEC-001 |
+| AF-023 | `docs/ARCHITECTURE.md` | HLD ADR-001 与 SRS DEC-001 / mat_io LLD 一致，写明初版 MAT 类型界限**已选**、实际 Reader/Writer/负例与正式基线仍未验收；不再笼统说范围待批准 | 未整改 | [新扫描报告 AF-023](reviews/AUDIT_FOLLOWUP_SCAN_2026-11-07.md)，HLD ADR-001 |
+| AF-024 | `docs/design/analysis_plotting.md` | §5.3 的 Bias 历史 xwerte 与实际视线 N 明确分开；原始图表为当前复现要求，**额外实际 N 对照图不属于当前必须交付项**，不再要求所有者现在决定是否增加可选新图；需要时另提正式需求、不阻塞核心分析 | 未整改 | [新扫描报告 AF-024](reviews/AUDIT_FOLLOWUP_SCAN_2026-11-07.md)，分析 LLD §5.3 |
+| AF-025 | `docs/design/sampling_noise.md` | 标记 `fixed_kugel_...randomnear.m`、`fixed_propfehler_...randomnear.m` 的**原 MATLAB 返回 near 是逐点循环最后赋值的标量**，而候选 `FlowSynthesisResult.nearness` 是 C++ 新增 N 维逐点内部记录；不得将其当作源码实际返回的向量，仍保持 N 次 uniform/3N 次 normal 等既有采样时序 | 未整改 | [新扫描报告 AF-025](reviews/AUDIT_FOLLOWUP_SCAN_2026-11-07.md)，原源函数 for 与 LLD §6 |
+
+**本节刚登记时状态**：AF-021～025 为 **5 个未整改目标**；AF-001～020 为 **21 个已整改目标**。只有修改实际目标文件、在新提交复核并提供依据后，才能把这些新问题逐项改为「已整改」。[AUDIT.md](AUDIT.md) 的文件审计三态与本表的两态无直接等价关系。
