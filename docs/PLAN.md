@@ -270,7 +270,7 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 | P7.2 | kugelflfunc2：按 MATLAB legendre 的约定计算 l≤2 的实球谐，核对负 m 的 sin 与正 m 的 cos | P7.1 | REQ-F-SH-001 | TC-F-SH-001 / AC-F-SH-001 | 球谐与 6×6 中间量；未实施/未验收 |
 | P7.3 | near_aus_koeff：以 3×5 系数矩阵恢复离散近度；严格限定有效位置 | P7.2 | REQ-F-SH-001 | TC-F-SH-001 / AC-F-SH-001 | 球谐与 6×6 中间量；未实施/未验收 |
 | P7.4 | koeff_aus_near：逐项投影、4π 归一及范数除法，明确其与一般联合最小二乘的差异 | P7.2 | REQ-F-SH-001 | TC-F-SH-001 / AC-F-SH-001 | 球谐与 6×6 中间量；未实施/未验收 |
-| P7.5 | **H-14 方案 A**：参考 Don Williamson `Source/IvanicSHRotate.cpp/.h` 的 C++ 递推，适配 MATLAB l=0/1/2（R0、R3、R5）旋转块及系数顺序；审查 sdla 依赖、README+第三方 MIT LICENSE；H-10 暂缓代码 | P7.2、P6.2 | REQ-F-SH-002 | TC-F-SH-002 / AC-F-SH-002 | 球谐与 6×6 中间量；未实施/未验收 |
+| P7.5 | **所有者确定：待上传 Ivanic–Ruedenberg 1996 原论文与 1998 勘误后，参考 Don Williamson 的递推，以 Eigen 完全重写 l=0/1/2 的 R0/R3/R5；禁止 sdla include/link/vendor/间接依赖**，普通版权审查不再阻塞开发；本轮不实施代码 | P7.2、P6.2 | REQ-F-SH-002 | TC-F-SH-002 / AC-F-SH-002 | 球谐与 6×6 中间量；未实施/未验收 |
 | P7.6 | transfor_koeff：结合 **Sophus 输出的 3×3 物理旋转**与 **Don Williamson/ Ivanic 生成的 3×3、5×5 球谐块**，校准 R1 轴置换、R5 的 25 项、m 顺序及正向/逆向旋转；独立 L3 全元素 Golden/批准容差先于数值等价认定 | P7.5 | REQ-F-SH-002 | TC-F-SH-002 / AC-F-SH-002 | 球谐与 6×6 中间量；未实施/未验收 |
 | P7.7 | oneit_adaptiv_matched_filter 的右端向量、四个 3×3 子块与 6×6 联立系统：分别建立可独立对照的数值阶段 | P7.3、P2.2 | REQ-F-ADAPT-001 | TC-F-ADAPT-001 / AC-F-ADAPT-001 | 球谐与 6×6 中间量；未实施/未验收 |
 | P7.8 | 单轮运动向量解析、平移归一化、残差、近度再计算、二阶球谐系数重估；明确状态输入/输出，不混成多帧类 | P7.4、P7.7 | REQ-F-ADAPT-001 | TC-F-ADAPT-001 / AC-F-ADAPT-001 | 球谐与 6×6 中间量；未实施/未验收 |
