@@ -609,8 +609,15 @@ $("detailHost").innerHTML=SIMPLE.map(x=>{
 document.querySelectorAll("[data-choice]").forEach(el=>el.addEventListener("change",()=>{
  const id=el.dataset.choice,r=state[id],c=CHOICES[id].find(x=>x[0]===el.value);
  if(!c)return;
+ if(r.referenceText!==chosen(r)[3]&&!confirm("更换决定会把这项的参考文字替换为新选项示例。确定继续吗？")){
+  el.value=r.choiceId;return;
+ }
  r.choiceId=c[0];r.decision=c[1];r.referenceText=c[3];r.referenceConfirmed=false;
  refreshReference(id);
+ if(c[1]==="approved"){
+  const box=document.querySelector('[data-detail="'+id+'"]');
+  box.hidden=false;box.scrollIntoView({behavior:"smooth",block:"nearest"});
+ }
  markDirty();
 }));
 document.querySelectorAll("[data-open]").forEach(el=>el.onclick=()=>{
@@ -678,7 +685,15 @@ $("importFile").onchange=async e=>{
    if(!rec||!state[rec.id])continue;
    const current=state[rec.id],choices=CHOICES[rec.id];
    // v1 旧版仅保存 decision，新版还保存 choiceId；不由旧版的批准自动确认参考文字。
-   const choice=choices.find(c=>c[0]===rec.choiceId)||choices.find(c=>c[1]===rec.decision)||choices[0];
+   let choice=choices.find(c=>c[0]===rec.choiceId)||choices.find(c=>c[1]===rec.decision);
+   // 旧 JSON 中的决定若当前下拉没有对应项，保留为一个明确标记的旧选项，不静默丢弃。
+   if(!choice&&statuses.some(x=>x[0]===rec.decision)){
+    choice=["legacy-"+rec.decision,rec.decision,"旧版决定："+(statuses.find(x=>x[0]===rec.decision)?.[1]||rec.decision),"请复核旧版审批记录的适用范围。"];
+    choices.push(choice);
+    const opt=document.createElement("option");opt.value=choice[0];opt.textContent=choice[2];
+    document.querySelector('[data-choice="'+rec.id+'"]').appendChild(opt);
+   }
+   choice=choice||choices[0];
    current.choiceId=choice[0];
    current.decision=choice[1];
    current.referenceText=typeof rec.referenceText==="string"?rec.referenceText:
