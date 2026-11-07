@@ -51,11 +51,11 @@ class UpdateRateRunner;
 
 **历史 MAT 的类型和 shape 已由 matio 1.5.26 实测**：582 个源文件/变量均为 v5+zlib、double/double，按下方数据契约读取；新 C++ Runner 尚未生成任何结果，未来 MAT 写出仍需回读/数值验收。
 
-## 4. Golden、异常、验收和未决
+## 4. L2/L3/L4 参考数据、错误和验收边界
 
 - 新输出的所有变量必须通过 matio 回读并与原 MAT 的 shape、统计含义核对；不应要求不同语言在随机数不等价时逐样本完全一致。
-- CLI 错误类含参数缺失、非法细分、零模向量、MAT 写失败/覆盖冲突、数值非有限和部分运行失败；具体退出码在 SRS/TEST_PLAN 冻结。
-- TC-F-BIAS-001/002/003、TC-F-EXP-001/002/003、TC-F-CLI-002/003、TC-I-RESULT-001、TC-NF-LOG-001；相关异常/性能在 P10 执行。
+- CLI 错误类含参数缺失、非法细分、零模向量、MAT 写失败/覆盖冲突、数值非有限和部分运行失败；**错误枚举→退出码的唯一候选定义是 [contracts.md §3.1](contracts.md)**，CLI 命令解析与诊断见 [cli.md §3](cli.md)，不由 Runner 重复定义。
+- TC-F-BIAS-001/002/003、TC-F-EXP-001/002/003、TC-F-CLI-002/003、TC-I-RESULT-001、TC-NF-LOG-001；**候选测试实体及 CTest 前缀见 §8.1 和 TEST_PLAN §3**，相关异常/性能只能在后续获授权时执行。
 - **真实历史 MAT 全量变量字典已完成读取**；独立 L3 逐节点参考、L2/L3/L4 限定范围的数值对照、总墙钟/CPU/RSS 预算、版权和新的 C++ 输出回读仍未完成，LLD 不可冻结。
 
 
@@ -128,6 +128,47 @@ public:
 
 实际项目使用 std::variant 区分五类 ExperimentConfig，还是各命令拥有独立参数类型，须在 P0.8/P1.2 冻结。**单个源脚本的参数默认值不能因为复用 Runner 而外溢到另一实验**。RunContext 应独占 RNG、输出位置与本次结果 Manifest；没有全局状态。
 
+### 6.0 RunContext 的最小所有权/接口候选（非编译代码）
+
+RunContext 属于 **egomotion_experiments** 的一次性运行上下文，不与 `MatResultReader`、`RunMatWriter` 或 `MatDenseArray` 建立生产级直接链接。Compose Root 负责在执行前校验用户输出根与 RunId、构造具体 Writer 后以 **contracts 的 IResultWriter** 窄接口注入；RunContext 只持有一个经验证的 `RunId` 和所需上下文。
+
+~~~cpp
+// 文档候选；IRandomSource/IResultWriter/RunId 由 contracts.md 声明。
+// 最终构造签名与 Result/Failure 携带方式均待 P0.8/DEC-008 冻结。
+struct SourceProvenance {
+    std::string repository_commit_sha;
+    std::string matlab_source_blob_sha; // 只读源码身份，绝非 MATLAB 运行记录
+};
+class RunContext {
+public:
+    RunContext(RunId id,
+               std::unique_ptr<IRandomSource> random,
+               IResultWriter& writer, // 非自拥有：Composition Root 保证生命周期
+               std::filesystem::path validated_output_root,
+               SourceProvenance provenance);
+    RunContext(const RunContext&) = delete;
+    RunContext& operator=(const RunContext&) = delete;
+    // 移动/重置策略暂不承诺，避免外部持有失效 writer/RNG 引用
+    const RunId& runId() const noexcept;
+    IRandomSource& randomSource() noexcept;
+    IResultWriter& resultWriter() noexcept;
+    const SourceProvenance& provenance() const noexcept;
+    const std::filesystem::path& approvedOutputRoot() const noexcept;
+    // 结果计数/Manifest 只可由当前运行写入；暴露方式待审
+private:
+    RunId run_id_;
+    std::unique_ptr<IRandomSource> random_;
+    IResultWriter& writer_;
+    std::filesystem::path validated_output_root_;
+    SourceProvenance provenance_;
+    // 每次运行独占的计数和 Manifest 值对象，实际表示尚待决定
+};
+~~~
+
+- **谁拥有谁**：Composition Root 保证 `IResultWriter&` 的有效期长于本次 Runner 调用；RunContext **独占 RNG**、RunId/结果计数/Manifest，Session 只持有其自身系数状态且不能跨 RunContext 共享。输出根由 CLI/Composition Root 验证，Runner 不按任意用户字符串拼接文件路径。
+- **失败与释放**：固定 RNG 耗尽、子求解器失败、MAT 写失败必须在 `Result<RunOutcome, ExperimentErrorCode>` 的失败分支保留原底层错误及 `ErrorDetail.run_id`；不再以一个空 `RunOutcome` 表示失败。Manifest 是否允许 partial、失败状态能否继续下一样本，仍为待决定事项，不做默认回滚承诺。
+- **边界**：`BiasExperimentConfig` 负责原入口 seed/最大 level/三个噪声乘数，`BiasFlowParameters`（采样 LLD）负责**单个流场**，不能彼此覆盖默认值。配置选择 `std::variant` 还是独立参数类型、RunContext 移动/并发限制、Writer 创建时机均待 P0.8 冻结。
+
 ### 6.1 输出 Manifest 推荐字段
 
 | 字段 | 语义/约束 |
@@ -150,19 +191,33 @@ public:
 - **原始数据保护**：任何路径重叠、文件已存在、变量写入失败应返回带 RunId 的明确错误，不允许把部分成功伪装为完整。
 - 对新实验在各入口运行过程中失败是否继续剩余参数组合，须经 P0.8 审核其与 MATLAB 行为差异；不能以异常吞掉而达到“全部通过”。
 
-## 8. Golden/验收/尚未批准的合同
+## 8. L2/L3/L4 参考数据、验收和未批准合同
 
-| 用例 | 最少黄金/预期字段 | 具体 TC |
+| 参考用例 | 证据来源等级 | 最少独立参考/预期字段（不是被测 C++ 自算） | 具体 TC |
 |---|---|---|
-| EX-G01 | 两类 Bias i=0/1/2 的正确 N、作者 xwerte、六项 ywerte、seed/随机轨迹 | TC-F-BIAS-001/002/003 |
-| EX-G02 | 初始化 35 点，四类误差与相同原 MATLAB 参数 | TC-F-EXP-001 |
-| EX-G03 | comparison 600 点 8 次的结果矩阵、单次 rottransratio | TC-F-EXP-002 |
-| EX-G04 | 更新率 1/5/11/21、600×4/600×1、三个现有源 save 字段 | TC-F-EXP-003 |
-| EX-G05 | 输出目录冲突、MAT 写失败、无效近度/solver 失败 | TC-NF-SAFETY-001、TC-NF-RECOVERY-001 |
+| EX-G01 | **L3** 采样/固定注入 RNG；**L2** 作者归档 xwerte/ywerte；**L4** 跨 40 runs 统计 | 两类 Bias i=0/1/2 的 N、原存储 xwerte、六项 ywerte 的 shape/指标；固定 RNG 序列的消费次序与独立统计分母 | TC-F-BIAS-001/002/003 |
+| EX-G02 | **L2** 历史四类 35×1；**L3** 独立帧/状态 | 初始化 35 点、四类误差 shape、首尾数组与主/比较系数更新的独立参考 | TC-F-EXP-001 |
+| EX-G03 | **L3** 固定 8 次聚合；**L2** 历史五字段；**L4** 汇总 | 600 点、四误差先累加再除以 8，rottransratio 仅保留**最后一次运行**值；不假设 MATLAB RNG 同 seed 输出相同 | TC-F-EXP-002 |
+| EX-G04 | **L3** 固定帧号状态机；**L2** 历史结果 | 更新率 1/5/11/21、600×4/600×1、三个当前源 save 字段；主 akkoeff 和周期基线状态不串扰 | TC-F-EXP-003 |
+| EX-G05 | **L3** 独立构造错误/安全合同 | 输出路径冲突、MAT 写失败、近度/solver 非有限；日志含 RunId、原错误码和独立失败数，不能把异常计为有效 | TC-NF-SAFETY-001、TC-NF-RECOVERY-001 |
 
-历史 **MAT 类型/shape 字典已实测**；但算法 Golden 中间量、容差、CLI schema、生产写入/回读与 CTest 仍未建立，不能以最终结果文件能够被读取替代算法真实性测试。
+历史 **MAT 类型/shape 字典已实测**；但算法的**独立 L3 逐节点参考**、完整 L2 逐值及 SHA-256、L4 统计、批准容差、CLI schema、生产写入/回读与 CTest 仍未建立，不能以最终结果文件能够被读取替代算法真实性测试。
 
-**状态**：五类入口参数与当前 save 契约已文档化，**历史输出 dtype/shape 已由 582/582 matio 数据字典确认**；C++ Runner、新输出、逐节点 Golden、误差容差及接口冻结仍未完成。
+**状态**：五类入口参数与当前 save 契约已文档化，**历史输出 dtype/shape 已由 582/582 matio 数据字典确认**；C++ Runner、新输出、独立 L3 逐节点参考、误差容差及接口冻结仍未完成。
+
+### 8.1 具体错误触发、CTest 候选与依赖边界
+
+`ExperimentErrorCode::DataMismatch` 的候选范围与 [contracts.md §3.3](contracts.md) 对齐：在**可验证的**参数、预期变量名/shape、帧数/有效样本总数、Manifest 与实际数据不一致时报告 DataMismatch（候选 exit 5）；不能将 MAT 底层非法 class/rank/压缩解码错报为 Runner DataMismatch，也不能因不同 RNG 的逐样本数值不等报错。 `SolverFailed` 用于求解器实际失败，`OutputFailed` 用于 Writer/路径/回读失败（保留底层 `MatErrorCode` 和 ErrorDetail），`IncompleteRun` 用于已记录的运行中断或无法完整聚合；Runner 不新增其他退出码。全部 CLI 映射继续以 contracts.md §3.1 为准。
+
+| TC/AC 组 | [TEST_PLAN.md §3](../TEST_PLAN.md) 中的拟议实体/CTest | 未来必须验证 |
+|---|---|---|
+| TC-F-BIAS-001/002/003 / 对应 AC | `tests/integration/test_bias.cpp` / `egomotion.bias.*` | 两 Bias 的 N、xwerte、六类 ywerte、固定 RNG/reset、独立 L3 与 L2/L4 |
+| TC-F-EXP-001/002/003 / 对应 AC | `tests/integration/test_adaptive_experiments.cpp` / `egomotion.experiments.*` | 35/600 点、8 次平均与末次比值、周期 [1,5,11,21]、Session 隔离 |
+| TC-I-RESULT-001 / AC-I-RESULT-001 | `tests/integration/test_adaptive_experiments.cpp` / `egomotion.experiments.*` | 只写新 output/RunId 下的当前 save 字段、MAT dtype/shape/回读 |
+| TC-NF-LOG-001 / AC-NF-LOG-001 | `tests/contracts/test_runlog.cpp` / `egomotion.logging.*` | RunId、来源、seed、失败/无效分母、错误上下文与真实日志 |
+| TC-NF-SAFETY-001 / AC-NF-SAFETY-001 | `tests/contracts/test_output_safety.cpp` / `egomotion.safety.*` | 重复 RunId、路径逃逸及已有文件非覆盖 |
+
+**CMake/头文件归属候选**：按 [ARCHITECTURE.md §4](../ARCHITECTURE.md)，`egomotion_experiments` 依赖 `egomotion_domain`、`egomotion_contracts`、`egomotion_sampling`、`egomotion_simulation`、`egomotion_estimators`；**不链接 `egomotion_matio`、不包含 `matio.h`**。Runner 的必要 facade/RunOutcome 接口可候选放在 `include/egomotion/experiments/`，输出 Manifest/实验编排和入口配置解析属于 `src/experiments/` 私有层（最终公开头与参数位置待 P0.8）。MAT I/O 具体 Writer 只在 CLI Composition Root 装配。上述测试文件及 target 均未创建，真实测试/头文件/依赖版本未冻结。
 
 ## 9. 原作者归档字段的实测数据合同
 
