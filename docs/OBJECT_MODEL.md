@@ -1,6 +1,6 @@
 # 对象模型与生命周期合同（Object Model）
 
-> **对象模型草案 v0.2；P0.7/P0.8 待评审，未冻结、未建立对应 C++ 类。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入；各文档当前版本、固定 SHA 和冻结状态统一由 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记，运行结果以 [PROGRESS](PROGRESS.md) 为准。
+> **对象模型草案 v0.3；P0.7/P0.8 待评审，未冻结、未建立对应 C++ 类。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入；各文档当前版本、固定 SHA 和冻结状态统一由 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记，运行结果以 [PROGRESS](PROGRESS.md) 为准。
 
 ## 1. 对象职责和约定
 
@@ -204,7 +204,7 @@ stateDiagram-v2
 | `bias_test/data_analysis/graphs_bias_test.m` | BiasResultAnalyzer::aggregate | 已定位 / 合同待 P0 核验 |
 | `bias_test/data_generation/bias_test_nonspherical.m` | BiasExperimentRunner::runOccluded | 已定位 / 合同待 P0 核验 |
 | `bias_test/data_generation/bias_test_spherical_prop_error.m` | BiasExperimentRunner::runProportional | 已定位 / 合同待 P0 核验 |
-| `help_functions/SHRotate.m` | HarmonicRotator / buildRotationBlocks；以 Ivanic–Ruedenberg 1996 原论文与 1998 勘误为数学依据、Eigen-only 重写 l≤2 R0/R3/R5（Don Williamson 仅参考、禁止 sdla） | 实现数学路径已选，论文待用户上传；Eigen 递推代码未创建、独立 L3/CTest 未运行 |
+| `help_functions/SHRotate.m` | `egomotion::harmonics::HarmonicRotator::blocks(const Eigen::Matrix3d&) const`；通过 [球谐专题 LLD §3](design/SH_ROTATION_IVANIC_RUEDENBERG.md) 的唯一声明生成 R3/R5（R0=1 不存可变成员）；按 Ivanic–Ruedenberg 1996 原文及 1998 勘误 **纯 Eigen 重写**，Don Williamson 仅供参考、禁止 sdla | 实现数学路线已选；此处仅**预定方法声明及源码映射**，未创建 `.hpp/.cpp`、未核对上传的论文全文、未运行 CTest |
 | `help_functions/drehvektor_aus_zwei_vektoren.m` | math::rotationVectorBetween (自由函数) | 已定位 / 合同待 P0 核验 |
 | `help_functions/erzeugeflussausnear.m` | FlowSynthesizer::synthesize | 已定位 / 合同待 P0 核验 |
 | `help_functions/erzeugekreuzproduktmatrix.m` | math::crossMatrix (自由函数) | 已定位 / 合同待 P0 核验 |
