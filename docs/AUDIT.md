@@ -113,19 +113,19 @@
 | `docs/design/contracts.md` | 已审计 | AF-004 已把实验失败策略标为已选择、实现及异常测试未验证；跨模块合同 v0.2 未冻结 |
 | `docs/design/cli.md` | 已审计 | 逐命令类型、固定 output/<RunId>/、OS RunId 与错误单一来源已做静态核对，未实现/测试 |
 | `docs/design/mat_io.md` | 已审计 | AF-018：0.01/0.1 已选仅首轮筛查，MAT 原值/类型/shape 仍严格；MAT I/O v0.8 文档合同已审，生产 Reader/Writer 未实现/测试 |
-| `docs/design/kvd.md` | 正在审计 | AF-013/014：已更新首轮筛查和 H-13 历史/后续失败策略，定向文档复核通过；原 KvD 两版逐轮独立 L3、病态/停止条件仍待深审 |
-| `docs/design/adaptive_mfa.md` | 正在审计 | 本次未改变 M1–M4、MSE、无效状态不提交；仍缺原源码逐式及独立 L3 核验 |
-| `docs/design/harmonics.md` | 正在审计 | AF-002/003/012 已完成文字修订与静态复核；仍待 1996 原文/1998 勘误 PDF、R3/R5 全元素独立 L3 数学审计 |
+| `docs/design/kvd.md` | 已审计 | 现有 norm/mue 两版 KvD、Franz 及 zellendefinieren 原 .m 的 near 权重、旧 t 算 ω、最少 6/最多 200、动态 grenze、末次尺度已完成**源码静态数学/时序审计**；逐轮独立 L3、CTest 未执行 |
+| `docs/design/adaptive_mfa.md` | 已审计 | oneit_adaptiv_matched_filter 的原 s/负 near、M1–M4/6×6、误差 MSE、1e−11 重算 near 与三个 Runner 的入口时序**静态审核完成**；错误提交为已选安全合同，独立数值测试未运行 |
+| `docs/design/harmonics.md` | 已审计 | kugelflfunc2 的九项实基相位、3×5 索引、独立拟合、SHRotate R3/R5 源码结构已审；**Ivanic–Ruedenberg 1996/1998 PDF 尚待上传，R5 独立 25 元素 L3 未验** |
 | `docs/design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 已审计 | 仅声明级文件/命名空间/类方法及论文 DOI/勘误优先已审；PDF 未上传、无 Eigen 递推实现 |
-| `docs/design/sampling_noise.md` | 正在审计 | AF-025 已区分 fixed_* 源 near_last 标量与 C++ 内部 nearness(N) 逐点记录；完整 i=1/2 方向、固定 RNG 的独立 L3/CTest 仍待审 |
-| `docs/design/trajectory.md` | 正在审计 | AF-020：已明确 Rodrigues eps 返回单位阵与旋转向量叉积 1e−11 的不同门槛，文本复核通过；小角/反向/球外独立 L3 仍待审 |
+| `docs/design/sampling_noise.md` | 已审计 | 原 getvektor、八面体/缺损取面、二十面体、findeDreiecke A/B/C/D、N uniform/3N normal 及 near_last 标量与候选向量区别已完成**源合同静态审计**；多级有序 L3、固定 RNG 实测待完成 |
+| `docs/design/trajectory.md` | 已审计 | kreis/sinus 轨迹 stellen 分母、Rᵀ、反向叉积 1e−11、Rodrigues eps、小球射线 near 正根的源码与 LLD **静态审计完成**；Sophus、近 π/边界 L3/CTest 待执行 |
 | `docs/design/experiments.md` | 已审计 | AF-001 已统一固定仓库 output/、可选 RunId 与 Writer 二次验证；Runner v0.3 仍无真实实现 |
-| `docs/design/analysis_plotting.md` | 正在审计 | AF-024 可选实际 N 对照图已从当前必要分析功能分离；仍在审计原始 begin/end/zone/平滑的独立 L3 数值与 CTest |
+| `docs/design/analysis_plotting.md` | 已审计 | 四种分析入口、ratio 0.01/0.02、begin/end/zone、kurveglaetten 边缘零值及 DEC-004 已审；**AF-026 冲突编号已改为 APL-G01～06**；独立 MAT 全曲线 L3/CTest 未执行 |
 | `docs/decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | 已审计 | 现行 save/历史 HistoricalOnly/缺字段错误已与 Runner/分析设计对应，仍未实施 |
 | `docs/decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md` | 已审计 | MIT、Eigen-only、无 sdla、固定输出、Result、数值筛查等已选设计依据已核 |
 | `docs/golden/NO_MATLAB_EXECUTION_POLICY.md` | 已审计 | AF-006/007 已区分首轮筛查和最终 DEC-005，普通版权审查不阻塞开发；L1 永久非必需 |
 | `docs/golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md` | 已审计 | L1 退出必要门禁、L2/L3/L4 适用范围与候选≠验收边界已核 |
-| `docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md` | 正在审计 | 首轮筛查与严格不变量口径已核；AN-G01～12、最终模块阈值及 L3 数值独立实测尚缺 |
+| `docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md` | 已审计 | AN-G01～12 解析候选与原 .m 主要公式/编号来源已审；**AF-027 x_ref 已修订为 L2/L3 来源**；0.01/0.1 仅首轮筛查，全部数值/正式 DEC-005 尚未验 |
 | `docs/TODO.md` | 已审计 | PAPER-SH、H-10/11、DEC-005/006、基线签署与发布的人类延期安排已核 |
 | `docs/MAT_DATA_SCHEMA.md` | 已审计 | 报告表 582 行唯一路径、5 种 shape 分布、dtype/dims×8/zlib/READ_OK 静态一致；**未重新读取 MAT** |
 | `docs/approval/DECISION_IMPLEMENTATION_NOTES.md` | 已审计 | 历史 H-01 draft、H-10/11 deferred 与当前决定的时间边界已核；不改原审批 |
@@ -141,6 +141,8 @@
 | `docs/reviews/AUDIT_AF013_AF020_RESOLUTION_2026-11-07.md` | 已审计 | AF-013～020 的 8/8 文档问题已在后续固定 SHA 限定复核，数学 L3 未覆盖 |
 | `docs/reviews/AUDIT_FOLLOWUP_SCAN_2026-11-07.md` | 已审计 | 本轮 AF-021～025 先审计、固定 SHA、提出五项未整改目标的只读扫描报告 |
 | `docs/reviews/AUDIT_AF021_AF025_RESOLUTION_2026-11-07.md` | 已审计 | 本轮 AF-021～025 的 5/5 文档修订及定向静态复核报告，原始数据和生产代码未变 |
+| `docs/reviews/AUDIT_SEVEN_MATH_DOCS_SCAN_2026-11-08.md` | 已审计 | 本轮七份在审文档先按固定 Git SHA 对照原 .m，发现 AF-026/027 并登记未整改；非真实数值测试 |
+| `docs/reviews/AUDIT_SEVEN_MATH_DOCS_RESOLUTION_2026-11-08.md` | 已审计 | AF-026/027 文字修订及定向固定 SHA 复核；七份静态源码合同的审计范围和未完成 L3/论文证据已分开说明 |
 | `AGENTS.md` | 已审计 | 项目只读原始数据、永久无需 MATLAB/L1、阶段运行权限及禁止改写历史的规则已核 |
 | `README.md` | 已审计 | MIT、Ivanic 原文＋勘误、Eigen-only/禁 sdla、固定输出根与探针证据边界已核 |
 | `LICENSE` | 已审计 | 根 MIT 文本及自有作品适用范围已核，不推导原作者数据再授权 |
@@ -213,3 +215,13 @@
 - **范围限制**：本次只改文档及审计证据，不生成或实现 `.hpp`/`.cpp`、不运行 Bash、CMake、CTest、MATLAB/Octave、不写 MAT、不给 DEC-005/006 设最终阈值、不擅自批准人类基线或合并发布。全文逐式数学与独立参考核验仍继续按文件审计三态跟踪；延期人类材料和执行权限见 [TODO.md](TODO.md)。
 
 **请勿把“26/26 文档整改已关闭”解释为“46/46 文件的全部数学内容已验证”或软件正式验收。**
+
+## 十二、七份在审数学/参考文档的静态审计完成（2026-11-08）
+
+**先审计**：固定输入 `e190ed74240bf7b3b32a65c8fb6099fbdedc46b9` 上对七份「正在审计」文件及相关原始 `.m` 的**可见公式、索引、调用/状态顺序**进行逐文件静态核对，形成 [扫描报告](reviews/AUDIT_SEVEN_MATH_DOCS_SCAN_2026-11-08.md)，并按规范在 [AUDIT_PROCESS.md](AUDIT_PROCESS.md) **先登记 AF-026、AF-027 为未整改**。
+
+**再整改**：仅修改分析 LLD 与 Golden 提案；固定复核提交 `22bc38635b2350bc9078c2952ba9ad520a55f7b1` 上，**分析 `APL-G01～06` 与全局 `AN-G01～12` 不再撞号；`x_ref` 明确来自 L2/独立 L3 而非强制 MATLAB L1**，两项定向检查通过，之后两条整改行才转「已整改」。详见 [七文件静态审计与整改复核](reviews/AUDIT_SEVEN_MATH_DOCS_RESOLUTION_2026-11-08.md)。
+
+**文件审计三态现为：48 个路径、已审计 48、正在审计 0、空白 0。** 其中七份数学/数值文档的「已审计」**只表示用户当前交付的文档与可用原 `.m` 在静态数学合同范围内完成审阅**；并不表示 Ivanic–Ruedenberg 原文/勘误全文已上传、R5 递推逐式核对、任何独立 L3 数值/退化样本/完整数据曲线、MAT Reader、C++/CTest、最终 DEC-005/006 或正式 SRS/HLD/LLD 基线已经通过。原数学证据与运行测试缺口继续在模块 LLD、TEST_PLAN、PROGRESS 与 [用户延期事项](TODO.md) 中维护，不能用审计台账代替。
+
+**当前整改两态**：AF-001～AF-027 共 28 个原子整改目标已按具体源文档修订并固定 SHA 核对；本轮未观察到新的、仍需改写的现行文档合同问题。将来若再发现文本冲突，必须新增 AF 并先登记「未整改」，绝不以本轮审计完成率否定后续发现。
