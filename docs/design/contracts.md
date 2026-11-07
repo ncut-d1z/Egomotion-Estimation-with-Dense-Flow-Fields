@@ -133,7 +133,7 @@ template<class Error> class Status;                // void 成功/失败合同
 | probe_source_sha / verified_archive_git_sha | 探针运行参数与经独立核实的归档 Git tree/commit 分开保存，未验证二者等同则不能合并 | 已记录前者、未独立核实两者关系 |
 | reference_generator_source_sha / reference_sha256 | 独立 L3 参考生成算法/推导文档的源码身份与参考文件 SHA-256 分别保管；同时保存原只读 .m 的 blob SHA。**无需 MATLAB 运行/采集脚本** | 只有解析候选，正式独立参考未全覆盖 |
 | fixed_input_identity | 确定性 N×6、near/coeff、参数及 RNG 固定序列 | 尚未建立完整 Golden |
-| expected_intermediates | MATLAB 逐轮 near/t/ω 或 M1–M4、b、z、error_mse | 尚未实际采集 |
+| expected_intermediates | 依**原只读源码静态公式、赋值顺序**，由独立 L3 解析或非被测实现生成的逐轮 `near/t/ω`、`M1–M4`、`b/z/error_mse` 等参考；含输入、节点索引及来源 SHA，**不是 MATLAB 运行输出** | 一般/退化输入的独立 L3 参考尚未完整生成或实测 |
 | target_method / unit | 确切数学合同、尺寸、rad/deg | 目前在模块 LLD 拟定 |
 | atol/rtol + scope | 每个节点阈值、有效数值条件、失败合同 | **DEC-005 未批准** |
 | testcase / ctest / runlog | TC ID、真实文件、CTest、SHA、执行记录 | 目前 TC 仅标识符 |
