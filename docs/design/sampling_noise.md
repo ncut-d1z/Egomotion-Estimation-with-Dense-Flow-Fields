@@ -1,6 +1,6 @@
 # 视线采样、光流合成与噪声——详细设计草案
 
-> **LLD v0.2 草案，未冻结；无生产实现或已执行的 L3 独立数值测试。** 对应 P2/P3、REQ-F-GEOM-*、REQ-F-FLOW-*、REQ-DC-RNG-001、REQ-DC-NOISE-001。
+> **LLD v0.3 草案，未冻结；无生产实现或已执行的 L3 独立数值测试。** 对应 P2/P3、REQ-F-GEOM-*、REQ-F-FLOW-*、REQ-DC-RNG-001、REQ-DC-NOISE-001。
 
 ## 1. 来源与输入输出
 
@@ -180,7 +180,7 @@ struct BiasFlowParameters {
 struct FlowSynthesisResult {
     FlowField noisy;
     FlowField noiseless;
-    Eigen::VectorXd nearness;
+    Eigen::VectorXd nearness; // C++ 新增的逐点内部记录，不等同原 fixed_* 返回的 near 标量
     Scalar mean_translational_magnitude;
     Scalar mean_rotational_magnitude;
 };
@@ -209,6 +209,8 @@ public:
 // Runner 注入 IDirectionSampler、IFlowNoiseModel、IRandomSource
 // 与 FlowSynthesizer，按 §5 的原始 RNG 顺序生成 FlowSynthesisResult。
 ~~~
+
+**原 `fixed_*_randomnear.m` 的输出契约与 C++ 内部记录必须区分**：在只读源 `fixed_kugel_symmetric_perfectpoints_randomnear.m` 的逐点循环（第 47–55 行）和 `fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m` 的逐点循环（第 45–53 行）中，`near=1/entf` 每次**覆盖单个标量**，而没有写 `near(i)`；因此这两个源函数的返回形参 `near` 实际代表**末次抽样近度标量**（仅在 N 大于 0 且调用完成时有定义），**不是一个 N×1 近度数组**。本 LLD 的 `FlowSynthesisResult.nearness` 是为了便于忠实模拟/独立诊断而计划提供的 **C++ N 维逐点内部值对象**：允许保留全部 N 次原抽样值，但其数学/输入行为与源码返回值**不能混同**；若单独核验旧 MATLAB 返回 `near`，必须明确使用最后一个采样值作为 `near_last` 标量并独立标记来源。不得以新增内部向量修改 RNG 的 N 次 uniform/3N 次 normal 调用时序、当前生成脚本的 MAT `save` 字段集合，亦不得把该向量宣称为作者 MAT 已有的变量。
 
 **与对象模型的一致性**：上述 `sampling::randomUnitDirection(IRandomSource&)` 与 [OBJECT_MODEL.md §7.1](../OBJECT_MODEL.md) 保持一致；不再另设 `SphericalRandomDirection` 或 `BiasSceneGenerator`。前者不拥有 RNG；后两项场景生成的唯一编排者是 `BiasExperimentRunner`，其类的完整入口/返回合同在 [experiments.md](experiments.md)。`IdealFlowResult` 为本模块的中间值对象，最终保存结果仍用 `FlowSynthesisResult`；两者不可混淆。
 
