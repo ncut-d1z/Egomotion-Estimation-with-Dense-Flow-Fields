@@ -31,7 +31,7 @@
 
 ## 四、项目依赖、数据边界与算法保真
 
-- 核心依赖为 **C++17 + CMake + Eigen 3 + matio**。matio 直接读取原始 .mat 文件；需要 zlib/HDF5 时依据真实 MAT 文件版本决定。不要为了预留功能添加未用的依赖。
+- 核心依赖为 **C++17 + CMake + Eigen 3 + matio**；**依据用户审批 JSON H-02，后续旋转分支指定采用 Sophus SO(3)** 取代原 `rodrigues.m` 的实际调用；**H-14 选定 Don Williamson 的 Ivanic–Ruedenberg SHRotation 方案 A** 取代 `SHRotate.m` 的旋转块。Sophus 是**将来获 H-10 授权实施时**的选定依赖，并非当前已安装/编译；不得随意增加未使用的 ROS、MATLAB Runtime 或其他依赖。matio 直接读取原始 .mat 文件；zlib/HDF5 依据实际 MAT 版本决定。详细决定见 [审批落实记录](docs/approval/DECISION_IMPLEMENTATION_NOTES.md)。
 - **不得开发或引入 .npz/.npy 转换路径、cnpy、NumPy/Python 运行依赖**。不将 MATLAB Runtime、ROS/ROS2、OpenCV、ESKF、视觉里程计前后端作为本项目构建或运行前提；用户以后明确提出新需求时再单独审议。
 - 原始 .mat 文件是**只读参考资料**：不得覆盖、重写、原地转换、重命名或删除。不要因代码需要而悄悄修改原始数据格式或变量名称。
 - MAT I/O 必须检查文件版本、变量名、rank、dims、class_type、data_type、复数标志、数据长度和读取失败状态。使用 RAII 保证 matio 资源释放及 Eigen 映射内存生命周期安全。
@@ -84,7 +84,7 @@
 
 - **目标平台仅为 Debian/Ubuntu（GNU/Linux）**，不将 Windows 列为支持、构建或测试目标。保持源外 CMake 构建，在文档中提供 Debian/Ubuntu 的依赖安装、构建及运行说明；仅报告实际验证过的发行版版本、编译器和环境。
 - 论文 [10.1371/journal.pone.0128413](https://doi.org/10.1371/journal.pone.0128413) 与原始 MATLAB 资料 [10.4119/unibi/2736885](https://doi.org/10.4119/unibi/2736885) 必须分别署名和引用。原资料页的 ODC-By 1.0 声明不自动证明每个 .m 程序获得相同的代码再分发授权；在复制或公开移植源码、MAT 数据之前核对归档内具体声明。
-- 不未经用户授权创建项目级 LICENSE，不推断第三方资料自动适用新许可证。不提交密钥、私人路径、未经确认可再分发的数据、海量运行产物或包含敏感信息的日志。
+- 不未经用户授权创建**项目级** LICENSE；H-02 已指定在将来实际复用的 **Don Williamson 第三方源码目录内** 放置来源 README，保存所需 MIT 版权声明及上游 LICENSE 副本，这是**第三方许可告知**，并非自动创建仓库根许可证，也不推广到其他未知来源文件。Sophus 亦须遵守自身的许可证告知条件。原始 `rodrigues.m`/`SHRotate.m` 保持只读，不以源文件的旧授权推断整个仓库可公开再分发。不提交密钥、私人路径、未经确认可再分发的数据、海量运行产物或包含敏感信息的日志。
 - 最终汇报应注明实际修改文件、提交 SHA、远端分支、Issue/PR、已执行的检查与结果、未执行事项及剩余阻塞。不得宣称未发生的编译、测试、实验复现或合并已经成功。
 
 ## 十、文档变更分级与人类审批门禁（强制）
@@ -128,5 +128,7 @@
 3. **先审批，再实施受限动作**：仅在批准内容与当前目标 SHA、实验环境及数据范围匹配时执行；批准设计候选不自动批准运行 MATLAB/CTest、写回读或合并 PR。涉及版权、再分发及无法确定的法律问题时暂停相应行为。
 4. **执行与验收独立**：获授权实施后另记实际命令、运行人、工具链、分支/HEAD SHA、RunId、输入数据 hash、stdout/stderr、exit code、有效/失败样本及 Golden/容差；再由人类按照 AC/TC 复核是否通过。不得用“审查通过草案”替代“测试通过”。
 5. **进度同步**：JSON 保存位置由人类自行决定；除非人类明确授权提交指定内容，AI 不得自动上传、提交、覆盖或公开含审批人信息的 JSON。经核验的批准记录和后续执行证据再按授权范围更新 `docs/PROGRESS.md` 与 `docs/TEST_PLAN.md`；仅保存/创建 HTML 或 JSON、受阻或连接器静态检查均不构成批准或通过。
+
+**本次审批专项边界（用户上传 JSON）**：H-02/H-04/H-12/H-14 的具体决定已在 [审批落实记录](docs/approval/DECISION_IMPLEMENTATION_NOTES.md) 中按其原始范围解释；**H-10 明确暂缓生产 C++ 修改、CMake/CTest 等真实运行，H-11 暂缓 Bash 现场执行**，且 `technicalDetails.permissions` 全为 false。本轮仅允许审阅与方案文档修改，以及 H-12 已明确要求的根 `output/` 忽略规则；不擅自执行原始数据写入、复制第三方源、创建 LICENSE、合并或发布。
 
 **优先级规则**：本节是与既有 Git 安全/原始数据只读/禁止未经授权构建测试规则并行生效的附加门禁，不能作为绕开 `AGENTS.md` 前九节的例外。用户后来就某一具体动作作出的明确授权仅作用于该动作，不等于一次性放弃全部审批规则。
