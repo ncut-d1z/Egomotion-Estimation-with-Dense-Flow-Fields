@@ -73,7 +73,7 @@ public:
 };
 ~~~
 
-责任边界：TrajectoryGenerator 不计算 MAT 数据或绘图；TrajectoryKinematics 不管理 Adaptive Session；Rodrigues 的第三方代码需做版权与算法来源核查。
+责任边界：TrajectoryGenerator 不计算 MAT 数据或绘图；TrajectoryKinematics 不管理 Adaptive Session。**依据用户审批 JSON H-02，后续以 Sophus SO(3) 接口替代原 `rodrigues.m` 的实际旋转向量→矩阵调用，不再计划逐行复制 Perona/Bouguet MATLAB 代码。** 当前尚未引入 Sophus 或运行 C++，对应依赖与权利说明见 [审批落实记录](../approval/DECISION_IMPLEMENTATION_NOTES.md)。
 
 TC-F-TRAJ-001：固定参数点列、局部 t/ω、首尾行为、奇异方向状态对照；实际 Golden 数值、精确签名与容差待审定。
 
@@ -102,7 +102,16 @@ n_c=\|\boldsymbol c\|,\quad
 | 任一输入为零 | γ 的分母可为零 | 显式 NumericalErrorCode，同时记录原版 NaN/报错；未授权不称“等价” |
 | dot/(norms) 超出 [-1,1] 浮点范围 | acos 非有限或复数 | 是否显式 clamp 为安全增强待决定，忠实模式不能未经同意更改 |
 
-rodrigues.m 的实际主要调用方向是 **3×1 旋转向量→3×3 旋转矩阵**，在小角度下按原 eps 分支输出 I；其完整 MATLAB 文件还有矩阵→向量及 Jacobian 模式，但是否属于本项目必需范围应由 45 文件调用矩阵确定。**第三方代码的权利核验是独立阻塞**，不能仅因数学公式公开就直接复制外部实现。
+rodrigues.m 的实际主要调用方向是 **3×1 旋转向量→3×3 旋转矩阵**；原函数在角度小于 MATLAB double 的 `eps` 时返回单位阵，完整 MATLAB 文件还包含矩阵→向量、SO(3) 投影与 Jacobian 功能。**H-02 已选定 Sophus**，不复刻未调用的辅助分支；仍须确认所有实际调用方是否使用了这些分支及返回 Jacobian，不能因库 API 类似而宣布完全等价。
+
+### 5.1 经 H-02 指定的 Sophus 适配方案（仅设计，未实施）
+
+- **依赖来源**：[strasdat/Sophus](https://github.com/strasdat/Sophus)，[sophus/so3.hpp](https://github.com/strasdat/Sophus/blob/main/sophus/so3.hpp)，上游 `LICENSE.txt` 为许可参考；只使用 SO(3) API，不引入 ROS 运行依赖。计划于将来的 P1.1/P6.2 获授权实施时锁定版本和 CMake 查找方式；本轮不安装库。
+- **数学调用**：给定原旋转向量 `omega = (ω_x, ω_y, ω_z)^T`（rad），候选计算为 `Sophus::SO3d::exp(omega).matrix()`，再返回自拥有的 `Eigen::Matrix3d`，不将 Sophus 类型泄露给其他业务层。
+- **原版边界保留**：为了对齐 `rodrigues.m`，当 `omega.norm() < std::numeric_limits<double>::epsilon()` 时须**优先按原函数返回单位阵**，再考虑调用 `Sophus::SO3d::exp`；阈值是**原 MATLAB 已存在条件**，不是新数值容差。输入非有限/异常的返回类型仍遵循 [contracts.md](contracts.md) 的未冻结错误候选。
+- **坐标/调用方向**：原 `trajektorie_aus_punkten` 使用 `Rᵀ` 把世界向量转换为局部运动；不能因为 Sophus 具有群操作就改变转置、轴角方向和单位。
+- **验收设计**：固定 `ω=0`、小于 MATLAB eps、x/y/z 轴已知角、复合转动、接近 π、原反向向量路径；对比原 MATLAB 的 `R` 九元素、`Rᵀ` 下的局部 t/ω；若未来确实需要矩阵→向量或 Jacobian，再另列 TC，不扩大 H-02 所批准范围。
+- **状态**：**方案选择已确认，代码/CTest/Golden 尚未运行**。H-10 暂缓生产实施、H-01/DEC-005 容差待定；H-02 不等于数值等价签署。
 
 ## 6. 位姿与球内近度的边界约定
 
