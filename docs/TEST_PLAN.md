@@ -77,6 +77,8 @@
 - 更新频率分析图：x=50:550、阈值 0.02，四条曲线与不同半窗 2/5/10 的平滑；kurveglaetten 的边缘零值语义不替换。
 - 每条曲线的**L2 输入/L3 独立计算参考**应记录原始 source MAT+variable 和 SHA-256、原只读源码中的 1-based 索引规则、x/y 数组、axis/units、分段、窗宽及有效样本状态；**不运行 MATLAB**，只比较图片像素不能算通过。
 
+**DEC-004 已选的历史字段兼容验收**（参见 [决定原文](decisions/DEC-004_HISTORICAL_MAT_FIELDS.md)）：以 L2 的 `with_errors` 七份文件与 `many_parameter` 六份文件证明历史字段只读存在；以独立 L3 小规模生成案例和未来 C++ 运行验证**新 comparison 仅五类 save、新 update-rates 仅三类 save**，两类历史 `alleadap*` 以及新 update-rates 不保存的 `rottransratio` 必须标 `HistoricalOnly`，不得写入新的 MAT。对新 update-rates 结果运行需要 `rottransratio` 的分析必须**确定性失败并报告 MissingVariable/来源类别**，旧历史目录仍能读取。关联 TC-F-EXP-002/003、TC-D-MAT-003、TC-F-AN-001/002、TC-I-ANALYSIS-001；**没有新增 TC ID，且所有新测试均未执行**。这套处理规则已经确定，不再等待历史额外字段归因。
+
 ### 2.8 用户审批 JSON 的数值与执行验证边界（仅规划）
 
 **已补充具体 Golden/容差候选，但仍未测试或批准**：查看 [Golden 参考样例与宽松容差建议](golden/GOLDEN_TOLERANCE_PROPOSAL.md) 和 [12 组解析候选 JSON](golden/analytic_golden_candidates.v1.json)。其中给出 12 组根据原 MATLAB 公式静态推导的固定输入/输出（含有序采样、光流、球谐、90° 转动、误差计算、Adaptive 单步）和第一轮探索性建议 `atol=0.01, rtol=0.1`。**这些是未执行的独立 L3 候选，不代表最终 DEC-005 PASS 阈值**；离散结构、错误状态、球面/旋转不变量另有严格条件。一般 KVD/Adaptive 逐轮及 RNG 测试须补齐 L3 独立固定输入、逐节点与调用次数参考，最终结果/统计使用 L2/L4；不要求 MATLAB 采集，H-10/H-11 暂缓状态不变。
@@ -91,6 +93,8 @@
 | H-04 Ubuntu VM 资源快照 | 用户提供的 `uname/df/free`；将来记录实际 CMake/CTest 和 peak RSS/wall/CPU | **只有环境资料，未批准时间/性能门槛** |
 
 > **H-10=deferred、H-11=deferred**；本次 JSON 的 `runCMake/runCTest/runMatlab/writeMat/runBash/measurePerformance` 全为 false。没有现场命令、运行结果或数值测试可在本轮回填。审阅/格式检查不触发工具执行授权。
+
+**参考术语的唯一解释**：本文件中历史标题/测试名如出现 `Golden`，除明确标明“历史 L1 分类”外，都必须逐个注明为 **L2（原作者现存 MAT）/L3（独立固定输入数值）/L4（统计）**；**L1 原 MATLAB 运行数据永久不作为强制取得/通过条件**。有编号不表示已有测试函数，唯一候选实体矩阵见 §3，真实执行证据只写入 [PROGRESS.md](PROGRESS.md)/[reviews/](reviews/) 的指定 Git SHA 记录。
 
 ## 3. TC → 实体/CTest → AC 规划矩阵
 
