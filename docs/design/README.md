@@ -52,7 +52,7 @@
 
 ## 当前阻塞汇总
 
-MAT 数据的 **582 文件全量 matio 字典已实际生成并提交**，包含 582 个 `READ_OK`、0 失败，以及 MATLAB class/data_type/dims/压缩和文件指纹。未完成的事项是生产 Reader/Writer/写回读、负例、P10.4 独立复核、两份第三方代码版权确认、CLI/error schema、数值 Golden 与正式容差，以及完整 Debian/Ubuntu 业务构建矩阵。因此，本目录除跨模块合同外的 **9 份模块 LLD** 可以用于进一步评审和实施准备，但均**不是正式冻结的 LLD 编码基线**。
+MAT 数据的 **582 文件全量 matio 字典已实际生成并提交**，包含 582 个 `READ_OK`、0 失败，以及 MATLAB class/data_type/dims/压缩和文件指纹。**H-02 已限定选择 Sophus 与 Don Williamson 的原 C++ SHRotation、H-14 选定方案 A；H-04 给出 Ubuntu 24.04.4 VM 快照、H-12 选定隔离 `output/`**。未完成的事项仍包括这些第三方源码的许可告知与 sdla 依赖审核、Reader/Writer/写回读、负例、P10.4 独立复核、CLI/error schema 冻结、Golden 与正式容差、完整 Debian/Ubuntu 构建矩阵。H-10/H-11 暂缓执行。因此，本目录除跨模块合同外的 **9 份模块 LLD** 可以用于进一步评审和实施准备，但均**不是正式冻结的 LLD 编码基线**。
 
 
 ## LLD 证据就绪度与源 MATLAB 核查重点
@@ -63,10 +63,10 @@ MAT 数据的 **582 文件全量 matio 字典已实际生成并提交**，包含
 | mat_io.md | MAT v5+zlib/double 类型与形状已实测，选定探针环境 matio 1.5.26；路径保护和 Reader/Writer 候选 API | **仍缺**业务接口、写入/回读、安全负例、Golden 按值检查与 P10.4 复核 |
 | cli.md | 命令、参数/类型、固定实验语义、失败类别及字段候选已表格化 | RunId 自动命名、JSONL/键值格式、部分参数合法边界待批准；真实 CLI/CTest 不存在 |
 | kvd.md | 原始/修正平移与旋转公式、最低/最大迭代、逐轮 trace 字段 | MATLAB 逐轮 Golden、病态边界、正式容差 |
-| harmonics.md | 9 项 l≤2 实球谐公式、3×5 索引、R3 元素、R5 递推结构 | R5 完整合法实现、外部版权、Golden 与精度 |
+| harmonics.md | 9 项 l≤2 实球谐公式、3×5 索引、R3 元素；H-14 方案 A 已指定 Don Williamson Ivanic C++ R5 适配 | 复用范围及 README/MIT LICENSE、sdla 依赖处理、完整实现、Golden 与精度 |
 | adaptive_mfa.md | M1–M4、rhs、MSE 返回、Frame/Session 更新时序差异 | 逐节点 Golden、异常提交决定、容差 |
 | sampling_noise.md | 三种采样顺序、噪声方程、rand/randn 调用顺序、source seed 重置 | 固定 RNG Golden 与样本全序核对 |
-| trajectory.md | 圆/正弦公式、方向→旋转奇异性、Rᵀ 局部运动、球内求交 | 旋转矩阵 Golden、零模/反向边界、Rodrigues 权利 |
+| trajectory.md | 圆/正弦公式、方向→旋转奇异性、Rᵀ 局部运动、球内求交；H-02 指定 Sophus 替代 Rodrigues | Sophus 实际依赖/版本和调用、小角 Golden、零模/反向边界 |
 | experiments.md | 五个 Runner 原参数及输出、历史 MAT 的 double/double 和五种实测 shape、Bias 原 xwerte 与真实 N 不同 | **仍缺**当前/历史输出差异归因、RunContext、C++ 新结果测试 |
 | analysis_plotting.md | 四分析入口与历史 MAT 的真实 shape、1-based 索引、分段阈值、半窗平滑 | **仍缺**数值曲线 Golden、绘图后端批准及 C++ 分析测试 |
 
@@ -80,9 +80,9 @@ MAT 数据的 **582 文件全量 matio 字典已实际生成并提交**，包含
 ## 本期未完成的先决工作
 
 1. **已完成的独立子能力**：582/582 MAT 已通过 matio 解压/变量元数据检查；**尚待** P1 生产 Reader/Writer 按值加载、错误负例及 P10.4 独立结果审核。
-2. P0.4/DEC-003/007：rodrigues.m、SHRotate.m 的第三方版权及可移植实现范围。
+2. P0.4/DEC-003/007：**用户已决定**由 Sophus SO(3) 和 Don Williamson Ivanic–Ruedenberg C++ 替代对应原 MATLAB 函数；但源码复制、第三方 README/MIT LICENSE 告知、依赖闭包及跨库数值对照仍待授权实施。参见 [审批落实记录](../approval/DECISION_IMPLEMENTATION_NOTES.md)。
 3. P0.8/DEC-008：统一 C++17 API、状态/错误、CLI schema、组件 target 和测试实体的批准。
-4. DEC-005/006：固定源 MATLAB Golden、逐模块容差、目标 Debian/Ubuntu 环境、wall/CPU/RSS 预算。
+4. DEC-005/006：固定源 MATLAB Golden 和逐模块容差未批准；H-04 已提供 Ubuntu 24.04.4 VM/x86_64 资源快照，但没有性能通过门槛。
 5. P1–P10：真实 C++ 类、CTest、运行结果及按 TC/AC 记录的证据。
 
 **当前模块 LLD 均未冻结**：独立 C++17 matio 扫描器确已编译运行，但无生产业务模块、CTest、逐元素 Golden 或算法数值实验。不能将数据字典扫描通过扩大为整项目或 LLD 验收通过。
