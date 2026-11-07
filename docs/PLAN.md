@@ -158,6 +158,9 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 
 ## 5. 细粒度实施任务（每项均可单独检查并提交）
 
+**WBS 证据列的性质**：本表的 98 个 P 工作项在「证据要求」中使用类别描述，**不表示**候选测试文件/CTest 已创建或分配了完成时间；每个 TC→唯一拟议测试实体/CTest→AC 的对照以 [TEST_PLAN.md §3](TEST_PLAN.md) 为唯一登记来源。关于 LLD 的具体候选路径：P2/P3 参照 [sampling_noise.md §8](design/sampling_noise.md) 的 `test_sampling.cpp`、`test_flow_simulation.cpp`；P5/P8 参照 [experiments.md §8.1](design/experiments.md) 的 `test_bias.cpp`、`test_adaptive_experiments.cpp`；P7 球谐参照 [harmonics.md §4.1](design/harmonics.md) 的 `test_harmonics.cpp`；P1 MAT/RAII 参照 [mat_io.md §5/§8](design/mat_io.md) 的 `test_mat_archive.cpp` 和候选 `test_mat_raii.cpp`。相关实体、CTest 名与调用/环境仍**未批准或运行**，本段不改变任何 P 的 REQ/TC/AC、依赖或状态。
+
+
 **本节是 WBS，不代表 C++ 工作已经开始。** 每个 P 任务显式关联 REQ→TC→AC，证据列只描述应收集的证据类别；初始状态均未验收。设计草案/源码可读取并不等价于完成 P 任务。所有完整测试数据与执行记录统一按 [TEST_PLAN.md](TEST_PLAN.md) 管理。
 
 ### P0 — 基线冻结与来源审计（原始资料/设计准备）
