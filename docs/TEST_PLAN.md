@@ -20,13 +20,15 @@
 | 子命令 | 候选必填参数 | 输出/验收 |
 |---|---|---|
 | inspect-mat | --file PATH | MAT 变量名、rank、dims、type、压缩/错误诊断 |
-| run-bias-occluded | --seed INT --level INT --output-root DIR | xwerte、ywerte1…6 的 MAT 结果 |
-| run-bias-proportional | --seed INT --level INT --output-root DIR | 独立完整球面/逐分量噪声结果 |
+| run-bias-occluded | --seed UINT32 --level NONNEG_INT --output-root DIR | xwerte、ywerte1…6 的 MAT 结果 |
+| run-bias-proportional | --seed UINT32 --level NONNEG_INT --output-root DIR | 独立完整球面/逐分量噪声结果 |
 | run-adaptive-init | --output-root DIR | 原始初始化四类误差结果 |
-| run-adaptive-comparison | --noise-scale NUMBER --output-root DIR | 带噪/无噪的原始五类 MAT 结果 |
+| run-adaptive-comparison | --noise-scale FINITE_DOUBLE --output-root DIR | 带噪/无噪的原始五类 MAT 结果 |
 | run-adaptive-update-rates | --output-root DIR | 1/5/11/21 帧更新频率结果 |
 | analyze | --experiment NAME --input-root DIR | 独立读取历史 MAT，计算统计序列 |
 | plot（可选） | --experiment NAME --input-root DIR | 图表结果；无图形后端不影响 analyze |
+
+**统一约定（候选，非批准）**：本表与 [cli.md §2.1](design/cli.md) 使用相同的 `UINT32`、`NONNEG_INT`、`FINITE_DOUBLE` 类型名；`--output-root DIR` **仅作为选择仓库根 `output/` 的候选显式参数**，不是自由外部路径；由 RunContext 在其下创建新的 `output/<RunId>/`。后续真实 CLI 测试须覆盖其它根、`origin/**`、符号链接逃逸和重复 RunId 的拒绝，但目前 H-10 暂缓、`writeMat=false`，均**未执行**。RunId 生成、参数最终形式及错误映射仍受 H-03/DEC-008 约束；本轮不设置输出根默认值。
 
 建议退出码类别（尚未批准）：0 成功、2 参数错误、3 MAT/输入 I/O 错误、4 格式/类型/形状错误、5 数值无效、6 输出目录保护、7 可选功能不可用。实施前冻结状态优先级与错误含义。
 
