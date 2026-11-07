@@ -1,6 +1,6 @@
 # Egomotion Estimation with Dense Flow Fields：软件需求规格说明书（SRS）
 
-> **状态：草案 v0.11，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
+> **状态：草案 v0.12，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
 
 ## 1. 目的、范围与约束
 
@@ -202,7 +202,7 @@
 
 | ID | 待决问题 | 状态与决定方 |
 |---|---|---|
-| DEC-001 | 582 份现有归档的 MAT 格式和 HDF5 必要性 | **格式事实已证实**：582/582 MAT v5 + zlib；现有数据无需 MAT v7.3/HDF5 读取能力。项目支持范围仍待所有者批准 |
+| DEC-001 | 582 份现有归档的 MAT 格式与首版 Reader 范围 | **已有数据事实**：历史 582/582 MAT 为 v5 + zlib；无需按这些归档引入 v7.3/HDF5。**项目所有者已经选定首版只支持二维、密集、实数、非 logical 的 double 数组**，不默默转换 sparse/complex/logical/其它类型。**这只是范围决定，不代表正式 Reader/Writer/负例已实现或最终需求基线已批准**；L2 原值及来源 SHA-256 仍待独立核验。具体类型与错误合同见 [mat_io.md](design/mat_io.md)。 |
 | DEC-002 | 现有 MAT 变量 class/data_type/dims | **类型与形状事实已证实**：582 个 double/double；`10×1` 80、`10×3` 480、`35×1` 4、`600×1` 14、`600×4` 4；无其他 class，数据字典待独立复核 |
 | DEC-003 | 旋转实现来源与许可证 | 项目自有代码 MIT 已由所有者确定；Don Williamson 仅作参考、Eigen 独立重写且不依赖 sdla；标准来源/现有第三方 notice 记录即可，普通版权审批**不再阻塞开发** |
 | DEC-004 | 现行生成脚本与历史 MAT 额外字段差异 | **项目所有者已选择处理原则**：新 C++ Runner 只输出当前有效 save 字段；历史 MAT 全部只读保留，额外字段标 `HistoricalOnly`；分析必需字段缺失则报告，不伪造、不从别的字段推导假值；历史成因不明**不阻塞开发**。见 [正式决定](decisions/DEC-004_HISTORICAL_MAT_FIELDS.md)；代码/测试仍未实施 |
@@ -510,7 +510,8 @@
 | v0.8 | REQ-F-CLI-002 移除“结果目录参数”残留；固定 `output/<RunId>/`、可选 `--run-id`，并澄清 H-14 的现行数学依据为 Ivanic–Ruedenberg 原文/勘误、Eigen-only、Don Williamson 仅参考 | 历史评审草案 |
 | v0.9 | UC-05 历史数据异常语义与已决定的 DEC-004 一致：`HistoricalOnly` 只读保留、无需归因、缺少分析必需字段明确失败；不改变既有 REQ/AC/TC | 评审草案，未冻结或运行测试 |
 | v0.10 | **仅低优先级文档层级调整**：REQ-D-SOURCE-002 与 REQ-NF-COPYRIGHT-001 保留可验证的来源/许可义务，具体 Eigen/Sophus/Don Williamson 方案下沉并引用 HLD/ADR/项目所有者决定；保留两条 REQ、AC、TC、P 追踪身份 | 历史评审草案 |
-| v0.11 | 依据 AF-010 明确 MAT 写出唯一固定目录 `output/<RunId>/`，不是任意与 `origin/**` 不重叠的目录；保留现有 REQ/AC/TC 以及已决定的 CLI 路线 | 评审草案，未冻结/未执行 CTest |
+| v0.11 | 依据 AF-010 明确 MAT 写出唯一固定目录 `output/<RunId>/`，不是任意与 `origin/**` 不重叠的目录；保留现有 REQ/AC/TC 以及已决定的 CLI 路线 | 历史评审草案 |
+| v0.12 | AF-022：将已选 MAT v5/zlib 首版二维密集实数非 logical double 范围与尚缺的正式 Reader/安全负例/基线批准分开表述，不新增 REQ、AC、TC，也不改变 HDF5/原 MAT 的事实边界 | 评审草案，未冻结/未执行 CTest |
 
 
 ## 附录 A：内部设计约束清单（REQ-DC）
