@@ -1,6 +1,6 @@
 # Egomotion Estimation with Dense Flow Fields：软件需求规格说明书（SRS）
 
-> **状态：草案 v0.6，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
+> **状态：草案 v0.7，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
 
 ## 1. 目的、范围与约束
 
@@ -170,9 +170,9 @@
 | 入口 | 必填或关键实参 | 可核验的输出 |
 |---|---|---|
 | inspect-mat | --file PATH；可选 --variable NAME、--mode strict/compat | 不写输入文件，显示 MAT 变量与错误诊断 |
-| run-bias-occluded / run-bias-proportional | --seed INTEGER、--level INTEGER | 对应两个实验的 xwerte 与六个 ywerte |
+| run-bias-occluded / run-bias-proportional | --seed UINT32、--level NONNEG_INT | 对应两个实验的 xwerte 与六个 ywerte |
 | run-adaptive-init | 无 | 四类初始化误差 |
-| run-adaptive-comparison | --noise-scale NUMBER | 前四种方向误差加 rottransratio 五类 MAT |
+| run-adaptive-comparison | --noise-scale FINITE_DOUBLE | 前四种方向误差加 rottransratio 五类 MAT |
 | run-adaptive-update-rates | 无 | 1/5/11/21 更新周期结果 |
 | analyze | --experiment NAME、--input-root DIR | 四类分析之一的数值序列，不重跑求解 |
 | plot（S 级） | --experiment NAME、--input-root DIR | 可选图示；无后端不妨碍数值命令 |
@@ -503,7 +503,8 @@
 | v0.3 | 明确 582/582 独立 matio 读取的已验证范围；配套静态追踪检查器 `scripts/check_docs_traceability.sh`；不改变任何必须需求的验收门槛 | 未冻结；仍待项目所有者批准 |
 | v0.4 | 按项目所有者明确要求移除原 MATLAB 实际运行及 L1 Golden 的强制门禁；关键 AC 改用 L2/L3/L4，保留原公式、算法时序及真实测试/数值容差审批义务 | 历史草案 |
 | v0.5 | 所有者确定项目 MIT、Ivanic–Ruedenberg 原文+勘误/Eigen 且禁 sdla、取消输出根 CLI 选项、封装 Result/JSONL、独立实验配置与失败策略、首轮 0.01/0.1 筛查 | 技术方向已定；正式测试与最终数值验收基线未冻结 |
-| v0.6 | DEC-004 历史字段处理获选定；REQ-DC 八项移入设计约束附录而保留 ID/AC/TC；数学行为与实现选型引用 HLD/LLD 单一来源；完善 L2/L3/L4 术语 | 评审草案；没有宣布基线冻结或 TC PASS |
+| v0.6 | DEC-004 历史字段处理获选定；REQ-DC 八项移入设计约束附录而保留 ID/AC/TC；数学行为与实现选型引用 HLD/LLD 单一来源；完善 L2/L3/L4 术语 | 历史草案 |
+| v0.7 | §6.1 CLI 外部参数类型与 `cli.md` 和 TEST_PLAN 一致，明确设计细节仍归 HLD/LLD；保留原 66 REQ/AC/TC | 评审草案，未批准/未冻结 |
 
 
 ## 附录 A：内部设计约束清单（REQ-DC）
