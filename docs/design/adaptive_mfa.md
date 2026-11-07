@@ -1,6 +1,6 @@
 # Adaptive MFA 单步计算与轨迹状态——详细设计草案
 
-> **LLD v0.3：未冻结、未实现、未测。** 已核对原 MATLAB 的 oneit_adaptiv_matched_filter.m 关键表达式，但仍须生成中间量 Golden、确定数值容差与异常状态合同才能进入编码基线。需求：REQ-F-ADAPT-001/002/003、REQ-F-EXP-001/002/003、REQ-DC-ADAPT-001；任务 P7.7–P7.11、P8.1–P8.9。
+> **LLD v0.4：未冻结、未实现、未测。** 已核对原 MATLAB 的 oneit_adaptiv_matched_filter.m 关键表达式，但仍须独立 L3 逐节点参考和真实测试、确定最终数值容差；**异常时不提交无效状态的原则已由所有者确定**。需求：REQ-F-ADAPT-001/002/003、REQ-F-EXP-001/002/003、REQ-DC-ADAPT-001；任务 P7.7–P7.11、P8.1–P8.9。
 
 ## 1. 单步输入/输出与接口候选
 
@@ -158,7 +158,11 @@ Per-run Session (one owner of akkoeff)
         record errors/ratios and preserve file-output contract
 ~~~
 
-**仍需 DEC/Golden 证据**：原 MATLAB 数值无效时是否进行下一轮、是否保留非有限系数、如何处理用户期望的错误状态。不能在忠实模式中默认替换为滤波器“失败回滚”机制。
+**项目所有者已确定失败状态规则**（见 [最新决定](../decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md) 与 [experiments.md §8.1](experiments.md)）：
+
+- StepSolver 返回非成功，不产生可提交的 `coefficients_next`；Session 仅在所有必须计算节点成功且有限时**原子提交下一帧主系数**，否则保持上一次有效主/基线系数，不将无效 near/系数写入状态。
+- 若是依赖上一帧状态的连续序列，且没有经证实安全的恢复路径，则**停止当前轨迹**并标记 `Incomplete`/`Failed`；独立运行/独立样本可以由 Runner 记录失败后继续，不改变有效样本分母。
+- 此策略是**明确的 C++ 安全合同**，不声称已验证原 MATLAB 特定异常时 NaN/Inf 传播；原 MATLAB 无统一事务机制不是强制复现该缺陷的要求。独立 L3 失败输入、状态 before/after 和真实 CTest 仍须完成。
 
 ## 6. 每一步 Golden 跟踪表及验收
 
@@ -177,7 +181,7 @@ Per-run Session (one owner of akkoeff)
 
 ## 7. 阻塞与批准事项
 
-- 精确 C++ 接口、数值错误枚举、状态机异常提交、Golden 输入、DEC-005 容差及第三方版权尚未冻结。
+- 精确 C++ 接口与错误码实现、状态原子提交的真实测试、独立 L3 参考、DEC-005 最终数值容差和 CTest 尚未完成；**异常不提交原则已确定，不需要再次人类选择**。
 - 本文的伪代码和公式是静态源码审计设计材料；没有编译、MAT 变量全量验证或数值运行证据。
 - **源函数返回 error=MSE，而非 RMS**，未来任何与之不符的计划/SRS/TC 都必须修正后才能作为对照基线。
 
@@ -239,14 +243,14 @@ Candidate interface only, not compiled: FrameResult, Session construction policy
 
 | 故障 | 最少保存的原 MATLAB 证据 | 候选数值状态 | 主系数是否提交 |
 |---|---|---|---|
-| FlowField/coeff 维度或非有限 | N×6、3×5 实际输入 | InvalidShape、NonFiniteInput | 待冻结，不伪造新系数 |
-| near 的原始均值 s 为零、接近零或负数 | near_raw、s、符号翻转、最终归一 | InvalidNearness；负 s 不等价于取 abs(s) | **未决定**，不得默认回滚 |
-| 6×6 退化、数值条件很差 | M1–M4、b、M、z、原版 real(inv(M)) | SingularSystem、IllConditionedSystem | 未决定 |
-| 线性解的 t 长度为零 | raw t、范数、归一化后状态 | ZeroNorm | 未决定 |
-| error_mse、near_new 或系数非有限 | 独立极值/病态输入及明确 C++ 状态 | NonFiniteResult | 未决定；原 MATLAB 运行细节不作强制对照 |
+| FlowField/coeff 维度或非有限 | N×6、3×5 实际输入 | InvalidShape、NonFiniteInput | **禁止提交，无效输入不能产生新系数** |
+| near 的原始均值 s 为零、接近零或负数 | near_raw、s、符号翻转、最终归一 | Zero/near-zero 退化返回 InvalidNearness；**负 s 按原公式处理，不自动当失败** | **仅真正非成功时不提交**；有效负 s 不改变符号算法 |
+| 6×6 退化、数值条件很差 | M1–M4、b、M、z、原版 real(inv(M)) | SingularSystem、IllConditionedSystem（判据待实测） | **非成功不提交；不能安全恢复则终止当前连续序列** |
+| 线性解的 t 长度为零 | raw t、范数、归一化后状态 | ZeroNorm | **非成功不提交** |
+| error_mse、near_new 或系数非有限 | 独立极值/病态输入及明确 C++ 状态 | NonFiniteResult | **非成功不提交；原 MATLAB 运行细节不作强制对照** |
 | MAT 写入中断 | 最后成功帧与独立输出目录 | OutputFailed（Runner 层） | 不由 StepSolver 决定 |
 
-原 MATLAB 没有统一的事务/回滚系统。**用户 JSON H-13 仅选择先核查失败行为并起草候选处理**，尚未批准 Session 遇错回滚、继续、终止或主系数提交策略；任何方案须记录静态可证的原源码与 C++ 数值失败策略的差异及**未知运行时行为**，不要求通过 MATLAB 实测 NaN/Inf 传播，也不能预设安全增强已获授权。**单步数值失败、主系数是否提交、整个 RunId 是否失败是三种不同状态**。H-10 暂缓实际编码/测试，H-01 容差尚未批准。
+**现行所有者决定优先于旧 H-13 仅起草状态**：StepSolver 计算失败、Session 主系数提交、Runner 整体 RunId 状态是三种不同层次；单步错误不得提交无效系数，不能安全恢复时停止当前连续序列，部分结果可保留审查但不伪装为完成。真实原版异常行为不可证明时按来源限制记录，不运行 MATLAB/Octave。H-10 的实际代码/测试运行仍须另行授权，最终数值容差和状态回归仍待实证。
 
 ## 9. 三个原入口的不同状态语义
 
@@ -292,7 +296,7 @@ C++ 从 0 开始存帧时必须显式转换为源 MATLAB 的 1-based i，周期�
 
 每个 Golden 应记录原只读 MATLAB 函数 blob SHA、**独立固定输入/L3 参考生成方式与 SHA-256**、各节点 shape/dtype、数值基准和经 DEC-005 批准的容差；**不要求运行 MATLAB 或记录 MATLAB 版本**。现有 produced_data 不含 M1…M4 的原始逐节点值，**不可把只对照最终 MAT 当作单步数学等价证据**。
 
-**状态**：此文档定义了算法逐节点检查与入口专属状态合同；Golden、最终错误提交策略、正式 API 及 CTest 均尚未实际形成。
+**状态**：此文档定义了算法逐节点检查与入口专属状态合同；独立 L3 参考、**错误提交策略的实际实现/测试**、正式 API 及 CTest 均尚未实际形成；设计原则已明确。
 
 ## 附录 A：无需运行 MATLAB 的证据边界
 
