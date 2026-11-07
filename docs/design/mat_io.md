@@ -7,7 +7,7 @@
 原 getflowfield(filename) 使用 MATLAB load(filename)，列出 fieldnames，并读取第一个字段。MATLAB 原分析入口经常省略 .mat 后缀，故必须区分：
 
 - **严格读取**：显式 MAT 路径和变量名，变量缺失即失败。
-- **旧脚本兼容读取**：按原脚本的路径/后缀解析规则取得数据，只有在确认 MATLAB 首变量枚举规则后才能冻结多变量行为。不能随意以名称字典排序代替原行为。
+- **旧脚本兼容读取**：按原脚本的路径/后缀解析规则取得数据，多变量场景须依据静态格式说明和独立 L3 例子核验枚举/冲突规则；若顺序无法确定则明确返回 AmbiguousVariable，**不要求运行 MATLAB 再冻结现有单变量归档合同**。不能随意以名称字典排序代替原行为。
 - **inspect**：列出全部变量元数据而不读取成算法领域类型或更改文件。
 
 **现有归档的格式已经实测**：`src/mat_data_dict_probe.cpp` 在 Ubuntu 24.04/matio 1.5.26 以 `Mat_Open(..., MAT_ACC_RDONLY)` 和 `Mat_VarRead` 读取全部 582 MAT/582 变量，失败 0；每个源 MAT 是 v5/zlib 压缩、单变量 class=double/data_type=double，flags 均为 `-`。详见 [MAT_DATA_SCHEMA.md](../MAT_DATA_SCHEMA.md)。当前数据不需要 HDF5；future 扩展到 v7.3 时再单独审核。
