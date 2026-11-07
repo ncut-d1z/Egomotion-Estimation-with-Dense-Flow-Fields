@@ -1,6 +1,6 @@
 # 实球谐、近度拟合及系数旋转——详细设计草案
 
-> **LLD v0.3，未冻结、未实现。** 来源：winkelausvektor.m、kugelflfunc2.m、near_aus_koeff.m、koeff_aus_near.m、transfor_koeff.m、SHRotate.m。第三方版权与 Golden 尚未完整核验。关联 REQ-F-SH-001/002、REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001、P7.1–P7.6/P7.10。
+> **LLD v0.3，未冻结、未实现。** 来源：winkelausvektor.m、kugelflfunc2.m、near_aus_koeff.m、koeff_aus_near.m、transfor_koeff.m、SHRotate.m。第三方许可/依赖与独立 L3 参考尚未完整核验。关联 REQ-F-SH-001/002、REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001、P7.1–P7.6/P7.10。
 
 ## 1. 坐标系、角度与原实球谐表达式
 
@@ -116,7 +116,7 @@ a'_{0,0}=a_{0,0},\quad
 | 上游许可证 | [dwilliamson/SHRotation/LICENSE](https://github.com/dwilliamson/SHRotation/blob/master/LICENSE)，Don Williamson 的 MIT 形式版权/许可文本 | 若以后实际复用源文件，在**复用目录**（例如拟议 `third_party/SHRotation/`）保存 `README.md`，逐文件列出原始上游路径、版本/commit/blob SHA、用户确认的复用范围，保留版权声明与上游 `LICENSE`；该 LICENSE 是第三方告知文件，**不是**项目根许可证 |
 | 旋转块接口 | MATLAB `SHRotate(r,2)` 输出 R0=1×1、R1=3×3、R2=5×5 | 用 `HarmonicRotator` 把上游计算输出转换到源 MATLAB 的 `(-1,0,1)` 和 `(-2,-1,0,1,2)` 次序；核对原 MATLAB R1 九元素映射与 R2 全 25 元素、转置/相位和正交性 |
 
-**冻结条件**：H-02/H-14 的**方案选择已记录**，但还没有将外部 C++ 源码逐文件纳入或实际编译，更没有合法复用依赖闭包/Golden、批准 DEC-005 容差、P7.5/TC-F-SH-002 验收。文件中的原 `SHRotate.m` 继续只读，R5 的数学矩阵不能被“Eigen::Matrix3d 转一下”代替。
+**冻结条件**：H-02/H-14 的**方案选择已记录**，但还没有将外部 C++ 源码逐文件纳入或实际编译，更没有合法复用依赖闭包/独立 L3 参考、批准 DEC-005 容差、P7.5/TC-F-SH-002 验收。文件中的原 `SHRotate.m` 继续只读，R5 的数学矩阵不能被“Eigen::Matrix3d 转一下”代替。
 
 ### 3.2 旋转类接口候选
 
@@ -134,25 +134,45 @@ public:
 };
 ~~~
 
+**值对象归属与最小状态合同（候选）**：`HarmonicCoefficients` 的 3×5、九有效项、列主序由 [contracts.md §2](contracts.md) 的 domain 值对象维护；`HarmonicRotationBlocks` 归本球谐模块，`degree_one` 与 `degree_two` 是自拥有、定尺寸 Eigen 3×3/5×5，允许按值复制/移动，R0=1 是显式数学不变量，无需持久存储新矩阵。三类计算接口不持有 MAT 句柄或跨帧状态；Adaptive Session 负责历史系数。
+
+**Result/Status 错误上下文**：`evaluate/fit/reconstruct/blocks/rotate` 使用 [contracts.md §3.0](contracts.md) 的统一 Failure/Result 候选，失败要保留 NumericalErrorCode、ErrorDetail 和已知输入条件（stage 候选 solve），**不能返回默认 R3/R5/空系数伪装成功**；错误码、const、复制和异常返回的最终 API 仍待 P0.8 冻结。
+
 需明确是否接受不严格正交的 r、是否允许投影回 SO(3)、奇异输入与未定义旋转的返回状态；**不应未经许可擅自修改原算法**。
 
 ## 4. 依赖、资源和可复现测试
 
 - RealSphericalHarmonics、HarmonicFitter、HarmonicRotator 均不持有 MAT 文件句柄和跨帧轨迹状态；Adaptive Session 独占系数历史。
-- 固定球面方向数组 Golden：所有 9 个 l,m 配对值、均匀/非均匀采样下拟合的系数、旋转前后近度差异。
-- 多组旋转 Golden：单位 R、绕 x/y/z 不同角度、复合旋转和逆变换；在指定系数顺序下逐元素检查 R3、R5 的全部 34 个块元素。
-- 测试必须绑定只读原源码 SHA、独立 L3 参考输出/独立复核者与经 DEC-005 批准的数值容差；原数据/Golden 若无法合法提交可使用受控外部存储与可审查哈希。
+- **L3 固定球面方向参考**：所有 9 个 (l,m) 配对值、均匀/非均匀采样下拟合的系数、旋转前后近度差异；由独立解析或非被测参考实现生成。
+- **L3 多组旋转参考**：单位 R、绕 x/y/z 不同角度、复合旋转和逆变换；在指定系数顺序下逐元素检查 R3 的 9 个和 R5 的 25 个元素，另核 R0=1。
+- 测试必须绑定只读原源码 SHA、独立 L3 参考输出/独立复核者与经 DEC-005 批准的数值容差；原始数据或独立 L3 参考若无法合法提交，可记录受控外部存储位置与独立 SHA-256。
+
+### 4.1 CMake target、头文件与测试映射（候选）
+
+| 边界 | 拟议内容 | 未完成条件 |
+|---|---|---|
+| CMake target | [ARCHITECTURE.md §4](../ARCHITECTURE.md) 中 `egomotion_harmonics`；域值对象来自 `egomotion_domain`；选定 Don Williamson Ivanic–Ruedenberg 适配层仅作私有第三方依赖 | target 未创建/编译；sdla 适配、许可、来源清单待审 |
+| 公共头文件 | 候选 `include/egomotion/harmonics/` 公开必需的 RealSphericalHarmonics、HarmonicFitter、HarmonicRotator、HarmonicRotationBlocks；`HarmonicCoefficients` 唯一归 domain 合同 | Result/Status 所在 target 的最终归属和签名待 P0.8；若需新 `egomotion_contracts` 依赖，应**同步修订 HLD 表及 DAG** |
+| 私有实现 | `src/harmonics/` 含 l≤2 函数、递推适配；不向外暴露 matio、sdla 指针或源 MATLAB 执行接口 | 无实际源代码、构建或测试证据 |
+
+| TC / AC | TEST_PLAN §3 的候选实体/CTest | L3 逐项核验 |
+|---|---|---|
+| TC-F-SH-001 / AC-F-SH-001 | `tests/unit/test_harmonics.cpp` / `egomotion.harmonics.*` | 九个实基的相位、归一化、3×5 有效项、拟合/近度 |
+| TC-F-SH-002 / AC-F-SH-002 | 同上 | R0=1、R3 九元素、R5 25 元素、系数 before/after、x/y/z、复合/逆旋转 |
+| TC-D-SOURCE-002 / AC-D-SOURCE-002 | `tests/golden/test_mat_archive.cpp` / `egomotion.mat.*` 与人工来源审查 | 上游 SHA、许可、依赖闭包；**不将来源审核等同算法测试** |
+
+所需参考为独立解析或独立非被测实现的 **L3 固定输入数值**；原 `SHRotate.m` 仅是只读静态数学/索引依据。不允许运行 MATLAB/Octave，也不能用被测实现输出当参考。所有上述代码、测试实体、CMake target 与参考数据仍未创建/执行；DEC-003/005/007/008 未全部关闭。
 
 ## 5. 冻结与授权阻塞
 
-- 仍需对源关联勒让德相位、SHRotate 块递推、真实黄金样本做独立核验。
+- 仍需对源关联勒让德相位、SHRotate 块递推、独立 L3 固定输入样本做独立核验。
 - **H-02 已限定选择 Sophus 和 Don Williamson C++（H-14 方案 A）**，上游 Sophus/SHRotation 许可证可查；复制范围、具体实现文件的许可保留、sdla 依赖消解及 C++ 源码纳入尚未发生。不得由此推断 `rodrigues.m`、`SHRotate.m` 的第三方版权头或整个 MATLAB 归档均获重新许可；DEC-003/007 仅记录**已决定的替代路线**，发布和业务验收仍待证据。
 - C++17 精确签名、错误枚举、异常行为、目标 CMake target 和测试用例未冻结。
 
-**本文件是详细设计草案；没有 C++ 实现、MATLAB 运行或数值验收证据。**
+**本文件是详细设计草案；没有生产 C++ 实现、完整独立 L3 参考或真实数值/CTest 验收证据；无需 MATLAB 运行。**
 
 
-## 6. l≤2 九个实球谐分量的显式公式（待独立 L3 Golden 核符号）
+## 6. l≤2 九个实球谐分量的显式公式（待独立 L3 参考核符号）
 
 取归一化方向 \(x=\sin\theta\cos\phi\)、\(y=\sin\theta\sin\phi\)、\(z=\cos\theta\)，并**按原 MATLAB 的 legendre 默认相位**（含 Condon–Shortley 相位）展开。下列是从 §1 通式得到的数学等价表示，只有经过独立 L3 逐元素检查、相位核对与批准数值测试才能成为已验证的公式 Golden：
 
@@ -223,7 +243,7 @@ U/V/W 在不同 m 与 n 边界上组合上一阶 \(R_3\) 条目与递推辅助 P
 | SH-RZ | 物理 r 绕 z 轴旋转小角及 90° | 输入 r、R3、R5、九个系数 before/after |
 | SH-RXY | 绕 x/y 轴和两轴复合旋转 | 各矩阵 34 元素、向量范数、近度值 |
 | SH-INV | 先 r 后 r⁻¹ | 九个系数和方向采样下近度变化 |
-| SH-BAD | 非正交或非有限输入 | 原函数实际结果及 C++ 明确状态 |
+| SH-BAD | 非正交或非有限输入 | 原只读源码的静态风险与独立 L3 非法输入；C++ 明确失败状态，不冒称已实测 MATLAB 异常 |
 
 **授权状态**：用户已确认 H-02/H-14 的限定替代来源（Sophus / Don Williamson Ivanic–Ruedenberg），但 H-10 暂缓生产代码实施，本轮不能据此自动复制原程序或外部程序；以后实施需保存第三方 README/LICENSE、核对依赖和独立 L3 数值参考。数学等价的推断不能取代实测。
 
@@ -233,9 +253,9 @@ U/V/W 在不同 m 与 n 边界上组合上一阶 \(R_3\) 条目与递推辅助 P
 - 近度拟合遇 \(b_{lm}=0\) 时明确失败；数学输入为 NaN、Inf、零向量或非正交 r 时须输出具体 NumericalErrorCode/细节，不得伪造通过。
 - RealSphericalHarmonics、HarmonicFitter、HarmonicRotator 可为无跨帧可变状态服务；球谐系数是自拥有值对象，由 Session 管理历史。
 - 正式的 Result、HarmonicCoefficients、NumericalErrorCode 以 [contracts.md](contracts.md) 为单一候选；具体 API 签名和 const/复制行为由 P0.8 确认。
-- TC-F-SH-001、TC-F-SH-002、TC-D-SOURCE-002 均需记录 MATLAB 来源函数 SHA、固定输入/输出、逐元素 atol/rtol、条件数和未定义样本数；DEC-003/005/007 未关闭时不得冻结。
+- TC-F-SH-001、TC-F-SH-002、TC-D-SOURCE-002 需记录**原只读 .m blob SHA、独立 L3 生成器/审查者身份、输入/参考 SHA-256**、逐元素 atol/rtol、有效条件和未定义样本数；DEC-003/005/007 未关闭时不得冻结，且不要求 MATLAB 运行。
 
-**本模块的已知内容：9 项索引与数学公式、R3 九项映射、R5 的递推结构；缺口：R5 分段递推合法实现、全量 Golden、批准容差与真实代码/CTest。**
+**本模块的已知内容：9 项索引与数学公式、R3 九项映射、R5 的递推结构；缺口：R5 分段递推合法实现、全量独立 L3 参考、批准容差与真实代码/CTest。**
 
 ## 附录 A：无需 MATLAB 运行的证据边界
 
