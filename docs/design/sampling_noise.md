@@ -1,6 +1,6 @@
 # 视线采样、光流合成与噪声——详细设计草案
 
-> **LLD 草案，未冻结；无生产实现/已执行的 L3 数值参考测试。** 对应 P2/P3、REQ-F-GEOM-*、REQ-F-FLOW-*、REQ-DC-RNG-001、REQ-DC-NOISE-001。
+> **LLD v0.1 草案，未冻结；无生产实现或已执行的 L3 独立数值测试。** 对应 P2/P3、REQ-F-GEOM-*、REQ-F-FLOW-*、REQ-DC-RNG-001、REQ-DC-NOISE-001。
 
 ## 1. 来源与输入输出
 
