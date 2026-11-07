@@ -2,11 +2,18 @@
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>审批意见 · 简明版</title>
 <style>
 :root{font-family:system-ui,"Microsoft YaHei",sans-serif;color:#223344;background:#f5f7fa;font-size:15px}*{box-sizing:border-box}body{margin:0;padding-bottom:85px}button,input,select,textarea{font:inherit}button{cursor:pointer}main{max-width:1080px;margin:auto;padding:18px}header{background:#193b58;color:#fff;padding:22px max(18px,calc((100vw - 1044px)/2))}header h1{margin:0 0 6px;font-size:1.55rem}header p{margin:0;color:#e0edf6}.panel{background:#fff;border:1px solid #dbe3eb;border-radius:10px;margin:14px 0;padding:19px}h2{font-size:1.12rem;margin:0 0 12px}h3{font-size:1rem;margin:16px 0 9px}.muted{color:#617283;font-size:.86rem}.notice{background:#eef5fb;border-left:4px solid #2879b0;padding:12px 15px;margin:15px 0;border-radius:5px}.small{font-size:.83rem}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:block;font-weight:600;font-size:.86rem}.field input,.field textarea,.field select{display:block;width:100%;border:1px solid #bac9d7;border-radius:7px;padding:9px;margin-top:5px;font-weight:400;background:#fff;color:#203347}.field textarea{min-height:65px;resize:vertical}.field input:focus,.field textarea:focus,.field select:focus{outline:2px solid #a3d3ee}.span{grid-column:1/-1}.btn{border:1px solid #b7cbd9;border-radius:7px;background:#fff;padding:8px 12px;color:#1e5377}.btn:hover{background:#eaf3fa}.primary{background:#167c89;color:#fff;border-color:#167c89;font-weight:700;padding:11px 22px}.primary:hover{background:#11636c}.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.grow{flex:1}.progress{height:8px;border-radius:8px;background:#dce7ee;overflow:hidden;margin:11px 0}.progress>div{height:100%;background:#247fa5;width:0;transition:width .2s}.summary{color:#415b6f;font-size:.9rem}.quick-table{width:100%;border-collapse:collapse}.quick-table th{text-align:left;color:#617182;font-size:.82rem;background:#f3f6f8}.quick-table th,.quick-table td{padding:9px 8px;border-bottom:1px solid #e4eaf0;vertical-align:middle}.quick-table td:nth-child(2){font-weight:600}.quick-table select{border:1px solid #bdcbd8;border-radius:6px;padding:7px;background:#fff;min-width:125px}.quick-table tr.active{background:#f2f8fc}.code{font-size:.78rem;color:#4b6a82;font-weight:700}.details{border:1px solid #dbe4ec;border-radius:8px;padding:13px;margin:10px 0;background:#fbfcfe}.details[hidden]{display:none}.details .note{font-size:.9rem;margin:8px 0}.warning{color:#b42318;font-size:.83rem;margin-top:7px}.invalid{border:2px solid #c33!important;background:#fff7f5!important}.highlight{background:#fff5ce!important}details>summary{cursor:pointer;font-weight:650;color:#205c82;padding:5px 0}details.tech{border-top:1px solid #e1e9ef;padding:9px 0}details.tech>summary{font-size:.94rem}.tablewrap{overflow-x:auto}table.inputs{width:100%;border-collapse:collapse;min-width:680px}.inputs td,.inputs th{border-bottom:1px solid #e4ebf0;padding:9px;text-align:left}.inputs input,.inputs textarea{border:1px solid #b9c8d5;border-radius:5px;padding:7px;width:100%}.inputs textarea{min-height:54px}.permission-group{border:1px solid #dfe6ed;border-radius:7px;margin:9px 0;padding:11px}.permission-group strong{display:block;margin-bottom:8px}.permission-group label{display:block;padding:5px}.permission-group small{display:block;color:#627789;margin-left:24px}.sticky{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #d4e0e9;box-shadow:0 -3px 15px #183d5720;padding:11px max(18px,calc((100vw - 1044px)/2));display:flex;align-items:center;gap:14px;z-index:10}.sticky .grow{font-size:.86rem;color:#476277}.dirty{color:#b42318!important}#message{font-size:.84rem;color:#235b7b}.terms{display:grid;grid-template-columns:repeat(2,1fr);gap:7px 16px}.terms p{margin:0;font-size:.86rem}.hide{display:none!important}@media(max-width:700px){.grid,.terms{grid-template-columns:1fr}.quick-table th:nth-child(1),.quick-table td:nth-child(1){width:46px}.quick-table select{min-width:110px}.panel{padding:13px}main{padding:10px}.sticky{padding:10px}.sticky .grow{font-size:.75rem}}
+
+.confirm-choice{display:flex;align-items:center;gap:8px;margin:10px 0;padding:7px 10px;border:1px solid #d7e5ec;border-radius:7px;background:#f0f7fb;font-size:.86rem;cursor:pointer}
+.confirm-choice input{accent-color:#196d8c;width:18px;height:18px}
+[data-item-reference]{min-height:104px!important}
+.quick-table select{max-width:340px;width:100%;white-space:normal}
+@media(max-width:700px){.quick-table select{min-width:145px}.quick-table td:nth-child(2){min-width:150px}}
+
 </style></head><body>
 <header><h1>审批意见 · 简明版</h1><p>记录你对 16 项事项的决定。可以只填一部分就保存；未填的保持“待决定”。</p></header>
 <main>
 <div class="notice"><strong>可以直接保存空白表，也可以只决定几项。</strong> 其他项目保持“待决定”，不会阻止保存。保存 JSON 只记录你的意见，不运行代码、不自动关闭决策或宣布验收。</div>
-<div class="panel"><div class="bar"><strong id="counts">未决定 16 · 已批准 0 · 已批准缺信息 0 · 其他 0</strong><span class="grow"></span><span id="progressText" class="small">已决定 0 / 16</span></div><div class="progress" role="progressbar" aria-label="审批进度" aria-valuemin="0" aria-valuemax="16" aria-valuenow="0" id="progress"><div id="progressFill"></div></div><p class="muted">只有选择“批准”且填写审核依据与授权范围，才算批准所需信息已填；这不代表实际审批权限已核验。</p></div>
+<div class="panel"><div class="bar"><strong id="counts">未决定 16 · 已批准 0 · 已批准缺信息 0 · 其他 0</strong><span class="grow"></span><span id="progressText" class="small">已决定 0 / 16</span></div><div class="progress" role="progressbar" aria-label="审批进度" aria-valuemin="0" aria-valuemax="16" aria-valuenow="0" id="progress"><div id="progressFill"></div></div><p class="muted">每项已有专门的可选决定和可修改的参考意见。选“批准”后，请明确确认所采用的文字；如有【请填写】标记，还需补全真实数值、版本或执行范围。</p></div>
 <details class="panel" open id="registration"><summary>一、申请登记（先看这里）</summary><div class="grid" style="margin-top:13px">
 <label class="field">申请编号<input id="applicationId" value="HAR-2026-11-06-001"></label>
 <label class="field">分支<input id="branch" value="dev-plan-P0-P1-mat-dictionary-probe"></label>
@@ -15,7 +22,7 @@
 </div><div class="bar" style="margin-top:12px"><button type="button" class="btn" id="importButton">导入已有 JSON</button><span class="muted">可以稍后继续填写</span></div><input type="file" id="importFile" accept=".json,application/json" hidden></details>
 <details class="panel" id="glossary"><summary>术语速查（不懂时再展开）</summary><div class="terms" style="margin-top:12px">
 <p><b>DEC：</b>尚待决定的工程问题。</p><p><b>Golden：</b>用来比较结果是否正确的参考数据。</p><p><b>atol / rtol：</b>绝对误差 / 相对误差允许范围。</p><p><b>CTest：</b>CMake 项目的自动化测试工具。</p><p><b>TOCTOU：</b>检查文件与使用文件之间发生变化的风险。</p><p><b>ADR：</b>记录重要设计决定及原因的文档。</p><p><b>RSS：</b>程序占用的实际物理内存量。</p><p><b>FNV64 / SHA-256：</b>两种文件指纹算法，SHA-256 更适合核验文件身份。</p><p><b>PR：</b>请求把开发分支的修改合并进仓库。</p><p><b>M0–M5：</b>项目计划中的六个里程碑。</p></div></details>
-<section class="panel" id="decisions"><h2>二、快速决定（16 项）</h2><p class="muted">每行只需选择一个决定；不知道的保留“待决定”。点击“填写 →”可查看白话解释、依据和范围。</p>
+<section class="panel" id="decisions"><h2>二、快速决定（16 项）</h2><p class="muted">每项下拉选项都针对对应问题。选“先让 AI 起草”不等于批准最终方案；打开“查看说明”可以直接使用或修改预填的参考意见。</p>
 <div class="bar" style="margin-bottom:12px"><button type="button" class="btn" id="allPending">全部保持待决定</button><button type="button" class="btn" id="allDeferred">全部暂缓</button><span class="muted">批量操作会覆盖当前 16 项决定，执行前会确认。</span></div>
 <div class="tablewrap"><table class="quick-table"><thead><tr><th>编号</th><th>事项（白话说明）</th><th>决定</th><th>详情</th></tr></thead><tbody id="decisionRows"></tbody></table></div>
 <div id="detailHost"></div>
@@ -29,7 +36,7 @@
 </details>
 <details class="panel" id="advanced"><summary>高级：保存文件名、选择文件夹和兼容性说明</summary><div class="grid"><label class="field">文件名<input id="filename" value="HUMAN_APPROVAL_REQUEST.json"></label><label class="field">建议目录<input id="directoryHint" value="docs/approval/" readonly></label></div><button type="button" class="btn" id="folderButton" style="margin-top:10px">选择保存文件夹（可选）</button><p class="muted" id="folderStatus">默认点击保存会下载 JSON；浏览器下载目录由你决定。建议将文件放到 docs/approval/。支持文件夹授权的浏览器可在这里选择目录。</p></details>
 <p class="muted">页面离线运行，不会自动提交 Git、运行 MATLAB/CMake/CTest 或修改原始 MAT 数据。</p>
-</main><div class="sticky"><span class="grow" id="saveHint">当前 16 项待决定，0 项批准——可以保存空白基线</span><button type="button" class="btn primary" id="saveButton">保存 JSON</button></div>
+</main><div class="sticky"><span class="grow" id="saveHint">当前 16 项待决定、0 项批准——可以保存空白基线</span><button type="button" class="btn primary" id="saveButton">保存 JSON</button></div>
 <script>
 "use strict";
 const ITEMS=[
@@ -72,10 +79,471 @@ const PERMISSIONS=[
 ];
 const MILESTONES=["M0：源资料与设计评审","M1：MAT 读写与构建","M2：Bias 计算与统计","M3：Adaptive 数值闭环","M4：分析/绘图与复现","M5：交付与验收"];
 const SIMPLE=[["H-01","数值容差","C++ 算出的数和 MATLAB 差多少算一样？","差多少算可以接受？"],["H-02","第三方版权","rodrigues.m 和 SHRotate.m 能否合法移植？","是否允许移植与公开这些代码？"],["H-03","命令行与测试","程序命令、错误提示和测试文件如何确定？","是否接受目前的接口和测试方案？"],["H-04","运行平台与资源","需要支持哪些 Linux 版本，允许使用多少资源？","确定平台与资源限制。"],["H-05","需求修改","是否允许改变功能范围或验收要求？","是否批准具体需求变更？"],["H-06","设计定稿","现有架构和接口设计是否可以定稿？","是否批准冻结指定设计？"],["H-07","历史数据差异","旧 MAT 文件中多出来的数据怎么处理？","是否接受归因与兼容方案？"],["H-08","MAT 文件和校验","支持哪些 MAT 文件？用什么方法确认文件身份？","决定格式范围和校验方式。"],["H-09","MATLAB 参考数据","要不要用 MATLAB 生成比较用的标准答案？","是否允许生成、保存参考数据？"],["H-10","运行开发与测试","允许 AI 编译 C++、运行测试和写回读吗？","决定哪些操作可以实际执行。"],["H-11","运行文档检查脚本","允许在真实 Linux 环境运行 Bash 检查吗？","是否授权执行并保存日志？"],["H-12","MAT 写入安全","怎样防止输出覆盖原始数据？","是否批准安全方案与负例验证？"],["H-13","计算失败如何处理","算法失败时应该停止、继续还是保留状态？","决定失败处理方式。"],["H-14","球谐 R5 实现","球谐旋转的 R5 算法可以如何合法实现？","是否批准合法实现路线？"],["H-15","里程碑与预算","项目阶段、资源和预算如何安排？","是否批准具体资源承诺？"],["H-16","合并与发布","最后能不能合并 PR、发布、加 LICENSE？","决定哪些发布动作得到授权。"]];
+
+const CHOICES={
+ "H-01": [
+  [
+   "pending",
+   "pending",
+   "暂不决定",
+   "暂不决定数值容差；没有独立 MATLAB 参考数据和逐模块误差记录前，不设置正式 atol/rtol。"
+  ],
+  [
+   "draft",
+   "draft",
+   "先请 AI 整理容差建议",
+   "请先比较固定输入下 MATLAB 与 C++ 的逐项误差，列出 atol/rtol 候选及依据；我暂不批准具体阈值。"
+  ],
+  [
+   "approve",
+   "approved",
+   "批准已有、可核对的容差方案",
+   "我只批准已列明的逐模块数值容差和统计判据：【请填写具体 atol/rtol、Golden 来源、适用版本】。缺少这些信息不代表 DEC-005 已关闭。"
+  ],
+  [
+   "revise",
+   "revise",
+   "现有阈值不合适，重新提案",
+   "请重新提出逐模块容差并说明与 MATLAB 固定输入参考值的差异；现有方案不批准。"
+  ],
+  [
+   "defer",
+   "deferred",
+   "等参考数据齐全后再定",
+   "先取得真实 Golden 和误差统计，再决定数值验收阈值。"
+  ]
+ ],
+ "H-02": [
+  [
+   "pending",
+   "pending",
+   "暂不决定",
+   "第三方代码许可还需核查；暂不认定 rodrigues.m 和 SHRotate.m 可移植或公开。"
+  ],
+  [
+   "draft",
+   "draft",
+   "先调查版权来源",
+   "请先列出两个源文件的版权头、原作者、许可及允许移植范围；只提交调查结果，不复制未经授权的第三方代码。"
+  ],
+  [
+   "approve",
+   "approved",
+   "确认授权后批准明确范围的移植",
+   "我已经核验相关授权，仅批准以下文件和方式：【请填写授权来源、被许可文件、复制/改写/再分发范围】；不涵盖未核实的第三方内容。"
+  ],
+  [
+   "reject",
+   "rejected",
+   "不允许复制或公开第三方代码",
+   "暂不允许复制、移植或公开未经核实许可证的第三方代码，可以先做不复制代码的来源调查。"
+  ],
+  [
+   "defer",
+   "deferred",
+   "等版权证据齐全再决定",
+   "版权与再分发范围维持待审核，不因此关闭 DEC-003/007。"
+  ]
+ ],
+ "H-03": [
+  [
+   "pending",
+   "pending",
+   "暂不决定",
+   "CLI 命令、错误码、测试与 Golden 身份映射仍为候选，暂不冻结。"
+  ],
+  [
+   "draft",
+   "draft",
+   "先完善接口和测试清单",
+   "请整理 cli.md、contracts.md 的参数/退出码及 TC→测试/Golden 对应表，供我确认；现在不冻结合同。"
+  ],
+  [
+   "approve",
+   "approved",
+   "批准已审阅的命令和测试规则",
+   "我批准下列已明确的 CLI/错误合同与测试映射：【请填写文档 SHA、命令范围、测试/Golden 身份】；未列明条目继续待批准。"
+  ],
+  [
+   "revise",
+   "revise",
+   "接口或测试映射需要调整",
+   "当前命令、退出码或测试映射仍有问题，请修订候选方案，暂不冻结。"
+  ],
+  [
+   "defer",
+   "deferred",
+   "暂缓接口冻结",
+   "等参数、错误格式及真实测试实体确定后再决定 DEC-008。"
+  ]
+ ],
+ "H-04": [
+  [
+   "pending",
+   "pending",
+   "暂不决定",
+   "尚不承诺 Debian/Ubuntu 具体版本、CPU/RAM 或性能阈值。"
+  ],
+  [
+   "draft",
+   "draft",
+   "先列平台和资源测量方案",
+   "先记录现有探针环境并提出完整工程的 Debian/Ubuntu 版本、CPU/RAM 和测试指标候选，不把探针结果当作生产验收。"
+  ],
+  [
+   "approve",
+   "approved",
+   "批准已填写的平台和资源范围",
+   "我批准以下平台/编译器、CPU/RAM 和性能预算：【请填写具体发行版版本、设备、时间与资源上限】；未实测的性能不得声明通过。"
+  ],
+  [
+   "defer",
+   "deferred",
+   "暂不设置性能预算",
+   "保留实际 wall/CPU/RSS 记录需求，性能阈值等第一次有效测量后再批准。"
+  ]
+ ],
+ "H-05": [
+  [
+   "pending",
+   "pending",
+   "暂不决定",
+   "不修改既有 REQ、AC、优先级或功能范围。"
+  ],
+  [
+   "draft",
+   "draft",
+   "先列出需求变更影响",
+   "请先列出涉及的需求 ID、原义务、候选差异和受影响的 TC/AC/P；未经确认不得实质改写需求。"
+  ],
+  [
+   "approve",
+   "approved",
+   "批准指定的需求变更",
+   "我仅批准以下已逐项说明的需求变更：【请填写 REQ/AC ID、修改前后义务及受审版本】；其他要求保持不变。"
+  ],
+  [
+   "reject",
+   "rejected",
+   "保持原需求，不接受变更",
+   "维持目前 SRS 需求义务、优先级及验收要求；允许不改变语义的文字修正。"
+  ]
+ ],
+ "H-06": [
+  [
+   "pending",
+   "pending",
+   "暂不决定",
+   "现有 HLD/LLD/ADR 维持评审草案，不冻结。"
+  ],
+  [
+   "draft",
+   "draft",
+   "先准备设计冻结核对表",
+   "请完成模块合同、依赖关系、未决 DEC 与缺失测试证据的核对表；仅形成可审查草案。"
+  ],
+  [
+   "approve",
+   "approved",
+   "批准指定版本的设计冻结",
+   "我仅批准以下 HLD/LLD/ADR 文档及具体版本冻结：【请填写文件、commit/blob SHA、批准范围及例外】；不代表代码已通过测试。"
+  ],
+  [
+   "revise",
+   "revise",
+   "继续修改设计，不冻结",
+   "当前设计仍需补全接口/错误/依赖约定，维持未冻结状态。"
+  ]
+ ],
+ "H-07": [
+  [
+   "pending",
+   "pending",
+   "暂不决定",
+   "历史 MAT 额外字段的来源和统计口径保持未归因。"
+  ],
+  [
+   "draft",
+   "draft",
+   "先核查新旧 MAT 差异",
+   "请列出 alleadap*、rottransratio 在历史 MAT、当前 save 与分析入口中的差异，标注可核对证据。"
+  ],
+  [
+   "approve",
+   "approved",
+   "批准已核实的历史兼容策略",
+   "我批准以下已核实的字段归因与兼容处理：【请填写字段、来源、读取/导出及统计口径】；不得修改原始 MAT。"
+  ],
+  [
+   "defer",
+   "deferred",
+   "暂保留未知来源状态",
+   "历史 MAT 原样只读保留，未知来源字段不伪造、不纳入未经批准的统计。"
+  ]
+ ],
+ "H-08": [
+  [
+   "pending",
+   "pending",
+   "暂不决定",
+   "MAT 支持边界和文件身份标准仍待最终审核。"
+  ],
+  [
+   "draft",
+   "draft",
+   "先准备 SHA-256 核对方案",
+   "先针对 582 个 MAT 文件提出 SHA-256 独立复核及正式 Reader 的类型拒绝清单；不把 FNV64 冒充 SHA-256。"
+  ],
+  [
+   "approve",
+   "approved",
+   "批准已审阅的 MAT 支持范围",
+   "我仅批准以下 MAT 类型/维度和身份核查规则：【请填写 MAT 版本、class、FNV64/SHA-256 要求及适用文件】；未来未知类型应明确拒绝。"
+  ],
+  [
+   "defer",
+   "deferred",
+   "等正式 Reader 和哈希结果再决定",
+   "原有 582/582 探针事实保持有效，但不能据此宣布生产 Reader 或身份验收通过。"
+  ]
+ ],
+ "H-09": [
+  [
+   "pending",
+   "pending",
+   "暂不决定",
+   "尚未授权实际启动 MATLAB 生成 Golden。"
+  ],
+  [
+   "draft",
+   "draft",
+   "先编写 Golden 采集计划",
+   "请先列固定输入、参考输出、脚本/数据 SHA、合法运行环境及存储方案，不执行 MATLAB。"
+  ],
+  [
+   "approve",
+   "approved",
+   "允许在明确范围内生成 Golden",
+   "仅授权在以下合法 MATLAB 环境、固定输入及隔离目录生成 Golden：【请填写执行环境、脚本、输入、存储路径】；不得覆盖原始资料。"
+  ],
+  [
+   "defer",
+   "deferred",
+   "暂不运行 MATLAB",
+   "参考数据采集继续待批准；不得把 C++ 自算结果当作独立 Golden。"
+  ]
+ ],
+ "H-10": [
+  [
+   "pending",
+   "pending",
+   "暂不决定",
+   "目前没有批准任何新增业务构建、CTest 或实验运行。"
+  ],
+  [
+   "draft",
+   "draft",
+   "先整理实现与测试计划（不运行）",
+   "请先准备 C++ 接口、CMake targets、CTest/负例及输出隔离方案；本选项仅授权起草，不等于授权编译。"
+  ],
+  [
+   "approveCode",
+   "approved",
+   "仅允许在开发分支修改 C++ 代码",
+   "仅授权在指定开发分支实施已明确的 C++ 功能，不授权编译、运行、CTest、性能测量或修改 origin/**：【请填写允许的代码目录和目标分支】。"
+  ],
+  [
+   "approveBuild",
+   "approved",
+   "允许指定 CMake/CTest 实际运行",
+   "仅授权在以下环境、目录执行明确列出的 CMake/CTest 命令：【请填写实际命令、执行环境、构建/输出目录及测试范围】。不自动授权 MATLAB 或发布。"
+  ],
+  [
+   "defer",
+   "deferred",
+   "暂不授权代码与测试执行",
+   "继续保持设计准备阶段；本次不批准生产代码实施或真实测试。"
+  ]
+ ],
+ "H-11": [
+  [
+   "pending",
+   "pending",
+   "暂不决定",
+   "Bash 检查器的现场执行仍没有本轮实际日志。"
+  ],
+  [
+   "draft",
+   "draft",
+   "先给我检查命令和日志模板",
+   "请准备在完整仓库工作树运行 check_docs_traceability.sh 的命令及 stdout/stderr/exit/SHA 记录模板；先不执行。"
+  ],
+  [
+   "approve",
+   "approved",
+   "允许实际运行只读 Bash 检查",
+   "仅允许在完整 Debian/Ubuntu 工作树运行 bash scripts/check_docs_traceability.sh 并保存 stdout、stderr、退出码与 HEAD SHA；不得因此启动 CTest。"
+  ],
+  [
+   "defer",
+   "deferred",
+   "暂不运行 Bash",
+   "只保留 GitHub 连接器静态检查为已有证据，不声称 Bash 已在现场执行。"
+  ]
+ ],
+ "H-12": [
+  [
+   "pending",
+   "pending",
+   "暂不决定",
+   "尚不批准 MAT 写回读/路径竞态防护的最终验收。"
+  ],
+  [
+   "draft",
+   "draft",
+   "先准备写入安全方案",
+   "先提出独立结果目录、不可覆盖、软链接/TOCTOU 负例及原子发布流程，不对原始 MAT 进行写操作。"
+  ],
+  [
+   "approve",
+   "approved",
+   "允许在隔离目录验证写入安全",
+   "仅授权在隔离测试副本及指定新结果目录测试 MAT 读写/负例：【请填写测试范围、隔离目录及允许的命令】；禁止覆盖 origin/**。"
+  ],
+  [
+   "revise",
+   "revise",
+   "现有安全方案需要修改",
+   "先补足竞态检查、拒绝覆盖及写后回读的设计，暂不认定安全验收通过。"
+  ]
+ ],
+ "H-13": [
+  [
+   "pending",
+   "pending",
+   "暂不决定",
+   "失败时继续、停止或回滚的选择尚未批准。"
+  ],
+  [
+   "draft",
+   "draft",
+   "先核对原 MATLAB 的失败行为",
+   "请记录 KvD/Adaptive 在 NaN/Inf、奇异、状态提交时的原始行为，提出显式失败处理候选，不改变原算法。"
+  ],
+  [
+   "approve",
+   "approved",
+   "批准指定的失败/状态策略",
+   "我批准以下明确列出的失败处理及 Session 状态提交规则：【请填写何时停止、继续、回滚和保留结果及原版差异】。"
+  ],
+  [
+   "revise",
+   "revise",
+   "现有失败处理方案不合适",
+   "先保持原数值行为的可追踪性，重新提出失败时处理候选。"
+  ]
+ ],
+ "H-14": [
+  [
+   "pending",
+   "pending",
+   "暂不决定",
+   "球谐 R5 的版权与实现路线未获批准。"
+  ],
+  [
+   "draft",
+   "draft",
+   "先做版权核查与独立方案",
+   "请说明 R3/R5 旋转公式、源代码版权与可独立实现的路径，不直接复制未授权第三方代码。"
+  ],
+  [
+   "approve",
+   "approved",
+   "授权后批准指定的 R5 实现路线",
+   "已核实合法来源，我批准以下 R5 实现方案：【请填写授权凭证、实现方法和适用范围】；数值等价仍须独立 Golden/DEC-005。"
+  ],
+  [
+   "reject",
+   "rejected",
+   "不复制第三方 R5 代码",
+   "禁止直接移植未经明确许可的 SHRotate.m/R5 第三方代码；可以保留文献研究和独立公式分析。"
+  ]
+ ],
+ "H-15": [
+  [
+   "pending",
+   "pending",
+   "暂不决定",
+   "暂不分配里程碑日期、预算或硬件资源承诺。"
+  ],
+  [
+   "draft",
+   "draft",
+   "先列出资源与里程碑候选",
+   "请整理 M0–M5 的退出证据、可用设备与工作量建议；不填写虚构负责人、工期或性能上限。"
+  ],
+  [
+   "approve",
+   "approved",
+   "批准已填写的资源安排",
+   "我批准以下资源、CPU/RAM 和里程碑计划：【请填写具体资源、日期/工期或明确写无期限承诺】；未列项目保持待决定。"
+  ],
+  [
+   "defer",
+   "deferred",
+   "暂不承诺日期和预算",
+   "继续按证据驱动执行已授权任务，不设置未经批准的日期或资源上限。"
+  ]
+ ],
+ "H-16": [
+  [
+   "pending",
+   "pending",
+   "暂不决定",
+   "本次不授权 PR 合并、发布、许可证创建或基线签字。"
+  ],
+  [
+   "draft",
+   "draft",
+   "先准备 PR 和发布检查清单",
+   "请整理 Draft PR、提交 SHA、真实测试证据、版权和未决 DEC；本选项不授权合并/发布。"
+  ],
+  [
+   "approveMerge",
+   "approved",
+   "仅批准明确指定的 PR 合并",
+   "仅批准以下具体 PR 合并：【请填写仓库、PR 编号、目标分支及适用 commit SHA】；不授权发布或创建 LICENSE。"
+  ],
+  [
+   "approvePublish",
+   "approved",
+   "批准指定发布/许可证动作",
+   "仅批准明确的发布/许可证/基线签字范围：【请填写版本、许可证适用文件、发布范围及受审 SHA】；不自动批准未列明动作。"
+  ],
+  [
+   "reject",
+   "rejected",
+   "暂不合并、不发布、不创建 LICENSE",
+   "保留 Draft PR 与现有未冻结状态，不执行正式发布或添加许可证。"
+  ]
+ ]
+};
+
 const $=id=>document.getElementById(id);
-const statuses=[["pending","待决定"],["approved","批准"],["revise","退回修改"],["deferred","暂缓"],["rejected","拒绝"]];
+const statuses=[["pending","待决定"],["draft","允许先起草"],["approved","批准"],["revise","退回修改"],["deferred","暂缓"],["rejected","拒绝"]];
 const descriptions=Object.fromEntries(SIMPLE.map(x=>[x[0],x]));
-const state=Object.fromEntries(ITEMS.map(x=>[x[0],{id:x[0],decision:"pending",evidence:"",scope:"",conditions:"",notes:""}]));
+const state=Object.fromEntries(ITEMS.map(x=>{
+ const choice=CHOICES[x[0]][0];
+ return [x[0],{id:x[0],choiceId:choice[0],decision:"pending",referenceText:choice[3],referenceConfirmed:false,evidence:"",scope:"",conditions:"",notes:""}];
+}));
+function chosen(r){return CHOICES[r.id].find(x=>x[0]===r.choiceId)||CHOICES[r.id][0];}
+function missing(r){
+ if(r.decision!=="approved")return [];
+ const absent=[];
+ if(!r.referenceConfirmed)absent.push("确认采用或修改参考意见");
+ if(r.referenceText.includes("【请填写"))absent.push("补充具体版本、阈值或执行范围");
+ return absent;
+}
 const extraFields={
 rightsFields:[["rodriguesRights","rodrigues.m 的许可和移植范围"],["shRotateRights","SHRotate.m / R5 的合法实现路线"],["archiveRights","原始数据与 Golden 可公开范围"],["rightsEvidence","版权审核证据"],["licenseDecision","是否创建 LICENSE"],["licenseScope","许可证适用范围"]],
 contractFields:[["runIdPolicy","RunId 命名与并发规则"],["diagnostics","诊断输出格式"],["negativeNoise","负噪声系数如何处理"],["errorMapping","错误码规则"],["testMapping","测试与参考数据对应关系"],["hashPolicy","文件身份校验方法"],["goldenEnvironment","MATLAB 参考数据环境和来源"]],
@@ -90,23 +558,86 @@ const permissionGroups=[
 let dirty=false,folder=null;
 const clean=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function markDirty(){dirty=true;update();}
-function incomplete(r){return r.decision==="approved"&&(!r.evidence.trim()||!r.scope.trim());}
+
+function incomplete(r){return missing(r).length>0;}
+function markDirty(){dirty=true;update();}
 function update(){
-const vals=Object.values(state),pending=vals.filter(x=>x.decision==="pending").length,approved=vals.filter(x=>x.decision==="approved").length,missing=vals.filter(incomplete).length,other=16-pending-approved,decided=16-pending;
-$("counts").textContent="未决定 "+pending+" · 已批准 "+approved+" · 已批准缺信息 "+missing+" · 其他 "+other;
-$("progressText").textContent="已决定 "+decided+" / 16";$("progressFill").style.width=(decided/16*100)+"%";$("progress").setAttribute("aria-valuenow",decided);
-$("saveHint").textContent=(dirty?"● 有未保存更改 · ":"")+"当前 "+pending+" 项待决定，"+approved+" 项批准，"+missing+" 项需补信息——可以直接保存";
-$("saveHint").classList.toggle("dirty",dirty);
-document.querySelectorAll("[data-row]").forEach(row=>{const id=row.dataset.row;row.classList.toggle("active",state[id].decision!=="pending");});
-document.querySelectorAll("[data-detail]").forEach(box=>{const r=state[box.dataset.detail],msg=box.querySelector(".warning"),required=box.querySelector(".required-fields");required.hidden=r.decision!=="approved"&&r.decision!=="revise";msg.textContent=incomplete(r)?"还需填写："+[!r.evidence.trim()?"审核依据":null,!r.scope.trim()?"授权范围":null].filter(Boolean).join("、"):"";});
+ const vals=Object.values(state),pending=vals.filter(x=>x.decision==="pending").length,approved=vals.filter(x=>x.decision==="approved").length,absent=vals.filter(incomplete).length,other=16-pending-approved,decided=16-pending;
+ $("counts").textContent="未决定 "+pending+" · 已批准 "+approved+" · 需补信息 "+absent+" · 其他决定 "+other;
+ $("progressText").textContent="已选择 "+decided+" / 16";$("progressFill").style.width=(decided/16*100)+"%";$("progress").setAttribute("aria-valuenow",decided);
+ $("saveHint").textContent=(dirty?"● 有未保存更改 · ":"")+"待决定 "+pending+" 项、已批准 "+approved+" 项、需补 "+absent+" 项——任何时候都能保存";
+ $("saveHint").classList.toggle("dirty",dirty);
+ document.querySelectorAll("[data-row]").forEach(row=>{
+  const id=row.dataset.row;row.classList.toggle("active",state[id].decision!=="pending");
+ });
+ document.querySelectorAll("[data-detail]").forEach(box=>{
+  const r=state[box.dataset.detail],miss=missing(r),warn=box.querySelector(".warning"),selection=box.querySelector("[data-current-choice]");
+  selection.textContent=chosen(r)[2];
+  warn.textContent=miss.length?"已选择批准，但还需："+miss.join("、")+"。可先保存草案。":"";
+  box.querySelector("[data-item-confirm]").checked=r.referenceConfirmed;
+ });
 }
-$("decisionRows").innerHTML=SIMPLE.map(x=>'<tr data-row="'+x[0]+'"><td class="code">'+x[0]+'</td><td>'+clean(x[1])+'<div class="muted">'+clean(x[2])+'</div></td><td><select data-decision="'+x[0]+'" aria-label="'+x[0]+' 审批决定">'+statuses.map(z=>'<option value="'+z[0]+'">'+z[1]+'</option>').join("")+'</select></td><td><button type="button" class="btn" data-open="'+x[0]+'">填写 →</button></td></tr>').join("");
-$("detailHost").innerHTML=SIMPLE.map(x=>'<section class="details" data-detail="'+x[0]+'" hidden><div class="bar"><strong>'+x[0]+' · '+clean(x[1])+'</strong><span class="grow"></span><button type="button" class="btn" data-close="'+x[0]+'">收起</button></div><p class="note">'+clean(x[2])+'</p><p class="muted">你需要决定：'+clean(x[3])+'</p><p class="muted">资料：'+clean(ITEMS.find(y=>y[0]===x[0])[2])+'</p><div class="required-fields grid" hidden><label class="field">审核依据 <span style="color:#b42318">*</span><textarea data-item="'+x[0]+'" data-key="evidence" placeholder="写出依据或引用资料"></textarea></label><label class="field">授权范围 <span style="color:#b42318">*</span><textarea data-item="'+x[0]+'" data-key="scope" placeholder="具体批准什么，哪些不批准"></textarea></label></div><p class="warning" role="status"></p><details><summary>高级：条件 / 例外 / 备注</summary><div class="grid"><label class="field">条件或例外<textarea data-item="'+x[0]+'" data-key="conditions"></textarea></label><label class="field">审核意见<textarea data-item="'+x[0]+'" data-key="notes"></textarea></label></div></details></section>').join("");
-document.querySelectorAll("[data-decision]").forEach(el=>el.addEventListener("change",()=>{state[el.dataset.decision].decision=el.value;markDirty();}));
-document.querySelectorAll("[data-open]").forEach(el=>el.onclick=()=>{const box=document.querySelector('[data-detail="'+el.dataset.open+'"]');box.hidden=false;box.scrollIntoView({behavior:"smooth",block:"center"});});
+function refreshReference(id){
+ const r=state[id],box=document.querySelector('[data-detail="'+id+'"]');
+ const input=box.querySelector("[data-item-reference]");
+ input.value=r.referenceText;
+ box.querySelector("[data-item-confirm]").checked=r.referenceConfirmed;
+}
+$("decisionRows").innerHTML=SIMPLE.map(x=>{
+ const choices=CHOICES[x[0]];
+ const select=choices.map(y=>'<option value="'+clean(y[0])+'">'+clean(y[2])+'</option>').join("");
+ return '<tr data-row="'+x[0]+'"><td class="code">'+x[0]+'</td><td>'+clean(x[1])+'<div class="muted">'+clean(x[2])+'</div></td><td><select data-choice="'+x[0]+'" aria-label="'+x[0]+' 决定">'+select+'</select></td><td><button type="button" class="btn" data-open="'+x[0]+'">查看说明 →</button></td></tr>';
+}).join("");
+$("detailHost").innerHTML=SIMPLE.map(x=>{
+ const id=x[0],r=state[id];
+ return '<section class="details" data-detail="'+id+'" hidden>'+
+ '<div class="bar"><strong>'+id+' · '+clean(x[1])+'</strong><span class="grow"></span><button type="button" class="btn" data-close="'+id+'">收起</button></div>'+
+ '<p class="note">'+clean(x[2])+'</p><p class="muted">你需要决定：'+clean(x[3])+'</p>'+
+ '<p class="muted">当前选择：<strong data-current-choice>暂不决定</strong></p>'+
+ '<label class="field">参考意见（已预填，可以直接修改）'+
+ '<textarea data-item-reference="'+id+'" rows="4">'+clean(r.referenceText)+'</textarea></label>'+
+ '<label class="confirm-choice"><input type="checkbox" data-item-confirm="'+id+'"> 我确认采用上面这段文字作为我的意见</label>'+
+ '<p class="muted">这段文字由 AI 提供，仅供参考。未勾选确认时，JSON 会保留为“参考建议”，不会把它当成人类已确认的意见。</p>'+
+ '<p class="warning" role="status"></p>'+
+ '<details><summary>高级：更多资料、范围和备注（可不填）</summary><div class="grid">'+
+ '<label class="field">资料或文件链接<textarea data-item="'+id+'" data-key="evidence" rows="2"></textarea></label>'+
+ '<label class="field">更精确的适用范围<textarea data-item="'+id+'" data-key="scope" rows="2"></textarea></label>'+
+ '<label class="field">附加条件/例外<textarea data-item="'+id+'" data-key="conditions" rows="2"></textarea></label>'+
+ '<label class="field">其他备注<textarea data-item="'+id+'" data-key="notes" rows="2"></textarea></label>'+
+ '</div></details></section>';
+}).join("");
+document.querySelectorAll("[data-choice]").forEach(el=>el.addEventListener("change",()=>{
+ const id=el.dataset.choice,r=state[id],c=CHOICES[id].find(x=>x[0]===el.value);
+ if(!c)return;
+ r.choiceId=c[0];r.decision=c[1];r.referenceText=c[3];r.referenceConfirmed=false;
+ refreshReference(id);
+ markDirty();
+}));
+document.querySelectorAll("[data-open]").forEach(el=>el.onclick=()=>{
+ const box=document.querySelector('[data-detail="'+el.dataset.open+'"]');
+ box.hidden=false;box.scrollIntoView({behavior:"smooth",block:"center"});
+});
 document.querySelectorAll("[data-close]").forEach(el=>el.onclick=()=>document.querySelector('[data-detail="'+el.dataset.close+'"]').hidden=true);
-document.querySelectorAll("[data-item]").forEach(el=>el.addEventListener("input",()=>{state[el.dataset.item][el.dataset.key]=el.value;markDirty();}));
-function bulk(decision){if(!confirm("这会把全部 16 项决定改成“"+statuses.find(x=>x[0]===decision)[1]+"”，但保留已填的依据和范围。确定吗？"))return;for(const r of Object.values(state))r.decision=decision;document.querySelectorAll("[data-decision]").forEach(x=>x.value=decision);markDirty();}
+document.querySelectorAll("[data-item-reference]").forEach(el=>el.addEventListener("input",()=>{
+ state[el.dataset.itemReference].referenceText=el.value;markDirty();
+}));
+document.querySelectorAll("[data-item-confirm]").forEach(el=>el.addEventListener("change",()=>{
+ state[el.dataset.itemConfirm].referenceConfirmed=el.checked;markDirty();
+}));
+document.querySelectorAll("[data-item]").forEach(el=>el.addEventListener("input",()=>{
+ state[el.dataset.item][el.dataset.key]=el.value;markDirty();
+}));
+function bulk(decision){
+ const action=decision==="pending"?"待决定":"暂缓";
+ if(!confirm("这会把全部 16 项决定改成“"+action+"”，但保留你在高级备注里写的文字。确定吗？"))return;
+ for(const r of Object.values(state)){
+  const c=CHOICES[r.id].find(x=>x[1]===decision)||CHOICES[r.id][0];
+  r.choiceId=c[0];r.decision=c[1];r.referenceText=c[3];r.referenceConfirmed=false;
+  refreshReference(r.id);
+ }
+ document.querySelectorAll("[data-choice]").forEach(el=>el.value=state[el.dataset.choice].choiceId);
+ markDirty();
+}
 $("allPending").onclick=()=>bulk("pending");$("allDeferred").onclick=()=>bulk("deferred");
 $("toleranceRows").innerHTML=TOLERANCES.map(x=>'<tr data-tolerance="'+x[1]+'"><td>'+clean(x[0])+'</td>'+["atol","rtol","criterion","golden"].map(k=>'<td><textarea data-tol="'+k+'" aria-label="'+clean(x[0]+" "+k)+'"></textarea></td>').join("")+'</tr>').join("");
 for(const [group,fields] of Object.entries(extraFields)){$(group).innerHTML=fields.map(([key,label])=>'<label class="field">'+clean(label)+'<textarea data-extra="'+key+'"></textarea></label>').join("");}
