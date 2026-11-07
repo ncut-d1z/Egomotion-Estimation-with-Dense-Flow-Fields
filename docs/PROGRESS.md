@@ -34,25 +34,26 @@
 | E-DOC-007 | [长期无需 MATLAB 运行政策](golden/NO_MATLAB_EXECUTION_POLICY.md) + [SRS](REQUIREMENTS.md) + [TEST_PLAN](TEST_PLAN.md) + [L2/L3/L4 矩阵](golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md) | 已从规范性 AC 中撤销 MATLAB 运行及 L1 逐节点强制前提，关键验收路线改为 L2/L3/L4；未修改原始 MATLAB/MAT 或旧审批 JSON | L2/L3/L4 已独立复核、代码/CTest/DEC-005 已完成、SRS/HLD/LLD 已冻结或原 MATLAB 运行全行为已等价 |
 | E-DOC-008 | [2026-11-07 LLD/MAT I/O 一致性审查](reviews/LLD_MAT_IO_AND_CONSISTENCY_2026-11-07.md) + [mat_io.md v0.5](design/mat_io.md) | 已统一 SRS v0.4 的 PLAN/TEST_PLAN 引用、当前未批准候选 atol=0.01/rtol=0.1 与历史 rtol=1e-10；修正各 LLD 的 L3 参考表述；MAT I/O 补 MatDenseArray 自拥有候选接口、单/多变量边界、错误与 RunContext、L2/L3、拟议 target 与负例→TC/CTest；指定 SHA 下连接器静态检查 66 REQ/66 TC/98 P/26 HLD 边均一致，origin Git 子树未改 | 新 C++ 类已创建/编译、真实 MatResultReader/Writer 与 MAT 读回/负例已执行、L2 SHA-256/逐值参考已完成、CMake/CTest 通过、数值阈值/接口已冻结 |
 | E-DOC-009 | [2026-11-07 跨模块 LLD 合同/target/测试映射](reviews/LLD_CONTRACTS_TARGETS_TESTS_ALIGNMENT_2026-11-07.md) + [contracts.md](design/contracts.md)、[experiments.md](design/experiments.md)、[harmonics.md](design/harmonics.md)、[sampling_noise.md](design/sampling_noise.md) | 在固定提交 `2689ac522aaa480d9e66ed993ae1ffc94254065f` 上，通过 GitHub 连接器只读核对 66 REQ、66 TC、98 P、26 条 HLD 边及 9 项限定合同断言，错误 0；已起草统一 Failure/Result/Status、ErrorDetail 阶段、RunContext 所有权、MatDenseArray io 边界、各模块 target/候选测试映射与 L2/L3/L4 术语，并将 CLI 多变量合同与 TEST_PLAN 候选关联 | 新公共头/Result/RunContext/SHRotation/RNG/Reader/Writer/CMake/CTest 已实现或编译、L2 SHA-256/L3 已执行、DEC-003/005/007/008 已批准、H-10/H-11 解除暂缓、LLD 已冻结或 AC 已验收 |
+| E-DOC-010 | [项目所有者 2026-11-07 决定](decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md) + [MIT LICENSE](../LICENSE) + [Ivanic–Ruedenberg 原文与 Eigen LLD](design/SH_ROTATION_IVANIC_RUEDENBERG.md) + [新审查记录](reviews/OWNER_TECH_DECISIONS_ALIGNMENT_2026-11-07.md) | 已建立仓库根 MIT、明确 1996 原文/1998 勘误优先和 Eigen-only 禁用 sdla；SRS v0.5、HLD v0.4、CLI v0.2（无自定义输出根）、MAT I/O v0.6；轻量 Result、ErrorStage、JSONL、独立 Runner 配置/失败策略、首轮 `atol=0.01`/`rtol=0.1` 筛查已选定；固定 SHA 下 66 REQ/66 TC/98 P/27 HLD 边静态一致 | 原始论文已上传/完成公式逐式核验、生产 R5/Result/CLI/Reader/Writer 已实现、CMake/CTest/数值测试/最终 DEC-005 已通过、用户允许合并发布或完成基线冻结 |
 | E-DEC-001 | [JSON 审批落实记录](approval/DECISION_IMPLEMENTATION_NOTES.md) | **H-02/H-14 已指定 Sophus 与 Don Williamson Ivanic 方案 A**；H-04 已提供 Ubuntu 24.04.4 VM 快照；H-12 已确定 `output/` 并更新 `.gitignore` | 任意第三方 C++ 文件已复制、Sophus 已安装/构建、MAT 写入/CTest 已执行、Golden/容差已批准、程序可发布 |
 
 ## 3. 实施任务与里程碑状态
 
 | 阶段 | 有证据的局部成果 | 阶段状态 | 下一验收证据 |
 |---|---|---|---|
-| P0：源资料/SRS/HLD/LLD 审计 | 45 .m 清单、582 MAT 类型字典；**H-02/H-14 替代路线选择已形成设计记录** | **进行中，未验收** | P0.1–P0.8 各项审查、许可告知保存/依赖核实、错误与 CLI 合同、Golden/容差决定 |
+| P0：源资料/SRS/HLD/LLD 审计 | 45 .m 清单、582 MAT 类型字典；根 MIT 已建立、球谐数学/Eigen 路线已明确（论文待上传） | **进行中，未验收** | P0.1–P0.8 追踪、第三方既有 notice（非研发阻塞）、接口/CLI/错误合同、独立参考与最终容差证据 |
 | P1：运行环境、CLI、MAT | 独立 matio 探针子能力；H-04 指定 VM 环境；H-12 配置排除未来 `output/` 数据上传 | **H-10 暂缓生产代码/运行，P1 未验收** | 生产 Reader/Writer、RAII、路径保护负例、写后回读和真实 CMake/CTest；解除暂缓和授予运行权限后再执行 |
 | P2–P9：几何/模拟/求解器/实验/分析 | LLD 草案与 source-to-responsibility 映射 | **代码未实现/未验证** | 对应 C++ 实现、固定输入 Golden、分模块数值误差与通过日志 |
 | P10：集成验收与复现 | 规划与证据模板 | **未开始验收** | 逐模块集成、论文复现、P10.4 独立 MAT 审核、性能/完整报告 |
 
 | 里程碑 | 目前状态 | 已有输入 | 缺失的退出条件 |
 |---|---|---|---|
-| M0 源资料与设计评审 | 未通过 | 源树清单、数据字典、SRS/HLD/LLD 草案、静态核查 | P0.8 审核签署、源身份与版权、CLI/错误范围、未决 DEC 处置 |
+| M0 源资料与设计评审 | 未通过 | 源树清单、数据字典、MIT、新 SRS/HLD/LLD 与静态核查 | P0.8 正式接口/签名审查、独立数值参考、CLI/错误范围与未决技术事项 |
 | M1 MAT 读写/构建闭环 | 未通过 | 582/582 独立探针记录 | 正式 Reader/Writer、CMake 业务 targets、CTest、路径/变量负例、写回读 |
 | M2 Bias 数据生成与统计 | 未通过 | 设计合同 | Franz/KvD/噪声 C++ 实现及 Golden、完整 Bias 证据 |
 | M3 Adaptive 估计实验 | 未通过 | 设计合同 | 球谐/Adaptive 求解、状态/周期逻辑、固定输入及逐轮 Golden |
 | M4 分析及绘图 | 未通过 | 设计合同 | 分析曲线与输出核验，可选绘图后端的批准 |
-| M5 最终交付 | 未通过 | 文件架构与验收规则 | 完整平台/CTest/数值证据、版权决策、维护文档、批准的合并/发布 |
+| M5 最终交付 | 未通过 | 项目 MIT、工程方案及候选证据 | 完整平台/CTest/数值证据、维护文档、批准合并/发布；一般版权审批不作为研发阻塞 |
 
 **日期/资源状态**：H-04 已提供一台 Ubuntu 24.04.4/x86_64 VirtualBox 的 `uname/df/free` 快照，物理内存总 8127380 KiB、当时 available 4908696 KiB、Swap 4194300 KiB；这些**不是**批准的资源配额或性能通过阈值。所有里程碑的具体日期、工时、CPU 核数、预算及验收指标仍待决定；不根据文档任务顺序擅自承诺日程。正式通过条件还需要相应 REQ/TC/AC 和证据编号。
 
@@ -60,8 +61,8 @@
 
 | 责任角色 | 当前可确认的职责 | 人员/批准情况 |
 |---|---|---|
-| 项目所有者/需求批准人 | 决定 SRS、接口、版权使用范围、数值容差、基线冻结和例外 | **尚无本轮签署记录**；不可代签 |
-| 源 MATLAB / 版权审核者 | 审查原作者材料、第三方 Rodrigues/SHRotate 权利和移植方式 | **尚未确认具体审核人或批准意见** |
+| 项目所有者/需求批准人 | 已直接选择仓库 MIT、Eigen-only 球谐/原论文与 1998 勘误、删除 CLI 输出根、ErrorStage/Result/JSONL/RunContext/探索性筛查 | **设计方向已选**；最终数值阈值/真实实施与发布授权仍独立办理 |
+| 来源登记维护者（非审批门禁） | 只读原论文/脚本和实际使用第三方文件的来源及原 notice 归档，不再安排普通版权审批来阻塞开发 | 不要求专门人员签字以启动原创 C++ 研发 |
 | 架构与 C++ 实现者 | 按 P 任务维护对象合同、目标依赖、代码、提交/PR | 本轮只记录文档维护与连接器检查；正式实施责任人待分配 |
 | 数值验证者 | 独立 Golden、统计样本、批准容差下的逐轮对照 | 未指派、Golden 和 DEC-005 未冻结 |
 | 测试/集成维护者 | Debian/Ubuntu 构建、CTest、数据/资源记录、静态审计核查 | Ubuntu 探针已有记录；完整工程/CTest 未获验收 |
@@ -73,8 +74,8 @@
 | 决策/阻塞 | 当前实际状态 | 下一步必须提交的材料 |
 |---|---|---|
 | DEC-001/002 当前 MAT 格式和类型 | 归档事实已有 582/582 证据；支持范围尚待审阅 | 当前数据限定 v5/double 与拒绝未知类型的具体 Reader/负例 |
-| DEC-003/007 第三方版权 | **H-02/H-14 已选定限定替代路径；发布/实现尚未验收** | Sophus `SO3d::exp`、Don Williamson `IvanicSHRotate.cpp/.h`（方案 A）及其 MIT 告知；将来保存复用目录 README/LICENSE、核实 sdla 依赖/源许可与 Golden；整个 MATLAB 归档权利不因 H-02 自动通过 |
-| DEC-005 数值容差 | **未关闭** | 条件数/数值尺度分组、固定独立 L3 逐节点 Golden、L2 最终结果、必要 L4 统计、逐字段误差及批准门槛（不运行 MATLAB）；人类可通过 [HTML 审批页](approval/HUMAN_APPROVAL_REQUEST.html) 记录决定并自行保存 JSON（不自动等同正式批准） |
+| DEC-003/007 项目 MIT 与来源跟踪 | **项目 MIT 根 LICENSE 已由所有者授权建立，球谐 Eigen-only 禁 sdla；普通版权审核不再阻塞开发** | 等待用户上传 1996/1998 论文以开展数学实现；实际上游文件保留现有来源 notice 即可；不把独立作品自动重新许可为 MIT |
+| DEC-005 数值验收 | **所有者确认 `atol=0.01, rtol=0.1` 为首轮宽松筛查，最终模块 PASS 阈值未冻结** | 根据 L2/L3/L4 固定输入、真实 C++ 误差、严格状态/物理不变量决定正式分模块阈值；无需 MATLAB/L1 |
 | DEC-006 平台与资源 | **用户已提供 H-04 主机环境事实；预算/性能仍未冻结** | Ubuntu 24.04.4 VirtualBox/x86_64 的资源快照已记；待将来实际 Debian/Ubuntu 业务构建和性能测量，不以容量快照作为性能验收标准 |
 | DEC-008 CLI/CTest/Golden 映射 | **未关闭** | 批准 [cli.md](design/cli.md) 参数及错误序列化，真实测试文件/注册名、Golden identity、执行证据 |
 | Bash 现场检查 | **H-11=deferred，禁止本轮现场执行** | 仅保留过去的连接器静态审查；未来人类另行授权后才能在完整仓库运行 Bash 并留 stdout/stderr/exit/SHA |
