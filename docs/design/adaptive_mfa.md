@@ -293,3 +293,9 @@ C++ 从 0 开始存帧时必须显式转换为源 MATLAB 的 1-based i，周期�
 每个 Golden 应记录来自 MATLAB 的固定输入、源 blob SHA、 MATLAB 版本、各节点 shape/dtype、数值基准和经 DEC-005 批准的容差。现有 produced_data 不含 M1…M4 的原始逐节点值，**不可把只对照最终 MAT 当作单步数学等价证据**。
 
 **状态**：此文档定义了算法逐节点检查与入口专属状态合同；Golden、最终错误提交策略、正式 API 及 CTest 均尚未实际形成。
+
+## 附录 A：Adaptive 的 Golden 等级与 Session 证据缺口（补充草案）
+
+详见 [L1–L4 与 AC 阻塞表](../golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md)。当前没有原 MATLAB 的 **L1**：near_raw/均值/符号/归一、M1–M4、rhs、6×6、z、t_raw/t_norm、ω、MSE、更新 near/3×5 系数，以及各入口每帧主/对照系数 before/after、周期触发/`mitkoeff` 比较单步不回写的真实执行日志。异常时 `real(inv(M))`、非有限传播与状态提交也无运行证据。作者归档 **L2 只有各实验的最终误差和部分比值**；`AN-G12` 仅是理想对称输入的 **L3 解析候选**，不是源 MATLAB 逐节点 Golden。
+
+`AC-F-ADAPT-001` 所需逐节点证据仍缺；`AC-F-ADAPT-002/003` 可未来用固定输入/帧号独立测试限定的状态逻辑，但不能凭静态推断断言其与原 MATLAB 所有连续运行行为一致。`AC-F-EXP-002/003` 的真实八次聚合及刷新时序也缺 L1；全部 AC 仍未验收。
