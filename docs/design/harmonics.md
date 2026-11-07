@@ -236,3 +236,9 @@ U/V/W 在不同 m 与 n 边界上组合上一阶 \(R_3\) 条目与递推辅助 P
 - TC-F-SH-001、TC-F-SH-002、TC-D-SOURCE-002 均需记录 MATLAB 来源函数 SHA、固定输入/输出、逐元素 atol/rtol、条件数和未定义样本数；DEC-003/005/007 未关闭时不得冻结。
 
 **本模块的已知内容：9 项索引与数学公式、R3 九项映射、R5 的递推结构；缺口：R5 分段递推合法实现、全量 Golden、批准容差与真实代码/CTest。**
+
+## 附录 A：SHRotate 原 MATLAB 与 L3 解析值的明确区别
+
+[证据等级与 AC 缺口](../golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md) 将 `AN-G06～08` 列为 **L3 解析候选**：九基函数与 90° 转动下 R3/R5 的静态推导**不等于原 MATLAB 实际运行返回的 L1**。当前缺少不同轴、复合转动、非正交/非有限输入的原 MATLAB R0(1 项)、R3(9 项)、R5(25 项)、3×5 系数 before/after 与实际错误/警告的完整 L1。未来 Don Williamson Ivanic–Ruedenberg 的实现即使独立得到相近数值，仍只能按其真实来源登记，不能冒充源 `SHRotate.m` 的 L1。
+
+`AC-F-SH-001` 可在其条款允许的范围内利用**经过独立核验**的 L3 参考测试固定基函数/系数；`AC-F-SH-002` 的源行为忠实性、全元素、许可和失败合同仍缺，C++/CTest、真实 Golden 与 DEC-005 均未完成。现有 H-02/H-14 选定实现路线不改变此证据边界。
