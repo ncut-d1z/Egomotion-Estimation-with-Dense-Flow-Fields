@@ -73,6 +73,8 @@
 
 ### 2.8 用户审批 JSON 的数值与执行验证边界（仅规划）
 
+**已补充具体 Golden/容差候选，但仍未测试或批准**：查看 [Golden 参考样例与宽松容差建议](golden/GOLDEN_TOLERANCE_PROPOSAL.md) 和 [12 组解析候选 JSON](golden/analytic_golden_candidates.v1.json)。其中给出 12 组根据原 MATLAB 公式静态推导的固定输入/输出（含有序采样、光流、球谐、90° 转动、误差计算、Adaptive 单步）和第一轮探索性建议 `atol=0.01, rtol=0.1`。**这些不是经 MATLAB 采集的 Golden，也不是经 DEC-005 批准的阈值**；离散结构、错误状态、球面/旋转不变量另有严格条件。正式 KVD/Adaptive 逐轮与随机实验 Golden 仍待合法环境中采集，H-10/H-11 暂缓状态不变。
+
 审批记录见 [DECISION_IMPLEMENTATION_NOTES.md](approval/DECISION_IMPLEMENTATION_NOTES.md)。H-01 **只批准先整理误差/容差提案**，H-03 仅批准整理 CLI/错误/TC→Golden 候选，H-09 仍为 Golden 采集计划；**不得输入默认 atol/rtol、把 C++ 生成数据当参考真值或把未建测试标记通过**。
 
 | 将来需要的对照 | 预定输入/观察量 | 当前状态 |
