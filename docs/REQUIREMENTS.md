@@ -178,10 +178,10 @@
 | 入口 | 必填或关键实参 | 可核验的输出 |
 |---|---|---|
 | inspect-mat | --file PATH；可选 --variable NAME、--mode strict/compat | 不写输入文件，显示 MAT 变量与错误诊断 |
-| run-bias-occluded / run-bias-proportional | --seed INTEGER、--level INTEGER、 | 对应两个实验的 xwerte 与六个 ywerte |
-| run-adaptive-init |  | 四类初始化误差 |
-| run-adaptive-comparison | --noise-scale NUMBER、 | 前四种方向误差加 rottransratio 五类 MAT |
-| run-adaptive-update-rates |  | 1/5/11/21 更新周期结果 |
+| run-bias-occluded / run-bias-proportional | --seed INTEGER、--level INTEGER | 对应两个实验的 xwerte 与六个 ywerte |
+| run-adaptive-init | 无 | 四类初始化误差 |
+| run-adaptive-comparison | --noise-scale NUMBER | 前四种方向误差加 rottransratio 五类 MAT |
+| run-adaptive-update-rates | 无 | 1/5/11/21 更新周期结果 |
 | analyze | --experiment NAME、--input-root DIR | 四类分析之一的数值序列，不重跑求解 |
 | plot（S 级） | --experiment NAME、--input-root DIR | 可选图示；无后端不妨碍数值命令 |
 
