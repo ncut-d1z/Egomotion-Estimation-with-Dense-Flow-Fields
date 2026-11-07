@@ -1,6 +1,6 @@
 # 实球谐、近度拟合及系数旋转——详细设计草案
 
-> **LLD v0.4，未冻结、未实现。** 来源：winkelausvektor.m、kugelflfunc2.m、near_aus_koeff.m、koeff_aus_near.m、transfor_koeff.m、SHRotate.m。第三方许可/依赖与独立 L3 参考尚未完整核验。关联 REQ-F-SH-001/002、REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001、P7.1–P7.6/P7.10。
+> **LLD v0.5，未冻结、未实现。** 来源：winkelausvektor.m、kugelflfunc2.m、near_aus_koeff.m、koeff_aus_near.m、transfor_koeff.m、SHRotate.m。第三方许可/依赖与独立 L3 参考尚未完整核验。关联 REQ-F-SH-001/002、REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001、P7.1–P7.6/P7.10。
 
 **项目所有者确定的实现路线**：[Ivanic–Ruedenberg 原始论文（1996）及勘误（1998）的纯 Eigen 实施方案](SH_ROTATION_IVANIC_RUEDENBERG.md) 已列明。实现的数学依据以**用户稍后上传的原论文和 1998 年勘误**为准，Don Williamson 源码只作参考；**完全禁止 sdla 依赖（直接和间接）**。仓库新代码 MIT，正常开发无需另外版权审核签字。论文上传前仅完善设计，不实施 R5 生产递推。
 
@@ -67,24 +67,13 @@ a_{lm}=a_{lm}^{num}/a_{lm}^{den}.
 
 ### 2.1 拟议输入输出与不变量
 
-~~~cpp
-// 仅设计草案，不是可调用的已实现 API。
-// HarmonicMatrix 类型别名统一由 contracts.md 维护。
-// HarmonicCoefficients 与 HarmonicMatrix 的唯一合同见 contracts.md。
-// 使用共享 NumericalErrorCode，不另建重复错误类型。
-class RealSphericalHarmonics {
-public:
-    Result<double, NumericalErrorCode> evaluate(int l, int m,
-                                            double theta_rad, double phi_rad) const;
-    Result<Eigen::VectorXd, NumericalErrorCode> reconstruct(
-        const HarmonicCoefficients&, const DirectionSet&) const;
-};
-class HarmonicFitter {
-public:
-    Result<HarmonicCoefficients, NumericalErrorCode> fit(
-        const DirectionSet&, const Eigen::VectorXd& nearness) const;
-};
-~~~
+- `RealSphericalHarmonics::evaluate(int degree, int order, double theta_rad, double phi_rad) const`：有限角输入、l≤2 和 `-l≤m≤l`；错误使用公共 `Result<double, NumericalErrorCode>`。
+- `RealSphericalHarmonics::reconstruct(const HarmonicCoefficients&, const DirectionSet&) const`：依据 3×5 的九个有效项重建逐方向 near。
+- `HarmonicFitter::fit(const DirectionSet&, const Eigen::VectorXd& nearness) const`：根据逐项投影/归一构建 3×5 系数，不引入联合最小二乘。
+- `RealSphericalHarmonics::validDegreeOrder(int,int) noexcept`：为输入检查准备的**静态函数声明**，不预先规定具体数值计算实现。
+
+**这些接口的拟议头文件、命名空间与唯一 C++17 声明已集中在 [球谐专题 LLD §3](SH_ROTATION_IVANIC_RUEDENBERG.md)**，本节不再维护重复 C++ 定义。上述签名只用于设计，生产头文件尚未创建。
+
 
 冻结前需决定 DirectionSet 定义、shape 校验、N=0、基函数范数零、非有限 near、非单位方向及异常时数据保持策略。上述 Result<T,E> 是项目建议的 C++17 显式结果约定，非标准库 std::expected。
 
@@ -122,19 +111,9 @@ a'_{0,0}=a_{0,0},\quad
 
 ### 3.2 旋转类接口候选
 
-~~~cpp
-struct HarmonicRotationBlocks {
-    Eigen::Matrix3d degree_one;
-    Eigen::Matrix<double, 5, 5> degree_two;
-};
-class HarmonicRotator {
-public:
-    Result<HarmonicRotationBlocks, NumericalErrorCode> blocks(
-        const Eigen::Matrix3d& rotation) const;
-    Result<HarmonicCoefficients, NumericalErrorCode> rotate(
-        const HarmonicCoefficients&, const Eigen::Matrix3d&) const;
-};
-~~~
+`egomotion::harmonics::HarmonicRotationBlocks` 以 **`Eigen::Matrix3d degree_one`、`Eigen::Matrix<double,5,5> degree_two`** 两个自拥有成员保存 R3/R5；R0=1 不设可修改成员。无状态的 `HarmonicRotator` 公开 `blocks(physical_rotation)` 和 `rotate(coefficients,physical_rotation)`，私有静态函数可检查有限旋转和构造 R3；`egomotion::harmonics::detail::IvanicRuedenbergEigen` 仅在内部负责预定 R5 返回接口。
+
+**唯一声明文本、预计头文件名与源文件路径见 [专题 LLD §3](SH_ROTATION_IVANIC_RUEDENBERG.md)**；禁止在此保留另一套类声明、R5 实现公式或 sdla 接口。
 
 **值对象归属与最小状态合同（候选）**：`HarmonicCoefficients` 的 3×5、九有效项、列主序由 [contracts.md §2](contracts.md) 的 domain 值对象维护；`HarmonicRotationBlocks` 归本球谐模块，`degree_one` 与 `degree_two` 是自拥有、定尺寸 Eigen 3×3/5×5，允许按值复制/移动，R0=1 是显式数学不变量，无需持久存储新矩阵。三类计算接口不持有 MAT 句柄或跨帧状态；Adaptive Session 负责历史系数。
 
@@ -154,8 +133,8 @@ public:
 | 边界 | 拟议内容 | 未完成条件 |
 |---|---|---|
 | CMake target | [ARCHITECTURE.md §4](../ARCHITECTURE.md) 的 `egomotion_harmonics` 显式依赖 **egomotion_domain + egomotion_contracts + Eigen**；Eigen-only 的 Ivanic–Ruedenberg l≤2 递推实现 | target 尚未创建/编译；**不能包含 sdla**，须等用户上传原文+勘误后逐式实现 |
-| 公共头文件 | 候选 `include/egomotion/harmonics/` 公开必需的 RealSphericalHarmonics、HarmonicFitter、HarmonicRotator、HarmonicRotationBlocks；`HarmonicCoefficients` 唯一归 domain 合同 | Result/Status 所在 target 的最终归属和签名待 P0.8；若需新 `egomotion_contracts` 依赖，应**同步修订 HLD 表及 DAG** |
-| 私有实现 | `src/harmonics/` 包含 l≤2 基函数、纯 Eigen 递推和独立 L3 适配，不暴露 MATLAB/matio/第三方矩阵类型 | 无实际代码/构建证据，确认编译依赖闭包不含 sdla |
+| 公共头文件 | 候选 `include/egomotion/harmonics/{real_spherical_harmonics,harmonic_fitter,harmonic_rotator}.hpp` 三个公共头；R3/R5 值对象归 harmonic_rotator，3×5 系数归 domain，精确声明见 [专题 §3](SH_ROTATION_IVANIC_RUEDENBERG.md) | Result/Status 所在 target 的最终归属和签名待 P0.8；若需新 `egomotion_contracts` 依赖，应**同步修订 HLD 表及 DAG** |
+| 私有实现 | `src/harmonics/{real_spherical_harmonics,harmonic_fitter,harmonic_rotator}.cpp` 与私有 `src/harmonics/detail/ivanic_ruedenberg_eigen.{hpp,cpp}` 仅作**预定路径设计**；无 C++ 实现，禁用 sdla | 无实际代码/构建证据，确认编译依赖闭包不含 sdla |
 
 | TC / AC | TEST_PLAN §3 的候选实体/CTest | L3 逐项核验 |
 |---|---|---|
