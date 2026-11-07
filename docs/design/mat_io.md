@@ -100,7 +100,7 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 | 相对路径、文件字节数与 FNV64（报告） | 已由探针生成 | **582/582 已记录；FNV 不是 Git SHA/密码学 SHA-256** |
 | MAT 版本、压缩、只读加载 | Mat_GetVersion、Mat_VarRead | **582/582 MAT v5+zlib，READ_OK** |
 | 变量名、MAT class、物理 data_type、rank/dims | Mat_VarRead 后读取 matvar_t 元数据 | **582/582 double/double，五种 shape** |
-| 数值范围、NaN/Inf、逐元素 MATLAB Golden/加密哈希 | 生产 Reader 按值遍历及独立对照 | **尚未验证**；探针成功读取不能替代数值等价 |
+| 数值范围、NaN/Inf、逐元素 L2 MAT 原值/独立 SHA-256 | 生产 Reader 按值遍历及独立对照 | **尚未验证**；探针成功读取不能替代数值等价 |
 | 严格/兼容读取策略、分析依赖 | 源 load/getflowfield 和数据字典映射 | 待冻结 |
 | 解码状态、错误码、是否受版权限制 | 成功/失败/不支持/权限阻塞 | 待验证 |
 
@@ -199,8 +199,10 @@ MAT 类支持范围的**最终**记录应由 docs/MAT_DATA_SCHEMA.md 单一维�
 
 **模块就绪状态：独立 matio 1.5.26 探针已在 Ubuntu 24.04 运行，582/582 MAT 文件/变量解码成功，格式与维度合同明确。** 但业务 Reader/Writer、接口最终签名、异常负例、列主序值对照、Golden、CTest、P10.4 独立审核仍未完成。
 
-## 附录 A：MAT 文件参考数据为 L2，非迭代 L1
+## 附录 A：本模块无需运行 MATLAB 的验收参考
 
-[Golden L1–L4 分级清单](../golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md) 把现存 582 MAT 的**最终变量**视为 L2 来源。此前 matio 探针记录了 582/582 文件及变量成功读取，证明已报告的格式/类型/尺寸子能力；**没有在此轮生成原 MATLAB 逐轮中间状态 L1，也尚未完成业务 Reader 逐元素参考导出和 582 文件独立 SHA-256 复核**。只有在将来独立只读提取并保存源身份后，才能将具体列主序 double 值作为逐元素 L2 参考使用。
+按 [长期无需 MATLAB 执行政策](../golden/NO_MATLAB_EXECUTION_POLICY.md) 与 [L2/L3/L4 来源矩阵](../golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md)：原 MATLAB .m 文件仅作为**只读公式、数据布局和顺序规范**；**不要求执行 MATLAB/Octave、采集 L1 或以缺少 L1 阻塞冻结/编码/验收**。
 
-损坏 MAT 负例属于独立构造的 Reader 合同测试输入，不应被描述成原 MATLAB Golden；生产 Writer 回读、RAII/TOCTOU 与源文件身份不变检查也不是 L1 取证。即便 H-12 规划 `output/<RunId>/`，H-10 暂缓且 `permissions.writeMat=false` 仍禁止本轮运行写回读。
+582 个历史 MAT 已通过独立探针的读取报告，当前 L2 需要只读逐值导出与独立 SHA-256，生产 Reader/Writer 仍需安全与回读验证；不要求 MATLAB 运行、L1 中间量或任何 MAT 原地改写。错误负例需隔离副本，且 H-10 暂缓真实写入。
+
+本附录不取消真实 C++/CTest、Golden 独立复核、DEC-005/008 以及源数据保护门禁；当前无新的软件测试通过证据。
