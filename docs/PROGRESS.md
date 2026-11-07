@@ -13,6 +13,7 @@
 - 原始数据范围：`origin/egomotion_estimation_dense_flow_fields_matlab_scripts/`；**45 个 .m、582 个 .mat，原始数据只读**。
 - **已验证子能力**：既有 `src/mat_data_dict_probe.cpp` 的独立实测报告记录 Ubuntu 24.04 / GCC 13 / matio 1.5.26，582 个 MAT、582 个变量均 `READ_OK`、失败 0；详情及每个文件的属性见 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md)。这是归档数据格式证据，**不是**正式 Reader/Writer 或 TC/CTest 通过。
 - **较早的静态检查**：使用 GitHub 连接器按固定 commit SHA 读取文档/递归源树，运行 JavaScript 静态断言并将结果记录在 [2026-11-06 静态追踪检查](reviews/STATIC_TRACEABILITY_2026-11-06.md)；实际观察 66 REQ、66 TC、98 P、45 .m 双向映射、26 条 HLD target 边，错误及环均为 0。该检查未在容器运行 Bash 脚本（外部 GitHub DNS 无法解析），也未运行任何业务 CTest。
+- **2026-11-07 文档合同补充（非执行验收）**：见 [MAT I/O 与 SRS v0.4 一致性记录](reviews/LLD_MAT_IO_AND_CONSISTENCY_2026-11-07.md)；在固定提交 `d18c630008e5da0e4899906080e7dd560fdde8ef` 上，GitHub 连接器只读 JavaScript 检查 66 REQ、66 TC、98 P、26 条 HLD 依赖边，检查范围错误 0。原始 `origin/` 子树哈希保持 `70ee155131c24a50169346d0ffbaff0c01b1c547`（45 .m、582 .mat）。**不等于 Bash/CMake/CTest/Reader 真实运行**。
 - **审查意见后的文档更正及复核**：参见 [跨文档一致性复核记录](reviews/DOC_CONSISTENCY_RECONCILIATION_2026-11-06.md)。固定提交 `5472c756b983fe002ef6e32143c96b6c6798cde9` 下，GitHub 连接器只读检查 66 REQ、66 TC、98 P、45 原始 `.m`、45/45 双向映射、26 条 HLD target 依赖边和 582 MAT Git 树路径，检查范围内不一致 0；与更正前比较，规范性 REQ/TC/P 表格行完全一致，`origin` Git 子树 SHA 不变。**这不是 Bash 现场执行或任何真实测试**。
 
 ## 2. 可核验子交付物
@@ -27,6 +28,7 @@
 | E-DOC-005 | [Golden 及容差候选](golden/GOLDEN_TOLERANCE_PROPOSAL.md) + [解析数值 JSON](golden/analytic_golden_candidates.v1.json) | 已静态提出 12 组带固定输入与具体参考数字的解析候选；建议第一轮宽松连续值比较 `atol=0.01, rtol=0.1`，并强制结构/物理不变量；记录为独立 L3 候选（未经真实测试） | MATLAB 运行/原 L1 已验证、DEC-005 阈值已批准、C++ 通过测试、M0～M5/P/TC/AC 可标记通过 |
 | E-DOC-006 | [Golden L1–L4 证据等级与 AC 缺口](golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md) | 已逐类记录目前缺失的原 MATLAB 每轮/每节点/RNG/异常/SH 旋转/逐帧 Session L1，区别于现存最终 L2、解析候选 L3 和待执行 L4；该文件目前已按项目所有者的新决定标出 L1 非必需，重点 AC 按更新的 SRS 采用 L2/L3/L4 | L2 全量值和 SHA-256 已复核、L3/L4 已测试、DEC/AC 已通过、可以冻结或合并 |
 | E-DOC-007 | [长期无需 MATLAB 运行政策](golden/NO_MATLAB_EXECUTION_POLICY.md) + [SRS](REQUIREMENTS.md) + [TEST_PLAN](TEST_PLAN.md) + [L2/L3/L4 矩阵](golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md) | 已从规范性 AC 中撤销 MATLAB 运行及 L1 逐节点强制前提，关键验收路线改为 L2/L3/L4；未修改原始 MATLAB/MAT 或旧审批 JSON | L2/L3/L4 已独立复核、代码/CTest/DEC-005 已完成、SRS/HLD/LLD 已冻结或原 MATLAB 运行全行为已等价 |
+| E-DOC-008 | [2026-11-07 LLD/MAT I/O 一致性审查](reviews/LLD_MAT_IO_AND_CONSISTENCY_2026-11-07.md) + [mat_io.md v0.5](design/mat_io.md) | 已统一 SRS v0.4 的 PLAN/TEST_PLAN 引用、当前未批准候选 atol=0.01/rtol=0.1 与历史 rtol=1e-10；修正各 LLD 的 L3 参考表述；MAT I/O 补 MatDenseArray 自拥有候选接口、单/多变量边界、错误与 RunContext、L2/L3、拟议 target 与负例→TC/CTest；指定 SHA 下连接器静态检查 66 REQ/66 TC/98 P/26 HLD 边均一致，origin Git 子树未改 | 新 C++ 类已创建/编译、真实 MatResultReader/Writer 与 MAT 读回/负例已执行、L2 SHA-256/逐值参考已完成、CMake/CTest 通过、数值阈值/接口已冻结 |
 | E-DEC-001 | [JSON 审批落实记录](approval/DECISION_IMPLEMENTATION_NOTES.md) | **H-02/H-14 已指定 Sophus 与 Don Williamson Ivanic 方案 A**；H-04 已提供 Ubuntu 24.04.4 VM 快照；H-12 已确定 `output/` 并更新 `.gitignore` | 任意第三方 C++ 文件已复制、Sophus 已安装/构建、MAT 写入/CTest 已执行、Golden/容差已批准、程序可发布 |
 
 ## 3. 实施任务与里程碑状态
