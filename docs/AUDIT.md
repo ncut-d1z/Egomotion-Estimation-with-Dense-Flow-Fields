@@ -3,6 +3,8 @@
 > **文档性质**：本文件是对本项目历轮对话中用户提出的审查意见、详细 Markdown 评价、修改原则和已确定技术决定的**主题性归纳与后续审计台账**，不是逐字转录聊天记录，不替代 [SRS](REQUIREMENTS.md)、[HLD](ARCHITECTURE.md)、[LLD 索引](design/README.md)、[测试计划](TEST_PLAN.md) 或人类批准。明确区分：**用户已决定的规则**、**评审建议/尚需逐文件核查**、**待真实实现/测试的证据缺口**。本台账只针对 `ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields`，不引入用户其他仓库的要求。
 >
 > **本次审计范围（2026-11-07）**：根据最近一轮“仍有低优先级残留”的审查，开始**纯文档一致性修订**，仅处理低优先级事项；不触碰生产 C++、`origin/**`、MAT 数据、CMake/CTest、Bash、MATLAB/Octave，不修改历史审批 JSON，不自行签署正式基线。**“已审计”只表示当前文档内容/引用已检查，不表示规范冻结、数值等价或测试通过。**
+>
+> **执行续记（同日，后续一轮）**：上述“仅低优先级文档修订”是上一轮已完成的范围；本次用户要求**按 AUDIT 执行覆盖全部 40 文件的文档审计**，已单独形成 [完整审计记录](reviews/FULL_DOCUMENT_AUDIT_2026-11-07.md)（固定审计输入 SHA `4627cc1e48be9c43ad10b28fda646d65ee8ef01c`）。本轮以连接器只读结构/语义检查为主，**不自动修订高/中发现项**，不做算法逐式或真实执行；以下状态按实际检查深度更新。
 
 ## 一、审计口径、优先级与单一来源
 
@@ -86,46 +88,46 @@
 
 | 文件相对路径（仓库根） | 审计状态 | 本轮核查重点或下一轮审计事项 |
 |---|---|---|
-| `docs/AUDIT.md` | 已审计 | 本台账结构、历轮用户意见归纳、三态审计表存在性；不表示所有被列文件已审计 |
-| `docs/REQUIREMENTS.md` | 已审计 | 来源/许可实现选型下沉、REQ-D-SOURCE-002/REQ-NF-COPYRIGHT-001 与原 AC/TC 保留；草案未冻结 |
-| `docs/PLAN.md` | 已审计 | SRS 引用版本随本轮编辑同步；98 个 P 不更名、不更改执行状态 |
-| `docs/TEST_PLAN.md` | 已审计 | SRS 引用版本同步；66 TC、无 MATLAB/L1 强制要求，未运行测试 |
-| `docs/design/README.md` | 已审计 | 纠正 Sophus 来源与可选绘图阻塞，保持其它 LLD 为候选 |
-| `docs/DOCUMENT_BASELINE_REGISTER.md` | 已审计 | 更新低优先级修订文件的固定 SHA，PROGRESS “正式基线”为不适用 |
-| `docs/PROGRESS.md` | 已审计 | 记录本轮纯文档证据，历史 SHA 仍按原日期解释 |
-| `docs/ARCHITECTURE.md` | 正在审计 | 后续全面核对 HLD 组件职责、部署、错误流、27 条 DAG 与质量场景，未编译 |
-| `docs/OBJECT_MODEL.md` | 正在审计 | 核对球谐与其它模块对象/方法映射、45 文件职责、生命周期 |
-| `docs/design/contracts.md` | 空白 | 完整模板/ABI、Result/Status/ErrorDetail、错误枚举与单一来源 |
-| `docs/design/cli.md` | 空白 | 无 `--output-root`、类型边界、RunId/JSONL/退出码，真实 TC 未建立 |
-| `docs/design/mat_io.md` | 空白 | MatDenseArray/Writer/多变量、L2/L3/TOCTOU、目标与测试映射 |
-| `docs/design/kvd.md` | 空白 | Franz/KvD 各分支顺序、动态阈值、L3 逐轮证据 |
-| `docs/design/adaptive_mfa.md` | 空白 | M1–M4、error=MSE、状态原子提交/失败行为 |
-| `docs/design/harmonics.md` | 空白 | R3/R5 全元素、实球谐相位、Eigen-only/论文勘误对应 |
-| `docs/design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 空白 | **只允许 C++ 声明级设计**，上传原文/勘误前不写递推实现 |
-| `docs/design/sampling_noise.md` | 空白 | 原采样面序、seed/reset/uniform/normal 次数和 L3 固定流场 |
-| `docs/design/trajectory.md` | 空白 | Sophus、Rᵀ、小角 eps、反向向量、球内求交与误差 |
-| `docs/design/experiments.md` | 空白 | 五入口/RunContext/八次聚合、DEC-004 save 字段、L2/L3/L4 |
-| `docs/design/analysis_plotting.md` | 空白 | 四类分析/zone/平滑、HistoricalOnly 缺字段失败、可选绘图 |
-| `docs/decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | 空白 | 确认已决定与各 LLD/AC 一致，避免“来源待归因”回潮 |
-| `docs/decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md` | 空白 | 现行技术决定；不与历史 H-02/H-14 文字冲突 |
-| `docs/golden/NO_MATLAB_EXECUTION_POLICY.md` | 空白 | L1 永久退出必需门禁 |
-| `docs/golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md` | 空白 | L2/L3/L4 的证据能力和受阻 AC 解释 |
-| `docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md` | 空白 | 0.01/0.1 仅筛查，0 值/物理不变量与最终 DEC-005 |
-| `docs/TODO.md` | 已审计 | 人类延期事项简称、内容、原因、建议处理阶段，非当前执行授权 |
-| `docs/MAT_DATA_SCHEMA.md` | 空白 | 582 MAT 格式/shape/原始哈希，区分探针与业务 Reader |
-| `docs/approval/DECISION_IMPLEMENTATION_NOTES.md` | 空白 | 历史批准证据的当时语境；不重写审批内容 |
-| `docs/approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md` | 空白 | 历史审阅材料与最新决定的身份关系 |
-| `docs/reviews/STATIC_TRACEABILITY_2026-11-06.md` | 空白 | 原 66/66/98 及静态检查固定 SHA 的旧证据 |
-| `docs/reviews/DOC_CONSISTENCY_RECONCILIATION_2026-11-06.md` | 空白 | 第一轮跨文档修订与历史范围 |
-| `docs/reviews/LLD_MAT_IO_AND_CONSISTENCY_2026-11-07.md` | 空白 | MAT I/O 候选接口与历史核对 |
-| `docs/reviews/LLD_CONTRACTS_TARGETS_TESTS_ALIGNMENT_2026-11-07.md` | 空白 | 跨模块 Result/RunContext/target 历史核对 |
-| `docs/reviews/OWNER_TECH_DECISIONS_ALIGNMENT_2026-11-07.md` | 空白 | MIT/Eigen/CLI/27 DAG 的旧静态记录 |
-| `docs/reviews/DOCUMENT_REVIEW_AND_SH_DECLARATIONS_2026-11-07.md` | 空白 | 球谐仅声明设计的检查点、相对链接与待办 |
-| `AGENTS.md` | 空白 | 当前项目读写约束、H-10/H-11 阶段授权、禁止误称测试 |
-| `README.md` | 空白 | 项目 MIT、数学原文/勘误、无 MATLAB/L1、固定输出路径 |
-| `LICENSE` | 空白 | 根 MIT 存在与必要声明；不对原作者文件再许可 |
-| `.gitignore` | 空白 | `/output/` 排除规则；不等于已验证文件系统安全 |
-| `scripts/check_docs_traceability.sh` | 空白 | Bash 静态检查器；**当前未获执行授权，不运行** |
+| `docs/AUDIT.md` | 已审计 | 28 组历史意见归纳已复核；本轮更新三态审计表、完整执行记录入口 |
+| `docs/REQUIREMENTS.md` | 正在审计 | AF-010：MAT 输出摘要须与固定 output/<RunId>/ 一致；本轮仅审查未修订 |
+| `docs/PLAN.md` | 已审计 | 98 P 的引用/依赖静态核对完成；WBS 为计划非真实完成状态 |
+| `docs/TEST_PLAN.md` | 正在审计 | AF-005：H-01 历史 draft 不能写成批准，继续核对审批表述 |
+| `docs/design/README.md` | 已审计 | LLD 单一来源、模块清单与低优先级修订复读完成，不意味着所有 LLD 已完成算法审计 |
+| `docs/DOCUMENT_BASELINE_REGISTER.md` | 已审计 | 固定快照 28 项 blob SHA 已核；后续审计完成后需再登记新快照 |
+| `docs/PROGRESS.md` | 已审计 | 证据记录与历史 SHA 语义已核，当前审计不生成 TC PASS |
+| `docs/ARCHITECTURE.md` | 正在审计 | AF-011：Sophus 是否“可选”的措辞需与既定选型区分 |
+| `docs/OBJECT_MODEL.md` | 正在审计 | AF-009：reconstructNearness 与唯一声明 reconstruct 不一致 |
+| `docs/design/contracts.md` | 正在审计 | AF-004：继续/回滚/部分结果为已选设计，尚有“开放决策”旧措辞 |
+| `docs/design/cli.md` | 已审计 | 逐命令类型、固定 output/<RunId>/、OS RunId 与错误单一来源已做静态核对，未实现/测试 |
+| `docs/design/mat_io.md` | 正在审计 | AF-008：Result/Failure 的已选封装方向尚未在该 LLD 同步 |
+| `docs/design/kvd.md` | 空白 | 仅已进行跨文档/接口静态扫描；Original/Modified a/b/c、每轮 near/t/ω、阈值尚未做原源码逐式审计 |
+| `docs/design/adaptive_mfa.md` | 正在审计 | 已核对 M1–M4、error=MSE、无效状态不提交的设计字段；尚缺原源码逐式/独立 L3 核验 |
+| `docs/design/harmonics.md` | 正在审计 | AF-002/003/012：上游输出、contracts 依赖条件句及章节标题待修；原文/勘误还待上传 |
+| `docs/design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 已审计 | 仅声明级文件/命名空间/类方法及论文 DOI/勘误优先已审；PDF 未上传、无 Eigen 递推实现 |
+| `docs/design/sampling_noise.md` | 空白 | 仅已检查模型层级/RNG 调用合同；i=1/2 完整有序方向与固定 RNG 的原源码逐式核验未开展 |
+| `docs/design/trajectory.md` | 空白 | 仅已检查 Sophus、Rᵀ、反向/小角边界的文档口径；原静态函数与 L3 解析逐式核验未开展 |
+| `docs/design/experiments.md` | 正在审计 | AF-001：Composition Root 仍写校验“用户输出根”，与固定输出根冲突 |
+| `docs/design/analysis_plotting.md` | 正在审计 | DEC-004 字段来源合同已核；旧曲线 begin/end/zone/平滑仍待独立数值逐式审查 |
+| `docs/decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | 已审计 | 现行 save/历史 HistoricalOnly/缺字段错误已与 Runner/分析设计对应，仍未实施 |
+| `docs/decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md` | 已审计 | MIT、Eigen-only、无 sdla、固定输出、Result、数值筛查等已选设计依据已核 |
+| `docs/golden/NO_MATLAB_EXECUTION_POLICY.md` | 正在审计 | AF-006/007：已选首轮容差仍称“未批准候选”，第三方版权门禁边界不清 |
+| `docs/golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md` | 已审计 | L1 退出必要门禁、L2/L3/L4 适用范围与候选≠验收边界已核 |
+| `docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md` | 正在审计 | 首轮筛查、严格不变量与 L3 解析候选身份已核；样例真实数值独立复核尚缺 |
+| `docs/TODO.md` | 已审计 | PAPER-SH、H-10/11、DEC-005/006、基线签署与发布的人类延期安排已核 |
+| `docs/MAT_DATA_SCHEMA.md` | 已审计 | 报告表 582 行唯一路径、5 种 shape 分布、dtype/dims×8/zlib/READ_OK 静态一致；**未重新读取 MAT** |
+| `docs/approval/DECISION_IMPLEMENTATION_NOTES.md` | 已审计 | 历史 H-01 draft、H-10/11 deferred 与当前决定的时间边界已核；不改原审批 |
+| `docs/approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md` | 已审计 | 仅对历史时间点及 AH-001 旧 L1 用语做审计；不可把旧文本当现行验收合同 |
+| `docs/reviews/STATIC_TRACEABILITY_2026-11-06.md` | 已审计 | 历史 26 条 HLD 边及固定 SHA 已核为旧快照，不替代当前 27 条 |
+| `docs/reviews/DOC_CONSISTENCY_RECONCILIATION_2026-11-06.md` | 已审计 | 历史 v0.3/v0.4、旧 CLI 选项是当时记录，不能当现行约束 |
+| `docs/reviews/LLD_MAT_IO_AND_CONSISTENCY_2026-11-07.md` | 已审计 | 历史 mat_io v0.5 与 26 边的固定 SHA 有明确边界 |
+| `docs/reviews/LLD_CONTRACTS_TARGETS_TESTS_ALIGNMENT_2026-11-07.md` | 已审计 | 旧 Result/运行器候选与 HLD 26 边属于旧检查点 |
+| `docs/reviews/OWNER_TECH_DECISIONS_ALIGNMENT_2026-11-07.md` | 已审计 | MIT/Eigen/固定输出的历史验证范围已核，当前未编译 |
+| `docs/reviews/DOCUMENT_REVIEW_AND_SH_DECLARATIONS_2026-11-07.md` | 已审计 | 球谐仅声明级设计、历史静态验证 SHA 已核，不当成已实现 |
+| `AGENTS.md` | 已审计 | 项目只读原始数据、永久无需 MATLAB/L1、阶段运行权限及禁止改写历史的规则已核 |
+| `README.md` | 已审计 | MIT、Ivanic 原文＋勘误、Eigen-only/禁 sdla、固定输出根与探针证据边界已核 |
+| `LICENSE` | 已审计 | 根 MIT 文本及自有作品适用范围已核，不推导原作者数据再授权 |
+| `.gitignore` | 已审计 | 确认含 /output/ 排除规则；该规则不能替代 Writer 文件系统安全 |
+| `scripts/check_docs_traceability.sh` | 已审计 | 只读检查器源码解析：REQ/TC/P、45 .m、HLD DAG 的 AWK 检查路径已核；Bash **未执行** |
 
 ## 六、审计闭环与完成标准
 
@@ -136,3 +138,16 @@
 5. 本轮**只清理低优先级**；如发现高/中优先级语义问题，明确列入下一轮，**不借本轮授权擅自扩大到实际代码/编译/测试**。完成本轮后按固定快照更新 [DOCUMENT_BASELINE_REGISTER.md](DOCUMENT_BASELINE_REGISTER.md) 的各文件 Git blob SHA，并在 [PROGRESS.md](PROGRESS.md) 登记审计证据、范围和“不能推断什么”。
 
 **当前结论**：用户历轮意见已归入本台账作为后续逐文件审计依据；具体修改应由本轮提交差异和固定 SHA 验证。所有核心 SRS/HLD/LLD 与测试计划仍是**评审草案、未冻结/未验收**，没有运行 MATLAB/Octave、Bash、CMake、CTest 或任何 MAT 写入/数值实验。
+
+## 七、完整文档审计执行结果（2026-11-07，后续审计轮）
+
+**审计输入的固定 Git commit**：`4627cc1e48be9c43ad10b28fda646d65ee8ef01c`。审计报告：[FULL_DOCUMENT_AUDIT_2026-11-07.md](reviews/FULL_DOCUMENT_AUDIT_2026-11-07.md)。审计报告和本文件的后续提交不是该固定输入 SHA 的一部分。
+
+- **覆盖**：40 个路径均检查文件身份、Markdown 链接/围栏、类型/版本/决策边界。共有 **452 条本地 Markdown 相对引用，未发现缺失目标**；这不代表每个链接的标题锚点均单独渲染验证。
+- **静态合同/追踪**：66 REQ、66 TC、98 P、附录 8 个 REQ-DC、45 .m（SRS/OBJECT_MODEL 各 45 映射）、HLD 27 条边无环；检查范围内 ID/映射不一致为 0，**不是 Bash/CTest 的 PASS**。
+- **MAT 历史字典**：582 行唯一路径、五种 shape 分布、MAT v5/double/zlib/READ_OK 的**报告内部结构**一致；未重新读取 MAT、未取得新的逐元素 L2/SHA-256。
+- **待修订问题**：报告登记 **AF-001～AF-012 共 12 项**（高 1、中 8、低 3）及 **AH-001～AH-002 两项历史/执行边界**。AF 是文档语义冲突或口径不完整，**均未在本轮直接修复**，之后要逐项修订/复核并登记提交 SHA。
+- **后续数学审计**：KvD、采样/噪声、轨迹保持“空白”（原源码逐式未进行）；Adaptive、分析、球谐/数值参考等部分检查过但未完成原文/独立 L3，标“正在审计”。**不得将三态审计完成率等同算法完成率或文档基线成熟度**。
+- **归档边界**：旧审批包、2026-11-06 的 26 条 DAG、较早版本的 MATLAB L1/SHRotation/CLI 文案保留为历史记录，不直接反向当作当前义务；现行项目所有者决定和 L1 退出政策优先。
+
+**本次不要求新增人工决定**。后续论文 PDF、H-10/H-11 执行权限、DEC-005/006 最终数值/性能阈值、基线/发布仍按 [TODO.md](TODO.md) 在对应阶段安排。
