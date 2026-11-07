@@ -49,15 +49,15 @@
 
 ## 3. 本轮新登记的整改目标（AF-032～062）
 
-**口径**：前 5 项为低优先级文字/治理事项；余下 25 项为阶段性设计、真实证据与批准门槛，并非仅靠文字修改就能结案。项目处于文档阶段，**全部先记「未整改」**。实际实现/运行/签署均须尊重授权与 [TODO.md](TODO.md)；不要求 MATLAB/L1。
+**口径**：前 5 项为低优先级文字/治理事项；余下 25 项为阶段性设计、真实证据与批准门槛，并非仅靠文字修改就能结案。项目处于文档阶段，**首次发现时全部先记「未整改」**，下表为整改后当前状态。实际实现/运行/签署均须尊重授权与 [TODO.md](TODO.md)；不要求 MATLAB/L1。
 
 | ID | 类型 | 仓库根相对路径 | 具体整改/验收目标 | 状态 |
 |---|---|---|---|---|
-| AF-032 | 文字·低 | `docs/REQUIREMENTS.md` | §5 将“来源未明”统一为 DEC-004：当前有效 save／历史 HistoricalOnly／分析缺字段报错；历史成因不作前置门禁。 | 未整改 |
-| AF-033 | 文字·低 | `docs/design/mat_io.md` | §4.1 标清 alleadap*/rottransratio 的 HistoricalOnly 身份；不要求先归因，不扩大当前 Writer save 字段。 | 未整改 |
-| AF-034 | 文字·低 | `docs/design/experiments.md` | §5 五入口对照表简化“来源未知/未证实”残留，统一 HistoricalOnly、当前 save 及缺字段失败语义。 | 未整改 |
-| AF-035 | 文字·低 | `docs/TEST_PLAN.md` | §5.1 with_errors 七份历史 MAT 中两份 alleadap* 显式标 HistoricalOnly；保留真实 shape 与 7/7 读取事实。 | 未整改 |
-| AF-036 | 治理·低 | `docs/DOCUMENT_BASELINE_REGISTER.md` | 解释该矩阵 36 项固定版本/身份登记与 AUDIT 本轮 50 个审计对象口径不同；新增审计对象不自动成为已冻结基线。 | 未整改 |
+| AF-032 | 文字·低 | `docs/REQUIREMENTS.md` | §5 将“来源未明”统一为 DEC-004：当前有效 save／历史 HistoricalOnly／分析缺字段报错；历史成因不作前置门禁。 | 已整改 |
+| AF-033 | 文字·低 | `docs/design/mat_io.md` | §4.1 标清 alleadap*/rottransratio 的 HistoricalOnly 身份；不要求先归因，不扩大当前 Writer save 字段。 | 已整改 |
+| AF-034 | 文字·低 | `docs/design/experiments.md` | §5 五入口对照表简化“来源未知/未证实”残留，统一 HistoricalOnly、当前 save 及缺字段失败语义。 | 已整改 |
+| AF-035 | 文字·低 | `docs/TEST_PLAN.md` | §5.1 with_errors 七份历史 MAT 中两份 alleadap* 显式标 HistoricalOnly；保留真实 shape 与 7/7 读取事实。 | 已整改 |
+| AF-036 | 治理·低 | `docs/DOCUMENT_BASELINE_REGISTER.md` | 解释该矩阵 36 项固定版本/身份登记与 AUDIT 本轮 50 个审计对象口径不同；新增审计对象不自动成为已冻结基线。 | 已整改 |
 | AF-037 | 基线·阶段 | `docs/REQUIREMENTS.md` | 正式冻结前复核 66 REQ/AC、附录 8 REQ-DC 内部约束身份，并为 AC→LLD 章节绑定精确版本/SHA/批准；DEC-005/006/008 及例外明确。 | 未整改 |
 | AF-038 | 设计·阶段 | `docs/ARCHITECTURE.md` | 复核 27 边 DAG、部署/质量场景、Composition Root→固定 output/<RunId>→Writer 与 CLI/mat_io/Runner 一致；动态探针/DEC 证据仅引用，待真实构建再关闭。 | 未整改 |
 | AF-039 | 设计·阶段 | `docs/OBJECT_MODEL.md` | 对齐 45 .m 职责映射、类名/所有权/Adaptive 状态机及 contracts/LLD 候选签名；正式冻结需一致且有批准记录。 | 未整改 |
@@ -83,6 +83,12 @@
 | AF-059 | 设计·阶段 | `docs/design/README.md` | 逐模块核对 LLD 签名、唯一合同归属、独立 L3/TC 映射与真实代码边界，建立可编码/可验证的冻结清单；不以目录齐全等同实现。 | 未整改 |
 | AF-060 | 证据·阶段 | `docs/golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md` | 逐 AC 复核 L2 逐值、L3 一般/退化/逐节点、适用 L4 的缺口与实际证据；L1/MATLAB 永久不列为必需门槛。 | 未整改 |
 | AF-061 | 证据·阶段 | `docs/PLAN.md` | DEC-006 性能/资源目标基于未来真实全工程构建及运行 wall/CPU/RSS、平台事实与批准标准确定；VM 容量快照不能当性能验收。 | 未整改 |
-| AF-062 | 治理·低 | `docs/design/README.md` | §1 不再将 36 个选定文档的固定版本身份矩阵称作“全部当前规范和过程文档”；另引用 AUDIT 50 条审计路径，明确两者用途及非冻结边界。 | 未整改 |
+| AF-062 | 治理·低 | `docs/design/README.md` | §1 不再将 36 个选定文档的固定版本身份矩阵称作“全部当前规范和过程文档”；另引用 AUDIT 50 条审计路径，明确两者用途及非冻结边界。 | 已整改 |
 
-**本轮台账合计**：历史 32 项「已整改」；新增 31 项「未整改」；共 **63 项（已整改 32、未整改 31）**。治理文档的“已审计”不等于这些目标“已整改”；冻结或真实测试证据缺失时，禁止将阶段门槛提前关闭。
+**当前台账合计**：历史 32 项已整改；本轮 6 项文字/治理目标已整改，25 项阶段验证/冻结目标未整改；共 **63 项（已整改 38、未整改 25）**。治理文档的“已审计”不等于这些目标“已整改”；冻结或真实测试证据缺失时，禁止将阶段门槛提前关闭。
+
+## 4. 本轮六项文档修订结案（2026-11-08）
+
+- **先审计并登记**：输入 `6c22fe7`，审计登记提交 `ae87532`，六项在修改前均标「未整改」。
+- **实际修改与复读**：SRS、mat_io、experiments、TEST_PLAN、LLD 索引、PLAN 的文本修订提交 `3e3ad2a`；AF-032～035、AF-062 五项定向静态检查通过。控制矩阵 AF-036 在提交 `2d608b9` 完成，**36/36 个登记文件的 blob SHA 均匹配其明确标注的固定快照**；非最新动态 HEAD 的验收状态。
+- **边界**：AF-037～061 的 25 个分阶段目标仍需实际 C++/CTest、独立 L2/L3/L4、性能数据、DEC-005/006/008 和相应批准，不得以静态审计关闭；原 `origin/**` 与历史审批/报告未变。
