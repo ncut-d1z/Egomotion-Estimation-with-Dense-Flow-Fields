@@ -1,6 +1,6 @@
 # 系统概要设计（HLD）— MATLAB 自运动估计 C++ 移植
 
-> **状态：HLD v0.4 评审草案，未冻结。** 当前统一文档版本与冻结状态见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，实际 matio 探针/构建/CTest/数值证据仅见 [PROGRESS.md](PROGRESS.md)；此处只定义稳定架构边界，不以历史探针代替架构验收。 来源是已核对的 MATLAB 源码和原 PLAN §3/4/6。需求依据见 [REQUIREMENTS.md](REQUIREMENTS.md)，类职责附件见 [OBJECT_MODEL.md](OBJECT_MODEL.md)，详细设计待定见 [design/README.md](design/README.md)，执行安排见 [PLAN.md](PLAN.md)。以 [AGENTS.md](../AGENTS.md) 和项目所有者批准为准。
+> **状态：HLD v0.5 评审草案，未冻结。** 当前统一文档版本与冻结状态见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，实际 matio 探针/构建/CTest/数值证据仅见 [PROGRESS.md](PROGRESS.md)；此处只定义稳定架构边界，不以历史探针代替架构验收。 来源是已核对的 MATLAB 源码和原 PLAN §3/4/6。需求依据见 [REQUIREMENTS.md](REQUIREMENTS.md)，类职责附件见 [OBJECT_MODEL.md](OBJECT_MODEL.md)，详细设计待定见 [design/README.md](design/README.md)，执行安排见 [PLAN.md](PLAN.md)。以 [AGENTS.md](../AGENTS.md) 和项目所有者批准为准。
 
 ## 1. 架构目标、质量属性和约束
 
@@ -92,7 +92,7 @@ flowchart LR
 | domain/math | N×6 FlowField 和 3D 数学、运动估计值 | Eigen | 三维向量、列主序、坐标与单位 | 无效维度、零范数与非有限输入 |
 | sampling | 八面体、缺损八面体、二十面体方向采样及注入 RNG 的 getvektor | domain/math、**contracts**（IDirectionSampler/IRandomSource） | 顺序确定的 N×3 单位视线 | 非法细分级别、数目溢出、随机源错误 |
 | simulation | 球内近度、光流合成、随机噪声、轨迹（H-02 的旋转向量→矩阵采用 Sophus） | domain/math、sampling、**contracts**（IRandomSource/IFlowNoiseModel）；**Sophus 作为规划的私有外部依赖** | 近度、t、ω、三维切向光流 | 无效几何、随机源异常 |
-| harmonics | 实球谐基函数、近度拟合/重建、系数旋转（H-14 的 Don Williamson 方案 A） | domain/math；**受控的第三方 Ivanic–Ruedenberg C++ 源码适配层作为私有实现** | l≤2、3×5 以及 3×3/5×5 旋转块 | 系数形状、归一化与旋转失败 |
+| harmonics | 实球谐基函数、近度拟合/重建和系数旋转；实现依据 Ivanic–Ruedenberg 1996 原文及 1998 勘误 | domain/math、**contracts**、Eigen；由项目**纯 Eigen 独立重写** l≤2 递推，Don Williamson 仅代码参考，**不包含 sdla** | 3×5 系数、R0/R3/R5 旋转块 | 系数形状、归一化、非有限输入和旋转失败 |
 | estimators | Franz、Original/Modified KvD、Adaptive 单步估计 | domain/math、harmonics（Adaptive） | FlowField、近度/系数、运动估计与计算状态 | 退化、奇异系统、非有限值 |
 | mat_io | 原始 MAT 只读元数据/变量读取与新 MAT 输出；实现 IResultReader/IResultWriter | matio/zlib、domain 值类型、**contracts** | rank、dims、class、dtype、列主序、变量名 | 文件/解压/类型错误、路径拒绝 |
 | experiments | 五类 MATLAB 原实验的参数编排、独立 RunId 与状态 | domain、**contracts**（写入窄接口）、**sampling**、simulation、estimators | 参数、seed、结果 MAT、有效/失败样本数 | 缺配置、数值失败、输出冲突 |
@@ -185,8 +185,9 @@ sequenceDiagram
   participant Run as ExperimentRunner
   participant Solver as Estimator
   participant Writer as RunMatWriter
-  User->>Root: experiment + 参数 + output-root
-  Root->>Run: 注入模型、RNG、写入器和 RunContext
+  User->>Root: experiment + 参数 + 可选 --run-id（无输出根选项）
+  Root->>Root: 确认仓库根 output/，使用独立 OS 随机源或用户 ID 独占创建 output/<RunId>/
+  Root->>Run: 注入模型、实验 RNG、受控写入器和 RunContext
   Run->>Run: 生成球面方向与光流
   Run->>Solver: FlowField / 旧系数（如适用）
   Solver-->>Run: Result(估计值、状态、指标)
