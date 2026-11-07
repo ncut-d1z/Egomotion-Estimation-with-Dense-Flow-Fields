@@ -1,6 +1,6 @@
 # 文档类型、版本、Git SHA 与基线状态控制矩阵
 
-> **文档管理登记，非正式已签署基线。** 以下 **31 份登记文件**的 Git blob SHA 均来自固定快照 commit `e8c994b6cc48c1a9ba77a43386f1729d3381c85c`；本矩阵自身的更新提交晚于该快照。SRS v0.11、HLD v0.6、对象模型 v0.4、contracts v0.2、MAT I/O v0.7、experiments v0.3、harmonics v0.7、PLAN/TEST_PLAN v0.5、LLD 索引 v0.4，各文件版本独立。**全部核心规范仍未冻结；PROGRESS/AUDIT/AUDIT_PROCESS/固定审查报告均是过程记录，不适用软件规范基线冻结或 TC PASS。** 后续变更必须重新登记文件的真实 SHA，不能把本快照当成未来分支 HEAD 的通过证明。
+> **文档管理登记，非正式已签署基线。** 以下 **31 份登记文件**的 Git blob SHA 均来自固定快照 commit `622a7de1f59284cfa0b085ee314828eb8d207218`；本矩阵自身的更新提交晚于该快照。SRS v0.11、HLD v0.6、对象模型 v0.4、contracts v0.2、MAT I/O v0.7、experiments v0.3、harmonics v0.7、PLAN/TEST_PLAN v0.5、LLD 索引 v0.4，各文件版本独立。**全部核心规范仍未冻结；PROGRESS/AUDIT/AUDIT_PROCESS/固定审查报告均是过程记录，不适用软件规范基线冻结或 TC PASS。** 后续变更必须重新登记文件的真实 SHA，不能把本快照当成未来分支 HEAD 的通过证明。
 
 ## 1. 文档职责与唯一规范来源
 
@@ -21,7 +21,7 @@
 
 ## 2. 当前核心文档与 blob SHA
 
-**快照：** `e8c994b6cc48c1a9ba77a43386f1729d3381c85c`。所有登记 blob SHA 对应该固定提交，**本矩阵更新提交晚于它**；`PROGRESS.md` 的正式基线状态为**不适用（滚动证据登记）**。现行审计总进度与逐项整改状态分别以 [AUDIT.md](AUDIT.md)、[AUDIT_PROCESS.md](AUDIT_PROCESS.md) 为准，审计完成不代表数学或软件验收。
+**快照：** `622a7de1f59284cfa0b085ee314828eb8d207218`。所有登记 blob SHA 对应该固定提交，**本矩阵更新提交晚于它**；`PROGRESS.md` 的正式基线状态为**不适用（滚动证据登记）**。现行审计总进度与逐项整改状态分别以 [AUDIT.md](AUDIT.md)、[AUDIT_PROCESS.md](AUDIT_PROCESS.md) 为准，审计完成不代表数学或软件验收。
 
 | 层次 | 文档 | 文档版本 | Git blob SHA | 正式基线 | 范围 |
 |---|---|---|---|---|---|
@@ -64,7 +64,7 @@
 | 延期人类事项 | [docs/TODO.md](TODO.md) | `c3f6d4b79dd7c0bbe4074006c75f214b182f2af4` | 材料、H-10/H-11、DEC-005/006、最终基线/发布：原因及建议阶段，**没有当前授权** |
 | 本轮只读审查 | [docs/reviews/DOCUMENT_REVIEW_AND_SH_DECLARATIONS_2026-11-07.md](reviews/DOCUMENT_REVIEW_AND_SH_DECLARATIONS_2026-11-07.md) | `580e98eae40a5378128b139ce531b6ded11c6c2e` | 历史固定 SHA 下的 GitHub 只读 ID/DAG/引用核对，非真实 Bash/CTest |
 | 用户历轮审计台账 | [docs/AUDIT.md](AUDIT.md) | `40f5e60029e5e4f8da178bcb0bd7ef995cc51f05` | **AU-001～028** 历轮意见，按文件相对路径的“空白/正在审计/已审计”进度，不表示 SRS/HLD/LLD 已冻结 |
-| 问题级整改进度 | [docs/AUDIT_PROCESS.md](AUDIT_PROCESS.md) | `c498b973832ce066401d5d598bfacb7ebef13d4f` | AF-001～012 细化为 13 个已整改目标；新 AF-013～020 共 8 个未整改目标。审计输入固定 SHA `3beb8c06a9d40380431f99e31ed0f70b346863a2`，均非真实 C++/CTest 结果 |
+| 问题级整改进度 | [docs/AUDIT_PROCESS.md](AUDIT_PROCESS.md) | `f5da4edba8295bba7189b0f1f670986a17d2bbd5` | AF-001～012 细化为 13 个已整改目标；新 AF-013～020 共 8 个未整改目标。审计输入固定 SHA `3beb8c06a9d40380431f99e31ed0f70b346863a2`，均非真实 C++/CTest 结果 |
 | 本轮完整审计报告 | [docs/reviews/FULL_DOCUMENT_AUDIT_2026-11-07.md](reviews/FULL_DOCUMENT_AUDIT_2026-11-07.md) | `43446ec3e7ebe3d9b7f2447561f72d64ccbb5e95` | 固定输入 commit `4627cc1e48be9c43ad10b28fda646d65ee8ef01c` 的 **40 文件文档审计**，记录 AF-001～012 待修订项与 AH-001～002 历史边界，非 CMake/CTest PASS |
 | AF-001～AF-012 修订复核 | [docs/reviews/AUDIT_AF001_AF012_RESOLUTION_2026-11-07.md](reviews/AUDIT_AF001_AF012_RESOLUTION_2026-11-07.md) | `ae44ae6ba782a9930b400ea860a50cc326a0cd3f` | 定向文本核验快照 `893acb7b07862c0701e62b786462ef8395a116da`：12 项 AF 已做纯文档修订并通过限定静态复核；仍缺逐式数值、代码编译和正式测试 |
 
