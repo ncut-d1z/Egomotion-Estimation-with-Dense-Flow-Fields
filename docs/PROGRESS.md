@@ -2,6 +2,8 @@
 
 > **2026-11-06 审批修订补充**：已新增 [HAR-2026-11-06-001 审查材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md)，把 H-01～H-16 分为已选技术路线、只供起草及暂缓执行三类，并提供具体静态源码证据、TC/Golden 对照和 M0～M5 候选退出证据。这是审查文档成果，**未改变 P/TC/AC 的验收状态**，也未解除全部 false 的执行权限。
 
+ > **项目长期决定**：[不运行 MATLAB 的数值证据政策](golden/NO_MATLAB_EXECUTION_POLICY.md) 已根据项目所有者的最新明确要求写入 SRS/TEST_PLAN/LLD/AGENTS：原 .m **只读静态审查**，L1 原 MATLAB 运行逐节点 Golden **不再作为任何冻结/验收阻塞**；下一步用 L2/L3/L4，保留真实 C++/CTest、DEC-005/008、版权、数据保护与人工签署。**本决定不是生产实施或运行测试授权。**
+
 > **当前状态：审计及设计草案阶段；所有正式软件需求、P 任务及里程碑均未宣布验收完成。** 本文件只记录可定位的实际子成果和未决项。验收规则以 [REQUIREMENTS.md](REQUIREMENTS.md)、[TEST_PLAN.md](TEST_PLAN.md) 和 [PLAN.md](PLAN.md) 为准；不得把已有文档、matio 独立探针或静态集合检查折算为业务 C++ 功能完成率。
 
 ## 1. 当前工作范围与证据
@@ -22,8 +24,9 @@
 | E-DOC-002 | [design/cli.md](design/cli.md) | 命令/参数类型/错误码/诊断输出的候选 LLD 已存在 | CLI 已实现、已获批准、错误/参数 schema 已冻结 |
 | E-DOC-003 | [OBJECT_MODEL.md](OBJECT_MODEL.md) + [design/sampling_noise.md](design/sampling_noise.md) | Bias 场景编排、`FlowSynthesizer`、`sampling::randomUnitDirection` 的职责和命名已协调 | 对应头文件/测试已创建、随机数调用序列已数值验证 |
 | E-DOC-004 | [审查后跨文档一致性复核](reviews/DOC_CONSISTENCY_RECONCILIATION_2026-11-06.md) | 8 份方案文档的 CLI/output、RunOutcome、SH R5、MAT 形状来源、HLD 环境/预算与章节引用得到文本统一；固定提交下的 66 REQ/66 TC/98 P、源目录和 DAG 静态断言未发现不一致 | H-03/DEC-005/008 已批准、H-10/H-11 已解除暂缓、Bash/CTest/Golden 已执行、SRS/HLD/LLD 可冻结 |
-| E-DOC-005 | [Golden 及容差候选](golden/GOLDEN_TOLERANCE_PROPOSAL.md) + [解析数值 JSON](golden/analytic_golden_candidates.v1.json) | 已静态提出 12 组带固定输入与具体参考数字的解析候选；建议第一轮宽松连续值比较 `atol=0.01, rtol=0.1`，并强制结构/物理不变量；记录了真实 MATLAB Golden 缺口 | MATLAB 已执行或输出已验证、DEC-005 阈值已批准、C++ 通过测试、M0～M5/P/TC/AC 可标记通过 |
-| E-DOC-006 | [Golden L1–L4 证据等级与 AC 缺口](golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md) | 已逐类记录目前缺失的原 MATLAB 每轮/每节点/RNG/异常/SH 旋转/逐帧 Session L1，区别于现存最终 L2、解析候选 L3 和待执行 L4；并逐项对应重点 AC/TC，不修改其条款 | L1 已实际采集、L2 全量值和 SHA-256 已复核、L3/L4 已测试、DEC/AC 已通过、可以冻结或合并 |
+| E-DOC-005 | [Golden 及容差候选](golden/GOLDEN_TOLERANCE_PROPOSAL.md) + [解析数值 JSON](golden/analytic_golden_candidates.v1.json) | 已静态提出 12 组带固定输入与具体参考数字的解析候选；建议第一轮宽松连续值比较 `atol=0.01, rtol=0.1`，并强制结构/物理不变量；记录为独立 L3 候选（未经真实测试） | MATLAB 运行/原 L1 已验证、DEC-005 阈值已批准、C++ 通过测试、M0～M5/P/TC/AC 可标记通过 |
+| E-DOC-006 | [Golden L1–L4 证据等级与 AC 缺口](golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md) | 已逐类记录目前缺失的原 MATLAB 每轮/每节点/RNG/异常/SH 旋转/逐帧 Session L1，区别于现存最终 L2、解析候选 L3 和待执行 L4；该文件目前已按项目所有者的新决定标出 L1 非必需，重点 AC 按更新的 SRS 采用 L2/L3/L4 | L2 全量值和 SHA-256 已复核、L3/L4 已测试、DEC/AC 已通过、可以冻结或合并 |
+| E-DOC-007 | [长期无需 MATLAB 运行政策](golden/NO_MATLAB_EXECUTION_POLICY.md) + [SRS](REQUIREMENTS.md) + [TEST_PLAN](TEST_PLAN.md) + [L2/L3/L4 矩阵](golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md) | 已从规范性 AC 中撤销 MATLAB 运行及 L1 逐节点强制前提，关键验收路线改为 L2/L3/L4；未修改原始 MATLAB/MAT 或旧审批 JSON | L2/L3/L4 已独立复核、代码/CTest/DEC-005 已完成、SRS/HLD/LLD 已冻结或原 MATLAB 运行全行为已等价 |
 | E-DEC-001 | [JSON 审批落实记录](approval/DECISION_IMPLEMENTATION_NOTES.md) | **H-02/H-14 已指定 Sophus 与 Don Williamson Ivanic 方案 A**；H-04 已提供 Ubuntu 24.04.4 VM 快照；H-12 已确定 `output/` 并更新 `.gitignore` | 任意第三方 C++ 文件已复制、Sophus 已安装/构建、MAT 写入/CTest 已执行、Golden/容差已批准、程序可发布 |
 
 ## 3. 实施任务与里程碑状态
@@ -56,7 +59,7 @@
 | 数值验证者 | 独立 Golden、统计样本、批准容差下的逐轮对照 | 未指派、Golden 和 DEC-005 未冻结 |
 | 测试/集成维护者 | Debian/Ubuntu 构建、CTest、数据/资源记录、静态审计核查 | Ubuntu 探针已有记录；完整工程/CTest 未获验收 |
 
-> **Golden 证据等级最新状态**：依 [E-DOC-006](golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md)，L1 原 MATLAB 逐节点/逐调用未采集、L2 历史 MAT 最终结果存在但完整逐值/SHA-256 审计缺、L3 解析样例只是候选、L4 尚未执行统计。尤其 KvD/Adaptive/RNG/SH/Session 的运行中间量仍缺，故不能把历史最终结果与解析数值当作逐节点 Golden；所有对应 AC **仍未验收**。现有 E-DOC-005 的 0.01/0.1 为未批准筛查候选。
+ > **Golden 证据等级最新状态**：依 [E-DOC-007](golden/NO_MATLAB_EXECUTION_POLICY.md)，L1 原 MATLAB 运行**永久非强制、非阻塞**；L2 作者 MAT 存在但独立 SHA-256/逐值复核仍缺，L3 的 AN-G01～12 仅为候选（完整逐轮/递归/一般输入仍待独立参考），L4 尚无新执行统计。故 KvD/Adaptive/RNG/SH/Session 的 AC 仍因**独立参考/真实 C++/CTest/容差批准不足**而未验收，**不是因为缺 L1**。候选 0.01/0.1 尚未批准。
 
 ## 5. 未解决决策与验证阻塞
 
@@ -64,7 +67,7 @@
 |---|---|---|
 | DEC-001/002 当前 MAT 格式和类型 | 归档事实已有 582/582 证据；支持范围尚待审阅 | 当前数据限定 v5/double 与拒绝未知类型的具体 Reader/负例 |
 | DEC-003/007 第三方版权 | **H-02/H-14 已选定限定替代路径；发布/实现尚未验收** | Sophus `SO3d::exp`、Don Williamson `IvanicSHRotate.cpp/.h`（方案 A）及其 MIT 告知；将来保存复用目录 README/LICENSE、核实 sdla 依赖/源许可与 Golden；整个 MATLAB 归档权利不因 H-02 自动通过 |
-| DEC-005 数值容差 | **未关闭** | 条件数/数值尺度分组、固定独立 MATLAB Golden、逐字段误差及批准门槛；人类可通过 [HTML 审批页](approval/HUMAN_APPROVAL_REQUEST.html) 记录决定并自行保存 JSON（不自动等同正式批准） |
+| DEC-005 数值容差 | **未关闭** | 条件数/数值尺度分组、固定独立 L3 逐节点 Golden、L2 最终结果、必要 L4 统计、逐字段误差及批准门槛（不运行 MATLAB）；人类可通过 [HTML 审批页](approval/HUMAN_APPROVAL_REQUEST.html) 记录决定并自行保存 JSON（不自动等同正式批准） |
 | DEC-006 平台与资源 | **用户已提供 H-04 主机环境事实；预算/性能仍未冻结** | Ubuntu 24.04.4 VirtualBox/x86_64 的资源快照已记；待将来实际 Debian/Ubuntu 业务构建和性能测量，不以容量快照作为性能验收标准 |
 | DEC-008 CLI/CTest/Golden 映射 | **未关闭** | 批准 [cli.md](design/cli.md) 参数及错误序列化，真实测试文件/注册名、Golden identity、执行证据 |
 | Bash 现场检查 | **H-11=deferred，禁止本轮现场执行** | 仅保留过去的连接器静态审查；未来人类另行授权后才能在完整仓库运行 Bash 并留 stdout/stderr/exit/SHA |
