@@ -1,6 +1,6 @@
 # 系统概要设计（HLD）— MATLAB 自运动估计 C++ 移植
 
-> **状态：HLD v0.5 评审草案，未冻结。** 当前统一文档版本与冻结状态见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，实际 matio 探针/构建/CTest/数值证据仅见 [PROGRESS.md](PROGRESS.md)；此处只定义稳定架构边界，不以历史探针代替架构验收。 来源是已核对的 MATLAB 源码和原 PLAN §3/4/6。需求依据见 [REQUIREMENTS.md](REQUIREMENTS.md)，类职责附件见 [OBJECT_MODEL.md](OBJECT_MODEL.md)，详细设计待定见 [design/README.md](design/README.md)，执行安排见 [PLAN.md](PLAN.md)。以 [AGENTS.md](../AGENTS.md) 和项目所有者批准为准。
+> **状态：HLD v0.6 评审草案，未冻结。** 当前统一文档版本与冻结状态见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，实际 matio 探针/构建/CTest/数值证据仅见 [PROGRESS.md](PROGRESS.md)；此处只定义稳定架构边界，不以历史探针代替架构验收。 来源是已核对的 MATLAB 源码和原 PLAN §3/4/6。需求依据见 [REQUIREMENTS.md](REQUIREMENTS.md)，类职责附件见 [OBJECT_MODEL.md](OBJECT_MODEL.md)，详细设计待定见 [design/README.md](design/README.md)，执行安排见 [PLAN.md](PLAN.md)。以 [AGENTS.md](../AGENTS.md) 和项目所有者批准为准。
 
 ## 1. 架构目标、质量属性和约束
 
