@@ -77,11 +77,14 @@ public:
 
 class RunMatWriter {
 public:
+    // 内部由 Composition Root 注入受控的仓库根 output/，非 CLI 参数。
+    explicit RunMatWriter(std::filesystem::path validated_repository_output);
     Status<MatErrorCode> saveNewVariable(
-        const std::filesystem::path& output_root,
         std::string_view run_id,
         std::string_view mat_variable_name,
         const MatDenseArray& value) const;
+private:
+    std::filesystem::path output_root_; // 构造/每次写出时仍应校验目录身份
 };
 ~~~
 
@@ -101,7 +104,7 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 - `Result<T, MatErrorCode>` 成功分支只包含完整、符合不变量的 T；失败分支应同时含 `MatErrorCode` 和 [contracts.md §3](contracts.md) 的 `ErrorDetail`（含 `stage/source_path/variable`，在已分配 RunId 时附加 `run_id`）。采用 `Failure<MatErrorCode>{code, detail}` 还是其他实现方式由公共合同统一冻结，**不得引入第二套 MAT 错误枚举或全局 last_error**。
 - `Status<MatErrorCode>` 表示无值的成功/失败；失败同样须传播 `ErrorDetail`，而不是用 `true/false` 丢失失败位置。其实现与 `Result` 共同归 [contracts.md §3](contracts.md) 管理。
 - `MatDenseArray::fromColumnMajor` 是建议的唯一对外构造入口。Reader 完整解码后在 MAT I/O 实现边界按验证后的 double/列主序复制成自拥有值对象；**实验 Runner 不直接构造或依赖 MatDenseArray**。Composition Root 注入具体 IResultWriter，MAT I/O 适配层负责将 contracts/domain 值对象按二维 shape 变换为合格 MatDenseArray 后交给 Writer；不得让 experiments/analysis 反向依赖 io 具体类。
-- **写入身份来源**：Composition Root 解析候选 `--output-root DIR` 并验证其为仓库根 `output/`；RunContext 独立生成/接收经验证的 RunId，在受控根目录下安全新建 `output/<RunId>/`。Writer 不自行生成 RunId、不将用户路径当作新根、不直接写任意目标，仅按既定 root/RunId 验证并发布 `output_root / run_id / (mat_variable_name + ".mat")`。同时校验元数据变量名与参数变量名相符。
+- **固定输出根与身份来源**：CLI 没有输出根参数。Composition Root 从已确认的仓库根位置取得 `output/`，并将该**内部可信候选路径**注入 RunMatWriter；RunContext 使用同一根、拥有或生成经验证的 RunId（自动 ID 通过独立 OS 随机源创建，不消耗实验 RNG），在 `output/<RunId>/` 独占新建目录。Writer 每次写出仍需重新检查 root 的设备/目录身份、不覆盖/不逃逸，目标为 `output_root_ / run_id / (mat_variable_name + ".mat")`；不接受用户提供的另一个输出根。
 - Writer 在文件系统层必须**再次约束** root、RunId、最终文件名、独占创建和已有目标拒绝，不能仅依赖 CLI 的一次性检查；同一新 RunId 可安全写入多个不同变量，但不能覆盖已有 MAT 文件。符号链接/目录竞态的可靠实现与测试仍是 P1.9 门禁。
 
 ## 3. 输入路径与输出路径的强制安全流程
@@ -113,7 +116,7 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 4. 返回自拥有的领域数据或具体错误码；输入文件及 origin 目录保持不变。
 
 **输出阶段（拟议保护合同）**：
-1. **H-12 已指定仓库根 `output/` 为新数据的唯一规划隔离根**。CLI 的 `--output-root DIR` 只可作为指向**根 `output/` 本身**的候选参数，不可指向 `output/<RunId>/` 或其他任意输出根；RunContext 负责校验根身份、生成/接收经审核的 RunId，并在 `output/<RunId>/` 中独占创建新结果，Writer 不得自行更改隔离根。此处仍是 H-03/DEC-008 **待冻结的接口方案**，不可据此默认执行写入。任何 `origin/**` 目标、路径逃逸、符号链接覆盖均应拒绝；
+1. **H-12 已确定仓库根 `output/` 是唯一新数据目录**，用户最新决定删除 CLI 的输出根选项。Composition Root/RunContext/Writer 共享同一受验证的内部输出根，RunId 可由用户提供或 OS 随机源生成，新建 `output/<RunId>/` 时必须独占且拒绝目录/文件复用。Writer 不自行更改隔离根、不使用用户任意路径。任何 `origin/**`、路径逃逸、符号链接覆盖都拒绝；真实 TOCTOU 实现仍待授权后测试。
 2. 对路径绝对化并解析已存在父目录及符号链接；拒绝 canonical 祖先关系下覆盖原始输入。需要考虑 ../、符号链接、同一路径多种表示、UTF-8/空格及软链接中途改变问题；
 3. 对最终文件使用**不覆盖**的独占创建/安全发布策略；不能仅靠“先 exists 再 open”保证无竞态。实际 matio 写出/临时文件/原子发布的组合在 Debian/Ubuntu 上需验证；
 4. 写后独立回读比对变量名、rank/dims、类型、数值，记录结果 SHA；失败时保留日志与不完整输出状态，但不得覆盖任何已有结果；
@@ -197,7 +200,7 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 | inspect(path) | 输入为存在的普通文件，且 Reader 不持有写权限 | 按 MAT 文件真实变量记录返回 name/class/dtype/rank/dims/complex，绝不变更输入 | MissingFile、InvalidMatHeader、CorruptCompressedData | TC-F-MAT-002 |
 | readNamed(path,name) | name 非空；所需 class 已受支持 | 对**唯一指定变量**读取完整自拥有数据，源文件句柄销毁后结果仍有效 | MissingVariable、UnsupportedClassOrType、InvalidShape | TC-F-MAT-001/003 |
 | readFirstCompatible(path) | 路径合法；可明确补齐省略的 `.mat`；不要求 MATLAB 运行 | **单变量文件**读取该变量；**多变量**在没有已获核准的独立顺序依据时拒绝 `AmbiguousVariable`，不擅自按字母序选取；仅承诺现有 582 份单变量归档的兼容范围 | AmbiguousVariable、MissingVariable、UnsupportedClassOrType、InvalidShape | TC-F-MAT-003 |
-| saveNewVariable(root,RunId,name,data) | root 限定在经 H-12 指定的 `output/`（待 CLI 参数合同批准），与 origin 不重叠；RunId 和变量名合法；输出不存在 | 新建结果 MAT，写后回读同名变量的 dtype/rank/dims/数据，并保存 manifest | OutputPathForbidden、OutputExists、WriteFailed、ReadbackMismatch | TC-F-MAT-004 |
+| saveNewVariable(RunId,name,data) | **构造时根路径已固定为仓库 `output/`，且写入时再次检验根/RunId/文件名**；不存在输出根 CLI 参数。RunId、变量名合法且文件不存在 | 在 `output/<RunId>/` 下独占发布新 MAT，写后回读 dtype/rank/dims/数据并保存 manifest | OutputPathForbidden、OutputExists、WriteFailed、ReadbackMismatch | TC-F-MAT-004 |
 | 句柄析构/移动 | 只允许单一所有者持有 mat_t*/matvar_t* | 释放恰好一次；move 后源句柄变为无所有权状态；MatDenseArray 深拷贝/移动后的存活性另测 | 不通过异常伪装成功；记录资源失败 | TC-DC-IO-001 |
 
 **完整错误枚举以 [contracts.md §3](contracts.md) 为唯一候选规范**；上表只是主要示例，不能视为完整 enum 列表。此模块涉及的 `MatErrorCode` 包括：`MissingFile`、`PermissionDenied`、`InvalidMatHeader`、`CorruptCompressedData`、`MissingVariable`、`AmbiguousVariable`、`UnsupportedClassOrType`、`InvalidShape`、`SizeOverflow`、`OutputPathForbidden`、`OutputExists`、`WriteFailed`、`ReadbackMismatch`。从 `Result/Status` 的失败分支传播原 `MatErrorCode` 与 `ErrorDetail`，CLI 退出码继续只引用 `contracts.md §3.1`，不在此处复制映射。无新增错误码得到批准。
@@ -223,8 +226,8 @@ Reader::readFirstCompatible:
     1 variable -> readNamed using the one and only true variable name
     >1 variables without approved independent ordering proof -> AmbiguousVariable
     never choose first by alphabetic name sorting
-Writer::saveNewVariable:
-    validate destination and obtain isolated RunId directory
+Writer::saveNewVariable(RunId,name,data):
+    validate fixed internal output root and isolated RunId directory
     build matvar_t via Mat_VarCreate (type/shape checked)
     create temporary MAT path through Mat_CreateVer
     Mat_VarWrite; Mat_Close; verify write result
