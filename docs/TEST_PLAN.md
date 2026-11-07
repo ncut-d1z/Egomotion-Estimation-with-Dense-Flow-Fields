@@ -220,6 +220,21 @@
 
 MAT 全量字典和来源证据**已经生成**：见 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md) 和 [design/mat_io.md](design/mat_io.md)。在 Ubuntu 24.04、matio 1.5.26 环境下，独立探针对原始归档 582/582 MAT、582/582 变量执行读取，均为 `READ_OK`，失败 0，这是**已取得的特定数据读取事实**。但它不代表生产 Reader/Writer、MAT 字节与 MATLAB 逐值 Golden、异常负例、数据来源独立核查或 P10.4 已通过；不得由此扩大推断到其他 MAT 格式和未来输入。
 
+### 5.4 L1–L4 Golden 取证状态与 TC 局限（仅规划）
+
+完整逐字段缺失清单、各来源等级的证据身份及 AC 阻塞状态见 [Golden 等级与 AC 缺口矩阵](golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md)。**L1 原 MATLAB 逐节点/逐调用：未采集；L2 582 个历史 MAT：文件存在、探针元数据已读取，逐值/SHA-256 复核尚缺；L3 12 组解析候选：未与 MATLAB/C++ 实测；L4 统计对照：尚未新执行。** 不能用“L2/L3/L4 可算”直接把 TC 的状态改为 PASS。
+
+| 重点 TC | 需要的证据及目前阻塞 | L2/L3/L4 只能承担的范围 |
+|---|---|---|
+| TC-F-FILTER-001、TC-F-KVD-001/002 | 原 MATLAB 各轴/逐轮近度、旧新 t、ω、a/b/c、RMS/阈值/退出时间序列 L1 缺；生产实现/CTest/容差均缺 | L3 公式与固定输入候选可准备；L2 Bias 结果只支持最终误差 |
+| TC-F-ADAPT-001/002/003、TC-DC-ADAPT-001 | 一轮 M1–M4/b/z/MSE/新系数与 Session 连续提交的 L1 缺 | L3 AN-G12 为理想场景；L2 不含中间量 |
+| TC-F-GEOM-002/003、TC-F-FLOW-002/003、TC-DC-RNG-001、TC-NF-RNG-001 | MATLAB i=0/1/2 有序方向 L1、真实 RNG 返回流 L1 均缺；**固定注入 RNG 的数学合同可用 L3 有限验证，不要求跨语言相同 seed 数字相同** | L3 i=0 与固定流场候选；L4 将来只证明统计 |
+| TC-F-SH-001/002、TC-F-TRAJ-001 | 原 MATLAB SHRotate R3/R5 全元素、轨迹逐帧/异常行为 L1 缺 | L3 解析旋转/轨迹不等于原脚本运行 |
+| TC-F-EXP-001/002/003 | 原八次分量、RNG 与逐帧系数 L1 缺 | L2 仅最终 MAT；L3 可审计保存/刷新规则，不能逆推出实际聚合过程 |
+| TC-F-AN-001、TC-I-ANALYSIS-001 | 原 graph begin/end/zone L1 缺，但**曲线数值可以后依据 L2 输入以独立 L3 计算验证**；生产 Reader/CTest 未实施 | L2 为输入、L3 为独立结果、L4 为汇总，均不可冒充 L1 |
+
+这里仅补充现有 §3 的 TC→测试文件/CTest→AC 矩阵，**不得**将它当成一张新的“已通过测试矩阵”。默认 `atol=0.01`、`rtol=0.1` 仍只是 [DEC-005 候选](golden/GOLDEN_TOLERANCE_PROPOSAL.md)，无原 MATLAB 实测与人类批准时不能作为通过阈值。任何将明确 L1 条款降级的方案都要另行审阅，当前没有取得测试权限。
+
 ## 6. Debian/Ubuntu 环境与配置矩阵
 
 | 环境组 | 发行版 / CPU 架构 | 编译器 | Eigen / matio / zlib | 当前状态 |
