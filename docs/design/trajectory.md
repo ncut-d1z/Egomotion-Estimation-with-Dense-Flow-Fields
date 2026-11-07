@@ -1,6 +1,6 @@
 # 轨迹、相机旋转与球内环境——详细设计草案
 
-> **LLD v0.1 草案，未冻结、未运行数值测试。** 来源：kreis_trajektorie.m、sinuskurve_trajektorie.m、trajektorie_aus_punkten.m、drehvektor_aus_zwei_vektoren.m、rodrigues.m、getnear_in_kugel_Drehung.m。对应 P3.6、P6.1–P6.7、REQ-F-TRAJ-001。
+> **LLD v0.2 草案，未冻结、未运行数值测试。** 来源：kreis_trajektorie.m、sinuskurve_trajektorie.m、trajektorie_aus_punkten.m、drehvektor_aus_zwei_vektoren.m、rodrigues.m、getnear_in_kugel_Drehung.m。对应 P3.6、P6.1–P6.7、REQ-F-TRAJ-001。
 
 ## 1. 轨迹点列与离散化
 
@@ -147,7 +147,7 @@ public:
 
 - 值对象不借用外部 MAT 的短生命周期内存。TrajectoryGenerator 不绘图，不修改 Session，也不产生全局随机状态。
 - 对不能形成前后两段位移的端点，返回原来的预分配零值，同时标注没有有效运动；不能用“端点真值零”掩盖其非估计状态。
-- 是否把近零角度强制置零、非法输入直接拒绝、是否支持球外位置，均属于 LLD 审批决定；禁止伪装成原 MATLAB 已经处理了这些异常。
+- **原始小角合同已确定**：对 `rodrigues.m` 的旋转向量→矩阵分支，原源码在 `theta < eps` 时返回**单位旋转矩阵**；§5.1 规划 `omega.norm() < std::numeric_limits<double>::epsilon()` 优先返回单位阵，否则采用已选定的 Sophus `SO3d::exp`。这不是将任意“近零角度”强制置零的新增可选策略，也不等于 `drehvektor_aus_zwei_vektoren.m` 的叉积范数 **1e−11** 判断门槛。**是否扩大原 eps 阈值、对非法/非有限输入如何显式失败、是否支持球外位置**仍须依据源代码与独立 L3/异常测试审查；不得把未知 MATLAB 行为写成已验证实现。
 
 ## 7. 黄金样本与验收覆盖
 
