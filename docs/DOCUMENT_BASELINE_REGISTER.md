@@ -1,6 +1,6 @@
 # 文档类型、版本、Git SHA 与基线状态控制矩阵
 
-> **文档管理登记，非正式已签署基线。** 下列 **36 份登记文件**的 Git blob SHA 对应固定快照 commit `276d71728971353bc678cce198d999aa9f5d8dd5`；本矩阵自身的更新提交晚于该快照。各文档独立版本包括 SRS v0.12、HLD v0.8、对象模型 v0.5、contracts v0.2、MAT I/O v0.8、experiments v0.3、harmonics v0.7、KvD v0.4、sampling_noise v0.3、**analysis_plotting v0.4、参考容差提案 v0.3**、trajectory v0.2、PLAN/TEST_PLAN/LLD 索引 v0.6。**核心规范均未冻结；PROGRESS/AUDIT/AUDIT_PROCESS/审计 reviews 属于过程资料，不能代替软件基线或 TC PASS**。后续变更需另按固定 Git SHA 登记。
+> **文档管理登记，非正式已签署基线。** 下列 **36 份登记文件**的 Git blob SHA 对应固定快照 commit `2a7482a11a232df291409c34497dfe7c4bed8143`；本矩阵自身的更新提交晚于该快照。各文档独立版本包括 SRS v0.12、HLD v0.8、对象模型 v0.5、contracts v0.2、MAT I/O v0.8、experiments v0.3、harmonics v0.7、KvD v0.4、sampling_noise v0.3、**analysis_plotting v0.4、参考容差提案 v0.3**、trajectory v0.2、PLAN/TEST_PLAN/LLD 索引 v0.6。**核心规范均未冻结；PROGRESS/AUDIT/AUDIT_PROCESS/审计 reviews 属于过程资料，不能代替软件基线或 TC PASS**。后续变更需另按固定 Git SHA 登记。
 
 ## 1. 文档职责与唯一规范来源
 
@@ -21,7 +21,7 @@
 
 ## 2. 当前核心文档与 blob SHA
 
-**快照：** `276d71728971353bc678cce198d999aa9f5d8dd5`。全部 SHA 是这一固定提交的 blob 身份，不含本矩阵自身更新后的 blob。七份原“正在审计”文档已按可用原始 `.m` 的**静态数学合同检查**完成并登记，**尚无用户上传的 Ivanic–Ruedenberg PDF 及独立 L3/CTest 实测**；审计完成不等于数学结果通过或正式冻结。
+**快照：** `2a7482a11a232df291409c34497dfe7c4bed8143`。全部 SHA 是这一固定提交的 blob 身份，不含本矩阵自身更新后的 blob。七份原“正在审计”文档已按可用原始 `.m` 的**静态数学合同检查**完成并登记，**尚无用户上传的 Ivanic–Ruedenberg PDF 及独立 L3/CTest 实测**；审计完成不等于数学结果通过或正式冻结。
 
 | 层次 | 文档 | 文档版本 | Git blob SHA | 正式基线 | 范围 |
 |---|---|---|---|---|---|
@@ -63,7 +63,7 @@
 | 开发规则 | [AGENTS.md](../AGENTS.md) | `7d609ccff2ecb41814b3bdbc7986dcccaaa2d6bf` | 只读原资料/实际运行授权 |
 | 延期人类事项 | [docs/TODO.md](TODO.md) | `c3f6d4b79dd7c0bbe4074006c75f214b182f2af4` | 材料、H-10/H-11、DEC-005/006、最终基线/发布：原因及建议阶段，**没有当前授权** |
 | 本轮只读审查 | [docs/reviews/DOCUMENT_REVIEW_AND_SH_DECLARATIONS_2026-11-07.md](reviews/DOCUMENT_REVIEW_AND_SH_DECLARATIONS_2026-11-07.md) | `580e98eae40a5378128b139ce531b6ded11c6c2e` | 历史固定 SHA 下的 GitHub 只读 ID/DAG/引用核对，非真实 Bash/CTest |
-| 用户历轮审计台账 | [docs/AUDIT.md](AUDIT.md) | `4ce8473f9fea0352cc5784874fa1a1c91684ae71` | **AU-001～028** 历轮意见，按文件相对路径的“三态审计进度”；七份可用 .m 资料的静态文档审阅已完成，论文/L3 仍待验证 |
+| 用户历轮审计台账 | [docs/AUDIT.md](AUDIT.md) | `a5b631b8b2512fe5e961de003944dbf81547a872` | **AU-001～028** 历轮意见，按文件相对路径的“三态审计进度”；七份可用 .m 资料的静态文档审阅已完成，论文/L3 仍待验证 |
 | 问题级整改进度 | [docs/AUDIT_PROCESS.md](AUDIT_PROCESS.md) | `cf0a00070358c262d874c6451cb408b24cf5df87` | **AF-001～027 共 28 个原子整改目标均已完成纯文档修订与固定 SHA 复核**；AF-026/027 的发现先以“未整改”登记，后由独立快照核对再转为“已整改”；非测试或基线批准 |
 | 本轮完整审计报告 | [docs/reviews/FULL_DOCUMENT_AUDIT_2026-11-07.md](reviews/FULL_DOCUMENT_AUDIT_2026-11-07.md) | `43446ec3e7ebe3d9b7f2447561f72d64ccbb5e95` | 固定输入 commit `4627cc1e48be9c43ad10b28fda646d65ee8ef01c` 的 **40 文件文档审计**，记录 AF-001～012 待修订项与 AH-001～002 历史边界，非 CMake/CTest PASS |
 | AF-001～AF-012 修订复核 | [docs/reviews/AUDIT_AF001_AF012_RESOLUTION_2026-11-07.md](reviews/AUDIT_AF001_AF012_RESOLUTION_2026-11-07.md) | `ae44ae6ba782a9930b400ea860a50cc326a0cd3f` | 定向文本核验快照 `893acb7b07862c0701e62b786462ef8395a116da`：12 项 AF 已做纯文档修订并通过限定静态复核；仍缺逐式数值、代码编译和正式测试 |
