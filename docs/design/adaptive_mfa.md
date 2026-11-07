@@ -171,7 +171,7 @@ Per-run Session (one owner of akkoeff)
 | 更新 | near_new、C_new(3×5) | oneit 第 120–132 行 |
 | 会话 | 前一帧 R、主/基线系数 before/after、频率策略、i、输出误差 | 三个 Adaptive 生成脚本 |
 
-所有黄金值必须有来自原 MATLAB 的输入/输出、对应源 SHA、数值容差及原始结果身份，不能只以 C++ 自算值验证 C++。
+所有黄金值应有**固定输入与独立 L3 数值参考**、原只读 .m 源 SHA、参考生成过程及输出 SHA-256、批准容差和测试记录；**不要求原 MATLAB 实际输出，也不能用被测 C++ 自算值验证自身**。
 
 关联 TC-F-ADAPT-001/002/003、TC-F-EXP-001/002/003、TC-DC-ADAPT-001、TC-NF-SESSION-001；更完整的证据设计见 [TEST_PLAN.md](../TEST_PLAN.md)。
 
@@ -243,7 +243,7 @@ Candidate interface only, not compiled: FrameResult, Session construction policy
 | near 的原始均值 s 为零、接近零或负数 | near_raw、s、符号翻转、最终归一 | InvalidNearness；负 s 不等价于取 abs(s) | **未决定**，不得默认回滚 |
 | 6×6 退化、数值条件很差 | M1–M4、b、M、z、原版 real(inv(M)) | SingularSystem、IllConditionedSystem | 未决定 |
 | 线性解的 t 长度为零 | raw t、范数、归一化后状态 | ZeroNorm | 未决定 |
-| error_mse、near_new 或系数非有限 | 各数组与原始 MATLAB 运行结果 | NonFiniteResult | 未决定 |
+| error_mse、near_new 或系数非有限 | 独立极值/病态输入及明确 C++ 状态 | NonFiniteResult | 未决定；原 MATLAB 运行细节不作强制对照 |
 | MAT 写入中断 | 最后成功帧与独立输出目录 | OutputFailed（Runner 层） | 不由 StepSolver 决定 |
 
 原 MATLAB 没有统一的事务/回滚系统。**用户 JSON H-13 仅选择先核查失败行为并起草候选处理**，尚未批准 Session 遇错回滚、继续、终止或主系数提交策略；任何方案必须记录与 MATLAB NaN/Inf 传播行为的差异，不能预设安全增强已获授权。**单步数值失败、主系数是否提交、整个 RunId 是否失败是三种不同状态**。H-10 暂缓实际编码/测试，H-01 容差尚未批准。
@@ -290,12 +290,10 @@ C++ 从 0 开始存帧时必须显式转换为源 MATLAB 的 1-based i，周期�
 | AD-G05 | comparison 的 i=2、3，addederror=0/非零 | 先上一帧旋转、再比较、再主更新；rottransratio 不取八次平均 |
 | AD-G06 | many_parameter i=5、11、21 邻近帧 | 四个周期准确触发，mitkoeff 比较单步不回写 |
 
-每个 Golden 应记录来自 MATLAB 的固定输入、源 blob SHA、 MATLAB 版本、各节点 shape/dtype、数值基准和经 DEC-005 批准的容差。现有 produced_data 不含 M1…M4 的原始逐节点值，**不可把只对照最终 MAT 当作单步数学等价证据**。
+每个 Golden 应记录原只读 MATLAB 函数 blob SHA、**独立固定输入/L3 参考生成方式与 SHA-256**、各节点 shape/dtype、数值基准和经 DEC-005 批准的容差；**不要求运行 MATLAB 或记录 MATLAB 版本**。现有 produced_data 不含 M1…M4 的原始逐节点值，**不可把只对照最终 MAT 当作单步数学等价证据**。
 
 **状态**：此文档定义了算法逐节点检查与入口专属状态合同；Golden、最终错误提交策略、正式 API 及 CTest 均尚未实际形成。
 
-## 附录 A：Adaptive 的 Golden 等级与 Session 证据缺口（补充草案）
+## 附录 A：无需运行 MATLAB 的证据边界
 
-详见 [L1–L4 与 AC 阻塞表](../golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md)。当前没有原 MATLAB 的 **L1**：near_raw/均值/符号/归一、M1–M4、rhs、6×6、z、t_raw/t_norm、ω、MSE、更新 near/3×5 系数，以及各入口每帧主/对照系数 before/after、周期触发/`mitkoeff` 比较单步不回写的真实执行日志。异常时 `real(inv(M))`、非有限传播与状态提交也无运行证据。作者归档 **L2 只有各实验的最终误差和部分比值**；`AN-G12` 仅是理想对称输入的 **L3 解析候选**，不是源 MATLAB 逐节点 Golden。
-
-`AC-F-ADAPT-001` 所需逐节点证据仍缺；`AC-F-ADAPT-002/003` 可未来用固定输入/帧号独立测试限定的状态逻辑，但不能凭静态推断断言其与原 MATLAB 所有连续运行行为一致。`AC-F-EXP-002/003` 的真实八次聚合及刷新时序也缺 L1；全部 AC 仍未验收。
+按 [当前 L2/L3/L4 证据矩阵](../golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md) 和 [长期无需 MATLAB 执行政策](../golden/NO_MATLAB_EXECUTION_POLICY.md)，**不要求原 MATLAB 逐节点/逐调用的 L1，也不因没有 L1 阻塞本模块的设计/编码/测试/验收**。原 `.m` 作为只读公式、分支、时序和数据合同依据；当前应准备模块适用的 **L3 独立固定输入逐节点参考**，L2 历史 MAT 用于最终结果范围，L4 用于统计。需要保留真实 C++/CTest、DEC-005 容差、错误与来源限制记录，不能把 L3 宣称为原 MATLAB 实际运行的完整等价证据。本文及该矩阵均未宣布模块验收通过。
