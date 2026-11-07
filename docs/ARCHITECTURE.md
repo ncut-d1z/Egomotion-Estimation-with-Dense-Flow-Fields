@@ -1,10 +1,10 @@
 # 系统概要设计（HLD）— MATLAB 自运动估计 C++ 移植
 
-> **状态：HLD v0.7 评审草案，未冻结。** 当前统一文档版本与冻结状态见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，实际 matio 探针/构建/CTest/数值证据仅见 [PROGRESS.md](PROGRESS.md)；此处只定义稳定架构边界，不以历史探针代替架构验收。 来源是已核对的 MATLAB 源码和原 PLAN §3/4/6。需求依据见 [REQUIREMENTS.md](REQUIREMENTS.md)，类职责附件见 [OBJECT_MODEL.md](OBJECT_MODEL.md)，详细设计待定见 [design/README.md](design/README.md)，执行安排见 [PLAN.md](PLAN.md)。以 [AGENTS.md](../AGENTS.md) 和项目所有者批准为准。
+> **状态：HLD v0.8 评审草案，未冻结。** 当前统一文档版本与冻结状态见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，实际 matio 探针/构建/CTest/数值证据仅见 [PROGRESS.md](PROGRESS.md)；此处只定义稳定架构边界，不以历史探针代替架构验收。 来源是已核对的 MATLAB 源码和原 PLAN §3/4/6。需求依据见 [REQUIREMENTS.md](REQUIREMENTS.md)，类职责附件见 [OBJECT_MODEL.md](OBJECT_MODEL.md)，详细设计待定见 [design/README.md](design/README.md)，执行安排见 [PLAN.md](PLAN.md)。以 [AGENTS.md](../AGENTS.md) 和项目所有者批准为准。
 
 ## 1. 架构目标、质量属性和约束
 
-**长期证据边界**：[无需 MATLAB 执行政策](golden/NO_MATLAB_EXECUTION_POLICY.md) 已取消 MATLAB/Octave 及 L1 逐节点 Golden 的冻结前置条件。HLD 部署视图不得引入 MATLAB Runtime，质量场景可采用 L2 最终 MAT、L3 独立逐节点参考及 L4 统计；无 L1 仅限制声称原版运行行为完整等价，**不是架构阻塞**。真实 CMake/CTest、版权、接口与指标审批门禁保持。
+**长期证据边界**：[无需 MATLAB 执行政策](golden/NO_MATLAB_EXECUTION_POLICY.md) 已取消 MATLAB/Octave 及 L1 逐节点 Golden 的冻结前置条件。HLD 部署视图不得引入 MATLAB Runtime，质量场景可采用 L2 最终 MAT、L3 独立逐节点参考及 L4 统计；无 L1 仅限制声称原版运行行为完整等价，**不是架构阻塞**。真实 CMake/CTest、接口与指标的工程证据和正式基线批准仍需完成；**项目自有代码的 MIT 方向已确定，一般版权复核不作为开发门禁**，实际引入第三方文件时仅保留其必要的原有来源/许可告知，不将仓库 MIT 自动赋予独立第三方作品。
 
 - C++17、Eigen 3、matio/zlib、CMake；**仅 Debian/Ubuntu**；原始 MATLAB/MAT 只读；不依赖 MATLAB Runtime、Python/NumPy/NPZ、ROS、OpenCV 或 Windows。
 - 忠实保留三轴 Franz、Original/Modified KvD、Adaptive 单步、球谐旋转和五个实验数据生成入口的数学语义；观测为 N×6 三维球面光流而非图像或像素流。
@@ -245,7 +245,7 @@ P0.7/P0.8 需校验本 HLD、[OBJECT_MODEL.md](OBJECT_MODEL.md)、MAT schema、L
 
 | ADR | 决策（与原 MATLAB 和 SRS 对应） | 状态 | 拟审查责任人与批准记录 |
 |---|---|---|---|
-| ADR-001 | 原始 MAT 只读、matio/zlib 直接读取、不开发 NPZ | **实测**：独立 matio 探针读取 582/582 MAT v5/double/zlib，失败 0；当前归档无需 HDF5。正式 Reader/Writer 合同未冻结 | [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md) 作为数据依据，项目所有者待批准支持范围 |
+| ADR-001 | 原始 MAT 只读、matio/zlib 直接读取、不开发 NPZ | **实测**：独立 matio 探针读取 582/582 MAT v5/double/zlib，失败 0；当前归档无需 HDF5。正式 Reader/Writer 合同未冻结 | [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md) 作为数据依据；**首版二维、密集、实数、非 logical double 的 MAT v5/zlib 读取范围已由所有者选定**；正式 Reader/Writer、负例、兼容性和 SRS/HLD 基线仍待真实验证与签署 |
 | ADR-002 | Debian/Ubuntu、C++17/Eigen/CMake；**H-02 已选定 Sophus `SO3d::exp` 处理实际调用的旋转向量→矩阵分支**；H-04 给出 Ubuntu 24.04.4 VM/x86_64 环境快照 | **数学/依赖路线已选、未实现**；实际 Sophus 版本锁定、CMake 目标链接/编译、几何边界 L3 与性能阈值仍待执行/确认，不宣称已部署 | 维护者将来提交实际 build/CTest 与数值矩阵，项目所有者在具证据后批准正式基线 |
 | ADR-003 | 值语义/RAII/窄接口/组合优先；纯数学自由函数 | HLD 提议，未冻结 | P0.7 对象设计评审者 + 所有者 |
 | ADR-004 | Adaptive StepSolver 与跨帧 Session 分离；KvD 双入口保真 | HLD 提议，未冻结 | 数值/接口评审者 + 所有者 |
