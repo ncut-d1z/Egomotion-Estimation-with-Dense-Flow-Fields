@@ -40,14 +40,14 @@
 
 | 整改 ID | 文档文件相对路径（仓库根） | 具体整改目标（待修正的冲突） | 整改状态 | 固定快照线索/依据 |
 |---|---|---|---|---|
-| **AF-013** | `docs/design/kvd.md` | §5 不得把历史 `1e−10` 再称为现行“候选”；统一为已由所有者选择的 **`atol=0.01,rtol=0.1` 仅用于首轮宽松筛查**，最终 DEC-005 按模块和严格几何/离散条件另审 | 未整改 | `kvd.md:160`；SRS §7、TEST_PLAN §2.5、最新所有者决定 |
-| **AF-014** | `docs/design/kvd.md` | §10 对 H-13 原审批 `draft` 的描述应标为**历史状态**，并引用后续已选**独立样本可继续、Adaptive 失败步不提交、无法安全恢复停止连续序列、部分结果保留**；不能把新决定重新称作“用户不批准继续/回滚/终止”，也不将其等同于原 MATLAB 异常实测 | 未整改 | `kvd.md:271`；`contracts.md §3.2`、`experiments.md` 和所有者决定 |
-| **AF-015** | `docs/design/sampling_noise.md` | §3.1 保留随机源耗尽等单次数值失败的显式传播，同时将**实验整体继续/状态不提交/部分结果保存策略**从“待 P0.8 和 Golden 审议”改为**已由所有者选择、真实 C++/CTest 尚未验收** | 未整改 | `sampling_noise.md:114`；`experiments.md §6–8`、`contracts.md §3.2` |
-| **AF-016** | `docs/OBJECT_MODEL.md` | §4 区分已选**Adaptive 失败不提交无效主系数**与仍须独立 L3/CTest 判断的安全恢复场景；不能笼统将“是否提交/是否终止”全部标成待决定；状态机及注释应呼应 Runner/Session | 未整改 | `OBJECT_MODEL.md:169`；`adaptive_mfa.md §5.1`、所有者决定 |
-| **AF-017** | `docs/ARCHITECTURE.md` | §7 **QA-01** 不能假设“用户把输出根目录设为 origin 子目录/软链接”，因为 CLI 已删除自定义输出根。改为用户提供非法/重复 `--run-id`、固定根被软链接/路径竞态替换、或输出目标已存在时的拒绝和原 `origin/**` 不变 | 未整改 | `ARCHITECTURE.md:235`；`cli.md`、`mat_io.md` 固定输出合同 |
-| **AF-018** | `docs/design/mat_io.md` | §4.2 将外层分析比较的 0.01/0.1 从“**未批准候选**”改成**已选首轮筛查但不是正式 PASS 阈值**；MAT 解码/复制的 exact dtype/shape/原始 double 校验仍严格，不因宽松筛查放行错误 | 未整改 | `mat_io.md:171`；最新所有者决定、`GOLDEN_TOLERANCE_PROPOSAL.md` |
-| **AF-019** | `docs/ARCHITECTURE.md` | §8 **ADR-002** 中“**拟采用 Sophus SO(3)**”与 §3 已选 `SO3d::exp` 口径不统一；改成“已选定设计路线，尚待真实依赖锁定/编译/数值验证”，不推断已部署 | 未整改 | `ARCHITECTURE.md:248`（ADR-002 行，以标题查找为准）；现行 H-02/ADR-006 |
-| **AF-020** | `docs/design/trajectory.md` | §5.1 已有“`||ω||<double epsilon` 返回 I 后调用 Sophus”来源规则，§6.1 又将“**是否把近零角度强制置零**”笼统说成待审批；明确**原始 epsilon 条件已确定**，额外扩大零角阈值或对其它异常输入的处理仍须独立测试/审查，不能混淆为同一未决事项 | 未整改 | `trajectory.md:111,150`，对照只读 `drehvektor_aus_zwei_vektoren.m`/原 Rodrigues 分支与 H-02 |
+| AF-013 | `docs/design/kvd.md` | §5 不得把历史 `1e−10` 再称为现行“候选”；统一为已由所有者选择的 **`atol=0.01,rtol=0.1` 仅用于首轮宽松筛查**，最终 DEC-005 按模块和严格几何/离散条件另审 | 未整改 | `kvd.md:160`；SRS §7、TEST_PLAN §2.5、最新所有者决定 |
+| AF-014 | `docs/design/kvd.md` | §10 对 H-13 原审批 `draft` 的描述应标为**历史状态**，并引用后续已选**独立样本可继续、Adaptive 失败步不提交、无法安全恢复停止连续序列、部分结果保留**；不能把新决定重新称作“用户不批准继续/回滚/终止”，也不将其等同于原 MATLAB 异常实测 | 未整改 | `kvd.md:271`；`contracts.md §3.2`、`experiments.md` 和所有者决定 |
+| AF-015 | `docs/design/sampling_noise.md` | §3.1 保留随机源耗尽等单次数值失败的显式传播，同时将**实验整体继续/状态不提交/部分结果保存策略**从“待 P0.8 和 Golden 审议”改为**已由所有者选择、真实 C++/CTest 尚未验收** | 未整改 | `sampling_noise.md:114`；`experiments.md §6–8`、`contracts.md §3.2` |
+| AF-016 | `docs/OBJECT_MODEL.md` | §4 区分已选**Adaptive 失败不提交无效主系数**与仍须独立 L3/CTest 判断的安全恢复场景；不能笼统将“是否提交/是否终止”全部标成待决定；状态机及注释应呼应 Runner/Session | 未整改 | `OBJECT_MODEL.md:169`；`adaptive_mfa.md §5.1`、所有者决定 |
+| AF-017 | `docs/ARCHITECTURE.md` | §7 **QA-01** 不能假设“用户把输出根目录设为 origin 子目录/软链接”，因为 CLI 已删除自定义输出根。改为用户提供非法/重复 `--run-id`、固定根被软链接/路径竞态替换、或输出目标已存在时的拒绝和原 `origin/**` 不变 | 未整改 | `ARCHITECTURE.md:235`；`cli.md`、`mat_io.md` 固定输出合同 |
+| AF-018 | `docs/design/mat_io.md` | §4.2 将外层分析比较的 0.01/0.1 从“**未批准候选**”改成**已选首轮筛查但不是正式 PASS 阈值**；MAT 解码/复制的 exact dtype/shape/原始 double 校验仍严格，不因宽松筛查放行错误 | 未整改 | `mat_io.md:171`；最新所有者决定、`GOLDEN_TOLERANCE_PROPOSAL.md` |
+| AF-019 | `docs/ARCHITECTURE.md` | §8 **ADR-002** 中“**拟采用 Sophus SO(3)**”与 §3 已选 `SO3d::exp` 口径不统一；改成“已选定设计路线，尚待真实依赖锁定/编译/数值验证”，不推断已部署 | 未整改 | `ARCHITECTURE.md:248`（ADR-002 行，以标题查找为准）；现行 H-02/ADR-006 |
+| AF-020 | `docs/design/trajectory.md` | §5.1 已有“`||ω||<double epsilon` 返回 I 后调用 Sophus”来源规则，§6.1 又将“**是否把近零角度强制置零**”笼统说成待审批；明确**原始 epsilon 条件已确定**，额外扩大零角阈值或对其它异常输入的处理仍须独立测试/审查，不能混淆为同一未决事项 | 未整改 | `trajectory.md:111,150`，对照只读 `drehvektor_aus_zwei_vektoren.m`/原 Rodrigues 分支与 H-02 |
 
 **下一轮新增统计：8 个整改 ID，全部「未整改」；共分布于 `docs/design/kvd.md`、`sampling_noise.md`、`OBJECT_MODEL.md`、`ARCHITECTURE.md`、`mat_io.md`、`trajectory.md` 六份现行设计文档。** 其中纯文档权限可后续逐项整改，而公式、退化近零条件仍须尊重原只读 .m 的确切分支，不得在本轮引入生产 C++ 或猜测原 MATLAB 运行结果。
 
