@@ -1,6 +1,6 @@
 # 视线采样、光流合成与噪声——详细设计草案
 
-> **LLD v0.1 草案，未冻结；无生产实现或已执行的 L3 独立数值测试。** 对应 P2/P3、REQ-F-GEOM-*、REQ-F-FLOW-*、REQ-DC-RNG-001、REQ-DC-NOISE-001。
+> **LLD v0.2 草案，未冻结；无生产实现或已执行的 L3 独立数值测试。** 对应 P2/P3、REQ-F-GEOM-*、REQ-F-FLOW-*、REQ-DC-RNG-001、REQ-DC-NOISE-001。
 
 ## 1. 来源与输入输出
 
@@ -111,7 +111,7 @@ public:
 | FixedSequenceRandomSource 耗尽或返回非法值 | RandomSourceExhausted / InvalidRandomSample | TC-DC-RNG-001 |
 | 噪声乘数非有限、光流非有限 | NonFiniteInput / NonFiniteResult | TC-F-FLOW-003、TC-DC-NOISE-001 |
 
-上述枚举及错误到退出码的映射**统一引用 [contracts.md §3.1–3.2](contracts.md)**，不在此文件独立定义重复的 enum。调用者收到失败必须停止当前计算路径并附上位置/参数；实验整体的回滚/部分结果提交规则待 P0.8 和 Golden 审议。以安全显式错误取代 MATLAB NaN/Inf 传播可能导致行为差异，必须在回归报告单独标注。
+上述枚举及错误到退出码的映射**统一引用 [contracts.md §3.1–3.2](contracts.md)**，不在此文件独立定义重复的 enum。随机源耗尽、无效方向或非有限输出的**当前采样/求解路径**必须立即显式传播失败并附上位置/参数，不能伪造正常值。**实验整体失败策略已由所有者确定**（参见 [experiments.md §6–8](experiments.md)）：独立样本可以记录失败并继续后续独立单位；依赖状态的 Adaptive 单步失败不提交无效主系数，无法安全恢复时终止当前连续序列；保留可审计的部分输出，Manifest 区分 Complete/Incomplete/Failed，八次聚合不改分母。**上述是已选设计而非待 P0.8/Golden 重新选型，实际 C++/CTest 失败回归尚未进行**。显式错误与原 MATLAB NaN/Inf 传播的差异须在未来证据中说明。
 
 ### 3.2 RNG 抽样合同与对象职责
 
