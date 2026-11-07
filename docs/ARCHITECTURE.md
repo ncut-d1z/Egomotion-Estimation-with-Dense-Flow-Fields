@@ -100,7 +100,7 @@ flowchart LR
 | plotting（可选） | 统计结果的 2D/3D 可视化 | analysis | 绘图数组、单位、图例与区间 | 后端缺失；不得修改原始数值 |
 | cli/composition | 命令、参数检查、状态/退出码和对象装配 | experiments、analysis、mat_io、**contracts**；plotting 可选 | 只读输入路径、独立输出根 | 参数、源/输出冲突、执行失败 |
 
-**组件与接口的唯一来源**：本 HLD §3 只规定能力级组件职责和依赖方向，返回值/错误枚举及资源类型由 [contracts.md](design/contracts.md) 维护，CLI schema 由 [cli.md](design/cli.md) 维护，各算法接口/公式归模块 LLD；**不在 HLD 复制具体签名**。本节内部项目模块依赖集合与 §4 target 表、§4.1 的 27 条直接 DAG 边一一对照；**Sophus 是可选外部实现依赖，Don Williamson 为代码参考而非生产库依赖；纯 Eigen R5 不得链接 sdla，上述约束不引入新的第三方生产 target 边**；本次是**文档合同**，尚不能等同真实 CMake target 的编译/链接。实际 C++ 实现可能需要修改依赖时，须同时维护三处与 ADR-008。
+**组件与接口的唯一来源**：本 HLD §3 只规定能力级组件职责和依赖方向，返回值/错误枚举及资源类型由 [contracts.md](design/contracts.md) 维护，CLI schema 由 [cli.md](design/cli.md) 维护，各算法接口/公式归模块 LLD；**不在 HLD 复制具体签名**。本节内部项目模块依赖集合与 §4 target 表、§4.1 的 27 条直接 DAG 边一一对照；**在需要原 `rodrigues.m` 向量→旋转矩阵能力的实现分支，Sophus `SO3d::exp` 是已选定的外部依赖；仅不使用该能力的 target 无需链接 Sophus**。Don Williamson 仅为代码参考而非生产库依赖；纯 Eigen R5 禁止链接 sdla。上述外部依赖不增设内部 `egomotion_` target DAG 边；本次是**文档合同**，尚不能等同真实 CMake target 的编译/链接。实际 C++ 实现可能需要修改依赖时，须同时维护三处与 ADR-008。
 
 **边界不变量**：求解器不 include matio 或绘图库；I/O 不持有求解器；实验 Runner 不重复数学公式；分析/绘图不修改求解结果。实验参数按 MATLAB 的五个入口分别定义，禁止以一个未经核准的全局默认值覆盖其差异。
 
