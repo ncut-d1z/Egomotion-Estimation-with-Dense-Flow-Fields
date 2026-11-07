@@ -14,7 +14,7 @@
 | AdaptiveComparisonRunner | agent_in_sphere_adaptive_matched_filter_test | 600 点正弦轨迹、二十面体级别 4、8 次重复、addederror 参数 | 上述四类平均误差、rottransratio（最后一次运行的缓冲） |
 | UpdateRateRunner | agent_in_sphere_adaptive_matched_filter_many_parameter | 600 点正弦轨迹、二十面体级别 2、单次运行、周期 1/5/11/21 | allemittransfehler、allemitrotfehler、akrot |
 
-所有历史 MAT 应与当前脚本的 save 行为**分别记录**；with_errors 和 many_parameter 目录含当前脚本未写出的额外变量，不能自行补造。
+**DEC-004 已由所有者选定**：[处理规则](../decisions/DEC-004_HISTORICAL_MAT_FIELDS.md)。当前 C++ Runner 只保存现有生成脚本实际有效的 save 字段；历史 MAT 完整只读保留，额外字段标 `HistoricalOnly`，来源未知不阻塞开发，不新增伪字段。
 
 ## 2. Runner 时序、对象拥有与可重入性
 
@@ -73,7 +73,7 @@ class UpdateRateRunner;
 | adaptive comparison | addederror、savestring；stellen=600、sinus amp=0.5、length=1、periods=2、height=0.3、level=4、anzahldurchlaeufe=8 | i=2..599 | 四类误差各 600×1，另保存 `rottransratio` 600×1（最后一次运行的缓冲）；共五个 save | without_errors：五个 double[600×1]；with_errors：七个 double[600×1]，**另外两份 `alleadap*` 来源未证实** |
 | adaptive rates | savestring；stellen=600、同一正弦轨迹、level=2、period=[1,5,11,21]、单运行 | i=2..599；四条周期 baseline | `allemittransfehler`、`allemitrotfehler` 各 600×4，`akrot` 600×1；**当前仅三个有效 save** | many_parameter：四个 double[600×4] 与两个 double[600×1]，包括当前未保存的 `alleadap*` 与 `rottransratio` |
 
-§9 的「历史归档」仅支持已经存储的变量名、MAT class/dtype、shape 和文件数；**不能把它反写为当前源脚本的运行结果**，也不得补造 `alleadap*` / `rottransratio`。
+§9 的「历史归档」仅支持已经存储的变量名、MAT class/dtype、shape 和文件数；**不能把它反写为当前源脚本的运行结果**。依 [DEC-004](../decisions/DEC-004_HISTORICAL_MAT_FIELDS.md)，新输出不生成 `HistoricalOnly` 的 `alleadap*` / `rottransratio`；历史旧文件保留读取能力，缺失的分析必需字段明确报错，不因归因不明阻塞开发。
 
 **必须保留的源码特殊行为（已核查）**：
 
@@ -193,7 +193,7 @@ private:
 
 - **Bias**：每个 corenumber 的结果相互独立，写入相应新 RunId 子目录；原始已有编号目录 1..40 是历史参考，不是 C++ 自动覆盖位置。
 - **Comparison**：四种方向误差数组仅在**八次有效完成**时按原算法先累计后除以 8；rottransratio 仅保留**第八次**（最后一次预定运行）的数组。若某次失败，整次聚合标记 `Incomplete`，不改为除以 7 或替代缺失的最后一次；部分结果可留证，但不作为原算法完整输出发布。
-- **Update rates**：比较的 mitkoeff 四组在源周期触发时更新；主 akkoeff 单独每帧更新。当前源 save **只有三个 MAT**；历史附加文件需要字段级差异报告。
+- **Update rates**：比较的 mitkoeff 四组在源周期触发时更新；主 akkoeff 单独每帧更新。当前源 save **只有三个 MAT**；历史附加文件标 `HistoricalOnly` 并保留字段级差异报告，**不得在新结果补造这些文件**。
 - **初始化**：每次创建独立系数起点，不能重用此前 600 帧轨迹的状态；首尾行按原 zeros 预分配语义。
 - **原始数据保护**：任何路径重叠、文件已存在、变量写入失败应返回带 RunId 的明确错误，不允许把部分成功伪装为完整。
 - **失败策略已由所有者确认**：独立采样/运行失败记录并可继续其他独立单位；Adaptive 连续状态不提交失败步，无法保证状态可用则停止该轨迹；损坏输入或输出写失败导致依赖任务失败；保留失败日志与可追踪产物，不自动删除旧文件/重试覆盖。需在未来真实 C++/CTest 下验证该策略，不声称原 MATLAB 的异常传播已实测。
@@ -236,9 +236,9 @@ private:
 | proportional_error | 同上 | xwerte: 40×(10×1)，ywerte: 240×(10×3) | 真实输入方向是完整球面，但原 xwerte 仍写为 6·4^i；不得更改 |
 | initialization | allemittransfehler、allemitrotfehler、alleohnetransfehler、alleohnerotfehler | 4×(35×1) | 与当前源 save 四种误差字段名一致 |
 | without_errors | 四误差变量、rottransratio | 5×(600×1) | 与当前对比实验 save 五字段对应 |
-| with_errors | 四误差变量、rottransratio；另有 alleadaprotfehler/alleadaptransfehler | 7×(600×1) | **后两字段是归档额外结果，当前生成入口无对应 save**，来源待归因 |
-| many_parameter | allemitrotfehler、allemittransfehler、alleadaprotfehler、alleadaptransfehler | 4×(600×4) | 只有前两项在当前生成脚本保存，后两项为历史额外结果 |
-| many_parameter | akrot、rottransratio | 2×(600×1) | akrot 为当前脚本输出，rottransratio 是历史额外结果，当前分析脚本依赖它 |
+| with_errors | 四误差变量、rottransratio；另有 alleadaprotfehler/alleadaptransfehler | 7×(600×1) | **后两字段为 HistoricalOnly，当前生成入口无对应 save**；未知来源无需先归因，保留原始归档 |
+| many_parameter | allemitrotfehler、allemittransfehler、alleadaprotfehler、alleadaptransfehler | 4×(600×4) | 仅前两项在当前生成脚本保存，后两项为 HistoricalOnly；新 C++ 输出不可增写 |
+| many_parameter | akrot、rottransratio | 2×(600×1) | akrot 为当前输出，rottransratio 为 HistoricalOnly；新运行结果如需要比值进行该分析则明确报告缺失，旧 MAT 可正常分析 |
 
 **验证边界**：这些历史文件被 matio 读取成功，但没有证明 C++ 新生成的对应数值、RNG 顺序或误差曲线与 MATLAB 一致。仍需 TC-F-EXP-001/002/003、TC-I-RESULT-001 的具体结果回读、比较和差异归因。
 
