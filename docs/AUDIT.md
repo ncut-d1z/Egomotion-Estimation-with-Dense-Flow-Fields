@@ -6,6 +6,18 @@
 >
 > **执行续记（同日，后续一轮）**：上述“仅低优先级文档修订”是上一轮已完成的范围；本次用户要求**按 AUDIT 执行覆盖全部 40 文件的文档审计**，已单独形成 [完整审计记录](reviews/FULL_DOCUMENT_AUDIT_2026-11-07.md)（固定审计输入 SHA `4627cc1e48be9c43ad10b28fda646d65ee8ef01c`）。本轮以连接器只读结构/语义检查为主，**不自动修订高/中发现项**，不做算法逐式或真实执行；以下状态按实际检查深度更新。
 
+
+## 零、发现问题与整改台账规则（强制）
+
+**双台账、双状态，不可混用**：
+
+- **文件审计进度**由本文件 §五的逐文件表维护，审计状态**仅允许**「空白、正在审计、已审计」；其含义是该文件相应检查范围内的审计深度，**不是问题整改状态，也不是测试/审批结果**。
+- **具体问题整改进度**必须由 [AUDIT_PROCESS.md](AUDIT_PROCESS.md) 维护，整改状态**仅允许**「未整改、已整改」。**每当审查任一文档发现问题时，必须新增一条整改目标记录**；至少填写**该文档文件相对于仓库根的路径、具体整改目标、整改状态**，并建议记录唯一问题 ID、严重度、原句/章节和固定 Git SHA。
+- **一个文件有多个整改目标时逐项登记**，不能用“整篇文档已处理”笼统代替。第一次发现问题时状态为「未整改」；**仅当实际修改对应文档，且在新的固定提交上复读确认目标确实修好时**，才允许改为「已整改」，应保留变更提交/复核证据。仅阅读、提出方案或在审查报告中声称计划修订，不算“已整改”。
+- 在 [AUDIT_PROCESS.md](AUDIT_PROCESS.md) 完成登记的同时，可将该文件在本表置为「正在审计」以表示尚有问题或深层数学核验未办结；若一项已经整改，但其它问题或独立 L3 审计仍开放，文件**仍可为「正在审计」**。文件审计状态变化**不能自动更新**任何整改行。
+- 原审批文档及旧 `reviews/` 是历史快照；发现其当时措辞与后续决定不同，须**先判断是否仅属历史语境**。不要无理由改写历史证据、SHA 或审批 JSON。真实需修的**现行**规范性冲突才作为整改事项登记。
+- 每轮扫描应写明**扫描依据、固定输入 commit、覆盖文件、发现问题 ID、修订目标、是否已修订及复核范围**；在 [PROGRESS.md](PROGRESS.md) 登记审计证据，更新 [DOCUMENT_BASELINE_REGISTER.md](DOCUMENT_BASELINE_REGISTER.md) 的固定文件身份。只读 GitHub/静态源码审计≠ MATLAB/CMake/CTest/真实 L2/L3 数值测试；不得用审计进度制造验收或人类授权。
+
 ## 一、审计口径、优先级与单一来源
 
 1. **区分文档类型**：`REQUIREMENTS.md` 是 SRS；`ARCHITECTURE.md` 是 HLD；`OBJECT_MODEL.md` 是 HLD 附件；`design/contracts.md` 是跨模块 LLD；`design/*.md` 的模块文件是 LLD；`PLAN.md` 为 WBS；`TEST_PLAN.md` 为 TC 与测试策略；`PROGRESS.md` 为动态证据登记；`DOCUMENT_BASELINE_REGISTER.md` 为精确版本/blob SHA 矩阵；`TODO.md` 仅管理可延期人类输入；`decisions/`、`golden/`、`reviews/` 为决策、参考与历史证据附件。**不能用 SRS/HLD 标准硬套模块 LLD，也不能拿 reviews/审批附件替代规范文档。**
@@ -89,23 +101,24 @@
 | 文件相对路径（仓库根） | 审计状态 | 本轮核查重点或下一轮审计事项 |
 |---|---|---|
 | `docs/AUDIT.md` | 已审计 | 28 组历史意见归纳已复核；本轮更新三态审计表、完整执行记录入口 |
+| `docs/AUDIT_PROCESS.md` | 已审计 | 新建双状态整改台账：上一轮 AF-001～012 的 13 个原子目标已整改，本轮 AF-013～020 的 8 项新扫描问题未整改；此处的「已审计」只指台账结构及记录已核对 |
 | `docs/REQUIREMENTS.md` | 已审计 | AF-010 固定 output/<RunId>/ 写出摘要已修订并静态复核；SRS v0.11 仍未冻结 |
 | `docs/PLAN.md` | 已审计 | 98 P 的引用/依赖静态核对完成；WBS 为计划非真实完成状态 |
 | `docs/TEST_PLAN.md` | 已审计 | AF-005 已区分历史 H-01 draft 与后来选定的 0.01/0.1 首轮筛查；TC/真实执行仍未验收 |
 | `docs/design/README.md` | 已审计 | LLD 单一来源、模块清单与低优先级修订复读完成，不意味着所有 LLD 已完成算法审计 |
 | `docs/DOCUMENT_BASELINE_REGISTER.md` | 已审计 | 固定快照 28 项 blob SHA 已核；后续审计完成后需再登记新快照 |
 | `docs/PROGRESS.md` | 已审计 | 证据记录与历史 SHA 语义已核，当前审计不生成 TC PASS |
-| `docs/ARCHITECTURE.md` | 已审计 | AF-011 Sophus 依赖口径已澄清；HLD v0.6/27 条设计 DAG 已静态复核，未编译 |
-| `docs/OBJECT_MODEL.md` | 已审计 | AF-009 与唯一球谐声明统一为 RealSphericalHarmonics::reconstruct；对象模型 v0.4 未实现 |
+| `docs/ARCHITECTURE.md` | 正在审计 | 新增 AF-017（QA-01 假设用户能设置输出根）、AF-019（ADR-002 Sophus“拟采用”表述）；均已登记 AUDIT_PROCESS，尚未整改 |
+| `docs/OBJECT_MODEL.md` | 正在审计 | 新增 AF-016：§4 仍把已确定的 Adaptive 失败不提交原则当成待决；已登记未整改 |
 | `docs/design/contracts.md` | 已审计 | AF-004 已把实验失败策略标为已选择、实现及异常测试未验证；跨模块合同 v0.2 未冻结 |
 | `docs/design/cli.md` | 已审计 | 逐命令类型、固定 output/<RunId>/、OS RunId 与错误单一来源已做静态核对，未实现/测试 |
-| `docs/design/mat_io.md` | 已审计 | AF-008 已统一 Failure/Result/Status 既定封装方向；MAT I/O v0.7 未编译/写回读 |
-| `docs/design/kvd.md` | 空白 | 仅已进行跨文档/接口静态扫描；Original/Modified a/b/c、每轮 near/t/ω、阈值尚未做原源码逐式审计 |
+| `docs/design/mat_io.md` | 正在审计 | 新增 AF-018：外层分析的 0.01/0.1 仍称未批准候选；已登记未整改，MAT 原值严格检查不受影响 |
+| `docs/design/kvd.md` | 正在审计 | 本轮只读核对两版 KvD/Franz 原 .m 的主要权重/赋值次序；新增 AF-013/014（旧 1e−10 候选与 H-13 历史审批口径），未整改；完整逐节点 L3 尚缺 |
 | `docs/design/adaptive_mfa.md` | 正在审计 | 本次未改变 M1–M4、MSE、无效状态不提交；仍缺原源码逐式及独立 L3 核验 |
 | `docs/design/harmonics.md` | 正在审计 | AF-002/003/012 已完成文字修订与静态复核；仍待 1996 原文/1998 勘误 PDF、R3/R5 全元素独立 L3 数学审计 |
 | `docs/design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 已审计 | 仅声明级文件/命名空间/类方法及论文 DOI/勘误优先已审；PDF 未上传、无 Eigen 递推实现 |
-| `docs/design/sampling_noise.md` | 空白 | 仅已检查模型层级/RNG 调用合同；i=1/2 完整有序方向与固定 RNG 的原源码逐式核验未开展 |
-| `docs/design/trajectory.md` | 空白 | 仅已检查 Sophus、Rᵀ、反向/小角边界的文档口径；原静态函数与 L3 解析逐式核验未开展 |
+| `docs/design/sampling_noise.md` | 正在审计 | 已只读核对源八面体初始面/缺损面、findeDreiecke A/B/C/D 与相关随机轨迹；新增 AF-015（实验失败策略仍称待决），未整改；完整 i=1/2 有序 L3 尚缺 |
+| `docs/design/trajectory.md` | 正在审计 | 已只读核对圆/正弦点列 stellen 分母、局部 Rᵀ、球内 near 公式；新增 AF-020（eps 归零规则与待决措辞混用），未整改；退化 L3 尚缺 |
 | `docs/design/experiments.md` | 已审计 | AF-001 已统一固定仓库 output/、可选 RunId 与 Writer 二次验证；Runner v0.3 仍无真实实现 |
 | `docs/design/analysis_plotting.md` | 正在审计 | DEC-004 已选且文本一致；历史 begin/end/zone/平滑的独立数值逐式核验仍待进行 |
 | `docs/decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | 已审计 | 现行 save/历史 HistoricalOnly/缺字段错误已与 Runner/分析设计对应，仍未实施 |
@@ -162,3 +175,15 @@
 - **当前三态审计表**：已审计 **33**、正在审计 **4**、空白 **3**（共 40）；其中仍在审计的 harmonics、adaptive_mfa、analysis_plotting、GOLDEN_TOLERANCE_PROPOSAL 是未完成的数学来源/独立参考审核，不表示这 12 项文档措辞仍未修订。KvD、sampling_noise、trajectory 的**深层原源码逐式审核**仍保持空白。
 - **不能扩大结论**：此轮没有实现/编译任何 C++、没有运行 CTest、Bash、MATLAB/Octave，也没有重新读取/写入原 MAT；没有为 12 项整改生成真实数值证明、批准模块最终 DEC-005 阈值、签署设计冻结或变更 H-10/H-11。
 - **后续范围**：进一步逐式数学审计应按照此台账继续记录；需要项目所有者提供论文或批准真实操作时按 [TODO.md](TODO.md) 对应阶段办理。审计报告的“已修订”不能替代最终 P/REQ/AC/TC 验收。
+
+## 九、下一轮问题扫描与 AUDIT_PROCESS 登记结果（2026-11-07）
+
+**扫描固定输入 SHA**：`3beb8c06a9d40380431f99e31ed0f70b346863a2`（扫描中创建/修改的审计台账和版本矩阵发生在其后，不能用旧 SHA 代表新提交）。详细**逐项目标、相对路径及整改状态**统一见 [AUDIT_PROCESS.md §二～三](AUDIT_PROCESS.md)。上轮 12 个 AF 问题在已复核的范围内维持“已整改”，不重开；本轮新增问题必须以新编号登记为“未整改”。
+
+- **AF-001～012**：由上一轮 [逐条修订证据](reviews/AUDIT_AF001_AF012_RESOLUTION_2026-11-07.md) 支持，分拆后 13 条具体目标，整改状态**已整改**。这是文档一致性结论，未冻结正式软件基线。
+- **AF-013～020**：本轮新增 **8 条整改目标，全部未整改**，分别涉及 `docs/design/kvd.md`（2）、`docs/design/sampling_noise.md`（1）、`docs/OBJECT_MODEL.md`（1）、`docs/ARCHITECTURE.md`（2）、`docs/design/mat_io.md`（1）、`docs/design/trajectory.md`（1）。新问题主要是历史 1e−10/首轮 0.01/0.1 容差口径、失败策略/提交边界、固定输出场景、Sophus 的已选状态与 epsilon 规则。
+- **扫描方式及来源限制**：GitHub 连接器只读查看最新现行 SRS/HLD/LLD、历史决定/报告和部分原 `.m` 源文件，按已选设计逐条比对。已静态核对 KvD 两路近度幂次、Franz 模板、八面体取面、轨迹点列、Adaptive 一次求解及分析平滑的部分源码逻辑；**不是对全部原始 45 个 .m 的逐式穷尽审核，也没有新生成 i=1/2 完整方向数值、L2 SHA-256 或 R5 原论文公式验证**。
+- **审计三态总数**：本次扫描后 `AUDIT.md` 跟踪 **41 个文件：已审计 31、正在审计 10、空白 0**。原三份数学 LLD 从“空白”变为“正在审计”，仅表示已有第一批只读源码局部审查、尚未完成全部数学核验；存在 AF-013～020 未整改的文件也保持“正在审计”。
+- **后续执行原则**：如下一轮要实际修复新问题，按 [AUDIT_PROCESS.md](AUDIT_PROCESS.md) 每条目标修改对应现行文档，再以新 Git SHA 核对并转为「已整改」；**不能因为本轮新增了审计记录就将 8 项自动标为完成**。没有进行 C++、Bash、CMake、CTest、MATLAB、MAT 写入或任何基线冻结。
+
+**本轮不新增需立即由人类决定的技术选择**。论文、真实测试授权、DEC-005/006 最终验收和发布仍按 [TODO.md](TODO.md) 适时处理。
