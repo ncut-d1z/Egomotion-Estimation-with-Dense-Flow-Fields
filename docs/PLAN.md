@@ -1,6 +1,6 @@
 # Egomotion Estimation with Dense Flow Fields：MATLAB → C++ 源码审计与模块化移植计划
 
-> **WBS 草案 v0.2，未形成承诺基线。** 98 项 P 任务的证据要求与可执行进度以 [PROGRESS.md](PROGRESS.md) 为唯一滚动登记；本文件不保存动态 PASS/失败计数。
+> **WBS 草案 v0.3，未形成承诺基线。** 98 项 P 任务的证据要求与可执行进度以 [PROGRESS.md](PROGRESS.md) 为唯一滚动登记；本文件不保存动态 PASS/失败计数。
 
 > **HAR-2026-11-06-001 的可审查补充**：用户审批 JSON 的 H-01～H-16 已拆成 [审批后的设计修订与待审材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md)，包含 H-05 需求影响、H-06 冻结准备、H-07 历史 MAT 差异、H-08 SHA-256、H-09 Golden、H-13 异常、H-15 里程碑与 H-16 Draft PR 清单。该补充不是 SRS/LLD 冻结或 H-10 解除暂缓，P0～P10 的既有 REQ/TC/AC 义务与任务状态不变。
 
@@ -20,7 +20,7 @@
 - **[docs/TEST_PLAN.md](TEST_PLAN.md)** 规划 TC → 拟议测试实体 → AC，尚未创建 C++ 测试或实际 CTest。
 - **[docs/DOCUMENT_BASELINE_REGISTER.md](DOCUMENT_BASELINE_REGISTER.md)** 是规范文档的类型、当前版本、冻结状态和固定 Git SHA 身份的统一索引；**[docs/PROGRESS.md](PROGRESS.md)** 是实施任务、里程碑、角色、实际验证与未决决定的滚动证据登记；初次静态核查见 [2026-11-06 审查记录](reviews/STATIC_TRACEABILITY_2026-11-06.md)，审查意见后的跨文档更正及连接器复核见 [一致性修订记录](reviews/DOC_CONSISTENCY_RECONCILIATION_2026-11-06.md)；二者均不代表 H-11 的 Bash 现场执行。
 - **[AGENTS.md](../AGENTS.md)** 规定 Git 安全、Debian/Ubuntu 支持范围、MAT 原始资料只读保护与 AI Agent 工作要求。
-- SRS 目前是 **v0.7 草案、尚未冻结、尚未验收**；需求项“依据已确认”不等于 C++ 已实现或测试通过。P0 对来源/数据/版权的审计结论与软件需求规格经项目所有者批准后才可冻结。所有未实测性能/内存/构建预算与逐模块容差保持 TBD，不得凭空编造。
+- SRS 目前是 **v0.8 草案、尚未冻结、尚未验收**；需求项“依据已确认”不等于 C++ 已实现或测试通过。P0 对来源/数据/版权的审计结论与软件需求规格经项目所有者批准后才可冻结。所有未实测性能/内存/构建预算与逐模块容差保持 TBD，不得凭空编造。
 - 原始 45 个 MATLAB 文件的逐文件追踪见 [SRS §9.2](REQUIREMENTS.md#92-原始-matlab-45-文件逐文件追踪清单已核实代码未移植)。下面每项 P 任务已标注至少一个关联需求 ID；后续修改 PLAN 子任务、SRS 需求、数值验收或 MATLAB 数据契约时须同步更新双向追踪矩阵和相关 AC/TC。
 
 ## 1. 目标、不可变约束与完成定义
@@ -31,7 +31,7 @@
 
 | 事项 | 固定决策 |
 |---|---|
-| C++ / 构建 | C++17、CMake、Eigen 3；**H-02 已选用 Sophus SO(3)** 为 Rodrigues 实际调用的替代依赖；H-14 方案 A 采用 Don Williamson C++ SHRotation 递推适配（当前未纳入代码） |
+| C++ / 构建 | C++17、CMake、Eigen 3；**H-02 已选用 Sophus SO(3)** 为 Rodrigues 实际调用的替代依赖；球谐 R0/R3/R5 以 Ivanic–Ruedenberg 1996 原论文及 1998 勘误为数学依据，使用 Eigen 独立重写；Don Williamson 仅作代码参考，禁止 sdla 依赖（递推生产实现尚未开始） |
 | MAT 读写 | matio；原始 MAT 只读，未来新 MAT 结果仅写仓库根 `output/<RunId>/` 隔离目录（H-12 已选定，已以 `/output/` 规则忽略上传）；**H-10 仍暂缓代码与执行** |
 | 数据格式 | 保留原始 .mat，不开发 .npz/.npy 转换、不引入 cnpy |
 | 运行环境 | 仅 Debian/Ubuntu；**H-04 选定 Ubuntu 24.04.4 VirtualBox/x86_64 开发环境快照**（可用容量已记录，未批准性能通过阈值）；不依赖 MATLAB Runtime、Python、ROS、OpenCV |
@@ -188,7 +188,7 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 
 | ID | 单一子任务与验收要点 | 前置 P | REQ | TC / AC | 证据要求与当前状态 |
 |---|---|---|---|---|---|
-| P1.1 | 待 H-10 解除暂缓后建立 Debian/Ubuntu CMake C++17 工程，声明 Eigen 3、matio、zlib 和 H-02 选定的 Sophus（只在相关 target 私有使用）；拟议 SHRotation C++ 适配同样须经版权保留和依赖核查；不编译 origin 下 MATLAB 文件 | P0.8 | REQ-NF-PLATFORM-001、REQ-NF-DEPS-001 | TC-NF-PLATFORM-001、TC-NF-DEPS-001 / AC-NF-PLATFORM-001、AC-NF-DEPS-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
+| P1.1 | 待 H-10 解除暂缓后建立 Debian/Ubuntu CMake C++17 工程，声明 Eigen 3、matio、zlib 和 H-02 选定的 Sophus（只在相关 target 私有使用）；球谐旋转须以原论文及勘误为依据使用 Eigen 自行实现、不得引入 sdla；实际采用的第三方文件保留必要来源告知，但一般版权复核不作为开发前置条件；不编译 origin 下 MATLAB 文件 | P0.8 | REQ-NF-PLATFORM-001、REQ-NF-DEPS-001 | TC-NF-PLATFORM-001、TC-NF-DEPS-001 / AC-NF-PLATFORM-001、AC-NF-DEPS-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
 | P1.2 | 依据 docs/design/cli.md 候选并经 P0.8 批准后建立 CLI 参数解析、退出码与独立输出路径；允许只执行 inspect 而不加载算法 | P1.1 | REQ-F-CLI-001、REQ-DC-EXPERIMENT-001、REQ-NF-PORTABLE-001、REQ-F-CLI-002、REQ-F-CLI-003、REQ-F-CLI-004、REQ-F-CLI-005、REQ-I-CLI-001 | TC-F-CLI-001、TC-DC-EXPERIMENT-001、TC-NF-PORTABLE-001、TC-F-CLI-002、TC-F-CLI-003、TC-F-CLI-004、TC-F-CLI-005、TC-I-CLI-001 / AC-F-CLI-001、AC-DC-EXPERIMENT-001、AC-NF-PORTABLE-001、AC-F-CLI-002、AC-F-CLI-003、AC-F-CLI-004、AC-F-CLI-005、AC-I-CLI-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
 | P1.3 | 封装 matio 只读文件句柄和变量句柄的 RAII；错误路径无资源泄漏且不会写源文件 | P1.1 | REQ-F-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001、REQ-I-MAT-001 | TC-F-MAT-001、TC-DC-IO-001、TC-NF-SAFETY-001、TC-I-MAT-001 / AC-F-MAT-001、AC-DC-IO-001、AC-NF-SAFETY-001、AC-I-MAT-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
 | P1.4 | 通过 MAT v5+zlib 读取数值变量的真实 rank、dims、类型、字节数及列主序内容；不静默转置或单精度升级 | P1.3 | REQ-F-CLI-001、REQ-F-MAT-001、REQ-D-MAT-002 | TC-F-CLI-001、TC-F-MAT-001、TC-D-MAT-002 / AC-F-CLI-001、AC-F-MAT-001、AC-D-MAT-002 | 源外构建/IO 合同、测试日志；未实施/未验收 |
@@ -275,7 +275,7 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 | P7.3 | near_aus_koeff：以 3×5 系数矩阵恢复离散近度；严格限定有效位置 | P7.2 | REQ-F-SH-001 | TC-F-SH-001 / AC-F-SH-001 | 球谐与 6×6 中间量；未实施/未验收 |
 | P7.4 | koeff_aus_near：逐项投影、4π 归一及范数除法，明确其与一般联合最小二乘的差异 | P7.2 | REQ-F-SH-001 | TC-F-SH-001 / AC-F-SH-001 | 球谐与 6×6 中间量；未实施/未验收 |
 | P7.5 | **所有者确定：待上传 Ivanic–Ruedenberg 1996 原论文与 1998 勘误后，参考 Don Williamson 的递推，以 Eigen 完全重写 l=0/1/2 的 R0/R3/R5；禁止 sdla include/link/vendor/间接依赖**，普通版权审查不再阻塞开发；本轮不实施代码 | P7.2、P6.2 | REQ-F-SH-002 | TC-F-SH-002 / AC-F-SH-002 | 球谐与 6×6 中间量；未实施/未验收 |
-| P7.6 | transfor_koeff：结合 **Sophus 输出的 3×3 物理旋转**与 **Don Williamson/ Ivanic 生成的 3×3、5×5 球谐块**，校准 R1 轴置换、R5 的 25 项、m 顺序及正向/逆向旋转；独立 L3 全元素 Golden/批准容差先于数值等价认定 | P7.5 | REQ-F-SH-002 | TC-F-SH-002 / AC-F-SH-002 | 球谐与 6×6 中间量；未实施/未验收 |
+| P7.6 | transfor_koeff：结合 **Sophus 输出的 3×3 物理旋转**与 **基于 Ivanic–Ruedenberg 原论文及勘误、由 Eigen 独立实现生成的 R3(3×3)、R5(5×5) 球谐块**，校准 R1 轴置换、R5 的 25 项、m 顺序及正向/逆向旋转；独立 L3 全元素 Golden/批准容差先于数值等价认定 | P7.5 | REQ-F-SH-002 | TC-F-SH-002 / AC-F-SH-002 | 球谐与 6×6 中间量；未实施/未验收 |
 | P7.7 | oneit_adaptiv_matched_filter 的右端向量、四个 3×3 子块与 6×6 联立系统：分别建立可独立对照的数值阶段 | P7.3、P2.2 | REQ-F-ADAPT-001 | TC-F-ADAPT-001 / AC-F-ADAPT-001 | 球谐与 6×6 中间量；未实施/未验收 |
 | P7.8 | 单轮运动向量解析、平移归一化、残差、近度再计算、二阶球谐系数重估；明确状态输入/输出，不混成多帧类 | P7.4、P7.7 | REQ-F-ADAPT-001 | TC-F-ADAPT-001 / AC-F-ADAPT-001 | 球谐与 6×6 中间量；未实施/未验收 |
 | P7.9 | 对照原始 inv/real 的行为和 Eigen 解算差异，记录奇异、零范数及非有限输出，不未经验证更改默认求解结果 | P7.8 | REQ-F-ADAPT-001、REQ-NF-NUM-001、REQ-NF-NUM-002 | TC-F-ADAPT-001、TC-NF-NUM-001、TC-NF-NUM-002 / AC-F-ADAPT-001、AC-NF-NUM-001、AC-NF-NUM-002 | 球谐与 6×6 中间量；未实施/未验收 |
