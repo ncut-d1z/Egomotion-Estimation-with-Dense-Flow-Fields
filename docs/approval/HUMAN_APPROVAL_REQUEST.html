@@ -9,6 +9,16 @@
 .quick-table select{max-width:340px;width:100%;white-space:normal}
 @media(max-width:700px){.quick-table select{min-width:145px}.quick-table td:nth-child(2){min-width:150px}}
 
+
+.replacement-guide{border:1px solid #c9dce9;border-radius:8px;background:#f6fafd;padding:9px 13px;margin:12px 0}
+.replacement-guide summary{font-weight:700;color:#225d82;cursor:pointer}
+.guide-body{font-size:.88rem;line-height:1.65}
+.guide-body h4{font-size:.95rem;margin:14px 0 5px;color:#1c405d}
+.guide-body p{margin:8px 0}
+.guide-body a{color:#155b91;text-decoration:underline}
+.guide-body code{background:#e9f1f7;padding:1px 4px;border-radius:3px;overflow-wrap:anywhere}
+.guide-warning{border-left:3px solid #bc8b29;padding:8px 10px;background:#fff9e9}
+.guide-links{font-size:.81rem}
 </style></head><body>
 <header><h1>审批意见 · 简明版</h1><p>记录你对 16 项事项的决定。可以只填一部分就保存；未填的保持“待决定”。</p></header>
 <main>
@@ -544,6 +554,31 @@ function missing(r){
  if(r.referenceText.includes("【请填写"))absent.push("补充具体版本、阈值或执行范围");
  return absent;
 }
+
+const REPLACEMENT_GUIDES={
+"H-02":`<details class="replacement-guide" open><summary>查看两个 MATLAB 脚本的用途与 C++ 替代方案（技术参考，不是批准）</summary>
+<div class="guide-body">
+<h4>① rodrigues.m：普通三维旋转</h4>
+<p>作用：3×1 旋转向量与 3×3 旋转矩阵的双向转换，原脚本还实现了雅可比与通过 SVD 将矩阵投影到 SO(3)。当前项目实际主要使用“旋转向量 → 旋转矩阵”，没有必要为全部未使用功能逐行移植。</p>
+<p><strong>优先方案：Eigen（已有依赖）。</strong> 使用 <code>Eigen::AngleAxisd(theta, omega/theta).toRotationMatrix()</code>，其中 <code>theta=omega.norm()</code>，零角度返回单位阵。<strong>备选：Sophus::SO3d::exp(omega).matrix()</strong>，但需额外依赖，不建议仅为此功能引入。</p>
+<p>必须核对：原脚本的极小角度分支（小于 MATLAB eps 返回单位阵）、旋转方向与矩阵顺序；若实际调用方需要矩阵→向量或雅可比，再单独审查。Eigen/Sophus 在数学上可替代，不代表未经 Golden 即逐数值一致。</p>
+<p class="guide-links">源代码：<a href="https://gitlab.com/libeigen/eigen/-/blob/master/Eigen/src/Geometry/AngleAxis.h" target="_blank" rel="noopener noreferrer">Eigen AngleAxis</a> · <a href="https://github.com/strasdat/Sophus/blob/main/sophus/so3.hpp" target="_blank" rel="noopener noreferrer">Sophus SO3</a> · <a href="../design/trajectory.md" target="_blank" rel="noopener noreferrer">本项目轨迹设计</a></p>
+<h4>② SHRotate.m：实球谐系数的旋转</h4>
+<p>作用：输入 3×3 物理旋转矩阵 <code>r</code> 和最高阶 <code>degree=2</code>，生成 <code>R0(1×1)</code>、<code>R1(3×3)</code>、<code>R2(5×5)</code>；本项目用它旋转 9 个有效的实球谐系数。<strong>Eigen 的 3×3 旋转 API 不能直接替代这一功能。</strong></p>
+<p><strong>首选参考：Don Williamson 的原始 C++ SHRotation。</strong> 原 MATLAB 文件头直接给出旧 <code>SHRotate.h</code> 和 Don Williamson <code>SHRotation.zip</code> 的来源线索；目前可查到 <a href="https://github.com/dwilliamson/SHRotation" target="_blank" rel="noopener noreferrer">dwilliamson/SHRotation</a>，包含 Ivanic–Ruedenberg 与 Choi 路线，仓库有 MIT LICENSE 文件。</p>
+<p>备选参考：<a href="https://leomccormack.github.io/Spatial_Audio_Framework/saf__sh_8c_source.html" target="_blank" rel="noopener noreferrer">Spatial Audio Framework 的 C 语言 getSHrotMtxReal</a>；<a href="https://www.open3d.org/docs/latest/cpp_api/md__2home_2runner_2_open3_d_2_open3_d_2cpp_2open3d_2visualization_2rendering_2_gaussian__splat_2_gaussian_splat_design.html" target="_blank" rel="noopener noreferrer">Open3D 的 Ivanic–Ruedenberg 设计说明</a>。这些可用于交叉核对，不能直接假定约定一致。</p>
+<p>必须核对：一阶 <code>R1</code> 的坐标轴置换、二阶 <code>R2</code> 的 25 个元素、实球谐的相位/归一化、<code>m=-l…l</code> 顺序、主动/被动旋转、系数存储布局、数值 Golden；还要审查候选 C++ 文件的许可证及其第三方来源。</p>
+<p class="guide-links">源头线索：<a href="https://github.com/dwilliamson/SHRotation" target="_blank" rel="noopener noreferrer">Don Williamson C++</a> · <a href="../design/harmonics.md" target="_blank" rel="noopener noreferrer">本项目球谐设计</a> · <a href="https://doi.org/10.1021/jp9833350" target="_blank" rel="noopener noreferrer">Ivanic–Ruedenberg 1998 勘误</a></p>
+<p class="guide-warning">建议的审核选择：允许先用 Eigen 设计 Rodrigues 替代接口，并以 Don Williamson 的 C++ 为 SHRotate 的优先参考；但不等于批准复制第三方代码、添加新依赖、关闭版权 DEC 或认定数值等价。</p>
+</div></details>`,
+"H-14":`<details class="replacement-guide" open><summary>查看 R5（二阶球谐）替代方案与验收要点</summary><div class="guide-body">
+<p><strong>不是 5 阶球谐。</strong> 此处的“R5”是 <code>l=2</code> 的 <strong>5×5</strong> 系数旋转矩阵。<code>SHRotate(r,2)</code> 生成 <code>1×1 + 3×3 + 5×5</code> 三个块，最终旋转 9 个实球谐系数。</p>
+<p><strong>方案 A（优先调查）：</strong>参考 <a href="https://github.com/dwilliamson/SHRotation" target="_blank" rel="noopener noreferrer">Don Williamson 的 C++ SHRotation</a>，核对 Ivanic–Ruedenberg 递推与 1998 勘误，并核实所用源文件许可及第三方归属。若合法且与项目约定一致，可采用 C++ 实现并在 Eigen 适配层处理系数。</p>
+<p><strong>方案 B（独立实现）：</strong>仅依据合法取得的 Ivanic–Ruedenberg 数学论文，独立实现 <code>R1 → R2</code> 递推；使用 Eigen 的固定大小矩阵保存 3×3、5×5 块，避免引入额外大型库。不能复制未审查的第三方代码。</p>
+<p><strong>方案 C（交叉验证）：</strong>参考 <a href="https://leomccormack.github.io/Spatial_Audio_Framework/saf__sh_8c_source.html" target="_blank" rel="noopener noreferrer">Spatial Audio Framework C 实现</a>、<a href="https://www.open3d.org/docs/latest/cpp_api/md__2home_2runner_2_open3_d_2_open3_d_2cpp_2open3d_2visualization_2rendering_2_gaussian__splat_2_gaussian_splat_design.html" target="_blank" rel="noopener noreferrer">Open3D 的旋转约定说明</a>，只作为独立对照；不要直接混用不同球谐规范。</p>
+<p>验证清单：<code>R=I</code>、绕 X/Y/Z 轴旋转、复合旋转、逆旋转；逐元素比较 R1 的 9 项与 R2 的 25 项、系数旋转前后重建值、正交性及误差容差。<strong>Golden 与 DEC-005/003/007 仍需另行批准。</strong></p>
+</div></details>`
+};
 const extraFields={
 rightsFields:[["rodriguesRights","rodrigues.m 的许可和移植范围"],["shRotateRights","SHRotate.m / R5 的合法实现路线"],["archiveRights","原始数据与 Golden 可公开范围"],["rightsEvidence","版权审核证据"],["licenseDecision","是否创建 LICENSE"],["licenseScope","许可证适用范围"]],
 contractFields:[["runIdPolicy","RunId 命名与并发规则"],["diagnostics","诊断输出格式"],["negativeNoise","负噪声系数如何处理"],["errorMapping","错误码规则"],["testMapping","测试与参考数据对应关系"],["hashPolicy","文件身份校验方法"],["goldenEnvironment","MATLAB 参考数据环境和来源"]],
@@ -594,6 +629,7 @@ $("detailHost").innerHTML=SIMPLE.map(x=>{
  '<div class="bar"><strong>'+id+' · '+clean(x[1])+'</strong><span class="grow"></span><button type="button" class="btn" data-close="'+id+'">收起</button></div>'+
  '<p class="note">'+clean(x[2])+'</p><p class="muted">你需要决定：'+clean(x[3])+'</p>'+
  '<p class="muted">当前选择：<strong data-current-choice>暂不决定</strong></p>'+
+ (REPLACEMENT_GUIDES[id]||'')+
  '<label class="field">参考意见（已预填，可以直接修改）'+
  '<textarea data-item-reference="'+id+'" rows="4">'+clean(r.referenceText)+'</textarea></label>'+
  '<label class="confirm-choice"><input type="checkbox" data-item-confirm="'+id+'"> 我确认采用上面这段文字作为我的意见</label>'+
