@@ -130,7 +130,7 @@ public:
 
 实际项目使用 std::variant 区分五类 ExperimentConfig，还是各命令拥有独立参数类型，须在 P0.8/P1.2 冻结。**单个源脚本的参数默认值不能因为复用 Runner 而外溢到另一实验**。RunContext 应独占 RNG、输出位置与本次结果 Manifest；没有全局状态。
 
-### 6.0 RunContext 的最小所有权/接口候选（非编译代码）
+### 6.1 RunContext 的最小所有权/接口候选（非编译代码）
 
 RunContext 属于 **egomotion_experiments** 的一次性运行上下文，不与 `MatResultReader`、`RunMatWriter` 或 `MatDenseArray` 建立生产级直接链接。Composition Root 负责在执行前校验用户输出根与 RunId、构造具体 Writer 后以 **contracts 的 IResultWriter** 窄接口注入；RunContext 只持有一个经验证的 `RunId` 和所需上下文。
 
@@ -171,7 +171,7 @@ private:
 - **失败与释放**：固定 RNG 耗尽、子求解器失败、MAT 写失败必须在 `Result<RunOutcome, ExperimentErrorCode>` 的失败分支保留原底层错误及 `ErrorDetail.run_id`；不再以一个空 `RunOutcome` 表示失败。Manifest 是否允许 partial、失败状态能否继续下一样本，仍为待决定事项，不做默认回滚承诺。
 - **边界**：`BiasExperimentConfig` 负责原入口 seed/最大 level/三个噪声乘数，`BiasFlowParameters`（采样 LLD）负责**单个流场**，不能彼此覆盖默认值。配置选择 `std::variant` 还是独立参数类型、RunContext 移动/并发限制、Writer 创建时机均待 P0.8 冻结。
 
-### 6.1 输出 Manifest 推荐字段
+### 6.2 输出 Manifest 推荐字段
 
 | 字段 | 语义/约束 |
 |---|---|
