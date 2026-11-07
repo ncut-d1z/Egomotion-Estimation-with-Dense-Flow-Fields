@@ -144,7 +144,7 @@ PlotExporter 仅消费 AnalysisDataset，输出图形位置必须在独立 RunId
 | AN-G05 | rottransratio 缺失、NaN/Inf、穿越区域不足、f 超过数据长度、MAT 形状错误 | TC-I-ANALYSIS-001、TC-NF-HEADLESS-001 |
 | AN-G06 | 单位球圆/正弦轨迹、l≤2 实球谐三种插图数据 | TC-F-AN-002 |
 
-所有参考数据须来自原 MATLAB 文件/历史 MAT、带源 SHA 与明确 Golden 版本。图像像素一致性不要求，但**数据值、MATLAB 索引、绘图分段、单位和有效数量必须可审查**。
+所有参考数据须来自原只读 .m 源公式/历史 MAT L2 及独立 L3 曲线实现，带原源码 SHA、输入 MAT SHA、参考生成过程与明确 Golden 版本；**不要求运行原 MATLAB 分析脚本**。图像像素一致性不要求，但**数据值、MATLAB 索引、绘图分段、单位和有效数量必须可审查**。
 
 **当前状态**：分析的索引、分段和平滑合同已列出；**历史 582 个 MAT 已由 matio 实测 READ_OK，真实形状与类型见下表**。实际曲线数值 Golden、批准容差、绘图后端、C++ 分析程序与 CTest 仍未完成。
 
