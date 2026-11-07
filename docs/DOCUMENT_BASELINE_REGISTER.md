@@ -1,6 +1,6 @@
 # 文档类型、版本、Git SHA 与基线状态控制矩阵
 
-> **文档管理登记，非正式已签署基线。** 下列文件 Git blob SHA 均来自固定快照 commit `af00122dd55254f8b084ac9bb0b7436a51836bff`，本矩阵自身的提交晚于该快照；不得将静态文件身份冒充文档批准。SRS v0.7、HLD v0.5 与模块 LLD v0.x 均采用各自独立版本，正式状态全部**未冻结**。如果快照后文件发生变更，必须重新登记其 SHA。
+> **文档管理登记，非正式已签署基线。** 下列文件 Git blob SHA 均来自固定快照 commit `0e3067b59c0836e8c6153cdbf0d352a75572a561`，本矩阵自身的提交晚于该快照；不得将静态文件身份冒充文档批准。SRS v0.8、HLD v0.5 与模块 LLD v0.x 均采用各自独立版本，正式状态全部**未冻结**。如果快照后文件发生变更，必须重新登记其 SHA。
 
 ## 1. 文档职责与唯一规范来源
 
@@ -19,11 +19,11 @@
 
 ## 2. 当前核心文档与 blob SHA
 
-**快照：** `af00122dd55254f8b084ac9bb0b7436a51836bff`。记录各文件在该 Git commit 上的精确 blob SHA；**本文件的提交晚于快照**，仅作为新登记本身，不代表批准。所有核心规范均为评审草案，PROGRESS 属于滚动证据记录而非编码基线。
+**快照：** `0e3067b59c0836e8c6153cdbf0d352a75572a561`。记录各文件在该 Git commit 上的精确 blob SHA；**本文件的提交晚于快照**，仅作为新登记本身，不代表批准。所有核心规范均为评审草案，PROGRESS 属于滚动证据记录而非编码基线。
 
 | 层次 | 文档 | 文档版本 | Git blob SHA | 正式基线 | 范围 |
 |---|---|---|---|---|---|
-| SRS | [docs/REQUIREMENTS.md](REQUIREMENTS.md) | v0.7 | `64e58584388ff9a3a534bedc3f41fb83190f28ef` | 未冻结 | REQ/AC + 附录 A 设计约束 |
+| SRS | [docs/REQUIREMENTS.md](REQUIREMENTS.md) | v0.8 | `f1fed50e753d30ed87c29c7e82390e77b8b52b59` | 未冻结 | REQ/AC + 附录 A 设计约束 |
 | HLD | [docs/ARCHITECTURE.md](ARCHITECTURE.md) | v0.5 | `1076a55eed9ee4d547e2cc4132d954cb34fd2c52` | 未冻结 | 组件/部署/27 条 target 边及 ADR |
 | HLD 附件 | [docs/OBJECT_MODEL.md](OBJECT_MODEL.md) | v0.2 | `47955081499247245b4f813f3086d7d1d079376a` | 未冻结 | 对象生命周期/45 文件映射 |
 | 跨模块 LLD | [docs/design/contracts.md](design/contracts.md) | v0.1 | `6ecd88effd5b3f05d6bd7c6f013cc2805af0bb9c` | 未冻结 | Result/Status/ErrorDetail 与领域数据 |
@@ -31,15 +31,15 @@
 | MAT I/O LLD | [docs/design/mat_io.md](design/mat_io.md) | v0.6 | `3a34af8995eaba5f10e89008f4ecfee5b30be9c6` | 未冻结 | 自拥有数据/Reader/Writer/安全 |
 | KvD LLD | [docs/design/kvd.md](design/kvd.md) | v0.3 | `abf9883654f2405ee244fe52a8fc5d9575aeab6c` | 未冻结 | Franz/KvD 与逐轮顺序 |
 | Adaptive LLD | [docs/design/adaptive_mfa.md](design/adaptive_mfa.md) | v0.4 | `c08f69f147845585370e789e3d34ab08d98dfeae` | 未冻结 | StepSolver/Session 失败不提交 |
-| 球谐 LLD | [docs/design/harmonics.md](design/harmonics.md) | v0.5 | `561ba45928ced37c5b4bd0e8c2dc1081944691f3` | 未冻结 | R3/R5、Eigen-only/禁 sdla |
+| 球谐 LLD | [docs/design/harmonics.md](design/harmonics.md) | v0.6 | `4966216d3f9a38caa2429adbd6899eb28cbd4933` | 未冻结 | R3/R5、Eigen-only/禁 sdla |
 | 采样/噪声 LLD | [docs/design/sampling_noise.md](design/sampling_noise.md) | v0.1 | `3d122777c04a3e57ba559d01eae89330d354d159` | 未冻结 | 有序采样、RNG/噪声 |
 | 轨迹 LLD | [docs/design/trajectory.md](design/trajectory.md) | v0.1 | `ebd445dba6c56e062cf5d26d92f5ffe13344ab75` | 未冻结 | 轨迹/运动/近度 |
 | 实验 LLD | [docs/design/experiments.md](design/experiments.md) | v0.2 | `3b439d4020f1c7aa8f21d233128d2182f320e4da` | 未冻结 | 五入口/当前 save、HistoricalOnly |
 | 分析 LLD | [docs/design/analysis_plotting.md](design/analysis_plotting.md) | v0.2 | `78ff555c1d64f62ffcc953ba3f142ac5abc84d20` | 未冻结 | L2 读取、L3 曲线/缺字段拒绝 |
 | LLD 索引 | [docs/design/README.md](design/README.md) | v0.2 | `bb4e75b25c8f4ff98f7cb5fcf430f07dadf48b94` | 未冻结 | 模块 LLD 范围/冻结条件 |
-| 实施 WBS | [docs/PLAN.md](PLAN.md) | v0.2 | `5d8b90fe1dd8652fb9f5e2295b7dae24549c9232` | 未冻结 | 98 个 P 工作项 |
-| 测试计划 | [docs/TEST_PLAN.md](TEST_PLAN.md) | v0.2 | `f1911d757d7e2bede004d055eea595dcd79f9589` | 未冻结 | 66 TC→候选测试→AC |
-| 证据登记 | [docs/PROGRESS.md](PROGRESS.md) | v0.1（滚动） | `b407ee848200f2925a4299546c2cd940e1f85998` | 未冻结 | 真实结果/历史证据/DEC 当前状态 |
+| 实施 WBS | [docs/PLAN.md](PLAN.md) | v0.3 | `ae0afe31ef64aff9371463e4ac0bbae1b60a9671` | 未冻结 | 98 个 P 工作项 |
+| 测试计划 | [docs/TEST_PLAN.md](TEST_PLAN.md) | v0.3 | `19aa1cfcd58289935f92b5d275ca31d06aa71929` | 未冻结 | 66 TC→候选测试→AC |
+| 证据登记 | [docs/PROGRESS.md](PROGRESS.md) | v0.1（滚动） | `6b67ffe14729428034b725887211c362d31fc3ce` | 未冻结 | 真实结果/历史证据/DEC 当前状态 |
 
 **全部核心基线签署字段现为未提供**：正式批准人、批准日期与时区、批准 commit SHA、冻结生效范围、例外 DEC 与批准证据。已有所有者**技术方案选择**和根 MIT 许可授权，不等于批准整份 SRS/HLD/LLD 或测试 PASS。对版本表的任何变更必须引用新 Git commit/对应 blob SHA。
 
