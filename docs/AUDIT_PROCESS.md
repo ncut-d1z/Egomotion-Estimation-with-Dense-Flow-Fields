@@ -75,10 +75,22 @@
 
 | 整改 ID | 文档文件相对路径（仓库根） | 具体整改目标 | 整改状态 | 审计依据 |
 |---|---|---|---|---|
-| AF-021 | `docs/ARCHITECTURE.md` | HLD §1 不再把**一般版权审批**写成研发门禁；保持实际上游文件已有来源/许可 notice 及真实 CMake/CTest、接口/指标和基线证据要求，项目原创 MIT 已确定 | 未整改 | [新扫描报告 AF-021](reviews/AUDIT_FOLLOWUP_SCAN_2026-11-07.md)，旧快照 `af9198906cf89b6fb5162aea1d74683906740d78`，HLD 第 7 行 |
-| AF-022 | `docs/REQUIREMENTS.md` | SRS DEC-001 把**首版仅支持二维、密集、实数、非 logical double 的 MAT v5/zlib**写为已由所有者选定的范围；将尚未完成的正式 Reader/负例和基线签署与已经确定的范围分开，不重复请求支持范围审批 | 未整改 | [新扫描报告 AF-022](reviews/AUDIT_FOLLOWUP_SCAN_2026-11-07.md)，SRS DEC-001 |
-| AF-023 | `docs/ARCHITECTURE.md` | HLD ADR-001 与 SRS DEC-001 / mat_io LLD 一致，写明初版 MAT 类型界限**已选**、实际 Reader/Writer/负例与正式基线仍未验收；不再笼统说范围待批准 | 未整改 | [新扫描报告 AF-023](reviews/AUDIT_FOLLOWUP_SCAN_2026-11-07.md)，HLD ADR-001 |
-| AF-024 | `docs/design/analysis_plotting.md` | §5.3 的 Bias 历史 xwerte 与实际视线 N 明确分开；原始图表为当前复现要求，**额外实际 N 对照图不属于当前必须交付项**，不再要求所有者现在决定是否增加可选新图；需要时另提正式需求、不阻塞核心分析 | 未整改 | [新扫描报告 AF-024](reviews/AUDIT_FOLLOWUP_SCAN_2026-11-07.md)，分析 LLD §5.3 |
-| AF-025 | `docs/design/sampling_noise.md` | 标记 `fixed_kugel_...randomnear.m`、`fixed_propfehler_...randomnear.m` 的**原 MATLAB 返回 near 是逐点循环最后赋值的标量**，而候选 `FlowSynthesisResult.nearness` 是 C++ 新增 N 维逐点内部记录；不得将其当作源码实际返回的向量，仍保持 N 次 uniform/3N 次 normal 等既有采样时序 | 未整改 | [新扫描报告 AF-025](reviews/AUDIT_FOLLOWUP_SCAN_2026-11-07.md)，原源函数 for 与 LLD §6 |
+| AF-021 | `docs/ARCHITECTURE.md` | HLD §1 不再把**一般版权审批**写成研发门禁；保持实际上游文件已有来源/许可 notice 及真实 CMake/CTest、接口/指标和基线证据要求，项目原创 MIT 已确定 | 已整改 | [修订后静态复核](reviews/AUDIT_AF021_AF025_RESOLUTION_2026-11-07.md)，固定提交 `ac683f41af2f906137705f3ad31e8da53fe5c036`；初始审计见 [扫描报告](reviews/AUDIT_FOLLOWUP_SCAN_2026-11-07.md) |
+| AF-022 | `docs/REQUIREMENTS.md` | SRS DEC-001 把**首版仅支持二维、密集、实数、非 logical double 的 MAT v5/zlib**写为已由所有者选定的范围；将尚未完成的正式 Reader/负例和基线签署与已经确定的范围分开，不重复请求支持范围审批 | 已整改 | [修订后静态复核](reviews/AUDIT_AF021_AF025_RESOLUTION_2026-11-07.md)，固定提交 `ac683f41af2f906137705f3ad31e8da53fe5c036`；初始审计见 [扫描报告](reviews/AUDIT_FOLLOWUP_SCAN_2026-11-07.md) |
+| AF-023 | `docs/ARCHITECTURE.md` | HLD ADR-001 与 SRS DEC-001 / mat_io LLD 一致，写明初版 MAT 类型界限**已选**、实际 Reader/Writer/负例与正式基线仍未验收；不再笼统说范围待批准 | 已整改 | [修订后静态复核](reviews/AUDIT_AF021_AF025_RESOLUTION_2026-11-07.md)，固定提交 `ac683f41af2f906137705f3ad31e8da53fe5c036`；初始审计见 [扫描报告](reviews/AUDIT_FOLLOWUP_SCAN_2026-11-07.md) |
+| AF-024 | `docs/design/analysis_plotting.md` | §5.3 的 Bias 历史 xwerte 与实际视线 N 明确分开；原始图表为当前复现要求，**额外实际 N 对照图不属于当前必须交付项**，不再要求所有者现在决定是否增加可选新图；需要时另提正式需求、不阻塞核心分析 | 已整改 | [修订后静态复核](reviews/AUDIT_AF021_AF025_RESOLUTION_2026-11-07.md)，固定提交 `ac683f41af2f906137705f3ad31e8da53fe5c036`；初始审计见 [扫描报告](reviews/AUDIT_FOLLOWUP_SCAN_2026-11-07.md) |
+| AF-025 | `docs/design/sampling_noise.md` | 标记 `fixed_kugel_...randomnear.m`、`fixed_propfehler_...randomnear.m` 的**原 MATLAB 返回 near 是逐点循环最后赋值的标量**，而候选 `FlowSynthesisResult.nearness` 是 C++ 新增 N 维逐点内部记录；不得将其当作源码实际返回的向量，仍保持 N 次 uniform/3N 次 normal 等既有采样时序 | 已整改 | [修订后静态复核](reviews/AUDIT_AF021_AF025_RESOLUTION_2026-11-07.md)，固定提交 `ac683f41af2f906137705f3ad31e8da53fe5c036`；初始审计见 [扫描报告](reviews/AUDIT_FOLLOWUP_SCAN_2026-11-07.md) |
 
 **本节刚登记时状态**：AF-021～025 为 **5 个未整改目标**；AF-001～020 为 **21 个已整改目标**。只有修改实际目标文件、在新提交复核并提供依据后，才能把这些新问题逐项改为「已整改」。[AUDIT.md](AUDIT.md) 的文件审计三态与本表的两态无直接等价关系。
+
+## 七、AF-021～025 修订闭环（2026-11-07）
+
+**履行顺序证据**：先以 `af9198906cf89b6fb5162aea1d74683906740d78` 完成 [新扫描报告](reviews/AUDIT_FOLLOWUP_SCAN_2026-11-07.md)，再在原表 §六用 **「未整改」** 建立五行，然后依 [修订复读证据](reviews/AUDIT_AF021_AF025_RESOLUTION_2026-11-07.md) 修改四份现行规范并在固定提交 `ac683f41af2f906137705f3ad31e8da53fe5c036` 进行定向复核。
+
+- AF-021、AF-023：HLD 的普通版权复核不阻塞原创开发；首版 MAT 支持范围已选、正式 Reader/Writer/基线未通过。
+- AF-022：SRS DEC-001 明确首版 v5/zlib、二维 dense real non-logical double 的既定范围；独立验证和额外类型支持没有被擅自批准。
+- AF-024：原 Bias xwerte 与真实 N 分离；新增对照图不属于当前必要工作，不增加即时人工审批。
+- AF-025：原 `fixed_*` 返回 `near_last` 标量，而新 C++ `FlowSynthesisResult.nearness` 是内部逐点记录，不能伪称原 MATLAB 直接返回该向量。
+- 当前台账所有 AF-001～025 的**原子整改行共 26 条，26/26 为「已整改」**。这里的闭环仅指**文本/设计合同一致性**，独立 L3、数据写回读、真实 C++/CTest、Ivanic 论文细节及正式基线依然开放，文件审计三态由 [AUDIT.md](AUDIT.md) 单独维护。
+
+历史「未整改」扫描事实只存放在前期固定报告及 §六的引言，**不是当前状态**；任何后续扫描发现回归，必须重新将对应**整改行**置为「未整改」并留下新固定 SHA。
