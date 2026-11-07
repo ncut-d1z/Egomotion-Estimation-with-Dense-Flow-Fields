@@ -76,7 +76,7 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 4. 返回自拥有的领域数据或具体错误码；输入文件及 origin 目录保持不变。
 
 **输出阶段（拟议保护合同）**：
-1. 要求用户给出独立 output-root 和合法 RunId，不允许把 origin/** 设成输出路径；
+1. **H-12 已指定仓库根 `output/` 为新数据的唯一规划隔离根**，RunId 新建在 `output/<RunId>/`；CLI 的 `--output-root` 候选应明确指向该目录（H-03 尚未冻结参数模式）。不允许把 origin/** 设为输出路径，不得通过软链接、相对路径逃逸或符号链接覆盖任何源 MAT；
 2. 对路径绝对化并解析已存在父目录及符号链接；拒绝 canonical 祖先关系下覆盖原始输入。需要考虑 ../、符号链接、同一路径多种表示、UTF-8/空格及软链接中途改变问题；
 3. 对最终文件使用**不覆盖**的独占创建/安全发布策略；不能仅靠“先 exists 再 open”保证无竞态。实际 matio 写出/临时文件/原子发布的组合在 Debian/Ubuntu 上需验证；
 4. 写后独立回读比对变量名、rank/dims、类型、数值，记录结果 SHA；失败时保留日志与不完整输出状态，但不得覆盖任何已有结果；
@@ -88,6 +88,8 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 - 输出已存在或路径不合法：明确拒绝，默认不覆盖。
 - 写入过程中失败：报告不完整的产物和 RunId；该行为不等同于已完成的原子事务。是否清除临时文件须遵守 AGENTS.md 禁止擅自删除/清理用户数据的要求。
 - 内存释放由 RAII 析构负责；不得在异常状态产生悬垂指针。
+
+**H-12 执行边界**：根目录 `.gitignore` 已新增 `/output/` 忽略规则；只计划在该目录生成新的结果和隔离负例副本，**不以全局 `*.mat` 排除原始资料**。即使 H-12 的路径方案已被用户确认，该 JSON 同时包含 H-10=deferred 和 `permissions.writeMat=false`，因此**本轮无权创建生产 Writer、运行写回读或模拟损坏的 MAT 负例**。既有 matio 探针只读记录仍独立有效。
 
 ## 4. MAT 数据字典和 Golden 来源
 
@@ -139,7 +141,7 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 | inspect(path) | 输入为存在的普通文件，且 Reader 不持有写权限 | 按 MAT 文件真实变量记录返回 name/class/dtype/rank/dims/complex，绝不变更输入 | MissingFile、InvalidMatHeader、CorruptCompressedData | TC-F-MAT-002 |
 | readNamed(path,name) | name 非空；所需 class 已受支持 | 对**唯一指定变量**读取完整自拥有数据，源文件句柄销毁后结果仍有效 | MissingVariable、UnsupportedClassOrType、InvalidShape | TC-F-MAT-001/003 |
 | readFirstCompatible(path) | 路径可按原 MATLAB load 规则解析；变量顺序已核验 | 首变量数据与 getflowfield MATLAB 输出一致，省略后缀时按确认后的规则补全 | AmbiguousVariable（规则未确定时）、MissingVariable | TC-F-MAT-003 |
-| saveNewVariable(root,RunId,name,data) | root 与 origin 不重叠；RunId 和变量名合法；输出不存在 | 新建结果 MAT，写后回读同名变量的 dtype/rank/dims/数据，并保存 manifest | OutputPathForbidden、OutputExists、WriteFailed、ReadbackMismatch | TC-F-MAT-004 |
+| saveNewVariable(root,RunId,name,data) | root 限定在经 H-12 指定的 `output/`（待 CLI 参数合同批准），与 origin 不重叠；RunId 和变量名合法；输出不存在 | 新建结果 MAT，写后回读同名变量的 dtype/rank/dims/数据，并保存 manifest | OutputPathForbidden、OutputExists、WriteFailed、ReadbackMismatch | TC-F-MAT-004 |
 | 句柄析构/移动 | 只允许单一所有者持有 mat_t*/matvar_t* | 释放恰好一次；move 后源句柄变为无所有权状态 | 不通过异常伪装成功；记录资源失败 | TC-DC-IO-001 |
 
 ### 7.1 具体 matio 调用边界
