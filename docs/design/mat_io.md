@@ -157,16 +157,35 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 
 历史归档中额外存在的 `alleadap*` / `rottransratio` 的**来源尚未归因**，不得依据它们擅自改变当前 MATLAB 生成入口的 `save` 合同。
 
-## 5. 接口与测试矩阵
+### 4.2 L2/L3 参考来源与独立性（非原 MATLAB 运行 Golden）
 
-- TC-F-MAT-001/002/003/004：抽样与全量压缩读取、变量枚举、严格/兼容首变量规则、MAT 结果写回读。
-- TC-D-MAT-001/002/003：582 文件字典、MAT 型别和矩阵布局与原始变量名。
-- TC-I-MAT-001、TC-DC-IO-001、TC-NF-SAFETY-001：RAII 句柄所有权、无悬垂 Eigen Map、目录/符号链接/RunId 冲突和拒绝覆盖。
-- 对非 ASCII 路径、损坏 MAT、类型不支持、维度/长度溢出、读后资源释放要有实际负例。输入源哈希与各失败日志必须保持。
+| 来源等级 | 可用数据与独立参考 | 当前未完成项 |
+|---|---|---|
+| **L2：原作者历史 MAT** | 对 582 个原始文件的**只读**逐值提取（保留原变量名、class/type、rank/dims、压缩与列主序）及各源文件的独立 SHA-256；业务 Reader 必须与独立数据读取/字节检查逐项对应 | **现有 matio 探针已报 582/582 READ_OK**，但尚未产生逐元素 L2 参考数据与独立 SHA-256；P10.4 仍待复核 |
+| **L3：独立构造的合同参考/负例** | 单变量与多变量 MAT、缺变量、类型/shape 错误、元素数溢出、只读/写保护、列主序定值、异常路径；由非被测实现或可手工审核的规则给出预期状态和值 | 负例文件/预期日志及 Reader/Writer 测试尚未建立；不调用或模拟原 MATLAB 运行结果 |
+| **L4：分析统计** | 对 L2 结果由独立分析逻辑计算的汇总 | 该层属于分析/实验模块，不是 MAT 解码成功的必要条件 |
+
+**比对口径**：MAT 文件身份/变量名/class/dtype/rank/dims/线性索引与**无转换的原始 double 数值读取**要求精确；如涉及 NaN/Inf，应保留其分类并单独说明比特级规范，不允许靠宽松容差掩盖数据转换。外层分析计算可另按 [容差提案](../golden/GOLDEN_TOLERANCE_PROPOSAL.md) 采用 `atol=0.01`、`rtol=0.1` 的**未批准候选**，但**MAT 解码/复制不使用此容差容忍丢值或转置**。全程不要求 MATLAB/Octave 或 L1 Golden。
+
+## 5. 接口、TC、候选测试实体与 AC（不表示测试已创建）
+
+完整的 TC→拟议文件/CTest→AC 矩阵以 [TEST_PLAN.md §3](../TEST_PLAN.md) 为单一来源，本表只列本模块的对应责任。**文件名、CTest 前缀、测试函数均为候选；当前没有这些业务测试代码、CTest 注册或 PASS 记录。**
+
+| TC / AC | 计划测试实体 | CTest 候选名/审核 | 检查内容与证据来源 |
+|---|---|---|---|
+| TC-F-MAT-001～004 / 对应 AC | `tests/golden/test_mat_archive.cpp` | `egomotion.mat.*` | L2 全量/代表变量值、strict/compat、写后回读、原文件只读 |
+| TC-D-MAT-001～003 / 对应 AC | `tests/golden/test_mat_archive.cpp` | `egomotion.mat.*` | 582 文件/变量合同、class/dtype/rank/dims、SHA-256、历史字段差异 |
+| TC-I-MAT-001 / AC-I-MAT-001 | `tests/golden/test_mat_archive.cpp` | `egomotion.mat.*` | 数据读/变量选择/错误传播、列主序数据合同 |
+| TC-DC-IO-001 / AC-DC-IO-001 | **新增候选** `tests/contracts/test_mat_raii.cpp` + `docs/OBJECT_MODEL.md` | **候选** `egomotion.mat.raii.*` + 人工评审 | move-only 句柄析构一次、自拥有 MatDenseArray、返回后资源释放、错误上下文不丢失 |
+| TC-NF-SAFETY-001 / AC-NF-SAFETY-001 | `tests/contracts/test_output_safety.cpp` | `egomotion.safety.*` | 原始数据保护、已有 RunId、符号链接/路径逃逸、失败输出证据 |
+| TC-I-RESULT-001 / AC-I-RESULT-001 | `tests/integration/test_adaptive_experiments.cpp` | `egomotion.experiments.*` | RunContext/Writer 生成结果的变量名/类型/shape/非覆盖、独立回读 |
+
+`test_mat_raii.cpp` 是面向原 `TC-DC-IO-001` 的**候选补充测试实体**，不会另建 TC/AC ID；是否最终采用该文件/CTest 名仍由 P0.8 和 DEC-008 确认。所有异常输入应使用**隔离的测试副本或内存合成数组**，不得破坏 `origin/**`。
+
 
 ## 6. 待决与冻结门槛
 
-实测 matio 版本 **1.5.26**、归档 class/dtype/rank/dims 已确认。**仍待**：完整业务 Reader 的数据复制/映射、CMake target、异常与 CLI 合同、Result<T,E>、文件名/首变量兼容规则、Golden 逐值对照、输出写入与路径安全、DEC-005 容差和 P10.4 独立复核。**不把候选接口当作已经建成的 C++ 程序。**
+实测 matio 版本 **1.5.26**、归档 class/dtype/rank/dims 已确认。**仍待**：完整业务 Reader 的数据复制/映射、CMake target、异常与 CLI 合同、Result<T,E>、文件名/首变量兼容规则、**L2 原 MAT 逐值参考/L3 独立合同参考**的核验、输出写入与路径安全、DEC-005 容差和 P10.4 独立复核。**不把候选接口当作已经建成的 C++ 程序。**
 
 
 ## 7. API 的前置/后置条件与错误映射（编码候选）
@@ -177,9 +196,11 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 |---|---|---|---|---|
 | inspect(path) | 输入为存在的普通文件，且 Reader 不持有写权限 | 按 MAT 文件真实变量记录返回 name/class/dtype/rank/dims/complex，绝不变更输入 | MissingFile、InvalidMatHeader、CorruptCompressedData | TC-F-MAT-002 |
 | readNamed(path,name) | name 非空；所需 class 已受支持 | 对**唯一指定变量**读取完整自拥有数据，源文件句柄销毁后结果仍有效 | MissingVariable、UnsupportedClassOrType、InvalidShape | TC-F-MAT-001/003 |
-| readFirstCompatible(path) | 路径可按原 MATLAB load 规则解析；变量顺序已核验 | 首变量数据与 getflowfield MATLAB 输出一致，省略后缀时按确认后的规则补全 | AmbiguousVariable（规则未确定时）、MissingVariable | TC-F-MAT-003 |
+| readFirstCompatible(path) | 路径合法；可明确补齐省略的 `.mat`；不要求 MATLAB 运行 | **单变量文件**读取该变量；**多变量**在没有已获核准的独立顺序依据时拒绝 `AmbiguousVariable`，不擅自按字母序选取；仅承诺现有 582 份单变量归档的兼容范围 | AmbiguousVariable、MissingVariable、UnsupportedClassOrType、InvalidShape | TC-F-MAT-003 |
 | saveNewVariable(root,RunId,name,data) | root 限定在经 H-12 指定的 `output/`（待 CLI 参数合同批准），与 origin 不重叠；RunId 和变量名合法；输出不存在 | 新建结果 MAT，写后回读同名变量的 dtype/rank/dims/数据，并保存 manifest | OutputPathForbidden、OutputExists、WriteFailed、ReadbackMismatch | TC-F-MAT-004 |
-| 句柄析构/移动 | 只允许单一所有者持有 mat_t*/matvar_t* | 释放恰好一次；move 后源句柄变为无所有权状态 | 不通过异常伪装成功；记录资源失败 | TC-DC-IO-001 |
+| 句柄析构/移动 | 只允许单一所有者持有 mat_t*/matvar_t* | 释放恰好一次；move 后源句柄变为无所有权状态；MatDenseArray 深拷贝/移动后的存活性另测 | 不通过异常伪装成功；记录资源失败 | TC-DC-IO-001 |
+
+**完整错误枚举以 [contracts.md §3](contracts.md) 为唯一候选规范**；上表只是主要示例，不能视为完整 enum 列表。此模块涉及的 `MatErrorCode` 包括：`MissingFile`、`PermissionDenied`、`InvalidMatHeader`、`CorruptCompressedData`、`MissingVariable`、`AmbiguousVariable`、`UnsupportedClassOrType`、`InvalidShape`、`SizeOverflow`、`OutputPathForbidden`、`OutputExists`、`WriteFailed`、`ReadbackMismatch`。从 `Result/Status` 的失败分支传播原 `MatErrorCode` 与 `ErrorDetail`，CLI 退出码继续只引用 `contracts.md §3.1`，不在此处复制映射。无新增错误码得到批准。
 
 ### 7.1 具体 matio 调用边界
 
