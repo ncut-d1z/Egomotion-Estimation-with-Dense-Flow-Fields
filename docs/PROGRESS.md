@@ -145,3 +145,6 @@ reviewed_by / review_date:
 | E-DOC-026 | 修订及固定复核提交 `c4944b085ff92c0b8259d766668e2fa97939ee9d`；`docs/PROGRESS.md` blob `5943a869807c7777b337e738ba15b64ad58ecabd`、`AGENTS.md` blob `296a49fd7a09e71796ea7ebff984a2904505bc2d` | AF-028～031 四处实际修改并对该固定提交定向复读：**4/4 通过**；本轮修订后整改台账为 32 已整改、0 未整改。历史证据/审批原文未变 | 不批准 H-10/H-11、DEC-005/006 最终阈值、冻结、软件验收；不以四条定向断言冒充全量数学验证 |
 
 继续按 [AUDIT.md](AUDIT.md) 与 [AUDIT_PROCESS.md](AUDIT_PROCESS.md) 各自维护文件审计三态和问题整改两态，原 `origin/**` 未修改。
+
+
+**E-DOC-027（2026-11-08，先审计）**：在固定输入 `6c22fe7448cc9f3aed2c1f9f42766208e3a3e7fe` 按 AUDIT 核查历史字段、版本矩阵、LLD 索引与相关设计/测试材料，确认 AF-032～036 尚需文字/治理修订，新增 AF-062（索引误称全量登记）；已在 AUDIT_PROCESS 先标「未整改」。AF-037～061 的真实软件/数值/授权证据仍缺，保持开放。本轮审计未执行 Bash/CMake/CTest/MATLAB、未读取或写入 MAT、未实施 C++。整改及静态复核应另提交，不在发现时声明结案。

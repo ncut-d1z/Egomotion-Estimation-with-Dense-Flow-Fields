@@ -62,7 +62,7 @@
 | `docs/REQUIREMENTS.md` | 正在审计 | SRS/66 REQ/AC、REQ-DC、DEC；待 AF-032、AF-037 |
 | `docs/PLAN.md` | 正在审计 | WBS 98 P、依赖和里程碑；待 AF-052、AF-061 |
 | `docs/TEST_PLAN.md` | 正在审计 | 66 TC→候选测试→AC/L2～L4；待 AF-035、AF-051 |
-| `docs/design/README.md` | 正在审计 | LLD 索引、单一来源；待 AF-059 |
+| `docs/design/README.md` | 正在审计 | LLD 索引、单一来源；待 AF-059、AF-062 |
 | `docs/DOCUMENT_BASELINE_REGISTER.md` | 正在审计 | 36 登记项与固定身份、冻结状态；待 AF-036、AF-058 |
 | `docs/PROGRESS.md` | 正在审计 | 真实证据与动态 DEC/里程碑；待 AF-053 |
 | `docs/ARCHITECTURE.md` | 正在审计 | HLD/27 条设计边、部署/Writer；待 AF-038 |
@@ -123,3 +123,11 @@
 - **MAT 数据**：独立 matio 探针曾报 582/582 READ_OK；尚缺独立 SHA-256、逐值 L2、正式业务 Reader/Writer/回读和安全负例。
 - **数学/实现**：尚缺 Ivanic 1996/1998 原文复核、R3/R5 与一般/退化 L3、必要 L4、真实 C++/CTest；首轮 `atol=0.01,rtol=0.1` 已选，最终 DEC-005/006/008、文档冻结/发布仍未完成。
 - 历史详细过程及固定 SHA 留在 [FULL_DOCUMENT_AUDIT](reviews/FULL_DOCUMENT_AUDIT_2026-11-07.md)、[七份数学文档复核](reviews/AUDIT_SEVEN_MATH_DOCS_RESOLUTION_2026-11-08.md)、[增量扫描](reviews/AUDIT_FOUR_POLICY_DRIFTS_SCAN_2026-11-08.md) 和 PROGRESS；此处不重复长篇日志或 hash 表。
+
+## 6. 本轮审计发现（2026-11-08）
+
+- 固定审计输入：`6c22fe7448cc9f3aed2c1f9f42766208e3a3e7fe`。比对两台账、SRS/HLD、MAT I/O/Runner/LLD 索引、TEST_PLAN、DEC-004、版本登记与部分算法 LLD；**先审计、后修改**。
+- **AF-032～035 证实**：SRS §5、MAT I/O §4.1、Runner §5 与 TEST_PLAN §5.1 对 `HistoricalOnly` 标记或来源不明的写法仍可统一；现行 DEC-004 决策**已选，无需追溯归因**。
+- **AF-036 证实**：控制矩阵的 **36 个选定文件身份登记**与 AUDIT 的 **50 个审计路径**是不同集合；不能把 36 写成全部仓库规范或认为多纳入审计即已批准。
+- **新增 AF-062**：`docs/design/README.md` §1 将控制矩阵称为“**全部当前规范和过程文档**”的版本索引，范围过宽；应明确它是所选文档的固定身份矩阵，完整审计对象见本文件。已在整改台账先登记「未整改」。
+- **AF-037～061**：所需设计冻结、真实 L2/L3/L4、Reader/Writer、测试、性能和人类批准仍缺独立证据；不运行生产命令、不填写假 PASS。本轮不以改文案结案这些阶段目标。历史 AF-001～031 的定向文本结论不被重新解释为运行验收。
