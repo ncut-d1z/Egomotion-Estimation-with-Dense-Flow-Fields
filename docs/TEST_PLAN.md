@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **审批后候选核对材料**：见 [HAR-2026-11-06-001 设计修订与待审材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md) §2、§3、§7～§9。其中提出六类容差数据的采集格式、582 MAT SHA-256 独立审核、正式 Reader 类型拒绝清单及合法 MATLAB Golden 采集表；所有阈值仍为空，测试实体/CTest 仍未执行，H-10/H-11/权限矩阵未解除。
+> **审批后候选核对材料**：见 [HAR-2026-11-06-001 设计修订与待审材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md) §2、§3、§7～§9。其中历史上提出六类容差采集格式、582 MAT SHA-256 独立审核和正式 Reader 类型拒绝清单；**当前参考采集/核验路径以 L2/L3/L4 为准，完全不要求 MATLAB/Octave 执行或 L1 Golden**，见 [长期政策](golden/NO_MATLAB_EXECUTION_POLICY.md)。现行 `atol=0.01`/`rtol=0.1` 是**未批准候选**，不是已冻结阈值；测试实体/CTest 仍未执行，H-10/H-11 其他执行门禁未解除。
 
 > **长期约束**：[无需运行 MATLAB 政策](golden/NO_MATLAB_EXECUTION_POLICY.md) 已取消 MATLAB/Octave 运行与 L1 Golden 的一切强制取证前提；现行测试参考为 L2 已存 MAT、L3 独立解析/重实现和 L4 统计。此决定不解除代码/CTest 的实际执行门禁，也不批准数值容差。
 
@@ -50,14 +50,14 @@
 
 **数据字典已通过独立 C++ matio 探针实际扫描**：Ubuntu 24.04 / matio 1.5.26，582/582 源 MAT 全部被逐变量 `Mat_VarRead` 解码，582 个变量均 `READ_OK`，失败 0。原始目录以 `MAT_ACC_RDONLY` 打开；见 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md)。P0.5/0.6 的文档合同、正式业务 Reader/Writer 与负例仍需测试；P10.4 独立复核尚未完成。
 
-对 Original/Modified KvD 的 near、t、ω、终止条件逐轮比对；Adaptive 比对 6×6 系统各子块、右端、旋转、残差与球谐系数更新。 **特别核验：Adaptive oneit 返回的 error 是 MSE，sqrt(error) 在 MATLAB 内部另算但没有返回；测试记录必须分列 error_mse 和仅用于诊断的 rms，不得将二者互作。** double/1e-10 是先前候选相对容差，尚未冻结；应按模块记录绝对误差、相对误差、条件数和样本有效性，再由维护者批准。不对零向量、NaN、Inf 或未定义方向误差计入成功。
+对 Original/Modified KvD 的 near、t、ω、终止条件逐轮比对；Adaptive 比对 6×6 系统各子块、右端、旋转、残差与球谐系数更新。 **特别核验：Adaptive oneit 返回的 error 是 MSE，sqrt(error) 在 MATLAB 内部另算但没有返回；测试记录必须分列 error_mse 和仅用于诊断的 rms，不得将二者互作。** `double` 为数值精度要求；**历史** `rtol=1e-10` 不是现行容差候选。现行待审候选为 `atol=0.01`、`rtol=0.1`，另对物理不变量、近零理想残差和离散行为保留严格检查；参阅 [Golden/容差提案](golden/GOLDEN_TOLERANCE_PROPOSAL.md)。须按模块记录绝对/相对误差、条件数及样本有效性，DEC-005 审批前不得作为通过阈值。不对零向量、NaN、Inf 或未定义方向误差计入成功。
 
 ### 2.6 已执行 matio 全量探针的证据与限制
 
 | 证据项 | 实测结果 | 当前验收边界 |
 |---|---|---|
 | 平台与工具 | Ubuntu 24.04，GCC 13，matio 1.5.26；源参数 SHA `48c590ba2564e4bdd293d2cbecd2eef83b291452` | 独立源文件 `src/mat_data_dict_probe.cpp` 已编译运行；非正式 CMake/CTest |
-| 读取 | 582/582 MAT、582/582 变量、失败 0 | `Mat_Open(MAT_ACC_RDONLY)` + `Mat_GetDir` + `Mat_VarRead`；未做数据逐元素 MATLAB Golden |
+| 读取 | 582/582 MAT、582/582 变量、失败 0 | `Mat_Open(MAT_ACC_RDONLY)` + `Mat_GetDir` + `Mat_VarRead`；未做数据逐元素 L2 原 MAT 值与 L3 独立参考对照 |
 | 格式与类别 | 全部 MAT v5 / zlib / MATLAB double、存储 double | 当前数据不需要 HDF5、cell、struct、complex、sparse 适配；新增数据另评审 |
 | 形状分布 | 10×1:80，10×3:480，35×1:4，600×1:14，600×4:4 | 真实历史结果 shape；不代表所有未来输出或算法形状 |
 | 文件身份 | 582 个文件各有 FNV-1a 64 位指纹 | FNV 非 SHA-256；尚须 P10.4 独立目录/文件身份审核 |
@@ -90,7 +90,7 @@
 
 ## 3. TC → 实体/CTest → AC 规划矩阵
 
-下列表格共 66 项，与 SRS v0.3 逐项对应。**独立 matio 探针已编写并执行**，但绝大多数拟议测试源文件、测试函数和 CTest 名称尚未创建；探针不是 CTest 注册项。人工审查项与自动测试区分。原始 45 个 MATLAB 源文件映射请参见 [REQUIREMENTS.md §9.2](REQUIREMENTS.md)。
+下列表格共 66 项，与 SRS **v0.4 草案**逐项对应。**独立 matio 探针已编写并执行**，但绝大多数拟议测试源文件、测试函数和 CTest 名称尚未创建；探针不是 CTest 注册项。人工审查项与自动测试区分。原始 45 个 MATLAB 源文件映射请参见 [REQUIREMENTS.md §9.2](REQUIREMENTS.md)。
 
 | TC ID | REQ | 候选测试文件或审核文档 | CTest/审核 | AC | 状态 |
 |---|---|---|---|---|---|
