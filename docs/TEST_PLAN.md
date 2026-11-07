@@ -1,5 +1,7 @@
 # 测试设计与验收计划（TEST PLAN）
 
+> **测试计划草案 v0.1，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记，实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
+
 > **审批后候选核对材料**：见 [HAR-2026-11-06-001 设计修订与待审材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md) §2、§3、§7～§9。其中历史上提出六类容差采集格式、582 MAT SHA-256 独立审核和正式 Reader 类型拒绝清单；**当前参考采集/核验路径以 L2/L3/L4 为准，完全不要求 MATLAB/Octave 执行或 L1 Golden**，见 [长期政策](golden/NO_MATLAB_EXECUTION_POLICY.md)。`atol=0.01`/`rtol=0.1` 已由所有者选作**首轮宽松筛查**，不是已冻结的最终验收阈值；测试实体/CTest 仍未执行，H-10/H-11 其他执行门禁未解除。
 
 > **长期约束**：[无需运行 MATLAB 政策](golden/NO_MATLAB_EXECUTION_POLICY.md) 已取消 MATLAB/Octave 运行与 L1 Golden 的一切强制取证前提；现行测试参考为 L2 已存 MAT、L3 独立解析/重实现和 L4 统计。此决定不解除代码/CTest 的实际执行门禁，也不批准数值容差。
