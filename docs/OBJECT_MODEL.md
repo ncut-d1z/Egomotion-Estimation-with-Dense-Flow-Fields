@@ -1,6 +1,6 @@
 # 对象模型与生命周期合同（Object Model）
 
-> **对象模型草案 v0.4；P0.7/P0.8 待评审，未冻结、未建立对应 C++ 类。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入；各文档当前版本、固定 SHA 和冻结状态统一由 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记，运行结果以 [PROGRESS](PROGRESS.md) 为准。
+> **对象模型草案 v0.5；P0.7/P0.8 待评审，未冻结、未建立对应 C++ 类。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入；各文档当前版本、固定 SHA 和冻结状态统一由 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记，运行结果以 [PROGRESS](PROGRESS.md) 为准。
 
 ## 1. 对象职责和约定
 
@@ -158,15 +158,15 @@ stateDiagram-v2
   Ready --> FrameRotated: 使用上一帧相对旋转
   FrameRotated --> BaselinePrepared: 重置 / 继承 / 周期刷新
   BaselinePrepared --> StepEvaluated: 单步估计
-  StepEvaluated --> Updated: 原 MATLAB 顺序提交 akkoeff
+  StepEvaluated --> Updated: 必需节点成功且有限后按原顺序原子提交 akkoeff
   Updated --> Ready: 下一个帧
-  StepEvaluated --> Failed: 数值错误/无效状态
+  StepEvaluated --> Failed: 数值错误或无效状态，不提交新主系数
   Ready --> Completed: 所有帧完成
   Failed --> [*]
   Completed --> [*]
 ```
 
-**特别说明**：异常时是否提交主系数、是否跳过当前帧、是否终止，需要依据可静态确认的原源码分支、独立 L3 固定输入与明确异常合同核验后冻结（不要求运行 MATLAB）；状态图只提出候选边界，不可直接当作代码行为事实。
+**已确定的状态安全原则（不是待决事项）**：Adaptive StepSolver 只有在所需节点全部成功且结果有效时，Session 才按原实验更新次序**原子提交**下一帧主系数；失败不得提交新主系数。若连续序列无法安全恢复，**停止当前轨迹**，由 Runner 将部分运行标记为 Incomplete/Failed 并保留真实有效样本数和错误证据；独立样本可记录失败后继续其他独立样本。图中的 Failed→终止描述**不能安全恢复时的默认路径**，不暗示自动跳过/重试；特殊恢复路径的资格、非有限输入及实际异常测试仍须独立 L3/CTest 核验。设计依据见 [Adaptive LLD](design/adaptive_mfa.md)、[Runner LLD](design/experiments.md) 和 [所有者决定](decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md)。**本状态机尚未实现/执行，不要求 MATLAB L1**。
 
 ## 5. 与模块边界相关的规则
 
