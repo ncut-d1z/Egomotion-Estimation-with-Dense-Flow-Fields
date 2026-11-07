@@ -271,3 +271,9 @@ public:
 **H-13 审批状态**：用户仅要求先核查原 MATLAB NaN/Inf、奇异、停止判定和迭代时变量覆盖顺序，并起草显式失败策略；**不批准**遇错继续、回滚或终止的新增行为。H-01/DEC-005 只允许起草容差，不批准阈值；H-10 暂缓代码和数值运行。
 
 **就绪状态**：数学步骤和逐轮字段已列出；仍缺原 MATLAB Golden、批准容差、实现/编译、具体测试函数/CTest。文档可用于技术审查，不可据此标记模块已通过。
+
+## 附录 A：KvD/Franz 的 Golden 等级与可证明范围（补充草案）
+
+证据出处和 AC 缺口统一见 [L1–L4 矩阵](../golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md)。**L1 原 MATLAB 实测未采集**：Franz 各轴响应和归一分母、初始 t/ω；Original/Modified 每轮 near/sum/sign、a/b/c、旧/新 t、ω、RMS、delta、动态 grenze、实际迭代次数/退出原因与最终尺度。现有作者 **L2 Bias MAT 只保存最终 xwerte/ywerte 统计结果**，不能倒推中间量；L3 固定解析/独立实现只能证明其明确覆盖的公式，不能证明源 MATLAB 逐轮执行。
+
+`AC-F-FILTER-001`、`AC-F-KVD-001` 对原 MATLAB 逐节点/逐轮 Golden 有明确要求，因此在没有合法 MATLAB L1、C++/CTest 和 DEC-005 的情况下均**缺完整验收证据**；`AC-F-KVD-002` 的停止/病态实际行为同样未验证。**不要把迭代次数当成唯一缺项**，也不因 L2 最终误差接近或宽松 0.01/0.1 比较而修改验收状态。
