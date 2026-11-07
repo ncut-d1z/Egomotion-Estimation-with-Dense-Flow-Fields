@@ -1,6 +1,6 @@
 # 视线采样、光流合成与噪声——详细设计草案
 
-> **LLD 草案，未冻结、无实现/Golden 数值。** 对应 P2/P3、REQ-F-GEOM-*、REQ-F-FLOW-*、REQ-DC-RNG-001、REQ-DC-NOISE-001。
+> **LLD 草案，未冻结；无生产实现/已执行的 L3 数值参考测试。** 对应 P2/P3、REQ-F-GEOM-*、REQ-F-FLOW-*、REQ-DC-RNG-001、REQ-DC-NOISE-001。
 
 ## 1. 来源与输入输出
 
@@ -116,7 +116,7 @@ public:
 
 **噪声策略区别**：MeanMagnitudeGaussianNoise(coefficient=0) 在对应 `nonpropfehler(...,0)` 的运行路径仍然消耗 3N 个 normal；作为“完全不调用噪声函数”的独立 NoNoise 策略可以不消耗样本，但**不能用它替代该 MATLAB 无噪入口**。这两个语义不同，须分别通过固定源消费计数验收。
 
-具体对象由 Composition Root 创建。FlowField 拥有 N×6 列主序，方向只读，算法不得修改外部 MAT 文件。无随机全局单例，固定 RNG 测试替身用于确定性 Golden。
+具体对象由 Composition Root 创建。FlowField 拥有 N×6 列主序，方向只读，算法不得修改外部 MAT 文件。无随机全局单例，固定 RNG 测试替身用于确定性 L3 参考核验。
 
 ## 4. 失败、安全与验证
 
@@ -124,7 +124,7 @@ public:
 - 边界测试：i=0,1,2 的方向**顺序**、具体缺损面、范数及数目，与**独立 L3 解析/独立重实现的完整有序方向参考**逐行比较；不要求运行原 MATLAB、不得由被测 C++ 输出生成参考。
 - 固定人工流场、固定 uniform/normal 序列，在噪声系数 0、0.6、2.4、9.6 下验证全场平均与逐分量模型不被互换。
 - 对有待解的随机结果，与原版随机试验**比较统计而非跨语言同种子逐位相同**。
-- 对应 TC-F-GEOM-001/002/003、TC-F-FLOW-001/002/003/004、TC-DC-RNG-001、TC-DC-NOISE-001。输入/Golden、容差、实际类和测试路径未冻结。
+- 对应 TC-F-GEOM-001/002/003、TC-F-FLOW-001/002/003/004、TC-DC-RNG-001、TC-DC-NOISE-001。独立 L3 输入/参考数据、容差、实际类和测试实体仍未冻结。
 
 
 ## 5. 原随机调用轨迹和可确定性测试合同
@@ -211,11 +211,13 @@ public:
 
 **前置条件**：细分级别非负、N=base·4^level 在 size_t 范围内且实际分配受资源限制；真值有限；所需方向可归一；生成的 near 有定义。对于 N=0、非有限方向、距离无效、数值溢出应返回可识别失败类别。原脚本即便在数值边界产生 NaN/Inf，也不能偷偷替换为看似成功的零值。
 
+**值对象的具体拥有关系（候选）**：`DirectionSet`/ `FlowField` 按 [contracts.md §2/§4](contracts.md) 自拥有 Eigen 列主序存储，`IdealFlowResult` 按值持有理想 `FlowField` 与两个 double 均值，`FlowSynthesisResult` 按值持有含噪/无噪 `FlowField`、自拥有 `Eigen::VectorXd nearness` 与对应均值；**不保存指向 matio 数据、函数局部矩阵或 RNG 内部缓存的 Eigen::Map/裸引用**。构造完成的值对象允许明确深拷贝/移动，计算中临时只读 Map 只在被映射对象生命周期内使用；是否限制大拷贝属于性能策略而非数学行为变更。FlowSynthesizer/三种方向采样器没有跨调用可变状态；`IRandomSource` 唯一可变源由 RunContext 独占，`uniform/normal` 返回的 Result 在失败时按 [contracts.md §3.0](contracts.md) 保留 code、stage（simulation）、observation_index 与已分配 RunId；不得靠 0、重新抽样或失败后复用上一次值掩盖错误。
+
 公共 DirectionSet、FlowField 的生命周期与 const 规则由 [contracts.md](contracts.md) 管理。采样器无跨调用状态，RNG 由一次 RunContext 独占；`BiasFlowParameters` 只承载**单层级流场合成参数**，`experiments.md` 的 `BiasExperimentConfig` 独立负责实验 seed、最大细分级别、三个噪声乘数及输出。这两者是不同层次的类型，不能再重复声明同名 Config。 `IdealFlowResult` 是 FlowSynthesizer 的理想结果；`FlowSynthesisResult` 是包含近度与含噪/无噪数据的场景输出，实际组合由 BiasExperimentRunner 完成。不得把全局 rand/randn 复用到多个实验。
 
-## 7. 逐层 Golden 和浮点顺序审查
+## 7. 独立 L3 参考数据、RNG 消耗及浮点顺序审查
 
-| Golden ID（拟议） | 对照 MATLAB 的内容 | 预期检查范围 |
+| L3 参考 ID（拟议） | 依据只读源公式独立生成的参考内容（无需执行 MATLAB） | 预期检查范围 |
 |---|---|---|
 | SN-G01 | 八面体 i=0/1/2 的有序 N×3 方向 | 每个叶中心单位化顺序、坐标与整体 N |
 | SN-G02 | 缺损八面体 i=0/1/2 | 明确排除初始面 1、4，并核对 6·4^i |
@@ -225,9 +227,30 @@ public:
 | SN-G06 | nonpropfehler 噪声系数 0 与非零 | 即使系数 0 仍消耗 3N 个 normal 样本 |
 | SN-G07 | 一般固定 near/t/ω 输入的 erzeugeflussausnear | 切向内积≈0、平移/旋转平均模长 |
 
-每个 Golden 应记录原 MATLAB blob SHA、固定输入序列、输出 shape、计算顺序、被测容差及是否退化；抽样初步通过不能代替最终批量实验。**目前没有以上 Golden 数值与批准容差。**
+每组 **L3 独立参考**须记录原只读 .m **Git blob SHA**、独立生成器代码/审查人身份及其 SHA、固定输入/注入 RNG 序列、输出 shape/数值与 SHA-256、计算次序、适用容差和退化状态；**不要求 MATLAB 运行或 L1**。初级采样通过不能替代完整实验/分布统计，以上参考尚未全部生成或测试，DEC-005 容差未批准。
 
-**模块状态**：采样/噪声的算法和 RNG 调用次序已有可审查合同；实现、实际 C++ 签名、数值 Golden、CTest 和性能预算均未完成。
+**模块状态**：采样/噪声的算法和 RNG 调用次序已有可审查合同；实现、实际 C++ 签名、独立 L3 逐值参考的验证、CTest 和性能预算均未完成。
+
+## 8. CMake 归属、头文件与 TC/CTest 候选（无实际实现）
+
+按 [ARCHITECTURE.md §4–4.1](../ARCHITECTURE.md) 现有的目标依赖边界：
+
+| 拟议 target | 本文职责 | 依赖与禁止事项 |
+|---|---|---|
+| `egomotion_sampling` | 三个有序采样器、`sampling::randomUnitDirection(IRandomSource&)` 的数学/无状态实现 | `egomotion_domain` + `egomotion_contracts`（随机接口与采样抽象）；不依赖 Runner、MAT I/O 或绘图 |
+| `egomotion_simulation` | `FlowSynthesizer`、理想/加噪流场、噪声模型与 `IdealFlowResult/FlowSynthesisResult` | `egomotion_domain`、`egomotion_sampling`、`egomotion_contracts`；不把 matio 或实验输出管理引入数学层 |
+| `egomotion_experiments` | BiasExperimentRunner 的种子阶段、场景/噪声组合与 RunContext/输出编排 | 只调用以上窄接口；不重复数值公式，不向 sampling/simulation 形成反向依赖 |
+
+公共头文件候选放在 `include/egomotion/sampling/` 和 `include/egomotion/simulation/`，实现可放 `src/sampling/`、`src/simulation/`；共享 `DirectionSet/FlowField` 和 `Result/Failure` 由其唯一公共合同提供，不在两处重新声明 enum 或 ABI。**头文件路径/接口、CMake target 链接与错误类型最终由 P0.8 冻结；目前并未编译或验证**。
+
+| TC / AC | TEST_PLAN §3 的拟议测试文件/CTest | 独立 L3 参考内容 |
+|---|---|---|
+| TC-F-GEOM-001/002/003 / 对应 AC | `tests/unit/test_sampling.cpp` / `egomotion.geometry.*` | i=0/1/2 三类采样的 N、全量有序方向、面/叶顺序、范数及非法 level/资源 |
+| TC-F-FLOW-001/002/003/004 / 对应 AC | `tests/unit/test_flow_simulation.cpp` / `egomotion.flow.*` | 切向流公式、近度、两个噪声模型、固定 normal 顺序、0 系数仍消耗、边界/不合法输入 |
+| TC-DC-RNG-001 / AC-DC-RNG-001 | TEST_PLAN 当前是**人工合同评审**；拟在上述两个测试文件增添固定随机替身检查，CTest 归属待 DEC-008 | uniform/normal 值、消耗计数、耗尽/无效输入、RunId 隔离 |
+| TC-DC-NOISE-001 / AC-DC-NOISE-001 | TEST_PLAN 当前是**人工合同评审**；拟在 `test_flow_simulation.cpp` 中补充噪声替身检查，CTest 归属待 DEC-008 | 模型不互换、非有限输入的 NumericalErrorCode/上下文与统计分母 |
+
+本节对 DC-RNG/NOISE 仅提议**追加测试实现位置**，不新增、替换或宣称已通过任何 TC/AC。全部实例、L3 参考、CTest 注册/运行与资源预算仍缺。原 MATLAB 为静态依据，不执行 MATLAB/Octave。
 
 ## 附录 A：本模块无需运行 MATLAB 的验收参考
 
