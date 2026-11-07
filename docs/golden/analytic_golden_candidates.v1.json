@@ -1,0 +1,848 @@
+{
+  "schema": "egomotion.analytic-golden-candidates.v1",
+  "status": "DRAFT_UNAPPROVED_UNEXECUTED",
+  "true_matlab_golden": false,
+  "note": "Computed mathematical candidates based on read-only original MATLAB source. Not outputs of MATLAB or of production C++. Store only under docs; do not register as an approved Golden or a passed TC.",
+  "source_repository_commit": "ddb4b15e78dbd617d5d083d80c2d75aa47f14464",
+  "source_root": "origin/egomotion_estimation_dense_flow_fields_matlab_scripts",
+  "proposed_numeric_compare": {
+    "atol": 0.01,
+    "rtol": 0.1,
+    "formula": "abs(actual-reference) <= 0.01 + 0.1 * abs(reference)",
+    "never_apply_to": [
+      "dimensions",
+      "MAT variable names",
+      "MAT dtype/class",
+      "enumerated states",
+      "iteration count",
+      "RNG draw count",
+      "source file identity",
+      "order",
+      "input/output ownership",
+      "finite-vs-nonfinite classification"
+    ],
+    "additional_invariants": {
+      "unit_direction_norm_absolute_error_max": 0.000001,
+      "SO3_orthogonality_frobenius_max": 0.000001,
+      "SO3_determinant_absolute_error_max": 0.000001,
+      "SH_rotation_block_orthogonality_frobenius_max": 0.000001,
+      "ideal_flow_tangency_absolute_max": 0.000001,
+      "noise_free_analytic_MSE_max": 0.000001,
+      "analytic_expected_zero_absolute_max": 0.000001
+    }
+  },
+  "fixtures": [
+    {
+      "id": "AN-G01",
+      "module": "sampling",
+      "sources": [
+        "erzeugerichtungsvektoren.m",
+        "findeDreiecke.m"
+      ],
+      "input": {
+        "subdivision_level": 0
+      },
+      "expected": {
+        "shape": [
+          8,
+          6
+        ],
+        "directions_ordered": [
+          [
+            0.5773502691896258,
+            0.5773502691896258,
+            0.5773502691896258
+          ],
+          [
+            0.5773502691896258,
+            -0.5773502691896258,
+            0.5773502691896258
+          ],
+          [
+            -0.5773502691896258,
+            0.5773502691896258,
+            0.5773502691896258
+          ],
+          [
+            -0.5773502691896258,
+            -0.5773502691896258,
+            0.5773502691896258
+          ],
+          [
+            0.5773502691896258,
+            0.5773502691896258,
+            -0.5773502691896258
+          ],
+          [
+            0.5773502691896258,
+            -0.5773502691896258,
+            -0.5773502691896258
+          ],
+          [
+            -0.5773502691896258,
+            0.5773502691896258,
+            -0.5773502691896258
+          ],
+          [
+            -0.5773502691896258,
+            -0.5773502691896258,
+            -0.5773502691896258
+          ]
+        ],
+        "last_three_columns_all_zero": true
+      },
+      "method": "source_formula_derived",
+      "check": "exact_order_shape_and_unit_norm"
+    },
+    {
+      "id": "AN-G02",
+      "module": "sampling",
+      "sources": [
+        "erzeugerichtungsvektoren_loch.m",
+        "findeDreiecke.m"
+      ],
+      "input": {
+        "subdivision_level": 0
+      },
+      "expected": {
+        "shape": [
+          6,
+          6
+        ],
+        "directions_ordered": [
+          [
+            0.5773502691896258,
+            -0.5773502691896258,
+            0.5773502691896258
+          ],
+          [
+            -0.5773502691896258,
+            0.5773502691896258,
+            0.5773502691896258
+          ],
+          [
+            0.5773502691896258,
+            0.5773502691896258,
+            -0.5773502691896258
+          ],
+          [
+            0.5773502691896258,
+            -0.5773502691896258,
+            -0.5773502691896258
+          ],
+          [
+            -0.5773502691896258,
+            0.5773502691896258,
+            -0.5773502691896258
+          ],
+          [
+            -0.5773502691896258,
+            -0.5773502691896258,
+            -0.5773502691896258
+          ]
+        ],
+        "last_three_columns_all_zero": true
+      },
+      "method": "source_formula_derived",
+      "check": "exact_order_shape_and_unit_norm"
+    },
+    {
+      "id": "AN-G03",
+      "module": "sampling",
+      "sources": [
+        "richtungsvektoren_icosahedron.m",
+        "findeDreiecke.m"
+      ],
+      "input": {
+        "subdivision_level": 0
+      },
+      "expected": {
+        "shape": [
+          20,
+          6
+        ],
+        "directions_ordered": [
+          [
+            -0.3568220897730899,
+            0,
+            -0.9341723589627156
+          ],
+          [
+            -0.5773502691896258,
+            -0.5773502691896258,
+            -0.5773502691896258
+          ],
+          [
+            0,
+            -0.9341723589627156,
+            -0.3568220897730899
+          ],
+          [
+            0.5773502691896258,
+            -0.5773502691896258,
+            -0.5773502691896258
+          ],
+          [
+            0.3568220897730899,
+            0,
+            -0.9341723589627156
+          ],
+          [
+            -0.5773502691896258,
+            -0.5773502691896258,
+            0.5773502691896258
+          ],
+          [
+            -0.3568220897730899,
+            0,
+            0.9341723589627156
+          ],
+          [
+            -0.5773502691896258,
+            0.5773502691896258,
+            0.5773502691896258
+          ],
+          [
+            -0.9341723589627156,
+            0.3568220897730899,
+            0
+          ],
+          [
+            -0.9341723589627156,
+            -0.3568220897730899,
+            0
+          ],
+          [
+            0.9341723589627156,
+            0.3568220897730899,
+            0
+          ],
+          [
+            0.9341723589627156,
+            -0.3568220897730899,
+            0
+          ],
+          [
+            0.5773502691896258,
+            -0.5773502691896258,
+            0.5773502691896258
+          ],
+          [
+            0.3568220897730899,
+            0,
+            0.9341723589627156
+          ],
+          [
+            0.5773502691896258,
+            0.5773502691896258,
+            0.5773502691896258
+          ],
+          [
+            0,
+            -0.9341723589627156,
+            0.3568220897730899
+          ],
+          [
+            0.5773502691896258,
+            0.5773502691896258,
+            -0.5773502691896258
+          ],
+          [
+            0,
+            0.9341723589627156,
+            0.3568220897730899
+          ],
+          [
+            0,
+            0.9341723589627156,
+            -0.3568220897730899
+          ],
+          [
+            -0.5773502691896258,
+            0.5773502691896258,
+            -0.5773502691896258
+          ]
+        ],
+        "last_three_columns_all_zero": true
+      },
+      "method": "source_formula_derived",
+      "check": "exact_order_shape_and_unit_norm"
+    },
+    {
+      "id": "AN-G04",
+      "module": "rng_sampling",
+      "sources": [
+        "getvektor.m"
+      ],
+      "input": {
+        "uniform_sequence": [
+          0.5,
+          0
+        ]
+      },
+      "expected": {
+        "unit_direction": [
+          1,
+          0,
+          0
+        ],
+        "uniform_calls": 2
+      },
+      "method": "source_formula_derived",
+      "check": "geometry_plus_exact_rng_call_count"
+    },
+    {
+      "id": "AN-G05",
+      "module": "flow",
+      "sources": [
+        "erzeugeflussausnear.m"
+      ],
+      "input": {
+        "directions": [
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        "nearness": [
+          2
+        ],
+        "translation": [
+          1,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          1,
+          0
+        ]
+      },
+      "expected": {
+        "flow": [
+          [
+            -3,
+            0,
+            0
+          ]
+        ],
+        "mean_translational_flow_norm": 2,
+        "mean_rotational_flow_norm": 1,
+        "rotation_translation_ratio": 0.5
+      },
+      "method": "source_formula_derived",
+      "check": "general_floating_plus_tangent"
+    },
+    {
+      "id": "AN-G06",
+      "module": "spherical_harmonics",
+      "sources": [
+        "kugelflfunc2.m",
+        "winkelausvektor.m"
+      ],
+      "input": {
+        "direction": [
+          1,
+          0,
+          0
+        ],
+        "order_lm": [
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            -1
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            -2
+          ],
+          [
+            2,
+            -1
+          ],
+          [
+            2,
+            0
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            2,
+            2
+          ]
+        ]
+      },
+      "expected": {
+        "basis_values": [
+          0.28209479177387814,
+          0,
+          0,
+          -0.4886025119029199,
+          0,
+          0,
+          -0.31539156525252005,
+          0,
+          0.5462742152960396
+        ]
+      },
+      "method": "source_formula_derived",
+      "check": "general_floating_plus_phase_sign"
+    },
+    {
+      "id": "AN-G07",
+      "module": "spherical_harmonics",
+      "sources": [
+        "near_aus_koeff.m",
+        "kugelflfunc2.m"
+      ],
+      "input": {
+        "coefficient_matrix": [
+          [
+            3.5449077018110318,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "direction_fixture_id": "AN-G03"
+      },
+      "expected": {
+        "nearness_all": 1,
+        "shape": [
+          20,
+          1
+        ]
+      },
+      "method": "source_formula_derived",
+      "check": "identity_near_one"
+    },
+    {
+      "id": "AN-G08",
+      "module": "rotation",
+      "sources": [
+        "rodrigues.m",
+        "SHRotate.m",
+        "transfor_koeff.m"
+      ],
+      "input": {
+        "rotation_vector": [
+          0,
+          0,
+          1.5707963267948966
+        ],
+        "coefficient_matrix": [
+          [
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            2,
+            3,
+            0,
+            0
+          ],
+          [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        ]
+      },
+      "expected": {
+        "R": [
+          [
+            0,
+            -1,
+            0
+          ],
+          [
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ],
+        "R0": [
+          [
+            1
+          ]
+        ],
+        "R3": [
+          [
+            0,
+            0,
+            -1
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            0
+          ]
+        ],
+        "R5": [
+          [
+            -1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            -1,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            -1
+          ]
+        ],
+        "transformed_coefficients": [
+          [
+            1,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            -3,
+            2,
+            1,
+            0,
+            0
+          ],
+          [
+            -1,
+            -4,
+            3,
+            2,
+            -5
+          ]
+        ]
+      },
+      "method": "source_formula_derived",
+      "check": "general_floating_plus_SO3_SH_invariants"
+    },
+    {
+      "id": "AN-G09",
+      "module": "error_metrics",
+      "sources": [
+        "normrelfehler.m",
+        "transfehler_div.m"
+      ],
+      "input": {
+        "reference": [
+          1,
+          0,
+          0
+        ],
+        "estimate": [
+          0,
+          2,
+          0
+        ]
+      },
+      "expected": {
+        "angular_direction_error_deg": 90,
+        "scale_aligned_vector_difference": 1.4142135623730951
+      },
+      "method": "source_formula_derived",
+      "check": "general_floating"
+    },
+    {
+      "id": "AN-G10",
+      "module": "analysis",
+      "sources": [
+        "kurveglaetten.m"
+      ],
+      "input": {
+        "curve": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "half_window": 1
+      },
+      "expected": {
+        "smoothed_curve": [
+          0,
+          2,
+          3,
+          4,
+          0
+        ]
+      },
+      "method": "source_formula_derived",
+      "check": "exact_boundary_behavior_and_general_floating"
+    },
+    {
+      "id": "AN-G11",
+      "module": "bias",
+      "sources": [
+        "bias_test_nonspherical.m",
+        "bias_test_spherical_prop_error.m"
+      ],
+      "input": {
+        "iterationnumber": 2
+      },
+      "expected": {
+        "original_xwerte": [
+          6,
+          24,
+          96
+        ],
+        "occluded_actual_flow_count": [
+          6,
+          24,
+          96
+        ],
+        "proportional_actual_flow_count": [
+          8,
+          32,
+          128
+        ],
+        "xwerte_shape": [
+          3,
+          1
+        ],
+        "each_ywerte_shape": [
+          3,
+          3
+        ]
+      },
+      "method": "source_formula_derived",
+      "check": "exact_count_shape_and_origin_behavior"
+    },
+    {
+      "id": "AN-G12",
+      "module": "adaptive_step",
+      "sources": [
+        "oneit_adaptiv_matched_filter.m",
+        "near_aus_koeff.m",
+        "koeff_aus_near.m",
+        "erzeugeflussausnear.m",
+        "richtungsvektoren_icosahedron.m"
+      ],
+      "input": {
+        "direction_fixture_id": "AN-G03",
+        "coefficient_matrix": [
+          [
+            3.5449077018110318,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "nearness_generation": "ones(20,1)",
+        "translation": [
+          1,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "flow_generation": "p_i = -[1,0,0] + d_i[0] * d_i"
+      },
+      "expected": {
+        "near_before_update_all": 1,
+        "M1": [
+          [
+            0.6666666666666666,
+            0,
+            0
+          ],
+          [
+            0,
+            0.6666666666666666,
+            0
+          ],
+          [
+            0,
+            0,
+            0.6666666666666666
+          ]
+        ],
+        "M2": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "M3": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "M4": [
+          [
+            0.6666666666666666,
+            0,
+            0
+          ],
+          [
+            0,
+            0.6666666666666666,
+            0
+          ],
+          [
+            0,
+            0,
+            0.6666666666666666
+          ]
+        ],
+        "rhs": [
+          0.6666666666666666,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "translation": [
+          1,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "mse": 0,
+        "near_after_update_approx": 1,
+        "coefficient_after_update_approx": [
+          [
+            3.5449077018110318,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ]
+      },
+      "method": "source_formula_derived",
+      "check": "general_floating_plus_zero_ideal_case"
+    }
+  ]
+}
