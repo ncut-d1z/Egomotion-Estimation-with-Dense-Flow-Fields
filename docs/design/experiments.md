@@ -1,5 +1,7 @@
 # 实验 Runner 与结果写出——详细设计草案
 
+> **长期参考边界**：本 Runner **不要求 MATLAB/Octave 运行或采集 L1**；原 .m 仅作只读源码依据，结果验收使用 L2 已存 MAT、L3 独立逐帧/逐轮参考与 L4 统计，参见 [长期政策](../golden/NO_MATLAB_EXECUTION_POLICY.md)。
+
 > **未冻结，未创建 C++ Runner。** 来源：bias_test/data_generation 中 2 个入口；adaptive_matched_filter_test/data_generation 中 3 个入口。对应 P5、P8、REQ-F-BIAS、REQ-F-EXP、REQ-F-CLI 与 REQ-I-RESULT。
 
 ## 1. 实验入口及源代码实际参数
@@ -130,7 +132,7 @@ public:
 
 ### 6.0 RunContext 的最小所有权/接口候选（非编译代码）
 
-RunContext 属于 **egomotion_experiments** 的一次性运行上下文，不与 `MatResultReader`、`RunMatWriter` 或 `MatDenseArray` 建立生产级直接链接。Compose Root 负责在执行前校验用户输出根与 RunId、构造具体 Writer 后以 **contracts 的 IResultWriter** 窄接口注入；RunContext 只持有一个经验证的 `RunId` 和所需上下文。
+RunContext 属于 **egomotion_experiments** 的一次性运行上下文，不与 `MatResultReader`、`RunMatWriter` 或 `MatDenseArray` 建立生产级直接链接。Composition Root 负责在执行前校验用户输出根与 RunId、构造具体 Writer 后以 **contracts 的 IResultWriter** 窄接口注入；RunContext 只持有一个经验证的 `RunId` 和所需上下文。
 
 ~~~cpp
 // 文档候选；IRandomSource/IResultWriter/RunId 由 contracts.md 声明。
