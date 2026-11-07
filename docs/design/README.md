@@ -25,7 +25,7 @@
 | 基础采样与噪声 | [sampling_noise.md](sampling_noise.md) | findeDreiecke、采样/流/噪声函数 | 数量、顺序、噪声方程、RNG 消耗与自拥有 FlowField/结果 | **egomotion_sampling/simulation 的接口、头文件边界与 TC/CTest 候选** | L3 独立有序方向/固定 RNG 仍待验证 | 未冻结，P0.8/DEC-008 |
 | 几何与轨迹 | [trajectory.md](trajectory.md) | Kreis/Sinus/trajectory、球内近度与旋转 | 已列离散轨迹/求交公式 | 候选接口 | 未测 | 第三方 Rodrigues 来源待审 |
 | Franz / KvD | [kvd.md](kvd.md) | zellendefinieren、franzeigen、两种 KvD、误差 | 已列各平移公式、RMS、终止规则 | 候选接口 | 未测 | 阻塞 DEC-005 |
-| 实球谐 | [harmonics.md](harmonics.md) | kugelflfunc2、near/koeff、SHRotate | 九项索引/公式、R3/R5 全元素、HarmonicRotationBlocks 所有权 | **egomotion_harmonics 私有递推适配、候选公共头与 test_harmonics.cpp** | 全量独立 L3 参考及 R5 实测未完成 | 未冻结，DEC-003/005/007/008 |
+| 实球谐 | [harmonics.md](harmonics.md) + [Ivanic–Ruedenberg 原文/勘误与纯 Eigen 方案](SH_ROTATION_IVANIC_RUEDENBERG.md) | kugelflfunc2、near/koeff、SHRotate | 九项索引/公式，原文 1996＋勘误 1998 为必读，Eigen-only 且禁止 sdla | **egomotion_harmonics 显式依赖 egomotion_contracts**，候选公共头/test_harmonics.cpp | 待用户上传论文、完成 L3 全元素与 CTest | 数学方向已定；实现/DEC-005 未冻结 |
 | Adaptive 单步/Session | [adaptive_mfa.md](adaptive_mfa.md) | oneit、3 个 Adaptive 入口 | 已列 M1–M4、RHS、MSE 及会话差异 | 候选接口 | 未测 | 阻塞 DEC-005 |
 | 实验 Runner | [experiments.md](experiments.md) | 2 Bias + 3 Adaptive 生成入口 | 参数/save、8 次聚合、刷新策略及 L2/L3/L4 证据等级 | **RunContext 候选接口、DataMismatch 边界、egomotion_experiments/TC/CTest** | 新 Runner/完整 L3/CTest 均未实现 | 未冻结，P0.8/DEC-008 |
 | 分析与可选绘图 | [analysis_plotting.md](analysis_plotting.md) | 4 分析入口、kurveglaetten、3 插图 | 已列数据/索引/阈值/窗口 | 候选接口 | 未测 | Golden 及绘图后端未定 |
