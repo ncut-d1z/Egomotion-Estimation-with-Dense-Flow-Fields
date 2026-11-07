@@ -10,7 +10,8 @@
 - 开发分支：`dev-plan-P0-P1-mat-dictionary-probe`（未合并至 `main`）。
 - 原始数据范围：`origin/egomotion_estimation_dense_flow_fields_matlab_scripts/`；**45 个 .m、582 个 .mat，原始数据只读**。
 - **已验证子能力**：既有 `src/mat_data_dict_probe.cpp` 的独立实测报告记录 Ubuntu 24.04 / GCC 13 / matio 1.5.26，582 个 MAT、582 个变量均 `READ_OK`、失败 0；详情及每个文件的属性见 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md)。这是归档数据格式证据，**不是**正式 Reader/Writer 或 TC/CTest 通过。
-- **本轮实际检查**：使用 GitHub 连接器按固定 commit SHA 读取文档/递归源树，运行 JavaScript 静态断言并将结果记录在 [2026-11-06 静态追踪检查](reviews/STATIC_TRACEABILITY_2026-11-06.md)；实际观察 66 REQ、66 TC、98 P、45 .m 双向映射、26 条 HLD target 边，错误及环均为 0。尚未在容器运行 Bash 脚本（外部 GitHub DNS 无法解析），也未运行任何业务 CTest。
+- **较早的静态检查**：使用 GitHub 连接器按固定 commit SHA 读取文档/递归源树，运行 JavaScript 静态断言并将结果记录在 [2026-11-06 静态追踪检查](reviews/STATIC_TRACEABILITY_2026-11-06.md)；实际观察 66 REQ、66 TC、98 P、45 .m 双向映射、26 条 HLD target 边，错误及环均为 0。该检查未在容器运行 Bash 脚本（外部 GitHub DNS 无法解析），也未运行任何业务 CTest。
+- **审查意见后的文档更正及复核**：参见 [跨文档一致性复核记录](reviews/DOC_CONSISTENCY_RECONCILIATION_2026-11-06.md)。固定提交 `5472c756b983fe002ef6e32143c96b6c6798cde9` 下，GitHub 连接器只读检查 66 REQ、66 TC、98 P、45 原始 `.m`、45/45 双向映射、26 条 HLD target 依赖边和 582 MAT Git 树路径，检查范围内不一致 0；与更正前比较，规范性 REQ/TC/P 表格行完全一致，`origin` Git 子树 SHA 不变。**这不是 Bash 现场执行或任何真实测试**。
 
 ## 2. 可核验子交付物
 
@@ -20,6 +21,7 @@
 | E-DOC-001 | [2026-11-06 追踪核查](reviews/STATIC_TRACEABILITY_2026-11-06.md) | 指定 Git 提交的文档内容及源树集合对应无缺项、无 P/DAG 环 | `bash scripts/check_docs_traceability.sh` 已执行，真实 CMake target 无环、CTest 通过 |
 | E-DOC-002 | [design/cli.md](design/cli.md) | 命令/参数类型/错误码/诊断输出的候选 LLD 已存在 | CLI 已实现、已获批准、错误/参数 schema 已冻结 |
 | E-DOC-003 | [OBJECT_MODEL.md](OBJECT_MODEL.md) + [design/sampling_noise.md](design/sampling_noise.md) | Bias 场景编排、`FlowSynthesizer`、`sampling::randomUnitDirection` 的职责和命名已协调 | 对应头文件/测试已创建、随机数调用序列已数值验证 |
+| E-DOC-004 | [审查后跨文档一致性复核](reviews/DOC_CONSISTENCY_RECONCILIATION_2026-11-06.md) | 8 份方案文档的 CLI/output、RunOutcome、SH R5、MAT 形状来源、HLD 环境/预算与章节引用得到文本统一；固定提交下的 66 REQ/66 TC/98 P、源目录和 DAG 静态断言未发现不一致 | H-03/DEC-005/008 已批准、H-10/H-11 已解除暂缓、Bash/CTest/Golden 已执行、SRS/HLD/LLD 可冻结 |
 | E-DEC-001 | [JSON 审批落实记录](approval/DECISION_IMPLEMENTATION_NOTES.md) | **H-02/H-14 已指定 Sophus 与 Don Williamson Ivanic 方案 A**；H-04 已提供 Ubuntu 24.04.4 VM 快照；H-12 已确定 `output/` 并更新 `.gitignore` | 任意第三方 C++ 文件已复制、Sophus 已安装/构建、MAT 写入/CTest 已执行、Golden/容差已批准、程序可发布 |
 
 ## 3. 实施任务与里程碑状态
@@ -84,5 +86,7 @@ actual_test_exit_code:
 open_issue / DEC / caveats:
 reviewed_by / review_date:
 ```
+
+本模板是 [TEST_PLAN.md §4.1](TEST_PLAN.md) 单次测试证据字段的**扩展记录格式**；其中 `expected_vs_observed` 对应预期/实测，`source_matlab_blob_sha / input_mat_sha_or_hash` 对应输入与参考身份，`pass / fail / skip / not_run counts` 对应状态计数。真正的 Golden 数值文件应另记 SHA-256 与经过批准的 DEC-005 容差，且不能以本次审查文档代填测试结果。
 
 每次新增证据只更新对应状态，不以补齐文档或估算百分比改变未验收的 98 个任务。严格按 [AGENTS.md](../AGENTS.md) 禁止重写历史、未经授权改动原始 MAT 或自动合并分支。
