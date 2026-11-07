@@ -1,6 +1,6 @@
 # 文档类型、版本、Git SHA 与基线状态控制矩阵
 
-> **文档管理登记，非正式已签署基线。** 下列 **28 份文档**的 Git blob SHA 均来自固定快照 commit `fbc06a10e955758d73616da85fc7d8819bbed4ff`；本矩阵自身的更新提交晚于该快照。当前 SRS **v0.10**、HLD v0.5、对象模型 v0.3、LLD 索引 v0.3，WBS/TEST_PLAN v0.4，容差参考 v0.2；各文件版本独立。**核心规范均未冻结，PROGRESS 是滚动证据登记、其正式基线状态为“不适用”。** 后续有变更时须重新取得固定文件 SHA，不能将历史 SHA 当作当前 HEAD 的冻结证明。
+> **文档管理登记，非正式已签署基线。** 以下 **29 份当前登记文件**的 Git blob SHA 对应固定快照 commit `44068279403782844648a99f0f8385dd28d27796`；本矩阵自身的更新提交晚于该快照。SRS v0.10、HLD v0.5、对象模型 v0.3、WBS/TEST_PLAN v0.4、LLD 索引 v0.3、容差参考 v0.2，各文件版本独立。**核心规范仍未冻结；PROGRESS/AUDIT/固定审查报告是过程登记，不适用软件基线冻结或 TC PASS**。后续文件更改必须重新登记新的快照与 blob SHA。
 
 ## 1. 文档职责与唯一规范来源
 
@@ -20,7 +20,7 @@
 
 ## 2. 当前核心文档与 blob SHA
 
-**快照：** `fbc06a10e955758d73616da85fc7d8819bbed4ff`。本矩阵登记的是该固定提交各文件的 blob SHA，不是它自身的最终提交身份；`PROGRESS.md` 的“正式基线”列是**不适用（滚动证据登记）**，其它核心规范均仍为未冻结。
+**快照：** `44068279403782844648a99f0f8385dd28d27796`。当前文件 Git blob 身份已按这一固定快照登记；本矩阵的提交晚于该快照。`PROGRESS.md` 的“正式基线”列为**不适用（滚动证据登记）**，其它核心规范仍未冻结；审计记录中的“已审计”不等于已解决所有语义问题。
 
 | 层次 | 文档 | 文档版本 | Git blob SHA | 正式基线 | 范围 |
 |---|---|---|---|---|---|
@@ -40,7 +40,7 @@
 | LLD 索引 | [docs/design/README.md](design/README.md) | v0.3 | `fa9d6fb463654d4c6ba2e109cdb077be0940dc6a` | 未冻结 | 模块 LLD 范围/冻结条件 |
 | 实施 WBS | [docs/PLAN.md](PLAN.md) | v0.4 | `52151182ccd23bca7c8f2f6da7eeb82fa58c663a` | 未冻结 | 98 个 P 工作项 |
 | 测试计划 | [docs/TEST_PLAN.md](TEST_PLAN.md) | v0.4 | `382961192ea8c4c7f343f318d11ff0f3170d5734` | 未冻结 | 66 TC→候选测试→AC |
-| 证据登记 | [docs/PROGRESS.md](PROGRESS.md) | v0.1（滚动） | `2b869b058ed815fe5ff5daa5009a9beba17f3cf6` | 不适用（滚动证据登记） | 真实结果/历史证据/DEC 当前状态 |
+| 证据登记 | [docs/PROGRESS.md](PROGRESS.md) | v0.1（滚动） | `996c6a662f87276bee97e7906ae8b8f899443140` | 不适用（滚动证据登记） | 真实结果/历史证据/DEC 当前状态 |
 
 **全部适用的规范基线签署字段目前未提供**：正式批准人、批准日期与时区、批准 commit SHA、冻结生效范围、例外 DEC 与批准证据。已有所有者**技术方案选择**和根 MIT 许可授权，不等于批准整份 SRS/HLD/LLD 或测试 PASS。对版本表的任何变更必须引用新 Git commit/对应 blob SHA。
 
@@ -62,9 +62,12 @@
 | 开发规则 | [AGENTS.md](../AGENTS.md) | `7d609ccff2ecb41814b3bdbc7986dcccaaa2d6bf` | 只读原资料/实际运行授权 |
 | 延期人类事项 | [docs/TODO.md](TODO.md) | `c3f6d4b79dd7c0bbe4074006c75f214b182f2af4` | 材料、H-10/H-11、DEC-005/006、最终基线/发布：原因及建议阶段，**没有当前授权** |
 | 本轮只读审查 | [docs/reviews/DOCUMENT_REVIEW_AND_SH_DECLARATIONS_2026-11-07.md](reviews/DOCUMENT_REVIEW_AND_SH_DECLARATIONS_2026-11-07.md) | `580e98eae40a5378128b139ce531b6ded11c6c2e` | 历史固定 SHA 下的 GitHub 只读 ID/DAG/引用核对，非真实 Bash/CTest |
-| 用户历轮审计台账 | [docs/AUDIT.md](AUDIT.md) | `e557783ab04a659722b345aa387f04b3a2f68add` | **AU-001～028** 历轮意见，按文件相对路径的“空白/正在审计/已审计”进度，不表示 SRS/HLD/LLD 已冻结 |
+| 用户历轮审计台账 | [docs/AUDIT.md](AUDIT.md) | `0dc7125c35415514dce1a934b9ad92e16bcc03b6` | **AU-001～028** 历轮意见，按文件相对路径的“空白/正在审计/已审计”进度，不表示 SRS/HLD/LLD 已冻结 |
+| 本轮完整审计报告 | [docs/reviews/FULL_DOCUMENT_AUDIT_2026-11-07.md](reviews/FULL_DOCUMENT_AUDIT_2026-11-07.md) | `43446ec3e7ebe3d9b7f2447561f72d64ccbb5e95` | 固定输入 commit `4627cc1e48be9c43ad10b28fda646d65ee8ef01c` 的 **40 文件文档审计**，记录 AF-001～012 待修订项与 AH-001～002 历史边界，非 CMake/CTest PASS |
 
 原审批与 `docs/reviews/*.md` 保存历史决定、历史 SHA 和当时的验证信息，不随当前版本重写。特别是先前的 26 条 HLD 边证据只能用于当时快照；目前 HLD 的 27 条边只做过 GitHub 连接器读取下的静态无环检查，**不是 CMake 构建证据**。
+
+**审计进度与当前问题**：见 [AUDIT.md](AUDIT.md) 的三态文件表及 [FULL_DOCUMENT_AUDIT_2026-11-07.md](reviews/FULL_DOCUMENT_AUDIT_2026-11-07.md) 的 AF-001～AF-012；固定快照中当前文档有 12 个待修订语义问题（高 1、中 8、低 3）。**尚未修复这些问题**，不能把 25 项“已审计”解释为 25 个无缺陷/已冻结文件。历史 reviews 的报告保留其当时 SHA 和旧版本事实。
 
 ## 4. 已选设计与真正未完成条件
 
