@@ -1,6 +1,6 @@
 # MAT I/O、路径安全与原始数据合同——详细设计草案
 
-> **LLD v0.8 候选草案，未冻结。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 L2 逐值/L3 独立参考验证仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
+> **LLD v0.9 候选草案，未冻结。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 L2 逐值/L3 独立参考验证仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
 
 ## 1. 原始行为、文件身份和支持版本
 
@@ -158,7 +158,7 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 | many_parameter | allemittransfehler、allemitrotfehler、alleadaptransfehler、alleadaprotfehler | 均 `double[600×4]` |
 | many_parameter | akrot、rottransratio | 均 `double[600×1]` |
 
-历史归档中额外存在的 `alleadap*` / `rottransratio` 的**来源尚未归因**，不得依据它们擅自改变当前 MATLAB 生成入口的 `save` 合同。
+按 [DEC-004](../decisions/DEC-004_HISTORICAL_MAT_FIELDS.md)，历史 MAT 中超出各现行入口有效 `save` 的 `alleadap*` / `rottransratio` 标为 **`HistoricalOnly`**，原文件保持只读；其实际历史生成原因**无需先归因、不构成开发阻塞**。新 Writer 只写当前入口有效字段，分析需要但新结果不存在的字段应明确报 `MissingVariable`（错误语义见 [分析 LLD](analysis_plotting.md)），不得补零或伪造。
 
 ### 4.2 L2/L3 参考来源与独立性（非原 MATLAB 运行 Golden）
 

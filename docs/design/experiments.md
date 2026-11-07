@@ -2,7 +2,7 @@
 
 > **长期参考边界**：本 Runner **不要求 MATLAB/Octave 运行或采集 L1**；原 .m 仅作只读源码依据，结果验收使用 L2 已存 MAT、L3 独立逐帧/逐轮参考与 L4 统计，参见 [长期政策](../golden/NO_MATLAB_EXECUTION_POLICY.md)。
 
-> **LLD v0.3 草案，未冻结、未创建 C++ Runner。** 来源：bias_test/data_generation 中 2 个入口；adaptive_matched_filter_test/data_generation 中 3 个入口。对应 P5、P8、REQ-F-BIAS、REQ-F-EXP、REQ-F-CLI 与 REQ-I-RESULT。
+> **LLD v0.4 草案，未冻结、未创建 C++ Runner。** 来源：bias_test/data_generation 中 2 个入口；adaptive_matched_filter_test/data_generation 中 3 个入口。对应 P5、P8、REQ-F-BIAS、REQ-F-EXP、REQ-F-CLI 与 REQ-I-RESULT。
 
 ## 1. 实验入口及源代码实际参数
 
@@ -70,10 +70,10 @@ class UpdateRateRunner;
 | bias occluded | corenumber、iterationnumber、savestring；noise=[0.6,2.4,9.6]；durchlaeufe=1 | level=0..iterationnumber；N=6·4^level | `xwerte` 是 (iterationnumber+1)×1；`ywerte1…6` 各 (iterationnumber+1)×3；共七个有效 save | 40 个结果目录，各有 `xwerte` 10×1、六个 `ywerte` 10×3；均为 double |
 | bias proportional | 同上，完整八面体 N=8·4^level | level=0..iterationnumber | 与 occluded 同样七个 save 与预分配；原脚本 `xwerte` 仍采用 6·4^level | 另 40 个结果目录，七个文件的形状同上；均为 double |
 | adaptive init | savestring；stellen=35、kreisradius=0.6、hoehe=0.3、二十面体 level=2 | i=2..34；anzahlitfuerini=1、anzahldurchlaeufe=1 | 四类 `allemit*/alleohne*` 误差分别为 35×1，保存四个 MAT | initialization 四个 double[35×1] |
-| adaptive comparison | addederror、savestring；stellen=600、sinus amp=0.5、length=1、periods=2、height=0.3、level=4、anzahldurchlaeufe=8 | i=2..599 | 四类误差各 600×1，另保存 `rottransratio` 600×1（最后一次运行的缓冲）；共五个 save | without_errors：五个 double[600×1]；with_errors：七个 double[600×1]，**额外两份 `alleadap*` 为 HistoricalOnly**（具体历史生成来源未知，但不阻塞实现） |
-| adaptive rates | savestring；stellen=600、同一正弦轨迹、level=2、period=[1,5,11,21]、单运行 | i=2..599；四条周期 baseline | `allemittransfehler`、`allemitrotfehler` 各 600×4，`akrot` 600×1；**当前仅三个有效 save** | many_parameter：四个 double[600×4] 与两个 double[600×1]；**额外 `alleadap*`、`rottransratio` 均为 HistoricalOnly**，新输出仅含当前三个有效 save |
+| adaptive comparison | addederror、savestring；stellen=600、sinus amp=0.5、length=1、periods=2、height=0.3、level=4、anzahldurchlaeufe=8 | i=2..599 | 四类误差各 600×1，另保存 `rottransratio` 600×1（最后一次运行的缓冲）；共五个 save | without_errors：五个 double[600×1]；with_errors：七个 double[600×1]，额外两份 `alleadap*` 为 **`HistoricalOnly`**，只读保留、不纳入新 `save` |
+| adaptive rates | savestring；stellen=600、同一正弦轨迹、level=2、period=[1,5,11,21]、单运行 | i=2..599；四条周期 baseline | `allemittransfehler`、`allemitrotfehler` 各 600×4，`akrot` 600×1；**当前仅三个有效 save** | many_parameter：四个 double[600×4] 与两个 double[600×1]；**额外 `alleadap*`、`rottransratio` 均为 `HistoricalOnly`**，只读保留；新输出仅含当前三个有效 `save` |
 
-§9 的「历史归档」仅支持已经存储的变量名、MAT class/dtype、shape 和文件数；**不能把它反写为当前源脚本的运行结果**。依 [DEC-004](../decisions/DEC-004_HISTORICAL_MAT_FIELDS.md)，新输出不生成 `HistoricalOnly` 的 `alleadap*` / `rottransratio`；历史旧文件保留读取能力，缺失的分析必需字段明确报错，不因归因不明阻塞开发。
+§9 的「历史归档」只反映已存 MAT 变量名、MAT class/dtype、shape 和文件数，**不得反写为现行脚本的有效 `save`**。按 [DEC-004](../decisions/DEC-004_HISTORICAL_MAT_FIELDS.md)，对当前未写出的额外字段统一标记 `HistoricalOnly` 并只读保留；**无需查清历史生成原因**。新 Runner 不补写这些字段；新结果缺少分析必需字段时明确报错（见 [分析 LLD](analysis_plotting.md)）。
 
 **必须保留的源码特殊行为（已核查）**：
 

@@ -1,6 +1,6 @@
 # Egomotion Estimation with Dense Flow Fields：软件需求规格说明书（SRS）
 
-> **状态：草案 v0.12，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
+> **状态：草案 v0.13，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
 
 ## 1. 目的、范围与约束
 
@@ -148,7 +148,7 @@
 - `setofpoints` 是 N×6（前三列单位视线，后三列三维切向光流）；系数布局为 3×5（1+3+5 个有效项）；Adaptive 线性系统为 6×6。MATLAB 的列主序、1-based 索引意义、数值精度不能被静默改变。
 - **已实测的归档数据合同**：`occluded_regions` 40×7=280、`proportional_error` 40×7=280；Adaptive 的 initialization 4、without_errors 5、with_errors 7、many_parameter 6，共 **582 个文件，582 个变量**。matio 1.5.26 实际读取均成功：**582/582 MAT v5、582/582 MATLAB class=double、data_type=double、zlib 压缩，flags 为 `-`，失败 0**。该批源文件无 MAT v7.3、cell、struct、sparse、complex、single 或整数存储变量；所以**不需要为现存 582 文件引入 HDF5 或其他 MAT class 读取支持**。详见 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md)。
 - **变量尺寸（真实 MAT 内容，不再是由 MATLAB `zeros` 推测）**：`10×3` 480 个、`10×1` 80 个、`35×1` 4 个、`600×1` 14 个、`600×4` 4 个。582/582 的变量名与同名 `.mat` 文件 basename 一致，且 `data_bytes = 8 × 元素数`。该证据只覆盖原作者已保存的历史结果，不证明新 C++ 算法或输出的数值正确。
-- Bias 的 xwerte、ywerte1…6 和 Adaptive 的 allemit*/alleohne*/rottransratio 等应以实际每个文件的变量名、shape 为准。历史归档可能与当前生成脚本输出不一致，须分别登记“当前写出、已有历史、分析需要、来源未明”。
+- Bias 的 xwerte、ywerte1…6 及 Adaptive 的 allemit*/alleohne*/rottransratio 等，应以原 MAT 实测变量名与 shape 为准。按 [DEC-004](decisions/DEC-004_HISTORICAL_MAT_FIELDS.md) 区分当前有效 `save`（`CurrentGenerated`）、历史专属字段（`HistoricalOnly`，只读）与尚无依据判定的字段（`Unknown`）；另记录分析必需字段。**历史成因未知无需先归因**，新 Runner 仅保存现行字段；分析必需字段缺失时返回明确错误，禁止补造。
 - 噪声参数 `[0.6, 2.4, 9.6]` 在原代码中直接乘以 randn，不能因为注释写 variance 而自行开平方。
 
 ## 6. 外部接口合同（不包含内部 OOP 类的实现承诺）
@@ -511,7 +511,8 @@
 | v0.9 | UC-05 历史数据异常语义与已决定的 DEC-004 一致：`HistoricalOnly` 只读保留、无需归因、缺少分析必需字段明确失败；不改变既有 REQ/AC/TC | 评审草案，未冻结或运行测试 |
 | v0.10 | **仅低优先级文档层级调整**：REQ-D-SOURCE-002 与 REQ-NF-COPYRIGHT-001 保留可验证的来源/许可义务，具体 Eigen/Sophus/Don Williamson 方案下沉并引用 HLD/ADR/项目所有者决定；保留两条 REQ、AC、TC、P 追踪身份 | 历史评审草案 |
 | v0.11 | 依据 AF-010 明确 MAT 写出唯一固定目录 `output/<RunId>/`，不是任意与 `origin/**` 不重叠的目录；保留现有 REQ/AC/TC 以及已决定的 CLI 路线 | 历史评审草案 |
-| v0.12 | AF-022：将已选 MAT v5/zlib 首版二维密集实数非 logical double 范围与尚缺的正式 Reader/安全负例/基线批准分开表述，不新增 REQ、AC、TC，也不改变 HDF5/原 MAT 的事实边界 | 评审草案，未冻结/未执行 CTest |
+| v0.12 | AF-022：将已选 MAT v5/zlib 首版二维密集实数非 logical double 范围与尚缺的正式 Reader/安全负例/基线批准分开表述，不新增 REQ、AC、TC，也不改变 HDF5/原 MAT 的事实边界 | 历史评审草案 |
+| v0.13 | AF-032：§5 明确 DEC-004 的 CurrentGenerated/HistoricalOnly/Unknown、缺字段显式失败与无需历史归因；保留原 REQ/AC/TC | 评审草案，未冻结/未执行 CTest |
 
 
 ## 附录 A：内部设计约束清单（REQ-DC）
