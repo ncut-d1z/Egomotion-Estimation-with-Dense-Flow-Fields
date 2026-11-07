@@ -101,12 +101,12 @@
 | 文件相对路径（仓库根） | 审计状态 | 本轮核查重点或下一轮审计事项 |
 |---|---|---|
 | `docs/AUDIT.md` | 已审计 | 28 组历史意见归纳已复核；本轮更新三态审计表、完整执行记录入口 |
-| `docs/AUDIT_PROCESS.md` | 已审计 | 双状态整改台账已登记：原 AF-001～020 的 21 个原子目标维持已整改，下一轮 AF-021～025 先登记未整改、经文件修订和固定 SHA 复核后已整改；**当前共 26/26 项文档整改目标已整改**，不等于数值验收 |
+| `docs/AUDIT_PROCESS.md` | 已审计 | 问题级整改台账 AF-001～027 的 28 个原子目标均已按对应文档修订及固定 SHA 文本复核，**现为已整改 28/28、未整改 0**；此状态不代表数学/CTest/正式基线通过 |
 | `docs/REQUIREMENTS.md` | 已审计 | SRS v0.12：AF-022 MAT v5/zlib 首版二维 dense real double 选型已明确，Reader/负例/正式基线仍未验收；原 66 REQ 保留 |
 | `docs/PLAN.md` | 已审计 | 98 P 的引用/依赖静态核对完成；WBS 为计划非真实完成状态 |
 | `docs/TEST_PLAN.md` | 已审计 | AF-005 已区分历史 H-01 draft 与后来选定的 0.01/0.1 首轮筛查；TC/真实执行仍未验收 |
 | `docs/design/README.md` | 已审计 | LLD 单一来源、模块清单与低优先级修订复读完成，不意味着所有 LLD 已完成算法审计 |
-| `docs/DOCUMENT_BASELINE_REGISTER.md` | 已审计 | 固定快照 28 项 blob SHA 已核；后续审计完成后需再登记新快照 |
+| `docs/DOCUMENT_BASELINE_REGISTER.md` | 已审计 | 当前矩阵按固定 Git 快照登记 **36 份文件及各自 blob SHA**；当前目录下最新整改完成后须保留新的快照，不以文件身份自动宣称已冻结 |
 | `docs/PROGRESS.md` | 已审计 | 证据记录与历史 SHA 语义已核，当前审计不生成 TC PASS |
 | `docs/ARCHITECTURE.md` | 已审计 | HLD v0.8：AF-021 一般版权复核不作开发门禁、AF-023 MAT 首版范围已选，与早前 AF-017/019 合同一致；27 边仍为设计 DAG，未编译 |
 | `docs/OBJECT_MODEL.md` | 已审计 | AF-016：状态机明确 Adaptive 失败不提交主系数，不能安全恢复则终止轨迹；对象模型 v0.5 文档合同已审，实际 Session/CTest 未验收 |
