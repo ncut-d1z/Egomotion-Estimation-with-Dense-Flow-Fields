@@ -204,7 +204,7 @@ stateDiagram-v2
 | `bias_test/data_analysis/graphs_bias_test.m` | BiasResultAnalyzer::aggregate | 已定位 / 合同待 P0 核验 |
 | `bias_test/data_generation/bias_test_nonspherical.m` | BiasExperimentRunner::runOccluded | 已定位 / 合同待 P0 核验 |
 | `bias_test/data_generation/bias_test_spherical_prop_error.m` | BiasExperimentRunner::runProportional | 已定位 / 合同待 P0 核验 |
-| `help_functions/SHRotate.m` | HarmonicRotator / buildRotationBlocks；H-14 方案 A：Don Williamson 的 `IvanicSHRotate` C++ 递推适配（按原 m/相位/旋转块） | H-02/H-14 已选定替代路线；源 C++ 尚未纳入、Golden/CTest 未运行 |
+| `help_functions/SHRotate.m` | HarmonicRotator / buildRotationBlocks；以 Ivanic–Ruedenberg 1996 原论文与 1998 勘误为数学依据、Eigen-only 重写 l≤2 R0/R3/R5（Don Williamson 仅参考、禁止 sdla） | 实现数学路径已选，论文待用户上传；Eigen 递推代码未创建、独立 L3/CTest 未运行 |
 | `help_functions/drehvektor_aus_zwei_vektoren.m` | math::rotationVectorBetween (自由函数) | 已定位 / 合同待 P0 核验 |
 | `help_functions/erzeugeflussausnear.m` | FlowSynthesizer::synthesize | 已定位 / 合同待 P0 核验 |
 | `help_functions/erzeugekreuzproduktmatrix.m` | math::crossMatrix (自由函数) | 已定位 / 合同待 P0 核验 |
