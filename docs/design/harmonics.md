@@ -1,6 +1,6 @@
 # 实球谐、近度拟合及系数旋转——详细设计草案
 
-> **LLD v0.6，未冻结、未实现。** 来源：winkelausvektor.m、kugelflfunc2.m、near_aus_koeff.m、koeff_aus_near.m、transfor_koeff.m、SHRotate.m。第三方许可/依赖与独立 L3 参考尚未完整核验。关联 REQ-F-SH-001/002、REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001、P7.1–P7.6/P7.10。
+> **LLD v0.7，未冻结、未实现。** 来源：winkelausvektor.m、kugelflfunc2.m、near_aus_koeff.m、koeff_aus_near.m、transfor_koeff.m、SHRotate.m。第三方许可/依赖与独立 L3 参考尚未完整核验。关联 REQ-F-SH-001/002、REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001、P7.1–P7.6/P7.10。
 
 **项目所有者确定的实现路线**：[Ivanic–Ruedenberg 原始论文（1996）及勘误（1998）的纯 Eigen 实施方案](SH_ROTATION_IVANIC_RUEDENBERG.md) 已列明。实现的数学依据以**用户稍后上传的原论文和 1998 年勘误**为准，Don Williamson 源码只作参考；**完全禁止 sdla 依赖（直接和间接）**。仓库新代码 MIT，正常开发无需另外版权审核签字。论文上传前仅完善设计，不实施 R5 生产递推。
 
