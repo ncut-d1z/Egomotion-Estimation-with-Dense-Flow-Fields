@@ -88,7 +88,7 @@
 | 数值验证者 | 独立 Golden、统计样本、批准容差下的逐轮对照 | 未指派、Golden 和 DEC-005 未冻结 |
 | 测试/集成维护者 | Debian/Ubuntu 构建、CTest、数据/资源记录、静态审计核查 | Ubuntu 探针已有记录；完整工程/CTest 未获验收 |
 
-> **Golden 证据等级最新状态**：依 [E-DOC-007](golden/NO_MATLAB_EXECUTION_POLICY.md)，L1 原 MATLAB 运行**永久非强制、非阻塞**；L2 作者 MAT 存在但独立 SHA-256/逐值复核仍缺，L3 的 AN-G01～12 仅为候选（完整逐轮/递归/一般输入仍待独立参考），L4 尚无新执行统计。故 KvD/Adaptive/RNG/SH/Session 的 AC 仍因**独立参考/真实 C++/CTest/容差批准不足**而未验收，**不是因为缺 L1**。候选 0.01/0.1 尚未批准。
+> **Golden 证据等级最新状态**：依 [E-DOC-007](golden/NO_MATLAB_EXECUTION_POLICY.md)，L1 原 MATLAB 运行**永久非强制、非阻塞**；L2 作者 MAT 存在但独立 SHA-256/逐值复核仍缺，L3 的 AN-G01～12 仅为候选（完整逐轮/递归/一般输入仍待独立参考），L4 尚无新执行统计。故 KvD/Adaptive/RNG/SH/Session 的 AC 仍因**独立参考/真实 C++/CTest/容差批准不足**而未验收，**不是因为缺 L1**。`atol=0.01`、`rtol=0.1` 已由所有者选定为首轮宽松探索性筛查；**最终 DEC-005 分模块 AC/TC PASS 数值阈值仍未批准**。
 
 **本阶段的人类输入已集中在 [docs/TODO.md](TODO.md)**：论文 PDF、生产代码及运行许可、DEC-005 最终阈值、DEC-006 真实性能预算、基线签署与发布均可在相应阶段办理；**当前需求分析只修改文档，未获得实际 C++/CMake/CTest/Bash/MAT 写入授权**。DEC-004、MIT、Eigen-only、无自定义输出根、Result/ErrorStage/JSONL、L1 退出均**已选定，不应重复申请**。此前 E-DOC-xxx 的版本/SHA 均是历史证据，不代表当前文件版本。
 
@@ -103,7 +103,7 @@
 | 决策/阻塞 | 当前实际状态 | 下一步必须提交的材料 |
 |---|---|---|
 | DEC-004 历史字段处理 | **项目所有者已经选定规则，非继续待人类选型**：新 Runner 仅保存当前有效 save 字段，旧 582 MAT 完整只读；额外字段 HistoricalOnly，分析必需字段缺失明确失败 | [DEC-004](decisions/DEC-004_HISTORICAL_MAT_FIELDS.md) 已记录；实际 Runner/Analyzer、L2/L3 负例及 TC/CTest 尚未实现，历史成因未知不阻塞开发 |
-| DEC-001/002 当前 MAT 格式和类型 | 归档事实已有 582/582 证据；支持范围尚待审阅 | 当前数据限定 v5/double 与拒绝未知类型的具体 Reader/负例 |
+| DEC-001/002 当前 MAT 格式和类型 | 独立探针的 582/582 读取事实已记录；**首版 MAT v5/zlib、二维密集实数非 logical double 数组的读取范围已由所有者选定**，不是仍待决定的选型 | 正式 Reader/Writer 实现与兼容性/拒绝未知类型负例、安全写回读、L2 逐值与独立 SHA-256，以及最终 SRS/HLD 基线签署仍待取得证据；不要将原探针结果视为这些项目通过 |
 | DEC-003/007 项目 MIT 与来源跟踪 | **项目 MIT 根 LICENSE 已由所有者授权建立，球谐 Eigen-only 禁 sdla；普通版权审核不再阻塞开发** | 等待用户上传 1996/1998 论文以开展数学实现；实际上游文件保留现有来源 notice 即可；不把独立作品自动重新许可为 MIT |
 | DEC-005 数值验收 | **所有者确认 `atol=0.01, rtol=0.1` 为首轮宽松筛查，最终模块 PASS 阈值未冻结** | 根据 L2/L3/L4 固定输入、真实 C++ 误差、严格状态/物理不变量决定正式分模块阈值；无需 MATLAB/L1 |
 | DEC-006 平台与资源 | **用户已提供 H-04 主机环境事实；预算/性能仍未冻结** | Ubuntu 24.04.4 VirtualBox/x86_64 的资源快照已记；待将来实际 Debian/Ubuntu 业务构建和性能测量，不以容量快照作为性能验收标准 |
