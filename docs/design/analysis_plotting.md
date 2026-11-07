@@ -1,6 +1,6 @@
 # MAT 结果分析与可选绘图——详细设计草案
 
-> **LLD v0.3 草案，未冻结、未运行任何可视化程序。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
+> **LLD v0.4 草案，未冻结、未运行任何可视化程序。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
 
 ## 1. 只读分析合同
 
@@ -135,14 +135,17 @@ PlotExporter 仅消费 AnalysisDataset，输出图形位置必须在独立 RunId
 
 ## 7. 对应 Golden、边界数据与测试映射
 
+**参考标识全局唯一**：本模块六个候选分析/绘图参考使用 `APL-G01～APL-G06`。原有 `docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md` 与 `analytic_golden_candidates.v1.json` 的 `AN-G01～AN-G12` 是**不同的全局解析数学候选**（例如其 AN-G01 是八面体方向、非 Bias 曲线），**不得与此表共享同一 ID**。此次只重命名本模块的候选标识，不改变各组输入、公式、TC/AC 或任何历史 MAT 数据；正式 L3 与 CTest 仍未生成。
+
+
 | 计划 Golden | 输入来源与核验内容 | 对应 TC |
 |---|---|---|
-| AN-G01 | 40-run 两组 Bias 的 xwerte、ywerte3…6，四组平均和 100/sqrt(x) | TC-F-BIAS-003 |
-| AN-G02 | init 的 1..13 与 1..35 原样索引，两个不等长度序列 | TC-F-AN-001 |
-| AN-G03 | comparison x=50..550、阈值 0.01、旋转/平移曲线、右轴 ratio 和各分段 | TC-F-AN-001 |
-| AN-G04 | many_parameter 的四组曲线、阈值 0.02、窗口 f=2/5/10、分段裁剪 | TC-F-AN-001 |
-| AN-G05 | rottransratio 缺失、NaN/Inf、穿越区域不足、f 超过数据长度、MAT 形状错误 | TC-I-ANALYSIS-001、TC-NF-HEADLESS-001 |
-| AN-G06 | 单位球圆/正弦轨迹、l≤2 实球谐三种插图数据 | TC-F-AN-002 |
+| APL-G01 | 40-run 两组 Bias 的 xwerte、ywerte3…6，四组平均和 100/sqrt(x) | TC-F-BIAS-003 |
+| APL-G02 | init 的 1..13 与 1..35 原样索引，两个不等长度序列 | TC-F-AN-001 |
+| APL-G03 | comparison x=50..550、阈值 0.01、旋转/平移曲线、右轴 ratio 和各分段 | TC-F-AN-001 |
+| APL-G04 | many_parameter 的四组曲线、阈值 0.02、窗口 f=2/5/10、分段裁剪 | TC-F-AN-001 |
+| APL-G05 | rottransratio 缺失、NaN/Inf、穿越区域不足、f 超过数据长度、MAT 形状错误 | TC-I-ANALYSIS-001、TC-NF-HEADLESS-001 |
+| APL-G06 | 单位球圆/正弦轨迹、l≤2 实球谐三种插图数据 | TC-F-AN-002 |
 
 所有参考数据须来自原只读 .m 源公式/历史 MAT L2 及独立 L3 曲线实现，带原源码 SHA、输入 MAT SHA、参考生成过程与明确 Golden 版本；**不要求运行原 MATLAB 分析脚本**。图像像素一致性不要求，但**数据值、MATLAB 索引、绘图分段、单位和有效数量必须可审查**。
 
