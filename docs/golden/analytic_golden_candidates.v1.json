@@ -92,7 +92,9 @@
         "last_three_columns_all_zero": true
       },
       "method": "source_formula_derived",
-      "check": "exact_order_shape_and_unit_norm"
+      "check": "exact_order_shape_and_unit_norm",
+      "evidence_level": "L3",
+      "execution_status": "not_executed_as_matlab_or_production_cpp"
     },
     {
       "id": "AN-G02",
@@ -144,7 +146,9 @@
         "last_three_columns_all_zero": true
       },
       "method": "source_formula_derived",
-      "check": "exact_order_shape_and_unit_norm"
+      "check": "exact_order_shape_and_unit_norm",
+      "evidence_level": "L3",
+      "execution_status": "not_executed_as_matlab_or_production_cpp"
     },
     {
       "id": "AN-G03",
@@ -266,7 +270,9 @@
         "last_three_columns_all_zero": true
       },
       "method": "source_formula_derived",
-      "check": "exact_order_shape_and_unit_norm"
+      "check": "exact_order_shape_and_unit_norm",
+      "evidence_level": "L3",
+      "execution_status": "not_executed_as_matlab_or_production_cpp"
     },
     {
       "id": "AN-G04",
@@ -289,7 +295,9 @@
         "uniform_calls": 2
       },
       "method": "source_formula_derived",
-      "check": "geometry_plus_exact_rng_call_count"
+      "check": "geometry_plus_exact_rng_call_count",
+      "evidence_level": "L3",
+      "execution_status": "not_executed_as_matlab_or_production_cpp"
     },
     {
       "id": "AN-G05",
@@ -332,7 +340,9 @@
         "rotation_translation_ratio": 0.5
       },
       "method": "source_formula_derived",
-      "check": "general_floating_plus_tangent"
+      "check": "general_floating_plus_tangent",
+      "evidence_level": "L3",
+      "execution_status": "not_executed_as_matlab_or_production_cpp"
     },
     {
       "id": "AN-G06",
@@ -400,7 +410,9 @@
         ]
       },
       "method": "source_formula_derived",
-      "check": "general_floating_plus_phase_sign"
+      "check": "general_floating_plus_phase_sign",
+      "evidence_level": "L3",
+      "execution_status": "not_executed_as_matlab_or_production_cpp"
     },
     {
       "id": "AN-G07",
@@ -443,7 +455,9 @@
         ]
       },
       "method": "source_formula_derived",
-      "check": "identity_near_one"
+      "check": "identity_near_one",
+      "evidence_level": "L3",
+      "execution_status": "not_executed_as_matlab_or_production_cpp"
     },
     {
       "id": "AN-G08",
@@ -585,7 +599,9 @@
         ]
       },
       "method": "source_formula_derived",
-      "check": "general_floating_plus_SO3_SH_invariants"
+      "check": "general_floating_plus_SO3_SH_invariants",
+      "evidence_level": "L3",
+      "execution_status": "not_executed_as_matlab_or_production_cpp"
     },
     {
       "id": "AN-G09",
@@ -611,7 +627,9 @@
         "scale_aligned_vector_difference": 1.4142135623730951
       },
       "method": "source_formula_derived",
-      "check": "general_floating"
+      "check": "general_floating",
+      "evidence_level": "L3",
+      "execution_status": "not_executed_as_matlab_or_production_cpp"
     },
     {
       "id": "AN-G10",
@@ -639,7 +657,9 @@
         ]
       },
       "method": "source_formula_derived",
-      "check": "exact_boundary_behavior_and_general_floating"
+      "check": "exact_boundary_behavior_and_general_floating",
+      "evidence_level": "L3",
+      "execution_status": "not_executed_as_matlab_or_production_cpp"
     },
     {
       "id": "AN-G11",
@@ -677,7 +697,9 @@
         ]
       },
       "method": "source_formula_derived",
-      "check": "exact_count_shape_and_origin_behavior"
+      "check": "exact_count_shape_and_origin_behavior",
+      "evidence_level": "L3",
+      "execution_status": "not_executed_as_matlab_or_production_cpp"
     },
     {
       "id": "AN-G12",
@@ -842,7 +864,9 @@
         ]
       },
       "method": "source_formula_derived",
-      "check": "general_floating_plus_zero_ideal_case"
+      "check": "general_floating_plus_zero_ideal_case",
+      "evidence_level": "L3",
+      "execution_status": "not_executed_as_matlab_or_production_cpp"
     }
   ],
   "source_blob_shas": {
@@ -865,5 +889,9 @@
     "help_functions/oneit_adaptiv_matched_filter.m": "48e51bcd52fb8f27cf35b3fce38b28507af36e55",
     "bias_test/data_generation/bias_test_nonspherical.m": "00a3e974fbf068ccd1af4e541a659862beffcad5",
     "bias_test/data_generation/bias_test_spherical_prop_error.m": "fc3c4f0a7a417171415fb5e3d869a744ba24d04"
-  }
+  },
+  "evidence_level": "L3",
+  "l1_matlab_runtime_reference_status": "not_collected",
+  "l2_historical_archived_results": "separate_data_source_not_an_iteration_trace",
+  "l4_statistical_validation_status": "not_executed"
 }
