@@ -180,8 +180,10 @@ public:
 
 **验证边界**：这些历史文件被 matio 读取成功，但没有证明 C++ 新生成的对应数值、RNG 顺序或误差曲线与 MATLAB 一致。仍需 TC-F-EXP-001/002/003、TC-I-RESULT-001 的具体结果回读、比较和差异归因。
 
-## 附录 A：原实验过程与历史 MAT 的 Golden 等级
+## 附录 A：本模块无需运行 MATLAB 的验收参考
 
-见 [L1–L4 证据等级/AC 缺口](../golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md)。现存 **L2** 的 560 个 Bias MAT 为 40×2 组历史最终 `xwerte/ywerte`；22 个 Adaptive MAT 为初始化/比较/更新率的汇总结果。**L2 不包含** Bias 真实 seed 下的逐样本 uniform/normal/近度/KvD 迭代，不包含 comparison 八次运行各自的系数轨迹、误差和 RNG，也不包含 update rates 的每帧 `mitkoeff/akkoeff` 状态。**当前脚本 `save`/循环的静态事实**只能说明它应做八次平均、`rottransratio` 保留最后一次运行，不能从最终 MAT 倒推出实际执行的聚合过程。
+按 [长期无需 MATLAB 执行政策](../golden/NO_MATLAB_EXECUTION_POLICY.md) 与 [L2/L3/L4 来源矩阵](../golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md)：原 MATLAB .m 文件仅作为**只读公式、数据布局和顺序规范**；**不要求执行 MATLAB/Octave、采集 L1 或以缺少 L1 阻塞冻结/编码/验收**。
 
-`AC-F-EXP-001/002/003` 仍未验收。将来可用 L2 对比最终字段、shape、误差统计；可用独立 L3 对固定输入的运行器规则/刷新时刻作有限测试；但要证明“原 MATLAB 实际八次平均过程、逐帧刷新与 RNG 一致”，还缺 **L1**。历史额外的 `alleadap*`/部分 `rottransratio` 不得伪造出处。
+现行实验验收从历史 L2 MAT 对照结果字段、shape 和统计；另以 L3 固定输入独立模拟 8 次聚合、rottransratio 末次值、周期 1/5/11/21 的触发及 Session 主/基线状态。原 MATLAB 运行时的每次 RNG/每帧系数并未保存，也**不需要**运行原脚本采集；仍需真实 Runner、Writer、安全/CTest 和 L4 统计。
+
+本附录不取消真实 C++/CTest、Golden 独立复核、DEC-005/008 以及源数据保护门禁；当前无新的软件测试通过证据。
