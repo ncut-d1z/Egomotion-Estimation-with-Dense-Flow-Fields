@@ -64,7 +64,7 @@ MAT 数据的 **582 文件全量 matio 字典已实际生成并提交**，包含
 | 文档 | 已文档化的可执行设计检查点 | 尚缺的冻结证据 |
 |---|---|---|
 | contracts.md | FlowField N×6、3×5 近度系数、统一 Failure/Result/Status、ErrorDetail 允许阶段、MatDenseArray 的 io 归属与 DataMismatch 边界 | 实际类型/ABI、错误码和诊断协议批准、线程/异常合同测试 |
-| mat_io.md | MAT v5+zlib/double 类型与形状已实测；**v0.5 候选**已细化 MatDenseArray 的二维 double 自拥有值、严格/有界 compat 多变量规则、RunContext/Writer、egomotion_matio target 和负例/TC 测试文件映射；与 contracts 窄接口分离 | **仍缺**正式接口冻结、L2 逐值/SHA-256、L3 独立负例、Reader/Writer、写入/回读、安全 CTest 与 P10.4 复核 |
+| mat_io.md | MAT v5+zlib/double 类型与形状已实测；**v0.6 候选**已细化 MatDenseArray 的二维 double 自拥有值、严格/有界 compat 多变量规则、RunContext/Writer、egomotion_matio target 和负例/TC 测试文件映射；与 contracts 窄接口分离 | **仍缺**正式接口冻结、L2 逐值/SHA-256、L3 独立负例、Reader/Writer、写入/回读、安全 CTest 与 P10.4 复核 |
 | cli.md | 命令、参数/类型、固定实验语义、失败类别及字段候选已表格化 | RunId 自动命名、JSONL/键值格式、部分参数合法边界待批准；真实 CLI/CTest 不存在 |
 | kvd.md | 原始/修正平移与旋转公式、最低/最大迭代、逐轮 trace 字段 | 独立 L3 逐轮 Golden、病态/停止边界、正式容差与 CTest |
 | harmonics.md | 九实基公式、3×5、R3/R5 全元素、HarmonicRotationBlocks 归属、私有递推 target 与测试映射 | 许可范围与 sdla 依赖、完整实现、独立 L3 逐元素参考、容差/CTest |
