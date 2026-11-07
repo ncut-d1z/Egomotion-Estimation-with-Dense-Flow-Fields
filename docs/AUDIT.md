@@ -108,17 +108,17 @@
 | `docs/design/README.md` | 已审计 | LLD 单一来源、模块清单与低优先级修订复读完成，不意味着所有 LLD 已完成算法审计 |
 | `docs/DOCUMENT_BASELINE_REGISTER.md` | 已审计 | 固定快照 28 项 blob SHA 已核；后续审计完成后需再登记新快照 |
 | `docs/PROGRESS.md` | 已审计 | 证据记录与历史 SHA 语义已核，当前审计不生成 TC PASS |
-| `docs/ARCHITECTURE.md` | 正在审计 | 新增 AF-017（QA-01 假设用户能设置输出根）、AF-019（ADR-002 Sophus“拟采用”表述）；均已登记 AUDIT_PROCESS，尚未整改 |
-| `docs/OBJECT_MODEL.md` | 正在审计 | 新增 AF-016：§4 仍把已确定的 Adaptive 失败不提交原则当成待决；已登记未整改 |
+| `docs/ARCHITECTURE.md` | 已审计 | AF-017/019：QA-01 改为固定 output/ 与非法/重复 RunId、软链/TOCTOU 拒写；ADR-002 明确 Sophus 已选路线；HLD v0.7 文档合同复读完成，真实构建未测 |
+| `docs/OBJECT_MODEL.md` | 已审计 | AF-016：状态机明确 Adaptive 失败不提交主系数，不能安全恢复则终止轨迹；对象模型 v0.5 文档合同已审，实际 Session/CTest 未验收 |
 | `docs/design/contracts.md` | 已审计 | AF-004 已把实验失败策略标为已选择、实现及异常测试未验证；跨模块合同 v0.2 未冻结 |
 | `docs/design/cli.md` | 已审计 | 逐命令类型、固定 output/<RunId>/、OS RunId 与错误单一来源已做静态核对，未实现/测试 |
-| `docs/design/mat_io.md` | 正在审计 | 新增 AF-018：外层分析的 0.01/0.1 仍称未批准候选；已登记未整改，MAT 原值严格检查不受影响 |
-| `docs/design/kvd.md` | 正在审计 | 本轮只读核对两版 KvD/Franz 原 .m 的主要权重/赋值次序；新增 AF-013/014（旧 1e−10 候选与 H-13 历史审批口径），未整改；完整逐节点 L3 尚缺 |
+| `docs/design/mat_io.md` | 已审计 | AF-018：0.01/0.1 已选仅首轮筛查，MAT 原值/类型/shape 仍严格；MAT I/O v0.8 文档合同已审，生产 Reader/Writer 未实现/测试 |
+| `docs/design/kvd.md` | 正在审计 | AF-013/014：已更新首轮筛查和 H-13 历史/后续失败策略，定向文档复核通过；原 KvD 两版逐轮独立 L3、病态/停止条件仍待深审 |
 | `docs/design/adaptive_mfa.md` | 正在审计 | 本次未改变 M1–M4、MSE、无效状态不提交；仍缺原源码逐式及独立 L3 核验 |
 | `docs/design/harmonics.md` | 正在审计 | AF-002/003/012 已完成文字修订与静态复核；仍待 1996 原文/1998 勘误 PDF、R3/R5 全元素独立 L3 数学审计 |
 | `docs/design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 已审计 | 仅声明级文件/命名空间/类方法及论文 DOI/勘误优先已审；PDF 未上传、无 Eigen 递推实现 |
-| `docs/design/sampling_noise.md` | 正在审计 | 已只读核对源八面体初始面/缺损面、findeDreiecke A/B/C/D 与相关随机轨迹；新增 AF-015（实验失败策略仍称待决），未整改；完整 i=1/2 有序 L3 尚缺 |
-| `docs/design/trajectory.md` | 正在审计 | 已只读核对圆/正弦点列 stellen 分母、局部 Rᵀ、球内 near 公式；新增 AF-020（eps 归零规则与待决措辞混用），未整改；退化 L3 尚缺 |
+| `docs/design/sampling_noise.md` | 正在审计 | AF-015：已统一采样错误传播与 Runner/Session 已选策略，文档修订复核通过；i=1/2 有序方向及固定 RNG 的独立 L3/真实 CTest 仍待审 |
+| `docs/design/trajectory.md` | 正在审计 | AF-020：已明确 Rodrigues eps 返回单位阵与旋转向量叉积 1e−11 的不同门槛，文本复核通过；小角/反向/球外独立 L3 仍待审 |
 | `docs/design/experiments.md` | 已审计 | AF-001 已统一固定仓库 output/、可选 RunId 与 Writer 二次验证；Runner v0.3 仍无真实实现 |
 | `docs/design/analysis_plotting.md` | 正在审计 | DEC-004 已选且文本一致；历史 begin/end/zone/平滑的独立数值逐式核验仍待进行 |
 | `docs/decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | 已审计 | 现行 save/历史 HistoricalOnly/缺字段错误已与 Runner/分析设计对应，仍未实施 |
@@ -187,3 +187,13 @@
 - **后续执行原则**：如下一轮要实际修复新问题，按 [AUDIT_PROCESS.md](AUDIT_PROCESS.md) 每条目标修改对应现行文档，再以新 Git SHA 核对并转为「已整改」；**不能因为本轮新增了审计记录就将 8 项自动标为完成**。没有进行 C++、Bash、CMake、CTest、MATLAB、MAT 写入或任何基线冻结。
 
 **本轮不新增需立即由人类决定的技术选择**。论文、真实测试授权、DEC-005/006 最终验收和发布仍按 [TODO.md](TODO.md) 适时处理。
+
+
+## 十、AF-013～AF-020 后续纯文档整改与复读（2026-11-07）
+
+**这是一轮在 §九所记原始“8 项未整改”扫描之后执行的整改**。原扫描快照 `3beb8c06a9d40380431f99e31ed0f70b346863a2` 的历史发现事实保持有效；[后续整改报告](reviews/AUDIT_AF013_AF020_RESOLUTION_2026-11-07.md) 独立记录了六份现行设计文档及 LLD 索引的文字修订、固定核对提交 `a782b5c8d86e50fe4d2ae4e2b198b3cd6345de52` 与证据限制。
+
+- **现行整改状态只从 [AUDIT_PROCESS.md](AUDIT_PROCESS.md) 判定**：AF-013～020 八条问题的各自**文档语义**已修改、8/8 定向静态检查通过，现均为**「已整改」**；历史 AF-001～012 的 13 个原子目标继续为「已整改」。合计 **21/21 项具体目标在文档一致性范围内已整改**。这不是没有其它潜在问题，也不意味着算法等价、真实 C++/CTest/数值验收通过。
+- **本台账文件审计三态**：共 41 个文件，当前 **已审计 34、正在审计 7、空白 0**。HLD、OBJECT_MODEL、MAT I/O 的此次**文档合同检查**已完成，状态改为“已审计”；KvD、采样噪声和轨迹虽然消除了本次文本冲突，仍因原公式/固定输入/边界值独立 L3 未完成而保留“正在审计”；Adaptive、球谐、分析及容差附件等继续按原剩余数学审核范围推进。
+- **当前剩余性质**：不再是 AF-013～020 八项已登记的旧措辞冲突，而是逐式数学核对、L2/L3/L4 参考、真实代码/安全/数值测试及人类签署门槛。继续依照 §零规则，一旦发现**新的**文档问题须在 AUDIT_PROCESS 另编号登记初始「未整改」，不能篡改旧修订证据。
+- **没有实施**生产 C++、Bash、CMake、CTest、MATLAB/Octave、MAT 写入、真实数值仿真，也没有批准最终 DEC-005/006 或冻结基线；实际权限按 [TODO.md](TODO.md)。
