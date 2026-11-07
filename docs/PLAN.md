@@ -118,7 +118,7 @@
 7. **来源与实现数学依据**：原作者材料及第三方代码保留原出处与现有文件头，项目新代码采用根 MIT。球谐 Eigen 独立重写必须在用户上传 1996 原论文和 1998 勘误后逐式核对；普通版权复核不作为开发/构建的前置门禁，复制已许可的上游文件时保留其既有版权/许可告知即可。
 8. **偏差实验“variance”术语**：脚本注释把 [0.6,2.4,9.6] 称为 variances，但代码把数值直接作为 randn 乘数，并未取方差平方根。忠实模式须执行代码表达式，同时在报告中区分“脚本系数”与统计学方差。
 9. **误差不是一种**：transfehler_div 先把估计向量模长缩放到真值模长，再计算向量差；normrelfehler 计算方向夹角（度）。绝不能以统一的角度误差替换 bias test 的六组输出。
-10. **已有生成结果和脚本可能不完全同步**：with_errors/ 中包含当前生成脚本不保存的 alleadap* 文件；many_parameter/ 含 rottransratio.mat 与 alleadap*，但当前生成脚本未写出这些文件；many_parameter 的绘图脚本又会读取 rottransratio。需要记录这些为“历史工件与当前生成脚本契约不一致，原因尚未确认”，不得悄悄补造值或删去历史文件。
+10. **已有生成结果和脚本可能不完全同步**：with_errors/ 中包含当前生成脚本不保存的 alleadap* 文件；many_parameter/ 含 rottransratio.mat 与 alleadap*，但当前生成脚本未写出这些文件；many_parameter 的绘图脚本又会读取 rottransratio。根据 [DEC-004 最新决定](decisions/DEC-004_HISTORICAL_MAT_FIELDS.md)，**新 Runner 只生成当前有效 save 字段**；历史 MAT 完整只读，额外字段列为 `HistoricalOnly`；原因不明不阻塞开发，缺失分析必需变量时明确失败，不补造或删去历史。
 11. **原代码潜在数值边界**：oneit 使用 real(inv(mgesamt))，并存在零范数、近度均值接近零、逆矩阵病态、acos 输入越界等风险；原 bias 生成函数的 near 输出在循环内作为标量覆写。必须首先忠实记录原行为及可能失败状态，再在单独、显式授权的增强模式中考虑更稳健的数值实现。
 12. **MAT 加载兼容性**：getflowfield(filename) 调用 load 后取第一个变量；当前分析脚本经常不写 .mat 扩展名。MAT 访问模块必须支持按明确变量名严格读取，并提供与旧脚本兼容的“无后缀路径、唯一/首个变量”读取策略；两者不可混淆。
 
@@ -288,7 +288,7 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 | P8.4 | P8.2 独立 MAT 输出四种误差及 rottransratio，分别对照 with_errors 和 without_errors | P8.2、P1.7 | REQ-F-EXP-002、REQ-I-RESULT-001 | TC-F-EXP-002、TC-I-RESULT-001 / AC-F-EXP-002、AC-I-RESULT-001 | 逐帧会话及输出契约；未实施/未验收 |
 | P8.5 | agent_in_sphere_adaptive_matched_filter_many_parameter：级别 2、更新间隔 **1/5/11/21**、真实更新 akkoeff 与多组冻结/周期刷新 mitkoeff | P8.8、P7.11、P6.5 | REQ-F-ADAPT-003、REQ-F-EXP-003、REQ-F-CLI-003 | TC-F-ADAPT-003、TC-F-EXP-003、TC-F-CLI-003 / AC-F-ADAPT-003、AC-F-EXP-003、AC-F-CLI-003 | 逐帧会话及输出契约；未实施/未验收 |
 | P8.6 | 比较“每步自身求解”和“独立 periodic baseline”的区别，并保存相应 MAT；不得将二者混成一组状态 | P8.5 | REQ-F-ADAPT-003、REQ-F-EXP-003 | TC-F-ADAPT-003、TC-F-EXP-003 / AC-F-ADAPT-003、AC-F-EXP-003 | 逐帧会话及输出契约；未实施/未验收 |
-| P8.7 | 对照历史结果时显式列出脚本没有当前写入、但归档已有的 alleadap*、rottransratio 等文件；先检查来源再决定是否需要额外兼容导出，不能伪造数据 | P8.4、P8.6、P1.8 | REQ-F-EXP-003、REQ-D-MAT-003、REQ-I-RESULT-001 | TC-F-EXP-003、TC-D-MAT-003、TC-I-RESULT-001 / AC-F-EXP-003、AC-D-MAT-003、AC-I-RESULT-001 | 逐帧会话及输出契约；未实施/未验收 |
+| P8.7 | 按已确定 DEC-004，在历史字段映射中将当前不保存但归档已有的 alleadap*、rottransratio 标 `HistoricalOnly`；**当前 C++ Runner 不新增兼容输出**，历史文件只读；新结果进行需要缺失比值的分析时明确报告错误，不等待归因 | P8.4、P8.6、P1.8 | REQ-F-EXP-003、REQ-D-MAT-003、REQ-I-RESULT-001 | TC-F-EXP-003、TC-D-MAT-003、TC-I-RESULT-001 / AC-F-EXP-003、AC-D-MAT-003、AC-I-RESULT-001 | 逐帧会话及输出契约；未实施/未验收 |
 | P8.8 | 引入 AdaptiveMfaSession（唯一主系数所有者）与 ICoefficientUpdatePolicy（重置、继承、周期刷新），以测试替身检验旋转→基线更新→求解→主状态提交的逐帧时序 | P7.11、P7.6 | REQ-F-ADAPT-002、REQ-DC-ADAPT-001 | TC-F-ADAPT-002、TC-DC-ADAPT-001 / AC-F-ADAPT-002、AC-DC-ADAPT-001 | 逐帧会话及输出契约；未实施/未验收 |
 | P8.9 | 为 InitializationRunner、AdaptiveComparisonRunner、UpdateRateRunner 分别提供 RunContext 及独立会话；测试多组更新频率和多次重复运行间不共享可变状态 | P8.1、P8.2、P8.5 | REQ-F-ADAPT-002、REQ-DC-ADAPT-001、REQ-NF-LOG-001、REQ-NF-SESSION-001 | TC-F-ADAPT-002、TC-DC-ADAPT-001、TC-NF-LOG-001、TC-NF-SESSION-001 / AC-F-ADAPT-002、AC-DC-ADAPT-001、AC-NF-LOG-001、AC-NF-SESSION-001 | 逐帧会话及输出契约；未实施/未验收 |
 
@@ -417,7 +417,7 @@ flowchart LR
 |---|---|---|---|
 | R-01 | DEC-001/002，REQ-D-MAT-001 | 现存归档已 582/582 读取成功，但新增 MAT 或正式 Reader 可能出现未支持类型/形状 | 当前数据边界已经确认；P1.5/1.9 做拒绝负例与 Reader 合同，P10.4 独立复核；未全部验收 |
 | R-02 | DEC-003/007，REQ-D-SOURCE-002 | 球谐 Eigen 重写的数学/勘误/相位未验证，原引用代码包含 sdla 类型 | 等待用户上传 1996 原文+1998 勘误，逐式对齐、以 Eigen 实现并对 L3 全元素验证；上游实际复用文件保留必要来源告知，**普通版权复核不阻塞研发** |
-| R-03 | DEC-004，REQ-D-MAT-003 | 历史 MAT 与当前 save 列表不一致 | P8.7 三方字段差异表，不补造数据；数值负责人；待归因 |
+| R-03 | DEC-004，REQ-D-MAT-003 | 历史 MAT 与当前 save 列表不一致 | **处理规则已由所有者选定**：当前只写当前 save，历史字段 HistoricalOnly、只读保留；分析缺字段返回错误，来源未知不阻塞研发；仍待 Runner/Analyzer 与 CTest 实施 |
 | R-04 | DEC-005，REQ-NF-NUM-001 | MATLAB/Eigen 计算顺序与奇异边界导致误差 | P4.8/P7.9 固定输入逐轮对照，容差按条件数批准；未冻结 |
 | R-05 | DEC-006，REQ-NF-RUNTIME-001 | 原配置资源消耗大、内存或构建版本不兼容 | P10.6 首测 wall/CPU/RSS、Debian/Ubuntu 版本；未测 |
 | R-06 | REQ-DC-*、REQ-NF-OOP-001 | 状态、I/O 与计算模块耦合 | P0.7/P0.8 对象/target DAG 审查，独立测试；未冻结 |
