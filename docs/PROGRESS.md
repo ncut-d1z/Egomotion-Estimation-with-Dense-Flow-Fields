@@ -22,6 +22,7 @@
 | E-DOC-002 | [design/cli.md](design/cli.md) | 命令/参数类型/错误码/诊断输出的候选 LLD 已存在 | CLI 已实现、已获批准、错误/参数 schema 已冻结 |
 | E-DOC-003 | [OBJECT_MODEL.md](OBJECT_MODEL.md) + [design/sampling_noise.md](design/sampling_noise.md) | Bias 场景编排、`FlowSynthesizer`、`sampling::randomUnitDirection` 的职责和命名已协调 | 对应头文件/测试已创建、随机数调用序列已数值验证 |
 | E-DOC-004 | [审查后跨文档一致性复核](reviews/DOC_CONSISTENCY_RECONCILIATION_2026-11-06.md) | 8 份方案文档的 CLI/output、RunOutcome、SH R5、MAT 形状来源、HLD 环境/预算与章节引用得到文本统一；固定提交下的 66 REQ/66 TC/98 P、源目录和 DAG 静态断言未发现不一致 | H-03/DEC-005/008 已批准、H-10/H-11 已解除暂缓、Bash/CTest/Golden 已执行、SRS/HLD/LLD 可冻结 |
+| E-DOC-005 | [Golden 及容差候选](golden/GOLDEN_TOLERANCE_PROPOSAL.md) + [解析数值 JSON](golden/analytic_golden_candidates.v1.json) | 已静态提出 12 组带固定输入与具体参考数字的解析候选；建议第一轮宽松连续值比较 `atol=0.01, rtol=0.1`，并强制结构/物理不变量；记录了真实 MATLAB Golden 缺口 | MATLAB 已执行或输出已验证、DEC-005 阈值已批准、C++ 通过测试、M0～M5/P/TC/AC 可标记通过 |
 | E-DEC-001 | [JSON 审批落实记录](approval/DECISION_IMPLEMENTATION_NOTES.md) | **H-02/H-14 已指定 Sophus 与 Don Williamson Ivanic 方案 A**；H-04 已提供 Ubuntu 24.04.4 VM 快照；H-12 已确定 `output/` 并更新 `.gitignore` | 任意第三方 C++ 文件已复制、Sophus 已安装/构建、MAT 写入/CTest 已执行、Golden/容差已批准、程序可发布 |
 
 ## 3. 实施任务与里程碑状态
