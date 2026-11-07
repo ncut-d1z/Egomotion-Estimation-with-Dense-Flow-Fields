@@ -1,6 +1,6 @@
 # Egomotion Estimation with Dense Flow Fields：软件需求规格说明书（SRS）
 
-> **状态：草案 v0.10，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
+> **状态：草案 v0.11，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
 
 ## 1. 目的、范围与约束
 
@@ -509,7 +509,8 @@
 | v0.7 | §6.1 CLI 外部参数类型与 `cli.md` 和 TEST_PLAN 一致，明确设计细节仍归 HLD/LLD；保留原 66 REQ/AC/TC | 评审草案，未批准/未冻结 |
 | v0.8 | REQ-F-CLI-002 移除“结果目录参数”残留；固定 `output/<RunId>/`、可选 `--run-id`，并澄清 H-14 的现行数学依据为 Ivanic–Ruedenberg 原文/勘误、Eigen-only、Don Williamson 仅参考 | 历史评审草案 |
 | v0.9 | UC-05 历史数据异常语义与已决定的 DEC-004 一致：`HistoricalOnly` 只读保留、无需归因、缺少分析必需字段明确失败；不改变既有 REQ/AC/TC | 评审草案，未冻结或运行测试 |
-| v0.10 | **仅低优先级文档层级调整**：REQ-D-SOURCE-002 与 REQ-NF-COPYRIGHT-001 保留可验证的来源/许可义务，具体 Eigen/Sophus/Don Williamson 方案下沉并引用 HLD/ADR/项目所有者决定；保留两条 REQ、AC、TC、P 追踪身份 | 评审草案；未修改任何实际授权、测试、批准或冻结状态 |
+| v0.10 | **仅低优先级文档层级调整**：REQ-D-SOURCE-002 与 REQ-NF-COPYRIGHT-001 保留可验证的来源/许可义务，具体 Eigen/Sophus/Don Williamson 方案下沉并引用 HLD/ADR/项目所有者决定；保留两条 REQ、AC、TC、P 追踪身份 | 历史评审草案 |
+| v0.11 | 依据 AF-010 明确 MAT 写出唯一固定目录 `output/<RunId>/`，不是任意与 `origin/**` 不重叠的目录；保留现有 REQ/AC/TC 以及已决定的 CLI 路线 | 评审草案，未冻结/未执行 CTest |
 
 
 ## 附录 A：内部设计约束清单（REQ-DC）
