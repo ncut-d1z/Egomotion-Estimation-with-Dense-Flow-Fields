@@ -2,7 +2,7 @@
 
 > **长期证据规则**：[不执行 MATLAB 的项目政策](../golden/NO_MATLAB_EXECUTION_POLICY.md) 已取消原 MATLAB L1 Golden 的强制门禁。LLD 与验收只要求来源清楚的 L2/L3/L4、真实 C++/CTest 和批准容差；**缺少 MATLAB 运行不阻塞冻结**，但不能宣称原脚本的未知异常/RNG/逐位输出已验证。
 
-> **LLD 索引 v0.1（所有模块草案、未冻结；未建立生产 C++/CTest 证据）。** 索引中的文件已实际创建，但其中的候选 C++17 接口、数学步骤、测试路径和错误枚举没有对应已实现代码。源 MATLAB 文件和已保存 MAT 仍由 origin/** 只读保存。
+> **LLD 索引 v0.2（所有模块草案、未冻结；未建立生产 C++/CTest 证据）。** 索引中的文件已实际创建，但其中的候选 C++17 接口、数学步骤、测试路径和错误枚举没有对应已实现代码。源 MATLAB 文件和已保存 MAT 仍由 origin/** 只读保存。
 
 ## 文档职责
 
@@ -26,7 +26,7 @@
 | 基础采样与噪声 | [sampling_noise.md](sampling_noise.md) | findeDreiecke、采样/流/噪声函数 | 数量、顺序、噪声方程、RNG 消耗与自拥有 FlowField/结果 | **egomotion_sampling/simulation 的接口、头文件边界与 TC/CTest 候选** | L3 独立有序方向/固定 RNG 仍待验证 | 未冻结，P0.8/DEC-008 |
 | 几何与轨迹 | [trajectory.md](trajectory.md) | Kreis/Sinus/trajectory、球内近度与旋转 | 已列离散轨迹/求交公式 | 候选接口 | 未测 | 第三方 Rodrigues 来源待审 |
 | Franz / KvD | [kvd.md](kvd.md) | zellendefinieren、franzeigen、两种 KvD、误差 | 已列各平移公式、RMS、终止规则 | 候选接口 | 未测 | 阻塞 DEC-005 |
-| 实球谐 | [harmonics.md](harmonics.md) + [Ivanic–Ruedenberg 原文/勘误与纯 Eigen 方案](SH_ROTATION_IVANIC_RUEDENBERG.md) | kugelflfunc2、near/koeff、SHRotate | 九项索引/公式，原文 1996＋勘误 1998 为必读，Eigen-only 且禁止 sdla | **egomotion_harmonics 显式依赖 egomotion_contracts**，候选公共头/test_harmonics.cpp | 待用户上传论文、完成 L3 全元素与 CTest | 数学方向已定；实现/DEC-005 未冻结 |
+| 实球谐 | [harmonics.md](harmonics.md) + [Ivanic–Ruedenberg 原文/勘误与纯 Eigen 方案](SH_ROTATION_IVANIC_RUEDENBERG.md) | kugelflfunc2、near/koeff、SHRotate | 九项索引/公式，原文 1996＋勘误 1998 为必读，Eigen-only 且禁止 sdla | **egomotion_harmonics 显式依赖 egomotion_contracts**；[专题 LLD §3](SH_ROTATION_IVANIC_RUEDENBERG.md) 已给出预定公共/私有文件、命名空间、类/成员/静态方法**声明**，无任何实现/测试 | 待用户上传论文、完成 L3 全元素与 CTest | 数学方向已定；实现/DEC-005 未冻结 |
 | Adaptive 单步/Session | [adaptive_mfa.md](adaptive_mfa.md) | oneit、3 个 Adaptive 入口 | 已列 M1–M4、RHS、MSE 及会话差异 | 候选接口 | 未测 | 阻塞 DEC-005 |
 | 实验 Runner | [experiments.md](experiments.md) | 2 Bias + 3 Adaptive 生成入口 | 参数/save、8 次聚合、刷新策略及 L2/L3/L4 证据等级 | **RunContext 候选接口、DataMismatch 边界、egomotion_experiments/TC/CTest** | 新 Runner/完整 L3/CTest 均未实现 | 未冻结，P0.8/DEC-008 |
 | 分析与可选绘图 | [analysis_plotting.md](analysis_plotting.md) | 4 分析入口、kurveglaetten、3 插图 | 已列数据/索引/阈值/窗口 | 候选接口 | 未测 | Golden 及绘图后端未定 |
