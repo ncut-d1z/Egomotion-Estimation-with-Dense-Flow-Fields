@@ -23,12 +23,12 @@ Input: experiment-kind + validated script parameters + RunId
   -> synthesize flow or per-frame scene
   -> call Franz/KvD or Adaptive StepSolver via independent Session
   -> calculate source-specific metrics and statistics
-  -> write current-script-compatible MAT outputs to new results/RunId
+  -> (future only) write current-script-compatible MAT outputs to new output/<RunId>/
   -> record errors/invalid counts and manifest
 Output: RunReport(status, output variables, run provenance)
 ~~~
 
-- 每个 RunId 拥有 RNG，失败/重试不自动合并到旧输出；不得用当前脚本写入的结果覆盖任何原始 MAT。
+- 每个 RunId 拥有 RNG；**H-12 选定将来新输出目录为仓库根 `output/<RunId>/`**，由 `.gitignore` 忽略生成数据。失败/重试不自动覆盖旧输出，原始 MAT 永远只读；**H-10 暂缓代码实施，当前没有可运行的 MAT Writer 或生成结果。**
 - Bias 的 40 个历史子目录是 40 份结果来源，不能错误解释为一个源运行的 40 个内循环。
 - AdaptiveComparisonRunner 的前四种结果累计后除以 **8**；rottransratio 按原脚本在循环中的覆盖次序保留。UpdateRateRunner 的输出系数状态分别保存，不和当前主 akkoeff 共享可写对象。
 - RunContext 跨实验不可共享可变状态；Session 异常时继续还是终止需冻结来源行为与结果合同。
