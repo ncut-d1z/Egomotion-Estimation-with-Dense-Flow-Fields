@@ -1,6 +1,6 @@
 # Franz / Original KvD / Modified KvD 详细设计草案
 
-> **LLD v0.3（未冻结、未实现、未验证）**。下列伪代码和公式根据源 MATLAB 函数重新核对，仍需有 MATLAB 固定输入 Golden 与经 DEC-005 批准的容差后才能冻结。需求：REQ-F-FILTER-001、REQ-F-KVD-001/002、REQ-F-ERROR-001、REQ-DC-KVD-001、REQ-NF-NUM-001/002；任务：P4.1–P4.10。
+> **LLD v0.3（未冻结、未实现、未验证）**。下列伪代码和公式根据源 MATLAB 函数重新核对，仍需有**独立 L3 固定输入逐轮 Golden** 与经 DEC-005 批准的容差后才能冻结；**无需执行 MATLAB**。需求：REQ-F-FILTER-001、REQ-F-KVD-001/002、REQ-F-ERROR-001、REQ-DC-KVD-001、REQ-NF-NUM-001/002；任务：P4.1–P4.10。
 
 ## 1. 精确来源与函数合同
 
@@ -161,7 +161,7 @@ return (mean(near) * t, omega, near, k)
 
 ## 6. 未决与冻结门禁
 
-- 固定 MATLAB Golden 数据尚未产生并归档；各阶段仅有公式/行为的静态核对。
+- 独立 L3 逐轮数值参考尚未完整产生/复核；仅有公式/行为的静态审计和解析候选。**不再等待或要求 MATLAB 运行 L1**。
 - 对原始 MATLAB 数值失败和新增显式错误返回的差异需列入合同，不能以“修复”之名改变忠实输出。
 - C++17 结果类型、具体签名、迭代快照的保存策略、算法默认行为、数值容差和 CTest 名称均待 P0.8/P4 审批。
 - 需求/测试：REQ-F-KVD-001/002、TC-F-KVD-001/002、TC-F-ERROR-001、TC-DC-KVD-001、TC-NF-NUM-001；详细执行计划见 [TEST_PLAN.md](../TEST_PLAN.md)。
@@ -225,7 +225,7 @@ public:
 }
 ~~~
 
-**合同待定项**：NumericalErrorCode 单独 enum 是否足以携带上下文、Result 如何表达 NaN/Inf 的原版行为、trace 在性能模式是否可关闭，以及是否允许方法接收非单位视线。须依 P0.8 与实际 MATLAB Golden 冻结，不能仅凭该示例签名开始实现。
+**合同待定项**：NumericalErrorCode 单独 enum 是否足以携带上下文、Result 如何表达 NaN/Inf 的原版行为、trace 在性能模式是否可关闭，以及是否允许方法接收非单位视线。须依 P0.8 与经独立复核的 L3 Golden 冻结，不能仅凭该示例签名开始实现。
 
 ## 8. 每轮状态、停止判据与异常路径表
 
@@ -250,17 +250,17 @@ public:
 
 ## 9. 固定 Golden 的分层生成与测试数据格式
 
-建议 Golden 以**只读 MATLAB 参考导出**形式存为对照数据；不得把被测 C++ 结果拷贝成 Expected。每个测试案例至少保存：
+建议 Golden 以**独立 L3 参考推导/非被测程序输出**形式存为可审查数据；只读原 MATLAB 源码作公式依据，**不执行原 MATLAB**。不得把被测 C++ 结果拷贝成 Expected。每个测试案例至少保存：
 
-| 样本 ID（计划） | 条件 | MATLAB 采集内容 | 目标 |
+| 样本 ID（计划） | 条件 | 独立 L3 参考及异常合同 | 目标 |
 |---|---|---|---|
 | KVD-G01 | i=0 小采样、无噪声/固定 near、非退化 t/ω | Franz 中间响应、每轮 near、Original/Modified t/ω、残差、停止 | 符号和更新顺序 |
 | KVD-G02 | 符号翻转（sum near<0） | near_before/after、t_before/after 与最终 scale | 保留符号分支 |
 | KVD-G03 | 非零固定 Gaussian、近似噪声输入 | 两个估计器逐轮误差和次数 | 对照统计数据与容差 |
-| KVD-G04 | 人工零模或几何退化输入 | MATLAB 是报错、产生非有限值还是仍返回 | 明确 C++ 状态与忠实性差别 |
+| KVD-G04 | 人工零模或几何退化输入 | 静态标注原源可能传播非有限的分支；独立输入与 C++ 显式错误分类 | 明确可验证异常状态，不冒充原 MATLAB 运行行为 |
 | KVD-G05 | 能区分最低 6 次、提前停止和 200 次上限的输入 | k、每轮 delta/threshold/残差 | 验证完整 while 语义 |
 
-黄金记录字段应有源 Git blob SHA、原始函数名、MATLAB 版本、固定输入身份、输出每个字段的 shape/dtype/数值、允许误差和对应 TC-F-FILTER-001、TC-F-KVD-001/002、TC-F-ERROR-001。**上述 G01–G05 只是测试设计编号，当前没有数据文件或运行证据。**
+黄金记录字段应有源 Git blob SHA、原始函数名、独立参考生成器/推导来源、固定输入身份、输出每个字段的 shape/dtype/数值、允许误差和对应 TC-F-FILTER-001、TC-F-KVD-001/002、TC-F-ERROR-001。**上述 G01–G05 只是测试设计编号，当前没有数据文件或运行证据。**
 
 ## 10. 与架构及开发工作的绑定
 
@@ -270,10 +270,8 @@ public:
 
 **H-13 审批状态**：用户仅要求先核查原 MATLAB NaN/Inf、奇异、停止判定和迭代时变量覆盖顺序，并起草显式失败策略；**不批准**遇错继续、回滚或终止的新增行为。H-01/DEC-005 只允许起草容差，不批准阈值；H-10 暂缓代码和数值运行。
 
-**就绪状态**：数学步骤和逐轮字段已列出；仍缺原 MATLAB Golden、批准容差、实现/编译、具体测试函数/CTest。文档可用于技术审查，不可据此标记模块已通过。
+**就绪状态**：数学步骤和逐轮字段已列出；仍缺覆盖一般输入的独立 L3 逐轮 Golden、批准容差、实现/编译、具体测试函数/CTest。文档可用于技术审查，不可据此标记模块已通过。
 
-## 附录 A：KvD/Franz 的 Golden 等级与可证明范围（补充草案）
+## 附录 A：无需运行 MATLAB 的证据边界
 
-证据出处和 AC 缺口统一见 [L1–L4 矩阵](../golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md)。**L1 原 MATLAB 实测未采集**：Franz 各轴响应和归一分母、初始 t/ω；Original/Modified 每轮 near/sum/sign、a/b/c、旧/新 t、ω、RMS、delta、动态 grenze、实际迭代次数/退出原因与最终尺度。现有作者 **L2 Bias MAT 只保存最终 xwerte/ywerte 统计结果**，不能倒推中间量；L3 固定解析/独立实现只能证明其明确覆盖的公式，不能证明源 MATLAB 逐轮执行。
-
-`AC-F-FILTER-001`、`AC-F-KVD-001` 对原 MATLAB 逐节点/逐轮 Golden 有明确要求，因此在没有合法 MATLAB L1、C++/CTest 和 DEC-005 的情况下均**缺完整验收证据**；`AC-F-KVD-002` 的停止/病态实际行为同样未验证。**不要把迭代次数当成唯一缺项**，也不因 L2 最终误差接近或宽松 0.01/0.1 比较而修改验收状态。
+按 [当前 L2/L3/L4 证据矩阵](../golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md) 和 [长期无需 MATLAB 执行政策](../golden/NO_MATLAB_EXECUTION_POLICY.md)，**不要求原 MATLAB 逐节点/逐调用的 L1，也不因没有 L1 阻塞本模块的设计/编码/测试/验收**。原 `.m` 作为只读公式、分支、时序和数据合同依据；当前应准备模块适用的 **L3 独立固定输入逐节点参考**，L2 历史 MAT 用于最终结果范围，L4 用于统计。需要保留真实 C++/CTest、DEC-005 容差、错误与来源限制记录，不能把 L3 宣称为原 MATLAB 实际运行的完整等价证据。本文及该矩阵均未宣布模块验收通过。
