@@ -33,6 +33,7 @@ struct RunId { std::string text; };
 | 类型 | 不变量 | 资源/生命周期 |
 |---|---|---|
 | FlowField | N×6，左三列单位视线，右三列三维切向光流；N 必须大于 0（适用数值求解时） | 自拥有的 Eigen 内存；不借用 MAT 缓冲区 |
+| MatDenseArray（MAT I/O 自拥有值对象） | 详见 [mat_io.md §2–2.1](mat_io.md)：当前候选只支持二维、密集、非 complex/logical double；含列主序数据和 rank/dims；**本合同不重复定义该类** | 属于 `egomotion_matio` 的 io 值对象，供具体 Reader/Writer 适配层使用；**不得让 experiments/analysis 的 IResultReader/IResultWriter 接口反向依赖 io 具体类型**；接口跨层以 domain/contract 值对象传递 |
 | DirectionSet | N×3，按原 MATLAB 生成顺序；零方向禁止用于物理模型 | 值对象 |
 | MotionEstimate | t、ω 均为三维并有明确数值有效性状态 | 求解器按值返回；不能将纯数值看作成功 |
 | HarmonicCoefficients | 3×5，只有 1+3+5 个有效项；其他位置不参与运算 | Session 独占其可写主状态 |
@@ -77,11 +78,41 @@ template<class Error> class Status;                // void 成功/失败合同
 ~~~
 
 - **Mat 错误**与**数值错误**分别归属 IO 与 solver，Runner 可以附带上下文，但不得吞掉原始错误。
-- **源算法与安全行为区别**：记录 MATLAB 在奇异、除零、NaN 等情况下实际产生的结果；C++ 默认可返回明确非成功状态，但任何“遇错继续/停止/回滚”必须通过入口专属合同评审，不能误标为数学等价。
+- **源算法与安全行为区别**：只记录原 .m 只读源码能证明的奇异、除零、NaN 分支；原 MATLAB 实际警告、非有限传播并无 L1，**无需运行 MATLAB**。C++ 可以候选地返回明确非成功状态，但“遇错继续/停止/回滚”须按入口专属合同评审，不能误标为已验证的原版运行行为。
 - **错误上下文与 RunId**：`ErrorDetail::run_id` 候选为 C++17 `std::optional<RunId>`（实现须包含 `<optional>`）；仅当 RunContext 已分配独立运行身份时填充，`inspect-mat` 和参数解析可为空。RunContext 拥有唯一 RunId；各层传播错误时不得丢失或重新生成它。`observation_index` 也可为空，不与真实 0-based 第 0 个样本混淆。
 - **错误结构待冻结**：当前 `Result<Value, ErrorCode>` 为候选类型；P0.8 须明确统一承载枚举及 ErrorDetail 的方式（如 Result 的失败分支包装 `Failure<Code>{code, detail}`），不得依赖可丢失 RunId 的全局 `last_error`。
-- **日志**：区分 RunId、探针 `source_sha` 参数、MATLAB blob SHA、Golden 脚本/数据 SHA；另记输入变量、维度、参数、seed、失败阶段、退出码、stdout/stderr。原源文件读取不应改变其内容哈希。
+- **日志**：区分 RunId、探针 `source_sha` 参数、**原只读 .m Git blob SHA**、L2 MAT SHA-256、**独立 L3 参考生成器/数据 SHA-256**及 L4 统计来源；另记输入变量、维度、参数、seed、失败阶段、退出码、stdout/stderr。无需 MATLAB 运行或脚本捕获，原源文件读取不应改变其哈希。
 - **CLI 退出码候选**：错误枚举到 CLI 退出码的**唯一候选映射**见 §3.1；命令参数、阶段与诊断输出由 [cli.md §2–3](cli.md) 维护，SRS §6.1 仅作外部接口概览。签名/错误级别仍须 P0.8/P1.2 审批。
+
+### 3.0 失败分支与稳定诊断协议（C++17 候选，待 P0.8 冻结）
+
+建议以单一带类型的失败记录实现所有 Result/Status 的错误传播，而不是仅返回枚举或使用全局 last_error：
+
+~~~cpp
+template<class ErrorCode>
+struct Failure {
+    ErrorCode code;
+    ErrorDetail detail; // run_id/stage/path/variable/index 等上下文
+};
+
+template<class Value, class ErrorCode>
+using Result = std::variant<Value, Failure<ErrorCode>>;
+
+template<class ErrorCode>
+using Status = std::variant<std::monostate, Failure<ErrorCode>>;
+~~~
+
+**这是一种候选实现方式，不是已创建的头文件或正式 ABI**。Success 仅对应 Result 的 Value 或 Status 的 std::monostate；Failure 必有非成功 ErrorCode 和 ErrorDetail。不得用默认 Value、空对象、NaN/Inf 或布尔 false 代替 Failure；variant 出现 valueless_by_exception 时也**不是成功**，应按内部异常路径报告。是否采用上述别名、封装类或显式 tagged union 仍需 P0.8 决定，但以下不丢失错误上下文的语义是设计要求。
+
+| ErrorDetail 字段 | 稳定合同候选 | 设置/传播责任 |
+|---|---|---|
+| stage | 失败时必须为可识别阶段：parse、read、decode/schema、output、solve、simulation、analyze、plot；不依赖中文/英文自由文本识别 | 错误发生层填写；contracts.md §3.1 的组合类别 `solve/simulation/analyze` 在实际发生处选择一个具体阶段 |
+| message | 供人阅读的诊断文本，可自由描述，但**不可被自动化当成稳定枚举** | 原层保留；Runner 可以添加上下文而不能覆盖 code |
+| source_path / variable | 已知时记录源文件路径及原始变量名；未分配时可为空 | Reader/Writer 写入，调用者不得随意伪造值 |
+| run_id | std::optional<RunId>：未创建 RunContext 的 parse/inspect 可为空；分配后传播不丢失 | RunContext 在跨模块边界补足缺失身份，**不得生成第二个 RunId** |
+| observation_index | std::optional<size_t>：空与真正 0-based 第 0 个样本不同 | 产生逐样本错误的模块填入，不允许以 0 冒充未知 |
+
+**唯一入口映射**仍为下面 §3.1；本节不另定义 CLI 退出码。通用阶段值采用现有 string 容器，是否提升为强类型 enum、如何序列化/转义、已有错误的嵌套 cause/运行时异常处理均待 DEC-008/P0.8 确认。MAT I/O 的 MatErrorCode、采样的 NumericalErrorCode 和 Runner 的 ExperimentErrorCode 不互相改写；调用方封装时应保留原错误代码和 ErrorDetail 于内部诊断证据。
 
 ### 3.1 错误枚举与 CLI 退出码：唯一候选映射
 
@@ -109,6 +140,10 @@ template<class Error> class Status;                // void 成功/失败合同
 - 原 Bias 的两次 seeding 由 RunContext 在相应阶段创建/重置随机源；须保持 motion 前的两组 uniform、reset 后的 N 次 uniform 与 3N 次 normal 的顺序。`nonpropfehler(...,0)` 仍须消费 3N 次 normal。
 - 每 RunId 独占 RNG，FixedSequence 测试覆盖数值、调用计数、提前耗尽、越界/非有限值；结果性能和 ABI 仍待批准。
 
+### 3.3 `ExperimentErrorCode::DataMismatch` 的候选触发边界
+
+仅用于 **Runner/集成层确认数据合同不一致**：例如本次预定输出与五个入口的变量名/shape/有效样本数/作者预存统计字段之间存在可证明的错配，或者独立 L2/L3 检查的来源/单位/样本集合不相容且无法进行有效比较。应记录 expected/observed、来源 SHA、RunId 和发现阶段（simulation 或 analyze），映射为 §3.1 的 exit 5。**不用于** MAT 原始解码的 `MatErrorCode::InvalidShape/UnsupportedClassOrType`、数值求解失败 `SolverFailed`、输出文件失败 `OutputFailed`，也**不将不同 RNG 导致的逐样本差异直接认定 DataMismatch**。参考 [实验 Runner LLD](experiments.md) §4/§7。
+
 ## 4. 所有权、const、线程和错误传播
 
 | 对象 | 所有者 | 复制/移动 | 并发保证 |
@@ -123,16 +158,16 @@ template<class Error> class Status;                // void 成功/失败合同
 
 算法调用按值返回的结果不能包含已释放句柄或局部 Eigen::Map 引用。异常/失败传播应包含对应 REQ/TC 和运行证据，不依赖全局 last_error。
 
-## 5. 黄金数据与可验收合同模板
+## 5. L2/L3/L4 参考数据与可验收合同模板
 
-本合同遵循 [不执行 MATLAB 的长期政策](../golden/NO_MATLAB_EXECUTION_POLICY.md)：以 L2 MAT、L3 独立逐节点参考、L4 统计进行限定数值验收；不再需要原 MATLAB 运行的 L1 或采集脚本 blob SHA。完整 C++ 构建/真实 TC、Golden 来源与 DEC-005 容差仍待批准。
+本合同遵循 [不执行 MATLAB 的长期政策](../golden/NO_MATLAB_EXECUTION_POLICY.md)：以 L2 MAT、L3 独立逐节点参考、L4 统计进行限定数值验收；不再需要原 MATLAB 运行的 L1 或采集脚本 blob SHA。完整 C++ 构建/真实 TC、独立参考数据来源与 DEC-005 容差仍待批准。
 
 | 字段 | 要求 | 当前状态 |
 |---|---|---|
 | source_file / source_blob_sha | 原始 .m 函数的 Git blob SHA，不能用探针 source_sha 参数替代 | 文件存在，个别 SHA 已读取 |
 | probe_source_sha / verified_archive_git_sha | 探针运行参数与经独立核实的归档 Git tree/commit 分开保存，未验证二者等同则不能合并 | 已记录前者、未独立核实两者关系 |
 | reference_generator_source_sha / reference_sha256 | 独立 L3 参考生成算法/推导文档的源码身份与参考文件 SHA-256 分别保管；同时保存原只读 .m 的 blob SHA。**无需 MATLAB 运行/采集脚本** | 只有解析候选，正式独立参考未全覆盖 |
-| fixed_input_identity | 确定性 N×6、near/coeff、参数及 RNG 固定序列 | 尚未建立完整 Golden |
+| fixed_input_identity | 确定性 N×6、near/coeff、参数及 RNG 固定序列，并明确 L2/L3/L4 来源等级 | 尚未建立全部独立 L3 参考 |
 | expected_intermediates | 依**原只读源码静态公式、赋值顺序**，由独立 L3 解析或非被测实现生成的逐轮 `near/t/ω`、`M1–M4`、`b/z/error_mse` 等参考；含输入、节点索引及来源 SHA，**不是 MATLAB 运行输出** | 一般/退化输入的独立 L3 参考尚未完整生成或实测 |
 | target_method / unit | 确切数学合同、尺寸、rad/deg | 目前在模块 LLD 拟定 |
 | atol/rtol + scope | 每个节点阈值、有效数值条件、失败合同 | **DEC-005 未批准** |
@@ -154,4 +189,4 @@ template<class Error> class Status;                // void 成功/失败合同
 | 结果目录与历史文件保护 | REQ-NF-SAFETY-001 / TC-NF-SAFETY-001 | 重复 RunId/路径逃逸/失败写入时源 hash 不变 | 未编码、未运行 |
 | Session 非并发使用边界 | REQ-NF-SESSION-001 / TC-NF-SESSION-001 | 两个 RunContext 互相隔离；同一 Session 的线程安全未承诺 | 未编码、未运行 |
 
-完整的测试文件/CTest 候选位置由 [TEST_PLAN.md](../TEST_PLAN.md) 统一管理；不能因为本表列有 TC 就认定测试已经实现、执行或通过。
+完整的测试文件/CTest 候选位置由 [TEST_PLAN.md §3](../TEST_PLAN.md) 统一管理；不能因为本表列有 TC 就认定测试已经实现、执行或通过。
