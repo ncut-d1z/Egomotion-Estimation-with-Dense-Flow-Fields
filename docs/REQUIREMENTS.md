@@ -1,6 +1,6 @@
 # Egomotion Estimation with Dense Flow Fields：软件需求规格说明书（SRS）
 
-> **状态：草案 v0.9，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
+> **状态：草案 v0.10，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
 
 ## 1. 目的、范围与约束
 
@@ -38,6 +38,8 @@
 - 冻结规则：只有确认源树 SHA、Mat 字典、外部接口、逐模块验收容差及阻塞风险后，SRS 才能由项目所有者批准为基线；对仍开放的 Should/TBD 项应有明确批准的处理决定。
 - **文档分层规则**：SRS §4 正文保留可观察行为、数据、对外接口和非功能需求；`REQ-DC-*` 的内部设计约束置于附录 A，由 HLD/LLD 明确实现。具体采用 Eigen、Sophus、sdla 禁用、封装 Result/Status、JSONL 的实现性选择以 [HLD ADR §8](ARCHITECTURE.md) 和 [最新所有者技术决定](decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md) 为权威来源；SRS 以可验证行为与必要约束作规范，而**不重复维护 C++ 签名/target/ABI**。此分层不撤销项目所有者对技术路线的明确决定。
 - **AC 引用的 LLD 身份门禁（不改变 AC 义务）**：§4 中如 `AC-F-FILTER-001` 引用 `design/kvd.md §2`、`AC-F-SH-001` 引用 `design/harmonics.md §1–3`，目前均为**未冻结草案的导航性链接**；不得将可变分支内容视为已批准验收依据。正式冻结时须为每条引用登记**精确 LLD 文件、章节、版本、Git blob SHA、所在 commit SHA、审批人/日期、对应 DEC 与有效范围**，并核对 SRS/TEST_PLAN/LLD 同一组 REQ/TC/AC。上述身份、Golden 或容差缺一时，保持未冻结/未验收，不在本轮填写虚构 SHA 或批准人。
+
+**低优先级一致性说明**：来源可追溯与许可声明属于可审查的数据/交付义务；不同于具体球谐实现选型。已选 Eigen-only/禁用 sdla、Sophus、Don Williamson 仅参考等实现细节以 HLD ADR 和所有者技术决定为权威，不在 SRS 的需求陈述重复维护。原有 REQ/AC/TC 的身份不变。
 
 ## 4. 编号需求及逐项验收条件
 
@@ -88,7 +90,7 @@
 | REQ-D-MAT-002 | M | 确定 | 系统应保留源 MAT 的列主序、数据类型、变量命名、数值含义和输出形状。 | AC-D-MAT-002：已读字段按元素及真实 shape 比较，变更有记录。 |
 | REQ-D-MAT-003 | M | DEC-004 已选定处理原则，待实施验证 | 系统应区分生成脚本实际保存、分析脚本需要和历史归档额外存在的 MAT 变量。 | AC-D-MAT-003：逐入口分别记录当前生成脚本有效 `save` 字段、582 MAT 中确有的历史字段及分析所需字段，标 `CurrentGenerated/HistoricalOnly/Unknown` 来源状态；保留历史只读、不伪造缺失数据，当前新结果仅生成现行字段，分析所需字段缺失时明确非成功。来源不明不阻塞开发，见 [DEC-004](decisions/DEC-004_HISTORICAL_MAT_FIELDS.md)。 |
 | REQ-D-SOURCE-001 | M | 目录已核对 | 系统应冻结原始资料的 SHA、45 个 .m、582 个 .mat、readme 和具体文件分类。 | AC-D-SOURCE-001：源码清单与 GitHub 树一致，每项可定位哈希。 |
-| REQ-D-SOURCE-002 | M | 已确定来源登记原则 | 系统应记录原 MATLAB 数学依据、Ivanic–Ruedenberg 1996 原论文及 1998 勘误、Don Williamson 参考实现的来源 SHA 与 Eigen 重写差异；项目自有代码采用根 MIT，不以普通版权审查作为编码/测试阻塞条件。 | AC-D-SOURCE-002：README/文献索引中的来源和原始作者可追溯；未来仅在实际使用上游文件时保留其必要现有许可告知；不需要另外的版权人工签字才能编写/测试原创 Eigen 算法。原始作者 MAT/.m 不自动重新授予项目 MIT。 |
+| REQ-D-SOURCE-002 | M | 来源可追溯原则已确定；实现审查未完成 | 系统应为所采用的数学公式、原始 MATLAB 资料、外部算法参考、第三方实现材料及其后续修改建立可追溯的来源身份和变更记录。 | AC-D-SOURCE-002：README/来源索引能定位原始作者、1996 年论文和 1998 年勘误的 DOI、实际引用代码或资料的来源 SHA、Eigen 重写差异及必要的原有 notice；具体 Sophus/Eigen/Don Williamson 方案只由 [HLD ADR-006](ARCHITECTURE.md) 和 [技术决定](decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md) 维护，不把普通版权复核作为原创 C++ 开发阻塞，也不把本仓库 MIT 扩展到原作者独立资料。 |
 
 ### 外部与组件接口合同
 
@@ -107,7 +109,7 @@
 
 | 需求 ID | 优先级 | 依据状态 | 可验证的需求陈述 | 验收条件 |
 |---|---|---|---|---|
-| REQ-NF-COPYRIGHT-001 | M | 项目 MIT 已确定；来源标注保留 | 本项目自行编写的软件和文档以仓库根 MIT LICENSE 发布；论文 DOI、原始数据 DOI 与上游实际引用来源继续保留，既有第三方告知不删除；正常开发不因单独版权审批待办阻塞。 | AC-NF-COPYRIGHT-001：根 LICENSE 的 MIT 文本、README 软件许可声明、两份 DOI 与实际引入的上游 notice/来源标识可核对；不得宣称根 MIT 自动重新许可原作者归档或独立第三方作品。 |
+| REQ-NF-COPYRIGHT-001 | M | 项目 MIT 已确定；来源标注仍须可核对 | 本仓库自有软件与文档须具有明确的 MIT 许可声明，并保留原始论文、数据和实际采用的第三方材料的必要来源及许可告知；不得无依据地更改第三方作品的授权范围。 | AC-NF-COPYRIGHT-001：根 [LICENSE](../LICENSE) 是 MIT，README 中的作者论文 DOI、原始数据 DOI、实际引入文件的来源与原有 notice 可核对；具体实现选型见 HLD/ADR/LLD，普通版权复核不作为研发前置门禁，不能将本仓库 MIT 误称为原始 MATLAB/.mat/论文的重新许可。 |
 | REQ-NF-DEPS-001 | M | 确定 | 系统核心运行不得依赖 Python、MATLAB Runtime、NumPy、ROS、OpenCV、Windows 或 NPZ 转换。 | AC-NF-DEPS-001：检查依赖和链接，源代码无禁用路径。 |
 | REQ-NF-HEADLESS-001 | M | 确定 | 系统应支持无图形环境的检查、运行和分析，绘图模块不得阻断数值。 | AC-NF-HEADLESS-001：禁用绘图时主要数据路径仍可执行。 |
 | REQ-NF-LOG-001 | M | 确定 | 系统应记录 RunId、SHA、环境、命令、参数、随机种子、输入身份、退出码及日志位置。 | AC-NF-LOG-001：每次正式运行记录字段完整，不覆盖失败证据。 |
@@ -507,6 +509,7 @@
 | v0.7 | §6.1 CLI 外部参数类型与 `cli.md` 和 TEST_PLAN 一致，明确设计细节仍归 HLD/LLD；保留原 66 REQ/AC/TC | 评审草案，未批准/未冻结 |
 | v0.8 | REQ-F-CLI-002 移除“结果目录参数”残留；固定 `output/<RunId>/`、可选 `--run-id`，并澄清 H-14 的现行数学依据为 Ivanic–Ruedenberg 原文/勘误、Eigen-only、Don Williamson 仅参考 | 历史评审草案 |
 | v0.9 | UC-05 历史数据异常语义与已决定的 DEC-004 一致：`HistoricalOnly` 只读保留、无需归因、缺少分析必需字段明确失败；不改变既有 REQ/AC/TC | 评审草案，未冻结或运行测试 |
+| v0.10 | **仅低优先级文档层级调整**：REQ-D-SOURCE-002 与 REQ-NF-COPYRIGHT-001 保留可验证的来源/许可义务，具体 Eigen/Sophus/Don Williamson 方案下沉并引用 HLD/ADR/项目所有者决定；保留两条 REQ、AC、TC、P 追踪身份 | 评审草案；未修改任何实际授权、测试、批准或冻结状态 |
 
 
 ## 附录 A：内部设计约束清单（REQ-DC）
