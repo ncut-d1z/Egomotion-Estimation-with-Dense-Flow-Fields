@@ -39,7 +39,7 @@ q_x=\mathrm{laenge}\,j/\mathrm{stellen}-\mathrm{laenge}/2,
 \boldsymbol\omega_i^{rel}=R^\top\mathrm{rotationVectorBetween}(\boldsymbol v_1,\boldsymbol v_2).
 \]
 
-原始函数初始化数组为 N×3，首尾行未在主循环填写，C++ 不能擅自用外推补齐而声称原版等价。接近共线、反向或零方向的行为必须记录原 MATLAB 结果与拟议数值状态。
+原始函数初始化数组为 N×3，首尾行未在主循环填写，C++ 不能擅自用外推补齐而声称原版等价。接近共线、反向或零方向的行为必须依据只读原源码静态逻辑和独立 L3 参考记录可验证结果与拟议 C++ 状态（未知运行行为注明限制）。
 
 ## 3. 单位球内射线近度
 
@@ -110,7 +110,7 @@ rodrigues.m 的实际主要调用方向是 **3×1 旋转向量→3×3 旋转矩�
 - **数学调用**：给定原旋转向量 `omega = (ω_x, ω_y, ω_z)^T`（rad），候选计算为 `Sophus::SO3d::exp(omega).matrix()`，再返回自拥有的 `Eigen::Matrix3d`，不将 Sophus 类型泄露给其他业务层。
 - **原版边界保留**：为了对齐 `rodrigues.m`，当 `omega.norm() < std::numeric_limits<double>::epsilon()` 时须**优先按原函数返回单位阵**，再考虑调用 `Sophus::SO3d::exp`；阈值是**原 MATLAB 已存在条件**，不是新数值容差。输入非有限/异常的返回类型仍遵循 [contracts.md](contracts.md) 的未冻结错误候选。
 - **坐标/调用方向**：原 `trajektorie_aus_punkten` 使用 `Rᵀ` 把世界向量转换为局部运动；不能因为 Sophus 具有群操作就改变转置、轴角方向和单位。
-- **验收设计**：固定 `ω=0`、小于 MATLAB eps、x/y/z 轴已知角、复合转动、接近 π、原反向向量路径；对比原 MATLAB 的 `R` 九元素、`Rᵀ` 下的局部 t/ω；若未来确实需要矩阵→向量或 Jacobian，再另列 TC，不扩大 H-02 所批准范围。
+- **验收设计**：固定 `ω=0`、小于 MATLAB eps、x/y/z 轴已知角、复合转动、接近 π、原反向向量路径；对比独立 L3 解析的 `R` 九元素、`Rᵀ` 下的局部 t/ω（不执行原 MATLAB）；若未来确实需要矩阵→向量或 Jacobian，再另列 TC，不扩大 H-02 所批准范围。
 - **状态**：**方案选择已确认，代码/CTest/Golden 尚未运行**。H-10 暂缓生产实施、H-01/DEC-005 容差待定；H-02 不等于数值等价签署。
 
 ## 6. 位姿与球内近度的边界约定
@@ -160,10 +160,8 @@ public:
 | TR-G05 | 球心、近边界位置与一般旋转 | 射线长度/near、判别式与有效性 |
 | TR-G06 | Rodrigues 零向量和已知 x/y/z 轴角 | R 矩阵、正交性和旋转方向 |
 
-关联 TC-F-TRAJ-001、TC-F-FLOW-004、TC-D-SOURCE-002；每个 Golden 必须记录源 SHA、MATLAB 实际数据、绝对/相对容差及版本。**当前只定义案例，没有固定数值或实验运行证据。**
+关联 TC-F-TRAJ-001、TC-F-FLOW-004、TC-D-SOURCE-002；每个 Golden 必须记录只读原源 blob SHA、独立 L3 参考值/来源和 SHA-256、绝对/相对容差及版本。**当前只定义案例，没有固定数值或实验运行证据。**
 
-## 附录 A：轨迹及旋转的来源等级（补充草案）
+## 附录 A：无需 MATLAB 运行的证据边界
 
-[统一 L1–L4 清单](../golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md) 说明：轨迹解析式与当前 `AN-G08` 的 3×3 旋转是 **L3 解析候选**，历史最终误差 MAT 是 **L2**。两者均不包含原 `trajektorie_aus_punkten` 在每一帧实际生成的 t/ω、`R^T` 局部坐标、端点 zeros、反向/近共线异常、`rodrigues.m` 在小角与边界的实际执行轨迹；这些 L1 仍缺失。
-
-`AC-F-TRAJ-001` 的解析路径可先设计有限固定输入检验，但当前没有真实生产 C++、独立 MATLAB 采集或 CTest，不能以 L3 的符号/公式推导宣称原 MATLAB 全部行为等价。Sophus 路线的选择不改变 L1 取证需求。
+遵守 [长期无需 MATLAB 执行政策](../golden/NO_MATLAB_EXECUTION_POLICY.md) 与 [L2/L3/L4 验收矩阵](../golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md)。**本模块不要求运行 MATLAB/Octave、取得 L1 逐节点输出或追溯原脚本运行异常**；现行独立参考需覆盖原静态数学公式、旋转/坐标/相位、固定输入、源 SHA 及全部有定义元素，并经 DEC-005 容差核准及真实 C++/CTest 比较。无法确定的原 MATLAB 特定运行结果须明确限制声称范围，不能冒充原脚本已实测。当前尚无正式实现/验收证据。
