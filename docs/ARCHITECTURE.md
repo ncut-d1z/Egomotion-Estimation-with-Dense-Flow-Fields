@@ -29,7 +29,7 @@ flowchart TD
 ```
 
 依赖的边界：
-1. `origin/**` 是外部不可变输入；输出 `results/<RunId>/` 不允许覆盖已存在文件；执行前解析/检查路径是否与原始目录重叠。
+1. `origin/**` 是外部不可变输入；输出 `output/<RunId>/` 不允许覆盖已存在文件；执行前解析/检查路径是否与原始目录重叠。
 2. 领域实体 `FlowField`、`MotionEstimate`、`HarmonicCoefficients` 自拥有值，不携带 matio 句柄或指向已释放缓冲区。
 3. `AdaptiveMfaStepSolver` 是单步无状态计算，`AdaptiveMfaSession` 拥有跨帧 `akkoeff`；每种 baseline 的 `mitkoeff`/重置状态另行隔离。
 4. `KvDIterationEngine` 可以共享计算流程，但不同平移更新规则必须可观察且不互换；不能硬造一个把 KvD 与 Adaptive 结果强行同构的“全能求解器”。
@@ -58,7 +58,8 @@ flowchart LR
 - 运行进程仅在 Debian/Ubuntu 构建；MAT 文件由本地文件系统提供，不要求网络或 MATLAB/Python 服务。
 - 原始输入目录的文件句柄只读、哈希不变；写入器不得通过软链接或路径穿越覆盖 origin。
 - 只有 `inspect-mat`、实验生成、数据分析是数值主路径；图形服务可缺失，不影响无界面运行。
-- 具体发行版最低版本、CMake/编译器版本及其性能边界待 DEC-006 实测与项目所有者批准，不在设计草案中虚构。
+- **H-04 已指明运行环境**：Ubuntu 24.04.4 VirtualBox / x86_64（用户提供 `uname -a`、`df`、`free` 快照），不是本轮执行测试的证据；物理内存总 `8127380` KiB、当时 available `4908696` KiB、Swap `4194300` KiB、根分区当时可用 `65347856` KiB。历史独立 matio 探针记录 GCC 13/matio 1.5.26，但本次 JSON 未提供 Sophus/CMake 的新版本实测。
+- H-04 **未指定可作为性能通过/失败判据的墙钟、CPU、RSS、构建耗时或线程数阈值**。Debian 具体版本与其余配置仍待实际验证；任何已选平台和容量快照均不表示完整工程已通过构建。
 
 ### 2.2 已实测的 MAT 数据合同
 
@@ -79,8 +80,8 @@ flowchart LR
 |---|---|---|---|---|
 | domain/math | N×6 FlowField 和 3D 数学、运动估计值 | Eigen | 三维向量、列主序、坐标与单位 | 无效维度、零范数与非有限输入 |
 | sampling | 八面体、缺损八面体、二十面体方向采样及注入 RNG 的 getvektor | domain/math、**contracts**（IDirectionSampler/IRandomSource） | 顺序确定的 N×3 单位视线 | 非法细分级别、数目溢出、随机源错误 |
-| simulation | 球内近度、光流合成、随机噪声、轨迹 | domain/math、sampling、**contracts**（IRandomSource/IFlowNoiseModel） | 近度、t、ω、三维切向光流 | 无效几何、随机源异常 |
-| harmonics | 实球谐基函数、近度拟合/重建、系数旋转 | domain/math | l≤2、3×5 以及 3×3/5×5 旋转块 | 系数形状、归一化与旋转失败 |
+| simulation | 球内近度、光流合成、随机噪声、轨迹（H-02 的旋转向量→矩阵采用 Sophus） | domain/math、sampling、**contracts**（IRandomSource/IFlowNoiseModel）；**Sophus 作为规划的私有外部依赖** | 近度、t、ω、三维切向光流 | 无效几何、随机源异常 |
+| harmonics | 实球谐基函数、近度拟合/重建、系数旋转（H-14 的 Don Williamson 方案 A） | domain/math；**受控的第三方 Ivanic–Ruedenberg C++ 源码适配层作为私有实现** | l≤2、3×5 以及 3×3/5×5 旋转块 | 系数形状、归一化与旋转失败 |
 | estimators | Franz、Original/Modified KvD、Adaptive 单步估计 | domain/math、harmonics（Adaptive） | FlowField、近度/系数、运动估计与计算状态 | 退化、奇异系统、非有限值 |
 | mat_io | 原始 MAT 只读元数据/变量读取与新 MAT 输出；实现 IResultReader/IResultWriter | matio/zlib、domain 值类型、**contracts** | rank、dims、class、dtype、列主序、变量名 | 文件/解压/类型错误、路径拒绝 |
 | experiments | 五类 MATLAB 原实验的参数编排、独立 RunId 与状态 | domain、**contracts**（写入窄接口）、**sampling**、simulation、estimators | 参数、seed、结果 MAT、有效/失败样本数 | 缺配置、数值失败、输出冲突 |
@@ -88,7 +89,7 @@ flowchart LR
 | plotting（可选） | 统计结果的 2D/3D 可视化 | analysis | 绘图数组、单位、图例与区间 | 后端缺失；不得修改原始数值 |
 | cli/composition | 命令、参数检查、状态/退出码和对象装配 | experiments、analysis、mat_io、**contracts**；plotting 可选 | 只读输入路径、独立输出根 | 参数、源/输出冲突、执行失败 |
 
-**组件依赖一致性**：本节依赖集合与 §4 target 表、§4.1 的 26 条直接 DAG 边一一对照；本次是**文档合同**，尚不能等同真实 CMake target 的编译/链接。实际 C++ 实现可能需要修改依赖时，须同时维护三处与 ADR-008。
+**组件依赖一致性**：本节内部项目模块依赖集合与 §4 target 表、§4.1 的 26 条直接 DAG 边一一对照；**新增 Sophus 与未来第三方 SHRotation 为外部/私有实现依赖，暂不作为新增内部 egomotion_ target 边计数**；本次是**文档合同**，尚不能等同真实 CMake target 的编译/链接。实际 C++ 实现可能需要修改依赖时，须同时维护三处与 ADR-008。
 
 **边界不变量**：求解器不 include matio 或绘图库；I/O 不持有求解器；实验 Runner 不重复数学公式；分析/绘图不修改求解结果。实验参数按 MATLAB 的五个入口分别定义，禁止以一个未经核准的全局默认值覆盖其差异。
 
@@ -108,9 +109,9 @@ flowchart LR
 | egomotion_domain | domain 值类型、向量/旋转及基本数学函数头 | Eigen 3 | 不引入 matio、experiment、CLI |
 | egomotion_contracts（INTERFACE 候选） | IResultReader/IResultWriter、IRandomSource 等只声明领域依赖的窄接口 | domain | 不含 matio.h、不链接 I/O 实现、不提供 C 函数入口 |
 | egomotion_sampling | 方向采样接口及实现、注入 RNG 的随机球面方向函数 | **domain、contracts**（IDirectionSampler/IRandomSource 契约） | 内部递归实现可私有，不依赖 experiment；若后续接口移至别处须同步 ADR/DAG |
-| egomotion_harmonics | l≤2 基函数、拟合/旋转接口 | domain | 第三方 SH 递归细节仅私有、须版权审查 |
+| egomotion_harmonics | l≤2 基函数、拟合/旋转接口 | domain；将来 private 使用 Don Williamson 的 Ivanic–Ruedenberg C++ 适配层 | 复用目录须 README+上游 MIT LICENSE/版权声明，原核心源有 sdla 依赖；未纳入或编译 |
 | egomotion_estimators | Franz、KvD、Adaptive 计算合同 | domain、harmonics | 不依赖 matio、CLI、plotting |
-| egomotion_simulation | 轨迹、噪声、场景/光流生成 | **domain、sampling、contracts**（IFlowNoiseModel/IRandomSource） | RNG 通过 contracts 窄接口注入，不含全局 RNG；不依赖 CLI/matio |
+| egomotion_simulation | 轨迹、噪声、场景/光流生成 | **domain、sampling、contracts**（IFlowNoiseModel/IRandomSource）；将来 PRIVATE 链接 Sophus SO(3) | RNG 通过 contracts 窄接口注入；对外只暴露 Eigen 值类型，不向数值接口泄漏 Sophus；未构建 |
 | egomotion_matio | MAT Reader/Writer 与元数据，**实现** Reader/Writer 合同 | contracts、domain、matio、zlib | 仅私有源码包含 matio.h；不依赖 estimators/experiments |
 | egomotion_experiments | 五类实验 Runner、RunContext | domain、contracts、sampling、simulation、estimators；**不链接 egomotion_matio** | 只通过 IResultWriter 使用写出能力；无原始 MAT 写权限、不依赖 plotting |
 | egomotion_analysis | 历史 MAT 数据分析与曲线序列 | domain、contracts；**不链接 egomotion_matio** | 仅 IResultReader；不调用 estimators，不依赖 plotting |
@@ -230,11 +231,11 @@ P0.7/P0.8 需校验本 HLD、[OBJECT_MODEL.md](OBJECT_MODEL.md)、MAT schema、L
 | ADR | 决策（与原 MATLAB 和 SRS 对应） | 状态 | 拟审查责任人与批准记录 |
 |---|---|---|---|
 | ADR-001 | 原始 MAT 只读、matio/zlib 直接读取、不开发 NPZ | **实测**：独立 matio 探针读取 582/582 MAT v5/double/zlib，失败 0；当前归档无需 HDF5。正式 Reader/Writer 合同未冻结 | [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md) 作为数据依据，项目所有者待批准支持范围 |
-| ADR-002 | Debian/Ubuntu、C++17/Eigen/CMake | 用户已定方向；具体发行版/编译器版本待 DEC-006 | 维护者提交实际 build 矩阵，所有者批准 |
+| ADR-002 | Debian/Ubuntu、C++17/Eigen/CMake；H-02 增加拟采用的 Sophus SO(3)，H-04 提供 Ubuntu 24.04.4 VM/x86_64 快照 | 用户已明确指定开发主机；完整构建版本与性能阈值仍待执行/确认 | 维护者提交实际 build 矩阵，所有者批准 |
 | ADR-003 | 值语义/RAII/窄接口/组合优先；纯数学自由函数 | HLD 提议，未冻结 | P0.7 对象设计评审者 + 所有者 |
 | ADR-004 | Adaptive StepSolver 与跨帧 Session 分离；KvD 双入口保真 | HLD 提议，未冻结 | 数值/接口评审者 + 所有者 |
 | ADR-005 | 分析与可选绘图隔离，核心无图形运行 | 方向已定、后端待选 | 分析模块维护者 + 所有者 |
-| ADR-006 | SHRotate/Rodrigues 第三方来源单独审查 | 待 DEC-003/007 | 所有者与版权审查相关方 |
+| ADR-006 | H-02：Sophus 替代 Rodrigues、Don Williamson C++ 替代 SHRotate；H-14 方案 A（Ivanic–Ruedenberg） | **限定替代路线已由用户选择**，第三方 README+MIT 许可保留、sdla 依赖审核、源码纳入及 Golden 尚未完成；H-10 暂缓实际实施 | [审批落实记录](approval/DECISION_IMPLEMENTATION_NOTES.md)，版权合规与验收另审 |
 | ADR-007 | 固定输入原 MATLAB 行为优先于“改善”数值稳定性 | 方向已定；测试/容差未冻结 | 数值验证负责人 + 所有者 |
 | ADR-008 | target DAG 分层及公共/私有边界以 §4 为候选；明确 contracts 声明 target 与 matio 实现 target 分离 | 可用 scripts/check_docs_traceability.sh 静态检查 DAG 无环；**尚未创建完整 CMake 业务 target，未验证实际编译、链接或跨 target 替身** | P0.8 架构审查者 + 所有者 |
 
