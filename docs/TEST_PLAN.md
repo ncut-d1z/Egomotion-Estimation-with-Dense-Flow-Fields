@@ -24,10 +24,10 @@
 | 子命令 | 候选必填参数 | 输出/验收 |
 |---|---|---|
 | inspect-mat | --file PATH | MAT 变量名、rank、dims、type、压缩/错误诊断 |
-| run-bias-occluded | --seed UINT32 --level NONNEG_INT  | xwerte、ywerte1…6 的 MAT 结果 |
-| run-bias-proportional | --seed UINT32 --level NONNEG_INT  | 独立完整球面/逐分量噪声结果 |
+| run-bias-occluded | --seed UINT32 --level NONNEG_INT | xwerte、ywerte1…6 的 MAT 结果 |
+| run-bias-proportional | --seed UINT32 --level NONNEG_INT | 独立完整球面/逐分量噪声结果 |
 | run-adaptive-init | 无 | 原始初始化四类误差结果 |
-| run-adaptive-comparison | --noise-scale FINITE_DOUBLE  | 带噪/无噪的原始五类 MAT 结果 |
+| run-adaptive-comparison | --noise-scale FINITE_DOUBLE | 带噪/无噪的原始五类 MAT 结果 |
 | run-adaptive-update-rates | 无 | 1/5/11/21 帧更新频率结果 |
 | analyze | --experiment NAME --input-root DIR | 独立读取历史 MAT，计算统计序列 |
 | plot（可选） | --experiment NAME --input-root DIR | 图表结果；无图形后端不影响 analyze |
