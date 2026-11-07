@@ -645,19 +645,69 @@ $("permissions").innerHTML=permissionGroups.map(g=>'<div class="permission-group
 $("milestoneRows").innerHTML=MILESTONES.map((x,i)=>'<tr data-milestone="M'+i+'"><td>'+clean(x)+'</td><td><input data-ms="owner" placeholder="可留空"></td><td><textarea data-ms="resources"></textarea></td></tr>').join("");
 document.querySelectorAll("[data-extra],[data-tol],[data-permission],[data-ms],#registration input,#filename").forEach(x=>x.addEventListener("input",markDirty));
 function gather(){
-const app={applicationId:$("applicationId").value,repository:"ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields",branch:$("branch").value,applicationCommit:$("applicationCommit").value,scopeIds:$("scopeIds").value,applicationStatus:"待逐项审批",applicationNotes:""};
-const approvals=Object.values(state).map(r=>({...r,recordCompleteness:r.decision==="approved"?(incomplete(r)?"incomplete":"fields_present_unverified"):"not_approved",missingFields:incomplete(r)?[!r.evidence.trim()?"审核依据":null,!r.scope.trim()?"授权范围":null].filter(Boolean):[]}));
-const technicalDetails={tolerances:[...document.querySelectorAll("[data-tolerance]")].map(tr=>{const d={id:tr.dataset.tolerance};tr.querySelectorAll("[data-tol]").forEach(el=>d[el.dataset.tol]=el.value);return d;}),permissions:{},milestones:[...document.querySelectorAll("[data-milestone]")].map(tr=>{const d={id:tr.dataset.milestone};tr.querySelectorAll("[data-ms]").forEach(el=>d[el.dataset.ms]=el.value);return d;})};
-document.querySelectorAll("[data-permission]").forEach(el=>technicalDetails.permissions[el.dataset.permission]=el.checked);
-document.querySelectorAll("[data-extra]").forEach(el=>technicalDetails[el.dataset.extra]=el.value);
-return {schema:"egomotion.human-approval.v1",sourceHtml:"docs/approval/HUMAN_APPROVAL_REQUEST.html",notice:"保存 JSON 只是记录意见，不自动批准或授权执行。",application:app,approvals,technicalDetails};
+ const app={applicationId:$("applicationId").value,repository:"ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields",branch:$("branch").value,applicationCommit:$("applicationCommit").value,scopeIds:$("scopeIds").value,applicationStatus:"待逐项审批",applicationNotes:""};
+ const approvals=Object.values(state).map(r=>{
+  const problems=missing(r),choice=chosen(r);
+  return {id:r.id,decision:r.decision,choiceId:r.choiceId,choiceLabel:choice[2],referenceText:r.referenceText,referenceConfirmed:r.referenceConfirmed,confirmedOpinion:r.referenceConfirmed?r.referenceText:"",evidence:r.evidence,scope:r.scope,conditions:r.conditions,notes:r.notes,recordCompleteness:r.decision==="approved"?(problems.length?"incomplete":"fields_present_unverified"):"not_approved",missingFields:problems};
+ });
+ const technicalDetails={tolerances:[...document.querySelectorAll("[data-tolerance]")].map(tr=>{const d={id:tr.dataset.tolerance};tr.querySelectorAll("[data-tol]").forEach(el=>d[el.dataset.tol]=el.value);return d;}),permissions:{},milestones:[...document.querySelectorAll("[data-milestone]")].map(tr=>{const d={id:tr.dataset.milestone};tr.querySelectorAll("[data-ms]").forEach(el=>d[el.dataset.ms]=el.value);return d;})};
+ document.querySelectorAll("[data-permission]").forEach(el=>technicalDetails.permissions[el.dataset.permission]=el.checked);
+ document.querySelectorAll("[data-extra]").forEach(el=>technicalDetails[el.dataset.extra]=el.value);
+ return {schema:"egomotion.human-approval.v1",sourceHtml:"docs/approval/HUMAN_APPROVAL_REQUEST.html",notice:"选择先起草只授权准备候选，不批准最终方案。未勾选确认的预填参考文字不是人类已确认意见；保存 JSON 不是 DEC 关闭、验收或执行授权证明。",application:app,approvals,technicalDetails};
 }
 function filename(){const n=$("filename").value.trim()||"HUMAN_APPROVAL_REQUEST.json";if(/[\\/:*?"<>|\x00-\x1f]/.test(n))throw Error("文件名不能包含路径分隔符或非法字符");return /\.json$/i.test(n)?n:n+".json";}
 async function save(){const name=filename(),data=JSON.stringify(gather(),null,2)+"\n";if(folder){const handle=await folder.getFileHandle(name,{create:true}),w=await handle.createWritable();await w.write(data);await w.close();return true;}const blob=new Blob([data],{type:"application/json;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);return false;}
 $("saveButton").onclick=async()=>{try{const direct=await save();dirty=false;update();$("saveHint").textContent=direct?"已写入选定文件夹":"已触发 JSON 下载，请检查浏览器下载目录";}catch(e){alert("保存失败："+e.message);}};
 $("folderButton").onclick=async()=>{if(!window.showDirectoryPicker){alert("当前浏览器不支持选择文件夹。请使用默认下载并自行移动 JSON。");return;}try{folder=await window.showDirectoryPicker({mode:"readwrite"});$("folderStatus").textContent="已选择："+folder.name+"。保存将写入该文件夹。";}catch(e){if(e.name!=="AbortError")alert(e.message);}};
 $("importButton").onclick=()=>$("importFile").click();
-$("importFile").onchange=async e=>{const f=e.target.files?.[0];if(!f)return;try{if(f.size>4*1024*1024)throw Error("JSON 文件超过 4 MiB");if(dirty&&!confirm("导入会覆盖当前填写内容，继续吗？"))return;const d=JSON.parse(await f.text());if(d.schema!=="egomotion.human-approval.v1"||!Array.isArray(d.approvals))throw Error("JSON 格式不匹配");for(const id of ["applicationId","branch","applicationCommit","scopeIds"])if(d.application&&typeof d.application[id]==="string")$(id).value=d.application[id];for(const r of d.approvals){if(!state[r.id])continue;state[r.id].decision=statuses.some(x=>x[0]===r.decision)?r.decision:"pending";for(const k of ["evidence","scope","conditions","notes"])state[r.id][k]=typeof r[k]==="string"?r[k]:"";}document.querySelectorAll("[data-decision]").forEach(el=>el.value=state[el.dataset.decision].decision);document.querySelectorAll("[data-item]").forEach(el=>el.value=state[el.dataset.item][el.dataset.key]);const x=d.technicalDetails||{};document.querySelectorAll("[data-extra]").forEach(el=>el.value=typeof x[el.dataset.extra]==="string"?x[el.dataset.extra]:"");document.querySelectorAll("[data-permission]").forEach(el=>el.checked=x.permissions?.[el.dataset.permission]===true);const tol=new Map((x.tolerances||[]).map(y=>[y.id,y]));document.querySelectorAll("[data-tolerance]").forEach(tr=>tr.querySelectorAll("[data-tol]").forEach(el=>el.value=tol.get(tr.dataset.tolerance)?.[el.dataset.tol]||""));const ms=new Map((x.milestones||[]).map(y=>[y.id,y]));document.querySelectorAll("[data-milestone]").forEach(tr=>tr.querySelectorAll("[data-ms]").forEach(el=>el.value=ms.get(tr.dataset.milestone)?.[el.dataset.ms]||""));dirty=true;update();document.querySelectorAll("[data-decision]").forEach(el=>{if(state[el.dataset.decision].decision!=="pending")el.closest("tr").classList.add("highlight")});alert("导入完成，黄色行表示已有决定，请复核后保存。");}catch(err){alert("导入失败："+err.message);}finally{e.target.value="";}};
+$("importFile").onchange=async e=>{
+ const f=e.target.files?.[0];if(!f)return;
+ try{
+  if(f.size>4*1024*1024)throw Error("JSON 文件超过 4 MiB");
+  if(dirty&&!confirm("导入会覆盖当前填写内容，继续吗？"))return;
+  const d=JSON.parse(await f.text());
+  if(d.schema!=="egomotion.human-approval.v1"||!Array.isArray(d.approvals))throw Error("JSON 格式不匹配");
+  for(const id of ["applicationId","branch","applicationCommit","scopeIds"]){
+   if(d.application&&typeof d.application[id]==="string")$(id).value=d.application[id];
+  }
+  for(const id of Object.keys(state)){
+   const first=CHOICES[id][0];
+   Object.assign(state[id],{choiceId:first[0],decision:"pending",referenceText:first[3],referenceConfirmed:false,evidence:"",scope:"",conditions:"",notes:""});
+  }
+  for(const rec of d.approvals){
+   if(!rec||!state[rec.id])continue;
+   const current=state[rec.id],choices=CHOICES[rec.id];
+   // v1 旧版仅保存 decision，新版还保存 choiceId；不由旧版的批准自动确认参考文字。
+   const choice=choices.find(c=>c[0]===rec.choiceId)||choices.find(c=>c[1]===rec.decision)||choices[0];
+   current.choiceId=choice[0];
+   current.decision=choice[1];
+   current.referenceText=typeof rec.referenceText==="string"?rec.referenceText:
+      (typeof rec.confirmedOpinion==="string"&&rec.confirmedOpinion?rec.confirmedOpinion:
+      (typeof rec.notes==="string"&&rec.notes?rec.notes:choice[3]));
+   current.referenceConfirmed=rec.referenceConfirmed===true;
+   for(const key of ["evidence","scope","conditions","notes"])
+    current[key]=typeof rec[key]==="string"?rec[key]:"";
+  }
+  document.querySelectorAll("[data-choice]").forEach(el=>el.value=state[el.dataset.choice].choiceId);
+  document.querySelectorAll("[data-item-reference]").forEach(el=>el.value=state[el.dataset.itemReference].referenceText);
+  document.querySelectorAll("[data-item-confirm]").forEach(el=>el.checked=state[el.dataset.itemConfirm].referenceConfirmed);
+  document.querySelectorAll("[data-item]").forEach(el=>el.value=state[el.dataset.item][el.dataset.key]);
+  const x=d.technicalDetails||{};
+  document.querySelectorAll("[data-extra]").forEach(el=>el.value=typeof x[el.dataset.extra]==="string"?x[el.dataset.extra]:"");
+  document.querySelectorAll("[data-permission]").forEach(el=>el.checked=x.permissions?.[el.dataset.permission]===true);
+  const tol=new Map((Array.isArray(x.tolerances)?x.tolerances:[]).filter(y=>y&&y.id).map(y=>[y.id,y]));
+  document.querySelectorAll("[data-tolerance]").forEach(tr=>tr.querySelectorAll("[data-tol]").forEach(el=>el.value=tol.get(tr.dataset.tolerance)?.[el.dataset.tol]||""));
+  const ms=new Map((Array.isArray(x.milestones)?x.milestones:[]).filter(y=>y&&y.id).map(y=>[y.id,y]));
+  document.querySelectorAll("[data-milestone]").forEach(tr=>tr.querySelectorAll("[data-ms]").forEach(el=>el.value=ms.get(tr.dataset.milestone)?.[el.dataset.ms]||""));
+  dirty=true;
+  update();
+  document.querySelectorAll("[data-choice]").forEach(el=>{
+   el.closest("tr").classList.toggle("highlight",state[el.dataset.choice].decision!=="pending");
+  });
+  alert("导入完成；有决定的行已标黄。预填参考意见只有你明确勾选确认后才会成为已确认意见。");
+ }catch(err){alert("导入失败："+err.message);}
+ finally{e.target.value="";}
+};
 window.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){e.preventDefault();$("saveButton").click();}});
 window.addEventListener("beforeunload",e=>{if(dirty){e.preventDefault();e.returnValue="";}});
 update();
