@@ -6,6 +6,8 @@
 
 > **当前状态：审计及设计草案阶段；所有正式软件需求、P 任务及里程碑均未宣布验收完成。** 本文件只记录可定位的实际子成果和未决项。验收规则以 [REQUIREMENTS.md](REQUIREMENTS.md)、[TEST_PLAN.md](TEST_PLAN.md) 和 [PLAN.md](PLAN.md) 为准；不得把已有文档、matio 独立探针或静态集合检查折算为业务 C++ 功能完成率。
 
+**2026-11-07 项目所有者最新决定**：仓库根 [MIT LICENSE](../LICENSE) 已获明确授权创建，普通版权审核不再阻塞开发；球谐必须以 Ivanic–Ruedenberg **1996 原始论文＋1998 勘误**为依据并**纯 Eigen 重写、禁用 sdla**，等用户上传两份论文后实现；CLI 已删除自定义输出根参数，输出固定 `output/<RunId>/`，RunId 来自独立 OS 随机源；Result/Status 采用轻量封装、ErrorStage 稳定枚举、JSONL；实验使用独立配置、失败状态不提交、八次聚合不改分母，Manifest 区分 Complete/Incomplete/Failed；`atol=0.01,rtol=0.1` **仅作为已确认的首轮探索性筛查**，最终 DEC-005 验收门槛未冻结。详见 [最新技术决定](decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md)。这不是生产代码或测试执行授权。
+
 ## 1. 当前工作范围与证据
 
 - 仓库：`ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields`
