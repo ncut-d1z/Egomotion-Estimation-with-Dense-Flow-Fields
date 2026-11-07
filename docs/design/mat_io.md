@@ -1,6 +1,6 @@
 # MAT I/O、路径安全与原始数据合同——详细设计草案
 
-> **LLD v0.4，未冻结。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 Golden 仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
+> **LLD v0.5 候选草案，未冻结。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 Golden 仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
 
 ## 1. 原始行为、文件身份和支持版本
 
@@ -26,19 +26,45 @@
 ## 2. 候选 C++17 类接口与资源所有权
 
 ~~~cpp
-// 尚未创建、尚未编译；Result<T,E> 为计划中的项目内部结果类型。
-// MatErrorCode 统一在 contracts.md 声明，不在此重复定义。
+// 候选 C++17 接口；未建头文件、未编译。
+// namespace 及最终 include 路径均待 P0.8/DEC-008 确认。
 struct MatVariableInfo {
     std::string name;
-    std::vector<std::size_t> dimensions;  // 按 MATLAB 原 rank/dims
-    int original_class_type;              // 来自 matio，转换为稳定项目类型尚待定
-    int original_data_type;
-    bool is_complex;
-    bool is_logical;
+    std::vector<std::size_t> dimensions; // 与 MAT 原 rank/dims 顺序一致
+    int original_class_type;             // 诊断用 matio 数值，非对外 matio 指针
+    int original_data_type;              // 最终稳定枚举待接口审批
+    bool is_complex = false;
+    bool is_logical = false;
 };
-struct MatDenseArray;                     // 拥有数据类型、rank、dims、列主序缓冲区
-class MatFileHandle;                      // move-only, 对应 mat_t* 资源所有权
-class MatVariableHandle;                  // move-only, 对应 matvar_t* 资源所有权
+
+// 仅针对当前归档必要的「二维、实数、密集 double」对象。
+// 不对其他 MATLAB class 暗中做类型转换。
+class MatDenseArray {
+public:
+    static Result<MatDenseArray, MatErrorCode> fromColumnMajor(
+        MatVariableInfo info,
+        std::vector<double> column_major_values);
+
+    const MatVariableInfo& info() const noexcept;
+    const std::vector<std::size_t>& dims() const noexcept;
+    const double* data() const noexcept;
+    std::size_t size() const noexcept; // 元素数
+    const std::vector<double>& valuesColumnMajor() const noexcept;
+
+    MatDenseArray(const MatDenseArray&) = default;
+    MatDenseArray& operator=(const MatDenseArray&) = default;
+    MatDenseArray(MatDenseArray&&) noexcept = default;
+    MatDenseArray& operator=(MatDenseArray&&) noexcept = default;
+
+private:
+    MatDenseArray() = default;
+    MatVariableInfo info_;
+    std::vector<double> values_col_major_;
+};
+
+class MatFileHandle;     // 内部 move-only；唯一持有 mat_t*
+class MatVariableHandle; // 内部 move-only；唯一持有 matvar_t*
+
 class MatResultReader {
 public:
     Result<std::vector<MatVariableInfo>, MatErrorCode> inspect(
@@ -48,6 +74,7 @@ public:
     Result<MatDenseArray, MatErrorCode> readFirstCompatible(
         const std::filesystem::path& source) const;
 };
+
 class RunMatWriter {
 public:
     Status<MatErrorCode> saveNewVariable(
@@ -62,10 +89,20 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 
 ### 2.1 内存所有权、shape 与类型合同
 
-- MatFileHandle、MatVariableHandle 应为 move-only；不允许跨已关闭的文件句柄或已释放的变量借用数据视图。
-- MatDenseArray **拥有自己的缓冲区**，保存 MAT 原始 class/dtype、rank、dims、元素大小和列主序；需要转换为 Eigen 时由显式校验后的 copy/map 决策完成。
-- 数据大小 = 元素数 × 元素字节数；计算时必须检查 size_t 乘法溢出、MAT rank 与各维是否异常；不静默将 MATLAB single 转 double 或将 N×6 隐式转置。
-- 语义访问与原始物理存储分开。MAT 的线性索引与列主序严格保持，C++ 索引应标注 0-based 的边界。
+- **唯一所有权**：MatFileHandle、MatVariableHandle move-only，析构释放一次；返回 MatDenseArray 后没有指向这些句柄/已释放 matvar_t 的借用视图。
+- **自拥有与访问器**：MatDenseArray 内部为 `std::vector<double>`，`data()` 是只读临时指针、`valuesColumnMajor()` 返回只读引用，`dims()` 返回 `info_.dimensions` 的只读引用。对象存活且未移动/修改时才可借用上述引用；不得存成跨对象生命周期的 Eigen::Map。需要 Eigen 时可在调用作用域内创建只读 Map 或复制为自拥有值对象。
+- **当前必要类型**：`fromColumnMajor` 仅接受非复杂、非 logical、实数密集 double 的 MAT class/type；`dimensions.size()==2` 且两维均大于 0。零长度数组在 `inspect` 中允许**如实报告元数据**，但正式业务数据读取/输出构造当前按 `InvalidShape` 拒绝；其他 rank/type 属未来变更范围，不暗中转成 double。
+- **形状/长度不变量**：在分配前以检查溢出的乘法计算 `elements=dims[0]*dims[1]` 与 `bytes=elements*sizeof(double)`，要求数据向量长度等于 elements；溢出返回 `SizeOverflow`，维度或长度不符返回 `InvalidShape`，class/type/complex/logical 不支持返回 `UnsupportedClassOrType`。列主序线性元素偏移为 `row + rows*column`，0-based 转换要显式核对。
+- **复制移动**：数组**可深拷贝**（独立 vector/元数据），也可移动；移动后原对象不得作为具有原数据的有效对象使用。当前不采用以 `std::vector<uint8_t>` 承载任意标量类型的泛型变体，避免将单精度、整数或 complex 假装受支持。
+- **元数据边界**：MatVariableInfo 的两个 int 暂是 matio 编码的数值快照，仅做诊断/验证；公共头不引用 matio.h、不提供 mat_t*/matvar_t*。将来稳定 enum/字段及目标 C++ 命名空间是待 P0.8 审核项；本候选不是已冻结、可编译的头文件。
+
+### 2.2 失败结果、错误上下文与 RunContext 边界（候选）
+
+- `Result<T, MatErrorCode>` 成功分支只包含完整、符合不变量的 T；失败分支应同时含 `MatErrorCode` 和 [contracts.md §3](contracts.md) 的 `ErrorDetail`（含 `stage/source_path/variable`，在已分配 RunId 时附加 `run_id`）。采用 `Failure<MatErrorCode>{code, detail}` 还是其他实现方式由公共合同统一冻结，**不得引入第二套 MAT 错误枚举或全局 last_error**。
+- `Status<MatErrorCode>` 表示无值的成功/失败；失败同样须传播 `ErrorDetail`，而不是用 `true/false` 丢失失败位置。其实现与 `Result` 共同归 [contracts.md §3](contracts.md) 管理。
+- `MatDenseArray::fromColumnMajor` 是建议的唯一对外构造入口。Reader 完整解码后复制字节解释为 double 并建立值对象；实验 Runner 将结果按源二维 shape 显式转换为列主序 double 后构造，Writer 只接受合格值对象。
+- **写入身份来源**：Composition Root 解析候选 `--output-root DIR` 并验证其为仓库根 `output/`；RunContext 独立生成/接收经验证的 RunId，在受控根目录下安全新建 `output/<RunId>/`。Writer 不自行生成 RunId、不将用户路径当作新根、不直接写任意目标，仅按既定 root/RunId 验证并发布 `output_root / run_id / (mat_variable_name + ".mat")`。同时校验元数据变量名与参数变量名相符。
+- Writer 在文件系统层必须**再次约束** root、RunId、最终文件名、独占创建和已有目标拒绝，不能仅依赖 CLI 的一次性检查；同一新 RunId 可安全写入多个不同变量，但不能覆盖已有 MAT 文件。符号链接/目录竞态的可靠实现与测试仍是 P1.9 门禁。
 
 ## 3. 输入路径与输出路径的强制安全流程
 
