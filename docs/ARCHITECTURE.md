@@ -50,7 +50,7 @@ flowchart LR
         libs --> io
     end
     raw[("origin/** 原始 MAT / MATLAB")]
-    out[("results/<RunId> 新结果")]
+    out[("output/<RunId> 隔离新结果")]
     raw -.只读输入.-> io
     io -->|"仅新输出目录"| out
 ```
