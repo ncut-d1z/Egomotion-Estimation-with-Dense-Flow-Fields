@@ -1,6 +1,6 @@
 # 系统概要设计（HLD）— MATLAB 自运动估计 C++ 移植
 
-> **状态：HLD v0.6 评审草案，未冻结。** 当前统一文档版本与冻结状态见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，实际 matio 探针/构建/CTest/数值证据仅见 [PROGRESS.md](PROGRESS.md)；此处只定义稳定架构边界，不以历史探针代替架构验收。 来源是已核对的 MATLAB 源码和原 PLAN §3/4/6。需求依据见 [REQUIREMENTS.md](REQUIREMENTS.md)，类职责附件见 [OBJECT_MODEL.md](OBJECT_MODEL.md)，详细设计待定见 [design/README.md](design/README.md)，执行安排见 [PLAN.md](PLAN.md)。以 [AGENTS.md](../AGENTS.md) 和项目所有者批准为准。
+> **状态：HLD v0.7 评审草案，未冻结。** 当前统一文档版本与冻结状态见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，实际 matio 探针/构建/CTest/数值证据仅见 [PROGRESS.md](PROGRESS.md)；此处只定义稳定架构边界，不以历史探针代替架构验收。 来源是已核对的 MATLAB 源码和原 PLAN §3/4/6。需求依据见 [REQUIREMENTS.md](REQUIREMENTS.md)，类职责附件见 [OBJECT_MODEL.md](OBJECT_MODEL.md)，详细设计待定见 [design/README.md](design/README.md)，执行安排见 [PLAN.md](PLAN.md)。以 [AGENTS.md](../AGENTS.md) 和项目所有者批准为准。
 
 ## 1. 架构目标、质量属性和约束
 
@@ -232,7 +232,7 @@ P0.7/P0.8 需校验本 HLD、[OBJECT_MODEL.md](OBJECT_MODEL.md)、MAT schema、L
 
 | 场景 ID / 质量属性 | 刺激与环境 | 架构响应 | 度量/证据及状态 |
 |---|---|---|---|
-| QA-01 数据完整性 | 用户把输出根目录设为 origin 子目录、软链接别名或旧 RunId | 拒绝写入；原数据不变 | 原始 582 MAT 与源 .m 哈希不变；TC-NF-SAFETY-001，设计已定、未测 |
+| QA-01 数据完整性 | 用户输入非法或重复 `--run-id`、已存在输出文件；或内部**固定仓库 `output/`** 被软链接/竞态替换，目标路径试图逃逸至 `origin/**` | CLI 拒绝非法 RunId；Composition Root/Writer 验证固定根及目标并独占创建，遭替换/已存在/越界则拒写；**CLI 不提供自定义输出根选项**，原数据保持只读不变 | 原始 582 MAT 与源 .m 身份/哈希不变；TC-NF-SAFETY-001，设计已定、TOCTOU/安全负例尚未执行 |
 | QA-02 可复现性 | 相同固定 N×6 流场进入 Franz、KvD、Adaptive | 输出独立步骤/中间量与状态；RNG 不影响固定样本 | 逐轮向量/矩阵误差表；DEC-005 容差待核 |
 | QA-03 数据格式可恢复性 | MAT 变量缺失、压缩块损坏、shape 错误 | Reader 返回带文件/变量上下文的错误，不覆盖既有结果 | 正常归档路径 582/582 已由探针验证；损坏输入负例与正式 Reader 的 TC-F-MAT-* 仍未测 |
 | QA-04 会话隔离 | 两个 Adaptive RunContext 交替执行，刷新频率不同 | akkoeff、mitkoeff、RNG、输出目录互不污染 | TC-NF-SESSION-001；同 Session 多线程安全**不在承诺范围** |
@@ -246,7 +246,7 @@ P0.7/P0.8 需校验本 HLD、[OBJECT_MODEL.md](OBJECT_MODEL.md)、MAT schema、L
 | ADR | 决策（与原 MATLAB 和 SRS 对应） | 状态 | 拟审查责任人与批准记录 |
 |---|---|---|---|
 | ADR-001 | 原始 MAT 只读、matio/zlib 直接读取、不开发 NPZ | **实测**：独立 matio 探针读取 582/582 MAT v5/double/zlib，失败 0；当前归档无需 HDF5。正式 Reader/Writer 合同未冻结 | [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md) 作为数据依据，项目所有者待批准支持范围 |
-| ADR-002 | Debian/Ubuntu、C++17/Eigen/CMake；H-02 增加拟采用的 Sophus SO(3)，H-04 提供 Ubuntu 24.04.4 VM/x86_64 快照 | 用户已明确指定开发主机；完整构建版本与性能阈值仍待执行/确认 | 维护者提交实际 build 矩阵，所有者批准 |
+| ADR-002 | Debian/Ubuntu、C++17/Eigen/CMake；**H-02 已选定 Sophus `SO3d::exp` 处理实际调用的旋转向量→矩阵分支**；H-04 给出 Ubuntu 24.04.4 VM/x86_64 环境快照 | **数学/依赖路线已选、未实现**；实际 Sophus 版本锁定、CMake 目标链接/编译、几何边界 L3 与性能阈值仍待执行/确认，不宣称已部署 | 维护者将来提交实际 build/CTest 与数值矩阵，项目所有者在具证据后批准正式基线 |
 | ADR-003 | 值语义/RAII/窄接口/组合优先；纯数学自由函数 | HLD 提议，未冻结 | P0.7 对象设计评审者 + 所有者 |
 | ADR-004 | Adaptive StepSolver 与跨帧 Session 分离；KvD 双入口保真 | HLD 提议，未冻结 | 数值/接口评审者 + 所有者 |
 | ADR-005 | 分析与可选绘图隔离，核心无图形运行 | 方向已定、后端待选 | 分析模块维护者 + 所有者 |
