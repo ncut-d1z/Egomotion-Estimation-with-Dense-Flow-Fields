@@ -101,7 +101,7 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 
 ### 2.2 失败结果、错误上下文与 RunContext 边界（候选）
 
-- `Result<T, MatErrorCode>` 成功分支只包含完整、符合不变量的 T；失败分支应同时含 `MatErrorCode` 和 [contracts.md §3](contracts.md) 的 `ErrorDetail`（含 `stage/source_path/variable`，在已分配 RunId 时附加 `run_id`）。采用 `Failure<MatErrorCode>{code, detail}` 还是其他实现方式由公共合同统一冻结，**不得引入第二套 MAT 错误枚举或全局 last_error**。
+- `Result<T, MatErrorCode>` 成功分支只包含完整、符合不变量的 T；失败分支应同时含 `MatErrorCode` 和 [contracts.md §3](contracts.md) 的 `ErrorDetail`（含 `stage/source_path/variable`，在已分配 RunId 时附加 `run_id`）。**已选定复用公共合同的 `Failure<MatErrorCode>{code, detail}` 失败记录及轻量 `Result/Status` 封装（内部 `std::variant`）**；具体 C++17 头文件、自包含性、异常边界和 ABI 尚待实际编译与 P0.8 审查。**不得引入第二套 MAT 错误枚举或全局 `last_error`**。
 - `Status<MatErrorCode>` 表示无值的成功/失败；失败同样须传播 `ErrorDetail`，而不是用 `true/false` 丢失失败位置。其实现与 `Result` 共同归 [contracts.md §3](contracts.md) 管理。
 - `MatDenseArray::fromColumnMajor` 是建议的唯一对外构造入口。Reader 完整解码后在 MAT I/O 实现边界按验证后的 double/列主序复制成自拥有值对象；**实验 Runner 不直接构造或依赖 MatDenseArray**。Composition Root 注入具体 IResultWriter，MAT I/O 适配层负责将 contracts/domain 值对象按二维 shape 变换为合格 MatDenseArray 后交给 Writer；不得让 experiments/analysis 反向依赖 io 具体类。
 - **固定输出根与身份来源**：CLI 没有输出根参数。Composition Root 从已确认的仓库根位置取得 `output/`，并将该**内部可信候选路径**注入 RunMatWriter；RunContext 使用同一根、拥有或生成经验证的 RunId（自动 ID 通过独立 OS 随机源创建，不消耗实验 RNG），在 `output/<RunId>/` 独占新建目录。Writer 每次写出仍需重新检查 root 的设备/目录身份、不覆盖/不逃逸，目标为 `output_root_ / run_id / (mat_variable_name + ".mat")`；不接受用户提供的另一个输出根。
