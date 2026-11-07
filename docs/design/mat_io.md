@@ -1,6 +1,6 @@
 # MAT I/O、路径安全与原始数据合同——详细设计草案
 
-> **LLD v0.5 候选草案，未冻结。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 Golden 仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
+> **LLD v0.5 候选草案，未冻结。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 L2 逐值/L3 独立参考验证仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
 
 ## 1. 原始行为、文件身份和支持版本
 
@@ -10,7 +10,7 @@
 - **旧脚本兼容读取**：按原脚本的路径/后缀解析规则取得数据，多变量场景须依据静态格式说明和独立 L3 例子核验枚举/冲突规则；若顺序无法确定则明确返回 AmbiguousVariable，**不要求运行 MATLAB 再冻结现有单变量归档合同**。不能随意以名称字典排序代替原行为。
 - **inspect**：列出全部变量元数据而不读取成算法领域类型或更改文件。
 
-**现有归档的格式已经实测**：`src/mat_data_dict_probe.cpp` 在 Ubuntu 24.04/matio 1.5.26 以 `Mat_Open(..., MAT_ACC_RDONLY)` 和 `Mat_VarRead` 读取全部 582 MAT/582 变量，失败 0；每个源 MAT 是 v5/zlib 压缩、单变量 class=double/data_type=double，flags 均为 `-`。详见 [MAT_DATA_SCHEMA.md](../MAT_DATA_SCHEMA.md)。当前数据不需要 HDF5；future 扩展到 v7.3 时再单独审核。
+**现有归档的格式已经实测**：`src/mat_data_dict_probe.cpp` 在 Ubuntu 24.04/matio 1.5.26 以 `Mat_Open(..., MAT_ACC_RDONLY)` 和 `Mat_VarRead` 读取全部 582 MAT/582 变量，失败 0；每个源 MAT 是 v5/zlib 压缩、单变量 class=double/data_type=double，flags 均为 `-`。详见 [MAT_DATA_SCHEMA.md](../MAT_DATA_SCHEMA.md)。当前数据不需要 HDF5；未来若扩展到 v7.3 应单独审查。
 
 ### 1.1 已确认的数据类型支持边界（基于 582/582 实测）
 
@@ -100,7 +100,7 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 
 - `Result<T, MatErrorCode>` 成功分支只包含完整、符合不变量的 T；失败分支应同时含 `MatErrorCode` 和 [contracts.md §3](contracts.md) 的 `ErrorDetail`（含 `stage/source_path/variable`，在已分配 RunId 时附加 `run_id`）。采用 `Failure<MatErrorCode>{code, detail}` 还是其他实现方式由公共合同统一冻结，**不得引入第二套 MAT 错误枚举或全局 last_error**。
 - `Status<MatErrorCode>` 表示无值的成功/失败；失败同样须传播 `ErrorDetail`，而不是用 `true/false` 丢失失败位置。其实现与 `Result` 共同归 [contracts.md §3](contracts.md) 管理。
-- `MatDenseArray::fromColumnMajor` 是建议的唯一对外构造入口。Reader 完整解码后复制字节解释为 double 并建立值对象；实验 Runner 将结果按源二维 shape 显式转换为列主序 double 后构造，Writer 只接受合格值对象。
+- `MatDenseArray::fromColumnMajor` 是建议的唯一对外构造入口。Reader 完整解码后在 MAT I/O 实现边界按验证后的 double/列主序复制成自拥有值对象；**实验 Runner 不直接构造或依赖 MatDenseArray**。Composition Root 注入具体 IResultWriter，MAT I/O 适配层负责将 contracts/domain 值对象按二维 shape 变换为合格 MatDenseArray 后交给 Writer；不得让 experiments/analysis 反向依赖 io 具体类。
 - **写入身份来源**：Composition Root 解析候选 `--output-root DIR` 并验证其为仓库根 `output/`；RunContext 独立生成/接收经验证的 RunId，在受控根目录下安全新建 `output/<RunId>/`。Writer 不自行生成 RunId、不将用户路径当作新根、不直接写任意目标，仅按既定 root/RunId 验证并发布 `output_root / run_id / (mat_variable_name + ".mat")`。同时校验元数据变量名与参数变量名相符。
 - Writer 在文件系统层必须**再次约束** root、RunId、最终文件名、独占创建和已有目标拒绝，不能仅依赖 CLI 的一次性检查；同一新 RunId 可安全写入多个不同变量，但不能覆盖已有 MAT 文件。符号链接/目录竞态的可靠实现与测试仍是 P1.9 门禁。
 
@@ -128,7 +128,7 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 
 **H-12 执行边界**：根目录 `.gitignore` 已新增 `/output/` 忽略规则；只计划在该目录生成新的结果和隔离负例副本，**不以全局 `*.mat` 排除原始资料**。即使 H-12 的路径方案已被用户确认，该 JSON 同时包含 H-10=deferred 和 `permissions.writeMat=false`，因此**本轮无权创建生产 Writer、运行写回读或模拟损坏的 MAT 负例**。既有 matio 探针只读记录仍独立有效。
 
-## 4. MAT 数据字典和 Golden 来源
+## 4. MAT 数据字典与 L2/L3 参考数据来源
 
 **正式 matio 全量字典已存在**：[MAT_DATA_SCHEMA.md](../MAT_DATA_SCHEMA.md)，逐文件列出 FNV64、版本、变量、class/type、dims、flags 和读取结果。以下表格区分已记录证据与仍需开发的业务 Reader/数值验收：
 
