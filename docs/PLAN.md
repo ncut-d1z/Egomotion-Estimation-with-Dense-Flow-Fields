@@ -21,6 +21,8 @@
 
 ## 1. 目标、不可变约束与完成定义
 
+**长期政策**：[无需 MATLAB 执行](golden/NO_MATLAB_EXECUTION_POLICY.md) 已由项目所有者明确选定：原 `.m` 仅只读审查，**禁止将运行 MATLAB/Octave 或取得 L1 视为任何 P 工作项、里程碑、基线或验收的前置条件**；应以 L2/L3/L4 独立参考、实际 C++ 测试及其明确覆盖范围为准。H-10/H-11 的其他真实执行暂缓仍有效。
+
 本项目以忠实移植（Faithful Port）为首要原则，把 Simon Strübbe、Wolfgang Stürzl、Martin Egelhaaf 的 **Egomotion Estimation with Dense Flow Fields: MATLAB Scripts** 移植为可在 **Debian/Ubuntu** 上独立构建和运行的 **C++17** 程序，复现原始数值实验、数据输出与图表分析流程。
 
 | 事项 | 固定决策 |
@@ -229,7 +231,7 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 | P4.5 | mue_norm_koenderink_iteration：保留移除额外 near 因子的**修正平移更新**，不依靠一个容易误配的布尔选项隐藏差异 | P4.3 | REQ-F-KVD-001 | TC-F-KVD-001 / AC-F-KVD-001 | 逐轮近度/t/ω、残差；未实施/未验收 |
 | P4.6 | 精确复现两者至少 6 次迭代、最多 200 次、动态阈值和绝对阈值组合的退出逻辑；输出迭代次数/残差 | P4.4、P4.5 | REQ-F-KVD-002 | TC-F-KVD-002 / AC-F-KVD-002 | 逐轮近度/t/ω、残差；未实施/未验收 |
 | P4.7 | transfehler_div 与 normrelfehler 分别实现与测试；特别验证零范数或 acos 越界的定义和状态 | P2.2 | REQ-F-ERROR-001、REQ-NF-NUM-002 | TC-F-ERROR-001、TC-NF-NUM-002 / AC-F-ERROR-001、AC-NF-NUM-002 | 逐轮近度/t/ω、残差；未实施/未验收 |
-| P4.8 | 用固定 N×6 流场比较 Franz、两种 KvD 的逐轮中间结果；数值等价检查先于批量实验 | P4.6、P4.7 | REQ-F-KVD-002、REQ-NF-NUM-001 | TC-F-KVD-002、TC-NF-NUM-001 / AC-F-KVD-002、AC-NF-NUM-001 | 逐轮近度/t/ω、残差；未实施/未验收 |
+| P4.8 | 用固定 N×6 流场，依据源静态公式建立**独立 L3 逐轮近度/运动/残差/停止**参考，并与 Franz、两种 KvD 的 C++ trace 比较；不要求运行 MATLAB | P4.6、P4.7 | REQ-F-KVD-002、REQ-NF-NUM-001 | TC-F-KVD-002、TC-NF-NUM-001 / AC-F-KVD-002、AC-NF-NUM-001 | 逐轮近度/t/ω、残差；未实施/未验收 |
 | P4.9 | 实现 KvDIterationEngine + IKvDTranslationRule 的组合以及 OriginalKvDEstimator、ModifiedKvDEstimator 两个明确入口；测试算法差异、状态不串扰和停止条件 | P4.4、P4.5、P4.6 | REQ-F-KVD-001、REQ-DC-KVD-001 | TC-F-KVD-001、TC-DC-KVD-001 / AC-F-KVD-001、AC-DC-KVD-001 | 逐轮近度/t/ω、残差；未实施/未验收 |
 | P4.10 | 将 FranzMatchedFilter 做成可独立实例化、无跨样本状态的求解服务，检查其模板存储私有性及 Run 之间的行为一致性 | P4.2 | REQ-F-FILTER-001 | TC-F-FILTER-001 / AC-F-FILTER-001 | 逐轮近度/t/ω、残差；未实施/未验收 |
 
@@ -250,7 +252,7 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 | ID | 单一子任务与验收要点 | 前置 P | REQ | TC / AC | 证据要求与当前状态 |
 |---|---|---|---|---|---|
 | P6.1 | drehvektor_aus_zwei_vektoren：方向间旋转轴角，处理近零与反向向量情形并记录原始 MATLAB 行为 | P2.2 | REQ-F-TRAJ-001 | TC-F-TRAJ-001 / AC-F-TRAJ-001 | 轨迹/旋转黄金向量；未实施/未验收 |
-| P6.2 | **H-02 指定 Sophus `SO3d::exp` 替代 rodrigues** 实际使用的旋转向量→3×3 分支，保留原小角 `eps` 分支、Rᵀ 局部坐标语义并准备固定输入 Golden；未用的逆向/Jacobian 不机械移植；H-10 暂缓实际实现 | P2.2 | REQ-F-TRAJ-001 | TC-F-TRAJ-001 / AC-F-TRAJ-001 | 轨迹/旋转黄金向量；未实施/未验收 |
+| P6.2 | **H-02 指定 Sophus `SO3d::exp` 替代 rodrigues** 实际使用的旋转向量→3×3 分支，保留原小角 `eps` 分支、Rᵀ 局部坐标语义并准备独立 L3 固定输入旋转参考（不执行 MATLAB）；未用的逆向/Jacobian 不机械移植；H-10 暂缓实际实现 | P2.2 | REQ-F-TRAJ-001 | TC-F-TRAJ-001 / AC-F-TRAJ-001 | 轨迹/旋转黄金向量；未实施/未验收 |
 | P6.3 | kreis_trajektorie：圆轨迹点序列、半径、高度，避免生成函数含有绘图副作用 | P2.1 | REQ-F-TRAJ-001 | TC-F-TRAJ-001 / AC-F-TRAJ-001 | 轨迹/旋转黄金向量；未实施/未验收 |
 | P6.4 | sinuskurve_trajektorie：正弦轨迹点序列、周期、幅值、长度、高度，保持离散分母和端点语义 | P2.1 | REQ-F-TRAJ-001 | TC-F-TRAJ-001 / AC-F-TRAJ-001 | 轨迹/旋转黄金向量；未实施/未验收 |
 | P6.5 | trajektorie_aus_punkten：相邻位置推导平移、绝对/相对转动并转到原约定坐标系；保留两端未填写元素 | P6.1、P6.2、P6.3、P6.4 | REQ-F-TRAJ-001 | TC-F-TRAJ-001 / AC-F-TRAJ-001 | 轨迹/旋转黄金向量；未实施/未验收 |
@@ -266,7 +268,7 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 | P7.3 | near_aus_koeff：以 3×5 系数矩阵恢复离散近度；严格限定有效位置 | P7.2 | REQ-F-SH-001 | TC-F-SH-001 / AC-F-SH-001 | 球谐与 6×6 中间量；未实施/未验收 |
 | P7.4 | koeff_aus_near：逐项投影、4π 归一及范数除法，明确其与一般联合最小二乘的差异 | P7.2 | REQ-F-SH-001 | TC-F-SH-001 / AC-F-SH-001 | 球谐与 6×6 中间量；未实施/未验收 |
 | P7.5 | **H-14 方案 A**：参考 Don Williamson `Source/IvanicSHRotate.cpp/.h` 的 C++ 递推，适配 MATLAB l=0/1/2（R0、R3、R5）旋转块及系数顺序；审查 sdla 依赖、README+第三方 MIT LICENSE；H-10 暂缓代码 | P7.2、P6.2 | REQ-F-SH-002 | TC-F-SH-002 / AC-F-SH-002 | 球谐与 6×6 中间量；未实施/未验收 |
-| P7.6 | transfor_koeff：结合 **Sophus 输出的 3×3 物理旋转**与 **Don Williamson/ Ivanic 生成的 3×3、5×5 球谐块**，校准 R1 轴置换、R5 的 25 项、m 顺序及正向/逆向旋转；未来 Golden 先于数值等价认定 | P7.5 | REQ-F-SH-002 | TC-F-SH-002 / AC-F-SH-002 | 球谐与 6×6 中间量；未实施/未验收 |
+| P7.6 | transfor_koeff：结合 **Sophus 输出的 3×3 物理旋转**与 **Don Williamson/ Ivanic 生成的 3×3、5×5 球谐块**，校准 R1 轴置换、R5 的 25 项、m 顺序及正向/逆向旋转；独立 L3 全元素 Golden/批准容差先于数值等价认定 | P7.5 | REQ-F-SH-002 | TC-F-SH-002 / AC-F-SH-002 | 球谐与 6×6 中间量；未实施/未验收 |
 | P7.7 | oneit_adaptiv_matched_filter 的右端向量、四个 3×3 子块与 6×6 联立系统：分别建立可独立对照的数值阶段 | P7.3、P2.2 | REQ-F-ADAPT-001 | TC-F-ADAPT-001 / AC-F-ADAPT-001 | 球谐与 6×6 中间量；未实施/未验收 |
 | P7.8 | 单轮运动向量解析、平移归一化、残差、近度再计算、二阶球谐系数重估；明确状态输入/输出，不混成多帧类 | P7.4、P7.7 | REQ-F-ADAPT-001 | TC-F-ADAPT-001 / AC-F-ADAPT-001 | 球谐与 6×6 中间量；未实施/未验收 |
 | P7.9 | 对照原始 inv/real 的行为和 Eigen 解算差异，记录奇异、零范数及非有限输出，不未经验证更改默认求解结果 | P7.8 | REQ-F-ADAPT-001、REQ-NF-NUM-001、REQ-NF-NUM-002 | TC-F-ADAPT-001、TC-NF-NUM-001、TC-NF-NUM-002 / AC-F-ADAPT-001、AC-NF-NUM-001、AC-NF-NUM-002 | 球谐与 6×6 中间量；未实施/未验收 |
@@ -317,7 +319,7 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 
 ## 6. 子任务依赖、并行、里程碑与进出准则
 
-**审批适用的执行门禁**：上传 JSON H-10 为 `deferred`、H-11 为 `deferred`，全部运行/构建/写入/合并权限位均为 false；本阶段只能更新计划、LLD 和 `.gitignore`，不能编译、运行脚本、产生 Golden、合并 PR 或按已完成数计入 P 项。完整逐项解释见 [审批落实记录](approval/DECISION_IMPLEMENTATION_NOTES.md)。
+**审批适用的执行门禁**：上传 JSON H-10 为 `deferred`、H-11 为 `deferred`，全部运行/构建/写入/合并权限位均为 false；本阶段只能更新计划、LLD 和 `.gitignore`，不能编译、运行脚本、**执行** Golden 数值测试、合并 PR 或按已完成数计入 P 项。完整逐项解释见 [审批落实记录](approval/DECISION_IMPLEMENTATION_NOTES.md)。
 
 本计划每个 P 子任务的**直接前置依赖**已在 §5 的表格中列出，共 98 个节点。当前依赖检查依据：每个前置 ID 存在，且图中没有环；这是一份静态的规划图检查，不等于已有 C++ 构建或实现。阶段编号并非实际严格串行顺序，例如 P3.6 的几何求交依赖 P6.2 的 Rodrigues 数学，允许跨阶段依赖。
 
@@ -386,7 +388,7 @@ flowchart LR
 - 任何阶段退出需附该阶段实际 REQ/TC/AC/测试实体/输出 SHA 与失败数；未经真实构建的任务不写“编译成功”。
 - 当前可见的文档提交不代表 98 个 P 任务已验收。**当前进行中状态、里程碑缺口和 E-DATA/E-DOC 证据索引已登记在 [docs/PROGRESS.md](PROGRESS.md)**；后续必须随真实代码、测试、批准记录持续回填，不得将已存在的登记表等同于 98 项任务已验收。
 
-> **Golden 取证与里程碑口径**：新增 [L1–L4 来源证据与 AC 缺口表](golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md)。原 MATLAB 逐轮/逐节点/随机流/运行异常的 L1 当前未采集；582 个原始 MAT 的 L2 最终值并不包含这些过程数据；AN-G01～12 只是 L3 解析候选，L4 统计尚未执行。P4、P7、P8、P9、P10 的工作项顺序/REQ/TC/AC/退出条件**不变**；不得以 L2/L3/L4 替代原 AC 中已明确要求的 L1 来宣布任务或 M0–M5 通过。实际解除证据阻塞须依 H-10/H-11/DEC-005/DEC-008 的权限及独立证据，不自动新增 Octave/Python 生产依赖。
+ > **Golden 取证与里程碑口径（长期决策）**：以 [无需 MATLAB 执行政策](golden/NO_MATLAB_EXECUTION_POLICY.md) 为当前依据。L1 原 MATLAB 逐节点、RNG 和异常运行记录**永久退出必需证据/里程碑门禁**；L2 作者 582 MAT 最终结果、L3 独立固定输入逐节点解析/重实现、L4 统计是现行可行参考来源。P4/P7/P8/P9/P10 不得以缺 L1 为阻塞理由，但独立 L3 尚需完整覆盖、真实 C++/CTest 和 DEC-005/008 仍未批准，故不能宣称任务或 M0–M5 已验收。未经许可不运行 MATLAB/Octave 或任何受 H-10/H-11 限制的真实命令。
 
 ## 7. 数值等价与科学复现的验收标准
 
