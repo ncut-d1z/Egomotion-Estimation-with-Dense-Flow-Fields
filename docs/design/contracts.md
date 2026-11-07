@@ -43,7 +43,7 @@ struct RunId { std::string text; };
 
 ## 3. 统一结果/错误语义
 
-本项目**不使用 C++23 std::expected**。拟采用项目内定义的 Result<Value, Error>（值或错误二选一），无值的操作采用 Status<Error>；实际实现可用 C++17 std::variant / 显式 tagged union 等，并在 P0.8 冻结。不得将原 MATLAB 非有限输出压成伪造的正常零值。
+本项目**不使用 C++23 std::expected**。下方代码展示一种一致的 C++17 `std::variant` 候选：Result<Value, ErrorCode> 的值/Failure 二选一，无值的操作采用 Status<ErrorCode>；它尚未成为已批准 API，P0.8 可审定为封装类或其他带标签联合体。不得将原 MATLAB 非有限输出压成伪造的正常零值。
 
 ~~~cpp
 namespace egomotion {
@@ -72,8 +72,16 @@ struct ErrorDetail {
     std::string variable;
     std::optional<std::size_t> observation_index; // 无编号与 0-based 首个样本可区分
 };
-template<class Value, class Error> class Result;  // 拟由项目自行定义
-template<class Error> class Status;                // void 成功/失败合同
+// C++17 可评审实现候选；实际容器/ABI 待 P0.8 冻结。
+template<class ErrorCode>
+struct Failure {
+    ErrorCode code;
+    ErrorDetail detail;
+};
+template<class Value, class ErrorCode>
+using Result = std::variant<Value, Failure<ErrorCode>>;
+template<class ErrorCode>
+using Status = std::variant<std::monostate, Failure<ErrorCode>>;
 }
 ~~~
 
@@ -88,19 +96,7 @@ template<class Error> class Status;                // void 成功/失败合同
 
 建议以单一带类型的失败记录实现所有 Result/Status 的错误传播，而不是仅返回枚举或使用全局 last_error：
 
-~~~cpp
-template<class ErrorCode>
-struct Failure {
-    ErrorCode code;
-    ErrorDetail detail; // run_id/stage/path/variable/index 等上下文
-};
-
-template<class Value, class ErrorCode>
-using Result = std::variant<Value, Failure<ErrorCode>>;
-
-template<class ErrorCode>
-using Status = std::variant<std::monostate, Failure<ErrorCode>>;
-~~~
+上面 §3 的同一份候选代码包含 Failure<ErrorCode>、Result<Value,ErrorCode>、Status<ErrorCode>；**不在不同 LLD 或示例中第二次定义同名模板/别名**。实现时须具备 C++17 的 <variant>、<optional> 等头文件以及完整的 RunId/ErrorDetail 类型，且通过真正的编译与单元测试验证后才能称为可编码 ABI。
 
 **这是一种候选实现方式，不是已创建的头文件或正式 ABI**。Success 仅对应 Result 的 Value 或 Status 的 std::monostate；Failure 必有非成功 ErrorCode 和 ErrorDetail。不得用默认 Value、空对象、NaN/Inf 或布尔 false 代替 Failure；variant 出现 valueless_by_exception 时也**不是成功**，应按内部异常路径报告。是否采用上述别名、封装类或显式 tagged union 仍需 P0.8 决定，但以下不丢失错误上下文的语义是设计要求。
 
