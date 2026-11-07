@@ -2,7 +2,7 @@
 
 > **长期证据规则**：[不执行 MATLAB 的项目政策](../golden/NO_MATLAB_EXECUTION_POLICY.md) 已取消原 MATLAB L1 Golden 的强制门禁。LLD 与验收只要求来源清楚的 L2/L3/L4、真实 C++/CTest 和批准容差；**缺少 MATLAB 运行不阻塞冻结**，但不能宣称原脚本的未知异常/RNG/逐位输出已验证。
 
-> **LLD 索引 v0.4（所有模块草案、未冻结；未建立生产 C++/CTest 证据）。** 索引中的文件已实际创建，但其中的候选 C++17 接口、数学步骤、测试路径和错误枚举没有对应已实现代码。源 MATLAB 文件和已保存 MAT 仍由 origin/** 只读保存。
+> **LLD 索引 v0.5（所有模块草案、未冻结；未建立生产 C++/CTest 证据）。** 索引中的文件已实际创建，但其中的候选 C++17 接口、数学步骤、测试路径和错误枚举没有对应已实现代码。源 MATLAB 文件和已保存 MAT 仍由 origin/** 只读保存。
 
 ## 文档职责
 
@@ -66,7 +66,7 @@
 | 文档 | 已文档化的可执行设计检查点 | 尚缺的冻结证据 |
 |---|---|---|
 | contracts.md | FlowField N×6、3×5 近度系数、统一 Failure/Result/Status、ErrorDetail 允许阶段、MatDenseArray 的 io 归属与 DataMismatch 边界 | 实际类型/ABI、错误码和诊断协议批准、线程/异常合同测试 |
-| mat_io.md | MAT v5+zlib/double 类型与形状已实测；**v0.7 候选**已细化 MatDenseArray 的二维 double 自拥有值、严格/有界 compat 多变量规则、RunContext/Writer、egomotion_matio target 和负例/TC 测试文件映射；与 contracts 窄接口分离 | **仍缺**正式接口冻结、L2 逐值/SHA-256、L3 独立负例、Reader/Writer、写入/回读、安全 CTest 与 P10.4 复核 |
+| mat_io.md | MAT v5+zlib/double 类型与形状已实测；**v0.8 候选**已细化 MatDenseArray 的二维 double 自拥有值、严格/有界 compat 多变量规则、RunContext/Writer、egomotion_matio target 和负例/TC 测试文件映射；与 contracts 窄接口分离 | **仍缺**正式接口冻结、L2 逐值/SHA-256、L3 独立负例、Reader/Writer、写入/回读、安全 CTest 与 P10.4 复核 |
 | cli.md | 命令、参数/类型、固定输出根、独立 OS RunId、ErrorStage/JSONL 已选定 | 实际 CLI/CTest 仍不存在，参数负例和 JSONL 转义需测试 |
 | kvd.md | 原始/修正平移与旋转公式、最低/最大迭代、逐轮 trace 字段 | 独立 L3 逐轮 Golden、病态/停止边界、正式容差与 CTest |
 | harmonics.md | 九实基公式、3×5、R3/R5 全元素、HarmonicRotationBlocks 归属、私有递推 target 与测试映射 | 论文原文/勘误待上传、Eigen-only 递推未实现、独立 L3 逐元素参考与最终容差/CTest |
