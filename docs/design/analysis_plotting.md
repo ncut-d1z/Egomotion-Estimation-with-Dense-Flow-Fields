@@ -159,4 +159,6 @@ PlotExporter 仅消费 AnalysisDataset，输出图形位置必须在独立 RunId
 | graph_agent_in_sphere_adaptive_matched_filter_test | without_errors 的四误差和 rottransratio 均 `600×1`；with_errors 另有 alleadaprot/alleadaptrans，亦 `600×1` | 当前源码不写 `alleadap*`，历史额外数据来源仍需追踪 |
 | graph_agent_in_sphere_adaptive_matched_filter_many_parameter | 现存 allemittrans/allemitrot/alleadaptrans/alleadaprot 均 `600×4`；akrot/rottransratio 均 `600×1` | 当前多频率生成脚本实际只保存两个 allemit 字段及 akrot；分析又读取历史 rottransratio，不能虚构其生成来源 |
 
+**H-07 审批状态**：用户仅允许先核对 `alleadap*`、`rottransratio` 在历史 MAT/当前脚本 save/分析入口中的差异，**未批准归因或新建历史缺失字段**。应形成“当前脚本生成/历史归档额外/来源未确认”三态字段表，而不是修改原 MAT 或擅自修正统计口径。
+
 后续验收要分别进行：(1) `Mat_VarRead` 正常读取、rank/dims 解析（**已有独立探针证据**）；(2) 业务 Reader 将 MAT 列主序数据正确映射到分析数组；(3) 分段、窗口、指标及数值曲线与原 MATLAB 的 Golden 逐项相符；(4) 可选绘图输出。只有 (1) 有实际完成证据，其余仍未实施。
