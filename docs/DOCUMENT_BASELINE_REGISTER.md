@@ -1,6 +1,6 @@
 # 文档类型、版本、Git SHA 与基线状态控制矩阵
 
-> **文档管理登记，非正式已签署基线。** 下列文件 Git blob SHA 均来自固定快照 commit `0e3067b59c0836e8c6153cdbf0d352a75572a561`，本矩阵自身的提交晚于该快照；不得将静态文件身份冒充文档批准。SRS v0.8、HLD v0.5 与模块 LLD v0.x 均采用各自独立版本，正式状态全部**未冻结**。如果快照后文件发生变更，必须重新登记其 SHA。
+> **文档管理登记，非正式已签署基线。** 下列 27 份文档的 Git blob SHA 均来自固定快照 commit `afe3da9091c7d9df17431cd5b427cd1361167f46`；**本矩阵自身的更新提交晚于该快照**。当前 SRS v0.9、HLD v0.5、对象模型 v0.3，WBS/TEST_PLAN v0.4，容差参考 v0.2；各文档版本独立，正式状态全部**未冻结**。后续修改任一文件须另行更新对应 SHA。
 
 ## 1. 文档职责与唯一规范来源
 
@@ -19,13 +19,13 @@
 
 ## 2. 当前核心文档与 blob SHA
 
-**快照：** `0e3067b59c0836e8c6153cdbf0d352a75572a561`。记录各文件在该 Git commit 上的精确 blob SHA；**本文件的提交晚于快照**，仅作为新登记本身，不代表批准。所有核心规范均为评审草案，PROGRESS 属于滚动证据记录而非编码基线。
+**快照：** `afe3da9091c7d9df17431cd5b427cd1361167f46`。每条文件身份均为该提交的 blob SHA，不能用本矩阵或历史静态检查代替正式批准；其中 `PROGRESS.md` 为滚动证据记录，非编码基线。
 
 | 层次 | 文档 | 文档版本 | Git blob SHA | 正式基线 | 范围 |
 |---|---|---|---|---|---|
-| SRS | [docs/REQUIREMENTS.md](REQUIREMENTS.md) | v0.8 | `f1fed50e753d30ed87c29c7e82390e77b8b52b59` | 未冻结 | REQ/AC + 附录 A 设计约束 |
+| SRS | [docs/REQUIREMENTS.md](REQUIREMENTS.md) | v0.9 | `4227ea1b33baa3d33c55cdc442aa1f8c6c437afe` | 未冻结 | REQ/AC + 附录 A 设计约束 |
 | HLD | [docs/ARCHITECTURE.md](ARCHITECTURE.md) | v0.5 | `1076a55eed9ee4d547e2cc4132d954cb34fd2c52` | 未冻结 | 组件/部署/27 条 target 边及 ADR |
-| HLD 附件 | [docs/OBJECT_MODEL.md](OBJECT_MODEL.md) | v0.2 | `47955081499247245b4f813f3086d7d1d079376a` | 未冻结 | 对象生命周期/45 文件映射 |
+| HLD 附件 | [docs/OBJECT_MODEL.md](OBJECT_MODEL.md) | v0.3 | `ebc8aa3bc5cd7bc504676059c34bb1d2d766d5c2` | 未冻结 | 对象生命周期/45 文件映射 |
 | 跨模块 LLD | [docs/design/contracts.md](design/contracts.md) | v0.1 | `6ecd88effd5b3f05d6bd7c6f013cc2805af0bb9c` | 未冻结 | Result/Status/ErrorDetail 与领域数据 |
 | CLI LLD | [docs/design/cli.md](design/cli.md) | v0.2 | `94fffed91f5f3ff8691f50eb69d9a81ece549c51` | 未冻结 | 命令、JSONL、固定输出根 |
 | MAT I/O LLD | [docs/design/mat_io.md](design/mat_io.md) | v0.6 | `3a34af8995eaba5f10e89008f4ecfee5b30be9c6` | 未冻结 | 自拥有数据/Reader/Writer/安全 |
@@ -37,9 +37,9 @@
 | 实验 LLD | [docs/design/experiments.md](design/experiments.md) | v0.2 | `3b439d4020f1c7aa8f21d233128d2182f320e4da` | 未冻结 | 五入口/当前 save、HistoricalOnly |
 | 分析 LLD | [docs/design/analysis_plotting.md](design/analysis_plotting.md) | v0.2 | `78ff555c1d64f62ffcc953ba3f142ac5abc84d20` | 未冻结 | L2 读取、L3 曲线/缺字段拒绝 |
 | LLD 索引 | [docs/design/README.md](design/README.md) | v0.2 | `bb4e75b25c8f4ff98f7cb5fcf430f07dadf48b94` | 未冻结 | 模块 LLD 范围/冻结条件 |
-| 实施 WBS | [docs/PLAN.md](PLAN.md) | v0.3 | `ae0afe31ef64aff9371463e4ac0bbae1b60a9671` | 未冻结 | 98 个 P 工作项 |
-| 测试计划 | [docs/TEST_PLAN.md](TEST_PLAN.md) | v0.3 | `19aa1cfcd58289935f92b5d275ca31d06aa71929` | 未冻结 | 66 TC→候选测试→AC |
-| 证据登记 | [docs/PROGRESS.md](PROGRESS.md) | v0.1（滚动） | `6b67ffe14729428034b725887211c362d31fc3ce` | 未冻结 | 真实结果/历史证据/DEC 当前状态 |
+| 实施 WBS | [docs/PLAN.md](PLAN.md) | v0.4 | `c50264368656a97883db377b8390aaf98af093fa` | 未冻结 | 98 个 P 工作项 |
+| 测试计划 | [docs/TEST_PLAN.md](TEST_PLAN.md) | v0.4 | `985ecc1d228613aaf9aad050525716e56b01e14a` | 未冻结 | 66 TC→候选测试→AC |
+| 证据登记 | [docs/PROGRESS.md](PROGRESS.md) | v0.1（滚动） | `85fff44e3ba516140f087bd907a3ab26fe356f87` | 未冻结 | 真实结果/历史证据/DEC 当前状态 |
 
 **全部核心基线签署字段现为未提供**：正式批准人、批准日期与时区、批准 commit SHA、冻结生效范围、例外 DEC 与批准证据。已有所有者**技术方案选择**和根 MIT 许可授权，不等于批准整份 SRS/HLD/LLD 或测试 PASS。对版本表的任何变更必须引用新 Git commit/对应 blob SHA。
 
@@ -55,7 +55,7 @@
 | DEC-004 | [docs/decisions/DEC-004_HISTORICAL_MAT_FIELDS.md](decisions/DEC-004_HISTORICAL_MAT_FIELDS.md) | `063acaa2dc8e7524546fb85a985a7f8b8e860a88` | 已决策，代码未实施 |
 | 无 MATLAB 政策 | [docs/golden/NO_MATLAB_EXECUTION_POLICY.md](golden/NO_MATLAB_EXECUTION_POLICY.md) | `c0553344482c7ce5068c73ec45d651eac70273f6` | L1 不再必需 |
 | 证据等级附件 | [docs/golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md](golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md) | `7e19801646f2eed343c452bfd9a1736e1e6acca2` | L2/L3/L4 归类 |
-| 容差策略附件 | [docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md](golden/GOLDEN_TOLERANCE_PROPOSAL.md) | `a1a2122887c4030dfadfd01199aed5e482b7b8b2` | 0.01/0.1 首轮筛查，最终阈值未冻结 |
+| 容差策略附件 | [docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md](golden/GOLDEN_TOLERANCE_PROPOSAL.md) | `736c082e8beab2f76dff2585fca27b10f321d775` | v0.2；0.01/0.1 首轮筛查，最终阈值未冻结；R5 独立 Eigen 参考 |
 | 开发规则 | [AGENTS.md](../AGENTS.md) | `7d609ccff2ecb41814b3bdbc7986dcccaaa2d6bf` | 只读原资料/实际运行授权 |
 | 延期人类事项 | [docs/TODO.md](TODO.md) | `c3f6d4b79dd7c0bbe4074006c75f214b182f2af4` | 材料、H-10/H-11、DEC-005/006、最终基线/发布：原因及建议阶段，**没有当前授权** |
 | 本轮只读审查 | [docs/reviews/DOCUMENT_REVIEW_AND_SH_DECLARATIONS_2026-11-07.md](reviews/DOCUMENT_REVIEW_AND_SH_DECLARATIONS_2026-11-07.md) | `580e98eae40a5378128b139ce531b6ded11c6c2e` | 历史固定 SHA 下的 GitHub 只读 ID/DAG/引用核对，非真实 Bash/CTest |
