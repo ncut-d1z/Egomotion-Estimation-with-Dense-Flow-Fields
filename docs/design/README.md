@@ -56,7 +56,7 @@
 
 ## 当前阻塞汇总
 
-MAT 数据的 **582 文件全量 matio 字典已实际生成并提交**，包含 582 个 `READ_OK`、0 失败，以及 MATLAB class/data_type/dims/压缩和文件指纹。**H-02 已限定选择 Sophus 与 Don Williamson 的原 C++ SHRotation、H-14 选定方案 A；H-04 给出 Ubuntu 24.04.4 VM 快照、H-12 选定隔离 `output/`**。未完成的事项仍包括这些第三方源码的许可告知与 sdla 依赖审核、Reader/Writer/写回读、负例、P10.4 独立复核、CLI/error schema 冻结、Golden 与正式容差、完整 Debian/Ubuntu 构建矩阵。H-10/H-11 暂缓执行。因此，本目录除跨模块合同外的 **9 份模块 LLD** 可以用于进一步评审和实施准备，但均**不是正式冻结的 LLD 编码基线**。
+MAT 数据的 **582 文件全量 matio 字典已实际生成并提交**，包含 582 个 `READ_OK`、0 失败及 MATLAB class/data_type/dims/压缩信息。**项目根 MIT LICENSE 已创建；球谐必须参考 Ivanic–Ruedenberg 1996 原始论文和 1998 勘误，以 Eigen 完全重写并禁止 sdla（待用户上传 PDF）；普通版权复核不再阻塞代码开发**。未完成的事项是 Reader/Writer/回读、L2 逐值及 SHA-256、L3 独立全量参考、异常负例、CLI/Result 真实实现、真正的 CMake target/CTest、最终 DEC-005 阈值与统计验证；此前 H-10/H-11 的现场执行仍按阶段授权，不因本设计决定自动运行。
 
 
 ## LLD 证据就绪度与源 MATLAB 核查重点
