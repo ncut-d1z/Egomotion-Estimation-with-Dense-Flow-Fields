@@ -1,6 +1,6 @@
 # Egomotion Estimation with Dense Flow Fields：软件需求规格说明书（SRS）
 
-> **状态：草案 v0.8，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
+> **状态：草案 v0.9，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
 
 ## 1. 目的、范围与约束
 
@@ -25,7 +25,7 @@
 | UC-02 | inspect MAT | 不修改源数据地显示变量及形状 | 损坏、变量不存在、类型不支持时明确失败 |
 | UC-03 | 运行两类 Bias | 新 RunId 下写出兼容 MAT | 不覆盖历史、不吞掉失败 |
 | UC-04 | 运行 Adaptive 三类实验 | 各输出及参数与 MATLAB 一致 | 退化或失败样本如实记录 |
-| UC-05 | 分析历史 MAT 与绘图 | 与求解器隔离地产生统计和图示 | 发现历史工件差异时标注待归因 |
+| UC-05 | 分析历史 MAT 与绘图 | 与求解器隔离地产生统计和图示 | 依 DEC-004 将历史专属字段标为 `HistoricalOnly` 并只读保留，**不要求先归因**；新结果缺少分析必需字段时明确返回非成功，不伪造数据 |
 | UC-06 | 审核需求和复现证据 | 从来源追踪 REQ、AC、TC、P、提交与日志 | 未执行不得标为已通过 |
 
 ## 3. 需求编号、优先级、状态
@@ -505,7 +505,8 @@
 | v0.5 | 所有者确定项目 MIT、Ivanic–Ruedenberg 原文+勘误/Eigen 且禁 sdla、取消输出根 CLI 选项、封装 Result/JSONL、独立实验配置与失败策略、首轮 0.01/0.1 筛查 | 技术方向已定；正式测试与最终数值验收基线未冻结 |
 | v0.6 | DEC-004 历史字段处理获选定；REQ-DC 八项移入设计约束附录而保留 ID/AC/TC；数学行为与实现选型引用 HLD/LLD 单一来源；完善 L2/L3/L4 术语 | 历史草案 |
 | v0.7 | §6.1 CLI 外部参数类型与 `cli.md` 和 TEST_PLAN 一致，明确设计细节仍归 HLD/LLD；保留原 66 REQ/AC/TC | 评审草案，未批准/未冻结 |
-| v0.8 | REQ-F-CLI-002 移除“结果目录参数”残留；固定 `output/<RunId>/`、可选 `--run-id`，并澄清 H-14 的现行数学依据为 Ivanic–Ruedenberg 原文/勘误、Eigen-only、Don Williamson 仅参考 | 评审草案；REQ/AC/TC 数量及 ID 不变，未冻结 |
+| v0.8 | REQ-F-CLI-002 移除“结果目录参数”残留；固定 `output/<RunId>/`、可选 `--run-id`，并澄清 H-14 的现行数学依据为 Ivanic–Ruedenberg 原文/勘误、Eigen-only、Don Williamson 仅参考 | 历史评审草案 |
+| v0.9 | UC-05 历史数据异常语义与已决定的 DEC-004 一致：`HistoricalOnly` 只读保留、无需归因、缺少分析必需字段明确失败；不改变既有 REQ/AC/TC | 评审草案，未冻结或运行测试 |
 
 
 ## 附录 A：内部设计约束清单（REQ-DC）
