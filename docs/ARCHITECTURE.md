@@ -42,7 +42,7 @@ flowchart LR
     subgraph host["Debian / Ubuntu GNU/Linux"]
         cli["egomotion CLI"]
         libs["C++17 domain / simulation / estimator / analyzer"]
-        io["matio 1.5.26 + zlib；已读 582 MAT v5"]
+        io["matio/zlib（历史探针 1.5.26）；已读 582 MAT v5"]
         plot["可选绘图导出"]
         cli --> libs
         cli --> io
@@ -58,8 +58,17 @@ flowchart LR
 - 运行进程仅在 Debian/Ubuntu 构建；MAT 文件由本地文件系统提供，不要求网络或 MATLAB/Python 服务。
 - 原始输入目录的文件句柄只读、哈希不变；写入器不得通过软链接或路径穿越覆盖 origin。
 - 只有 `inspect-mat`、实验生成、数据分析是数值主路径；图形服务可缺失，不影响无界面运行。
-- **H-04 已指明运行环境**：Ubuntu 24.04.4 VirtualBox / x86_64（用户提供 `uname -a`、`df`、`free` 快照），不是本轮执行测试的证据；物理内存总 `8127380` KiB、当时 available `4908696` KiB、Swap `4194300` KiB、根分区当时可用 `65347856` KiB。历史独立 matio 探针记录 GCC 13/matio 1.5.26，但本次 JSON 未提供 Sophus/CMake 的新版本实测。
-- H-04 **未指定可作为性能通过/失败判据的墙钟、CPU、RSS、构建耗时或线程数阈值**。Debian 具体版本与其余配置仍待实际验证；任何已选平台和容量快照均不表示完整工程已通过构建。
+**H-04 环境事实与预算/验收门槛分栏（均非本轮现场实测）**：
+
+| 项目 | 用户提供或历史记录的事实 | 项目预算/验收状态 |
+|---|---|---|
+| 目标系统 | 用户 `uname -a`：Ubuntu 24.04.4 VirtualBox、x86_64 | 已作为目标环境快照；不是业务构建通过或 Debian 兼容性证据 |
+| RAM/Swap | 用户 `free`：物理内存总 `8127380` KiB，当时 available `4908696` KiB，Swap 总 `4194300` KiB | **不是**批准的峰值 RSS、并发量、线程数或性能上限 |
+| 磁盘 | 用户 `df`：根分区当时可用 `65347856` KiB | **不是**批准的构建/输出/测试磁盘配额 |
+| 编译工具与依赖 | 历史独立 MAT 探针：GCC 13、matio 1.5.26；该用户快照无新的 Sophus/Eigen/CMake 版本证据 | 生产目标尚未实际构建/链接；支持版本范围仍待核准 |
+| wall / CPU / RSS / 构建时间 | 本次审批未提供业务程序测量值 | **无已批准性能预算或通过/失败阈值**；DEC-006 仍开放 |
+
+表中 `uname/df/free` 来源为用户审批 JSON；探针版本属于**早前独立记录**，两者不能混成同一次运行证据。完整平台与性能核验仍以 [TEST_PLAN.md §6–7](TEST_PLAN.md) 的未来执行记录为准。
 
 ### 2.2 已实测的 MAT 数据合同
 
