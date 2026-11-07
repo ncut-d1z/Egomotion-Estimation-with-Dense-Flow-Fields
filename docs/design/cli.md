@@ -14,7 +14,7 @@
 
 | 命令 | 必需选项 | 可选选项 | 已知输出、选择与来源边界 |
 |---|---|---|---|
-| `inspect-mat` | `--file PATH` | `--variable NAME`、`--mode strict/compat`（默认 strict） | 未指定变量时仅列举元数据；strict+NAME 指定变量；compat 且不带 NAME 时模拟原 getflowfield 读首变量。compat+NAME 视为参数错误；多变量首字段顺序待 Golden 解决 |
+| `inspect-mat` | `--file PATH` | `--variable NAME`、`--mode strict/compat`（默认 strict） | 未指定变量时仅列举元数据；strict+NAME 指定变量；compat 且不带 NAME 时模拟原 getflowfield 读首变量。compat+NAME 视为参数错误；**单变量文件**按现有归档合同读唯一变量，**多变量且没有获批准的独立顺序依据**返回 `MatErrorCode::AmbiguousVariable`，不采用字母序猜测；完整边界见 [mat_io.md §7.4](mat_io.md)，无需 MATLAB 运行 |
 | `run-bias-occluded` | `--seed UINT32 --level NONNEG_INT --output-root DIR` | `--run-id ID` | 使用缺损八面体、平均光流模长噪声；level 为包含端点的最大递归级别；写 xwerte 和 ywerte1…6 |
 | `run-bias-proportional` | 同上 | `--run-id ID` | 使用完整八面体和逐分量噪声；保留原作者 xwerte 与真实 N 不同的行为 |
 | `run-adaptive-init` | `--output-root DIR` | `--run-id ID` | 35 点、level=2；四类初始化误差 MAT |
@@ -42,7 +42,7 @@
 |---:|---|---|
 | 0 | 成功 | help、version 或正常完成 |
 | 2 | 参数错误 | 未知/重复/缺少参数、非法枚举、整数格式 |
-| 3 | 输入或 MAT 读取错误 | 文件不存在/拒绝访问、坏 MAT 头、损坏压缩块、缺变量 |
+| 3 | 输入或 MAT 读取错误 | 文件不存在/拒绝访问、坏 MAT 头、损坏压缩块、缺变量、兼容多变量顺序不明（AmbiguousVariable） |
 | 4 | 变量类型/布局错误 | 不支持的 MAT class/data_type、rank/dims 不匹配、长度溢出 |
 | 5 | 数值或实验失败 | SingularSystem、NonFiniteResult、SolverFailed、IncompleteRun |
 | 6 | 输出路径/结果安全冲突 | origin 路径、已有 RunId、写失败、独立回读不一致 |
