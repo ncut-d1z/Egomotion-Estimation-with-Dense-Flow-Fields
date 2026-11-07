@@ -19,7 +19,7 @@
 
 | 模块 | 对应文档 | 原只读 MATLAB 源范围 | 数学/数据约定 | 候选 API | L2/L3/L4 参考/实测 | 冻结状态 |
 |---|---|---|---|---|---|---|
-| 跨模块 C++17 合同 | [contracts.md](contracts.md) | SRS/OBJECT_MODEL/全部模块 | 值类型、ErrorDetail 稳定字段与唯一 Mat/Num/Experiment 错误码；MatDenseArray 归 io | **Failure/Result/Status 的 C++17 variant 候选**，DataMismatch 限定范围 | 无真实测试 | 未冻结，P0.8/DEC-008 |
+| 跨模块 C++17 合同 | [contracts.md](contracts.md) | SRS/OBJECT_MODEL/全部模块 | 值类型、ErrorDetail 稳定字段与唯一 Mat/Num/Experiment 错误码；MatDenseArray 归 io | **轻量封装 Result/Status（内部 variant）已选定，仍未实现**，DataMismatch 限定范围 | 无真实测试 | 未冻结，P0.8/DEC-008 |
 | CLI 参数与错误协议 | [cli.md](cli.md) | 五个实验入口、inspect、analyze、可选 plot | 按入口列出参数/合法范围、退出码与诊断字段 | 候选命令/错误 schema | 未测 | 阻塞 P0.8/P1.2、DEC-008 |
 | MAT I/O | [mat_io.md](mat_io.md) | getflowfield、各入口 load/save、582 MAT | **582/582 真实 v5+zlib/double 类型字典已获得**；生产 Reader/Writer、路径安全仍待验收 | 候选签名/错误码 | **独立探针已执行，非 CTest** | DEC-001/002 格式事实已证实，接口未冻结 |
 | 基础采样与噪声 | [sampling_noise.md](sampling_noise.md) | findeDreiecke、采样/流/噪声函数 | 数量、顺序、噪声方程、RNG 消耗与自拥有 FlowField/结果 | **egomotion_sampling/simulation 的接口、头文件边界与 TC/CTest 候选** | L3 独立有序方向/固定 RNG 仍待验证 | 未冻结，P0.8/DEC-008 |
@@ -65,14 +65,14 @@ MAT 数据的 **582 文件全量 matio 字典已实际生成并提交**，包含
 |---|---|---|
 | contracts.md | FlowField N×6、3×5 近度系数、统一 Failure/Result/Status、ErrorDetail 允许阶段、MatDenseArray 的 io 归属与 DataMismatch 边界 | 实际类型/ABI、错误码和诊断协议批准、线程/异常合同测试 |
 | mat_io.md | MAT v5+zlib/double 类型与形状已实测；**v0.6 候选**已细化 MatDenseArray 的二维 double 自拥有值、严格/有界 compat 多变量规则、RunContext/Writer、egomotion_matio target 和负例/TC 测试文件映射；与 contracts 窄接口分离 | **仍缺**正式接口冻结、L2 逐值/SHA-256、L3 独立负例、Reader/Writer、写入/回读、安全 CTest 与 P10.4 复核 |
-| cli.md | 命令、参数/类型、固定实验语义、失败类别及字段候选已表格化 | RunId 自动命名、JSONL/键值格式、部分参数合法边界待批准；真实 CLI/CTest 不存在 |
+| cli.md | 命令、参数/类型、固定输出根、独立 OS RunId、ErrorStage/JSONL 已选定 | 实际 CLI/CTest 仍不存在，参数负例和 JSONL 转义需测试 |
 | kvd.md | 原始/修正平移与旋转公式、最低/最大迭代、逐轮 trace 字段 | 独立 L3 逐轮 Golden、病态/停止边界、正式容差与 CTest |
-| harmonics.md | 九实基公式、3×5、R3/R5 全元素、HarmonicRotationBlocks 归属、私有递推 target 与测试映射 | 许可范围与 sdla 依赖、完整实现、独立 L3 逐元素参考、容差/CTest |
-| adaptive_mfa.md | M1–M4、rhs、MSE 返回、Frame/Session 更新时序差异 | 逐节点 Golden、异常提交决定、容差 |
+| harmonics.md | 九实基公式、3×5、R3/R5 全元素、HarmonicRotationBlocks 归属、私有递推 target 与测试映射 | 论文原文/勘误待上传、Eigen-only 递推未实现、独立 L3 逐元素参考与最终容差/CTest |
+| adaptive_mfa.md | M1–M4、rhs、MSE 返回、Frame/Session 更新时序差异 | 逐节点 L3 参考、已确定的不提交失败状态策略仍需真实 CTest 验证、最终容差 |
 | sampling_noise.md | 三种采样与噪声公式、固定 uniform/normal 消耗及值对象所有权、sampling/simulation target 和测试文件候选 | i=0/1/2 全量独立 L3 参考、RNG/噪声 TC/CTest、真实实现 |
 | trajectory.md | 圆/正弦公式、方向→旋转奇异性、Rᵀ 局部运动、球内求交；H-02 指定 Sophus 替代 Rodrigues | Sophus 实际依赖/版本和调用、小角 Golden、零模/反向边界 |
-| experiments.md | 五入口参数/输出、历史 MAT shape 与原 xwerte、RunContext 所有权、L2/L3/L4 分类、DataMismatch/target/CTest | **仍缺**历史额外输出归因、RunContext 具体实现与错误提交策略、C++ 新结果/CTest |
-| analysis_plotting.md | 四分析入口与历史 MAT 的真实 shape、1-based 索引、分段阈值、半窗平滑 | **仍缺**数值曲线 Golden、绘图后端批准及 C++ 分析测试 |
+| experiments.md | 五入口参数/输出、历史 MAT shape 与原 xwerte、RunContext 所有权、L2/L3/L4 分类、DataMismatch/target/CTest | **DEC-004 已选定历史字段 HistoricalOnly/当前仅存现行 save**；仍缺 RunContext/Writer 具体实现、错误提交测试、新结果/CTest |
+| analysis_plotting.md | 四分析入口与历史 MAT 的真实 shape、1-based 索引、分段阈值、半窗平滑 | **仍缺**独立 L3 数值曲线、C++ 分析/CTest；可选绘图后端不是核心算法阻塞 |
 
 ### 评审与完成状态的强制区分
 
