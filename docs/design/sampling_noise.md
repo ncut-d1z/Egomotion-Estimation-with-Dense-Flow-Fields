@@ -48,6 +48,9 @@ generate_bias_flow(level, truth_t, truth_omega, noise_kind, rng):
 
 ## 3. 候选 C++17 合同（未批准）
 
+**接口定义唯一归属**：下面 IRandomSource、IDirectionSampler、IFlowNoiseModel 的 C++ 类声明仅用于展示**候选签名**，并不表示在 sampling/simulation 两个目标里重复定义接口类。按 [ARCHITECTURE.md §4](../ARCHITECTURE.md) 与 [contracts.md](contracts.md)，最终这三种可注入抽象应在 `egomotion_contracts` 的单一公共接口头提供；`egomotion_sampling`、`egomotion_simulation` 只 include 它们并实现具体类。Result/Failure 与 NumericalErrorCode 也只从公共合同引入，不在模块实现重复声明。正式头文件位置/具体 virtual 语义须 P0.8 审查，不代表已经建立 ABI。
+
+
 ~~~cpp
 // 文档接口草案，不是实现。
 struct DirectionSet; struct FlowField;
