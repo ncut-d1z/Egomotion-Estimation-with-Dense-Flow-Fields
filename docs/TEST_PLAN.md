@@ -67,6 +67,19 @@
 - 更新频率分析图：x=50:550、阈值 0.02，四条曲线与不同半窗 2/5/10 的平滑；kurveglaetten 的边缘零值语义不替换。
 - 每种曲线的 Golden 结构应记录 source MAT+variable、原 MATLAB 1-based 索引、x/y 数组、axis/units、分段、窗宽和有效样本状态；只比较图像像素不能算通过。
 
+### 2.8 用户审批 JSON 的数值与执行验证边界（仅规划）
+
+审批记录见 [DECISION_IMPLEMENTATION_NOTES.md](approval/DECISION_IMPLEMENTATION_NOTES.md)。H-01 **只批准先整理误差/容差提案**，H-03 仅批准整理 CLI/错误/TC→Golden 候选，H-09 仍为 Golden 采集计划；**不得输入默认 atol/rtol、把 C++ 生成数据当参考真值或把未建测试标记通过**。
+
+| 将来需要的对照 | 预定输入/观察量 | 当前状态 |
+|---|---|---|
+| H-02 Sophus 取代 Rodrigues | 原 MATLAB 固定 `ω=0`、小角低于 eps、x/y/z、复合、接近 π；核对 3×3 物理旋转、Rᵀ 局部运动 | **已选路线，未运行** |
+| H-14 方案 A：Don Williamson 的 Ivanic–Ruedenberg | 原 `SHRotate(r,2)` 的 R0=1、R1 九元素、R2 25 元素；比较 m 顺序、相位、轴排列、正/逆旋转及完整九个球谐系数 | **已选路线，未复制/编译/运行，独立 Golden 缺失** |
+| H-12 `output/<RunId>/` 结果及负例 | 原 `origin/**` 前后哈希不变；重复 RunId、软链接越界、异常读写、MAT 写后回读、运行输出排除在 Git 上传之外 | **只完成忽略规则的文档/配置，H-10 暂缓、writeMat=false，未运行** |
+| H-04 Ubuntu VM 资源快照 | 用户提供的 `uname/df/free`；将来记录实际 CMake/CTest 和 peak RSS/wall/CPU | **只有环境资料，未批准时间/性能门槛** |
+
+> **H-10=deferred、H-11=deferred**；本次 JSON 的 `runCMake/runCTest/runMatlab/writeMat/runBash/measurePerformance` 全为 false。没有现场命令、运行结果或数值测试可在本轮回填。审阅/格式检查不触发工具执行授权。
+
 ## 3. TC → 实体/CTest → AC 规划矩阵
 
 下列表格共 66 项，与 SRS v0.3 逐项对应。**独立 matio 探针已编写并执行**，但绝大多数拟议测试源文件、测试函数和 CTest 名称尚未创建；探针不是 CTest 注册项。人工审查项与自动测试区分。原始 45 个 MATLAB 源文件映射请参见 [REQUIREMENTS.md §9.2](REQUIREMENTS.md)。
@@ -205,12 +218,12 @@ MAT 全量字典和来源证据**已经生成**：见 [MAT_DATA_SCHEMA.md](MAT_D
 
 | 环境组 | 发行版 / CPU 架构 | 编译器 | Eigen / matio / zlib | 当前状态 |
 |---|---|---|---|---|
-| LINUX-01 | **Ubuntu 24.04 / x86_64（用户提供的 VirtualBox 环境）** | **GCC 13**（已编译独立探针） | matio **1.5.26**、zlib1g-dev 已安装；Eigen/CMake 业务构建未验证 | **仅 matio 探针编译/运行成功**；非完整工程及 CTest |
+| LINUX-01 | **H-04 用户提供 Ubuntu 24.04.4 VirtualBox / x86_64 快照**（内核标识 7.0.0-38-generic） | **历史独立 matio 探针记录 GCC 13**；用户本次 JSON 没提供编译器版本新实测 | matio 探针历史记录 **1.5.26**；Sophus、Eigen、完整 CMake/CTest 未在该审批快照中测得 | **环境已选**；用户 `free` 总内存 8127380 KiB、available 4908696 KiB、Swap 4194300 KiB，根分区当时可用 65347856 KiB；**非项目通过预算**，业务构建/CTest 未执行 |
 | LINUX-02 | Debian stable，具体版本待确认 / x86_64 | GCC 或 Clang，具体版本待记录 | 依赖版本待记录 | **未构建** |
 | LINUX-03（可选） | Debian/Ubuntu 的另一受支持编译器或 CPU 架构 | 由维护者决定 | 兼容性待核 | 未安排 |
 
 - 不将 Windows 或交叉编译视为本项目要求；不凭空规定编译器/Eigen/matio 的最低版本。
-- 每组记录 uname、/etc/os-release、编译器版本、CMake 版本、依赖实际版本、CMake 选项、build SHA、CTest 名称与结果；未执行不能在平台矩阵打勾。
+- 每组将来仍须记录 uname、/etc/os-release、编译器版本、CMake 版本、Eigen/Sophus/matio/zlib 的实际版本、CMake 选项、build SHA、CTest 名称与结果；**H-04 用户提供的某时刻容量并不是可自动分配的 CPU/RAM 预算或通过阈值**，未执行不能在平台矩阵打勾。
 - 依赖安装、构建及数值测试必须遵守 [AGENTS.md](../AGENTS.md) 的远程检查点和 Git 安全规则。
 
 ## 7. 非功能测试方法与风险
@@ -278,6 +291,8 @@ bash scripts/check_docs_traceability.sh
 **实际现场执行的补录要求**：新建独立证据记录，附所执行命令、真实 HEAD SHA、工具链、stdin（若有）、stdout/stderr 路径、exit code、时间戳和执行人；经人类审阅后再同步 [PROGRESS.md](PROGRESS.md)，不能以本表的“应执行”替代“已执行”。
 
 **当前文档级检查口径**：66 条 REQ、66 项 TC、98 个 P 工作项、45 个 .m 映射是版本化的预期数量；检查器同时验证 ID 唯一性、配对关系、真实路径集合、P 依赖环和 ARCHITECTURE §4.1 target DAG 的**静态环**，不只比对计数。变更基线数量时须同步评审脚本期望值；**静态无环不等于真实 CMake target 已创建或编译通过**。
+
+**本轮实际执行状态**：用户审批 JSON 的 H-11=deferred，因此未运行上文的 Bash 现场脚本；H-10=deferred，因此未运行新的 CMake 配置/编译、CTest、MATLAB、MAT 写回读、负例或性能测量。原来的 582/582 matio 探针属于**早前独立实测**，不在本轮重跑。审批详情与阶段状态参阅 [审批落实记录](approval/DECISION_IMPLEMENTATION_NOTES.md) 和 [PROGRESS.md](PROGRESS.md)。
 
 ## 9. 变更与冻结条件
 
