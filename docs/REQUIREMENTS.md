@@ -32,7 +32,7 @@
 - 需求类别：`REQ-F-*` 功能、`REQ-D-*` 数据、`REQ-I-*` 可观察/组件边界接口、`REQ-DC-*` 内部设计约束、`REQ-NF-*` 非功能、`REQ-PROC-*` 项目过程质量。实施工作项仍单独使用 P0–P10，不能把 P ID 当需求。
 - 对应 `AC-*` 是验收条件、`TC-*` 是**计划中的测试标识**；实际测试文件/CTest 名见 [TEST_PLAN.md](TEST_PLAN.md)，尚未创建的名称均标为拟议。
 - 优先级 M=必须、S=应该、C=可选、W=本期排除。M 项目若有必需的未冻结容差/权限/数据合同，应标注“**M（受 DEC 阻塞）**”并保持验收状态“不可判定/未通过”，不能因此放低优先级，也不能冒称通过。
-- “确定/待审计/设计待冻结”等仅说明需求依据状态；**MAT 独立探针已在 Ubuntu 上编译并运行，582/582 文件及变量完整读取，详见 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md)**。这一实测证据不表示完整 MAT Reader/Writer、CLI、CTest 或算法已完成。DEC-001/002 对当前归档的格式与类型事实已有证据、尚待基线审查；DEC-005 数值容差、DEC-006 完整平台及性能范围、DEC-003/007 版权仍待项目所有者审批。
+- “确定/待审计/设计待冻结”等仅说明需求依据状态；**MAT 独立探针已在 Ubuntu 上编译并运行，582/582 文件及变量完整读取，详见 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md)**。这一实测证据不表示完整 MAT Reader/Writer、CLI、CTest 或算法已完成。DEC-001/002 对当前归档的格式与类型事实已有证据、尚待基线审查；DEC-005 数值容差、DEC-008 CLI/CTest/Golden 基线继续待批准；**H-02/H-14 已针对 Sophus 和 Don Williamson 的明确替代方案作出选择，H-04 已给出 Ubuntu 24.04.4 的环境容量快照，但未产生性能阈值或软件测试证据**。详细审批边界见 [审批落实记录](approval/DECISION_IMPLEMENTATION_NOTES.md)。
 - **ID 迁移兼容表**：`REQ-I-DOMAIN/IO/RNG/NOISE/KVD/ADAPT/EXPERIMENT/ANALYSIS-001` → 对应 `REQ-DC-...-001`；`REQ-NF-TRACE-001` → `REQ-PROC-TRACE-001`；`REQ-NF-THREAD-001` → `REQ-NF-SESSION-001`。其 AC/TC ID 同步更名，旧标识不得用于新提交或验收证据；现有实现/测试均未创建，故无迁移二进制兼容问题。
 - 冻结规则：只有确认源树 SHA、Mat 字典、外部接口、逐模块验收容差及阻塞风险后，SRS 才能由项目所有者批准为基线；对仍开放的 Should/TBD 项应有明确批准的处理决定。
 
@@ -74,7 +74,7 @@
 | REQ-F-MAT-003 | M | 确定 | 系统应分别提供指定变量名的严格读取和 getflowfield 兼容的首变量/省略扩展名读取。 | AC-F-MAT-003：分别测试单变量、多变量、缺失变量、后缀处理。 |
 | REQ-F-MAT-004 | M | 确定 | 系统应在独立 RunId 输出目录写入变量名与尺寸兼容的 MAT 结果。 | AC-F-MAT-004：写后回读一致，拒绝覆盖原归档/历史 RunId。 |
 | REQ-F-SH-001 | M | 确定 | 系统应复现 l≤2 的实球谐基函数、3×5 系数、近度恢复与逐项拟合。 | AC-F-SH-001：依据 [design/harmonics.md §1–3](design/harmonics.md) 对固定方向逐项核查 l≤2 九个实球谐基函数的正/负 m 相位、归一化、3×5 有效位置、逐项 koeff 拟合与 near 重建；分别记录索引/维度、参考 SHA 和误差。没有源 MATLAB/独立 Golden 及 DEC-005 批准容差时保持未验收。 |
-| REQ-F-SH-002 | M | 待版权核查 | 系统应复现 l≤2 球谐旋转矩阵与系数旋转，保持原基函数顺序及旋转方向。 | AC-F-SH-002：3×3、5×5 旋转块固定样本对照；权利来源先核实。 |
+| REQ-F-SH-002 | M | H-02/H-14 已选择 Don Williamson C++ 方案 A；尚待许可保留/Golden/实施 | 系统应复现 l≤2 球谐旋转矩阵与系数旋转，保持原基函数顺序及旋转方向。 | AC-F-SH-002：3×3、5×5 旋转块固定样本对照；权利来源先核实。 |
 | REQ-F-TRAJ-001 | M | 确定 | 系统应按原参数生成圆轨迹、正弦轨迹和相邻点局部运动/旋转，不将绘图混入数据生成。 | AC-F-TRAJ-001：样本轨迹、旋转方向、端点和角度转换对照。 |
 
 ### 数据与来源需求
@@ -113,7 +113,7 @@
 
 | 需求 ID | 优先级 | 依据状态 | 可验证的需求陈述 | 验收条件 |
 |---|---|---|---|---|
-| REQ-NF-COPYRIGHT-001 | M | 待权利核查 | 系统应保留两份 DOI、第三方来源，不擅自新增项目级 LICENSE。 | AC-NF-COPYRIGHT-001：README 署名可核对，第三方权利障碍记录。 |
+| REQ-NF-COPYRIGHT-001 | M | H-02 已限定第三方替代来源；源码再分发与声明仍须核查 | 系统应保留两份 DOI、第三方来源，不擅自新增项目级 LICENSE。 | AC-NF-COPYRIGHT-001：README 署名可核对，第三方权利障碍记录。 |
 | REQ-NF-DEPS-001 | M | 确定 | 系统核心运行不得依赖 Python、MATLAB Runtime、NumPy、ROS、OpenCV、Windows 或 NPZ 转换。 | AC-NF-DEPS-001：检查依赖和链接，源代码无禁用路径。 |
 | REQ-NF-HEADLESS-001 | M | 确定 | 系统应支持无图形环境的检查、运行和分析，绘图模块不得阻断数值。 | AC-NF-HEADLESS-001：禁用绘图时主要数据路径仍可执行。 |
 | REQ-NF-LOG-001 | M | 确定 | 系统应记录 RunId、SHA、环境、命令、参数、随机种子、输入身份、退出码及日志位置。 | AC-NF-LOG-001：每次正式运行记录字段完整，不覆盖失败证据。 |
@@ -204,12 +204,14 @@
 |---|---|---|
 | DEC-001 | 582 份现有归档的 MAT 格式和 HDF5 必要性 | **格式事实已证实**：582/582 MAT v5 + zlib；现有数据无需 MAT v7.3/HDF5 读取能力。项目支持范围仍待所有者批准 |
 | DEC-002 | 现有 MAT 变量 class/data_type/dims | **类型与形状事实已证实**：582 个 double/double；`10×1` 80、`10×3` 480、`35×1` 4、`600×1` 14、`600×4` 4；无其他 class，数据字典待独立复核 |
-| DEC-003 | rodrigues.m 和 SHRotate.m 中第三方代码许可/可再分发范围 | 待项目所有者及权利审查 |
-| DEC-004 | 历史 MAT 有而当前源脚本未保存的字段 | 已观察，待出处调查与处理决定 |
-| DEC-005 | 固定输入容差及统计噪声验收方法 | 有候选值，待数值验证人员与项目所有者冻结 |
-| DEC-006 | Debian/Ubuntu 版本范围、CPU/内存与构建时间预算 | Ubuntu 24.04 上已验证 **独立 matio 探针**（GCC 13、matio 1.5.26）；**完整工程、Debian、性能、内存与构建预算仍 TBD** |
-| DEC-007 | 原 MATLAB 文件第三方代码的再分发权利与归档使用边界 | 待版权核查，项目所有者决定是否阻塞源代码发布 |
-| DEC-008 | TC 与测试文件、CTest 名称及 Golden 文件的实际对应关系 | 尚未创建，P0.8 与实施后冻结 |
+| DEC-003 | rodrigues.m 和 SHRotate.m 中第三方代码许可/可再分发范围 | **限定替代方向已由 H-02 批准**：Sophus `SO3d::exp` 取代 Rodrigues；Don Williamson 的 C++ `IvanicSHRotate` 取代 SHRotate；上游 MIT 形式许可文本已找到；第三方源码纳入、上游版权声明/README/LICENSE 的具体保存、间接依赖及原 MATLAB 自身版权不自动获得完整验收 |
+| DEC-004 | 历史 MAT 有而当前源脚本未保存的字段 | H-07 **只允许先起草调查**，归因和统计处理未批准 |
+| DEC-005 | 固定输入容差及统计噪声验收方法 | H-01 **draft**：仅准备逐项误差和 atol/rtol 提案；数值阈值、Golden 与最终验收标准均未批准 |
+| DEC-006 | Debian/Ubuntu 版本范围、CPU/内存与构建时间预算 | H-04 **确认开发主机快照**：Ubuntu 24.04.4 VirtualBox/x86_64，物理内存总 8127380 KiB、当时 available 4908696 KiB、Swap 4194300 KiB；历史独立探针曾在 Ubuntu 24.04/GCC 13/matio 1.5.26 成功。**未有真实全工程构建、Debian 验证或可据以判通过的 wall/CPU/RSS/构建时间阈值** |
+| DEC-007 | 原 MATLAB 文件第三方代码的再分发权利与归档使用边界 | H-02 **只针对 Sophus/Don Williamson 选定来源**；将来实际复用 Don C++ 文件时在其目录提供上游来源 README 和适用 MIT LICENSE/版权声明。整个原 MATLAB/归档的许可范围及 H-16 发布权限**未获整体批准** |
+| DEC-008 | TC 与测试文件、CTest 名称及 Golden 文件的实际对应关系 | H-03 仅**draft**：先整理 `cli.md`/`contracts.md` 与 TC→测试/Golden 候选，不冻结；H-10/H-11 暂缓运行 |
+
+**H-12 的实施目录决定**：后续新生成的数据放在仓库根 `output/<RunId>/`，`.gitignore` 已规划排除 `/output/`，以避免新数据被误提交；`origin/**` 保持只读。H-12 属于路径和隔离策略，**不改变**上表中 REQ/AC 的验收义务，也不因它批准而允许运行实际写回读（H-10 暂缓、`permissions.writeMat=false`）。
 
 ## 9. 双向追踪矩阵：来源 → REQ → PLAN → TC/AC
 
