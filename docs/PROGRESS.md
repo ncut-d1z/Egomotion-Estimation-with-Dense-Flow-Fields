@@ -12,6 +12,8 @@
 
 **文档审计入口**：[AUDIT.md](AUDIT.md) 已汇总历轮用户提出的修改和 Markdown 评审意见，并以“空白、正在审计、已审计”跟踪逐文件审计。此表只记录文档审计过程，**不构成** C++/CTest/数值通过或任何人类批准；具体可推迟的人类事项仍集中在 [TODO.md](TODO.md)。
 
+**2026-11-07 全量文档审计续记**：以 [固定 SHA 审计报告](reviews/FULL_DOCUMENT_AUDIT_2026-11-07.md) 为语义问题唯一清单，按照 [AUDIT.md](AUDIT.md) 的 40 行三态跟踪后续复核；本轮只审计和登记问题，**AF-001～012 未修订，且不得将“已审计”作为整改完成率**。
+
 ## 1. 当前工作范围与证据
 
 - 仓库：`ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields`
@@ -45,6 +47,7 @@
 | E-DOC-014 | [SRS](REQUIREMENTS.md) / [PLAN](PLAN.md) / [harmonics LLD](design/harmonics.md) / [TEST_PLAN](TEST_PLAN.md) | **纯文档一致性修订**：SRS REQ-F-CLI-002 删除“结果目录参数”；PLAN §1/P1.1/P7.6 删除 Don Williamson C++ 直接适配表述；harmonics §3.1.1/§7.2 明确 Ivanic–Ruedenberg 1996 原文＋1998 勘误为正式数学依据、Eigen-only、Don Williamson 仅作代码参考；TEST_PLAN §2.8 更正 H-14 名称及 R3/R5 验证范围。GitHub 只读固定检查点 `5678a1cbf94ff4ee8c87845c5176cf46efa3725e`：66 REQ/66 TC/98 P、HLD 27 边，范围内 8 项断言均通过；SRS v0.8、PLAN v0.3、harmonics v0.6、TEST_PLAN v0.3 均仍为草案 | 上述文档已构成正式批准基线、真实生产代码已修改、论文 PDF 已核验、Bash/CMake/CTest/数值测试已执行、DEC-005 最终容差已批准 |
 | E-DOC-015 | [SRS v0.9](REQUIREMENTS.md)、[对象模型 v0.3](OBJECT_MODEL.md)、[L2/L3 容差文档](golden/GOLDEN_TOLERANCE_PROPOSAL.md)、[PLAN v0.4](PLAN.md)、[TEST_PLAN v0.4](TEST_PLAN.md) | **仅中优先级纯文档一致性修订**：UC-05 改为 DEC-004 `HistoricalOnly`/不等待归因/缺必需字段显式失败；`SHRotate.m` 的对象映射改为 `HarmonicRotator::blocks` 且引用球谐专题 LLD 的唯一声明；L3 旋转参考改为 Ivanic–Ruedenberg 1996/1998＋**Eigen 独立重写、禁用 sdla**，Don Williamson 仅作参考。PLAN P1.1 在检查前已修正，未重复覆盖。固定 GitHub 只读 JavaScript 检查点 `930316daad3b678e40c9592d5a4dc9a150c302f6`：66 REQ/66 TC/98 P、附录 8 REQ-DC、27 HLD 边静态无环；限定范围发现不一致 0。该 SHA 不包括后续进度及矩阵登记提交 | **不代表**已编写/编译球谐 C++、运行 Bash/CMake/CTest、取得 L2/L3/L4 实测参考、完成最终 DEC-005 或冻结基线；原始 `.m/.mat` 均未修改 |
 | E-DOC-016 | [历轮用户意见汇总及三态审计台账](AUDIT.md) + [LLD 索引](design/README.md) + [SRS 草案](REQUIREMENTS.md) + [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) | **仅低优先级纯文档一致性修订**：归纳历轮用户 Markdown 详细审查为 AU-001～AU-028，逐文件审计表使用“空白/正在审计/已审计”；LLD 索引纠正“Rodrigues 来源待审”与“绘图后端未定阻塞”；SRS 的两条来源/MIT 义务改为可观察需求并链接 HLD/ADR，不重复实现方案；WBS 与 TEST_PLAN 同步 SRS v0.10；滚动 PROGRESS 的正式基线列计划改为“不适用”。本条仅登记提交中的文档审计范围，静态复核与版本矩阵的固定 SHA 仍需后续同轮核对记录 | 该台账已涵盖未在对话中提供的原始聊天逐字稿、所有源文件均已完成审计、Bash/CMake/CTest/MATLAB 已执行、原 45 .m/582 MAT 已重跑、软件验收或正式基线已冻结 |
+| E-DOC-017 | [AUDIT 全文档审计台账](AUDIT.md) + [固定快照审计报告](reviews/FULL_DOCUMENT_AUDIT_2026-11-07.md) | 在**固定审计输入提交** `4627cc1e48be9c43ad10b28fda646d65ee8ef01c` 上，按 AU-001～AU-028 对 40 路径做 GitHub 连接器只读文档审计：452 条本地 Markdown 链接无缺失目标、围栏配对，66 REQ/66 TC/98 P、8 REQ-DC、45 .m（SRS/OBJECT 各 45）、27 条 HLD 边静态无环，582 条 MAT 字典内部尺寸/类型/READ_OK 一致；报告登记 **AF-001～AF-012 12 个待修订问题＋AH-001～AH-002 两个历史/执行边界**。AUDIT 三态现为 **已审计 25/正在审计 12/空白 3**；“已审计”仅指明确的审计范围，**不等于无问题或已修订** | 未修复 12 项文档问题；未开展全部原始数学源码逐式/独立 L3 核验；没有 Bash/CMake/CTest/MATLAB/原 MAT 读取或写入/发布/正式基线签署；报告固定快照不覆盖后续 HEAD |
 | E-DEC-001 | [JSON 审批落实记录](approval/DECISION_IMPLEMENTATION_NOTES.md) | **H-02/H-14 已指定 Sophus 与 Don Williamson Ivanic 方案 A**；H-04 已提供 Ubuntu 24.04.4 VM 快照；H-12 已确定 `output/` 并更新 `.gitignore` | 任意第三方 C++ 文件已复制、Sophus 已安装/构建、MAT 写入/CTest 已执行、Golden/容差已批准、程序可发布 |
 
 ## 3. 实施任务与里程碑状态
