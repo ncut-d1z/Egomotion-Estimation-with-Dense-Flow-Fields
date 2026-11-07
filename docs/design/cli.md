@@ -1,6 +1,6 @@
 # CLI 参数、退出码与诊断协议：详细设计草案
 
-> **候选 v0.1，未冻结、未编码、未执行 CTest。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
+> **候选 v0.2，未冻结、未编码、未执行 CTest。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
 
 ## 1. 语法与基本约束
 
