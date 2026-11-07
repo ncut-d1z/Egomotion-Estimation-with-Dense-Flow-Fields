@@ -142,7 +142,7 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 | 变量名、MAT class、物理 data_type、rank/dims | Mat_VarRead 后读取 matvar_t 元数据 | **582/582 double/double，五种 shape** |
 | 数值范围、NaN/Inf、逐元素 L2 MAT 原值/独立 SHA-256 | 生产 Reader 按值遍历及独立对照 | **尚未验证**；探针成功读取不能替代数值等价 |
 | 严格/兼容读取策略、分析依赖 | 源 load/getflowfield 和数据字典映射 | 待冻结 |
-| 解码状态、错误码、是否受版权限制 | 成功/失败/不支持/权限阻塞 | 待验证 |
+| 解码状态与错误码 | 成功/失败/不支持/只读权限拒绝 | 待验证；一般版权审查不是 MAT 读取/开发阻塞项 |
 
 输出合同：Bias 每目录 xwerte、ywerte1…6；Adaptive 使用初始化四类结果、600 点比较五类结果和更新频率三类当前源码结果。**历史 MAT 的额外文件属于归档证据，不得视为当前脚本已经写出。**
 
