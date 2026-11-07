@@ -135,3 +135,13 @@ reviewed_by / review_date:
 本模板是 [TEST_PLAN.md §4.1](TEST_PLAN.md) 单次测试证据字段的**扩展记录格式**；其中 `expected_vs_observed` 对应预期/实测，`source_matlab_blob_sha / input_mat_sha_or_hash` 对应输入与参考身份，`pass / fail / skip / not_run counts` 对应状态计数。真正的 Golden 数值文件应另记 SHA-256 与经过批准的 DEC-005 容差，且不能以本次审查文档代填测试结果。
 
 每次新增证据只更新对应状态，不以补齐文档或估算百分比改变未验收的 98 个任务。严格按 [AGENTS.md](../AGENTS.md) 禁止重写历史、未经授权改动原始 MAT 或自动合并分支。
+
+
+## 7. 2026-11-08 增量文档审计与修订证据（仅静态复核）
+
+| 证据 ID | 固定输入/提交与文档 | 实际完成 | 不能推断 |
+|---|---|---|---|
+| E-DOC-025 | [审计报告](reviews/AUDIT_FOUR_POLICY_DRIFTS_SCAN_2026-11-08.md)，原始输入 `0fa760423532fda691c046f2e4eac5fc37784503`，登记提交 `815c748476b4b8ca47ec3e894a57931e4aeabee8` | 对现行 SRS/HLD/LLD、Golden/DEC、AGENTS/PROGRESS 的跨文档静态比对发现 AF-028～031 四条决策口径冲突，按 AUDIT_PROCESS 先以未整改登记 | 不代表原 MATLAB 运行、独立 L3、生产编译、CTest 或性能测试 |
+| E-DOC-026 | 修订及固定复核提交 `c4944b085ff92c0b8259d766668e2fa97939ee9d`；`docs/PROGRESS.md` blob `5943a869807c7777b337e738ba15b64ad58ecabd`、`AGENTS.md` blob `296a49fd7a09e71796ea7ebff984a2904505bc2d` | AF-028～031 四处实际修改并对该固定提交定向复读：**4/4 通过**；本轮修订后整改台账为 32 已整改、0 未整改。历史证据/审批原文未变 | 不批准 H-10/H-11、DEC-005/006 最终阈值、冻结、软件验收；不以四条定向断言冒充全量数学验证 |
+
+继续按 [AUDIT.md](AUDIT.md) 与 [AUDIT_PROCESS.md](AUDIT_PROCESS.md) 各自维护文件审计三态和问题整改两态，原 `origin/**` 未修改。
