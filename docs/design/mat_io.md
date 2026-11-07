@@ -1,6 +1,6 @@
 # MAT I/O、路径安全与原始数据合同——详细设计草案
 
-> **LLD v0.7 候选草案，未冻结。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 L2 逐值/L3 独立参考验证仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
+> **LLD v0.8 候选草案，未冻结。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 L2 逐值/L3 独立参考验证仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
 
 ## 1. 原始行为、文件身份和支持版本
 
@@ -168,7 +168,7 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 | **L3：独立构造的合同参考/负例** | 单变量与多变量 MAT、缺变量、类型/shape 错误、元素数溢出、只读/写保护、列主序定值、异常路径；由非被测实现或可手工审核的规则给出预期状态和值 | 负例文件/预期日志及 Reader/Writer 测试尚未建立；不调用或模拟原 MATLAB 运行结果 |
 | **L4：分析统计** | 对 L2 结果由独立分析逻辑计算的汇总 | 该层属于分析/实验模块，不是 MAT 解码成功的必要条件 |
 
-**比对口径**：MAT 文件身份/变量名/class/dtype/rank/dims/线性索引与**无转换的原始 double 数值读取**要求精确；如涉及 NaN/Inf，应保留其分类并单独说明比特级规范，不允许靠宽松容差掩盖数据转换。外层分析计算可另按 [容差提案](../golden/GOLDEN_TOLERANCE_PROPOSAL.md) 采用 `atol=0.01`、`rtol=0.1` 的**未批准候选**，但**MAT 解码/复制不使用此容差容忍丢值或转置**。全程不要求 MATLAB/Octave 或 L1 Golden。
+**比对口径**：MAT 文件身份/变量名/class/dtype/rank/dims/线性索引与**无转换的原始 double 数值读取**要求精确；如涉及 NaN/Inf，应保留其分类并单独说明比特级规范，不允许靠宽松容差掩盖数据转换。外层连续数值分析可依据 [容差建议](../golden/GOLDEN_TOLERANCE_PROPOSAL.md) 使用项目所有者**已选定的首轮宽松探索性筛查** `atol=0.01`、`rtol=0.1`，**这不是正式模块 AC/TC PASS 阈值，最终数值标准仍待 DEC-005 实测后确定**；**MAT 解码/复制的 class/dtype/rank/dims/列主序及原始 double 值必须严格核对，绝不能使用宽松筛查容忍丢值、转置或伪造成功**。全程不要求 MATLAB/Octave 或 L1 Golden。
 
 ## 5. 接口、TC、候选测试实体与 AC（不表示测试已创建）
 
