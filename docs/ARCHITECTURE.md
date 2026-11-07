@@ -78,7 +78,7 @@ flowchart LR
 |---|---|---|
 | 全部 582 MAT | MAT v5/zlib、class=double/data_type=double、582 个变量 READ_OK | 当前真实归档只需 v5 + zlib 的 double 数值读取；其他 class 保留明确拒绝路径 |
 | Bias 560 文件 | xwerte：80 个 10×1；ywerte1…6：480 个 10×3 | 使用真实 MAT rank/dims，不依据注释推测 |
-| Adaptive 22 文件 | 35×1：4、600×1：14、600×4：4 | 当前历史结果结构已明确，逐步算法 Golden 仍缺失 |
+| Adaptive 22 文件 | 35×1：4、600×1：14、600×4：4 | 当前历史结果结构已明确，**独立 L3 逐节点参考尚未完整建立**；不需要原 MATLAB L1 |
 | 文件身份 | 每份文件一个与 basename 同名的变量；FNV-1a64 指纹 | 原始输入只读；FNV 不是 SHA-256 |
 
 独立数据字典探针已经实测，但生产 `egomotion_matio` target、Reader/Writer 注入、错误负例、索引转换与写回读尚未验证。
