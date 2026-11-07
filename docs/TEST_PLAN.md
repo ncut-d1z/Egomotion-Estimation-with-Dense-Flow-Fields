@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **审批后候选核对材料**：见 [HAR-2026-11-06-001 设计修订与待审材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md) §2、§3、§7～§9。其中历史上提出六类容差采集格式、582 MAT SHA-256 独立审核和正式 Reader 类型拒绝清单；**当前参考采集/核验路径以 L2/L3/L4 为准，完全不要求 MATLAB/Octave 执行或 L1 Golden**，见 [长期政策](golden/NO_MATLAB_EXECUTION_POLICY.md)。现行 `atol=0.01`/`rtol=0.1` 是**未批准候选**，不是已冻结阈值；测试实体/CTest 仍未执行，H-10/H-11 其他执行门禁未解除。
+> **审批后候选核对材料**：见 [HAR-2026-11-06-001 设计修订与待审材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md) §2、§3、§7～§9。其中历史上提出六类容差采集格式、582 MAT SHA-256 独立审核和正式 Reader 类型拒绝清单；**当前参考采集/核验路径以 L2/L3/L4 为准，完全不要求 MATLAB/Octave 执行或 L1 Golden**，见 [长期政策](golden/NO_MATLAB_EXECUTION_POLICY.md)。`atol=0.01`/`rtol=0.1` 已由所有者选作**首轮宽松筛查**，不是已冻结的最终验收阈值；测试实体/CTest 仍未执行，H-10/H-11 其他执行门禁未解除。
 
 > **长期约束**：[无需运行 MATLAB 政策](golden/NO_MATLAB_EXECUTION_POLICY.md) 已取消 MATLAB/Octave 运行与 L1 Golden 的一切强制取证前提；现行测试参考为 L2 已存 MAT、L3 独立解析/重实现和 L4 统计。此决定不解除代码/CTest 的实际执行门禁，也不批准数值容差。
 
@@ -13,6 +13,8 @@
 - 所有测试须记录 RunId、源 Git SHA、数据文件哈希、实际 Debian/Ubuntu/编译器/依赖版本、命令、参数、随机种子、预期与实测、误差、退出码及日志。
 - 每条 M 级需求应有验收条件与至少一个真实测试或经批准的人工核查；任何尚未执行的用例不能宣称通过。
 
+**2026-11-07 已选定策略**：按 [最新项目决定](decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md)，所有新输出路径固定、采用轻量封装的 Result/Status 与 JSONL、独立 Runner 配置及失败/部分结果状态，球谐 Eigen-only 且等待用户上传 1996 原文与 1998 勘误。本轮只修改设计，不运行 MATLAB、Bash、CTest 或写 MAT。现有 TC 编号/数量不变。
+
 ## 2. 首批关键测试的具体条件
 
 ### 2.1 CLI 契约（TC-F-CLI-001）
@@ -22,15 +24,15 @@
 | 子命令 | 候选必填参数 | 输出/验收 |
 |---|---|---|
 | inspect-mat | --file PATH | MAT 变量名、rank、dims、type、压缩/错误诊断 |
-| run-bias-occluded | --seed UINT32 --level NONNEG_INT --output-root DIR | xwerte、ywerte1…6 的 MAT 结果 |
-| run-bias-proportional | --seed UINT32 --level NONNEG_INT --output-root DIR | 独立完整球面/逐分量噪声结果 |
-| run-adaptive-init | --output-root DIR | 原始初始化四类误差结果 |
-| run-adaptive-comparison | --noise-scale FINITE_DOUBLE --output-root DIR | 带噪/无噪的原始五类 MAT 结果 |
-| run-adaptive-update-rates | --output-root DIR | 1/5/11/21 帧更新频率结果 |
+| run-bias-occluded | --seed UINT32 --level NONNEG_INT  | xwerte、ywerte1…6 的 MAT 结果 |
+| run-bias-proportional | --seed UINT32 --level NONNEG_INT  | 独立完整球面/逐分量噪声结果 |
+| run-adaptive-init | 无 | 原始初始化四类误差结果 |
+| run-adaptive-comparison | --noise-scale FINITE_DOUBLE  | 带噪/无噪的原始五类 MAT 结果 |
+| run-adaptive-update-rates | 无 | 1/5/11/21 帧更新频率结果 |
 | analyze | --experiment NAME --input-root DIR | 独立读取历史 MAT，计算统计序列 |
 | plot（可选） | --experiment NAME --input-root DIR | 图表结果；无图形后端不影响 analyze |
 
-**统一约定（候选，非批准）**：本表与 [cli.md §2.1](design/cli.md) 使用相同的 `UINT32`、`NONNEG_INT`、`FINITE_DOUBLE` 类型名；`--output-root DIR` **仅作为选择仓库根 `output/` 的候选显式参数**，不是自由外部路径；由 RunContext 在其下创建新的 `output/<RunId>/`。后续真实 CLI 测试须覆盖其它根、`origin/**`、符号链接逃逸和重复 RunId 的拒绝，但目前 H-10 暂缓、`writeMat=false`，均**未执行**。RunId 生成、参数最终形式及错误映射仍受 H-03/DEC-008 约束；本轮不设置输出根默认值。
+**统一 CLI 输出约定（项目所有者已决定）**：用户配置输出根的 CLI 选项已删除；新结果固定写入仓库根 `output/<RunId>/`。`--run-id ID` 可选，缺省独立 OS 随机生成，不消费实验 RNG；每个目录与文件均独占创建，重复 RunId/路径逃逸/指向 `origin/**` 均拒绝。纯读取/分析命令保持只读；`plot` 只有保存结果时才分配 RunId。真实 C++/CTest/安全负例仍待后续获准实施。
 
 建议退出码类别（尚未批准）：0 成功、2 参数错误、3 MAT/输入 I/O 错误、4 格式/类型/形状错误、5 数值无效、6 输出目录保护、7 可选功能不可用。实施前冻结状态优先级与错误含义。
 
@@ -50,7 +52,7 @@
 
 **数据字典已通过独立 C++ matio 探针实际扫描**：Ubuntu 24.04 / matio 1.5.26，582/582 源 MAT 全部被逐变量 `Mat_VarRead` 解码，582 个变量均 `READ_OK`，失败 0。原始目录以 `MAT_ACC_RDONLY` 打开；见 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md)。P0.5/0.6 的文档合同、正式业务 Reader/Writer 与负例仍需测试；P10.4 独立复核尚未完成。
 
-对 Original/Modified KvD 的 near、t、ω、终止条件逐轮比对；Adaptive 比对 6×6 系统各子块、右端、旋转、残差与球谐系数更新。 **特别核验：Adaptive oneit 返回的 error 是 MSE，sqrt(error) 在 MATLAB 内部另算但没有返回；测试记录必须分列 error_mse 和仅用于诊断的 rms，不得将二者互作。** `double` 为数值精度要求；**历史** `rtol=1e-10` 不是现行容差候选。现行待审候选为 `atol=0.01`、`rtol=0.1`，另对物理不变量、近零理想残差和离散行为保留严格检查；参阅 [Golden/容差提案](golden/GOLDEN_TOLERANCE_PROPOSAL.md)。须按模块记录绝对/相对误差、条件数及样本有效性，DEC-005 审批前不得作为通过阈值。不对零向量、NaN、Inf 或未定义方向误差计入成功。
+对 Original/Modified KvD 的 near、t、ω、终止条件逐轮比对；Adaptive 比对 6×6 系统各子块、右端、旋转、残差与球谐系数更新。 **特别核验：Adaptive oneit 返回的 error 是 MSE，sqrt(error) 在 MATLAB 内部另算但没有返回；测试记录必须分列 error_mse 和仅用于诊断的 rms，不得将二者互作。** `double` 为数值精度要求；**历史** `rtol=1e-10` 不是现行容差候选。已决定的首轮探索筛查为 `atol=0.01`、`rtol=0.1`，另对物理不变量、近零理想残差和离散行为保留严格检查；参阅 [Golden/容差提案](golden/GOLDEN_TOLERANCE_PROPOSAL.md)。须按模块记录绝对/相对误差、条件数及样本有效性，DEC-005 审批前不得作为通过阈值。不对零向量、NaN、Inf 或未定义方向误差计入成功。
 
 ### 2.6 已执行 matio 全量探针的证据与限制
 
@@ -75,14 +77,14 @@
 
 ### 2.8 用户审批 JSON 的数值与执行验证边界（仅规划）
 
-**已补充具体 Golden/容差候选，但仍未测试或批准**：查看 [Golden 参考样例与宽松容差建议](golden/GOLDEN_TOLERANCE_PROPOSAL.md) 和 [12 组解析候选 JSON](golden/analytic_golden_candidates.v1.json)。其中给出 12 组根据原 MATLAB 公式静态推导的固定输入/输出（含有序采样、光流、球谐、90° 转动、误差计算、Adaptive 单步）和第一轮探索性建议 `atol=0.01, rtol=0.1`。**这些不是经 MATLAB 采集的 Golden，也不是经 DEC-005 批准的阈值**；离散结构、错误状态、球面/旋转不变量另有严格条件。一般 KVD/Adaptive 逐轮及 RNG 测试须补齐 L3 独立固定输入、逐节点与调用次数参考，最终结果/统计使用 L2/L4；不要求 MATLAB 采集，H-10/H-11 暂缓状态不变。
+**已补充具体 Golden/容差候选，但仍未测试或批准**：查看 [Golden 参考样例与宽松容差建议](golden/GOLDEN_TOLERANCE_PROPOSAL.md) 和 [12 组解析候选 JSON](golden/analytic_golden_candidates.v1.json)。其中给出 12 组根据原 MATLAB 公式静态推导的固定输入/输出（含有序采样、光流、球谐、90° 转动、误差计算、Adaptive 单步）和第一轮探索性建议 `atol=0.01, rtol=0.1`。**这些是未执行的独立 L3 候选，不代表最终 DEC-005 PASS 阈值**；离散结构、错误状态、球面/旋转不变量另有严格条件。一般 KVD/Adaptive 逐轮及 RNG 测试须补齐 L3 独立固定输入、逐节点与调用次数参考，最终结果/统计使用 L2/L4；不要求 MATLAB 采集，H-10/H-11 暂缓状态不变。
 
-审批记录见 [DECISION_IMPLEMENTATION_NOTES.md](approval/DECISION_IMPLEMENTATION_NOTES.md)。H-01 **只批准先整理误差/容差提案**，H-03 仅批准整理 CLI/错误/TC→Golden 候选，历史 H-09 采集计划不再含 MATLAB 运行要求；**0.01/0.1 为未批准候选，不能用被测 C++ 生成数据当参考真值或把未建测试标记通过**。
+审批记录见 [DECISION_IMPLEMENTATION_NOTES.md](approval/DECISION_IMPLEMENTATION_NOTES.md)。H-01 **只批准先整理误差/容差提案**，H-03 仅批准整理 CLI/错误/TC→Golden 候选，历史 H-09 采集计划不再含 MATLAB 运行要求；**0.01/0.1 为已确定的首轮筛查值，最终模块 PASS 门槛仍待审，不能用被测 C++ 生成数据当参考真值或把未建测试标记通过**。
 
 | 将来需要的对照 | 预定输入/观察量 | 当前状态 |
 |---|---|---|
 | H-02 Sophus 取代 Rodrigues | 原 MATLAB 固定 `ω=0`、小角低于 eps、x/y/z、复合、接近 π；核对 3×3 物理旋转、Rᵀ 局部运动 | **已选路线，未运行** |
-| H-14 方案 A：Don Williamson 的 Ivanic–Ruedenberg | 原 `SHRotate(r,2)` 的 R0=1、R1 九元素、R2 25 元素；比较 m 顺序、相位、轴排列、正/逆旋转及完整九个球谐系数 | **已选路线，未复制/编译/运行，独立 Golden 缺失** |
+| H-14 方案 A：Don Williamson 的 Ivanic–Ruedenberg | 原 `SHRotate(r,2)` 的 R0=1、R1 九元素、R2 25 元素；比较 m 顺序、相位、轴排列、正/逆旋转及完整九个球谐系数 | **已选路线，未复制/编译/运行，独立 L3 参考尚待核验** |
 | H-12 `output/<RunId>/` 结果及负例 | 原 `origin/**` 前后哈希不变；重复 RunId、软链接越界、异常读写、MAT 写后回读、运行输出排除在 Git 上传之外 | **只完成忽略规则的文档/配置，H-10 暂缓、writeMat=false，未运行** |
 | H-04 Ubuntu VM 资源快照 | 用户提供的 `uname/df/free`；将来记录实际 CMake/CTest 和 peak RSS/wall/CPU | **只有环境资料，未批准时间/性能门槛** |
 
@@ -90,7 +92,7 @@
 
 ## 3. TC → 实体/CTest → AC 规划矩阵
 
-下列表格共 66 项，与 SRS **v0.4 草案**逐项对应；MAT I/O 的拟议数据结构、独立负例及测试文件映射详见 [mat_io.md §2、§5、§8–9](design/mat_io.md)。**独立 matio 探针已编写并执行**，但绝大多数拟议测试源文件、测试函数和 CTest 名称尚未创建；探针不是 CTest 注册项。人工审查项与自动测试区分。原始 45 个 MATLAB 源文件映射请参见 [REQUIREMENTS.md §9.2](REQUIREMENTS.md)。
+下列表格共 66 项，与 SRS **v0.5 草案**逐项对应；MAT I/O 的拟议数据结构、独立负例及测试文件映射详见 [mat_io.md §2、§5、§8–9](design/mat_io.md)。**独立 matio 探针已编写并执行**，但绝大多数拟议测试源文件、测试函数和 CTest 名称尚未创建；探针不是 CTest 注册项。人工审查项与自动测试区分。原始 45 个 MATLAB 源文件映射请参见 [REQUIREMENTS.md §9.2](REQUIREMENTS.md)。
 
 **L2/L3/L4 来源及测试文件唯一索引**：`contracts.md §3/§3.0`、`experiments.md §8.1`、`harmonics.md §4.1`、`sampling_noise.md §8`、`mat_io.md §5/§8` 仅补充对应模块的候选测试细节。本表仍是 66 项 TC 的单一归档，不产生新编号；其 test 文件、CTest 名称与来源证明尚未创建/批准，H-10/H-11 实际执行权限保持暂缓。
 
@@ -216,7 +218,7 @@
 1. **现有 Golden**：作者归档中真正存在的 MAT 结果，可作为变量合同与统计结果参考，但没有每轮中间量时不能冒称提供了逐步算法真值。
 2. **待生成的数值 Golden**：Franz 模板项、Original/Modified KvD 的 near/t/ω、Adaptive 的 M1…M4/b/z/error_mse、新系数、球谐块旋转。**必须以只读源公式、独立解析或独立非被测实现生成/复核 L3 参考**；不需要执行 MATLAB/Octave 或采集 L1；不能以被测 C++ 程序自己的结果作为真值。
 3. **身份字段**：源 .m Git blob SHA、源树 SHA、工具及版本、原公式的固定输入和独立注入 RNG 序列、变量名/shape/dtype、参考数值文件 SHA-256、许可证/可存储位置。
-4. **存放位置**：小型、可再分发的定值 Golden 在经版权核验后可放 tests/golden/fixtures；受限或大型资料放在维护者批准的独立持久位置，仓库只保存路径映射和哈希，不擅自复制/再许可。
+4. **存放位置**：小型、可再分发的定值 Golden 在满足现有上游告知后可放 tests/golden/fixtures；受限或大型资料放在维护者批准的独立持久位置，仓库只保存路径映射和哈希，不擅自复制/再许可。
 5. **版本更新**：变更输入、脚本 SHA、近度定义、索引或容差时，应生成新的 Golden 版本并保存历史，不静默覆盖旧结果。
 6. **样本统计**：每次用例记录文件总数、成功解码、格式不支持、损坏、缺失、统计有效/失败/未定义，不能只报告成功部分。
 
@@ -237,7 +239,7 @@ MAT 全量字典和来源证据**已经生成**：见 [MAT_DATA_SCHEMA.md](MAT_D
 | TC-F-EXP-001/002/003 | L3 固定两帧/8 次聚合/刷新规则；L2 历史 MAT、L4 统计 | 一般输入参考、Runner、CTest、L4 |
 | TC-F-AN-001、TC-I-ANALYSIS-001 | 从 L2 只读 MAT 独立重算为 L3 begin/end/zone/平滑/曲线 | 原始值逐元素导出、独立分析结果、CTest |
 
-无论哪项仍缺 C++ 实施、实际测试、参考值或 DEC-005 批准时均不可标记 PASS。宽松 `atol=0.01,rtol=0.1` 仅为待批准提案；对形状、顺序、RNG 消耗、状态和几何不变量仍严格检查。**不再因无法运行 MATLAB 而阻塞任何 TC/AC。**
+无论哪项仍缺 C++ 实施、实际测试、参考值或 DEC-005 批准时均不可标记 PASS。宽松 `atol=0.01,rtol=0.1` 已确认用于**首轮探索筛查**（正式验收另定）；对形状、顺序、RNG 消耗、状态和几何不变量仍严格检查。**不再因无法运行 MATLAB 而阻塞任何 TC/AC。**
 
 ## 6. Debian/Ubuntu 环境与配置矩阵
 
