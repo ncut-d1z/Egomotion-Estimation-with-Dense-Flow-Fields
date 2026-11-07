@@ -6,7 +6,7 @@
 
 > **项目长期决定**：[不运行 MATLAB 的数值证据政策](golden/NO_MATLAB_EXECUTION_POLICY.md) 已根据项目所有者的最新明确要求写入 SRS/TEST_PLAN/LLD/AGENTS：原 .m **只读静态审查**，L1 原 MATLAB 运行逐节点 Golden **不再作为任何冻结/验收阻塞**；下一步用 L2/L3/L4，保留真实 C++/CTest、DEC-005/008、版权、数据保护与人工签署。**本决定不是生产实施或运行测试授权。**
 
-> **当前状态：审计及设计草案阶段；所有正式软件需求、P 任务及里程碑均未宣布验收完成。** 本文件只记录可定位的实际子成果和未决项。验收规则以 [REQUIREMENTS.md](REQUIREMENTS.md)、[TEST_PLAN.md](TEST_PLAN.md) 和 [PLAN.md](PLAN.md) 为准；不得把已有文档、matio 独立探针或静态集合检查折算为业务 C++ 功能完成率。
+> **当前状态：审计及设计草案阶段；全部软件 REQ/TC/P/M0–M5 的验收状态仍依据实际执行证据，未宣告正式通过。** 版本与规范冻结状态见 [DOCUMENT_BASELINE_REGISTER.md](DOCUMENT_BASELINE_REGISTER.md)，`reviews/*` 的历史 SHA 是过往检查点，不能作为当前 HEAD 的动态通过证明。 本文件只记录可定位的实际子成果和未决项。验收规则以 [REQUIREMENTS.md](REQUIREMENTS.md)、[TEST_PLAN.md](TEST_PLAN.md) 和 [PLAN.md](PLAN.md) 为准；不得把已有文档、matio 独立探针或静态集合检查折算为业务 C++ 功能完成率。
 
 **2026-11-07 项目所有者最新决定**：仓库根 [MIT LICENSE](../LICENSE) 已获明确授权创建，普通版权审核不再阻塞开发；球谐必须以 Ivanic–Ruedenberg **1996 原始论文＋1998 勘误**为依据并**纯 Eigen 重写、禁用 sdla**，等用户上传两份论文后实现；CLI 已删除自定义输出根参数，输出固定 `output/<RunId>/`，RunId 来自独立 OS 随机源；Result/Status 采用轻量封装、ErrorStage 稳定枚举、JSONL；实验使用独立配置、失败状态不提交、八次聚合不改分母，Manifest 区分 Complete/Incomplete/Failed；`atol=0.01,rtol=0.1` **仅作为已确认的首轮探索性筛查**，最终 DEC-005 验收门槛未冻结。详见 [最新技术决定](decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md)。这不是生产代码或测试执行授权。
 
@@ -37,6 +37,7 @@
 | E-DOC-008 | [2026-11-07 LLD/MAT I/O 一致性审查](reviews/LLD_MAT_IO_AND_CONSISTENCY_2026-11-07.md) + [mat_io.md v0.5](design/mat_io.md) | 已统一 SRS v0.4 的 PLAN/TEST_PLAN 引用、当前未批准候选 atol=0.01/rtol=0.1 与历史 rtol=1e-10；修正各 LLD 的 L3 参考表述；MAT I/O 补 MatDenseArray 自拥有候选接口、单/多变量边界、错误与 RunContext、L2/L3、拟议 target 与负例→TC/CTest；指定 SHA 下连接器静态检查 66 REQ/66 TC/98 P/26 HLD 边均一致，origin Git 子树未改 | 新 C++ 类已创建/编译、真实 MatResultReader/Writer 与 MAT 读回/负例已执行、L2 SHA-256/逐值参考已完成、CMake/CTest 通过、数值阈值/接口已冻结 |
 | E-DOC-009 | [2026-11-07 跨模块 LLD 合同/target/测试映射](reviews/LLD_CONTRACTS_TARGETS_TESTS_ALIGNMENT_2026-11-07.md) + [contracts.md](design/contracts.md)、[experiments.md](design/experiments.md)、[harmonics.md](design/harmonics.md)、[sampling_noise.md](design/sampling_noise.md) | 在固定提交 `2689ac522aaa480d9e66ed993ae1ffc94254065f` 上，通过 GitHub 连接器只读核对 66 REQ、66 TC、98 P、26 条 HLD 边及 9 项限定合同断言，错误 0；已起草统一 Failure/Result/Status、ErrorDetail 阶段、RunContext 所有权、MatDenseArray io 边界、各模块 target/候选测试映射与 L2/L3/L4 术语，并将 CLI 多变量合同与 TEST_PLAN 候选关联 | 新公共头/Result/RunContext/SHRotation/RNG/Reader/Writer/CMake/CTest 已实现或编译、L2 SHA-256/L3 已执行、DEC-003/005/007/008 已批准、H-10/H-11 解除暂缓、LLD 已冻结或 AC 已验收 |
 | E-DOC-010 | [项目所有者 2026-11-07 决定](decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md) + [MIT LICENSE](../LICENSE) + [Ivanic–Ruedenberg 原文与 Eigen LLD](design/SH_ROTATION_IVANIC_RUEDENBERG.md) + [新审查记录](reviews/OWNER_TECH_DECISIONS_ALIGNMENT_2026-11-07.md) | 已建立仓库根 MIT、明确 1996 原文/1998 勘误优先和 Eigen-only 禁用 sdla；SRS v0.5、HLD v0.4、CLI v0.2（无自定义输出根）、MAT I/O v0.6；轻量 Result、ErrorStage、JSONL、独立 Runner 配置/失败策略、首轮 `atol=0.01`/`rtol=0.1` 筛查已选定；固定 SHA 下 66 REQ/66 TC/98 P/27 HLD 边静态一致 | 原始论文已上传/完成公式逐式核验、生产 R5/Result/CLI/Reader/Writer 已实现、CMake/CTest/数值测试/最终 DEC-005 已通过、用户允许合并发布或完成基线冻结 |
+| E-DOC-011 | [DEC-004 历史字段决定](decisions/DEC-004_HISTORICAL_MAT_FIELDS.md) + [SRS v0.6](REQUIREMENTS.md) + [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) | 已将 DEC-004 当前保存字段/历史字段/缺失分析显式失败的原则写入 SRS、Runner/Analyzer LLD、TEST_PLAN、PLAN；REQ-DC 八项迁入 SRS 附录（ID/AC/TC不变），SRS 与设计职责分层、Golden L2/L3/L4 术语归口、当前文档版本/SHA 单一清单计划建立 | DEC-004 的生产 Runner/Analyzer 已实施、当前 branch CMake/CTest 或任何数值测试已执行、SRS/HLD/LLD/TC/AC 已冻结或全部完成 |
 | E-DEC-001 | [JSON 审批落实记录](approval/DECISION_IMPLEMENTATION_NOTES.md) | **H-02/H-14 已指定 Sophus 与 Don Williamson Ivanic 方案 A**；H-04 已提供 Ubuntu 24.04.4 VM 快照；H-12 已确定 `output/` 并更新 `.gitignore` | 任意第三方 C++ 文件已复制、Sophus 已安装/构建、MAT 写入/CTest 已执行、Golden/容差已批准、程序可发布 |
 
 ## 3. 实施任务与里程碑状态
@@ -75,6 +76,7 @@
 
 | 决策/阻塞 | 当前实际状态 | 下一步必须提交的材料 |
 |---|---|---|
+| DEC-004 历史字段处理 | **项目所有者已经选定规则，非继续待人类选型**：新 Runner 仅保存当前有效 save 字段，旧 582 MAT 完整只读；额外字段 HistoricalOnly，分析必需字段缺失明确失败 | [DEC-004](decisions/DEC-004_HISTORICAL_MAT_FIELDS.md) 已记录；实际 Runner/Analyzer、L2/L3 负例及 TC/CTest 尚未实现，历史成因未知不阻塞开发 |
 | DEC-001/002 当前 MAT 格式和类型 | 归档事实已有 582/582 证据；支持范围尚待审阅 | 当前数据限定 v5/double 与拒绝未知类型的具体 Reader/负例 |
 | DEC-003/007 项目 MIT 与来源跟踪 | **项目 MIT 根 LICENSE 已由所有者授权建立，球谐 Eigen-only 禁 sdla；普通版权审核不再阻塞开发** | 等待用户上传 1996/1998 论文以开展数学实现；实际上游文件保留现有来源 notice 即可；不把独立作品自动重新许可为 MIT |
 | DEC-005 数值验收 | **所有者确认 `atol=0.01, rtol=0.1` 为首轮宽松筛查，最终模块 PASS 阈值未冻结** | 根据 L2/L3/L4 固定输入、真实 C++ 误差、严格状态/物理不变量决定正式分模块阈值；无需 MATLAB/L1 |
