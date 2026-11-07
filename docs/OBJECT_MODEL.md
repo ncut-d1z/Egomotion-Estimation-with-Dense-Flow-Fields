@@ -234,7 +234,7 @@ stateDiagram-v2
 | `help_functions/skalarprodukt.m` | math::dot (自由函数) | 已定位 / 合同待 P0 核验 |
 | `help_functions/trajektorie_aus_punkten.m` | TrajectoryKinematics::fromPoints | 已定位 / 合同待 P0 核验 |
 | `help_functions/transfehler_div.m` | metrics::scaleAlignedVectorError | 已定位 / 合同待 P0 核验 |
-| `help_functions/transfor_koeff.m` | HarmonicRotator::rotateCoefficients | 已定位 / 合同待 P0 核验 |
+| `help_functions/transfor_koeff.m` | `egomotion::harmonics::HarmonicRotator::rotate`；接口声明见 [球谐专题 LLD §3](design/SH_ROTATION_IVANIC_RUEDENBERG.md) | 已定位 / 仅声明草案，待 P0.8 审阅；没有实现 |
 | `help_functions/winkelausvektor.m` | math::directionToAngles | 已定位 / 合同待 P0 核验 |
 | `help_functions/zellendefinieren.m` | FranzMatchedFilter::axisTemplates | 已定位 / 合同待 P0 核验 |
 | `illustrations/circle_curve_in_the_sphere.m` | IPlotExporter::drawCircleInSphere (可选) | 已定位 / 合同待 P0 核验 |
