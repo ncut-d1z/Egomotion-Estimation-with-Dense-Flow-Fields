@@ -273,6 +273,6 @@ stateDiagram-v2
 | 资源拥有 | unique 句柄、复制/移动/异常清理、不可覆盖原始 MAT | 资源测试、只读文件 hash |
 | 状态与线程 | RunContext / Session 唯一写入者，跨帧更新次序，单 Session 并发不承诺 | 独立 Session 回归 |
 | 错误处理 | 业务类别与精确 C++17 result/error 约定，CLI 状态映射 | 含失败路径的合同测试 |
-| 批准 | 原 MATLAB SHA、评审人、批准日期、受影响 REQ/TC、开放 DEC | 架构审查记录 |
+| 批准 | **原只读 MATLAB 源文件 Git blob SHA、L2 原始 MAT 身份与 L3 独立参考生成器/输入 SHA**、评审人、批准日期、受影响 REQ/TC、开放 DEC；不要求 MATLAB 运行 | 架构审查记录 |
 
 **状态仍为草案：本文件尚不包含经批准的可编译类签名，P0.7/P0.8 不能记为完成。**
