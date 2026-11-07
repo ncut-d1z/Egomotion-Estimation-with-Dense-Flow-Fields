@@ -25,7 +25,7 @@ A_{l0}\,P_l^0(\cos\theta),&m=0,\\
 \end{cases}
 \]
 
-上式直接对应 kugelflfunc2.m 的 factorial、legendre、sin/cos 分支；未以 MATLAB 固定黄金值验证每个负 m 的符号前，不得把显式多项式实现当作已验证。
+上式直接对应 kugelflfunc2.m 的 factorial、legendre、sin/cos 分支；未以独立 L3 固定方向参考验证每个负 m 的符号前，不得把显式多项式实现当作已验证。
 
 ### 1.1 3×5 系数的九个有效索引
 
@@ -103,7 +103,7 @@ a'_{0,0}=a_{0,0},\quad
 - 先处理 l=0 常数块，l=1 依据源 SHRotate 的轴排列构造 R3（注意行、列和符号）。
 - l=2 的 R5 使用 Ivanic–Ruedenberg 递归生成。**用户 JSON H-14 已选择方案 A：参考 Don Williamson 原始 C++ SHRotation 的 `IvanicSHRotate` 实现，不再把未经审查的其他路线作为默认**；H-02 指定复用源码目录附近须保存来源 README 与上游 MIT LICENSE。H-10 暂缓，**本轮不复制/移植任何 C++ 文件**。
 - 先用对 z 轴的已知旋转检查 m 正负的相位，再分别用 x/y 轴和复合旋转检查 R3/R5 全部元素、正交性、往返一致性和基函数变换方向。
-- 以选定的 Don Williamson C++ 核心递推为**待实施参考**，必须建立 Golden 表：旋转向量、输入 R、MATLAB 源输出 R3/R5、输入/输出系数、误差及源 SHA；不得以 C++ 自校验替代独立源 MATLAB Golden，也不得在本轮复制第三方代码。
+- 以选定的 Don Williamson C++ 核心递推为**待实施参考**，必须建立独立 L3 Golden 表：旋转向量、输入 R、**独立推导/复核** R3/R5 全元素、输入/输出系数、误差及只读源 SHA；不得以被测 C++ 自验代替独立参考，**无需运行 MATLAB**，也不得在本轮复制第三方代码。
 - 对第二阶旋转的任何替代生成算法，须证明与作者 SHRotate 数值行为和系数顺序一致，并有合法的原创或兼容授权基础。
 
 ### 3.1.1 H-02/H-14：上游 C++ 复用路线与法律/构建边界
@@ -141,7 +141,7 @@ public:
 - RealSphericalHarmonics、HarmonicFitter、HarmonicRotator 均不持有 MAT 文件句柄和跨帧轨迹状态；Adaptive Session 独占系数历史。
 - 固定球面方向数组 Golden：所有 9 个 l,m 配对值、均匀/非均匀采样下拟合的系数、旋转前后近度差异。
 - 多组旋转 Golden：单位 R、绕 x/y/z 不同角度、复合旋转和逆变换；在指定系数顺序下逐元素检查 R3、R5 的全部 34 个块元素。
-- 测试必须绑定源脚本 SHA、MATLAB 参考输出和经 DEC-005 批准的数值容差；原数据/Golden 若无法合法提交可使用受控外部存储与可审查哈希。
+- 测试必须绑定只读原源码 SHA、独立 L3 参考输出/独立复核者与经 DEC-005 批准的数值容差；原数据/Golden 若无法合法提交可使用受控外部存储与可审查哈希。
 
 ## 5. 冻结与授权阻塞
 
@@ -152,9 +152,9 @@ public:
 **本文件是详细设计草案；没有 C++ 实现、MATLAB 运行或数值验收证据。**
 
 
-## 6. l≤2 九个实球谐分量的显式公式（待 MATLAB Golden 核符号）
+## 6. l≤2 九个实球谐分量的显式公式（待独立 L3 Golden 核符号）
 
-取归一化方向 \(x=\sin\theta\cos\phi\)、\(y=\sin\theta\sin\phi\)、\(z=\cos\theta\)，并**按原 MATLAB 的 legendre 默认相位**（含 Condon–Shortley 相位）展开。下列是从 §1 通式得到的数学等价表示，只有经过源 MATLAB 数值检查才能成为冻结的公式 Golden：
+取归一化方向 \(x=\sin\theta\cos\phi\)、\(y=\sin\theta\sin\phi\)、\(z=\cos\theta\)，并**按原 MATLAB 的 legendre 默认相位**（含 Condon–Shortley 相位）展开。下列是从 §1 通式得到的数学等价表示，只有经过独立 L3 逐元素检查、相位核对与批准数值测试才能成为已验证的公式 Golden：
 
 | (l,m) | 按源代码约定的 \(Y_{lm}^{real}\) |
 |---|---|
@@ -225,7 +225,7 @@ U/V/W 在不同 m 与 n 边界上组合上一阶 \(R_3\) 条目与递推辅助 P
 | SH-INV | 先 r 后 r⁻¹ | 九个系数和方向采样下近度变化 |
 | SH-BAD | 非正交或非有限输入 | 原函数实际结果及 C++ 明确状态 |
 
-**授权状态**：用户已确认 H-02/H-14 的限定替代来源（Sophus / Don Williamson Ivanic–Ruedenberg），但 H-10 暂缓生产代码实施，本轮不能据此自动复制原程序或外部程序；以后实施需保存第三方 README/LICENSE、核对依赖和源 MATLAB 数值参考。数学等价的推断不能取代实测。
+**授权状态**：用户已确认 H-02/H-14 的限定替代来源（Sophus / Don Williamson Ivanic–Ruedenberg），但 H-10 暂缓生产代码实施，本轮不能据此自动复制原程序或外部程序；以后实施需保存第三方 README/LICENSE、核对依赖和独立 L3 数值参考。数学等价的推断不能取代实测。
 
 ## 8. 异常、生命周期与接口合同
 
@@ -237,8 +237,6 @@ U/V/W 在不同 m 与 n 边界上组合上一阶 \(R_3\) 条目与递推辅助 P
 
 **本模块的已知内容：9 项索引与数学公式、R3 九项映射、R5 的递推结构；缺口：R5 分段递推合法实现、全量 Golden、批准容差与真实代码/CTest。**
 
-## 附录 A：SHRotate 原 MATLAB 与 L3 解析值的明确区别
+## 附录 A：无需 MATLAB 运行的证据边界
 
-[证据等级与 AC 缺口](../golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md) 将 `AN-G06～08` 列为 **L3 解析候选**：九基函数与 90° 转动下 R3/R5 的静态推导**不等于原 MATLAB 实际运行返回的 L1**。当前缺少不同轴、复合转动、非正交/非有限输入的原 MATLAB R0(1 项)、R3(9 项)、R5(25 项)、3×5 系数 before/after 与实际错误/警告的完整 L1。未来 Don Williamson Ivanic–Ruedenberg 的实现即使独立得到相近数值，仍只能按其真实来源登记，不能冒充源 `SHRotate.m` 的 L1。
-
-`AC-F-SH-001` 可在其条款允许的范围内利用**经过独立核验**的 L3 参考测试固定基函数/系数；`AC-F-SH-002` 的源行为忠实性、全元素、许可和失败合同仍缺，C++/CTest、真实 Golden 与 DEC-005 均未完成。现有 H-02/H-14 选定实现路线不改变此证据边界。
+遵守 [长期无需 MATLAB 执行政策](../golden/NO_MATLAB_EXECUTION_POLICY.md) 与 [L2/L3/L4 验收矩阵](../golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md)。**本模块不要求运行 MATLAB/Octave、取得 L1 逐节点输出或追溯原脚本运行异常**；现行独立参考需覆盖原静态数学公式、旋转/坐标/相位、固定输入、源 SHA 及全部有定义元素，并经 DEC-005 容差核准及真实 C++/CTest 比较。无法确定的原 MATLAB 特定运行结果须明确限制声称范围，不能冒充原脚本已实测。当前尚无正式实现/验收证据。
