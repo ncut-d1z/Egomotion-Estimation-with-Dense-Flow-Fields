@@ -35,6 +35,7 @@
 - “确定/待审计/设计待冻结”等仅说明需求依据状态；**MAT 独立探针已在 Ubuntu 上编译并运行，582/582 文件及变量完整读取，详见 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md)**。这一实测证据不表示完整 MAT Reader/Writer、CLI、CTest 或算法已完成。DEC-001/002 对当前归档的格式与类型事实已有证据、尚待基线审查；DEC-005 数值容差、DEC-008 CLI/CTest/Golden 基线继续待批准；**H-02/H-14 已针对 Sophus 和 Don Williamson 的明确替代方案作出选择，H-04 已给出 Ubuntu 24.04.4 的环境容量快照，但未产生性能阈值或软件测试证据**。详细审批边界见 [审批落实记录](approval/DECISION_IMPLEMENTATION_NOTES.md)。
 - **ID 迁移兼容表**：`REQ-I-DOMAIN/IO/RNG/NOISE/KVD/ADAPT/EXPERIMENT/ANALYSIS-001` → 对应 `REQ-DC-...-001`；`REQ-NF-TRACE-001` → `REQ-PROC-TRACE-001`；`REQ-NF-THREAD-001` → `REQ-NF-SESSION-001`。其 AC/TC ID 同步更名，旧标识不得用于新提交或验收证据；现有实现/测试均未创建，故无迁移二进制兼容问题。
 - 冻结规则：只有确认源树 SHA、Mat 字典、外部接口、逐模块验收容差及阻塞风险后，SRS 才能由项目所有者批准为基线；对仍开放的 Should/TBD 项应有明确批准的处理决定。
+- **AC 引用的 LLD 身份门禁（不改变 AC 义务）**：§4 中如 `AC-F-FILTER-001` 引用 `design/kvd.md §2`、`AC-F-SH-001` 引用 `design/harmonics.md §1–3`，目前均为**未冻结草案的导航性链接**；不得将可变分支内容视为已批准验收依据。正式冻结时须为每条引用登记**精确 LLD 文件、章节、版本、Git blob SHA、所在 commit SHA、审批人/日期、对应 DEC 与有效范围**，并核对 SRS/TEST_PLAN/LLD 同一组 REQ/TC/AC。上述身份、Golden 或容差缺一时，保持未冻结/未验收，不在本轮填写虚构 SHA 或批准人。
 
 ## 4. 编号需求及逐项验收条件
 
@@ -182,6 +183,8 @@
 | run-adaptive-update-rates | --output-root DIR | 1/5/11/21 更新周期结果 |
 | analyze | --experiment NAME、--input-root DIR | 四类分析之一的数值序列，不重跑求解 |
 | plot（S 级） | --experiment NAME、--input-root DIR | 可选图示；无后端不妨碍数值命令 |
+
+**H-12 已确认的输出路径边界**：本表的 `--output-root DIR` **仅为候选 CLI 参数**，不是允许任意目录写出的需求授权；其值在拟议实现中只能解析到仓库根 `output/`，由 RunContext 为每次运行创建新的 `output/<RunId>/`，不得指向 `origin/**` 或既有结果。是否保留该选项、参数规范化与 RunId 自动命名仍待 H-03/DEC-008 另行审批，**不由此引入默认输出路径参数值**。本表 `INTEGER`、`NUMBER` 是外部概览写法；[CLI 详细设计 §2.1](design/cli.md) 现有候选类型为 `UINT32`、`NONNEG_INT`、`FINITE_DOUBLE`，它们亦未冻结。
 
 建议退出码表（尚未冻结）：0 成功；2 参数错误；3 文件/MAT 输入错误；4 MAT 类型或形状错误；5 数值状态失败；6 输出安全冲突；7 可选功能不可用。参数合法范围、错误优先级、默认值及输出 schema 在 P0.8/P1.2 以 [TEST_PLAN.md](TEST_PLAN.md) 中 TC-F-CLI-* 的测试说明确认，不能将这份候选表当作已有 CLI。
 
