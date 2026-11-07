@@ -57,7 +57,7 @@ public:
 ## 4. 验收、Golden 和阻塞
 
 - 每一种输出曲线必须从具体 MAT 变量、原始 MATLAB 索引（1-based）和读出 shape 追踪到 C++ 结构化曲线；逐元素误差与数值统计独立于颜色/图例验证。
-- 对缺失 rottransratio 或历史额外 MAT 的情况，报告缺字段及其来源，不为了生成图像而伪造比值。
+- **DEC-004 已确定**：历史归档原样只读读取；新 C++ 输出只生成当前有效 save 字段。对于当前生成流程不写、但历史分析需要的 `rottransratio` 等字段，必须报告 `MissingVariable`（或由 Analyzer 按 contracts 明确映射的非成功）及 `HistoricalOnly` 来源说明，**绝不补零、跨 RunId 借用、推导虚假比值或伪造图像**。详见 [决策](../decisions/DEC-004_HISTORICAL_MAT_FIELDS.md)。
 - TC-F-BIAS-003、TC-F-AN-001/002、TC-I-ANALYSIS-001、TC-F-CLI-004/005；当前无 Golden 数值、无签名冻结、无实际 CTest。
 
 
@@ -157,9 +157,9 @@ PlotExporter 仅消费 AnalysisDataset，输出图形位置必须在独立 RunId
 | graphs_bias_test | 两类归档各 40 运行；每运行 xwerte `10×1`，ywerte1…6 各 `10×3` | 原图分析主要使用 ywerte3…6，且 xwerte 按作者存储值而非实际完整球面 N |
 | graph_agent_in_sphere_initialization_test | 四个 allemit/alleohne trans/rot 变量，均 `35×1` | 1..13 与全行索引按源脚本控制，不因 dtype/shape 合法而省略索引测试 |
 | graph_agent_in_sphere_adaptive_matched_filter_test | without_errors 的四误差和 rottransratio 均 `600×1`；with_errors 另有 alleadaprot/alleadaptrans，亦 `600×1` | 当前源码不写 `alleadap*`，历史额外数据来源仍需追踪 |
-| graph_agent_in_sphere_adaptive_matched_filter_many_parameter | 现存 allemittrans/allemitrot/alleadaptrans/alleadaprot 均 `600×4`；akrot/rottransratio 均 `600×1` | 当前多频率生成脚本实际只保存两个 allemit 字段及 akrot；分析又读取历史 rottransratio，不能虚构其生成来源 |
+| graph_agent_in_sphere_adaptive_matched_filter_many_parameter | 现存 allemittrans/allemitrot/alleadaptrans/alleadaprot 均 `600×4`；akrot/rottransratio 均 `600×1` | 当前多频率生成脚本只保存两个 allemit 和 akrot；历史 rottransratio 属 HistoricalOnly。新输出进行该图分析时缺少比值即明确失败，不虚构数据；保留旧历史完整分析 |
 
-**H-07 审批状态**：用户仅允许先核对 `alleadap*`、`rottransratio` 在历史 MAT/当前脚本 save/分析入口中的差异，**未批准归因或新建历史缺失字段**。应形成“当前脚本生成/历史归档额外/来源未确认”三态字段表，而不是修改原 MAT 或擅自修正统计口径。
+**DEC-004 的最新所有者决定优先于历史 H-07 的仅起草状态**：当前生成字段正常输出，历史额外字段标 `HistoricalOnly` 并只读保留；未知来源无需先归因。分析需要却缺失的字段明确非成功，不补造/不调整统计口径。三态来源分类可保留 `CurrentGenerated/HistoricalOnly/Unknown`，具体报告类型待 LLD/CTest 验证。
 
 后续验收要分别进行：(1) `Mat_VarRead` 正常读取、rank/dims 解析（**已有独立探针证据**）；(2) 业务 Reader 将 MAT 列主序数据正确映射到分析数组；(3) 分段、窗口、指标及数值曲线与从 L2 MAT 依据原静态索引/公式**独立重算的 L3 数值参考**逐项相符；(4) 可选绘图输出。只有 (1) 有实际完成证据，其余仍未实施。
 
