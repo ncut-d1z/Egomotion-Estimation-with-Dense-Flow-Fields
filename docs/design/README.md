@@ -62,7 +62,7 @@ MAT 数据的 **582 文件全量 matio 字典已实际生成并提交**，包含
 | 文档 | 已文档化的可执行设计检查点 | 尚缺的冻结证据 |
 |---|---|---|
 | contracts.md | FlowField N×6、3×5 近度系数、Result/MatError/NumericalError 候选及生命周期 | 代码内实际类型、错误码批准、线程合同测试 |
-| mat_io.md | MAT v5+zlib/double 类型与形状已实测，选定探针环境 matio 1.5.26；路径保护和 Reader/Writer 候选 API | **仍缺**业务接口、写入/回读、安全负例、Golden 按值检查与 P10.4 复核 |
+| mat_io.md | MAT v5+zlib/double 类型与形状已实测；**v0.5 候选**已细化 MatDenseArray 的二维 double 自拥有值、严格/有界 compat 多变量规则、RunContext/Writer、egomotion_matio target 和负例/TC 测试文件映射 | **仍缺**正式接口冻结、L2 逐值/SHA-256、L3 独立负例、Reader/Writer、写入/回读、安全 CTest 与 P10.4 复核 |
 | cli.md | 命令、参数/类型、固定实验语义、失败类别及字段候选已表格化 | RunId 自动命名、JSONL/键值格式、部分参数合法边界待批准；真实 CLI/CTest 不存在 |
 | kvd.md | 原始/修正平移与旋转公式、最低/最大迭代、逐轮 trace 字段 | 独立 L3 逐轮 Golden、病态/停止边界、正式容差与 CTest |
 | harmonics.md | 9 项 l≤2 实球谐公式、3×5 索引、R3 元素；H-14 方案 A 已指定 Don Williamson Ivanic C++ R5 适配 | 复用范围及 README/MIT LICENSE、sdla 依赖处理、完整实现、Golden 与精度 |
