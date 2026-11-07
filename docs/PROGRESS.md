@@ -18,13 +18,14 @@
 | E-DOC-001 | [2026-11-06 追踪核查](reviews/STATIC_TRACEABILITY_2026-11-06.md) | 指定 Git 提交的文档内容及源树集合对应无缺项、无 P/DAG 环 | `bash scripts/check_docs_traceability.sh` 已执行，真实 CMake target 无环、CTest 通过 |
 | E-DOC-002 | [design/cli.md](design/cli.md) | 命令/参数类型/错误码/诊断输出的候选 LLD 已存在 | CLI 已实现、已获批准、错误/参数 schema 已冻结 |
 | E-DOC-003 | [OBJECT_MODEL.md](OBJECT_MODEL.md) + [design/sampling_noise.md](design/sampling_noise.md) | Bias 场景编排、`FlowSynthesizer`、`sampling::randomUnitDirection` 的职责和命名已协调 | 对应头文件/测试已创建、随机数调用序列已数值验证 |
+| E-DEC-001 | [JSON 审批落实记录](approval/DECISION_IMPLEMENTATION_NOTES.md) | **H-02/H-14 已指定 Sophus 与 Don Williamson Ivanic 方案 A**；H-04 已提供 Ubuntu 24.04.4 VM 快照；H-12 已确定 `output/` 并更新 `.gitignore` | 任意第三方 C++ 文件已复制、Sophus 已安装/构建、MAT 写入/CTest 已执行、Golden/容差已批准、程序可发布 |
 
 ## 3. 实施任务与里程碑状态
 
 | 阶段 | 有证据的局部成果 | 阶段状态 | 下一验收证据 |
 |---|---|---|---|
-| P0：源资料/SRS/HLD/LLD 审计 | 45 .m 清单、582 MAT 类型字典；文档层 REQ/TC/P/映射静态一致 | **进行中，未验收** | P0.1–P0.8 各项审批/来源身份、错误与 CLI 合同、版权决定 |
-| P1：运行环境、CLI、MAT | 仅独立 matio 数据字典探针的实测子能力 | **部分子能力可核对，P1 仍未验收** | 生产 Reader/Writer、RAII、输出保护、正反例、写后回读、真实 CMake/CTest |
+| P0：源资料/SRS/HLD/LLD 审计 | 45 .m 清单、582 MAT 类型字典；**H-02/H-14 替代路线选择已形成设计记录** | **进行中，未验收** | P0.1–P0.8 各项审查、许可告知保存/依赖核实、错误与 CLI 合同、Golden/容差决定 |
+| P1：运行环境、CLI、MAT | 独立 matio 探针子能力；H-04 指定 VM 环境；H-12 配置排除未来 `output/` 数据上传 | **H-10 暂缓生产代码/运行，P1 未验收** | 生产 Reader/Writer、RAII、路径保护负例、写后回读和真实 CMake/CTest；解除暂缓和授予运行权限后再执行 |
 | P2–P9：几何/模拟/求解器/实验/分析 | LLD 草案与 source-to-responsibility 映射 | **代码未实现/未验证** | 对应 C++ 实现、固定输入 Golden、分模块数值误差与通过日志 |
 | P10：集成验收与复现 | 规划与证据模板 | **未开始验收** | 逐模块集成、论文复现、P10.4 独立 MAT 审核、性能/完整报告 |
 
@@ -37,7 +38,7 @@
 | M4 分析及绘图 | 未通过 | 设计合同 | 分析曲线与输出核验，可选绘图后端的批准 |
 | M5 最终交付 | 未通过 | 文件架构与验收规则 | 完整平台/CTest/数值证据、版权决策、维护文档、批准的合并/发布 |
 
-**日期/资源状态**：所有里程碑的具体日期、工时、预算、CPU/RAM 指标均**待项目所有者确认**。不根据文档任务顺序擅自承诺日程。正式通过条件还需要相应 REQ/TC/AC 和证据编号。
+**日期/资源状态**：H-04 已提供一台 Ubuntu 24.04.4/x86_64 VirtualBox 的 `uname/df/free` 快照，物理内存总 8127380 KiB、当时 available 4908696 KiB、Swap 4194300 KiB；这些**不是**批准的资源配额或性能通过阈值。所有里程碑的具体日期、工时、CPU 核数、预算及验收指标仍待决定；不根据文档任务顺序擅自承诺日程。正式通过条件还需要相应 REQ/TC/AC 和证据编号。
 
 ## 4. 角色与批准权限（不杜撰人员分配）
 
@@ -54,12 +55,14 @@
 | 决策/阻塞 | 当前实际状态 | 下一步必须提交的材料 |
 |---|---|---|
 | DEC-001/002 当前 MAT 格式和类型 | 归档事实已有 582/582 证据；支持范围尚待审阅 | 当前数据限定 v5/double 与拒绝未知类型的具体 Reader/负例 |
-| DEC-003/007 第三方版权 | **未关闭** | Rodrigues、SHRotate 来源/许可链、可重写范围和项目所有者决定 |
+| DEC-003/007 第三方版权 | **H-02/H-14 已选定限定替代路径；发布/实现尚未验收** | Sophus `SO3d::exp`、Don Williamson `IvanicSHRotate.cpp/.h`（方案 A）及其 MIT 告知；将来保存复用目录 README/LICENSE、核实 sdla 依赖/源许可与 Golden；整个 MATLAB 归档权利不因 H-02 自动通过 |
 | DEC-005 数值容差 | **未关闭** | 条件数/数值尺度分组、固定独立 MATLAB Golden、逐字段误差及批准门槛；人类可通过 [HTML 审批页](approval/HUMAN_APPROVAL_REQUEST.html) 记录决定并自行保存 JSON（不自动等同正式批准） |
-| DEC-006 平台与资源 | **未关闭** | 实际 Debian/Ubuntu 业务构建/测量矩阵；不使用探针结果替代 |
+| DEC-006 平台与资源 | **用户已提供 H-04 主机环境事实；预算/性能仍未冻结** | Ubuntu 24.04.4 VirtualBox/x86_64 的资源快照已记；待将来实际 Debian/Ubuntu 业务构建和性能测量，不以容量快照作为性能验收标准 |
 | DEC-008 CLI/CTest/Golden 映射 | **未关闭** | 批准 [cli.md](design/cli.md) 参数及错误序列化，真实测试文件/注册名、Golden identity、执行证据 |
-| Bash 现场检查 | **尚未执行** | 完整检出并运行 `bash scripts/check_docs_traceability.sh`，保存 stdout/stderr/exit/SHA；本轮只有 E-DOC-001 的连接器等价检查 |
-| MAT 业务读写 | **尚未实现** | P1.3/1.4/1.7/1.9/1.10 的生产接口、路径安全及端到端回读证据 |
+| Bash 现场检查 | **H-11=deferred，禁止本轮现场执行** | 仅保留过去的连接器静态审查；未来人类另行授权后才能在完整仓库运行 Bash 并留 stdout/stderr/exit/SHA |
+| MAT 业务读写 | **尚未实现；H-10=deferred 且 permissions.writeMat=false** | 已确定新数据根 `output/`、已编辑 `.gitignore`；Reader/Writer、路径安全、写后回读/负例需取得单独运行授权和真实证据 |
+
+**用户 JSON 的授权矩阵**：`runCMake`、`runCTest`、`runMatlab`、`writeMat`、`runBash`、`measurePerformance`、`mergePR`、`publish`、`createLicense`、`freezeBaseline` 均为 `false`。H-01/H-03/H-05/H-06/H-07/H-08/H-09/H-13/H-15/H-16 仅允许**先起草**；目前不能据这些决定扩大权限或认定需求/软件验收。上传原始审批 JSON 未自动提交到仓库。
 
 ## 6. 证据回填模板（后续每次实际执行时新增记录）
 
