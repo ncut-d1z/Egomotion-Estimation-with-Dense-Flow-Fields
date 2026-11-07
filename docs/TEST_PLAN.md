@@ -85,7 +85,7 @@
 
 **已补充具体 Golden/容差候选，但仍未测试或批准**：查看 [Golden 参考样例与宽松容差建议](golden/GOLDEN_TOLERANCE_PROPOSAL.md) 和 [12 组解析候选 JSON](golden/analytic_golden_candidates.v1.json)。其中给出 12 组根据原 MATLAB 公式静态推导的固定输入/输出（含有序采样、光流、球谐、90° 转动、误差计算、Adaptive 单步）和第一轮探索性建议 `atol=0.01, rtol=0.1`。**这些是未执行的独立 L3 候选，不代表最终 DEC-005 PASS 阈值**；离散结构、错误状态、球面/旋转不变量另有严格条件。一般 KVD/Adaptive 逐轮及 RNG 测试须补齐 L3 独立固定输入、逐节点与调用次数参考，最终结果/统计使用 L2/L4；不要求 MATLAB 采集，H-10/H-11 暂缓状态不变。
 
-审批记录见 [DECISION_IMPLEMENTATION_NOTES.md](approval/DECISION_IMPLEMENTATION_NOTES.md)。H-01 **只批准先整理误差/容差提案**，H-03 仅批准整理 CLI/错误/TC→Golden 候选，历史 H-09 采集计划不再含 MATLAB 运行要求；**0.01/0.1 为已确定的首轮筛查值，最终模块 PASS 门槛仍待审，不能用被测 C++ 生成数据当参考真值或把未建测试标记通过**。
+审批记录见 [DECISION_IMPLEMENTATION_NOTES.md](approval/DECISION_IMPLEMENTATION_NOTES.md)。**历史 H-01 在原审批记录中是 `draft`、`referenceConfirmed=false`，并未批准任何数值阈值**；H-03 也只是 CLI/错误/TC→参考数据方案草案，历史 H-09 不再要求 MATLAB 运行。项目所有者**后来另行确定** `atol=0.01`、`rtol=0.1` 仅为**首轮探索性筛查**，不等于 H-01 已签字或 DEC-005 最终模块 PASS 门槛已获批准；不能把被测 C++ 输出当独立真值或将未创建的测试标为通过。
 
 | 将来需要的对照 | 预定输入/观察量 | 当前状态 |
 |---|---|---|
