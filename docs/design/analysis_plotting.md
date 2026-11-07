@@ -1,6 +1,6 @@
 # MAT 结果分析与可选绘图——详细设计草案
 
-> **LLD v0.2 草案，未冻结、未运行任何可视化程序。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
+> **LLD v0.3 草案，未冻结、未运行任何可视化程序。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
 
 ## 1. 只读分析合同
 
@@ -98,7 +98,7 @@ y_i=0\text{ （原始 zeros 预分配的其余边缘）}.
 两个 Bias **生成脚本**都写 xwerte(i+1)=6·4^i，然而完整球面生成函数的实际视线数量为 8·4^i。分析脚本对原存 xwerte 求 100/sqrt(xwerte)。因此：
 - **原始复现视图**必须使用历史文件的 xwerte 和理论曲线，不把 x 替换成真实 N；
 - 如另行输出物理实际样本数，应使用 separate actual_flow_count 元信息及新的、明确标注的图表，不能把新图伪装成原论文结果；
-- 需求与结果解释中应记录这一差异，待项目所有者决定是否保留另一种对照图。
+- **原版 Bias xwerte 与理论参考线是当前复现的既定要求**，不再因“是否提供另一种对照图”请求当前人工选择。若另行提供物理实际方向数，必须作为明确标注的 `actual_flow_count` 元信息，与原存 `xwerte` 并列且不得覆写；**额外使用实际 N 的对照图属于当前必要交付/验收范围之外的新增功能**，只有收到明确新需求才另行规划、验收，不能阻塞既定分析功能。
 
 ## 6. 候选 CurveSeries 输出 schema 与 C++17 错误合同
 
