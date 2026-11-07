@@ -1,5 +1,7 @@
 # 分模块详细设计（LLD）索引、完成度与冻结标准
 
+> **长期证据规则**：[不执行 MATLAB 的项目政策](../golden/NO_MATLAB_EXECUTION_POLICY.md) 已取消原 MATLAB L1 Golden 的强制门禁。LLD 与验收只要求来源清楚的 L2/L3/L4、真实 C++/CTest 和批准容差；**缺少 MATLAB 运行不阻塞冻结**，但不能宣称原脚本的未知异常/RNG/逐位输出已验证。
+
 > **设计状态：草案，未冻结、未编译、未验证。** 索引中的文件已实际创建，但其中的候选 C++17 接口、数学步骤、测试路径和错误枚举没有对应已实现代码。源 MATLAB 文件和已保存 MAT 仍由 origin/** 只读保存。
 
 ## 文档职责
@@ -62,7 +64,7 @@ MAT 数据的 **582 文件全量 matio 字典已实际生成并提交**，包含
 | contracts.md | FlowField N×6、3×5 近度系数、Result/MatError/NumericalError 候选及生命周期 | 代码内实际类型、错误码批准、线程合同测试 |
 | mat_io.md | MAT v5+zlib/double 类型与形状已实测，选定探针环境 matio 1.5.26；路径保护和 Reader/Writer 候选 API | **仍缺**业务接口、写入/回读、安全负例、Golden 按值检查与 P10.4 复核 |
 | cli.md | 命令、参数/类型、固定实验语义、失败类别及字段候选已表格化 | RunId 自动命名、JSONL/键值格式、部分参数合法边界待批准；真实 CLI/CTest 不存在 |
-| kvd.md | 原始/修正平移与旋转公式、最低/最大迭代、逐轮 trace 字段 | MATLAB 逐轮 Golden、病态边界、正式容差 |
+| kvd.md | 原始/修正平移与旋转公式、最低/最大迭代、逐轮 trace 字段 | 独立 L3 逐轮 Golden、病态/停止边界、正式容差与 CTest |
 | harmonics.md | 9 项 l≤2 实球谐公式、3×5 索引、R3 元素；H-14 方案 A 已指定 Don Williamson Ivanic C++ R5 适配 | 复用范围及 README/MIT LICENSE、sdla 依赖处理、完整实现、Golden 与精度 |
 | adaptive_mfa.md | M1–M4、rhs、MSE 返回、Frame/Session 更新时序差异 | 逐节点 Golden、异常提交决定、容差 |
 | sampling_noise.md | 三种采样顺序、噪声方程、rand/randn 调用顺序、source seed 重置 | 固定 RNG Golden 与样本全序核对 |
@@ -82,13 +84,18 @@ MAT 数据的 **582 文件全量 matio 字典已实际生成并提交**，包含
 1. **已完成的独立子能力**：582/582 MAT 已通过 matio 解压/变量元数据检查；**尚待** P1 生产 Reader/Writer 按值加载、错误负例及 P10.4 独立结果审核。
 2. P0.4/DEC-003/007：**用户已决定**由 Sophus SO(3) 和 Don Williamson Ivanic–Ruedenberg C++ 替代对应原 MATLAB 函数；但源码复制、第三方 README/MIT LICENSE 告知、依赖闭包及跨库数值对照仍待授权实施。参见 [审批落实记录](../approval/DECISION_IMPLEMENTATION_NOTES.md)。
 3. P0.8/DEC-008：统一 C++17 API、状态/错误、CLI schema、组件 target 和测试实体的批准。
-4. DEC-005/006：固定源 MATLAB Golden 和逐模块容差未批准；H-04 已提供 Ubuntu 24.04.4 VM/x86_64 资源快照，但没有性能通过门槛。
+4. DEC-005/006：**独立 L3 固定输入逐节点 Golden** 与逐模块容差未全面核验/批准；无需运行 MATLAB；H-04 已提供 Ubuntu 24.04.4 VM/x86_64 资源快照，但没有性能通过门槛。
 5. P1–P10：真实 C++ 类、CTest、运行结果及按 TC/AC 记录的证据。
 
 **当前模块 LLD 均未冻结**：独立 C++17 matio 扫描器确已编译运行，但无生产业务模块、CTest、逐元素 Golden 或算法数值实验。不能将数据字典扫描通过扩大为整项目或 LLD 验收通过。
 
-## Golden 来源等级的跨模块统一索引
+## Golden 来源等级的跨模块统一索引（不运行 MATLAB）
 
-[Golden L1–L4 证据分级、缺失字段与 AC 验收缺口](../golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md) 是本轮 **非规范性审查附表**：L1 原 MATLAB 逐节点/逐调用（当前未采集），L2 现存历史 MAT 最终结果（已知元数据，逐值/SHA-256 复核尚缺），L3 独立解析/重实现（AN-G01～12 仅是候选），L4 统计对照（尚未新执行）。它不能替代 [TEST_PLAN.md `3](../TEST_PLAN.md) 的正式 TC→实体→AC 映射，不自动改写现有数值/失败语义、批准 DEC-005 或使任一 LLD 冻结。
+以 [长期无需 MATLAB 执行政策](../golden/NO_MATLAB_EXECUTION_POLICY.md) 为当前规则，[L2/L3/L4 参考来源及 AC 对应](../golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md) 为模块核对清单。**L1 原 MATLAB 运行证据永久退出必需清单**，不得再因为“未运行 .m”或“缺少 MATLAB 逐节点 Golden”而阻塞签名评审、设计冻结、代码实现或验收。作者 582 MAT 为 L2 最终值来源（只读逐值/SHA-256 复核待做）；AN-G01～12 等解析候选属于 L3，**尚需独立复核与扩展**；L4 统计尚待实际分析。模块真实接口、异常、依赖、许可、DEC-005/008、CMake/CTest 与正式签署要求不变。
 
-KvD、Adaptive、球谐、采样/RNG、轨迹、实验、分析与 MAT I/O LLD 中新增的同名附录仅记录**尚缺的来源和允许做出的有限结论**。若要以 L2/L3/L4 正式取代原 AC 明确要求的原 MATLAB L1，必须另行人类批准需求/验收变更。
+- KvD/Franz、Adaptive：用 L3 **独立逐节点/逐轮数学参考**（包含一般/边界输入），以及实际 C++ trace 验证。
+- 采样、RNG：用 i=0/1/2 的全部有序 L3 方向、固定注入 uniform/normal 与准确调用次数；不要求复现原 MATLAB 特定种子的具体随机流。
+- 球谐/轨迹：用独立 R0/R3/R5 全元素、系数、几何和逆变换参考。
+- 实验、分析与 MAT I/O：L2 历史 MAT 原值，独立重算 L3 曲线/聚合/刷新以及 L4 统计。原 MATLAB 不执行。
+
+[TEST_PLAN.md §3](../TEST_PLAN.md) 仍是完整 TC→测试实体→AC 的唯一候选矩阵；本索引不等于任何 TC/AC 已通过。
