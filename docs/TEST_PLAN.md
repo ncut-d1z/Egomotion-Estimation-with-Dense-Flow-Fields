@@ -1,5 +1,7 @@
 # 测试设计与验收计划（TEST PLAN）
 
+> **审批后候选核对材料**：见 [HAR-2026-11-06-001 设计修订与待审材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md) §2、§3、§7～§9。其中提出六类容差数据的采集格式、582 MAT SHA-256 独立审核、正式 Reader 类型拒绝清单及合法 MATLAB Golden 采集表；所有阈值仍为空，测试实体/CTest 仍未执行，H-10/H-11/权限矩阵未解除。
+
 > **草案，未冻结。** 测试标识 TC 均为拟定名称；下面的测试文件、CTest 前缀均为未来可能的产物，尚未建立。需求参见 [REQUIREMENTS.md](REQUIREMENTS.md)，实施参见 [PLAN.md](PLAN.md)。已编写并在 Ubuntu 24.04 上编译运行**独立 C++17 matio 数据字典探针**，582/582 MAT 均 `READ_OK`；**未创建完整业务 C++/CTest，也未执行业务级或数值 Golden 测试**。
 
 ## 1. 验证分层和前提
