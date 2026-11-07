@@ -1,6 +1,6 @@
 # Egomotion Estimation with Dense Flow Fields：软件需求规格说明书（SRS）
 
-> **状态：草案 v0.7，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
+> **状态：草案 v0.8，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
 
 ## 1. 目的、范围与约束
 
@@ -33,7 +33,7 @@
 - 需求类别：`REQ-F-*` 功能、`REQ-D-*` 数据、`REQ-I-*` 可观察/组件边界接口、`REQ-DC-*` 内部设计约束、`REQ-NF-*` 非功能、`REQ-PROC-*` 项目过程质量。实施工作项仍单独使用 P0–P10，不能把 P ID 当需求。
 - 对应 `AC-*` 是验收条件、`TC-*` 是**计划中的测试标识**；实际测试文件/CTest 名见 [TEST_PLAN.md](TEST_PLAN.md)，尚未创建的名称均标为拟议。
 - 优先级 M=必须、S=应该、C=可选、W=本期排除。M 项目若有必需的未冻结容差/权限/数据合同，应标注“**M（受 DEC 阻塞）**”并保持验收状态“不可判定/未通过”，不能因此放低优先级，也不能冒称通过。
-- “确定/待审计/设计待冻结”等仅说明需求依据状态；**MAT 独立探针已在 Ubuntu 上编译并运行，582/582 文件及变量完整读取，详见 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md)**。这一实测证据不表示完整 MAT Reader/Writer、CLI、CTest 或算法已完成。DEC-001/002 对当前归档的格式与类型事实已有证据、尚待基线审查；DEC-005 数值容差、DEC-008 CLI/CTest/Golden 基线继续待批准；**H-02/H-14 已针对 Sophus 和 Don Williamson 的明确替代方案作出选择，H-04 已给出 Ubuntu 24.04.4 的环境容量快照，但未产生性能阈值或软件测试证据**。详细审批边界见 [审批落实记录](approval/DECISION_IMPLEMENTATION_NOTES.md)。
+- “确定/待审计/设计待冻结”等仅说明需求依据状态；**MAT 独立探针已在 Ubuntu 上编译并运行，582/582 文件及变量完整读取，详见 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md)**。这一实测证据不表示完整 MAT Reader/Writer、CLI、CTest 或算法已完成。DEC-001/002 对当前归档的格式与类型事实已有证据、尚待基线审查；DEC-005 数值容差、DEC-008 CLI/CTest/Golden 基线继续待批准；**H-02 已选 Sophus；H-14 的现行约束为依据 Ivanic–Ruedenberg 1996 原文及 1998 勘误，以 Eigen 独立重写球谐旋转，Don Williamson 仅作辅助代码参考、禁止依赖 sdla。H-04 已给出 Ubuntu 24.04.4 环境容量快照，但未产生性能阈值或软件测试证据**。详细审批边界见 [审批落实记录](approval/DECISION_IMPLEMENTATION_NOTES.md)。
 - **ID 迁移兼容表**：`REQ-I-DOMAIN/IO/RNG/NOISE/KVD/ADAPT/EXPERIMENT/ANALYSIS-001` → 对应 `REQ-DC-...-001`；`REQ-NF-TRACE-001` → `REQ-PROC-TRACE-001`；`REQ-NF-THREAD-001` → `REQ-NF-SESSION-001`。其 AC/TC ID 同步更名，旧标识不得用于新提交或验收证据；现有实现/测试均未创建，故无迁移二进制兼容问题。
 - 冻结规则：只有确认源树 SHA、Mat 字典、外部接口、逐模块验收容差及阻塞风险后，SRS 才能由项目所有者批准为基线；对仍开放的 Should/TBD 项应有明确批准的处理决定。
 - **文档分层规则**：SRS §4 正文保留可观察行为、数据、对外接口和非功能需求；`REQ-DC-*` 的内部设计约束置于附录 A，由 HLD/LLD 明确实现。具体采用 Eigen、Sophus、sdla 禁用、封装 Result/Status、JSONL 的实现性选择以 [HLD ADR §8](ARCHITECTURE.md) 和 [最新所有者技术决定](decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md) 为权威来源；SRS 以可验证行为与必要约束作规范，而**不重复维护 C++ 签名/target/ABI**。此分层不撤销项目所有者对技术路线的明确决定。
@@ -54,7 +54,7 @@
 | REQ-F-BIAS-002 | M | 确定 | 系统应复现完整球面、逐分量比例噪声的 Bias 实验。 | AC-F-BIAS-002：同一固定流场及 Gaussian 序列下，逐分量按 randn × 系数 × p_component 扰动并重新投影；其输出与平均模长噪声模型有可计算差别，保存文件名和维度一致。 |
 | REQ-F-BIAS-003 | M | 确定 | 系统应支持汇总两种 Bias 实验各 40 份独立运行结果及理论参考曲线。 | AC-F-BIAS-003：跨运行均值及 100/sqrt(N) 曲线与原分析脚本一致。 |
 | REQ-F-CLI-001 | M | 确定 | 系统应提供 inspect-mat 命令，对指定 MAT 文件进行只读检查，不调用任何估计器。 | AC-F-CLI-001：依据 [design/cli.md §2–4](design/cli.md) 的 `inspect-mat` 候选合同，使用一个有效压缩 MAT、一个不存在的文件及一个变量名错误样本，核验帮助、strict/compat、变量名/类型/形状、退出码与原文件哈希不变；具体 CLI 参数/错误映射仍待 P0.8/P1.2 批准。 |
-| REQ-F-CLI-002 | M | 接口草案 | 系统应分别提供两种 Bias 数据生成命令，保留随机种子、细分等级和结果目录参数。 | AC-F-CLI-002：依据 [design/cli.md §2–4](design/cli.md) 核查两种 Bias 命令的合法/非法等级、seed、可选 `--run-id` 与固定 `output/<RunId>/` 非覆盖；**不存在用户配置输出根选项**，生成 xwerte 与 ywerte1…6，失败按候选错误码返回非成功。 |
+| REQ-F-CLI-002 | M | 接口草案 | 系统应分别提供两种 Bias 数据生成命令，支持随机种子、细分等级与可选的 `--run-id`；新结果仅写入固定的仓库 `output/<RunId>/`，不得提供自定义输出根参数。 | AC-F-CLI-002：依据 [design/cli.md §2–4](design/cli.md) 核查两种 Bias 命令的合法/非法等级、seed、可选 `--run-id` 与固定 `output/<RunId>/` 非覆盖；**不存在用户配置输出根选项**，生成 xwerte 与 ywerte1…6，失败按候选错误码返回非成功。 |
 | REQ-F-CLI-003 | M | 接口草案 | 系统应分别提供 Adaptive 初始化、带/不带噪声比较和更新间隔三种实验入口。 | AC-F-CLI-003：依据 [design/cli.md §2–4](design/cli.md) 逐命令核查三种 Adaptive 入口的原 MATLAB 参数、固定默认值、当前脚本输出合同与 1/5/11/21 刷新时刻；非法参数或数值失败不得报告成功。 |
 | REQ-F-CLI-004 | M | 接口草案 | 系统应提供独立 analyze 命令，只读取已有 MAT 结果并计算曲线数据而不运行求解器。 | AC-F-CLI-004：依据 [design/cli.md §2–4](design/cli.md) 用历史归档执行四种 analyze 路径，核验不调用求解器、原结果哈希不变及缺失字段的明确错误和非零退出。 |
 | REQ-F-CLI-005 | S | 接口草案 | 系统应提供可选 plot 命令，绘图后端缺失时不影响其他数值命令。 | AC-F-CLI-005：依据 [design/cli.md §2–4](design/cli.md) 对同一分析数据核验可选绘图输出与后端缺失状态（候选退出码 7）；禁用绘图不影响 inspect/run/analyze。 |
@@ -505,6 +505,7 @@
 | v0.5 | 所有者确定项目 MIT、Ivanic–Ruedenberg 原文+勘误/Eigen 且禁 sdla、取消输出根 CLI 选项、封装 Result/JSONL、独立实验配置与失败策略、首轮 0.01/0.1 筛查 | 技术方向已定；正式测试与最终数值验收基线未冻结 |
 | v0.6 | DEC-004 历史字段处理获选定；REQ-DC 八项移入设计约束附录而保留 ID/AC/TC；数学行为与实现选型引用 HLD/LLD 单一来源；完善 L2/L3/L4 术语 | 历史草案 |
 | v0.7 | §6.1 CLI 外部参数类型与 `cli.md` 和 TEST_PLAN 一致，明确设计细节仍归 HLD/LLD；保留原 66 REQ/AC/TC | 评审草案，未批准/未冻结 |
+| v0.8 | REQ-F-CLI-002 移除“结果目录参数”残留；固定 `output/<RunId>/`、可选 `--run-id`，并澄清 H-14 的现行数学依据为 Ivanic–Ruedenberg 原文/勘误、Eigen-only、Don Williamson 仅参考 | 评审草案；REQ/AC/TC 数量及 ID 不变，未冻结 |
 
 
 ## 附录 A：内部设计约束清单（REQ-DC）
