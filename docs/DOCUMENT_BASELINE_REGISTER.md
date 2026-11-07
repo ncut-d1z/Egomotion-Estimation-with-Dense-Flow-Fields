@@ -1,6 +1,6 @@
 # 文档类型、版本、Git SHA 与基线状态控制矩阵
 
-> **文档管理登记，非正式已签署基线。** 下列 27 份文档的 Git blob SHA 均来自固定快照 commit `afe3da9091c7d9df17431cd5b427cd1361167f46`；**本矩阵自身的更新提交晚于该快照**。当前 SRS v0.9、HLD v0.5、对象模型 v0.3，WBS/TEST_PLAN v0.4，容差参考 v0.2；各文档版本独立，正式状态全部**未冻结**。后续修改任一文件须另行更新对应 SHA。
+> **文档管理登记，非正式已签署基线。** 下列 **28 份文档**的 Git blob SHA 均来自固定快照 commit `fbc06a10e955758d73616da85fc7d8819bbed4ff`；本矩阵自身的更新提交晚于该快照。当前 SRS **v0.10**、HLD v0.5、对象模型 v0.3、LLD 索引 v0.3，WBS/TEST_PLAN v0.4，容差参考 v0.2；各文件版本独立。**核心规范均未冻结，PROGRESS 是滚动证据登记、其正式基线状态为“不适用”。** 后续有变更时须重新取得固定文件 SHA，不能将历史 SHA 当作当前 HEAD 的冻结证明。
 
 ## 1. 文档职责与唯一规范来源
 
@@ -15,15 +15,16 @@
 | **TEST_PLAN** | 66 TC 的候选文件/CTest→AC、参考来源 L2/L3/L4、测法和证据模板 | 实际是否执行、失败数、PASS/FAIL 只从 PROGRESS 与定 SHA reviews 获取 |
 | **PLAN** | 98 P 工作项、前置关系、里程碑、证据类别 | 不复制所有具体测试函数和实际结果；链接 TEST_PLAN/PROGRESS |
 | **PROGRESS/reviews** | 当前工作/DEC/里程碑与真实执行记录；reviews 是历史固定 SHA 快照 | 不作为 SRS/HLD/LLD 正文，不把旧快照 26 条边视为现有 HLD 27 条边的执行证明 |
+| **AUDIT** | 归纳用户历轮详细 Markdown 审查与修改意见，按相对路径和三态维护逐文件审计进度 | 审计状态不是软件测试 PASS、规范冻结或历史审批 JSON 的改写；动态证据仍归 PROGRESS |
 | **政策与决定附件** | 所有者已确定的技术方向、DEC-004、L1 不必需和 L2/L3/L4 参考策略 | 只为规范提供来源，不替代核心规范批准；原审批历史保留原时间点 |
 
 ## 2. 当前核心文档与 blob SHA
 
-**快照：** `afe3da9091c7d9df17431cd5b427cd1361167f46`。每条文件身份均为该提交的 blob SHA，不能用本矩阵或历史静态检查代替正式批准；其中 `PROGRESS.md` 为滚动证据记录，非编码基线。
+**快照：** `fbc06a10e955758d73616da85fc7d8819bbed4ff`。本矩阵登记的是该固定提交各文件的 blob SHA，不是它自身的最终提交身份；`PROGRESS.md` 的“正式基线”列是**不适用（滚动证据登记）**，其它核心规范均仍为未冻结。
 
 | 层次 | 文档 | 文档版本 | Git blob SHA | 正式基线 | 范围 |
 |---|---|---|---|---|---|
-| SRS | [docs/REQUIREMENTS.md](REQUIREMENTS.md) | v0.9 | `4227ea1b33baa3d33c55cdc442aa1f8c6c437afe` | 未冻结 | REQ/AC + 附录 A 设计约束 |
+| SRS | [docs/REQUIREMENTS.md](REQUIREMENTS.md) | v0.10 | `8abf270ad02210b48c3b48561b91b0d5cdbf5728` | 未冻结 | REQ/AC + 附录 A 设计约束 |
 | HLD | [docs/ARCHITECTURE.md](ARCHITECTURE.md) | v0.5 | `1076a55eed9ee4d547e2cc4132d954cb34fd2c52` | 未冻结 | 组件/部署/27 条 target 边及 ADR |
 | HLD 附件 | [docs/OBJECT_MODEL.md](OBJECT_MODEL.md) | v0.3 | `ebc8aa3bc5cd7bc504676059c34bb1d2d766d5c2` | 未冻结 | 对象生命周期/45 文件映射 |
 | 跨模块 LLD | [docs/design/contracts.md](design/contracts.md) | v0.1 | `6ecd88effd5b3f05d6bd7c6f013cc2805af0bb9c` | 未冻结 | Result/Status/ErrorDetail 与领域数据 |
@@ -36,14 +37,16 @@
 | 轨迹 LLD | [docs/design/trajectory.md](design/trajectory.md) | v0.1 | `ebd445dba6c56e062cf5d26d92f5ffe13344ab75` | 未冻结 | 轨迹/运动/近度 |
 | 实验 LLD | [docs/design/experiments.md](design/experiments.md) | v0.2 | `3b439d4020f1c7aa8f21d233128d2182f320e4da` | 未冻结 | 五入口/当前 save、HistoricalOnly |
 | 分析 LLD | [docs/design/analysis_plotting.md](design/analysis_plotting.md) | v0.2 | `78ff555c1d64f62ffcc953ba3f142ac5abc84d20` | 未冻结 | L2 读取、L3 曲线/缺字段拒绝 |
-| LLD 索引 | [docs/design/README.md](design/README.md) | v0.2 | `bb4e75b25c8f4ff98f7cb5fcf430f07dadf48b94` | 未冻结 | 模块 LLD 范围/冻结条件 |
-| 实施 WBS | [docs/PLAN.md](PLAN.md) | v0.4 | `c50264368656a97883db377b8390aaf98af093fa` | 未冻结 | 98 个 P 工作项 |
-| 测试计划 | [docs/TEST_PLAN.md](TEST_PLAN.md) | v0.4 | `985ecc1d228613aaf9aad050525716e56b01e14a` | 未冻结 | 66 TC→候选测试→AC |
-| 证据登记 | [docs/PROGRESS.md](PROGRESS.md) | v0.1（滚动） | `85fff44e3ba516140f087bd907a3ab26fe356f87` | 未冻结 | 真实结果/历史证据/DEC 当前状态 |
+| LLD 索引 | [docs/design/README.md](design/README.md) | v0.3 | `fa9d6fb463654d4c6ba2e109cdb077be0940dc6a` | 未冻结 | 模块 LLD 范围/冻结条件 |
+| 实施 WBS | [docs/PLAN.md](PLAN.md) | v0.4 | `52151182ccd23bca7c8f2f6da7eeb82fa58c663a` | 未冻结 | 98 个 P 工作项 |
+| 测试计划 | [docs/TEST_PLAN.md](TEST_PLAN.md) | v0.4 | `382961192ea8c4c7f343f318d11ff0f3170d5734` | 未冻结 | 66 TC→候选测试→AC |
+| 证据登记 | [docs/PROGRESS.md](PROGRESS.md) | v0.1（滚动） | `2b869b058ed815fe5ff5daa5009a9beba17f3cf6` | 不适用（滚动证据登记） | 真实结果/历史证据/DEC 当前状态 |
 
-**全部核心基线签署字段现为未提供**：正式批准人、批准日期与时区、批准 commit SHA、冻结生效范围、例外 DEC 与批准证据。已有所有者**技术方案选择**和根 MIT 许可授权，不等于批准整份 SRS/HLD/LLD 或测试 PASS。对版本表的任何变更必须引用新 Git commit/对应 blob SHA。
+**全部适用的规范基线签署字段目前未提供**：正式批准人、批准日期与时区、批准 commit SHA、冻结生效范围、例外 DEC 与批准证据。已有所有者**技术方案选择**和根 MIT 许可授权，不等于批准整份 SRS/HLD/LLD 或测试 PASS。对版本表的任何变更必须引用新 Git commit/对应 blob SHA。
 
 ## 3. 专题、证据与所有者决策附件
+
+**历轮用户修改意见及逐文件审计进度**：[AUDIT.md](AUDIT.md)，与延期人工干预的 [TODO.md](TODO.md) 分开管理；AUDIT 不替代 SRS/HLD/LLD 或测试执行证据。
 
 **人类干预事项的当前唯一清单**：[TODO.md](TODO.md)（延期原因/建议处理时间）。球谐 C++17 仅声明文件清单在 [专题 LLD §3](design/SH_ROTATION_IVANIC_RUEDENBERG.md)，对应的 .hpp/.cpp 文件**尚不存在**，不应登记为源码工件。
 
@@ -59,6 +62,7 @@
 | 开发规则 | [AGENTS.md](../AGENTS.md) | `7d609ccff2ecb41814b3bdbc7986dcccaaa2d6bf` | 只读原资料/实际运行授权 |
 | 延期人类事项 | [docs/TODO.md](TODO.md) | `c3f6d4b79dd7c0bbe4074006c75f214b182f2af4` | 材料、H-10/H-11、DEC-005/006、最终基线/发布：原因及建议阶段，**没有当前授权** |
 | 本轮只读审查 | [docs/reviews/DOCUMENT_REVIEW_AND_SH_DECLARATIONS_2026-11-07.md](reviews/DOCUMENT_REVIEW_AND_SH_DECLARATIONS_2026-11-07.md) | `580e98eae40a5378128b139ce531b6ded11c6c2e` | 历史固定 SHA 下的 GitHub 只读 ID/DAG/引用核对，非真实 Bash/CTest |
+| 用户历轮审计台账 | [docs/AUDIT.md](AUDIT.md) | `e557783ab04a659722b345aa387f04b3a2f68add` | **AU-001～028** 历轮意见，按文件相对路径的“空白/正在审计/已审计”进度，不表示 SRS/HLD/LLD 已冻结 |
 
 原审批与 `docs/reviews/*.md` 保存历史决定、历史 SHA 和当时的验证信息，不随当前版本重写。特别是先前的 26 条 HLD 边证据只能用于当时快照；目前 HLD 的 27 条边只做过 GitHub 连接器读取下的静态无环检查，**不是 CMake 构建证据**。
 
@@ -78,4 +82,4 @@
 4. 实际测试和数值验收按授权进行，把每项证据/样本数与输出日志回填 TEST_PLAN 关联的 PROGRESS，而不是重复标记在多个 LLD。
 5. 由所有者对固定 Git SHA、范围、证据及开放风险明确签署；**本轮未进行该签署**。
 
-**本表仅已建立版本/责任控制架构，当前全部核心规范仍是未冻结评审草案。**
+**本表仅登记版本/责任与固定文件身份：SRS/HLD/LLD/TEST_PLAN 仍为未冻结评审草案；PROGRESS/AUDIT 是过程登记，不适用规范基线冻结，均不代表算法或测试已经通过。**
