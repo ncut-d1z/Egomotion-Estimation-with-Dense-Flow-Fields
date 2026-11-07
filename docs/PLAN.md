@@ -1,6 +1,6 @@
 # Egomotion Estimation with Dense Flow Fields：MATLAB → C++ 源码审计与模块化移植计划
 
-> **WBS 草案 v0.5，未形成承诺基线。** 98 项 P 任务的证据要求与可执行进度以 [PROGRESS.md](PROGRESS.md) 为唯一滚动登记；本文件不保存动态 PASS/失败计数。
+> **WBS 草案 v0.6，未形成承诺基线。** 98 项 P 任务的证据要求与可执行进度以 [PROGRESS.md](PROGRESS.md) 为唯一滚动登记；本文件不保存动态 PASS/失败计数。
 
 > **HAR-2026-11-06-001 的可审查补充**：用户审批 JSON 的 H-01～H-16 已拆成 [审批后的设计修订与待审材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md)，包含 H-05 需求影响、H-06 冻结准备、H-07 历史 MAT 差异、H-08 SHA-256、H-09 Golden、H-13 异常、H-15 里程碑与 H-16 Draft PR 清单。该补充不是 SRS/LLD 冻结或 H-10 解除暂缓，P0～P10 的既有 REQ/TC/AC 义务与任务状态不变。
 
@@ -20,7 +20,7 @@
 - **[docs/TEST_PLAN.md](TEST_PLAN.md)** 规划 TC → 拟议测试实体 → AC，尚未创建 C++ 测试或实际 CTest。
 - **[docs/DOCUMENT_BASELINE_REGISTER.md](DOCUMENT_BASELINE_REGISTER.md)** 是规范文档的类型、当前版本、冻结状态和固定 Git SHA 身份的统一索引；**[docs/PROGRESS.md](PROGRESS.md)** 是实施任务、里程碑、角色、实际验证与未决决定的滚动证据登记；初次静态核查见 [2026-11-06 审查记录](reviews/STATIC_TRACEABILITY_2026-11-06.md)，审查意见后的跨文档更正及连接器复核见 [一致性修订记录](reviews/DOC_CONSISTENCY_RECONCILIATION_2026-11-06.md)；二者均不代表 H-11 的 Bash 现场执行。
 - **[AGENTS.md](../AGENTS.md)** 规定 Git 安全、Debian/Ubuntu 支持范围、MAT 原始资料只读保护与 AI Agent 工作要求。
-- SRS 目前是 **v0.11 草案、尚未冻结、尚未验收**；需求项“依据已确认”不等于 C++ 已实现或测试通过。P0 对来源/数据/版权的审计结论与软件需求规格经项目所有者批准后才可冻结。所有未实测性能/内存/构建预算与逐模块容差保持 TBD，不得凭空编造。
+- SRS 目前是 **v0.12 草案、尚未冻结、尚未验收**；需求项“依据已确认”不等于 C++ 已实现或测试通过。P0 对来源/数据/版权的审计结论与软件需求规格经项目所有者批准后才可冻结。所有未实测性能/内存/构建预算与逐模块容差保持 TBD，不得凭空编造。
 - 原始 45 个 MATLAB 文件的逐文件追踪见 [SRS §9.2](REQUIREMENTS.md#92-原始-matlab-45-文件逐文件追踪清单已核实代码未移植)。下面每项 P 任务已标注至少一个关联需求 ID；后续修改 PLAN 子任务、SRS 需求、数值验收或 MATLAB 数据契约时须同步更新双向追踪矩阵和相关 AC/TC。
 
 ## 1. 目标、不可变约束与完成定义
