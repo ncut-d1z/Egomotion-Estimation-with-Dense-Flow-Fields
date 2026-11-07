@@ -101,7 +101,15 @@
 
 | 整改 ID | 文档文件相对路径（仓库根） | 具体整改目标 | 整改状态 | 固定扫描证据 |
 |---|---|---|---|---|
-| AF-026 | `docs/design/analysis_plotting.md` | §7 把分析模块的 `AN-G01～AN-G06` 编号替换为独立 **`APL-G01～APL-G06`**，因为全局 `GOLDEN_TOLERANCE_PROPOSAL.md`/JSON 已将 `AN-G01～AN-G12` 赋予**不同数学解析候选**；不得重命名原 JSON 的 12 个 ID，按现有 TC 映射保留六个分析场景 | 未整改 | [扫描报告 AF-026](reviews/AUDIT_SEVEN_MATH_DOCS_SCAN_2026-11-08.md)，原 LLD §7 行 140～145 |
-| AF-027 | `docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md` | §1 将 `x_ref` 的“原 MATLAB 数值”改为**有来源身份的 L2 历史 MAT 数值或独立生成的 L3 数值参考**，L4 统计另审；保留仅作初轮筛查的 `atol=0.01,rtol=0.1` 与逐元素公式，不重新引入运行 MATLAB/L1 取证门禁 | 未整改 | [扫描报告 AF-027](reviews/AUDIT_SEVEN_MATH_DOCS_SCAN_2026-11-08.md)，原提案行 13 |
+| AF-026 | `docs/design/analysis_plotting.md` | §7 把分析模块的 `AN-G01～AN-G06` 编号替换为独立 **`APL-G01～APL-G06`**，因为全局 `GOLDEN_TOLERANCE_PROPOSAL.md`/JSON 已将 `AN-G01～AN-G12` 赋予**不同数学解析候选**；不得重命名原 JSON 的 12 个 ID，按现有 TC 映射保留六个分析场景 | 已整改 | [修订后静态复核](reviews/AUDIT_SEVEN_MATH_DOCS_RESOLUTION_2026-11-08.md)：固定提交 `22bc38635b2350bc9078c2952ba9ad520a55f7b1`，源 `.m`/候选 JSON 身份不变，限定文本校验通过 |
+| AF-027 | `docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md` | §1 将 `x_ref` 的“原 MATLAB 数值”改为**有来源身份的 L2 历史 MAT 数值或独立生成的 L3 数值参考**，L4 统计另审；保留仅作初轮筛查的 `atol=0.01,rtol=0.1` 与逐元素公式，不重新引入运行 MATLAB/L1 取证门禁 | 已整改 | [修订后静态复核](reviews/AUDIT_SEVEN_MATH_DOCS_RESOLUTION_2026-11-08.md)：固定提交 `22bc38635b2350bc9078c2952ba9ad520a55f7b1`，源 `.m`/候选 JSON 身份不变，限定文本校验通过 |
 
 **扫描时状态**：旧 AF-001～025 的 26 个原子目标已有固定 SHA 的文档修订证据；新 AF-026～027 共 2 项，**在本节首次登记时均为「未整改」**。只有目标文件真正修改并经固定 SHA 独立复读验证，才可在本表将两行转为「已整改」，并在 `AUDIT.md` 同步本轮审计状态。
+
+## 九、AF-026/027 后续纯文档整改结案（2026-11-08）
+
+**已履行先发现/登记为「未整改」→修改两份规范→固定 SHA 复查→更新为「已整改」的顺序**。固定审计输入 `e190ed74240bf7b3b32a65c8fb6099fbdedc46b9`；修订后的固定复核输入 `22bc38635b2350bc9078c2952ba9ad520a55f7b1`；详细证据见 [七份文档的审计结案报告](reviews/AUDIT_SEVEN_MATH_DOCS_RESOLUTION_2026-11-08.md)。
+
+- **AF-026 已整改**：分析六项改用 `APL-G01～APL-G06`，保留全局 JSON 的 `AN-G01～AN-G12`，避免参考身份冲突，不修改原公式/TC。
+- **AF-027 已整改**：`x_ref` 明确为可追溯的 **L2 历史 MAT 或独立 L3 数值**，L4 统计单列，`0.01/0.1` 仍只是首轮宽松筛查。
+- **当前问题级整改**：历史 AF-001～025 原子目标 26 条，加本轮两条，合计 **28/28 已整改，0 未整改**（限定为已发现的文档语义问题）；这不表示所有独立 L3 数值、球谐论文、C++/CTest、正式基线完成。
