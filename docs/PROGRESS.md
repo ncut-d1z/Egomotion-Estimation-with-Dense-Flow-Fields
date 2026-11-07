@@ -73,6 +73,8 @@
 
 > **Golden 证据等级最新状态**：依 [E-DOC-007](golden/NO_MATLAB_EXECUTION_POLICY.md)，L1 原 MATLAB 运行**永久非强制、非阻塞**；L2 作者 MAT 存在但独立 SHA-256/逐值复核仍缺，L3 的 AN-G01～12 仅为候选（完整逐轮/递归/一般输入仍待独立参考），L4 尚无新执行统计。故 KvD/Adaptive/RNG/SH/Session 的 AC 仍因**独立参考/真实 C++/CTest/容差批准不足**而未验收，**不是因为缺 L1**。候选 0.01/0.1 尚未批准。
 
+**本阶段的人类输入已集中在 [docs/TODO.md](TODO.md)**：论文 PDF、生产代码及运行许可、DEC-005 最终阈值、DEC-006 真实性能预算、基线签署与发布均可在相应阶段办理；**当前需求分析只修改文档，未获得实际 C++/CMake/CTest/Bash/MAT 写入授权**。DEC-004、MIT、Eigen-only、无自定义输出根、Result/ErrorStage/JSONL、L1 退出均**已选定，不应重复申请**。此前 E-DOC-xxx 的版本/SHA 均是历史证据，不代表当前文件版本。
+
 ## 5. 未解决决策与验证阻塞
 
 | 决策/阻塞 | 当前实际状态 | 下一步必须提交的材料 |
