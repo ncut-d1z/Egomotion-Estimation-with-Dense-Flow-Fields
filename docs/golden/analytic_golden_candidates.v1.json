@@ -844,5 +844,26 @@
       "method": "source_formula_derived",
       "check": "general_floating_plus_zero_ideal_case"
     }
-  ]
+  ],
+  "source_blob_shas": {
+    "help_functions/erzeugerichtungsvektoren.m": "6ad7da8e3865cd2fd63ec641548ea38e0723b700",
+    "help_functions/erzeugerichtungsvektoren_loch.m": "13992600417e2ebd87193c06c1a7ec5740655735",
+    "help_functions/richtungsvektoren_icosahedron.m": "c785db126cef2149a6ffc177ecadb21e457699ca",
+    "help_functions/findeDreiecke.m": "8f6abf2cfb5daeca197314a19e382401d11df75f",
+    "help_functions/getvektor.m": "c183a2808cf4f6c8bce86f83f93c46d8dec1ed9e",
+    "help_functions/erzeugeflussausnear.m": "df22f256390395aab08a887f5456546bd9111a11",
+    "help_functions/kugelflfunc2.m": "edc0caa1f88bf91d2a189e4d3a283334f809b905",
+    "help_functions/winkelausvektor.m": "5bb7ba5832ae849c791df6c67bd49d53b60f250e",
+    "help_functions/near_aus_koeff.m": "7373c4376dfd5bbf281136ced39657d411a10ffa",
+    "help_functions/koeff_aus_near.m": "5ff91a2210a20e5acf79dec6e59ddd33b55529d3",
+    "help_functions/rodrigues.m": "748f2bf171b01ad77fd949cb518d0df4344a39d5",
+    "help_functions/SHRotate.m": "7b73000411a9294f6cbed2e111bf74ce7fb7d4df",
+    "help_functions/transfor_koeff.m": "7f26019cab53666539e1961dac67a2e07dae614c",
+    "help_functions/normrelfehler.m": "c9fecc37180ab13d854a144d333a2599e601a9a8",
+    "help_functions/transfehler_div.m": "89708055b98e0b6651990c08dc3850393ca8acad",
+    "help_functions/kurveglaetten.m": "eced66659205a6386ec84723e37a46517d06c017",
+    "help_functions/oneit_adaptiv_matched_filter.m": "48e51bcd52fb8f27cf35b3fce38b28507af36e55",
+    "bias_test/data_generation/bias_test_nonspherical.m": "00a3e974fbf068ccd1af4e541a659862beffcad5",
+    "bias_test/data_generation/bias_test_spherical_prop_error.m": "fc3c4f0a7a417171415fb5e3d869a744ba24d04"
+  }
 }
