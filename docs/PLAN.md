@@ -134,7 +134,7 @@ N×6 球面流场、3×5 实球谐系数、6×6 Adaptive 系统，以及 MATLAB 
 
 ### 3.3 面向对象设计原则
 
-采用**值对象 + RAII + 组合/窄接口 + 无状态求解器与有状态会话分离**。无状态点积、叉积和基函数保留普通函数；不为每个 MATLAB .m 机械创建类。详细设计原则和 ADR 见 [docs/ARCHITECTURE.md](ARCHITECTURE.md) §3/8。
+采用**值对象 + RAII + 组合/窄接口 + 无状态求解器与有状态会话分离**。无状态点积、叉积和基函数保留普通函数；不为每个 MATLAB .m 机械创建类。设计原则参见 [docs/ARCHITECTURE.md §3](ARCHITECTURE.md)，架构决策记录参见其 [§8 ADR](ARCHITECTURE.md)；两者均为未冻结 HLD 草案。
 
 ### 3.4 对象模型与 MATLAB 映射
 
@@ -152,7 +152,7 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 
 目录布局、公开/私有头文件边界、CMake target 候选清单统一见 [docs/ARCHITECTURE.md](ARCHITECTURE.md) §4，详细模块的设计草案见 [docs/design/](design/README.md)。核心分层为 include/egomotion 的 domain/contracts/io/math/geometry/simulation/estimators/harmonics/experiments/analysis，与 src/ 对应，另有 tests/unit、tests/contracts、tests/golden、tests/integration、tests/reproduction；命令行 composition root 位于 src/cli。
 
-现有原始资料仍以 origin/egomotion_estimation_dense_flow_fields_matlab_scripts/ 为只读参照。**H-12 已选定**所有未来新数据保存在仓库根 `output/<RunId>/` 隔离目录，并在 `.gitignore` 中忽略 `/output/`；现阶段未创建该目录、未运行写回读、未修改原始数据。若未来合法复用 Don Williamson 源码，则计划在 `third_party/SHRotation/` 内存放许可范围内的算法源文件及其 `README.md` 与上游 `LICENSE`，而不是自动添加项目根 LICENSE。
+现有原始资料仍以 origin/egomotion_estimation_dense_flow_fields_matlab_scripts/ 为只读参照。**H-12 已选定**所有未来新数据保存在仓库根 `output/<RunId>/` 隔离目录，并在 `.gitignore` 中忽略 `/output/`；候选 CLI `--output-root DIR` 只允许定位仓库根 `output/`，**不能**指定任意外部输出路径，实际 RunId 子目录由 RunContext 新建；保留参数与具体解析规则仍待 H-03/DEC-008 冻结。现阶段未创建该目录、未运行写回读、未修改原始数据。若未来合法复用 Don Williamson 源码，则计划在 `third_party/SHRotation/` 内存放许可范围内的算法源文件及其 `README.md` 与上游 `LICENSE`，而不是自动添加项目根 LICENSE。
 
 ## 5. 细粒度实施任务（每项均可单独检查并提交）
 
