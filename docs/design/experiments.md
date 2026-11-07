@@ -25,7 +25,7 @@ Input: experiment-kind + validated script parameters + RunId
   -> calculate source-specific metrics and statistics
   -> (future only) write current-script-compatible MAT outputs to new output/<RunId>/
   -> record errors/invalid counts and manifest
-Output: RunReport(status, output variables, run provenance)
+Output: Result<RunOutcome, ExperimentErrorCode>（成功时为 RunOutcome 及记录的输出变量/来源，失败时保留明确错误上下文）
 ~~~
 
 - 每个 RunId 拥有 RNG；**H-12 选定将来新输出目录为仓库根 `output/<RunId>/`**，由 `.gitignore` 忽略生成数据。失败/重试不自动覆盖旧输出，原始 MAT 永远只读；**H-10 暂缓代码实施，当前没有可运行的 MAT Writer 或生成结果。**
@@ -61,13 +61,17 @@ class UpdateRateRunner;
 
 ## 5. 五个入口的参数 schema 与源文件差异
 
-| 入口 | 参数/原始默认值（MATLAB 代码） | MATLAB 循环/样本 | **当前 MATLAB save 合同与已归档 MAT 的实测类型/shape** |
-|---|---|---|---|
-| bias occluded | corenumber、iterationnumber、savestring；noise=[0.6,2.4,9.6]；durchlaeufe=1 | level=0..iterationnumber；样本 N=6·4^level | xwerte:(level_count+1)×1；每个 ywerte1…6:(level_count+1)×3 |
-| bias proportional | 同上，完整八面体 N=8·4^level | level=0..iterationnumber | xwerte、ywerte1…6 同形状 |
-| adaptive init | savestring；stellen=35、kreisradius=0.6、hoehe=0.3、二十面体 level=2 | i=2..34；anzahlitfuerini=1、anzahldurchlaeufe=1 | allemittransfehler、allemitrotfehler、alleohnetransfehler、alleohnerotfehler：各 35×1 |
-| adaptive comparison | addederror、savestring；stellen=600、sinus amp=0.5、length=1、periods=2、height=0.3、level=4、anzahldurchlaeufe=8 | i=2..599 | 四类误差 600×1；rottransratio 600×1 |
-| adaptive rates | savestring；stellen=600、同一正弦轨迹、level=2、period=[1,5,11,21]、单运行 | i=2..599；四条周期 baseline | allemittransfehler、allemitrotfehler：600×4；akrot：600×1 |
+**下表分离两个不同证据层次**：「当前脚本预分配/save」来自原 MATLAB 静态源码；「历史归档实测」来自早前 matio 582/582 变量读取，不是本轮 MATLAB 执行，更不能推断历史文件都由当前脚本版本生成。历史 MAT 详情以 §9 和 [MAT_DATA_SCHEMA.md](../MAT_DATA_SCHEMA.md) 为准。
+
+| 入口 | 参数/原始默认值（MATLAB 代码） | MATLAB 循环/样本 | **当前脚本预分配与有效 save（源码静态核对）** | **历史归档的实际类型/shape（matio 实测）** |
+|---|---|---|---|---|
+| bias occluded | corenumber、iterationnumber、savestring；noise=[0.6,2.4,9.6]；durchlaeufe=1 | level=0..iterationnumber；N=6·4^level | `xwerte` 是 (iterationnumber+1)×1；`ywerte1…6` 各 (iterationnumber+1)×3；共七个有效 save | 40 个结果目录，各有 `xwerte` 10×1、六个 `ywerte` 10×3；均为 double |
+| bias proportional | 同上，完整八面体 N=8·4^level | level=0..iterationnumber | 与 occluded 同样七个 save 与预分配；原脚本 `xwerte` 仍采用 6·4^level | 另 40 个结果目录，七个文件的形状同上；均为 double |
+| adaptive init | savestring；stellen=35、kreisradius=0.6、hoehe=0.3、二十面体 level=2 | i=2..34；anzahlitfuerini=1、anzahldurchlaeufe=1 | 四类 `allemit*/alleohne*` 误差分别为 35×1，保存四个 MAT | initialization 四个 double[35×1] |
+| adaptive comparison | addederror、savestring；stellen=600、sinus amp=0.5、length=1、periods=2、height=0.3、level=4、anzahldurchlaeufe=8 | i=2..599 | 四类误差各 600×1，另保存 `rottransratio` 600×1（最后一次运行的缓冲）；共五个 save | without_errors：五个 double[600×1]；with_errors：七个 double[600×1]，**另外两份 `alleadap*` 来源未证实** |
+| adaptive rates | savestring；stellen=600、同一正弦轨迹、level=2、period=[1,5,11,21]、单运行 | i=2..599；四条周期 baseline | `allemittransfehler`、`allemitrotfehler` 各 600×4，`akrot` 600×1；**当前仅三个有效 save** | many_parameter：四个 double[600×4] 与两个 double[600×1]，包括当前未保存的 `alleadap*` 与 `rottransratio` |
+
+§9 的「历史归档」仅支持已经存储的变量名、MAT class/dtype、shape 和文件数；**不能把它反写为当前源脚本的运行结果**，也不得补造 `alleadap*` / `rottransratio`。
 
 **必须保留的源码特殊行为（已核查）**：
 
