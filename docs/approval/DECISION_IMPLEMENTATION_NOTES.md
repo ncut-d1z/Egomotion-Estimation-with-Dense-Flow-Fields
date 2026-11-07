@@ -1,5 +1,7 @@
 # 人类审批 JSON 的方案落实记录（非测试验收）
 
+> **后续细化**：可逐项审阅的 H-01～H-16 工作材料、MAT 历史差异证据、候选 SHA-256/Golden/异常清单、需求影响和里程碑退出条件，集中于 [HAR-2026-11-06-001 修订材料包](HAR-2026-11-06-001_REVIEW_PACKAGE.md)。它仅补充本文件，不能作为审批记录所缺 `applicationCommit`、`scopeIds` 或真实执行证据的替代。
+
 > **状态：已根据用户在对话中提供的 `HUMAN_APPROVAL_REQUEST.json` 进行文档设计同步；不是已冻结/已交付的软件。** 该 JSON 的 `applicationCommit`、`scopeIds` 为空；不将它写成已签署某个 Git SHA 的完整软件基线。原始用户 JSON **不自动上传至 GitHub**。审批标签以该 JSON 的 `decision`、`referenceConfirmed`、`confirmedOpinion` 和 `technicalDetails.permissions` 为事实来源，预填但未确认的 `referenceText` 不冒充用户签署。
 
 ## 1. 各事项原始决定与落实边界
