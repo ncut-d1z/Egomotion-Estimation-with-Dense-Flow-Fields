@@ -134,7 +134,7 @@ public:
 
 ### 6.1 RunContext 的最小所有权/接口候选（非编译代码）
 
-RunContext 属于 **egomotion_experiments** 的一次性运行上下文，不与 `MatResultReader`、`RunMatWriter` 或 `MatDenseArray` 建立生产级直接链接。Composition Root 负责在执行前校验用户输出根与 RunId、构造具体 Writer 后以 **contracts 的 IResultWriter** 窄接口注入；RunContext 只持有一个经验证的 `RunId` 和所需上下文。
+RunContext 属于 **egomotion_experiments** 的一次性运行上下文，不与 `MatResultReader`、`RunMatWriter` 或 `MatDenseArray` 建立生产级直接链接。Composition Root 负责确认**仓库根固定的 `output/`** 与可选的用户 `--run-id`（未指定时由独立 OS 随机源产生 RunId），独占创建 `output/<RunId>/`，并构造具体 Writer 后以 **contracts 的 IResultWriter** 窄接口注入；RunContext 只持有已验证的 `RunId` 和所需上下文。**CLI 不提供、也不解析自定义输出根参数**。
 
 ~~~cpp
 // 文档候选；IRandomSource/IResultWriter/RunId 由 contracts.md 声明。
@@ -169,7 +169,7 @@ private:
 };
 ~~~
 
-- **谁拥有谁**：Composition Root 保证 `IResultWriter&` 的有效期长于本次 Runner 调用；RunContext **独占 RNG**、RunId/结果计数/Manifest，Session 只持有其自身系数状态且不能跨 RunContext 共享。输出根由 CLI/Composition Root 验证，Runner 不按任意用户字符串拼接文件路径。
+- **谁拥有谁**：Composition Root 保证 `IResultWriter&` 的有效期长于本次 Runner 调用；RunContext **独占 RNG**、RunId/结果计数/Manifest，Session 只持有其自身系数状态且不能跨 RunContext 共享。**固定 `output/` 根由 Composition Root 从已确认的仓库位置确定并验证**，CLI 只接受可选 `--run-id`；RunMatWriter 仍须二次校验固定根、RunId 和最终文件路径，Runner 不按任意用户字符串拼接文件路径。
 - **失败与释放**：固定 RNG 耗尽、子求解器失败、MAT 写失败必须在 `Result<RunOutcome, ExperimentErrorCode>` 的失败分支保留原底层错误及 `ErrorDetail.run_id`；不再以一个空 `RunOutcome` 表示失败。**Manifest 必须区分 `Complete`、`Incomplete`、`Failed`**，记录每次尝试/成功/失败/无定义样本和有效分母；允许保存可审查的部分产物，但不得将其伪装为完整实验，亦不自动删除/覆盖已有结果。独立样本失败可继续后续独立样本；依赖状态错误不提交，不能安全恢复则停止当前轨迹。
 - **边界**：`BiasExperimentConfig` 负责原入口 seed/最大 level/三个噪声乘数，`BiasFlowParameters`（采样 LLD）负责**单个流场**，不能彼此覆盖默认值。配置采用**每入口独立类型**，CLI 层可选择 variant 分发；RunContext 默认不可复制、单次会话不可并发，Writer 在 Composition Root 装配；构建期的类移动能力/线程合同尚需真实验证。
 
