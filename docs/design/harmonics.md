@@ -1,6 +1,8 @@
 # 实球谐、近度拟合及系数旋转——详细设计草案
 
-> **LLD v0.3，未冻结、未实现。** 来源：winkelausvektor.m、kugelflfunc2.m、near_aus_koeff.m、koeff_aus_near.m、transfor_koeff.m、SHRotate.m。第三方许可/依赖与独立 L3 参考尚未完整核验。关联 REQ-F-SH-001/002、REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001、P7.1–P7.6/P7.10。
+> **LLD v0.4，未冻结、未实现。** 来源：winkelausvektor.m、kugelflfunc2.m、near_aus_koeff.m、koeff_aus_near.m、transfor_koeff.m、SHRotate.m。第三方许可/依赖与独立 L3 参考尚未完整核验。关联 REQ-F-SH-001/002、REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001、P7.1–P7.6/P7.10。
+
+**项目所有者确定的实现路线**：[Ivanic–Ruedenberg 原始论文（1996）及勘误（1998）的纯 Eigen 实施方案](SH_ROTATION_IVANIC_RUEDENBERG.md) 已列明。实现的数学依据以**用户稍后上传的原论文和 1998 年勘误**为准，Don Williamson 源码只作参考；**完全禁止 sdla 依赖（直接和间接）**。仓库新代码 MIT，正常开发无需另外版权审核签字。论文上传前仅完善设计，不实施 R5 生产递推。
 
 ## 1. 坐标系、角度与原实球谐表达式
 
@@ -101,7 +103,7 @@ a'_{0,0}=a_{0,0},\quad
 ### 3.1 转动块生成规则的可验证边界
 
 - 先处理 l=0 常数块，l=1 依据源 SHRotate 的轴排列构造 R3（注意行、列和符号）。
-- l=2 的 R5 使用 Ivanic–Ruedenberg 递归生成。**用户 JSON H-14 已选择方案 A：参考 Don Williamson 原始 C++ SHRotation 的 `IvanicSHRotate` 实现，不再把未经审查的其他路线作为默认**；H-02 指定复用源码目录附近须保存来源 README 与上游 MIT LICENSE。H-10 暂缓，**本轮不复制/移植任何 C++ 文件**。
+- l=2 的 R5 必须以 Ivanic–Ruedenberg **1996 原文与 1998 勘误**为首要数学依据，在**Eigen** 上重写递推；Don Williamson `IvanicSHRotate` 仅作代码参考，**不得引入 sdla 头、库、源文件或间接依赖**。用户将上传论文后才启动 R5 生产实现，本轮不复制/移植第三方代码。
 - 先用对 z 轴的已知旋转检查 m 正负的相位，再分别用 x/y 轴和复合旋转检查 R3/R5 全部元素、正交性、往返一致性和基函数变换方向。
 - 以选定的 Don Williamson C++ 核心递推为**待实施参考**，必须建立独立 L3 Golden 表：旋转向量、输入 R、**独立推导/复核** R3/R5 全元素、输入/输出系数、误差及只读源 SHA；不得以被测 C++ 自验代替独立参考，**无需运行 MATLAB**，也不得在本轮复制第三方代码。
 - 对第二阶旋转的任何替代生成算法，须证明与作者 SHRotate 数值行为和系数顺序一致，并有合法的原创或兼容授权基础。
@@ -110,13 +112,13 @@ a'_{0,0}=a_{0,0},\quad
 
 | 核查项 | 已确认的上游事实或用户决定 | 实施要求（未执行） |
 |---|---|---|
-| 用户选定方案 | H-02：Don Williamson 原 C++ 替代 `SHRotate.m`；H-14：**方案 A** | 以 Ivanic–Ruedenberg 路线优先，非 Choi 路线；只须生成 l≤2 的三块 R0/R1/R2 |
+| 用户选定路线 | Ivanic–Ruedenberg 原论文（1996）及其 1998 勘误 **必须作为实现前依据**，Don Williamson C++ 是算法参考 | 使用 Eigen 自行重写 l≤2 的 R0/R3/R5，不依赖 sdla，论文上传之前不开始生产递推 |
 | 上游实际算法文件 | [`Source/IvanicSHRotate.cpp`](https://github.com/dwilliamson/SHRotation/blob/master/Source/IvanicSHRotate.cpp)、[`Source/IvanicSHRotate.h`](https://github.com/dwilliamson/SHRotation/blob/master/Source/IvanicSHRotate.h)；配套 `Source/SHRotateMatrix.h` | **`Source/SHRotation.h` 是依赖 sdla 的示例应用类，不是独立的核心递推 API**，不能只复制该头文件就宣称解决 R5 |
-| 底层依赖 | 上游 `IvanicSHRotate.cpp` 明确包含 `sdla/Matrix.h` 和 `sdla/Exception.h`；用户项目的目标是 Debian/Ubuntu + C++17/Eigen | 获取版权允许的必要实现和依赖，评估是否通过适配器将 `sdla` 类型转换为 Eigen，而非盲目引入整套示例图形/Windows 项目；任何实际改写须等 H-10 授权 |
-| 上游许可证 | [dwilliamson/SHRotation/LICENSE](https://github.com/dwilliamson/SHRotation/blob/master/LICENSE)，Don Williamson 的 MIT 形式版权/许可文本 | 若以后实际复用源文件，在**复用目录**（例如拟议 `third_party/SHRotation/`）保存 `README.md`，逐文件列出原始上游路径、版本/commit/blob SHA、用户确认的复用范围，保留版权声明与上游 `LICENSE`；该 LICENSE 是第三方告知文件，**不是**项目根许可证 |
+| 底层依赖 | Williamson 参考源码包含 `sdla/Matrix.h` 和 `sdla/Exception.h`；本项目使用 Eigen3 | **禁用并移除 sdla 的所有 include、link、vendor 依赖，不做 sdla 包装或桥接**；用 Eigen::Matrix3d / Eigen::Matrix<double,5,5> 和统一 ErrorDetail 重写数学递推，须核 1998 勘误及源相位映射 |
+| 项目许可与来源记录 | 仓库新代码已采用根 [MIT LICENSE](../../LICENSE)，Don Williamson 上游代码同为独立来源 | 正常开发**不因版权审批待办阻塞**，保留实际引入上游文件必要的原许可/署名；不将项目 MIT 扩展到原作者归档数据 |
 | 旋转块接口 | MATLAB `SHRotate(r,2)` 输出 R0=1×1、R1=3×3、R2=5×5 | 用 `HarmonicRotator` 把上游计算输出转换到源 MATLAB 的 `(-1,0,1)` 和 `(-2,-1,0,1,2)` 次序；核对原 MATLAB R1 九元素映射与 R2 全 25 元素、转置/相位和正交性 |
 
-**冻结条件**：H-02/H-14 的**方案选择已记录**，但还没有将外部 C++ 源码逐文件纳入或实际编译，更没有合法复用依赖闭包/独立 L3 参考、批准 DEC-005 容差、P7.5/TC-F-SH-002 验收。文件中的原 `SHRotate.m` 继续只读，R5 的数学矩阵不能被“Eigen::Matrix3d 转一下”代替。
+**冻结条件**：必须先核对用户上传的 1996 原论文和 1998 勘误，完成 Eigen-only 的 R5 数学实现并对 R0/R3/R5 独立 L3 全元素验证；还需正式接口/CTest 和 DEC-005 最终阈值。项目 MIT 与不再以一般版权审查阻塞开发的方向已确定，但不意味着目前实现或验收完成。
 
 ### 3.2 旋转类接口候选
 
@@ -151,9 +153,9 @@ public:
 
 | 边界 | 拟议内容 | 未完成条件 |
 |---|---|---|
-| CMake target | [ARCHITECTURE.md §4](../ARCHITECTURE.md) 中 `egomotion_harmonics`；域值对象来自 `egomotion_domain`；选定 Don Williamson Ivanic–Ruedenberg 适配层仅作私有第三方依赖 | target 未创建/编译；sdla 适配、许可、来源清单待审 |
+| CMake target | [ARCHITECTURE.md §4](../ARCHITECTURE.md) 的 `egomotion_harmonics` 显式依赖 **egomotion_domain + egomotion_contracts + Eigen**；Eigen-only 的 Ivanic–Ruedenberg l≤2 递推实现 | target 尚未创建/编译；**不能包含 sdla**，须等用户上传原文+勘误后逐式实现 |
 | 公共头文件 | 候选 `include/egomotion/harmonics/` 公开必需的 RealSphericalHarmonics、HarmonicFitter、HarmonicRotator、HarmonicRotationBlocks；`HarmonicCoefficients` 唯一归 domain 合同 | Result/Status 所在 target 的最终归属和签名待 P0.8；若需新 `egomotion_contracts` 依赖，应**同步修订 HLD 表及 DAG** |
-| 私有实现 | `src/harmonics/` 含 l≤2 函数、递推适配；不向外暴露 matio、sdla 指针或源 MATLAB 执行接口 | 无实际源代码、构建或测试证据 |
+| 私有实现 | `src/harmonics/` 包含 l≤2 基函数、纯 Eigen 递推和独立 L3 适配，不暴露 MATLAB/matio/第三方矩阵类型 | 无实际代码/构建证据，确认编译依赖闭包不含 sdla |
 
 | TC / AC | TEST_PLAN §3 的候选实体/CTest | L3 逐项核验 |
 |---|---|---|
@@ -166,7 +168,7 @@ public:
 ## 5. 冻结与授权阻塞
 
 - 仍需对源关联勒让德相位、SHRotate 块递推、独立 L3 固定输入样本做独立核验。
-- **H-02 已限定选择 Sophus 和 Don Williamson C++（H-14 方案 A）**，上游 Sophus/SHRotation 许可证可查；复制范围、具体实现文件的许可保留、sdla 依赖消解及 C++ 源码纳入尚未发生。不得由此推断 `rodrigues.m`、`SHRotate.m` 的第三方版权头或整个 MATLAB 归档均获重新许可；DEC-003/007 仅记录**已决定的替代路线**，发布和业务验收仍待证据。
+- **项目许可和数学来源已确定**：仓库新代码 MIT；球谐 l≤2 按 Ivanic–Ruedenberg 1996 原文＋1998 勘误以 Eigen 重写，Don Williamson 只作辅助参考，禁止 sdla；正常开发不因重复版权审查阻塞。实际引入第三方文件时保留必要原许可告知。论文上传前不做生产递推实现；数值与 CTest 仍未验收。
 - C++17 精确签名、错误枚举、异常行为、目标 CMake target 和测试用例未冻结。
 
 **本文件是详细设计草案；没有生产 C++ 实现、完整独立 L3 参考或真实数值/CTest 验收证据；无需 MATLAB 运行。**
@@ -233,7 +235,7 @@ v=\frac{1-2d_m}{2}\sqrt{\frac{(1+d_m)(l+|m|-1)(l+|m|)}{D_{ln}}},
 w=-\frac{1-d_m}{2}\sqrt{\frac{(l-|m|-1)(l-|m|)}{D_{ln}}}.
 \]
 
-U/V/W 在不同 m 与 n 边界上组合上一阶 \(R_3\) 条目与递推辅助 P。本节公式来自对原 MATLAB **输出数学行为的静态梳理**，不构成可直接编译的 R5 算法；完整递推分段、索引/相位映射及 `sdla` 依赖处理，须以**已选 Don Williamson C++ 上游**为待实施参考，在 P7.5 复核精确源码与许可范围后再冻结。实现的数值验收必须用独立 L3 Golden 核对原静态源码所规定的**全部 25 个 R5 元素**及其索引/符号，不能只检查正交性或往返；H-10 暂缓下本轮不复制代码。
+U/V/W 在不同 m 与 n 边界上组合上一阶 \(R_3\) 条目与递推辅助 P。本节公式来自对原 MATLAB **输出数学行为的静态梳理**，不构成可直接编译的 R5 算法；完整递推分段、索引/相位映射须先阅读用户上传的 **Ivanic–Ruedenberg 1996 原文及 1998 勘误**，以 Eigen 实现，**不允许 sdla 依赖**；Don Williamson 仅为辅助代码参考。实现的数值验收必须用独立 L3 Golden 核对原静态源码所规定的**全部 25 个 R5 元素**及其索引/符号，不能只检查正交性或往返；H-10 暂缓下本轮不复制代码。
 
 ### 7.3 旋转样本与方向性判定
 
@@ -245,7 +247,7 @@ U/V/W 在不同 m 与 n 边界上组合上一阶 \(R_3\) 条目与递推辅助 P
 | SH-INV | 先 r 后 r⁻¹ | 九个系数和方向采样下近度变化 |
 | SH-BAD | 非正交或非有限输入 | 原只读源码的静态风险与独立 L3 非法输入；C++ 明确失败状态，不冒称已实测 MATLAB 异常 |
 
-**授权状态**：用户已确认 H-02/H-14 的限定替代来源（Sophus / Don Williamson Ivanic–Ruedenberg），但 H-10 暂缓生产代码实施，本轮不能据此自动复制原程序或外部程序；以后实施需保存第三方 README/LICENSE、核对依赖和独立 L3 数值参考。数学等价的推断不能取代实测。
+**实施时序**：用户已确定纯 Eigen / 不依赖 sdla，原始 1996 论文和 1998 勘误尚待上传；因此本轮只完成方案。上传后逐式确认并进入单独获准的 C++ 实现/测试，不要求 MATLAB/Octave/L1。
 
 ## 8. 异常、生命周期与接口合同
 
