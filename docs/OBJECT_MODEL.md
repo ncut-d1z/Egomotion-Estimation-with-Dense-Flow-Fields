@@ -1,6 +1,6 @@
 # 对象模型与生命周期合同（Object Model）
 
-> **对象模型草案 v0.1；P0.7/P0.8 待评审，未冻结、未建立对应 C++ 类。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入；各文档当前版本、固定 SHA 和冻结状态统一由 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记，运行结果以 [PROGRESS](PROGRESS.md) 为准。
+> **对象模型草案 v0.2；P0.7/P0.8 待评审，未冻结、未建立对应 C++ 类。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入；各文档当前版本、固定 SHA 和冻结状态统一由 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记，运行结果以 [PROGRESS](PROGRESS.md) 为准。
 
 ## 1. 对象职责和约定
 
@@ -243,7 +243,7 @@ stateDiagram-v2
 
 - 无状态的点积、叉积、采样递归、误差公式优先使用自由函数，**不要为了“45/45 面向对象”而强行创建 45 个类**。
 - 实验入口统一由 Runner 调度，但必须保留各自独立的参数和存储合同。历史 MAT 结果的分析与绘图不反向依赖求解器。
-- 原 `rodrigues.m`、`SHRotate.m` 保持只读源资料。H-02/H-14 的限定决定采用 Sophus 与 Don Williamson C++ 方案 A；**不复刻原 MATLAB 受版权保护的旧函数代码**，将来复用的 C++ 源须保存来源 README 和上游 MIT LICENSE/版权声明，核对 sdla 依赖、R3/R5 与参考数值。H-10 暂缓生产实施，不能把对象映射行当作已实现。
+- 原 `rodrigues.m`、`SHRotate.m` 保持只读源资料。物理旋转采用 Sophus；球谐旋转以 **Ivanic–Ruedenberg 1996 原文和 1998 勘误**为数学依据，**Eigen-only 独立重写** l≤2 的 R0/R3/R5；Don Williamson 仅作为源代码参考，**不得引入 sdla 的头文件、链接库或间接依赖**。仓库原创部分使用 MIT，引用实际第三方文件时保留其现有来源告知；不以一般版权复核阻塞研发。相关 C++ 头/源文件本轮仅作声明级设计，尚未创建或实现。
 - 对一份 MATLAB 文件内多个辅助函数或附加可调用模式，P0.2 必须另列到方法级迁移表；本表仅记录每个文件的首要职责，不等于逐函数审计已全部完成。
 
 ### 7.1 名称一致性与职责边界
