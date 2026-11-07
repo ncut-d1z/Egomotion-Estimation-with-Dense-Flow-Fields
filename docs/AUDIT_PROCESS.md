@@ -40,22 +40,31 @@
 
 | 整改 ID | 文档文件相对路径（仓库根） | 具体整改目标（待修正的冲突） | 整改状态 | 固定快照线索/依据 |
 |---|---|---|---|---|
-| AF-013 | `docs/design/kvd.md` | §5 不得把历史 `1e−10` 再称为现行“候选”；统一为已由所有者选择的 **`atol=0.01,rtol=0.1` 仅用于首轮宽松筛查**，最终 DEC-005 按模块和严格几何/离散条件另审 | 未整改 | `kvd.md:160`；SRS §7、TEST_PLAN §2.5、最新所有者决定 |
-| AF-014 | `docs/design/kvd.md` | §10 对 H-13 原审批 `draft` 的描述应标为**历史状态**，并引用后续已选**独立样本可继续、Adaptive 失败步不提交、无法安全恢复停止连续序列、部分结果保留**；不能把新决定重新称作“用户不批准继续/回滚/终止”，也不将其等同于原 MATLAB 异常实测 | 未整改 | `kvd.md:271`；`contracts.md §3.2`、`experiments.md` 和所有者决定 |
-| AF-015 | `docs/design/sampling_noise.md` | §3.1 保留随机源耗尽等单次数值失败的显式传播，同时将**实验整体继续/状态不提交/部分结果保存策略**从“待 P0.8 和 Golden 审议”改为**已由所有者选择、真实 C++/CTest 尚未验收** | 未整改 | `sampling_noise.md:114`；`experiments.md §6–8`、`contracts.md §3.2` |
-| AF-016 | `docs/OBJECT_MODEL.md` | §4 区分已选**Adaptive 失败不提交无效主系数**与仍须独立 L3/CTest 判断的安全恢复场景；不能笼统将“是否提交/是否终止”全部标成待决定；状态机及注释应呼应 Runner/Session | 未整改 | `OBJECT_MODEL.md:169`；`adaptive_mfa.md §5.1`、所有者决定 |
-| AF-017 | `docs/ARCHITECTURE.md` | §7 **QA-01** 不能假设“用户把输出根目录设为 origin 子目录/软链接”，因为 CLI 已删除自定义输出根。改为用户提供非法/重复 `--run-id`、固定根被软链接/路径竞态替换、或输出目标已存在时的拒绝和原 `origin/**` 不变 | 未整改 | `ARCHITECTURE.md:235`；`cli.md`、`mat_io.md` 固定输出合同 |
-| AF-018 | `docs/design/mat_io.md` | §4.2 将外层分析比较的 0.01/0.1 从“**未批准候选**”改成**已选首轮筛查但不是正式 PASS 阈值**；MAT 解码/复制的 exact dtype/shape/原始 double 校验仍严格，不因宽松筛查放行错误 | 未整改 | `mat_io.md:171`；最新所有者决定、`GOLDEN_TOLERANCE_PROPOSAL.md` |
-| AF-019 | `docs/ARCHITECTURE.md` | §8 **ADR-002** 中“**拟采用 Sophus SO(3)**”与 §3 已选 `SO3d::exp` 口径不统一；改成“已选定设计路线，尚待真实依赖锁定/编译/数值验证”，不推断已部署 | 未整改 | `ARCHITECTURE.md:248`（ADR-002 行，以标题查找为准）；现行 H-02/ADR-006 |
-| AF-020 | `docs/design/trajectory.md` | §5.1 已有“`omega.norm() < std::numeric_limits<double>::epsilon()` 返回 I 后调用 Sophus”来源规则，§6.1 又将“**是否把近零角度强制置零**”笼统说成待审批；明确**原始 epsilon 条件已确定**，额外扩大零角阈值或对其它异常输入的处理仍须独立测试/审查，不能混淆为同一未决事项 | 未整改 | `trajectory.md:111,150`，对照只读 `drehvektor_aus_zwei_vektoren.m`/原 Rodrigues 分支与 H-02 |
+| AF-013 | `docs/design/kvd.md` | §5 不得把历史 `1e−10` 再称为现行“候选”；统一为已由所有者选择的 **`atol=0.01,rtol=0.1` 仅用于首轮宽松筛查**，最终 DEC-005 按模块和严格几何/离散条件另审 | 已整改 | [本轮修订复核](reviews/AUDIT_AF013_AF020_RESOLUTION_2026-11-07.md)，定向静态提交 `a782b5c8d86e50fe4d2ae4e2b198b3cd6345de52`；初始扫描位置见原问题描述 |
+| AF-014 | `docs/design/kvd.md` | §10 对 H-13 原审批 `draft` 的描述应标为**历史状态**，并引用后续已选**独立样本可继续、Adaptive 失败步不提交、无法安全恢复停止连续序列、部分结果保留**；不能把新决定重新称作“用户不批准继续/回滚/终止”，也不将其等同于原 MATLAB 异常实测 | 已整改 | [本轮修订复核](reviews/AUDIT_AF013_AF020_RESOLUTION_2026-11-07.md)，定向静态提交 `a782b5c8d86e50fe4d2ae4e2b198b3cd6345de52`；初始扫描位置见原问题描述 |
+| AF-015 | `docs/design/sampling_noise.md` | §3.1 保留随机源耗尽等单次数值失败的显式传播，同时将**实验整体继续/状态不提交/部分结果保存策略**从“待 P0.8 和 Golden 审议”改为**已由所有者选择、真实 C++/CTest 尚未验收** | 已整改 | [本轮修订复核](reviews/AUDIT_AF013_AF020_RESOLUTION_2026-11-07.md)，定向静态提交 `a782b5c8d86e50fe4d2ae4e2b198b3cd6345de52`；初始扫描位置见原问题描述 |
+| AF-016 | `docs/OBJECT_MODEL.md` | §4 区分已选**Adaptive 失败不提交无效主系数**与仍须独立 L3/CTest 判断的安全恢复场景；不能笼统将“是否提交/是否终止”全部标成待决定；状态机及注释应呼应 Runner/Session | 已整改 | [本轮修订复核](reviews/AUDIT_AF013_AF020_RESOLUTION_2026-11-07.md)，定向静态提交 `a782b5c8d86e50fe4d2ae4e2b198b3cd6345de52`；初始扫描位置见原问题描述 |
+| AF-017 | `docs/ARCHITECTURE.md` | §7 **QA-01** 不能假设“用户把输出根目录设为 origin 子目录/软链接”，因为 CLI 已删除自定义输出根。改为用户提供非法/重复 `--run-id`、固定根被软链接/路径竞态替换、或输出目标已存在时的拒绝和原 `origin/**` 不变 | 已整改 | [本轮修订复核](reviews/AUDIT_AF013_AF020_RESOLUTION_2026-11-07.md)，定向静态提交 `a782b5c8d86e50fe4d2ae4e2b198b3cd6345de52`；初始扫描位置见原问题描述 |
+| AF-018 | `docs/design/mat_io.md` | §4.2 将外层分析比较的 0.01/0.1 从“**未批准候选**”改成**已选首轮筛查但不是正式 PASS 阈值**；MAT 解码/复制的 exact dtype/shape/原始 double 校验仍严格，不因宽松筛查放行错误 | 已整改 | [本轮修订复核](reviews/AUDIT_AF013_AF020_RESOLUTION_2026-11-07.md)，定向静态提交 `a782b5c8d86e50fe4d2ae4e2b198b3cd6345de52`；初始扫描位置见原问题描述 |
+| AF-019 | `docs/ARCHITECTURE.md` | §8 **ADR-002** 中“**拟采用 Sophus SO(3)**”与 §3 已选 `SO3d::exp` 口径不统一；改成“已选定设计路线，尚待真实依赖锁定/编译/数值验证”，不推断已部署 | 已整改 | [本轮修订复核](reviews/AUDIT_AF013_AF020_RESOLUTION_2026-11-07.md)，定向静态提交 `a782b5c8d86e50fe4d2ae4e2b198b3cd6345de52`；初始扫描位置见原问题描述 |
+| AF-020 | `docs/design/trajectory.md` | §5.1 已有“`omega.norm() < std::numeric_limits<double>::epsilon()` 返回 I 后调用 Sophus”来源规则，§6.1 又将“**是否把近零角度强制置零**”笼统说成待审批；明确**原始 epsilon 条件已确定**，额外扩大零角阈值或对其它异常输入的处理仍须独立测试/审查，不能混淆为同一未决事项 | 已整改 | [本轮修订复核](reviews/AUDIT_AF013_AF020_RESOLUTION_2026-11-07.md)，定向静态提交 `a782b5c8d86e50fe4d2ae4e2b198b3cd6345de52`；初始扫描位置见原问题描述 |
 
-**下一轮新增统计：8 个整改 ID，全部「未整改」；共分布于 `docs/design/kvd.md`、`sampling_noise.md`、`OBJECT_MODEL.md`、`ARCHITECTURE.md`、`mat_io.md`、`trajectory.md` 六份现行设计文档。** 其中纯文档权限可后续逐项整改，而公式、退化近零条件仍须尊重原只读 .m 的确切分支，不得在本轮引入生产 C++ 或猜测原 MATLAB 运行结果。
+**该次扫描发现时的历史状态：8 个新增整改 ID 当时均「未整改」，分布于 `docs/design/kvd.md`、`sampling_noise.md`、`OBJECT_MODEL.md`、`ARCHITECTURE.md`、`mat_io.md`、`trajectory.md` 六份现行设计文档。** 其中纯文档权限可后续逐项整改，而公式、退化近零条件仍须尊重原只读 .m 的确切分支，不得在本轮引入生产 C++ 或猜测原 MATLAB 运行结果。
 
 ## 四、下一轮扫描的正向核对与覆盖限制
 
 - **已静态交叉检查的来源**：原 `norm_koenderink_iteration.m` 与 `mue_norm_koenderink_iteration.m` 的区别确为原始平移更新的 `near²` 与修正版本的 `near`、旧 `t` 算 `rot`；`franzeigen.m` 三轴匹配；`erzeugerichtungsvektoren.m` 的八面体 8 面顺序及缺损版本保留面 2/3/5/6/7/8；`findeDreiecke.m` 的 A/B/C/D 细分；圆/正弦的 `stellen` 分母；轨迹 `Rᵀ`；`oneit_adaptiv_matched_filter.m` 的 6×6 和返回 `error=MSE`；`kurveglaetten.m` 的半窗/边界零值。
 - **仍未完整核对**：各模式的全部 MATLAB 源分支、所有调用者、i=1/2 的完整有序 L3 数组、近退化输入、球谐 1996 原文/1998 勘误全文（用户尚未上传）、分段分析全部实际 L2 数值。**源代码静态查看不等于已生成或运行独立 L3，也不等于数值完全等价。**
-- 本轮只创建并更新审计登记文档，**未修订上述 AF-013～020 的目标源 LLD/HLD/对象文件**；只有这些文件的实际修订经过固定 SHA 复核后才可改为「已整改」。
+- **原扫描轮次的边界（历史事实）**：当时只创建/更新审计登记、没有修订 AF-013～020 的目标设计文件；之后项目按台账逐项改动六份现行设计文档，并在 [后续固定 SHA 修订报告](reviews/AUDIT_AF013_AF020_RESOLUTION_2026-11-07.md) 中核对，**本表上方现已据此标记「已整改」**。
 - [AUDIT.md](AUDIT.md) 继续使用文件审计三态；[PROGRESS.md](PROGRESS.md) 只记录真实执行/文档检查证据与基线状态；历史报告的 `AF-001～012` 原始“待修订”是**当时状态**，本表保留完整时间顺序。
 
-**截至本轮扫描：AF-001～AF-012 的 13 项具体文档目标为「已整改」；AF-013～AF-020 的 8 项新目标为「未整改」。没有新的人类技术选型要求；延期的论文上传、H-10/H-11、最终 DEC-005/006 和发布/冻结仍见 [TODO.md](TODO.md)。**
+**历史扫描时 AF-013～020 曾为「未整改」；随后依据修订证据均转为「已整改」**。目前 21 个具体整改目标已全部完成**文档语义修订及定向静态复核**，并非所有模块已实现或数值验收。延期论文、H-10/H-11、DEC-005/006、基线和发布仍见 [TODO.md](TODO.md)。
+
+
+## 五、AF-013～AF-020 的后续整改结案（2026-11-07）
+
+- **原发现快照**：`3beb8c06a9d40380431f99e31ed0f70b346863a2`，当时本台账 AF-013～020 的八行状态确为「未整改」。
+- **修订后固定复核快照**：`a782b5c8d86e50fe4d2ae4e2b198b3cd6345de52`；[逐条整改、文件版本、静态证据及限制](reviews/AUDIT_AF013_AF020_RESOLUTION_2026-11-07.md)。八项均改动其对应的 **六份当前设计文档**，并同步修正 `docs/design/README.md` 的 MAT I/O 版本引用。**8/8 条定向文本断言通过**，原 REQ/TC/P 与 HLD DAG 的设计集合保持一致。
+- **本台账现行状态**：AF-001a/001b 与 AF-002～012 共 **13 个「已整改」**；AF-013～020 共 **8 个「已整改」**；合计 **21 条整改目标全部在文档一致性意义上已整改**。本状态只代表问题条目对应的**文字和接口口径**已修订，不表示不存在未发现的新问题。
+- **仍未完成**：KvD、采样噪声、轨迹以及 Adaptive/球谐/分析中必要的原公式逐式核验、独立 L3/适用 L4 与真实 C++/CTest/TOCTOU 数值/安全测试、最终 DEC-005/006、正式 SRS/HLD/LLD 冻结。对应**文件审计三态**继续见 [AUDIT.md](AUDIT.md)。
+- **实施权限边界**：没有实施/编译 C++、没有运行 Bash/CMake/CTest/MATLAB/Octave、没有写入 MAT，也没有改变 H-10/H-11/合并/发布授权。本次仅文档修订与 GitHub 连接器静态核对。
