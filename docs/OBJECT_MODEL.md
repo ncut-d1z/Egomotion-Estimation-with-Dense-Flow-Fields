@@ -204,7 +204,7 @@ stateDiagram-v2
 | `bias_test/data_analysis/graphs_bias_test.m` | BiasResultAnalyzer::aggregate | 已定位 / 合同待 P0 核验 |
 | `bias_test/data_generation/bias_test_nonspherical.m` | BiasExperimentRunner::runOccluded | 已定位 / 合同待 P0 核验 |
 | `bias_test/data_generation/bias_test_spherical_prop_error.m` | BiasExperimentRunner::runProportional | 已定位 / 合同待 P0 核验 |
-| `help_functions/SHRotate.m` | HarmonicRotator / buildRotationBlocks | 已定位 / 合同待 P0 核验 |
+| `help_functions/SHRotate.m` | HarmonicRotator / buildRotationBlocks；H-14 方案 A：Don Williamson 的 `IvanicSHRotate` C++ 递推适配（按原 m/相位/旋转块） | H-02/H-14 已选定替代路线；源 C++ 尚未纳入、Golden/CTest 未运行 |
 | `help_functions/drehvektor_aus_zwei_vektoren.m` | math::rotationVectorBetween (自由函数) | 已定位 / 合同待 P0 核验 |
 | `help_functions/erzeugeflussausnear.m` | FlowSynthesizer::synthesize | 已定位 / 合同待 P0 核验 |
 | `help_functions/erzeugekreuzproduktmatrix.m` | math::crossMatrix (自由函数) | 已定位 / 合同待 P0 核验 |
@@ -229,7 +229,7 @@ stateDiagram-v2
 | `help_functions/normrelfehler.m` | metrics::directionAngleDeg | 已定位 / 合同待 P0 核验 |
 | `help_functions/oneit_adaptiv_matched_filter.m` | AdaptiveMfaStepSolver::solve | 已定位 / 合同待 P0 核验 |
 | `help_functions/richtungsvektoren_icosahedron.m` | IcosahedralSampler::sample | 已定位 / 合同待 P0 核验 |
-| `help_functions/rodrigues.m` | math::rodrigues (实验实际使用的向量→矩阵分支) | 已定位 / 合同待 P0 核验 |
+| `help_functions/rodrigues.m` | math::rotationVectorToMatrix，内层规划调用 Sophus::SO3d::exp()（仅实际使用的向量→矩阵分支） | H-02 已选定 Sophus；零角/小角与 Rᵀ 值待对照，未编码 |
 | `help_functions/sinuskurve_trajektorie.m` | TrajectoryGenerator::sine | 已定位 / 合同待 P0 核验 |
 | `help_functions/skalarprodukt.m` | math::dot (自由函数) | 已定位 / 合同待 P0 核验 |
 | `help_functions/trajektorie_aus_punkten.m` | TrajectoryKinematics::fromPoints | 已定位 / 合同待 P0 核验 |
@@ -243,7 +243,7 @@ stateDiagram-v2
 
 - 无状态的点积、叉积、采样递归、误差公式优先使用自由函数，**不要为了“45/45 面向对象”而强行创建 45 个类**。
 - 实验入口统一由 Runner 调度，但必须保留各自独立的参数和存储合同。历史 MAT 结果的分析与绘图不反向依赖求解器。
-- `rodrigues.m` 与 `SHRotate.m` 有外部来源；C++ 实现范围与授权须在复制原代码前另行核验。
+- 原 `rodrigues.m`、`SHRotate.m` 保持只读源资料。H-02/H-14 的限定决定采用 Sophus 与 Don Williamson C++ 方案 A；**不复刻原 MATLAB 受版权保护的旧函数代码**，将来复用的 C++ 源须保存来源 README 和上游 MIT LICENSE/版权声明，核对 sdla 依赖、R3/R5 与参考数值。H-10 暂缓生产实施，不能把对象映射行当作已实现。
 - 对一份 MATLAB 文件内多个辅助函数或附加可调用模式，P0.2 必须另列到方法级迁移表；本表仅记录每个文件的首要职责，不等于逐函数审计已全部完成。
 
 ### 7.1 名称一致性与职责边界
