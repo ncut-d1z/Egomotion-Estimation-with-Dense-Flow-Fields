@@ -23,6 +23,7 @@
 | E-DOC-003 | [OBJECT_MODEL.md](OBJECT_MODEL.md) + [design/sampling_noise.md](design/sampling_noise.md) | Bias 场景编排、`FlowSynthesizer`、`sampling::randomUnitDirection` 的职责和命名已协调 | 对应头文件/测试已创建、随机数调用序列已数值验证 |
 | E-DOC-004 | [审查后跨文档一致性复核](reviews/DOC_CONSISTENCY_RECONCILIATION_2026-11-06.md) | 8 份方案文档的 CLI/output、RunOutcome、SH R5、MAT 形状来源、HLD 环境/预算与章节引用得到文本统一；固定提交下的 66 REQ/66 TC/98 P、源目录和 DAG 静态断言未发现不一致 | H-03/DEC-005/008 已批准、H-10/H-11 已解除暂缓、Bash/CTest/Golden 已执行、SRS/HLD/LLD 可冻结 |
 | E-DOC-005 | [Golden 及容差候选](golden/GOLDEN_TOLERANCE_PROPOSAL.md) + [解析数值 JSON](golden/analytic_golden_candidates.v1.json) | 已静态提出 12 组带固定输入与具体参考数字的解析候选；建议第一轮宽松连续值比较 `atol=0.01, rtol=0.1`，并强制结构/物理不变量；记录了真实 MATLAB Golden 缺口 | MATLAB 已执行或输出已验证、DEC-005 阈值已批准、C++ 通过测试、M0～M5/P/TC/AC 可标记通过 |
+| E-DOC-006 | [Golden L1–L4 证据等级与 AC 缺口](golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md) | 已逐类记录目前缺失的原 MATLAB 每轮/每节点/RNG/异常/SH 旋转/逐帧 Session L1，区别于现存最终 L2、解析候选 L3 和待执行 L4；并逐项对应重点 AC/TC，不修改其条款 | L1 已实际采集、L2 全量值和 SHA-256 已复核、L3/L4 已测试、DEC/AC 已通过、可以冻结或合并 |
 | E-DEC-001 | [JSON 审批落实记录](approval/DECISION_IMPLEMENTATION_NOTES.md) | **H-02/H-14 已指定 Sophus 与 Don Williamson Ivanic 方案 A**；H-04 已提供 Ubuntu 24.04.4 VM 快照；H-12 已确定 `output/` 并更新 `.gitignore` | 任意第三方 C++ 文件已复制、Sophus 已安装/构建、MAT 写入/CTest 已执行、Golden/容差已批准、程序可发布 |
 
 ## 3. 实施任务与里程碑状态
@@ -54,6 +55,8 @@
 | 架构与 C++ 实现者 | 按 P 任务维护对象合同、目标依赖、代码、提交/PR | 本轮只记录文档维护与连接器检查；正式实施责任人待分配 |
 | 数值验证者 | 独立 Golden、统计样本、批准容差下的逐轮对照 | 未指派、Golden 和 DEC-005 未冻结 |
 | 测试/集成维护者 | Debian/Ubuntu 构建、CTest、数据/资源记录、静态审计核查 | Ubuntu 探针已有记录；完整工程/CTest 未获验收 |
+
+> **Golden 证据等级最新状态**：依 [E-DOC-006](golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md)，L1 原 MATLAB 逐节点/逐调用未采集、L2 历史 MAT 最终结果存在但完整逐值/SHA-256 审计缺、L3 解析样例只是候选、L4 尚未执行统计。尤其 KvD/Adaptive/RNG/SH/Session 的运行中间量仍缺，故不能把历史最终结果与解析数值当作逐节点 Golden；所有对应 AC **仍未验收**。现有 E-DOC-005 的 0.01/0.1 为未批准筛查候选。
 
 ## 5. 未解决决策与验证阻塞
 
