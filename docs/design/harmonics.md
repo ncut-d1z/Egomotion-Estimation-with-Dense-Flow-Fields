@@ -97,7 +97,7 @@ a'_{0,0}=a_{0,0},\quad
 - 以 **Ivanic–Ruedenberg 1996 原论文及 1998 勘误**为数学依据，规划纯 Eigen 的 R5 递推；Don Williamson 的 C++ 代码仅作为交叉阅读参考，必须建立独立 L3 参考表：旋转向量、输入 R、**独立推导/复核** R3/R5 全元素、输入/输出系数、误差及只读源 SHA；不得以被测 C++ 自验代替独立参考，**无需运行 MATLAB**，也不得在本轮复制第三方代码。
 - 对第二阶旋转的任何替代生成算法，须证明与作者 SHRotate 数值行为和系数顺序一致，并有合法的原创或兼容授权基础。
 
-### 3.1.1 H-02/H-14：上游 C++ 复用路线与法律/构建边界
+### 3.1.1 Ivanic–Ruedenberg 原论文、Don Williamson 参考与 Eigen-only 构建边界
 
 | 核查项 | 已确认的上游事实或用户决定 | 实施要求（未执行） |
 |---|---|---|
@@ -105,7 +105,7 @@ a'_{0,0}=a_{0,0},\quad
 | 上游实际算法文件 | [`Source/IvanicSHRotate.cpp`](https://github.com/dwilliamson/SHRotation/blob/master/Source/IvanicSHRotate.cpp)、[`Source/IvanicSHRotate.h`](https://github.com/dwilliamson/SHRotation/blob/master/Source/IvanicSHRotate.h)；配套 `Source/SHRotateMatrix.h` | **`Source/SHRotation.h` 是依赖 sdla 的示例应用类，不是独立的核心递推 API**，不能只复制该头文件就宣称解决 R5 |
 | 底层依赖 | Williamson 参考源码包含 `sdla/Matrix.h` 和 `sdla/Exception.h`；本项目使用 Eigen3 | **禁用并移除 sdla 的所有 include、link、vendor 依赖，不做 sdla 包装或桥接**；用 Eigen::Matrix3d / Eigen::Matrix<double,5,5> 和统一 ErrorDetail 重写数学递推，须核 1998 勘误及源相位映射 |
 | 项目许可与来源记录 | 仓库新代码已采用根 [MIT LICENSE](../../LICENSE)，Don Williamson 上游代码同为独立来源 | 正常开发**不因版权审批待办阻塞**，保留实际引入上游文件必要的原许可/署名；不将项目 MIT 扩展到原作者归档数据 |
-| 旋转块接口 | MATLAB `SHRotate(r,2)` 输出 R0=1×1、R1=3×3、R2=5×5 | 用 `HarmonicRotator` 把上游计算输出转换到源 MATLAB 的 `(-1,0,1)` 和 `(-2,-1,0,1,2)` 次序；核对原 MATLAB R1 九元素映射与 R2 全 25 元素、转置/相位和正交性 |
+| 旋转块接口 | MATLAB `SHRotate(r,2)` 输出 R0=1×1、R1=3×3、R2=5×5 | 由**本项目依据原论文及 1998 勘误编写的纯 Eigen 递推**生成旋转块，再由 `HarmonicRotator` 按原实球谐约定映射 `(-1,0,1)` 和 `(-2,-1,0,1,2)` 的次序/相位；逐项核对 R3 九元素与 R5 全 25 元素、转置和正交性。Don Williamson 仅供代码阅读参考，不引入 sdla |
 
 **冻结条件**：必须先核对用户上传的 1996 原论文和 1998 勘误，完成 Eigen-only 的 R5 数学实现并对 R0/R3/R5 独立 L3 全元素验证；还需正式接口/CTest 和 DEC-005 最终阈值。项目 MIT 与不再以一般版权审查阻塞开发的方向已确定，但不意味着目前实现或验收完成。
 
@@ -133,7 +133,7 @@ a'_{0,0}=a_{0,0},\quad
 | 边界 | 拟议内容 | 未完成条件 |
 |---|---|---|
 | CMake target | [ARCHITECTURE.md §4](../ARCHITECTURE.md) 的 `egomotion_harmonics` 显式依赖 **egomotion_domain + egomotion_contracts + Eigen**；Eigen-only 的 Ivanic–Ruedenberg l≤2 递推实现 | target 尚未创建/编译；**不能包含 sdla**，须等用户上传原文+勘误后逐式实现 |
-| 公共头文件 | 候选 `include/egomotion/harmonics/{real_spherical_harmonics,harmonic_fitter,harmonic_rotator}.hpp` 三个公共头；R3/R5 值对象归 harmonic_rotator，3×5 系数归 domain，精确声明见 [专题 §3](SH_ROTATION_IVANIC_RUEDENBERG.md) | Result/Status 所在 target 的最终归属和签名待 P0.8；若需新 `egomotion_contracts` 依赖，应**同步修订 HLD 表及 DAG** |
+| 公共头文件 | 候选 `include/egomotion/harmonics/{real_spherical_harmonics,harmonic_fitter,harmonic_rotator}.hpp` 三个公共头；R3/R5 值对象归 harmonic_rotator，3×5 系数归 domain，精确声明见 [专题 §3](SH_ROTATION_IVANIC_RUEDENBERG.md) | `egomotion_harmonics → egomotion_contracts` **已在 HLD §4 和 27 边 DAG 中明确**；具体头文件的自包含性、签名/ABI 仍需 P0.8 与真实编译验证；**只有未来实际改变依赖边界时**才须同步修改 HLD/ADR/DAG |
 | 私有实现 | `src/harmonics/{real_spherical_harmonics,harmonic_fitter,harmonic_rotator}.cpp` 与私有 `src/harmonics/detail/ivanic_ruedenberg_eigen.{hpp,cpp}` 仅作**预定路径设计**；无 C++ 实现，禁用 sdla | 无实际代码/构建证据，确认编译依赖闭包不含 sdla |
 
 | TC / AC | TEST_PLAN §3 的候选实体/CTest | L3 逐项核验 |
