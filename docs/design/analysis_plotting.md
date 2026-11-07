@@ -1,6 +1,6 @@
 # MAT 结果分析与可选绘图——详细设计草案
 
-> **LLD v0.1 草案，未冻结、未运行任何可视化程序。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
+> **LLD v0.2 草案，未冻结、未运行任何可视化程序。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
 
 ## 1. 只读分析合同
 
@@ -156,7 +156,7 @@ PlotExporter 仅消费 AnalysisDataset，输出图形位置必须在独立 RunId
 |---|---|---|
 | graphs_bias_test | 两类归档各 40 运行；每运行 xwerte `10×1`，ywerte1…6 各 `10×3` | 原图分析主要使用 ywerte3…6，且 xwerte 按作者存储值而非实际完整球面 N |
 | graph_agent_in_sphere_initialization_test | 四个 allemit/alleohne trans/rot 变量，均 `35×1` | 1..13 与全行索引按源脚本控制，不因 dtype/shape 合法而省略索引测试 |
-| graph_agent_in_sphere_adaptive_matched_filter_test | without_errors 的四误差和 rottransratio 均 `600×1`；with_errors 另有 alleadaprot/alleadaptrans，亦 `600×1` | 当前源码不写 `alleadap*`，历史额外数据来源仍需追踪 |
+| graph_agent_in_sphere_adaptive_matched_filter_test | without_errors 的四误差和 rottransratio 均 `600×1`；with_errors 另有 alleadaprot/alleadaptrans，亦 `600×1` | 当前源码不写 `alleadap*`，历史额外字段归类为 `HistoricalOnly`，**无需先归因**；保留历史数据的只读分析能力 |
 | graph_agent_in_sphere_adaptive_matched_filter_many_parameter | 现存 allemittrans/allemitrot/alleadaptrans/alleadaprot 均 `600×4`；akrot/rottransratio 均 `600×1` | 当前多频率生成脚本只保存两个 allemit 和 akrot；历史 rottransratio 属 HistoricalOnly。新输出进行该图分析时缺少比值即明确失败，不虚构数据；保留旧历史完整分析 |
 
 **DEC-004 的最新所有者决定优先于历史 H-07 的仅起草状态**：当前生成字段正常输出，历史额外字段标 `HistoricalOnly` 并只读保留；未知来源无需先归因。分析需要却缺失的字段明确非成功，不补造/不调整统计口径。三态来源分类可保留 `CurrentGenerated/HistoricalOnly/Unknown`，具体报告类型待 LLD/CTest 验证。
