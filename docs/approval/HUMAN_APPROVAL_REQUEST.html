@@ -92,7 +92,7 @@ details.guide{margin:8px 0 0}.guide summary{cursor:pointer;font-weight:600}
 <nav class="nav" aria-label="页面导航">
   <a href="#application">申请信息</a><a href="#approvals">逐项审批</a><a href="#tolerances">数值容差</a><a href="#rights">版权与发布</a><a href="#contracts">CLI 与 Golden</a><a href="#execution">执行权限</a><a href="#save">保存 JSON</a>
 </nav>
-<div class="notice"><strong>审批与执行是两个独立门槛。</strong> 只有你明确选择“批准”并填写审批人、角色、日期及其时区、所批准的 SHA、范围和证据后，该条记录才可能形式完整；系统不核验真实身份，也不会关闭 DEC、执行测试或提交 Git。未批准、退回和暂缓的记录也可保存。</div>
+<div class="notice"><strong>审批与执行是两个独立门槛。</strong> 只有你明确选择“批准”并填写该事项的授权范围和依据后，该条记录才可能形式完整；整个申请只需在顶部填写一次版本 SHA，系统不核验实际授权身份，也不会关闭 DEC、执行测试或提交 Git。未批准、退回和暂缓的记录也可保存。</div>
 <form id="approvalForm" novalidate>
 <section class="card" id="application">
   <h2>一、申请登记</h2>
@@ -101,10 +101,10 @@ details.guide{margin:8px 0 0}.guide summary{cursor:pointer;font-weight:600}
     <label class="field">仓库<input id="repository" value="ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields" readonly></label>
     <label class="field">目标开发分支<input id="branch" value="dev-plan-P0-P1-mat-dictionary-probe" maxlength="200"></label>
     <label class="field">本申请所依据的 commit SHA<input id="applicationCommit" placeholder="填写已核验的 Git commit SHA" spellcheck="false"></label>
-    <label class="field">项目所有者 / 联系人<input id="owner" placeholder="由人类填写"></label>
-    <label class="field">其他审核人及角色<input id="otherReviewers" placeholder="由人类填写"></label>
+    
+    
     <label class="field">本次审批范围（H 编号）<input id="scopeIds" placeholder="例如：H-03、H-08"></label>
-    <label class="field">下次复核日期<input id="nextReviewDate" type="date"></label>
+    
     <label class="field">申请总状态<select id="applicationStatus"><option value="待逐项审批">待逐项审批</option><option value="部分已填">部分已填</option><option value="待提交复核">待提交复核</option></select></label>
     <label class="field span-all">审批补充说明<textarea id="applicationNotes" rows="3" placeholder="备注、风险、例外条款；不在此代填审批决定"></textarea></label>
   </div>
@@ -112,7 +112,7 @@ details.guide{margin:8px 0 0}.guide summary{cursor:pointer;font-weight:600}
 </section>
 
 <section class="card" id="approvals">
-  <div class="section-head"><h2>二、16 项独立审批</h2><span class="subtle">选择意见后填写该项专属的审批依据</span></div>
+  <div class="section-head"><h2>二、16 项独立审批</h2><span class="subtle">单人项目：只需填写每项决定、依据和授权范围；版本 SHA 在申请信息中统一填写</span></div>
   <div class="statbar">
     <div class="stat"><b id="statPending">16</b><small>待决定</small></div>
     <div class="stat"><b id="statApproved">0</b><small>选择批准</small></div>
@@ -178,11 +178,11 @@ details.guide{margin:8px 0 0}.guide summary{cursor:pointer;font-weight:600}
     <label class="field">允许执行的命令、用例及异常处理<textarea data-extra="allowedCommands" placeholder="实际 CMake / CTest / Bash / MATLAB 命令及范围"></textarea></label>
     <label class="field">Debian/Ubuntu 版本、GCC/Clang、CPU/RAM<textarea data-extra="platformResources" placeholder="版本/资源；未批准时留空"></textarea></label>
     <label class="field">性能阈值、墙钟/CPU/内存预算<textarea data-extra="performanceBudget" placeholder="不能编造性能门槛"></textarea></label>
-    <label class="field">负责人、审查人及授权环境<textarea data-extra="executorInfo"></textarea></label>
+    <label class="field">执行环境与权限范围<textarea data-extra="executorInfo"></textarea></label>
     <label class="field">执行证据的路径及保管要求<textarea data-extra="executionEvidence" placeholder="Git SHA、RunId、stdout/stderr、退出码、数据哈希"></textarea></label>
   </div>
   <h3 class="block-title">M0–M5 里程碑（待人类决定）</h3>
-  <div class="table-wrap"><table class="data-table"><thead><tr><th>里程碑</th><th>责任人</th><th>目标日期</th><th>预算 / 资源 / 备注</th></tr></thead><tbody id="milestoneRows"></tbody></table></div>
+  <div class="table-wrap"><table class="data-table"><thead><tr><th>里程碑</th><th>实施备注</th><th>预算 / 资源 / 备注</th></tr></thead><tbody id="milestoneRows"></tbody></table></div>
 </section>
 
 <section class="card" id="save">
@@ -227,11 +227,11 @@ const ITEMS=[
 ["H-12","MAT 原子发布、路径与软链接防护","mat_io.md · P1.9","准备不可覆盖、TOCTOU、写后回读的安全候选。","人类授权负例测试并审核实际安全结果。"],
 ["H-13","KvD / Adaptive 异常与状态提交","kvd.md · adaptive_mfa.md","比较 MATLAB NaN/Inf 与提交、回滚、终止候选。","数值验证人/所有者批准失败后处理与原版差异。"],
 ["H-14","实球谐 R5 的合法实现路线","harmonics.md · SHRotate.m","列明 R3/R5、递推与独立实现候选。","版权审核后批准实现范围，再以 Golden/容差核验。"],
-["H-15","人员分派、里程碑、资源与预算","PLAN §6 · PROGRESS.md","准备 WBS、责任角色、M0–M5 空白进度模板。","有权人员填写角色、日期、CPU/RAM、预算和时间承诺。"],
+["H-15","里程碑、资源与预算","PLAN §6 · PROGRESS.md","准备 WBS、责任角色、M0–M5 空白进度模板。","由你确认 CPU/RAM、预算及资源承诺。"],
 ["H-16","PR 合并、发布、许可证与最终签字","AGENTS.md · Draft PR · SRS/HLD/LLD","准备提交、风险、发布及基线冻结检查表。","针对指定 PR/commit、许可证和发布范围明确授权。"]
 ];
 const STATUSES=[["pending","待决定"],["approved","批准"],["revise","退回修改"],["deferred","暂缓"],["rejected","拒绝"]];
-const ROLES=["项目所有者","数值验证负责人","版权审查负责人","数据审计负责人","架构审查负责人","维护/集成负责人","开发负责人","其他"];
+
 const TOLERANCES=[
 ["Franz、Original/Modified KvD（逐轮）","kvd"],
 ["实球谐 9 项、R3/R5、近度拟合","harmonics"],
@@ -259,29 +259,29 @@ let edited=false;
 function esc(t){return String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function t(s){return String(s==null?"":s);}
 function makeSelect(name,options){return '<select data-field="'+name+'"><option value="">请选择</option>'+options.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("")+'</select>';}
-function field(label,name,type){return '<label class="field">'+label+(type==="textarea"?'<textarea data-field="'+name+'" rows="2"></textarea>':type==="role"?makeSelect(name,ROLES):type==="timezone"?'<input data-field="'+name+'" placeholder="如 Europe/Berlin / UTC" list="tzOptions">':'<input data-field="'+name+'" type="'+type+'" autocomplete="off">')+'</label>';}
+function field(label,name,type){return '<label class="field">'+label+(type==="textarea"?'<textarea data-field="'+name+'" rows="2"></textarea>':'<input data-field="'+name+'" type="'+type+'" autocomplete="off">')+'</label>';}
 function itemNode(item){
  const id=item[0];
  const choices=STATUSES.map((x,n)=>'<label class="choice"><input type="radio" name="decision-'+id+'" value="'+x[0]+'" '+(n===0?"checked":"")+'><span>'+x[1]+'</span></label>').join("");
- const detail='<div class="form-grid two">'+field("审批人姓名 *","reviewer","text")+field("审批人角色 *","role","role")+field("审批日期及时间 *","reviewedAt","datetime-local")+field("时区 *","timezone","timezone")+field("批准对象 commit / blob SHA *","sha","text")+field("审批依据 / 证据链接或文件 *","evidence","textarea")+field("适用范围及明确授权的内容 *","scope","textarea")+field("条件 / 例外条款","conditions","textarea")+field("审核意见和原因","notes","textarea")+'</div>';
- return '<article class="approval-item" data-id="'+id+'" data-search="'+esc(item.join(" ").toLowerCase())+'"><div class="item-main"><div class="item-top"><span class="item-code">'+id+'</span><span class="item-title">'+esc(item[1])+'</span><span class="item-state">待决定</span></div><div class="item-meta">'+esc(item[2])+'</div><p class="item-desc"><strong>AI 可准备：</strong>'+esc(item[3])+'<br><strong>人类需决定：</strong>'+esc(item[4])+'</p><div class="choice-row" role="radiogroup" aria-label="'+id+' 审批意见">'+choices+'</div></div><details class="item-details"><summary>填写审批人、SHA、证据和范围（选择“批准”后必须填写）</summary><div class="detail-body">'+detail+'</div></details></article>';
+ const detail='<div class="form-grid two">'+field("审核依据 / 证据链接或文件 *","evidence","textarea")+field("适用范围及明确授权的内容 *","scope","textarea")+field("条件 / 例外条款","conditions","textarea")+field("审核意见和原因","notes","textarea")+'</div>';
+ return '<article class="approval-item" data-id="'+id+'" data-search="'+esc(item.join(" ").toLowerCase())+'"><div class="item-main"><div class="item-top"><span class="item-code">'+id+'</span><span class="item-title">'+esc(item[1])+'</span><span class="item-state">待决定</span></div><div class="item-meta">'+esc(item[2])+'</div><p class="item-desc"><strong>AI 可准备：</strong>'+esc(item[3])+'<br><strong>人类需决定：</strong>'+esc(item[4])+'</p><div class="choice-row" role="radiogroup" aria-label="'+id+' 审批意见">'+choices+'</div></div><details class="item-details"><summary>填写审核依据、范围和意见（选择“批准”后必须填写）</summary><div class="detail-body">'+detail+'</div></details></article>';
 }
 $("items").innerHTML=ITEMS.map(itemNode).join("");
 $("toleranceRows").innerHTML=TOLERANCES.map(row=>'<tr data-tolerance="'+row[1]+'"><td>'+esc(row[0])+'</td><td><input data-tol-field="atol" inputmode="decimal" placeholder="未定"></td><td><input data-tol-field="rtol" inputmode="decimal" placeholder="未定"></td><td><textarea data-tol-field="criterion" placeholder="统计及退化判据"></textarea></td><td><textarea data-tol-field="golden" placeholder="来源 / SHA / 证据"></textarea></td></tr>').join("");
 $("permissions").innerHTML=PERMISSIONS.map(x=>'<label class="choice-check"><input type="checkbox" data-permission="'+x[0]+'"><span>'+esc(x[1])+'</span></label>').join("");
-$("milestoneRows").innerHTML=MILESTONES.map((x,i)=>'<tr data-milestone="M'+i+'"><td>'+esc(x)+'</td><td><input data-milestone-field="owner" placeholder="未分派"></td><td><input data-milestone-field="date" type="date"></td><td><textarea data-milestone-field="resources" placeholder="未批准"></textarea></td></tr>').join("");
+$("milestoneRows").innerHTML=MILESTONES.map((x,i)=>'<tr data-milestone="M'+i+'"><td>'+esc(x)+'</td><td><input data-milestone-field="owner" placeholder="未分派"></td><td><textarea data-milestone-field="resources" placeholder="未批准"></textarea></td></tr>').join("");
 function getValue(root,name){const node=root.querySelector('[data-field="'+name+'"]');return node?node.value.trim():"";}
 function getDecision(root){return root.querySelector('input[type="radio"]:checked')?.value||"pending";}
 function getApproval(root){
  const record={id:root.dataset.id,decision:getDecision(root)};
- for(const name of ["reviewer","role","reviewedAt","timezone","sha","evidence","scope","conditions","notes"])record[name]=getValue(root,name);
+ for(const name of ["evidence","scope","conditions","notes"])record[name]=getValue(root,name);
  return record;
 }
 function missing(record){
  if(record.decision!=="approved")return [];
- const fields=[["reviewer","审批人"],["role","审批角色"],["reviewedAt","审批时间"],["timezone","时区"],["scope","授权范围"],["evidence","证据"]];
+ const fields=[["scope","授权范围"],["evidence","审核依据"]];
  const problems=fields.filter(x=>!record[x[0]]).map(x=>x[1]);
- if(!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/i.test(record.sha))problems.push("40/64 位 Git SHA");
+
  const perms=readPermissions();
  if(record.id==="H-10"&&!["runCMake","runCTest","writeMat","measurePerformance"].some(x=>perms[x]))problems.push("至少一项生产/测试执行权限");
  if(record.id==="H-11"&&!perms.runBash)problems.push("Bash 现场执行权限");
@@ -326,16 +326,16 @@ function showMessage(message,kind){const node=$("saveStatus");node.textContent=m
 $("validateButton").onclick=()=>{
  const all=[...document.querySelectorAll(".approval-item")].map(getApproval),problems=all.filter(x=>x.decision==="approved"&&missing(x).length);
  if(problems.length){showMessage("批准记录尚有缺项："+problems.map(x=>x.id+"（"+missing(x).join("、")+"）").join("；")+"。可先保存草案。","error");}
- else showMessage("静态表单检查完成：已选择批准的事项没有必填字段缺项。此检查不核验身份、证据真实性或是否获得正式批准。","success");
+ else showMessage("静态表单检查完成：已选择批准的事项没有必填字段缺项。此检查不核验证据真实性或是否获得正式批准。","success");
 };
-const DISPLAY_FIELDS=["applicationId","repository","branch","applicationCommit","owner","otherReviewers","scopeIds","nextReviewDate","applicationStatus","applicationNotes"];
+const DISPLAY_FIELDS=["applicationId","repository","branch","applicationCommit","scopeIds","applicationStatus","applicationNotes"];
 function readExtra(){const out={};document.querySelectorAll("[data-extra]").forEach(el=>{out[el.dataset.extra]=el.value.trim()});return out;}
 function tolerances(){return [...document.querySelectorAll("[data-tolerance]")].map(el=>{const x={id:el.dataset.tolerance,name:TOLERANCES.find(t=>t[1]===el.dataset.tolerance)?.[0]||""};el.querySelectorAll("[data-tol-field]").forEach(y=>x[y.dataset.tolField]=y.value.trim());return x;});}
 function milestones(){return [...document.querySelectorAll("[data-milestone]")].map(el=>{const x={id:el.dataset.milestone};el.querySelectorAll("[data-milestone-field]").forEach(y=>x[y.dataset.milestoneField]=y.value.trim());return x;});}
 function exportData(){
  const app={};DISPLAY_FIELDS.forEach(id=>app[id]=$(id).value.trim());
  const approvals=[...document.querySelectorAll(".approval-item")].map(el=>{const r=getApproval(el);r.recordCompleteness=r.decision==="approved"?(missing(r).length?"incomplete":"fields_present_unverified"):"not_approved";r.missingFields=missing(r);return r;});
- return {schema:"egomotion.human-approval.v1",exportedAt:new Date().toISOString(),sourceHtml:"docs/approval/HUMAN_APPROVAL_REQUEST.html",notice:"JSON is a human-entered draft/record; export alone does not approve DEC, authorize execution, freeze design or demonstrate tests.",application:app,approvals:approvals,technicalDetails:{tolerances:tolerances(),...readExtra(),permissions:readPermissions(),milestones:milestones()}};
+ return {schema:"egomotion.human-approval.v1",sourceHtml:"docs/approval/HUMAN_APPROVAL_REQUEST.html",notice:"JSON is a human-entered draft/record; export alone does not approve DEC, authorize execution, freeze design or demonstrate tests.",application:app,approvals:approvals,technicalDetails:{tolerances:tolerances(),...readExtra(),permissions:readPermissions(),milestones:milestones()}};
 }
 function validFilename(v){
  let name=v.trim();
@@ -409,7 +409,7 @@ $("loadFile").onchange=async()=>{
    const d=byId.get(el.dataset.id)||{};
    const decision=STATUSES.some(x=>x[0]===d.decision)?d.decision:"pending";
    el.querySelectorAll('input[type="radio"]').forEach(r=>r.checked=r.value===decision);
-   for(const field of ["reviewer","role","reviewedAt","timezone","sha","evidence","scope","conditions","notes"]){
+   for(const field of ["evidence","scope","conditions","notes"]){
     const node=el.querySelector('[data-field="'+field+'"]');if(!node)continue;node.value=t(d[field]);
    }
    el.querySelector("details").open=decision!=="pending";
