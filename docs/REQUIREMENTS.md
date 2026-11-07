@@ -1,6 +1,6 @@
 # Egomotion Estimation with Dense Flow Fields：软件需求规格说明书（SRS）
 
-> **状态：草案 v0.4，未冻结、未验收。** 本文档规定系统的可验证义务；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
+> **状态：草案 v0.5，未冻结、未验收。** 本文档规定系统的可验证义务；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
 
 ## 1. 目的、范围与约束
 
@@ -53,7 +53,7 @@
 | REQ-F-BIAS-002 | M | 确定 | 系统应复现完整球面、逐分量比例噪声的 Bias 实验。 | AC-F-BIAS-002：同一固定流场及 Gaussian 序列下，逐分量按 randn × 系数 × p_component 扰动并重新投影；其输出与平均模长噪声模型有可计算差别，保存文件名和维度一致。 |
 | REQ-F-BIAS-003 | M | 确定 | 系统应支持汇总两种 Bias 实验各 40 份独立运行结果及理论参考曲线。 | AC-F-BIAS-003：跨运行均值及 100/sqrt(N) 曲线与原分析脚本一致。 |
 | REQ-F-CLI-001 | M | 确定 | 系统应提供 inspect-mat 命令，对指定 MAT 文件进行只读检查，不调用任何估计器。 | AC-F-CLI-001：依据 [design/cli.md §2–4](design/cli.md) 的 `inspect-mat` 候选合同，使用一个有效压缩 MAT、一个不存在的文件及一个变量名错误样本，核验帮助、strict/compat、变量名/类型/形状、退出码与原文件哈希不变；具体 CLI 参数/错误映射仍待 P0.8/P1.2 批准。 |
-| REQ-F-CLI-002 | M | 接口草案 | 系统应分别提供两种 Bias 数据生成命令，保留随机种子、细分等级和结果目录参数。 | AC-F-CLI-002：依据 [design/cli.md §2–4](design/cli.md) 分别检查两种 Bias 命令的合法/非法等级、seed、输出目录及覆盖冲突；生成 xwerte 与 ywerte1…6，并按候选错误映射以非零退出码报告失败；具体范围未批准前不得标为通过。 |
+| REQ-F-CLI-002 | M | 接口草案 | 系统应分别提供两种 Bias 数据生成命令，保留随机种子、细分等级和结果目录参数。 | AC-F-CLI-002：依据 [design/cli.md §2–4](design/cli.md) 核查两种 Bias 命令的合法/非法等级、seed、可选 `--run-id` 与固定 `output/<RunId>/` 非覆盖；**不存在用户配置输出根选项**，生成 xwerte 与 ywerte1…6，失败按候选错误码返回非成功。 |
 | REQ-F-CLI-003 | M | 接口草案 | 系统应分别提供 Adaptive 初始化、带/不带噪声比较和更新间隔三种实验入口。 | AC-F-CLI-003：依据 [design/cli.md §2–4](design/cli.md) 逐命令核查三种 Adaptive 入口的原 MATLAB 参数、固定默认值、当前脚本输出合同与 1/5/11/21 刷新时刻；非法参数或数值失败不得报告成功。 |
 | REQ-F-CLI-004 | M | 接口草案 | 系统应提供独立 analyze 命令，只读取已有 MAT 结果并计算曲线数据而不运行求解器。 | AC-F-CLI-004：依据 [design/cli.md §2–4](design/cli.md) 用历史归档执行四种 analyze 路径，核验不调用求解器、原结果哈希不变及缺失字段的明确错误和非零退出。 |
 | REQ-F-CLI-005 | S | 接口草案 | 系统应提供可选 plot 命令，绘图后端缺失时不影响其他数值命令。 | AC-F-CLI-005：依据 [design/cli.md §2–4](design/cli.md) 对同一分析数据核验可选绘图输出与后端缺失状态（候选退出码 7）；禁用绘图不影响 inspect/run/analyze。 |
@@ -76,7 +76,7 @@
 | REQ-F-MAT-003 | M | 确定 | 系统应分别提供指定变量名的严格读取和 getflowfield 兼容的首变量/省略扩展名读取。 | AC-F-MAT-003：分别测试单变量、多变量、缺失变量、后缀处理。 |
 | REQ-F-MAT-004 | M | 确定 | 系统应在独立 RunId 输出目录写入变量名与尺寸兼容的 MAT 结果。 | AC-F-MAT-004：写后回读一致，拒绝覆盖原归档/历史 RunId。 |
 | REQ-F-SH-001 | M | 确定 | 系统应复现 l≤2 的实球谐基函数、3×5 系数、近度恢复与逐项拟合。 | AC-F-SH-001：依据 [design/harmonics.md §1–3](design/harmonics.md) 以固定方向和 **L3 独立解析值**逐项核查 l≤2 九个实球谐基函数的正/负 m 相位、归一化、3×5 有效位置、逐项系数拟合与 near 重建，记录索引/维度、参考 SHA 和误差；必须有独立参考、实际 C++ 用例与 DEC-005 批准容差；不要求原 MATLAB 运行结果。 |
-| REQ-F-SH-002 | M | H-02/H-14 已选择 Don Williamson C++ 方案 A；尚待许可保留/Golden/实施 | 系统应复现 l≤2 球谐旋转矩阵与系数旋转，保持原基函数顺序及旋转方向。 | AC-F-SH-002：选定 Don Williamson Ivanic–Ruedenberg C++ 路线，使用 **L3 独立解析/独立实现**固定输入逐项核验 R0(1 项)、R3(9 项)、R5(25 项)、九系数 before/after、相位/坐标/旋转方向和独立几何不变量，记录源与第三方许可及批准容差；不要求运行原 `SHRotate.m`，但不能声称其未知异常运行行为已验证。 |
+| REQ-F-SH-002 | M | 已选定 Ivanic–Ruedenberg＋Eigen，论文待上传/实现未验收 | 系统应依据 Ivanic–Ruedenberg 1996 原论文和 1998 勘误，使用 Eigen 独立实现 l≤2 的球谐旋转，完全不依赖 sdla，保持原实基符号、次序和旋转方向。 | AC-F-SH-002：对上传的 1996 原文/1998 勘误建立公式与索引对应，参考 Don Williamson 但完全以 Eigen 重写；构建依赖闭包没有 sdla，固定输入 L3 独立核验 R0(1)、R3(9)、R5(25)、九系数 before/after、符号相位/主动被动方向及几何不变量；允许宽松探索筛查，正式通过需 DEC-005 的模块阈值和真实 CTest，不要求 MATLAB/Octave/L1。 |
 | REQ-F-TRAJ-001 | M | 确定 | 系统应按原参数生成圆轨迹、正弦轨迹和相邻点局部运动/旋转，不将绘图混入数据生成。 | AC-F-TRAJ-001：样本轨迹、旋转方向、端点和角度转换对照。 |
 
 ### 数据与来源需求
@@ -87,7 +87,7 @@
 | REQ-D-MAT-002 | M | 确定 | 系统应保留源 MAT 的列主序、数据类型、变量命名、数值含义和输出形状。 | AC-D-MAT-002：已读字段按元素及真实 shape 比较，变更有记录。 |
 | REQ-D-MAT-003 | M | 历史差异待归因 | 系统应区分生成脚本实际保存、分析脚本需要和历史归档额外存在的 MAT 变量。 | AC-D-MAT-003：所有差异有状态和证据，不伪造缺失数据。 |
 | REQ-D-SOURCE-001 | M | 目录已核对 | 系统应冻结原始资料的 SHA、45 个 .m、582 个 .mat、readme 和具体文件分类。 | AC-D-SOURCE-001：源码清单与 GitHub 树一致，每项可定位哈希。 |
-| REQ-D-SOURCE-002 | M | 待权利核查 | 系统应记录原作者及外部 rodrigues/SHRotate 的实际来源和可再分发范围。 | AC-D-SOURCE-002：核对文件版权头；不擅自补造 LICENSE 结论。 |
+| REQ-D-SOURCE-002 | M | 已确定来源登记原则 | 系统应记录原 MATLAB 数学依据、Ivanic–Ruedenberg 1996 原论文及 1998 勘误、Don Williamson 参考实现的来源 SHA 与 Eigen 重写差异；项目自有代码采用根 MIT，不以普通版权审查作为编码/测试阻塞条件。 | AC-D-SOURCE-002：README/文献索引中的来源和原始作者可追溯；未来仅在实际使用上游文件时保留其必要现有许可告知；不需要另外的版权人工签字才能编写/测试原创 Eigen 算法。原始作者 MAT/.m 不自动重新授予项目 MIT。 |
 
 ### 外部与组件接口合同
 
@@ -96,7 +96,7 @@
 | REQ-I-ANALYSIS-001 | M | 待数据字典冻结 | 系统分析接口应接收已有 MAT 结果目录并返回数值曲线/统计结构，而不调用求解器或修改输入。 | AC-I-ANALYSIS-001：使用全部四类分析原入口的结果数据验证输入/输出字段，原始 MAT SHA 无变化。 |
 | REQ-I-CLI-001 | M | 待合同冻结 | 系统命令行的命令名、必填/可选参数、类型、合法范围和错误退出行为应具有可读取的确定规格。 | AC-I-CLI-001：以 [design/cli.md §2–4](design/cli.md) 的逐命令参数/类型/范围及 [design/contracts.md §3.1](design/contracts.md) 的错误码→CLI 退出码映射候选为检查依据，逐命令核验必要字段、默认行为、优先级和诊断字段；SRS §6.1 仅是外部接口摘要，详细合同仍须 P0.8/P1.2 批准后冻结。 |
 | REQ-I-MAT-001 | M | 历史数据格式已确认；严格/兼容读取及写入接口未验收 | 系统的 MAT 外部接口应区分只读严格/兼容读取和独立输出写入，并保留变量类型/维度等元数据。 | AC-I-MAT-001：使用单/多变量和压缩 MAT 验证路径、变量选择、类型/尺寸、只读/输出保护，不依赖求解器。 |
-| REQ-I-RESULT-001 | M | 原作者结果 dtype/shape 已确认；C++ 新结果尚未生成 | 系统实验结果的变量名、尺寸、数据类型、实验标识和输出目录命名应与对应原 MATLAB 结果合同一致。 | AC-I-RESULT-001：按五个数据生成入口分别核验新增 MAT 的变量、形状与历史/当前源码差异表。 |
+| REQ-I-RESULT-001 | M | 原作者结果 dtype/shape 已确认；C++ 新结果尚未生成 | 系统实验结果的变量名、尺寸、数据类型、实验标识和输出目录命名应与对应原 MATLAB 结果合同一致。 | AC-I-RESULT-001：对五个生成入口分别核验新 MAT 的变量名、shape、dtype、RunId 及固定 `output/<RunId>/`，默认拒绝已有目录/文件；历史 MAT 与当前源码 save 差异必须分开报告，原始 `origin/**` 始终只读。 |
 
 ### 内部设计约束（非外部接口）
 
@@ -115,11 +115,11 @@
 
 | 需求 ID | 优先级 | 依据状态 | 可验证的需求陈述 | 验收条件 |
 |---|---|---|---|---|
-| REQ-NF-COPYRIGHT-001 | M | H-02 已限定第三方替代来源；源码再分发与声明仍须核查 | 系统应保留两份 DOI、第三方来源，不擅自新增项目级 LICENSE。 | AC-NF-COPYRIGHT-001：README 署名可核对，第三方权利障碍记录。 |
+| REQ-NF-COPYRIGHT-001 | M | 项目 MIT 已确定；来源标注保留 | 本项目自行编写的软件和文档以仓库根 MIT LICENSE 发布；论文 DOI、原始数据 DOI 与上游实际引用来源继续保留，既有第三方告知不删除；正常开发不因单独版权审批待办阻塞。 | AC-NF-COPYRIGHT-001：根 LICENSE 的 MIT 文本、README 软件许可声明、两份 DOI 与实际引入的上游 notice/来源标识可核对；不得宣称根 MIT 自动重新许可原作者归档或独立第三方作品。 |
 | REQ-NF-DEPS-001 | M | 确定 | 系统核心运行不得依赖 Python、MATLAB Runtime、NumPy、ROS、OpenCV、Windows 或 NPZ 转换。 | AC-NF-DEPS-001：检查依赖和链接，源代码无禁用路径。 |
 | REQ-NF-HEADLESS-001 | M | 确定 | 系统应支持无图形环境的检查、运行和分析，绘图模块不得阻断数值。 | AC-NF-HEADLESS-001：禁用绘图时主要数据路径仍可执行。 |
 | REQ-NF-LOG-001 | M | 确定 | 系统应记录 RunId、SHA、环境、命令、参数、随机种子、输入身份、退出码及日志位置。 | AC-NF-LOG-001：每次正式运行记录字段完整，不覆盖失败证据。 |
-| REQ-NF-NUM-001 | M | M（受 DEC-005 阻塞） | 系统应保持从原 MATLAB 只读源码可静态确认的数学公式、变量覆盖与更新顺序，并基于 L2/L3/L4 可获得来源进行固定输入数值对照与分模块容差审查；不要求运行 MATLAB 或取得 L1。 | AC-NF-NUM-001：必须使用 double，核对原源码可静态证实的计算/分支/状态顺序，独立记录各模块固定输入的实际绝对/相对误差、量纲、条件数与无效样本；未实测的原 MATLAB 异常/警告/随机流只标来源能力限制，C++ 必须明确拒绝异常输入。0.01/0.1 是候选而非批准门槛，待 DEC-005 批准逐模块阈值，并有真实 C++ 测试证据方可判定；**不得把缺失 L1 当作阻塞**。 |
+| REQ-NF-NUM-001 | M | M（受 DEC-005 阻塞） | 系统应保持从原 MATLAB 只读源码可静态确认的数学公式、变量覆盖与更新顺序，并基于 L2/L3/L4 可获得来源进行固定输入数值对照与分模块容差审查；不要求运行 MATLAB 或取得 L1。 | AC-NF-NUM-001：必须使用 double，按源可静态确认的计算/分支/更新次序核对 L2/L3/L4；项目所有者确认 `atol=0.01, rtol=0.1` 作为**首轮探索性筛查**，不作为最终 AC PASS 阈值。MAT 变量/类型/形状/原 double 值、RNG 次数/循环次数、样本状态严格匹配；几何不变量和理想零残差有单独严格门槛；各模块最终阈值仍须 DEC-005 根据真实测试证据审定，缺失 L1 不是阻塞。 |
 | REQ-NF-NUM-002 | M | 确定 | 系统应显式报告零范数、奇异、非有限、文件损坏、未定义角度；不可误记成功。 | AC-NF-NUM-002：每类失败有非成功状态及对应日志。 |
 | REQ-NF-OOP-001 | M | 确定 | 系统应明确所有权，隔离算法公式与实验编排，不创建巨型类或错误的通用求解器。 | AC-NF-OOP-001：对象模型和独立测试核实状态、资源与依赖方向。 |
 | REQ-NF-PLATFORM-001 | M | 确定 | 系统应在 Debian/Ubuntu 上以 C++17/CMake 源外构建。 | AC-NF-PLATFORM-001：实际支持的平台/编译器构建并留命令与日志。 |
@@ -178,14 +178,14 @@
 | 入口 | 必填或关键实参 | 可核验的输出 |
 |---|---|---|
 | inspect-mat | --file PATH；可选 --variable NAME、--mode strict/compat | 不写输入文件，显示 MAT 变量与错误诊断 |
-| run-bias-occluded / run-bias-proportional | --seed INTEGER、--level INTEGER、--output-root DIR | 对应两个实验的 xwerte 与六个 ywerte |
-| run-adaptive-init | --output-root DIR | 四类初始化误差 |
-| run-adaptive-comparison | --noise-scale NUMBER、--output-root DIR | 前四种方向误差加 rottransratio 五类 MAT |
-| run-adaptive-update-rates | --output-root DIR | 1/5/11/21 更新周期结果 |
+| run-bias-occluded / run-bias-proportional | --seed INTEGER、--level INTEGER、 | 对应两个实验的 xwerte 与六个 ywerte |
+| run-adaptive-init |  | 四类初始化误差 |
+| run-adaptive-comparison | --noise-scale NUMBER、 | 前四种方向误差加 rottransratio 五类 MAT |
+| run-adaptive-update-rates |  | 1/5/11/21 更新周期结果 |
 | analyze | --experiment NAME、--input-root DIR | 四类分析之一的数值序列，不重跑求解 |
 | plot（S 级） | --experiment NAME、--input-root DIR | 可选图示；无后端不妨碍数值命令 |
 
-**H-12 已确认的输出路径边界**：本表的 `--output-root DIR` **仅为候选 CLI 参数**，不是允许任意目录写出的需求授权；其值在拟议实现中只能解析到仓库根 `output/`，由 RunContext 为每次运行创建新的 `output/<RunId>/`，不得指向 `origin/**` 或既有结果。是否保留该选项、参数规范化与 RunId 自动命名仍待 H-03/DEC-008 另行审批，**不由此引入默认输出路径参数值**。本表 `INTEGER`、`NUMBER` 是外部概览写法；[CLI 详细设计 §2.1](design/cli.md) 现有候选类型为 `UINT32`、`NONNEG_INT`、`FINITE_DOUBLE`，它们亦未冻结。
+**输出根与 RunId（项目所有者当前决定）**：CLI 已删除自定义输出根选项，所有新结果在程序确认的仓库根 `output/<RunId>/` 内创建；`--run-id ID` 可选，缺省通过**与实验 RNG 独立的操作系统随机源**创建新身份；目录以独占方式创建，重复身份或已有文件拒绝覆盖，Composer/RunContext/Writer 必须层层校验路径。没有新输出的纯读取/分析命令不强制创建 RunId。CLI 数值参数在 [cli.md](design/cli.md) 中详细规定，其他未实现的边界仍需真实测试。
 
 建议退出码表（尚未冻结）：0 成功；2 参数错误；3 文件/MAT 输入错误；4 MAT 类型或形状错误；5 数值状态失败；6 输出安全冲突；7 可选功能不可用。参数合法范围、错误优先级、默认值及输出 schema 在 P0.8/P1.2 以 [TEST_PLAN.md](TEST_PLAN.md) 中 TC-F-CLI-* 的测试说明确认，不能将这份候选表当作已有 CLI。
 
@@ -195,12 +195,14 @@
 |---|---|---|
 | 兼容环境 | 仅 Debian/Ubuntu，源外 CMake/C++17，实际构建记录工具链版本 | 受支持发行版/编译器的完整版本矩阵待实测 |
 | 原始数据 | 582 份原始 MAT 均不可修改，已存在结果默认不可覆盖 | 不承诺未经设计的自动恢复 SLA |
-| 数值精度 | 默认 double；固定输入记录最大绝对/相对误差、失败/无定义次数 | **历史** `rtol=1e-10` 不再是现行候选；现行宽松候选为 `atol=0.01`、`rtol=0.1`，另保留离散结构/几何不变量严格判据；均待 DEC-005 分模块批准，详见 [容差建议](golden/GOLDEN_TOLERANCE_PROPOSAL.md) |
+| 数值精度 | 默认 double；固定输入记录最大绝对/相对误差、失败/无定义次数 | **首轮探索筛查已由所有者选定** `atol=0.01`、`rtol=0.1`，历史 `rtol=1e-10` 不采用；结构/几何/状态严格门槛单列，**DEC-005 最终分模块验收阈值仍未冻结**，见 [容差建议](golden/GOLDEN_TOLERANCE_PROPOSAL.md) |
 | 测试与追踪 | 所有 M 需求有 AC、TC、至少一个 P 子任务；实测通过才算完成 | 行覆盖率、分支覆盖率百分比未获批准，不虚构 |
 | 性能/内存 | 记录原实验墙钟、CPU、峰值 RSS、输入规模和运行平台 | 速度上限、加速倍数、内存峰值、构建时间预算均 TBD |
 | 日志/恢复 | 留存 RunId、SHA、参数、环境、输入身份、退出码、stderr、历史失败证据 | 不擅自增加自动重试频率和保留天数 |
 | 并发 | 每个 RunContext 独立 RNG/系数/结果路径 | 同一 Session 多线程安全非本期承诺 |
 | 无界面运行 | 不要求 Python 或绘图环境便能 MAT 检查、实验与数据分析 | 图像像素级复刻不是本期强制要求 |
+
+**新决策的优先级**：详见 [2026-11-07 所有者决定](decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md)。历史审批材料保留原日期的事实，涉及 MIT/球谐 Eigen/输出根/错误格式时以新决定为现行设计依据，**不因普通版权复查延迟生产代码开发**；实际复制上游文件仍保留既有 license notices。球谐递推实现前等待用户上传 1996 原论文及 1998 勘误。
 
 ## 8. 假设、依赖、阻塞与决策人
 
@@ -208,12 +210,12 @@
 |---|---|---|
 | DEC-001 | 582 份现有归档的 MAT 格式和 HDF5 必要性 | **格式事实已证实**：582/582 MAT v5 + zlib；现有数据无需 MAT v7.3/HDF5 读取能力。项目支持范围仍待所有者批准 |
 | DEC-002 | 现有 MAT 变量 class/data_type/dims | **类型与形状事实已证实**：582 个 double/double；`10×1` 80、`10×3` 480、`35×1` 4、`600×1` 14、`600×4` 4；无其他 class，数据字典待独立复核 |
-| DEC-003 | rodrigues.m 和 SHRotate.m 中第三方代码许可/可再分发范围 | **限定替代方向已由 H-02 批准**：Sophus `SO3d::exp` 取代 Rodrigues；Don Williamson 的 C++ `IvanicSHRotate` 取代 SHRotate；上游 MIT 形式许可文本已找到；第三方源码纳入、上游版权声明/README/LICENSE 的具体保存、间接依赖及原 MATLAB 自身版权不自动获得完整验收 |
+| DEC-003 | 旋转实现来源与许可证 | 项目自有代码 MIT 已由所有者确定；Don Williamson 仅作参考、Eigen 独立重写且不依赖 sdla；标准来源/现有第三方 notice 记录即可，普通版权审批**不再阻塞开发** |
 | DEC-004 | 历史 MAT 有而当前源脚本未保存的字段 | H-07 **只允许先起草调查**，归因和统计处理未批准 |
-| DEC-005 | 固定输入容差及统计噪声验收方法 | H-01 **draft**：仅准备逐项误差和 atol/rtol 提案；数值阈值、Golden 与最终验收标准均未批准 |
+| DEC-005 | 固定输入容差和统计噪声验收方法 | **首轮宽松筛查** `atol=0.01, rtol=0.1` 已由所有者选定，结构/几何/状态另设严格检查；**最终逐模块 PASS 门槛**仍待独立 L3 与真实 C++ 误差证据核准 |
 | DEC-006 | Debian/Ubuntu 版本范围、CPU/内存与构建时间预算 | H-04 **确认开发主机快照**：Ubuntu 24.04.4 VirtualBox/x86_64，物理内存总 8127380 KiB、当时 available 4908696 KiB、Swap 4194300 KiB；历史独立探针曾在 Ubuntu 24.04/GCC 13/matio 1.5.26 成功。**未有真实全工程构建、Debian 验证或可据以判通过的 wall/CPU/RSS/构建时间阈值** |
-| DEC-007 | 原 MATLAB 文件第三方代码的再分发权利与归档使用边界 | H-02 **只针对 Sophus/Don Williamson 选定来源**；将来实际复用 Don C++ 文件时在其目录提供上游来源 README 和适用 MIT LICENSE/版权声明。整个原 MATLAB/归档的许可范围及 H-16 发布权限**未获整体批准** |
-| DEC-008 | TC 与测试文件、CTest 名称及 Golden 文件的实际对应关系 | H-03 仅**draft**：先整理 `cli.md`/`contracts.md` 与 TC→测试/Golden 候选，不冻结；H-10/H-11 暂缓运行 |
+| DEC-007 | 项目 MIT 与原作者材料的来源边界 | **仓库根 MIT LICENSE 已获直接授权并创建**；原始论文/归档及实际复用的上游第三方文件保留各自来源和必要告知；不以额外版权签字挂起开发，不将根 MIT 解释为对第三方材料重新许可 |
+| DEC-008 | CLI/Result/JSONL/RunId 与 TC 映射的接口合同 | 已按所有者决定选择封装的 C++17 `std::variant` Result/Status、稳定 ErrorStage、JSONL、固定 `output/<RunId>/`、可选 RunId；**CLI 删除自定义输出根选项**。真实接口及测试实体尚未实现/冻结 |
 
 **H-12 的实施目录决定**：后续新生成的数据放在仓库根 `output/<RunId>/`，`.gitignore` 已规划排除 `/output/`，以避免新数据被误提交；`origin/**` 保持只读。H-12 属于路径和隔离策略，**不改变**上表中 REQ/AC 的验收义务，也不因它批准而允许运行实际写回读（H-10 暂缓、`permissions.writeMat=false`）。
 
@@ -503,4 +505,5 @@
 |---|---|---|
 | v0.2 | REQ/AC/TC 分层与 98 项 P 任务追踪；数据合同和 CLI 候选 | 未冻结 |
 | v0.3 | 明确 582/582 独立 matio 读取的已验证范围；配套静态追踪检查器 `scripts/check_docs_traceability.sh`；不改变任何必须需求的验收门槛 | 未冻结；仍待项目所有者批准 |
-| v0.4 | 按项目所有者明确要求移除原 MATLAB 实际运行及 L1 Golden 的强制门禁；关键 AC 改用 L2/L3/L4，保留原公式、算法时序及真实测试/数值容差审批义务 | 未冻结；需求变更方向明确，不表示数值验收或基线签署 |
+| v0.4 | 按项目所有者明确要求移除原 MATLAB 实际运行及 L1 Golden 的强制门禁；关键 AC 改用 L2/L3/L4，保留原公式、算法时序及真实测试/数值容差审批义务 | 历史草案 |
+| v0.5 | 所有者确定项目 MIT、Ivanic–Ruedenberg 原文+勘误/Eigen 且禁 sdla、取消输出根 CLI 选项、封装 Result/JSONL、独立实验配置与失败策略、首轮 0.01/0.1 筛查 | 技术方向已定；正式测试与最终数值验收基线未冻结 |
