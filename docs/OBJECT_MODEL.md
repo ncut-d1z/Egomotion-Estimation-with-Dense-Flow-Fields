@@ -1,6 +1,6 @@
 # 对象模型与生命周期合同（Object Model）
 
-> **P0.7 / P0.8 的设计草案，尚未冻结、没有 C++ 对应类实现。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入。
+> **对象模型草案 v0.1；P0.7/P0.8 待评审，未冻结、未建立对应 C++ 类。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入。
 
 ## 1. 对象职责和约定
 
