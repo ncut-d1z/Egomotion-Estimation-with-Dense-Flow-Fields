@@ -1,5 +1,7 @@
 # Egomotion Estimation with Dense Flow Fields：MATLAB → C++ 源码审计与模块化移植计划
 
+> **HAR-2026-11-06-001 的可审查补充**：用户审批 JSON 的 H-01～H-16 已拆成 [审批后的设计修订与待审材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md)，包含 H-05 需求影响、H-06 冻结准备、H-07 历史 MAT 差异、H-08 SHA-256、H-09 Golden、H-13 异常、H-15 里程碑与 H-16 Draft PR 清单。该补充不是 SRS/LLD 冻结或 H-10 解除暂缓，P0～P10 的既有 REQ/TC/AC 义务与任务状态不变。
+
 > **本文件为实际 MATLAB 源码审计后的修订计划，不代表任何 C++ 功能已经实现。**
 >
 > 审计依据：本仓库 main 分支的 origin/egomotion_estimation_dense_flow_fields_matlab_scripts/、AGENTS.md、原始资料自带 readme 和 2015 年论文。原始文件的目录和函数名均已在 GitHub 上核对；MAT 变量已由独立 C++17 matio 探针在 Ubuntu 24.04 上完整读取：582 个文件、582 个变量全部 `READ_OK`，见 [docs/MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md)。这不等于 MATLAB/C++ 算法数值等价。
