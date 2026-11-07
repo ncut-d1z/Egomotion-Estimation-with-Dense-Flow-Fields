@@ -9,9 +9,10 @@
 - [REQUIREMENTS.md](../REQUIREMENTS.md)：SRS 中 REQ/AC/TC 与可验证行为的唯一来源。
 - [ARCHITECTURE.md](../ARCHITECTURE.md)：HLD 组件边界、target DAG、部署和 ADR 的唯一来源。
 - [OBJECT_MODEL.md](../OBJECT_MODEL.md)：类职责、所有权及 45 MATLAB 文件→拟议方法的唯一维护位置。
-- [TEST_PLAN.md](../TEST_PLAN.md)：Golden、证据、测试环境与候选 CTest 的唯一来源。
+- [TEST_PLAN.md](../TEST_PLAN.md)：TC→候选测试实体/CTest→AC、L2/L3/L4 参考准则与测试证据**字段模板**的唯一来源；**已执行的结果**只登记于 PROGRESS/reviews。
 - [PLAN.md](../PLAN.md)：98 个 P0–P10 最小工作项、任务依赖、风险与里程碑。
-- [PROGRESS.md](../PROGRESS.md)：阶段及里程碑的实际证据、角色/批准状态、缺失退出条件；已核对的静态审查另见 [2026-11-06 记录](../reviews/STATIC_TRACEABILITY_2026-11-06.md)。
+- [PROGRESS.md](../PROGRESS.md)：阶段及里程碑、DEC 处理、实际执行结果、人员/批准的**唯一动态登记**。历史证据可在 [reviews/](../reviews/) 中查验；固定 Git SHA 后的变更不能被前一份报告覆盖。
+- [DOCUMENT_BASELINE_REGISTER.md](../DOCUMENT_BASELINE_REGISTER.md)：**全部当前规范和过程文档的类型/版本/状态、适用范围、来源 SHA 与未冻结门禁的统一索引**；不在每个 LLD 重复维护当前状态表。
 - [contracts.md](contracts.md)：C++17 领域值类型、Result<T,E>、错误分类、资源生命周期与跨模块接口的**统一候选合同**。
 - 本目录每份文档是**对应模块的 LLD 草案**，具体签名、公式、错误处理、数据布局应在 P0.8 以后逐个确认。
 
@@ -54,9 +55,9 @@
 - **已冻结**：审阅人批准具体 SHA、合同、Golden、容差和开放例外。
 - **已实现/已测试**：分别需要代码提交及实际执行证据，是与设计冻结独立的两个状态。
 
-## 当前阻塞汇总
+## 设计冻结所需证据的分类（实时状态见 PROGRESS）
 
-MAT 数据的 **582 文件全量 matio 字典已实际生成并提交**，包含 582 个 `READ_OK`、0 失败及 MATLAB class/data_type/dims/压缩信息。**项目根 MIT LICENSE 已创建；球谐必须参考 Ivanic–Ruedenberg 1996 原始论文和 1998 勘误，以 Eigen 完全重写并禁止 sdla（待用户上传 PDF）；普通版权复核不再阻塞代码开发**。未完成的事项是 Reader/Writer/回读、L2 逐值及 SHA-256、L3 独立全量参考、异常负例、CLI/Result 真实实现、真正的 CMake target/CTest、最终 DEC-005 阈值与统计验证；此前 H-10/H-11 的现场执行仍按阶段授权，不因本设计决定自动运行。
+本索引只列**必需证据类型**：接口/错误合同与所有权的可执行定义、CMake target 的真实依赖、L2 只读逐值与 SHA-256、L3 独立固定输入数值、L4 统计（适用时）、真实 CTest/异常负例、最终 DEC-005 模块阈值及适用的验收签署。**实际是否已取得及执行时间、分母、失败数统一参见 [PROGRESS.md](../PROGRESS.md) 和 [TEST_PLAN.md](../TEST_PLAN.md)**，此处不复制运行计数或假称已通过。用户已确定 MIT、纯 Eigen/禁 sdla、DEC-004、固定输出根、L1 不必需等设计方向，**不再把这些旧技术选择反复列为待审批阻塞**。
 
 
 ## LLD 证据就绪度与源 MATLAB 核查重点
@@ -84,10 +85,10 @@ MAT 数据的 **582 文件全量 matio 字典已实际生成并提交**，包含
 ## 本期未完成的先决工作
 
 1. **已完成的独立子能力**：582/582 MAT 已通过 matio 解压/变量元数据检查；**尚待** P1 生产 Reader/Writer 按值加载、错误负例及 P10.4 独立结果审核。
-2. P0.4/DEC-003/007：**用户已决定**由 Sophus SO(3) 和 Don Williamson Ivanic–Ruedenberg C++ 替代对应原 MATLAB 函数；但源码复制、第三方 README/MIT LICENSE 告知、依赖闭包及跨库数值对照仍待授权实施。参见 [审批落实记录](../approval/DECISION_IMPLEMENTATION_NOTES.md)。
-3. P0.8/DEC-008：统一 C++17 API、状态/错误、CLI schema、组件 target 和测试实体的批准。
-4. DEC-005/006：**独立 L3 固定输入逐节点 Golden** 与逐模块容差未全面核验/批准；无需运行 MATLAB；H-04 已提供 Ubuntu 24.04.4 VM/x86_64 资源快照，但没有性能通过门槛。
-5. P1–P10：真实 C++ 类、CTest、运行结果及按 TC/AC 记录的证据。
+2. **球谐设计约束已确定**：物理旋转使用 Sophus，实球谐递推须依据 1996 原论文和 1998 勘误**纯 Eigen 重写**，Don Williamson 仅代码参考且**禁用 sdla**；用户尚待上传论文 PDF。参见 [专题 LLD](SH_ROTATION_IVANIC_RUEDENBERG.md)；普通版权核查不再是研发阻塞。
+3. **接口设计已选择，尚待实现核验**：Result/Status 使用轻量封装+内部 variant，ErrorStage/JSONL、固定输出根/RunId 已选；P0.8/DEC-008 的头文件自包含、异常传播、实际 CTest 身份与兼容边界仍待记录。
+4. **数值/性能必须留实证**：L3 独立参考、L2 全量值、必要 L4 统计及真实误差记录仍是验收证据；首轮 0.01/0.1 只是筛查，最终 DEC-005/006 的通过阈值需实测。MATLAB/Octave/L1 不要求。
+5. **DEC-004 已选定**：新 Runner 仅写当前有效 save，历史额外字段标 HistoricalOnly 并只读保留；新分析缺必需字段报错，不等待归因。相应真实 Runner/Analyzer/CTest 和证据仍未完成，见 [DEC-004](../decisions/DEC-004_HISTORICAL_MAT_FIELDS.md)。
 
 **当前模块 LLD 均未冻结**：独立 C++17 matio 扫描器确已编译运行，但无生产业务模块、CTest、逐元素 Golden 或算法数值实验。不能将数据字典扫描通过扩大为整项目或 LLD 验收通过。
 
