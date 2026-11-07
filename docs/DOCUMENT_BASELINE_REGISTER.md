@@ -1,6 +1,6 @@
 # 文档类型、版本、Git SHA 与基线状态控制矩阵
 
-> **文档管理登记，非正式已签署基线。** 以下 **31 份登记文件**的 Git blob SHA 均来自固定快照 commit `622a7de1f59284cfa0b085ee314828eb8d207218`；本矩阵自身的更新提交晚于该快照。SRS v0.11、HLD v0.6、对象模型 v0.4、contracts v0.2、MAT I/O v0.7、experiments v0.3、harmonics v0.7、PLAN/TEST_PLAN v0.5、LLD 索引 v0.4，各文件版本独立。**全部核心规范仍未冻结；PROGRESS/AUDIT/AUDIT_PROCESS/固定审查报告均是过程记录，不适用软件规范基线冻结或 TC PASS。** 后续变更必须重新登记文件的真实 SHA，不能把本快照当成未来分支 HEAD 的通过证明。
+> **文档管理登记，非正式已签署基线。** 以下 **32 份登记文件**的 Git blob SHA 对应固定快照 commit `17e366667369033e9ffbc66472405ea2de871de6`；本矩阵自身的更新提交发生在该快照之后。最新草案版本含 SRS v0.11、HLD v0.7、对象模型 v0.5、contracts v0.2、MAT I/O v0.8、experiments v0.3、harmonics v0.7、KvD v0.4、sampling_noise/trajectory v0.2、PLAN/TEST_PLAN v0.5、LLD 索引 v0.5；**版本分别维护且核心规范仍未冻结**。PROGRESS/AUDIT/AUDIT_PROCESS/固定审查报告是过程记录，不适用软件基线冻结或 TC PASS。后续文件变化须另记新的固定 Git SHA。
 
 ## 1. 文档职责与唯一规范来源
 
@@ -21,27 +21,27 @@
 
 ## 2. 当前核心文档与 blob SHA
 
-**快照：** `622a7de1f59284cfa0b085ee314828eb8d207218`。所有登记 blob SHA 对应该固定提交，**本矩阵更新提交晚于它**；`PROGRESS.md` 的正式基线状态为**不适用（滚动证据登记）**。现行审计总进度与逐项整改状态分别以 [AUDIT.md](AUDIT.md)、[AUDIT_PROCESS.md](AUDIT_PROCESS.md) 为准，审计完成不代表数学或软件验收。
+**快照：** `17e366667369033e9ffbc66472405ea2de871de6`。登记的是该提交下各文件真实 blob SHA，矩阵自身的更新提交晚于此快照；`PROGRESS.md` 是滚动证据记录（正式基线不适用），`AUDIT.md` 与 `AUDIT_PROCESS.md` 仅代表审计与整改进度，均不构成独立 L3/CTest 或正式签署。
 
 | 层次 | 文档 | 文档版本 | Git blob SHA | 正式基线 | 范围 |
 |---|---|---|---|---|---|
 | SRS | [docs/REQUIREMENTS.md](REQUIREMENTS.md) | v0.11 | `c1d31587cb417cb9d4c779633911bdabb50caf2b` | 未冻结 | REQ/AC + 附录 A 设计约束 |
-| HLD | [docs/ARCHITECTURE.md](ARCHITECTURE.md) | v0.6 | `6edaa3c67eab3278957c7eaa12f0799809c247ab` | 未冻结 | 组件/部署/27 条 target 边及 ADR |
-| HLD 附件 | [docs/OBJECT_MODEL.md](OBJECT_MODEL.md) | v0.4 | `24ed9aeefb7f12741002bf550cca3babc638d5c7` | 未冻结 | 对象生命周期/45 文件映射 |
+| HLD | [docs/ARCHITECTURE.md](ARCHITECTURE.md) | v0.7 | `81bb8a579d904affd76759822738e08f248e5294` | 未冻结 | 组件/部署/27 条 target 边及 ADR |
+| HLD 附件 | [docs/OBJECT_MODEL.md](OBJECT_MODEL.md) | v0.5 | `26db2608f60826b89bd8341d237ad4207a87dd29` | 未冻结 | 对象生命周期/45 文件映射 |
 | 跨模块 LLD | [docs/design/contracts.md](design/contracts.md) | v0.2 | `ccc90e7ba40b65d0dd64bafdbda55ac02543a33f` | 未冻结 | Result/Status/ErrorDetail 与领域数据 |
 | CLI LLD | [docs/design/cli.md](design/cli.md) | v0.2 | `94fffed91f5f3ff8691f50eb69d9a81ece549c51` | 未冻结 | 命令、JSONL、固定输出根 |
-| MAT I/O LLD | [docs/design/mat_io.md](design/mat_io.md) | v0.7 | `2b62b7f56ba0c7196d1c6c79ffe69e9c6154a994` | 未冻结 | 自拥有数据/Reader/Writer/安全 |
-| KvD LLD | [docs/design/kvd.md](design/kvd.md) | v0.3 | `abf9883654f2405ee244fe52a8fc5d9575aeab6c` | 未冻结 | Franz/KvD 与逐轮顺序 |
+| MAT I/O LLD | [docs/design/mat_io.md](design/mat_io.md) | v0.8 | `1b4044765209cc384c87ebf8d1ce0a7dc95594c0` | 未冻结 | 自拥有数据/Reader/Writer/安全 |
+| KvD LLD | [docs/design/kvd.md](design/kvd.md) | v0.4 | `b59a151a0bdb7942c999538dffa94dbee02b655f` | 未冻结 | Franz/KvD 与逐轮顺序 |
 | Adaptive LLD | [docs/design/adaptive_mfa.md](design/adaptive_mfa.md) | v0.4 | `c08f69f147845585370e789e3d34ab08d98dfeae` | 未冻结 | StepSolver/Session 失败不提交 |
 | 球谐 LLD | [docs/design/harmonics.md](design/harmonics.md) | v0.7 | `e8b28b096f8c4b2fdcd6aa6cfadca26d29fe8f2e` | 未冻结 | R3/R5、Eigen-only/禁 sdla |
-| 采样/噪声 LLD | [docs/design/sampling_noise.md](design/sampling_noise.md) | v0.1 | `3d122777c04a3e57ba559d01eae89330d354d159` | 未冻结 | 有序采样、RNG/噪声 |
-| 轨迹 LLD | [docs/design/trajectory.md](design/trajectory.md) | v0.1 | `ebd445dba6c56e062cf5d26d92f5ffe13344ab75` | 未冻结 | 轨迹/运动/近度 |
+| 采样/噪声 LLD | [docs/design/sampling_noise.md](design/sampling_noise.md) | v0.2 | `c86f1ad658dd2197e86615e9de3314687861a100` | 未冻结 | 有序采样、RNG/噪声 |
+| 轨迹 LLD | [docs/design/trajectory.md](design/trajectory.md) | v0.2 | `9f1d0bf0604f515b17bca58b94ab7d8311b850cb` | 未冻结 | 轨迹/运动/近度 |
 | 实验 LLD | [docs/design/experiments.md](design/experiments.md) | v0.3 | `ad1626baefbc907f9a430311bf7cb1b95b49e2b3` | 未冻结 | 五入口/当前 save、HistoricalOnly |
 | 分析 LLD | [docs/design/analysis_plotting.md](design/analysis_plotting.md) | v0.2 | `78ff555c1d64f62ffcc953ba3f142ac5abc84d20` | 未冻结 | L2 读取、L3 曲线/缺字段拒绝 |
-| LLD 索引 | [docs/design/README.md](design/README.md) | v0.4 | `02fd27b470bb8a4677268c10dc5501173e50188a` | 未冻结 | 模块 LLD 范围/冻结条件 |
+| LLD 索引 | [docs/design/README.md](design/README.md) | v0.5 | `330783b31ef1f55912170b040a10cae5e662a7cc` | 未冻结 | 模块 LLD 范围/冻结条件 |
 | 实施 WBS | [docs/PLAN.md](PLAN.md) | v0.5 | `5b865d4df3dc1466b27e4c2c99d4d082d9ad323c` | 未冻结 | 98 个 P 工作项 |
 | 测试计划 | [docs/TEST_PLAN.md](TEST_PLAN.md) | v0.5 | `95e25cb89d38f97512429f38f2f25780d3d7b2f1` | 未冻结 | 66 TC→候选测试→AC |
-| 证据登记 | [docs/PROGRESS.md](PROGRESS.md) | v0.1（滚动） | `5b35a5444869dab515b0f20ffe83e08dadf964c9` | 不适用（滚动证据登记） | 真实结果/历史证据/DEC 当前状态 |
+| 证据登记 | [docs/PROGRESS.md](PROGRESS.md) | v0.1（滚动） | `a3d907d565af97bf352e8905a4426954009c7941` | 不适用（滚动证据登记） | 真实结果/历史证据/DEC 当前状态 |
 
 **全部适用的规范基线签署字段目前未提供**：正式批准人、批准日期与时区、批准 commit SHA、冻结生效范围、例外 DEC 与批准证据。已有所有者**技术方案选择**和根 MIT 许可授权，不等于批准整份 SRS/HLD/LLD 或测试 PASS。对版本表的任何变更必须引用新 Git commit/对应 blob SHA。
 
@@ -63,14 +63,15 @@
 | 开发规则 | [AGENTS.md](../AGENTS.md) | `7d609ccff2ecb41814b3bdbc7986dcccaaa2d6bf` | 只读原资料/实际运行授权 |
 | 延期人类事项 | [docs/TODO.md](TODO.md) | `c3f6d4b79dd7c0bbe4074006c75f214b182f2af4` | 材料、H-10/H-11、DEC-005/006、最终基线/发布：原因及建议阶段，**没有当前授权** |
 | 本轮只读审查 | [docs/reviews/DOCUMENT_REVIEW_AND_SH_DECLARATIONS_2026-11-07.md](reviews/DOCUMENT_REVIEW_AND_SH_DECLARATIONS_2026-11-07.md) | `580e98eae40a5378128b139ce531b6ded11c6c2e` | 历史固定 SHA 下的 GitHub 只读 ID/DAG/引用核对，非真实 Bash/CTest |
-| 用户历轮审计台账 | [docs/AUDIT.md](AUDIT.md) | `40f5e60029e5e4f8da178bcb0bd7ef995cc51f05` | **AU-001～028** 历轮意见，按文件相对路径的“空白/正在审计/已审计”进度，不表示 SRS/HLD/LLD 已冻结 |
-| 问题级整改进度 | [docs/AUDIT_PROCESS.md](AUDIT_PROCESS.md) | `f5da4edba8295bba7189b0f1f670986a17d2bbd5` | AF-001～012 细化为 13 个已整改目标；新 AF-013～020 共 8 个未整改目标。审计输入固定 SHA `3beb8c06a9d40380431f99e31ed0f70b346863a2`，均非真实 C++/CTest 结果 |
+| 用户历轮审计台账 | [docs/AUDIT.md](AUDIT.md) | `9e39ec4ae7a3f428cd2722f5f796468dce1f3180` | **AU-001～028** 历轮意见，按文件相对路径的“空白/正在审计/已审计”进度，不表示 SRS/HLD/LLD 已冻结 |
+| 问题级整改进度 | [docs/AUDIT_PROCESS.md](AUDIT_PROCESS.md) | `44abfa04f358572727794a6f5a2e76bfad9b6346` | AF-001～012 细化为 13 个已整改目标；新 AF-013～020 共 8 个未整改目标。审计输入固定 SHA `3beb8c06a9d40380431f99e31ed0f70b346863a2`，均非真实 C++/CTest 结果 |
 | 本轮完整审计报告 | [docs/reviews/FULL_DOCUMENT_AUDIT_2026-11-07.md](reviews/FULL_DOCUMENT_AUDIT_2026-11-07.md) | `43446ec3e7ebe3d9b7f2447561f72d64ccbb5e95` | 固定输入 commit `4627cc1e48be9c43ad10b28fda646d65ee8ef01c` 的 **40 文件文档审计**，记录 AF-001～012 待修订项与 AH-001～002 历史边界，非 CMake/CTest PASS |
 | AF-001～AF-012 修订复核 | [docs/reviews/AUDIT_AF001_AF012_RESOLUTION_2026-11-07.md](reviews/AUDIT_AF001_AF012_RESOLUTION_2026-11-07.md) | `ae44ae6ba782a9930b400ea860a50cc326a0cd3f` | 定向文本核验快照 `893acb7b07862c0701e62b786462ef8395a116da`：12 项 AF 已做纯文档修订并通过限定静态复核；仍缺逐式数值、代码编译和正式测试 |
+| AF-013～AF-020 文档修订复核 | [docs/reviews/AUDIT_AF013_AF020_RESOLUTION_2026-11-07.md](reviews/AUDIT_AF013_AF020_RESOLUTION_2026-11-07.md) | `1466ca9534a54cac6bf9b21a5b2bf42491d6e6a9` | 固定修订/静态复核 commit `a782b5c8d86e50fe4d2ae4e2b198b3cd6345de52`；八条 AF 均完成合同文本修订，非真实软件/数值通过 |
 
 原审批与 `docs/reviews/*.md` 保存历史决定、历史 SHA 和当时的验证信息，不随当前版本重写。特别是先前的 26 条 HLD 边证据只能用于当时快照；目前 HLD 的 27 条边只做过 GitHub 连接器读取下的静态无环检查，**不是 CMake 构建证据**。
 
-**审计进度与当前问题**：[AUDIT.md](AUDIT.md) 已新增双台账强制规则：文件审计仅「空白/正在审计/已审计」，问题整改仅由 [AUDIT_PROCESS.md](AUDIT_PROCESS.md) 以「未整改/已整改」逐条登记。以前 [FULL_DOCUMENT_AUDIT_2026-11-07.md](reviews/FULL_DOCUMENT_AUDIT_2026-11-07.md) 的 AF-001～012 曾待修订，随后 [修订复核](reviews/AUDIT_AF001_AF012_RESOLUTION_2026-11-07.md) **12/12 文本整改有固定 SHA 证据**；此次后续扫描又发现 **AF-013～020 八项新的现行文档冲突，全部未整改**。AUDIT 当前 41 路径**已审计 31/正在审计 10/空白 0**；深层独立数学参考/代码与测试证据仍未形成。历史 `reviews/*` 均保持各自的旧 SHA，不改写当时结论。
+**审计进度与当前问题**：原 [FULL_DOCUMENT_AUDIT](reviews/FULL_DOCUMENT_AUDIT_2026-11-07.md) 在其旧固定 SHA 中提出 AF-001～012，旧 [AUDIT_PROCESS.md](AUDIT_PROCESS.md) 的下一轮扫描又发现 AF-013～020，当时状态为「未整改」；后续分别由 [AF-001～012 修订记录](reviews/AUDIT_AF001_AF012_RESOLUTION_2026-11-07.md) 与 [AF-013～020 修订记录](reviews/AUDIT_AF013_AF020_RESOLUTION_2026-11-07.md) 完成定向文档合同复核。**现行 AUDIT_PROCESS 21/21 具体整改目标均为「已整改」**；[AUDIT.md](AUDIT.md) **41 文件中已审计 34、正在审计 7、空白 0**。剩余数学逐式/独立 L3、代码/CTest 与基线批准未完成，不能把审计文本结案当作规范冻结。历史 reviews 保留各自的固定 SHA/时间点。
 
 ## 4. 已选设计与真正未完成条件
 
