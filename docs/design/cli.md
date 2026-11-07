@@ -6,7 +6,7 @@
 
 - 进程入口：`egomotion COMMAND [OPTIONS]`。`egomotion --help`、`egomotion COMMAND --help` 和 `egomotion --version` 不读取 MAT、不执行算法、退出 0。
 - 未知命令/选项、缺参数、单值选项重复、非法枚举/整数/浮点数都退出 **2**，不采取“最后值胜出”。
-- 必填输出路径必须指向 origin/** 之外；所有 run 命令只创建新的 RunId 目录，已存在则退出 6，不得默认覆盖。原始归档只读。
+- **H-12 已选定的规划输出根为仓库根 `output/`**；仍将 `--output-root DIR` 作为候选必填参数，待 H-03/DEC-008 冻结时可规定其值固定/限制到 `output/`，**不得擅自引入未经批准的参数默认值**。所有 run 命令只创建新的 `output/<RunId>/`，已有目录即拒绝覆盖，原始归档只读；`output/` 已被 `.gitignore` 排除，但忽略不等于文件系统安全。
 - 解析时不改变 MATLAB 原值：35/600 点、二十面体细分级别、8 次比较、四个更新间隔 1/5/11/21、噪声乘数不擅自改变。
 - 路径保留 Debian/Ubuntu 的 UTF-8/中文/空格语义；不把路径拼接结果当成可靠的防符号链接绕过实现。
 
@@ -50,6 +50,8 @@
 阶段检查顺序为 **parse（2）→ input/read（3）→ decode/schema（4）→ output safety（6）→ solve/analyze（5）→ plot capability（7）**。如果一个请求包含多个问题，报告实际先触发的失败，保留原始错误码及上下文。具体错误枚举映射直接引用 [contracts.md §3.1](contracts.md) 的候选表，待 P0.8/P1.2 人类批准后冻结。
 
 失败诊断最少包含稳定的 `error_code`、`exit_code`、`stage`、`message`；涉及 MAT 需附 `path` 与已知 `variable`，涉及实验需附 RunId、算法与样本下标。正常输出使用 stdout、错误使用 stderr，文件里仍保存原 MATLAB 兼容 MAT。**诊断序列化格式（JSONL/键值行）、stderr 转义规则和 RunId 生成方式尚未批准**，不得将候选协议称为可机读的已实现 API。
+
+**H-03 审批状态**：用户 JSON 中只确认“**先完善接口和测试清单**”，不是批准本文件的参数、错误码或 CTest/Golden identity。参照 [contracts.md §3.1](contracts.md) 的候选枚举映射整理 `TC-F-CLI-001…005` 与 `TC-I-CLI-001`，标注真实测试实体仍未建；不执行命令、不把 ExitCode 当作已冻结。需沿用明确的 H-03 第二次批准后再确定 JSONL/键值行、RunId 命名及 CLI 命令参数。
 
 ## 4. 验收映射与冻结界线
 
