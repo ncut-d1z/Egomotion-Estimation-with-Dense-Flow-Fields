@@ -223,7 +223,7 @@ stateDiagram-v2
 | `help_functions/kugelflfunc2.m` | RealSphericalHarmonics::evaluate | 已定位 / 合同待 P0 核验 |
 | `help_functions/kurveglaetten.m` | analysis::windowMean (自由函数) | 已定位 / 合同待 P0 核验 |
 | `help_functions/mue_norm_koenderink_iteration.m` | ModifiedKvDEstimator::estimate | 已定位 / 合同待 P0 核验 |
-| `help_functions/near_aus_koeff.m` | RealSphericalHarmonics::reconstructNearness | 已定位 / 合同待 P0 核验 |
+| `help_functions/near_aus_koeff.m` | RealSphericalHarmonics::reconstruct | 已定位 / 合同待 P0 核验 |
 | `help_functions/nonpropfehler.m` | MeanMagnitudeGaussianNoise::apply | 已定位 / 合同待 P0 核验 |
 | `help_functions/norm_koenderink_iteration.m` | OriginalKvDEstimator::estimate | 已定位 / 合同待 P0 核验 |
 | `help_functions/normrelfehler.m` | metrics::directionAngleDeg | 已定位 / 合同待 P0 核验 |
