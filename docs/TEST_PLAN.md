@@ -46,7 +46,7 @@
 
 ### 2.4 600 点 Adaptive 轨迹输出（TC-F-EXP-002）
 
-原始 agent_in_sphere_adaptive_matched_filter_test.m 采用 stellen=600、anzahliterationen=4、anzahldurchlaeufe=8、帧循环 i=2:599。当前代码明确 save 五个变量：allemittransfehler、allemitrotfehler、alleohnetransfehler、alleohnerotfehler、rottransratio，均保存为同名 MAT 文件。前四项为八次运行平均得到的 600×1 缓冲；rottransratio 仅保留代码在运行循环中最后赋值的 600×1 缓冲，不能擅自平均。with_errors 历史额外出现的 alleadap* 须作为数据差异调查，不加入虚构的当前生成合同。
+原始 agent_in_sphere_adaptive_matched_filter_test.m 采用 stellen=600、anzahliterationen=4、anzahldurchlaeufe=8、帧循环 i=2:599。当前代码明确 save 五个变量：allemittransfehler、allemitrotfehler、alleohnetransfehler、alleohnerotfehler、rottransratio，均保存为同名 MAT 文件。前四项为八次运行平均得到的 600×1 缓冲；rottransratio 仅保留代码在运行循环中最后赋值的 600×1 缓冲，不能擅自平均。with_errors 历史 `alleadap*` 按 [DEC-004](decisions/DEC-004_HISTORICAL_MAT_FIELDS.md) 标为 `HistoricalOnly`、只读保留；新 C++ 结果严格只生成五项当前有效 save 字段，**不以历史来源未明阻塞开发**。
 
 ### 2.5 原始 MAT、数值容差和失败判定
 
@@ -69,7 +69,7 @@
 
 ### 2.7 更新频率实验与四种分析入口（TC-F-EXP-003、TC-F-AN-001）
 
-- 更新率当前脚本：600 点、二十面体等级 2、**1/5/11/21 帧**，输出 600×4 的 allemittransfehler、allemitrotfehler，以及 600×1 的 akrot；历史 many_parameter 额外出现 alleadaprotfehler、alleadaptransfehler、rottransratio，需分别记“当前生成/归档存在/分析消费/来源状态”，不补造。
+- 更新率当前脚本：600 点、二十面体等级 2、**1/5/11/21 帧**，输出 600×4 的 allemittransfehler、allemitrotfehler，以及 600×1 的 akrot；历史 many_parameter 额外 `alleadaprotfehler`、`alleadaptransfehler`、`rottransratio` 按 **DEC-004** 标 `HistoricalOnly`，新结果只保存两个 `allemit*` 与 `akrot` 三项；针对新结果进行需要 `rottransratio` 的分析时必须**明确报告缺失而不是构造比值**。
 - 初始化分析图：allemittransfehler(1:13,1) 与 allemitrotfehler(:,1) 的数值、索引、对数纵轴语义；数据被读取不代表一定进入图线。
 - 比较分析图：x=50:550 的旋转与平移方向角度误差、rottransratio 双纵轴，阈值 0.01，分段规则精确依据原 MATLAB。
 - 更新频率分析图：x=50:550、阈值 0.02，四条曲线与不同半窗 2/5/10 的平滑；kurveglaetten 的边缘零值语义不替换。
