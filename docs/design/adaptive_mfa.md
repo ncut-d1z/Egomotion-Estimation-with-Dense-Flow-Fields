@@ -246,7 +246,7 @@ Candidate interface only, not compiled: FrameResult, Session construction policy
 | error_mse、near_new 或系数非有限 | 各数组与原始 MATLAB 运行结果 | NonFiniteResult | 未决定 |
 | MAT 写入中断 | 最后成功帧与独立输出目录 | OutputFailed（Runner 层） | 不由 StepSolver 决定 |
 
-原 MATLAB 没有统一的事务/回滚系统。Session 采用什么安全处理必须记录与原版传播 NaN/Inf 行为的差异，并由项目所有者确认。**单步数值失败、主系数是否提交、整个 RunId 是否失败是三种不同状态**。
+原 MATLAB 没有统一的事务/回滚系统。**用户 JSON H-13 仅选择先核查失败行为并起草候选处理**，尚未批准 Session 遇错回滚、继续、终止或主系数提交策略；任何方案必须记录与 MATLAB NaN/Inf 传播行为的差异，不能预设安全增强已获授权。**单步数值失败、主系数是否提交、整个 RunId 是否失败是三种不同状态**。H-10 暂缓实际编码/测试，H-01 容差尚未批准。
 
 ## 9. 三个原入口的不同状态语义
 
