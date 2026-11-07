@@ -47,7 +47,7 @@
 | AF-017 | `docs/ARCHITECTURE.md` | §7 **QA-01** 不能假设“用户把输出根目录设为 origin 子目录/软链接”，因为 CLI 已删除自定义输出根。改为用户提供非法/重复 `--run-id`、固定根被软链接/路径竞态替换、或输出目标已存在时的拒绝和原 `origin/**` 不变 | 未整改 | `ARCHITECTURE.md:235`；`cli.md`、`mat_io.md` 固定输出合同 |
 | AF-018 | `docs/design/mat_io.md` | §4.2 将外层分析比较的 0.01/0.1 从“**未批准候选**”改成**已选首轮筛查但不是正式 PASS 阈值**；MAT 解码/复制的 exact dtype/shape/原始 double 校验仍严格，不因宽松筛查放行错误 | 未整改 | `mat_io.md:171`；最新所有者决定、`GOLDEN_TOLERANCE_PROPOSAL.md` |
 | AF-019 | `docs/ARCHITECTURE.md` | §8 **ADR-002** 中“**拟采用 Sophus SO(3)**”与 §3 已选 `SO3d::exp` 口径不统一；改成“已选定设计路线，尚待真实依赖锁定/编译/数值验证”，不推断已部署 | 未整改 | `ARCHITECTURE.md:248`（ADR-002 行，以标题查找为准）；现行 H-02/ADR-006 |
-| AF-020 | `docs/design/trajectory.md` | §5.1 已有“`||ω||<double epsilon` 返回 I 后调用 Sophus”来源规则，§6.1 又将“**是否把近零角度强制置零**”笼统说成待审批；明确**原始 epsilon 条件已确定**，额外扩大零角阈值或对其它异常输入的处理仍须独立测试/审查，不能混淆为同一未决事项 | 未整改 | `trajectory.md:111,150`，对照只读 `drehvektor_aus_zwei_vektoren.m`/原 Rodrigues 分支与 H-02 |
+| AF-020 | `docs/design/trajectory.md` | §5.1 已有“`omega.norm() < std::numeric_limits<double>::epsilon()` 返回 I 后调用 Sophus”来源规则，§6.1 又将“**是否把近零角度强制置零**”笼统说成待审批；明确**原始 epsilon 条件已确定**，额外扩大零角阈值或对其它异常输入的处理仍须独立测试/审查，不能混淆为同一未决事项 | 未整改 | `trajectory.md:111,150`，对照只读 `drehvektor_aus_zwei_vektoren.m`/原 Rodrigues 分支与 H-02 |
 
 **下一轮新增统计：8 个整改 ID，全部「未整改」；共分布于 `docs/design/kvd.md`、`sampling_noise.md`、`OBJECT_MODEL.md`、`ARCHITECTURE.md`、`mat_io.md`、`trajectory.md` 六份现行设计文档。** 其中纯文档权限可后续逐项整改，而公式、退化近零条件仍须尊重原只读 .m 的确切分支，不得在本轮引入生产 C++ 或猜测原 MATLAB 运行结果。
 
