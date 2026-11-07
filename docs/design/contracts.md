@@ -125,11 +125,13 @@ template<class Error> class Status;                // void 成功/失败合同
 
 ## 5. 黄金数据与可验收合同模板
 
+本合同遵循 [不执行 MATLAB 的长期政策](../golden/NO_MATLAB_EXECUTION_POLICY.md)：以 L2 MAT、L3 独立逐节点参考、L4 统计进行限定数值验收；不再需要原 MATLAB 运行的 L1 或采集脚本 blob SHA。完整 C++ 构建/真实 TC、Golden 来源与 DEC-005 容差仍待批准。
+
 | 字段 | 要求 | 当前状态 |
 |---|---|---|
 | source_file / source_blob_sha | 原始 .m 函数的 Git blob SHA，不能用探针 source_sha 参数替代 | 文件存在，个别 SHA 已读取 |
 | probe_source_sha / verified_archive_git_sha | 探针运行参数与经独立核实的归档 Git tree/commit 分开保存，未验证二者等同则不能合并 | 已记录前者、未独立核实两者关系 |
-| golden_capture_script_blob_sha / reference_sha256 | Golden 采集脚本 Git blob SHA 与参考数值文件 SHA-256 分别保管 | 尚未建立 Golden |
+| reference_generator_source_sha / reference_sha256 | 独立 L3 参考生成算法/推导文档的源码身份与参考文件 SHA-256 分别保管；同时保存原只读 .m 的 blob SHA。**无需 MATLAB 运行/采集脚本** | 只有解析候选，正式独立参考未全覆盖 |
 | fixed_input_identity | 确定性 N×6、near/coeff、参数及 RNG 固定序列 | 尚未建立完整 Golden |
 | expected_intermediates | MATLAB 逐轮 near/t/ω 或 M1–M4、b、z、error_mse | 尚未实际采集 |
 | target_method / unit | 确切数学合同、尺寸、rad/deg | 目前在模块 LLD 拟定 |
