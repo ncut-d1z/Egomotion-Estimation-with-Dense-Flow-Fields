@@ -162,3 +162,9 @@ PlotExporter 仅消费 AnalysisDataset，输出图形位置必须在独立 RunId
 **H-07 审批状态**：用户仅允许先核对 `alleadap*`、`rottransratio` 在历史 MAT/当前脚本 save/分析入口中的差异，**未批准归因或新建历史缺失字段**。应形成“当前脚本生成/历史归档额外/来源未确认”三态字段表，而不是修改原 MAT 或擅自修正统计口径。
 
 后续验收要分别进行：(1) `Mat_VarRead` 正常读取、rank/dims 解析（**已有独立探针证据**）；(2) 业务 Reader 将 MAT 列主序数据正确映射到分析数组；(3) 分段、窗口、指标及数值曲线与原 MATLAB 的 Golden 逐项相符；(4) 可选绘图输出。只有 (1) 有实际完成证据，其余仍未实施。
+
+## 附录 A：历史 L2 输入、独立 L3 曲线与缺失 L1
+
+按 [Golden 等级及 AC 证据清单](../golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md)，当前原始 MAT 可作为 **L2 只读输入**；后续从 L2 按原 1-based 索引、分段阈值、`begin/end/zone` 切换、`kurveglaetten` 的边缘 0 语义**独立重算**的数组属于 **L3**；跨历史运行的汇总统计属于 **L4**，均须记录真实实施、固定来源、实际输出/误差，**当前尚未执行**。原 `graph_*.m` 在 MATLAB 中实际产生的中间分段数组未捕获 **L1**。
+
+`AC-F-AN-001`、`AC-I-ANALYSIS-001` 的**数值输出**可以在将来有生产 Reader/Analyzer、真实独立 L3、CTest 与获批容差后进行限定范围的核验；不能因此声称原 MATLAB 的整个绘图过程已经 L1 验证。历史缺少 `rottransratio` 等字段时必须如实报缺失并保留来源差异。
