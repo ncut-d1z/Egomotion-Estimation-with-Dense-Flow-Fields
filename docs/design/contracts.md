@@ -43,7 +43,7 @@ struct RunId { std::string text; };
 
 ## 3. 统一结果/错误语义
 
-本项目**不使用 C++23 std::expected**。下方代码展示一种一致的 C++17 `std::variant` 候选：Result<Value, ErrorCode> 的值/Failure 二选一，无值的操作采用 Status<ErrorCode>；它尚未成为已批准 API，P0.8 可审定为封装类或其他带标签联合体。不得将原 MATLAB 非有限输出压成伪造的正常零值。
+本项目**不使用 C++23 std::expected**。项目所有者已选定：**自定义轻量 Result/Status 封装类，内部使用 C++17 `std::variant`，外部只访问 `hasValue()/value()/error()` 等明确接口**；不把内部容器作为对外 ABI。以下是候选精确签名示意，尚未创建真实公共头或编译。不得将原 MATLAB 非有限输出压成伪造的正常零值。
 
 ~~~cpp
 namespace egomotion {
@@ -64,51 +64,71 @@ enum class ExperimentErrorCode {
     InvalidParameters, SourceUnavailable, DataMismatch,
     SolverFailed, OutputFailed, IncompleteRun
 };
+enum class ErrorStage {
+    Parse, Read, Decode, Output, Solve, Simulation, Analyze, Plot
+};
 struct ErrorDetail {
-    std::optional<RunId> run_id; // 可无 RunId 的 inspect / parse 仍可报告错误
-    std::string stage;
-    std::string message;
+    std::optional<RunId> run_id;
+    ErrorStage stage;                       // 稳定枚举，JSONL 时转固定小写 token
+    std::string message;                   // 供人阅读；不可用于业务条件判断
     std::string source_path;
     std::string variable;
-    std::optional<std::size_t> observation_index; // 无编号与 0-based 首个样本可区分
+    std::optional<std::size_t> observation_index;
+    std::optional<std::string> source_error_code; // 跨层封装时保留底层错误来源
 };
-// C++17 可评审实现候选；实际容器/ABI 待 P0.8 冻结。
-template<class ErrorCode>
+template<class Code>
 struct Failure {
-    ErrorCode code;
+    Code code;
     ErrorDetail detail;
 };
-template<class Value, class ErrorCode>
-using Result = std::variant<Value, Failure<ErrorCode>>;
-template<class ErrorCode>
-using Status = std::variant<std::monostate, Failure<ErrorCode>>;
+// 仅候选接口：实现包含 std::variant<T, Failure<Code>>，内部不公开。
+template<class T, class Code>
+class Result {
+public:
+    static Result success(T value);
+    static Result failure(Failure<Code> why);
+    bool hasValue() const noexcept;
+    const T& value() const &;
+    T&& value() &&;
+    const Failure<Code>& error() const &;
+private:
+    std::variant<T, Failure<Code>> payload_;
+};
+// 仅候选接口：实现包含 std::variant<std::monostate, Failure<Code>>。
+template<class Code>
+class Status {
+public:
+    static Status success();
+    static Status failure(Failure<Code> why);
+    bool hasValue() const noexcept;
+    const Failure<Code>& error() const &;
+private:
+    std::variant<std::monostate, Failure<Code>> payload_;
+};
 }
 ~~~
 
 - **Mat 错误**与**数值错误**分别归属 IO 与 solver，Runner 可以附带上下文，但不得吞掉原始错误。
 - **源算法与安全行为区别**：只记录原 .m 只读源码能证明的奇异、除零、NaN 分支；原 MATLAB 实际警告、非有限传播并无 L1，**无需运行 MATLAB**。C++ 可以候选地返回明确非成功状态，但“遇错继续/停止/回滚”须按入口专属合同评审，不能误标为已验证的原版运行行为。
-- **错误上下文与 RunId**：`ErrorDetail::run_id` 候选为 C++17 `std::optional<RunId>`（实现须包含 `<optional>`）；仅当 RunContext 已分配独立运行身份时填充，`inspect-mat` 和参数解析可为空。RunContext 拥有唯一 RunId；各层传播错误时不得丢失或重新生成它。`observation_index` 也可为空，不与真实 0-based 第 0 个样本混淆。
-- **错误结构待冻结**：当前 `Result<Value, ErrorCode>` 为候选类型；P0.8 须明确统一承载枚举及 ErrorDetail 的方式（如 Result 的失败分支包装 `Failure<Code>{code, detail}`），不得依赖可丢失 RunId 的全局 `last_error`。
+- **错误上下文与 RunId**：`ErrorDetail::run_id` 使用 C++17 `std::optional<RunId>`（实现须包含 `<optional>`）；仅当 RunContext 已分配独立运行身份时填充，`inspect-mat` 和参数解析可为空。RunContext 拥有唯一 RunId；各层传播错误时不得丢失或重新生成它。`observation_index` 也可为空，不与真实 0-based 第 0 个样本混淆。
+- **已选定错误结构方向**：自定义轻量 Result/Status，内部 `std::variant`，统一 `Failure<Code>{code,detail}`；ABI/头文件/Exception 边界仍待实施验证。不得依赖丢失 RunId 的全局 `last_error`。
 - **日志**：区分 RunId、探针 `source_sha` 参数、**原只读 .m Git blob SHA**、L2 MAT SHA-256、**独立 L3 参考生成器/数据 SHA-256**及 L4 统计来源；另记输入变量、维度、参数、seed、失败阶段、退出码、stdout/stderr。无需 MATLAB 运行或脚本捕获，原源文件读取不应改变其哈希。
-- **CLI 退出码候选**：错误枚举到 CLI 退出码的**唯一候选映射**见 §3.1；命令参数、阶段与诊断输出由 [cli.md §2–3](cli.md) 维护，SRS §6.1 仅作外部接口概览。签名/错误级别仍须 P0.8/P1.2 审批。
+- **CLI 退出码候选**：错误枚举到 CLI 退出码的**唯一候选映射**见 §3.1；命令参数、阶段与诊断输出由 [cli.md §2–3](cli.md) 维护，SRS §6.1 仅作外部接口概览。项目所有者已选定 Result/ErrorStage/JSONL 的方案，真实 API/CTest 与其它错误级别仍需 P0.8/P1.2 验收。
 
-### 3.0 失败分支与稳定诊断协议（C++17 候选，待 P0.8 冻结）
+### 3.0 失败分支、稳定阶段与 JSONL（项目所有者已选设计）
 
-建议以单一带类型的失败记录实现所有 Result/Status 的错误传播，而不是仅返回枚举或使用全局 last_error：
+**统一容器**：上方 §3 的 `Failure<Code>`、`Result<T,Code>`、`Status<Code>` 使用**单一轻量封装**，内部 `std::variant` 不向调用方泄漏。成功只返回 T（或无值 Status），失败必须保留 `Code` 和 `ErrorDetail`；失败绝不能返回默认值、零向量、NaN/Inf 并假装成功。实现模板需保证单一定义与正确 include；对 `valueless_by_exception` 应有明确非成功处理。最终 ABI/头文件仍需真实编译与 P0.8 审查。
 
-上面 §3 的同一份候选代码包含 Failure<ErrorCode>、Result<Value,ErrorCode>、Status<ErrorCode>；**不在不同 LLD 或示例中第二次定义同名模板/别名**。实现时须具备 C++17 的 <variant>、<optional> 等头文件以及完整的 RunId/ErrorDetail 类型，且通过真正的编译与单元测试验证后才能称为可编码 ABI。
-
-**这是一种候选实现方式，不是已创建的头文件或正式 ABI**。Success 仅对应 Result 的 Value 或 Status 的 std::monostate；Failure 必有非成功 ErrorCode 和 ErrorDetail。不得用默认 Value、空对象、NaN/Inf 或布尔 false 代替 Failure；variant 出现 valueless_by_exception 时也**不是成功**，应按内部异常路径报告。是否采用上述别名、封装类或显式 tagged union 仍需 P0.8 决定，但以下不丢失错误上下文的语义是设计要求。
-
-| ErrorDetail 字段 | 稳定合同候选 | 设置/传播责任 |
+| ErrorDetail 字段 | 当前设计决定 | 责任 |
 |---|---|---|
-| stage | 失败时必须为可识别阶段：parse、read、decode/schema、output、solve、simulation、analyze、plot；不依赖中文/英文自由文本识别 | 错误发生层填写；contracts.md §3.1 的组合类别 `solve/simulation/analyze` 在实际发生处选择一个具体阶段 |
-| message | 供人阅读的诊断文本，可自由描述，但**不可被自动化当成稳定枚举** | 原层保留；Runner 可以添加上下文而不能覆盖 code |
-| source_path / variable | 已知时记录源文件路径及原始变量名；未分配时可为空 | Reader/Writer 写入，调用者不得随意伪造值 |
-| run_id | std::optional<RunId>：未创建 RunContext 的 parse/inspect 可为空；分配后传播不丢失 | RunContext 在跨模块边界补足缺失身份，**不得生成第二个 RunId** |
-| observation_index | std::optional<size_t>：空与真正 0-based 第 0 个样本不同 | 产生逐样本错误的模块填入，不允许以 0 冒充未知 |
+| stage | **ErrorStage 强类型枚举**：Parse、Read、Decode、Output、Solve、Simulation、Analyze、Plot；JSONL 稳定对应 `parse/read/decode/output/solve/simulation/analyze/plot` | 原始失败层设置，Runner 传播时不随意重写 |
+| message | 自由文本，仅供人阅读 | 序列化成合法转义的 JSON 字符串，不用于自动判断成功 |
+| run_id | `std::optional<RunId>`，未分配的 parse/inspect 可为空，产生后绝不丢失 | RunContext 提供，不产生新的 ID |
+| source_path / variable | 已知时记录源路径/变量名，未知可为空 | 原 Reader/Writer 设置 |
+| observation_index | `std::optional<size_t>`，未知与真实的第 0 个样本明确区分 | 逐样本失败层填写 |
+| source_error_code | 跨 Mat/Numerical/Experiment 层封装时保留原始错误码的稳定名称 | Runner 不吞掉底层失败原因 |
 
-**唯一入口映射**仍为下面 §3.1；本节不另定义 CLI 退出码。通用阶段值采用现有 string 容器，是否提升为强类型 enum、如何序列化/转义、已有错误的嵌套 cause/运行时异常处理均待 DEC-008/P0.8 确认。MAT I/O 的 MatErrorCode、采样的 NumericalErrorCode 和 Runner 的 ExperimentErrorCode 不互相改写；调用方封装时应保留原错误代码和 ErrorDetail 于内部诊断证据。
+**诊断输出采用 JSONL**：每行一个 UTF-8 JSON 对象，至少包含 `stage`、`error_code`、`exit_code`、`message`；可选 `run_id/path/variable/observation_index/source_error_code`，必须有正确的引号/反斜杠/控制字符转义，非有限浮点不得输出非法 JSON token；日志失败也不能被当作正常完成。可以使用审计过的小型序列化逻辑，**不为 JSONL 强行引入大型依赖**。JSONL 文件的创建与 CLI stderr 消息分离，均不得覆盖原始 MAT。以上仅为已选设计，未实际写/测。
 
 ### 3.1 错误枚举与 CLI 退出码：唯一候选映射
 
