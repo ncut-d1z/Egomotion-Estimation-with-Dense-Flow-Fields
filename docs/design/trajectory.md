@@ -161,3 +161,9 @@ public:
 | TR-G06 | Rodrigues 零向量和已知 x/y/z 轴角 | R 矩阵、正交性和旋转方向 |
 
 关联 TC-F-TRAJ-001、TC-F-FLOW-004、TC-D-SOURCE-002；每个 Golden 必须记录源 SHA、MATLAB 实际数据、绝对/相对容差及版本。**当前只定义案例，没有固定数值或实验运行证据。**
+
+## 附录 A：轨迹及旋转的来源等级（补充草案）
+
+[统一 L1–L4 清单](../golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md) 说明：轨迹解析式与当前 `AN-G08` 的 3×3 旋转是 **L3 解析候选**，历史最终误差 MAT 是 **L2**。两者均不包含原 `trajektorie_aus_punkten` 在每一帧实际生成的 t/ω、`R^T` 局部坐标、端点 zeros、反向/近共线异常、`rodrigues.m` 在小角与边界的实际执行轨迹；这些 L1 仍缺失。
+
+`AC-F-TRAJ-001` 的解析路径可先设计有限固定输入检验，但当前没有真实生产 C++、独立 MATLAB 采集或 CTest，不能以 L3 的符号/公式推导宣称原 MATLAB 全部行为等价。Sophus 路线的选择不改变 L1 取证需求。
