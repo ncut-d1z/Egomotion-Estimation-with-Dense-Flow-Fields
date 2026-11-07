@@ -1,6 +1,6 @@
 # 实球谐、近度拟合及系数旋转——详细设计草案
 
-> **LLD v0.5，未冻结、未实现。** 来源：winkelausvektor.m、kugelflfunc2.m、near_aus_koeff.m、koeff_aus_near.m、transfor_koeff.m、SHRotate.m。第三方许可/依赖与独立 L3 参考尚未完整核验。关联 REQ-F-SH-001/002、REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001、P7.1–P7.6/P7.10。
+> **LLD v0.6，未冻结、未实现。** 来源：winkelausvektor.m、kugelflfunc2.m、near_aus_koeff.m、koeff_aus_near.m、transfor_koeff.m、SHRotate.m。第三方许可/依赖与独立 L3 参考尚未完整核验。关联 REQ-F-SH-001/002、REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001、P7.1–P7.6/P7.10。
 
 **项目所有者确定的实现路线**：[Ivanic–Ruedenberg 原始论文（1996）及勘误（1998）的纯 Eigen 实施方案](SH_ROTATION_IVANIC_RUEDENBERG.md) 已列明。实现的数学依据以**用户稍后上传的原论文和 1998 年勘误**为准，Don Williamson 源码只作参考；**完全禁止 sdla 依赖（直接和间接）**。仓库新代码 MIT，正常开发无需另外版权审核签字。论文上传前仅完善设计，不实施 R5 生产递推。
 
@@ -94,7 +94,7 @@ a'_{0,0}=a_{0,0},\quad
 - 先处理 l=0 常数块，l=1 依据源 SHRotate 的轴排列构造 R3（注意行、列和符号）。
 - l=2 的 R5 必须以 Ivanic–Ruedenberg **1996 原文与 1998 勘误**为首要数学依据，在**Eigen** 上重写递推；Don Williamson `IvanicSHRotate` 仅作代码参考，**不得引入 sdla 头、库、源文件或间接依赖**。用户将上传论文后才启动 R5 生产实现，本轮不复制/移植第三方代码。
 - 先用对 z 轴的已知旋转检查 m 正负的相位，再分别用 x/y 轴和复合旋转检查 R3/R5 全部元素、正交性、往返一致性和基函数变换方向。
-- 以选定的 Don Williamson C++ 核心递推为**待实施参考**，必须建立独立 L3 Golden 表：旋转向量、输入 R、**独立推导/复核** R3/R5 全元素、输入/输出系数、误差及只读源 SHA；不得以被测 C++ 自验代替独立参考，**无需运行 MATLAB**，也不得在本轮复制第三方代码。
+- 以 **Ivanic–Ruedenberg 1996 原论文及 1998 勘误**为数学依据，规划纯 Eigen 的 R5 递推；Don Williamson 的 C++ 代码仅作为交叉阅读参考，必须建立独立 L3 参考表：旋转向量、输入 R、**独立推导/复核** R3/R5 全元素、输入/输出系数、误差及只读源 SHA；不得以被测 C++ 自验代替独立参考，**无需运行 MATLAB**，也不得在本轮复制第三方代码。
 - 对第二阶旋转的任何替代生成算法，须证明与作者 SHRotate 数值行为和系数顺序一致，并有合法的原创或兼容授权基础。
 
 ### 3.1.1 H-02/H-14：上游 C++ 复用路线与法律/构建边界
@@ -198,7 +198,7 @@ R_3(R_z(\gamma))=
 
 ### 7.2 第 2 阶 R5 的递推合同
 
-**实现来源与行为基准区分**：H-02/H-14 已选定 Don Williamson 的 C++ `Source/IvanicSHRotate.cpp/.h`（Ivanic–Ruedenberg，方案 A）作为**将来待实施的 R5 递推来源**；原只读 `SHRotate.m` 仅用于静态明确原作者 `SHRotate(r,2)` 的数学约定，并构造独立 L3 Golden，**不是要逐行复刻的实现源**。该 MATLAB 函数在 degree=2 时遍历 \(m,n\in\{-2,-1,0,1,2\}\)，由前一阶 \(R_3\) 生成 25 个 \(R_5(m,n)\)。
+**数学依据、代码参考与行为约定的区分**：R5 的正式实现依据为 **Ivanic–Ruedenberg 1996 原始论文和 1998 勘误**；生产代码必须用 **Eigen 独立重写**，不得引入 sdla。Don Williamson 的 `Source/IvanicSHRotate.cpp/.h` 仅是辅助代码参考，**不是待复制或直接适配的生产实现来源**。原只读 `SHRotate.m` 用于静态核对原作者 `SHRotate(r,2)` 的实球谐基底、索引及变换约定，并构造独立 L3 参考，不运行 MATLAB，也不逐行复刻源代码。该 MATLAB 函数在 degree=2 时遍历 \(m,n\in\{-2,-1,0,1,2\}\)，由前一阶 \(R_3\) 生成 25 个 \(R_5(m,n)\)。
 
 \[
 R_5(m,n)=u_{2mn}U_{2mn}+v_{2mn}V_{2mn}+w_{2mn}W_{2mn}.
