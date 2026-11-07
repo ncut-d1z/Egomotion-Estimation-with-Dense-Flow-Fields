@@ -12,6 +12,7 @@
 - [TEST_PLAN.md](../TEST_PLAN.md)：TC→候选测试实体/CTest→AC、L2/L3/L4 参考准则与测试证据**字段模板**的唯一来源；**已执行的结果**只登记于 PROGRESS/reviews。
 - [PLAN.md](../PLAN.md)：98 个 P0–P10 最小工作项、任务依赖、风险与里程碑。
 - [PROGRESS.md](../PROGRESS.md)：阶段及里程碑、DEC 处理、实际执行结果、人员/批准的**唯一动态登记**。历史证据可在 [reviews/](../reviews/) 中查验；固定 Git SHA 后的变更不能被前一份报告覆盖。
+- [TODO.md](../TODO.md)：**仅需人类参与且可推迟**的材料/授权/最终基线事项，逐项记原因与建议处理时间；普通 C++ 私有实现技术细节不作人类待审项。
 - [DOCUMENT_BASELINE_REGISTER.md](../DOCUMENT_BASELINE_REGISTER.md)：**全部当前规范和过程文档的类型/版本/状态、适用范围、来源 SHA 与未冻结门禁的统一索引**；不在每个 LLD 重复维护当前状态表。
 - [contracts.md](contracts.md)：C++17 领域值类型、Result<T,E>、错误分类、资源生命周期与跨模块接口的**统一候选合同**。
 - 本目录每份文档是**对应模块的 LLD 草案**，具体签名、公式、错误处理、数据布局应在 P0.8 以后逐个确认。
