@@ -33,7 +33,7 @@ Output: Result<RunOutcome, ExperimentErrorCode>（成功时为 RunOutcome 及记
 - 每个 RunId 拥有 RNG；**H-12 选定将来新输出目录为仓库根 `output/<RunId>/`**，由 `.gitignore` 忽略生成数据。失败/重试不自动覆盖旧输出，原始 MAT 永远只读；**H-10 暂缓代码实施，当前没有可运行的 MAT Writer 或生成结果。**
 - Bias 的 40 个历史子目录是 40 份结果来源，不能错误解释为一个源运行的 40 个内循环。
 - AdaptiveComparisonRunner 的前四种结果累计后除以 **8**；rottransratio 按原脚本在循环中的覆盖次序保留。UpdateRateRunner 的输出系数状态分别保存，不和当前主 akkoeff 共享可写对象。
-- RunContext 跨实验不可共享可变状态；Session 异常时继续还是终止需冻结来源行为与结果合同。
+- RunContext 跨实验不可共享可变状态；**单步 Adaptive 求解失败不得提交无效主系数**；如果依赖状态无法安全延续，就停止本条连续序列。独立样本或独立实验可记失败后继续其他样本，前提是记录真实有效分母；不得将失败静默改成正常结果。
 
 ## 3. 候选实验和报告结构
 
@@ -43,7 +43,7 @@ enum class ExperimentKind {
     BiasOccluded, BiasProportional,
     AdaptiveInitialization, AdaptiveComparison, AdaptiveUpdateRates
 };
-struct ExperimentConfig;    // 五种原入口参数分开表达
+// 五个入口各自独立 Config 类型；CLI 层若需统一分发才用 variant。
 // 结构化运行结果仅使用 §6 的 RunOutcome，避免 RunReport/RunOutcome 并存。
 class BiasExperimentRunner;
 class InitializationRunner;
@@ -111,8 +111,10 @@ struct UpdateRateExperimentConfig {
     std::size_t trajectory_points = 600;
     std::size_t icosahedron_level = 2;
 };
+enum class RunCompleteness { Complete, Incomplete, Failed }; // Manifest 最终状态
 struct RunOutcome {
     RunId run_id;
+    RunCompleteness completeness;
     std::vector<std::string> mat_variables_produced;
     std::size_t attempted_solver_calls;
     std::size_t valid_samples;
@@ -128,7 +130,7 @@ public:
 };
 ~~~
 
-实际项目使用 std::variant 区分五类 ExperimentConfig，还是各命令拥有独立参数类型，须在 P0.8/P1.2 冻结。**单个源脚本的参数默认值不能因为复用 Runner 而外溢到另一实验**。RunContext 应独占 RNG、输出位置与本次结果 Manifest；没有全局状态。
+**项目所有者确定每类 Runner 使用独立强类型配置**；CLI Composition Root 仅在必要时用 `std::variant` 作命令分发，不把它泄漏到算法与 Session 入口。**单个源脚本的参数默认值不能因为复用 Runner 而外溢到另一实验**。RunContext 应独占 RNG、输出位置与本次结果 Manifest；没有全局状态。
 
 ### 6.1 RunContext 的最小所有权/接口候选（非编译代码）
 
@@ -168,14 +170,17 @@ private:
 ~~~
 
 - **谁拥有谁**：Composition Root 保证 `IResultWriter&` 的有效期长于本次 Runner 调用；RunContext **独占 RNG**、RunId/结果计数/Manifest，Session 只持有其自身系数状态且不能跨 RunContext 共享。输出根由 CLI/Composition Root 验证，Runner 不按任意用户字符串拼接文件路径。
-- **失败与释放**：固定 RNG 耗尽、子求解器失败、MAT 写失败必须在 `Result<RunOutcome, ExperimentErrorCode>` 的失败分支保留原底层错误及 `ErrorDetail.run_id`；不再以一个空 `RunOutcome` 表示失败。Manifest 是否允许 partial、失败状态能否继续下一样本，仍为待决定事项，不做默认回滚承诺。
-- **边界**：`BiasExperimentConfig` 负责原入口 seed/最大 level/三个噪声乘数，`BiasFlowParameters`（采样 LLD）负责**单个流场**，不能彼此覆盖默认值。配置选择 `std::variant` 还是独立参数类型、RunContext 移动/并发限制、Writer 创建时机均待 P0.8 冻结。
+- **失败与释放**：固定 RNG 耗尽、子求解器失败、MAT 写失败必须在 `Result<RunOutcome, ExperimentErrorCode>` 的失败分支保留原底层错误及 `ErrorDetail.run_id`；不再以一个空 `RunOutcome` 表示失败。**Manifest 必须区分 `Complete`、`Incomplete`、`Failed`**，记录每次尝试/成功/失败/无定义样本和有效分母；允许保存可审查的部分产物，但不得将其伪装为完整实验，亦不自动删除/覆盖已有结果。独立样本失败可继续后续独立样本；依赖状态错误不提交，不能安全恢复则停止当前轨迹。
+- **边界**：`BiasExperimentConfig` 负责原入口 seed/最大 level/三个噪声乘数，`BiasFlowParameters`（采样 LLD）负责**单个流场**，不能彼此覆盖默认值。配置采用**每入口独立类型**，CLI 层可选择 variant 分发；RunContext 默认不可复制、单次会话不可并发，Writer 在 Composition Root 装配；构建期的类移动能力/线程合同尚需真实验证。
+
+**RunId 自动命名（所有者已选择）**：不再有输出根 CLI 选项，固定 `output/<RunId>/`。由 Composition Root 使用**独立于算法随机源的 Linux OS 随机源**生成 128 位随机标识，推荐 `run_<32位十六进制>`，以独占目录创建确认唯一性；用户传入 `--run-id` 则严格校验 ASCII 字符 `[A-Za-z0-9_-]`（1–64）并拒绝重复。不能使用 RunContext 的 uniform/normal 来生成 RunId，避免改变科学实验 RNG 调用顺序；无法获取随机源/创建目录时直接返回错误。Writer 仍需做文件系统层二次验证。
 
 ### 6.2 输出 Manifest 推荐字段
 
 | 字段 | 语义/约束 |
 |---|---|
 | run_id / experiment_kind / source_entry | 唯一运行身份与原 MATLAB 函数名称 |
+| completeness / expected_repetitions / completed_repetitions | `Complete`/`Incomplete`/`Failed`；8 次聚合必须完整，不因失败改变平均分母 |
 | repo_sha / source_blob_sha / original_mat_root | 可追溯版本，原数据只读 |
 | original_parameters / default_origin | 每个数值来自入口形参还是源文件固定常量 |
 | subdivision_level / actual_flow_count / original_xwerte | 区分物理 N 与作者横轴存储值 |
@@ -187,11 +192,11 @@ private:
 ## 7. 结果写入与多次运行的失败路径
 
 - **Bias**：每个 corenumber 的结果相互独立，写入相应新 RunId 子目录；原始已有编号目录 1..40 是历史参考，不是 C++ 自动覆盖位置。
-- **Comparison**：四种方向误差数组在八次内循环中累加后除以 8；rottransratio 在各次运行的循环里重新分配，最后仅写最后一次的数组。不得擅自对其求八次平均或把它与四个误差数组同样聚合。
+- **Comparison**：四种方向误差数组仅在**八次有效完成**时按原算法先累计后除以 8；rottransratio 仅保留**第八次**（最后一次预定运行）的数组。若某次失败，整次聚合标记 `Incomplete`，不改为除以 7 或替代缺失的最后一次；部分结果可留证，但不作为原算法完整输出发布。
 - **Update rates**：比较的 mitkoeff 四组在源周期触发时更新；主 akkoeff 单独每帧更新。当前源 save **只有三个 MAT**；历史附加文件需要字段级差异报告。
 - **初始化**：每次创建独立系数起点，不能重用此前 600 帧轨迹的状态；首尾行按原 zeros 预分配语义。
 - **原始数据保护**：任何路径重叠、文件已存在、变量写入失败应返回带 RunId 的明确错误，不允许把部分成功伪装为完整。
-- 对新实验在各入口运行过程中失败是否继续剩余参数组合，须经 P0.8 审核其与 MATLAB 行为差异；不能以异常吞掉而达到“全部通过”。
+- **失败策略已由所有者确认**：独立采样/运行失败记录并可继续其他独立单位；Adaptive 连续状态不提交失败步，无法保证状态可用则停止该轨迹；损坏输入或输出写失败导致依赖任务失败；保留失败日志与可追踪产物，不自动删除旧文件/重试覆盖。需在未来真实 C++/CTest 下验证该策略，不声称原 MATLAB 的异常传播已实测。
 
 ## 8. L2/L3/L4 参考数据、验收和未批准合同
 
@@ -205,7 +210,7 @@ private:
 
 历史 **MAT 类型/shape 字典已实测**；但算法的**独立 L3 逐节点参考**、完整 L2 逐值及 SHA-256、L4 统计、批准容差、CLI schema、生产写入/回读与 CTest 仍未建立，不能以最终结果文件能够被读取替代算法真实性测试。
 
-**状态**：五类入口参数与当前 save 契约已文档化，**历史输出 dtype/shape 已由 582/582 matio 数据字典确认**；C++ Runner、新输出、独立 L3 逐节点参考、误差容差及接口冻结仍未完成。
+**状态**：五类入口参数、独立 Config、RunContext/Manifest 失败策略与当前 save 契约已文档化，**历史输出 dtype/shape 已由 582/582 matio 数据字典确认**；C++ Runner、新输出、独立 L3 逐节点参考、误差容差及接口冻结仍未完成。
 
 ### 8.1 具体错误触发、CTest 候选与依赖边界
 
