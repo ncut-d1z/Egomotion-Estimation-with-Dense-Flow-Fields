@@ -101,7 +101,7 @@
 
 ### 内部设计约束的归属说明
 
-`REQ-DC-*` 为实现可审计的**内部设计约束**，**不是新用户功能或外部 CLI 接口**；其原始编号、M/S 优先级、AC 与 TC 均保持不变，完整八项移至 [附录 A](#附录-a-内部设计约束清单req-dc) 统一登记，具体类型/接口/生命周期由 [ARCHITECTURE.md](ARCHITECTURE.md)、[OBJECT_MODEL.md](OBJECT_MODEL.md) 和 [contracts.md](design/contracts.md) 的单一合同提供。为避免破坏现有 66 REQ/66 TC/98 P 追踪关系，**此次仅调整文档位置，不增删需求**。
+`REQ-DC-*` 为实现可审计的**内部设计约束**，**不是新用户功能或外部 CLI 接口**；其原始编号、M/S 优先级、AC 与 TC 均保持不变，完整八项移至 本文末尾的**附录 A** 统一登记，具体类型/接口/生命周期由 [ARCHITECTURE.md](ARCHITECTURE.md)、[OBJECT_MODEL.md](OBJECT_MODEL.md) 和 [contracts.md](design/contracts.md) 的单一合同提供。为避免破坏现有 66 REQ/66 TC/98 P 追踪关系，**此次仅调整文档位置，不增删需求**。
 
 ### 非功能及质量需求
 
