@@ -228,3 +228,9 @@ public:
 每个 Golden 应记录原 MATLAB blob SHA、固定输入序列、输出 shape、计算顺序、被测容差及是否退化；抽样初步通过不能代替最终批量实验。**目前没有以上 Golden 数值与批准容差。**
 
 **模块状态**：采样/噪声的算法和 RNG 调用次序已有可审查合同；实现、实际 C++ 签名、数值 Golden、CTest 和性能预算均未完成。
+
+## 附录 A：采样/RNG 的 L1 缺口与 L3 固定输入测试
+
+[Golden 等级及 AC 对应](../golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md) 区分两种命题：**调用顺序可依据原 `.m` 静态推导**（如 `getvektor` 的两次 uniform、seed 重置后特定分支的 uniform/normal 次数，以及 `nonpropfehler(...,0)` 仍消耗 normal）；但**MATLAB 实际 RNG 返回流、种子/生成器版本、每样本距离/噪声和运行后状态**并未存入 L2 MAT，也没有捕获 L1。固定注入的 uniform/normal 和 `AN-G01～04` 属于 L3 候选，不得称跨语言同 seed 逐位等价。
+
+`AC-F-GEOM-002/003` 明示原 MATLAB 的 i=0/1/2 **有序**方向 Golden，目前 L3 只有 i=0，L1 缺失；`findeDreiecke` 的方向为三角面顶点的**归一化重心**，不是八面体或二十面体顶点本身。`AC-F-FLOW-002/003`、`AC-DC-RNG-001` 与 `AC-NF-RNG-001` 可以在将来获准后通过固定注入 RNG 和限定统计合同进行 L3/L4 有限核验，但**不得宣称原 MATLAB 实际随机流一致或测试已通过**。
