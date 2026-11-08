@@ -68,7 +68,7 @@
 | `docs/PROGRESS.md` | 正在审计 | 真实证据与动态 DEC/里程碑；待 AF-053；AF-070 已定向复核；AF-053 真实证据待补 |
 | `docs/ARCHITECTURE.md` | 正在审计 | HLD/27 条设计边、部署/Writer；待 AF-038 |
 | `docs/OBJECT_MODEL.md` | 正在审计 | 生命周期、45 .m 映射；待 AF-039 |
-| `docs/design/contracts.md` | 正在审计 | Result/Status/ErrorDetail、所有权；待 AF-040；待 AF-077 AnalysisErrorCode 到 CLI 的单一候选映射 |
+| `docs/design/contracts.md` | 正在审计 | Result/Status/ErrorDetail、所有权；待 AF-040；AF-077 已定向复核（候选映射）；AF-040 仍待实际 ABI/错误运行验证 |
 | `docs/design/cli.md` | 正在审计 | 参数类型、RunId、JSONL/错误；待 AF-041 |
 | `docs/design/mat_io.md` | 正在审计 | MAT 类型、RAII、Reader/Writer/安全；AF-033 已整改，待 AF-042 |
 | `docs/design/kvd.md` | 正在审计 | Franz/KvD 公式、逐轮顺序；待 AF-043 |
@@ -157,3 +157,9 @@
 
 - 输入 `4ffbbf93d0acf8177bbc4d9dfd28ed6aaaef197b`。核对 `docs/design/analysis_plotting.md §6` 的 `AnalysisErrorCode` 七个候选枚举与 `docs/design/contracts.md §3.1` 统一退出码表：后者只覆盖 Mat/Numerical/Experiment，分析层的 MissingResult/MissingVariable/ShapeMismatch/InvalidSegment/NonFiniteInput/UndefinedStatistic/UnsupportedExperiment 尚缺明确且单一的映射。见 [静态扫描报告](reviews/AUDIT_ANALYSIS_ERROR_MAPPING_SCAN_2026-11-08.md)。
 - 新增 AF-077 先记「未整改」；后续应由 contracts 维护候选 stage/exit，分析与 CLI LLD 只引用而不复制，并把缺字段、坏形状、非法区间的 TC 检查点写清。DEC-008 正式批准、真实 JSONL/CTest 仍独立开放。
+
+
+## 10. AF-077 跨模块分析错误候选映射结案（2026-11-08）
+
+- 先以 `4ffbbf93` 静态审计 `AnalysisErrorCode` 的 7 种状态与 `contracts.md §3.1` 统一退出码的缺口，在 `20b5fcaa` 登记未整改，再以固定提交 `e3c4c679` 复读 `contracts.md` v0.4、`analysis_plotting.md` v0.7、`cli.md` v0.5、`TEST_PLAN.md` v0.13：七种分析错误均对应单一候选 stage/exit，并区分非法命令参数 parse(2) 与 Analyzer 运行时不支持 analyze(5)，无重复 enum。
+- **AF-077 在文档合同一致性范围已整改**；尚须 DEC-008/P0.8 的人类批准、真实 JSONL/CTest、底层错误传播与输入负例，AF-040/041/050/051 保持未整改。当前 **78 个目标中 55 已整改、23 未整改**；审计文件 57 路径（34 已审计、23 正在审计）。

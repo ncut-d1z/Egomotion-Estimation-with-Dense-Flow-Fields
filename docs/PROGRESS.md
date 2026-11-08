@@ -240,3 +240,9 @@ reviewed_by / review_date:
 - 根据只读 `graph_agent_in_sphere_adaptive_matched_filter_many_parameter.m` 和 `graph_agent_in_sphere_adaptive_matched_filter_test.m`，先登记 AF-075/076，随后分别修订 `analysis_plotting.md` v0.6 与 `TEST_PLAN.md` v0.12，保留四段旋转局部平滑/边缘零值/裁剪、平移全 600 行（或未平滑）后连续绘制 50:550 的**不同执行域**；见 [审计纠偏](reviews/AUDIT_ANALYSIS_SEGMENT_SMOOTHING_CORRECTION_2026-11-08.md)。
 - 定向复读输入 `d8e7e64e5affd97130a2b7436a039e4681de502d`，§5.1/5.2/5.2.1/5.3 顺序连续，保留 66 项 TC 编号及 L3 未执行说明。修正最初扫描报告中关于“相同内部裁剪后的均值必不同”的错误断言，不把纠偏当成 L3 PASS。
 - AF-075/076 文档层关闭；AF-050/051 真实 Analyzer、独立曲线、CTest 及 DEC-005/008 未通过。现台账 77 项（54 已整改、23 未整改），审计路径 56（33 已审计、23 正在审计）。未变更任何 `origin/**`、生产代码或授权。
+
+
+### E-DOC-043（2026-11-08：分析错误协议的单一候选映射）
+
+- 发现 `analysis_plotting.md §6` 的 `AnalysisErrorCode` 七个枚举没有加入原 `contracts.md §3.1` 统一退出码单一来源，先登记 AF-077 未整改，再于 `e3c4c6794b3d2b562ebc39e92251eaaa52f44c34` 同步 contracts v0.4、analysis v0.7、CLI v0.5、TEST_PLAN v0.13。审阅确认 **7/7 候选错误码有唯一来源和候选 stage/exit**：缺文件/变量 read(3)，shape decode(4)，分析内部状态 analyze(5)，非法 CLI 参数 parse(2)；底层 `ErrorDetail.source_error_code` 不得丢弃。
+- AF-077 的静态合同一致性复核通过并结案；DEC-008、实际解析/分析器、错误传播、JSONL 和 CTest 仍须独立授权与测试。现为 78 个 AF（55 已整改、23 未整改）；旧 66 TC 不增加/伪造 PASS，原始数据未变。

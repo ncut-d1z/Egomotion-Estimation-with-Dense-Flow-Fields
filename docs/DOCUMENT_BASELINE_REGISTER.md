@@ -230,3 +230,17 @@ AF-041/047/055/058 与其它开放目标仍须独立数据/真实软件及审批
 | `docs/reviews/AUDIT_ANALYSIS_SEGMENT_SMOOTHING_CORRECTION_2026-11-08.md` | `fd30206e5fc7a29125d4b64946354d09b6156558` | 扫描错误断言的后续纠偏，旧报告不回写 |
 
 正式 L2/L3/Analyzer/CTest、原文件哈希与批准仍未通过，历史 §2～3 的固定 36 文件登记不作为 HEAD 当前基线。
+
+
+### 6.11 分析错误协议的当前草案文件身份（非冻结）
+
+固定修订及静态复读输入 `e3c4c6794b3d2b562ebc39e92251eaaa52f44c34`：
+
+| 文件 | Git blob SHA | 文档合同作用 |
+|---|---|---|
+| `docs/design/contracts.md` | `37326d9c1b1e0949fcbcc3b1b71bf7c6d5bc13a0` | v0.4；AnalysisErrorCode 的对外候选 stage/exit 单一映射 |
+| `docs/design/analysis_plotting.md` | `3e301b6312f4ef154bdd7cbcfe953fa7548a971a` | v0.7；原七 enum 仍属本模块，公共合同仅提供映射 |
+| `docs/design/cli.md` | `15524a70b97cbc58bd6e7b6254d6086ef6c882bf` | v0.5；区分 parse(2)、read(3)、decode(4)、analyze(5) |
+| `docs/TEST_PLAN.md` | `d56199932442da7648a6076d6dd91b67361b6d6e` | v0.13；现有 TC 对应候选负例，未实际建立/执行 |
+
+以上仅固定此提交的文档身份；DEC-008/实际 ABI、MAT 数据及 CTest/数值没有签署或通过。

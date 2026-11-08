@@ -124,6 +124,12 @@
 
 | ID | 文件相对路径 | 整改目标 | 状态 |
 |---|---|---|---|
-| AF-077 | `docs/design/contracts.md` | `analysis_plotting.md` 已定义 AnalysisErrorCode 七个状态，但 contracts §3.1 统一 CLI 退出码尚未映射；补单一候选的错误来源/stage/exit，明确缺 MAT、坏 shape、无效分段、非有限与非法实验命令的差异，并在分析/CLI/TEST_PLAN 引用，保持 DEC-008 未批准与真实测试未完成。 | 未整改 |
+| AF-077 | `docs/design/contracts.md` | `analysis_plotting.md` 已定义 AnalysisErrorCode 七个状态，但 contracts §3.1 统一 CLI 退出码尚未映射；补单一候选的错误来源/stage/exit，明确缺 MAT、坏 shape、无效分段、非有限与非法实验命令的差异，并在分析/CLI/TEST_PLAN 引用，保持 DEC-008 未批准与真实测试未完成。 | 已整改 |
 
 **发现时**：78 个 AF 原子目标，54 已整改、24 未整改；此阶段只有静态发现，没有修改接口源文件或批准退出码。
+
+
+## 8. AF-077 定向复核结案（2026-11-08）
+
+- 发现登记 `20b5fcaa` 时「未整改」；统一候选错误来源 `contracts.md §3.1` 的固定修订提交 `e3c4c6794b3d2b562ebc39e92251eaaa52f44c34` 上完成 7 类 `AnalysisErrorCode` 的 `read(3)/decode(4)/analyze(5)`、非法 CLI 选项 `parse(2)` 与跨层原始错误保留的**静态定向检查**。分析/CLI LLD 只引用同一表，TEST_PLAN 仍是拟议负例，故仅 AF-077 的文档冲突关闭。
+- **当前两态：78 个原子目标，55 已整改、23 未整改**。其中 AF-040/041/050/051 和 DEC-008 正式审批、真实 C++/JSONL/CTest 仍开放；不宣称任何新软件 PASS。
