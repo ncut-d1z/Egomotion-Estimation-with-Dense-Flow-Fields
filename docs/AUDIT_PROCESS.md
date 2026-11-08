@@ -242,7 +242,14 @@
 
 | ID | 仓库根相对路径 | 独立整改目标 | 状态 |
 |---|---|---|---|
-| AF-086 | `docs/design/README.md` | LLD 模块覆盖矩阵实际指向 11 个独立 Markdown 文件（`contracts` 1、`cli/mat_io/sampling_noise/trajectory/kvd/harmonics/adaptive_mfa/experiments/analysis_plotting` 9、球谐专题 `SH_ROTATION_IVANIC_RUEDENBERG` 1），但正文声称“10 份文档”；澄清模块数与专题文件数，不虚构已实现或冻结的 LLD。 | 未整改 |
-| AF-087 | `docs/design/kvd.md` | §5/§8 的逐轮 Golden 要求 near 分母及符号翻转、原始/归一化 t 范数、旋转更新 aω/bω/cω、预测流、终止判定与旧 t，但 §7 的 `KvDIterationTrace` 候选字段不全；核对原 `norm_koenderink_iteration.m:46–146` / `mue_norm_koenderink_iteration.m:43–143`，把这些可观察字段明确归入 trace（或等效 Golden 诊断），同步现有 `TEST_PLAN` 的 TC-F-KVD-001/002 映射；不得引入新的数学公式、改变分支/循环、伪造 L3/CTest/DEC-008。 | 未整改 |
+| AF-086 | `docs/design/README.md` | LLD 模块覆盖矩阵实际指向 11 个独立 Markdown 文件（`contracts` 1、`cli/mat_io/sampling_noise/trajectory/kvd/harmonics/adaptive_mfa/experiments/analysis_plotting` 9、球谐专题 `SH_ROTATION_IVANIC_RUEDENBERG` 1），但正文声称“10 份文档”；澄清模块数与专题文件数，不虚构已实现或冻结的 LLD。 | 已整改 |
+| AF-087 | `docs/design/kvd.md` | §5/§8 的逐轮 Golden 要求 near 分母及符号翻转、原始/归一化 t 范数、旋转更新 aω/bω/cω、预测流、终止判定与旧 t，但 §7 的 `KvDIterationTrace` 候选字段不全；核对原 `norm_koenderink_iteration.m:46–146` / `mue_norm_koenderink_iteration.m:43–143`，把这些可观察字段明确归入 trace（或等效 Golden 诊断），同步现有 `TEST_PLAN` 的 TC-F-KVD-001/002 映射；不得引入新的数学公式、改变分支/循环、伪造 L3/CTest/DEC-008。 | 已整改 |
 
 登记后 **88 AF：63 已整改、25 未整改**；文件审计仍 **60：37 已审计、23 正在审计、0 空白**。AF-043 的一般逐轮独立 L3/真正 CTest 和 AF-051 真实测试仍不得关闭。
+
+## 23. AF-086/087 定向复核与第一轮剩余卡点（2026-11-08）
+
+- **先登记后修订**：发现固定基准 `3c171271400d7dacb09315152708da4585461152`；首次登记 `a6e2595408b7cae20d2da5c710fddbc1f7d0c2ff`，此时 **88 个 AF：63 已整改、25 未整改**。
+- **AF-086 固定复核**：源修订提交 `ae6bb72d0d2114ca55b7d85481581ffb1c311ea2`，矩阵严格为 **10 条模块/合同行、11 个不同 Markdown 文件**，额外 1 份为球谐专题 LLD，不再混称“10 文件”。
+- **AF-087 固定复核**：`docs/design/kvd.md` 候选 trace 提交 `e5ec72d26648222a72eea837d40ec28f3a28b29a`；`docs/TEST_PLAN.md` 映射提交 `db437096dfd7f382119329e5afd5231a19436661`。在新固定文本上检查 **8/8 静态断言满足**：Franz 初始化/逐轮 near 分母和符号/归一 t/旋转三项/残差预测/终止布尔/末轮缩放的候选字段齐全，现有 TC 追踪且 AF-043/051 不错误关闭。只读对照 `norm_koenderink_iteration.m` 和 `mue_norm_koenderink_iteration.m` 的计算先后，**未产生独立逐轮 L3 数值或执行程序**。
+- **现行问题两态：88 项，65 已整改、23 未整改**；文件三态仍为 [AUDIT §3](AUDIT.md) 的 **60 路径，37 已审计、23 正在审计、0 空白**。AF-086/087 只关闭可独立复核的**文档合同缺项**，并未关闭 AF-043、AF-051、DEC-005/008、授权、实际编码或数值测试。剩余 23 项保持原目标与状态；未达到开展第二轮全面审计的第一轮清零条件。
