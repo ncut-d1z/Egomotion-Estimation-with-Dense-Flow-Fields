@@ -61,6 +61,8 @@
 **第一轮静态分支判别补充（不新增 TC/CTest）**：TC-F-KVD-001/002 除常数 near 场景，还须以同一固定流场/Franz 初态设计**非恒一近度**，分别比较 Original 的 `⟨μp⟩/⟨μd⟩/⟨μ²(t·d)d⟩` 与 Modified 的 `⟨p⟩/⟨d⟩/⟨μ(t·d)d⟩`，并记录 `ω_new` 使用旧 t 的顺序；参阅 [KvD §9.1](design/kvd.md)。TC-F-ADAPT-001/002 须覆盖正/负/零原始 near 均值，特别在 `s<0` 时归一后均值应为 **−1**（按原先翻 near、再除负 s 公式）；参阅 [Adaptive §10.1](design/adaptive_mfa.md)。这些是源码静态推导的**未来夹具资格条件**，并非已形成完整独立 L3 或通过测试。
 
 
+**KvD 逐轮 trace 合同的定向断言（AF-087，仍待独立 L3/真实测试）**：针对现有 `TC-F-FILTER-001`、`TC-F-KVD-001/002`、`TC-DC-KVD-001`，先核 Franz 每轴的平移/旋转响应与分母及初始 t 范数；再以相同固定 N×6 输入对 Original/Modified 的**每个迭代 k**分别核 `near_denominator/raw/sum/sign_flip/after_sign`、`t_raw/norm/normalized`、平移 `a/b/c`、旋转 `aω/bω/cω`、使用旧 t 的时序、每个样本的预测光流及 MSE/RMS、上一轮 RMS、delta、动态门限和原 `(A&&B&&C)||k<6` 的下一轮布尔判定。最终核 **近度不重算**、`t_direction * mean(last_near)`、实际循环次数/失败类型。具体拟议存储字段由 [KvD §7–9](design/kvd.md) **单一归口**，此处不另造测试函数、Golden 数值或修改既有 TC 编号；**只有静态合同已补齐，AF-043/051 的独立数据与 CTest 仍不满足**。
+
 ### 2.6 已执行 matio 全量探针的证据与限制
 
 | 证据项 | 实测结果 | 当前验收边界 |
@@ -333,7 +335,7 @@ MAT 全量字典和来源证据**已经生成**：见 [MAT_DATA_SCHEMA.md](MAT_D
 
 | 重点 TC | 采用的可行参考 | 剩余缺项（不包括 L1） |
 |---|---|---|
-| TC-F-FILTER-001、TC-F-KVD-001/002 | L3 独立逐轴/逐轮 near、旧/新 t、ω、a/b/c、RMS、阈值、退出次数；C++ trace | 多组 L3 生成与核验、容差批准、真实 C++/CTest |
+| TC-F-FILTER-001、TC-F-KVD-001/002 | L3 独立逐轴 Franz 响应/分母与逐轮 near 分母/符号、平移 raw/normalized、旋转 aω/bω/cω（旧 t）、逐点预测流、MSE/RMS、停止布尔、终局 near 均值/尺度；对应 KvD §7 的候选 trace 与真实 C++/CTest | 多组 L3 生成与核验、容差批准、真实 C++/CTest |
 | TC-F-ADAPT-001/002/003、TC-DC-ADAPT-001 | L3 独立 M1～M4/b/z/MSE/系数、连续帧状态；L2 最终误差 | 一般场景、退化输入、Session 状态和 C++/CTest |
 | TC-F-GEOM-002/003、TC-F-FLOW-002/003、TC-DC-RNG-001、TC-NF-RNG-001 | L3 i=0/1/2 **全部有序方向**、固定 uniform/normal 和调用数；L4 统计 | i=1/2 L3 参考、独立 RNG/噪声测试、CTest |
 | TC-F-SH-001/002、TC-F-TRAJ-001 | L3 R0/R3/R5 全元素、系数与几何旋转、轨迹解析值 | 多轴/复合/非平凡角独立参考、版权/适配、CTest |
