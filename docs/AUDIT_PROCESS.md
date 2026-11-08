@@ -125,13 +125,13 @@
 
 **固定整改复读提交**：`306b9ac4e8c832344d703b8d29d371710055ae86`。此次依据 §3 未整改事项，完成 **AF-037～041 的文档层初步整改**；已推送源文档修订并静态复读 5 项对应锚点。下面仅列可确认的完成部分，不把阶段性证据缺口改成「已整改」。
 
-| ID | 已修改的实际目标文档及本轮完成部分 | 尚未满足的结案门槛 | 状态 |
-|---|---|---|---|
-| AF-037 | `docs/REQUIREMENTS.md` v0.14 新增 §9.6：66 REQ/AC（含 8 REQ-DC）→候选 LLD/TC 固定身份检查项 | 逐 AC 精确 SHA 绑定、独立测试与所有者签署/DEC-005/006/008 | 未整改 |
-| AF-038 | `docs/ARCHITECTURE.md` v0.9：§5.1 Writer 写入前二次路径校验，§5.2 确认已选失败不提交；§5.4 跨文档职责表 | 真正的 CMake 27 边、IO 安全负例、Session 回归和 HLD 批准 | 未整改 |
-| AF-039 | `docs/OBJECT_MODEL.md` v0.6 §8.1：对象/值类型/唯一签名来源与 45 .m 映射边界复读 | 可编译类声明、线程/资源实测及 P0.7/P0.8 签署 | 未整改 |
-| AF-040 | `docs/design/contracts.md` v0.3 §3.0.1：列出 `variant` 空态、访问前置条件、ErrorDetail/JSONL 的未决行为 | 具体异常/错误映射批准，公共头及 ABI/跨层测试 | 未整改 |
-| AF-041 | `docs/design/cli.md` v0.3 §3.1：负噪声、RunId、参数端值、错误优先级、JSONL 的冻结前边界矩阵 | DEC-008 逐命令决策、真实 CLI/路径/JSONL 负例及 CTest | 未整改 |
+以下仅补记 §3 中同一目标的推进证据，**不重复新增 AF 目标行**：
+
+- **AF-037（文档部分已推进，仍未整改）**：`docs/REQUIREMENTS.md` v0.14 新增 §9.6：66 REQ/AC（含 8 REQ-DC）→候选 LLD/TC 固定身份检查项；**待结案**：逐 AC 精确 SHA 绑定、独立测试与所有者签署/DEC-005/006/008。
+- **AF-038（文档部分已推进，仍未整改）**：`docs/ARCHITECTURE.md` v0.9：§5.1 Writer 写入前二次路径校验，§5.2 确认已选失败不提交；§5.4 跨文档职责表；**待结案**：真正的 CMake 27 边、IO 安全负例、Session 回归和 HLD 批准。
+- **AF-039（文档部分已推进，仍未整改）**：`docs/OBJECT_MODEL.md` v0.6 §8.1：对象/值类型/唯一签名来源与 45 .m 映射边界复读；**待结案**：可编译类声明、线程/资源实测及 P0.7/P0.8 签署。
+- **AF-040（文档部分已推进，仍未整改）**：`docs/design/contracts.md` v0.3 §3.0.1：列出 `variant` 空态、访问前置条件、ErrorDetail/JSONL 的未决行为；**待结案**：具体异常/错误映射批准，公共头及 ABI/跨层测试。
+- **AF-041（文档部分已推进，仍未整改）**：`docs/design/cli.md` v0.3 §3.1：负噪声、RunId、参数端值、错误优先级、JSONL 的冻结前边界矩阵；**待结案**：DEC-008 逐命令决策、真实 CLI/路径/JSONL 负例及 CTest。
 
 `docs/PLAN.md`、`docs/TEST_PLAN.md` 已同步 SRS v0.14 引用；[PROGRESS.md](PROGRESS.md) 与 [文件身份矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记本批静态证据。**没有**创建/编译生产代码、运行 Bash/CMake/CTest/MATLAB/Octave、生成独立 L3 或写 MAT；H-10/H-11 保持原状态。
 
