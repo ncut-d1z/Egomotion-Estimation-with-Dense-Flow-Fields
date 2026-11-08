@@ -130,3 +130,21 @@
 | `docs/TEST_PLAN.md` | v0.8（引用更新） | `4f02e3c5b66b8cab6e0b633d8ce5b4b0fe306a28` | SRS v0.14 引用，未执行 CTest |
 
 上述目标仍为 AF-037～041 **未整改**，正式批准、接口实现/ABI、CMake/CTest/独立 L2/L3/L4 和 DEC-005/006/008 未完成；当前状态统一见 [AUDIT_PROCESS](AUDIT_PROCESS.md)。此登记不是软件或数学验收证据。
+
+
+### 6.3 本次第一轮设计修订的固定文件身份（非正式基线）
+
+以下 **8 个文件的 Git blob** 对应固定源提交 `f846e7b96a1b75b5d1d29621b4a295fd6504bade`；不要将它们覆盖写入 §2 原快照并声称同一身份。后续审计滚动文档的 SHA 另在后续固定提交登记。
+
+| 路径 | 版本 | 固定提交 blob SHA | 说明 |
+|---|---|---|---|
+| `docs/design/mat_io.md` | v0.10 | `b8742f42a4e28578ad9cd01bfbbae1637ad44035` | AF-042：独占写出/竞态与读取夹具；未实现 |
+| `docs/design/sampling_noise.md` | v0.4 | `d126d0037231ce1e8a6f81adc2a8e973501b3b5b` | AF-047：有序采样/RNG 合同；未生成 L3 |
+| `docs/design/trajectory.md` | v0.3 | `901104da31bb574bf6acd47ea0f9422590e7609f` | AF-048：Sophus/球内正根边界；未编译 |
+| `docs/design/experiments.md` | v0.5 | `9c94b27d9bb4b38eb15d58fb13bb5d75fb88c123` | AF-049：Runner/Manifest 夹具；未实现 |
+| `docs/design/analysis_plotting.md` | v0.5 | `1352c66499b3e20b5ad17879bcddb0c5d59f0a41` | AF-050：四入口分析场景；缺真实曲线 |
+| `docs/TEST_PLAN.md` | v0.9 | `4dc15c476f5af1ba3fe7cca071aadd90d1167d14` | AF-051：已有 66 TC 的夹具补充；CTest 未运行 |
+| `docs/golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md` | 未冻结附件 | `9432d537a1aaa169450e873eb4097126b9d35077` | AF-060：L2/L3/L4 证据口径；数值未生成 |
+| `docs/design/README.md` | v0.7（MAT 版本引用更新） | `c437eaba39e7f39e1a378c9df8756a7db6d8c6e4` | 仅引用 mat_io v0.10；不冻结 LLD |
+
+**本表仅作文件身份追踪**：AF-042/047/048/049/050/051/060 仍未整改，未取得实际 C++/CTest、独立 L2/L3/L4、最终 DEC-005/006/008 或正式批准；两台账当前进度见 [AUDIT](AUDIT.md) / [AUDIT_PROCESS](AUDIT_PROCESS.md)。

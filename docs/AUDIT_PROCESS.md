@@ -136,3 +136,22 @@
 `docs/PLAN.md`、`docs/TEST_PLAN.md` 已同步 SRS v0.14 引用；[PROGRESS.md](PROGRESS.md) 与 [文件身份矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记本批静态证据。**没有**创建/编译生产代码、运行 Bash/CMake/CTest/MATLAB/Octave、生成独立 L3 或写 MAT；H-10/H-11 保持原状态。
 
 **停止判定**：67 项仍为 **44 已整改、23 未整改**，包括上述五个阶段性目标；依据用户条件，**第一轮在此停止，不开展 AUDIT 新扫描，不实施第二轮整改**。该统计以本轮固定源文档提交与本台账更新为依据，不等于软件验收。
+
+
+## 9. 再次执行的第一轮整改：七项设计与验证准备（2026-11-08）
+
+本轮**先读取最新 67 项台账**（输入 `f62a8a3`），依原有未整改目标补充目标文档并及时提交：首批 `0dccbff`（MAT I/O、采样、轨迹、LLD 索引），第二批 `f846e7b`（Runner、分析、TEST_PLAN、L2/L3/L4 证据分级）。在固定 `f846e7b96a1b75b5d1d29621b4a295fd6504bade` 上完成七项目标文档的**7/7 定向静态复读**；仍未创建或运行真正的业务测试和独立 Golden。
+
+| 现有 AF 编号 | 本轮完成的可核对文档部分 | 仍需才能标为「已整改」 |
+|---|---|---|
+| AF-042 | `mat_io.md §8.1`：读/写与 TOCTOU、列主序、回读、路径负例的夹具/预期 | Reader/Writer 及路径安全生产代码、真实负例/回读、L2 SHA-256、CTest、授权 |
+| AF-047 | `sampling_noise.md §7.1`：八面体/缺损有序样本数、N uniform/3N normal、零噪声与 RNG 耗尽 | 完整有序独立 L3、真实 RNG trace/CTest、数值批准 |
+| AF-048 | `trajectory.md §6.2`：轨迹端点、Sophus eps、反向/近 π、Rᵀ、球内正根与模块边界 | Sophus 实际编译、独立 L3/负例、接口冻结 |
+| AF-049 | `experiments.md §8.2`：八次聚合、最后比值、更新率、Manifest/RunContext/Writer 失败及历史字段 | 五个 Runner 实现、L2/L3/L4、负例/CTest、状态证据 |
+| AF-050 | `analysis_plotting.md §8.1`：501 点、阈值等值、分段/平滑、缺字段/无图形环境 | L2 全曲线逐值、独立 L3、Analyzer 与 CTest |
+| AF-051 | `TEST_PLAN.md §2.9`：上述固定夹具关联原 66 TC，不新增编号/PASS | 真正测试实体、独立参考、运行日志与验收 |
+| AF-060 | `GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md §4.1`：证据身份与有效样本口径；纠正“0.01/0.1 仍未选”的旧句，区分已选首轮筛查与最终 DEC-005 | 独立 L2/L3/L4 数据、TC/AC 逐项复核及批准 |
+
+**状态不提前结案**：七项仍为 §3 中的原编号「未整改」，本节只是进展说明，**不新增重复 AF 整改行**。其余 16 个开放目标也未获得真实软件/数值/人类批准证据。现有 **67 项：已整改 44，未整改 23**；[AUDIT.md](AUDIT.md) **50 文件：已审计 27，正在审计 23**。因此按用户停止条件**第一轮结束后立即退出，不开展新一轮 AUDIT 扫描与第二轮整改**。
+
+**执行边界**：本轮只有 GitHub 端纯文档修改/静态复读；没有实现 C++、运行 Bash/CMake/CTest/MATLAB/Octave、读取 MAT 逐值、生成独立 L3/L4 或写 MAT；`origin/**`、历史审批与 H-10/H-11 状态未改。
