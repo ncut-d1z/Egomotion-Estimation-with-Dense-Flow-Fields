@@ -1,6 +1,6 @@
 # MAT 结果分析与可选绘图——详细设计草案
 
-> **LLD v0.4 草案，未冻结、未运行任何可视化程序。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
+> **LLD v0.5 草案，未冻结、未运行任何可视化程序。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
 
 ## 1. 只读分析合同
 
@@ -165,6 +165,19 @@ PlotExporter 仅消费 AnalysisDataset，输出图形位置必须在独立 RunId
 **DEC-004 的最新所有者决定优先于历史 H-07 的仅起草状态**：当前生成字段正常输出，历史额外字段标 `HistoricalOnly` 并只读保留；未知来源无需先归因。分析需要却缺失的字段明确非成功，不补造/不调整统计口径。三态来源分类可保留 `CurrentGenerated/HistoricalOnly/Unknown`，具体报告类型待 LLD/CTest 验证。
 
 后续验收要分别进行：(1) `Mat_VarRead` 正常读取、rank/dims 解析（**已有独立探针证据**）；(2) 业务 Reader 将 MAT 列主序数据正确映射到分析数组；(3) 分段、窗口、指标及数值曲线与从 L2 MAT 依据原静态索引/公式**独立重算的 L3 数值参考**逐项相符；(4) 可选绘图输出。只有 (1) 有实际完成证据，其余仍未实施。
+
+### 8.1 第一轮分析数值与缺字段验证表（AF-050，设计补齐）
+
+| 场景/输入来源 | 独立比较的数组或错误语义 | 需保留的证据 |
+|---|---|---|
+| Bias 两组各 40 次的历史 L2 xwerte/ywerte | 用源 MAT `xwerte`（不是实际 N）及 `ywerte3…6` 独立重算四组曲线、均值和 `100/sqrt(xwerte)` | MAT 文件与变量身份、有效样本数、数值/维度及 Python/其它独立 L3 算法来源（不调用被测 Analyzer） |
+| Initialization 的 35×1 输入 | `mittrans(1:13)` 为 13 点、`mitrot(:)` 为 35 点；不得补齐/截断成相同长度 | 原 MATLAB 1-based 下标、各自输出 shape、对数坐标元数据 |
+| Comparison/Update-rate 的历史 `rottransratio` | `x=50:550` 共 **501** 点；阈值分别 **0.01/0.02**，**等于阈值不转移**，`begin/end/zone` 顺序与最多四段按源定义 | 可逐点复查的 ratio、阈值状态、begin/end、真实绘制区间与 NaN/Inf 分类 |
+| 选定平滑半窗 `f=2/5/10`，包括短数组/越界分段 | 中间每个样本使用 `2f+1` 长度均值，首尾各 f 个值保留源 zeros 预分配的零；绘图段以 `begin+f..end-f` 裁剪 | 完整平滑数组（含零边界）、裁剪索引、空/非法窗口错误 |
+| 当前 Update rates 三份 save 缺 `rottransratio` 或历史字段不全 | 明确 `AnalysisErrorCode::MissingVariable`（或合同指定的非成功），**不得**推导比值/回退另一字段；旧历史结果只读分析能力保留 | MissingVariable 诊断含 source/path/variable，来源 `CurrentGenerated/HistoricalOnly` |
+| 绘图后端未安装或无显示环境 | 只读数值 Analyzer 仍应返回完整 `AnalysisDataset`；可选 plot 独立返回能力错误，不改变数值/文件 | 有图/无图两路输出的曲线值与有效样本身份一致 |
+
+上表绑定 `APL-G01～APL-G06`、`TC-F-AN-001/002`、`TC-I-ANALYSIS-001`、`TC-NF-HEADLESS-001` 的现有候选；不重命名全局 `AN-G01～12`。尚缺 L2 逐值/SHA-256、独立 L3 曲线、业务 Analyzer、错误负例及 CTest，**AF-050 仍「未整改」**，绘图后端不是核心数值验证门禁。
 
 ## 附录 A：本模块无需运行 MATLAB 的验收参考
 

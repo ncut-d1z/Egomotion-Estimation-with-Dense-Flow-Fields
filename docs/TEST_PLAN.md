@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **测试计划草案 v0.8，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
+> **测试计划草案 v0.9，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
 
 > **审批后候选核对材料**：见 [HAR-2026-11-06-001 设计修订与待审材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md) §2、§3、§7～§9。其中历史上提出六类容差采集格式、582 MAT SHA-256 独立审核和正式 Reader 类型拒绝清单；**当前参考采集/核验路径以 L2/L3/L4 为准，完全不要求 MATLAB/Octave 执行或 L1 Golden**，见 [长期政策](golden/NO_MATLAB_EXECUTION_POLICY.md)。`atol=0.01`/`rtol=0.1` 已由所有者选作**首轮宽松筛查**，不是已冻结的最终验收阈值；测试实体/CTest 仍未执行，H-10/H-11 其他执行门禁未解除。
 
@@ -97,6 +97,20 @@
 > **H-10=deferred、H-11=deferred**；本次 JSON 的 `runCMake/runCTest/runMatlab/writeMat/runBash/measurePerformance` 全为 false。没有现场命令、运行结果或数值测试可在本轮回填。审阅/格式检查不触发工具执行授权。
 
 **参考术语的唯一解释**：本文件中历史标题/测试名如出现 `Golden`，除明确标明“历史 L1 分类”外，都必须逐个注明为 **L2（原作者现存 MAT）/L3（独立固定输入数值）/L4（统计）**；**L1 原 MATLAB 运行数据永久不作为强制取得/通过条件**。有编号不表示已有测试函数，唯一候选实体矩阵见 §3，真实执行证据只写入 [PROGRESS.md](PROGRESS.md)/[reviews/](reviews/) 的指定 Git SHA 记录。
+
+### 2.9 第一轮新增的可复核测试夹具规范（AF-051，尚未建真实测试）
+
+下表仅把模块 LLD 中新增的固定输入/预期映射到**既有 TC**，不改变 §3 的 66 项编号或将建议的测试文件说成已创建。
+
+| TC 组 | 应准备的独立夹具/重要断言 | 预期证据 |
+|---|---|---|
+| `TC-F-MAT-003/004`、`TC-NF-SAFETY-001`、`TC-DC-IO-001` | 多变量歧义、固定 `double[2×3]` 列主序、符号链接父目录/并发 RunId/非覆盖、写入失败及独立回读 | 隔离测试目录、源文件不变、具体 MatErrorCode、manifest/log 与逐元素比较；详见 `mat_io.md §8.1` |
+| `TC-F-GEOM-002/003`、`TC-NF-RNG-001`、`TC-DC-RNG-001` | 完整/缺损八面体 levels 0/1/2，有序行；固定注入时先 N 次 uniform 后 3N 次 normal；0 噪声仍抽样 | 原源码 SHA、独立方向 L3/固定 RNG 输入、调用数/顺序、非有限与耗尽负例；详见 `sampling_noise.md §7.1` |
+| `TC-F-TRAJ-001`、`TC-F-FLOW-004` | 35/600 轨迹、N 分母、端点无有效运动、`R^\top`、小角 epsilon/反向/近 π、球内正根 | 全矩阵独立 L3、状态/维度、球外失败分类；详见 `trajectory.md §6.2` |
+| `TC-F-EXP-002/003`、`TC-I-RESULT-001`、`TC-NF-RECOVERY-001` | 8 次四误差平均而 ratio 只留第 8 次、单轮失败/Manifest、周期刷新和当前三个 save | 独立固定八轮和帧号、RunId、保存字段/源只读确认；详见 `experiments.md §8.2` |
+| `TC-F-AN-001/002`、`TC-I-ANALYSIS-001` | 50:550 的 501 点、阈值等值不触发、分段与 f 半窗/零边界、更新率新数据缺 ratio 明确报错 | L2 原始变量/下标与独立 L3 曲线/分段/错误对照；详见 `analysis_plotting.md §8.1` |
+
+**不能自动宣称 PASS**：测试夹具未生成，运行许可 H-10/H-11 未开放，源输入/参考 SHA、逐值误差及 CTest stdout/stderr/exit 尚无本轮执行记录。本表仅完成 AF-051 的测试**设计部分**，AF-051 继续「未整改」。
 
 ## 3. TC → 实体/CTest → AC 规划矩阵
 

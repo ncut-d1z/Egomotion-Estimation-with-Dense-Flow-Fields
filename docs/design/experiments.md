@@ -2,7 +2,7 @@
 
 > **长期参考边界**：本 Runner **不要求 MATLAB/Octave 运行或采集 L1**；原 .m 仅作只读源码依据，结果验收使用 L2 已存 MAT、L3 独立逐帧/逐轮参考与 L4 统计，参见 [长期政策](../golden/NO_MATLAB_EXECUTION_POLICY.md)。
 
-> **LLD v0.4 草案，未冻结、未创建 C++ Runner。** 来源：bias_test/data_generation 中 2 个入口；adaptive_matched_filter_test/data_generation 中 3 个入口。对应 P5、P8、REQ-F-BIAS、REQ-F-EXP、REQ-F-CLI 与 REQ-I-RESULT。
+> **LLD v0.5 草案，未冻结、未创建 C++ Runner。** 来源：bias_test/data_generation 中 2 个入口；adaptive_matched_filter_test/data_generation 中 3 个入口。对应 P5、P8、REQ-F-BIAS、REQ-F-EXP、REQ-F-CLI 与 REQ-I-RESULT。
 
 ## 1. 实验入口及源代码实际参数
 
@@ -225,6 +225,21 @@ private:
 | TC-NF-SAFETY-001 / AC-NF-SAFETY-001 | `tests/contracts/test_output_safety.cpp` / `egomotion.safety.*` | 重复 RunId、路径逃逸及已有文件非覆盖 |
 
 **CMake/头文件归属候选**：按 [ARCHITECTURE.md §4](../ARCHITECTURE.md)，`egomotion_experiments` 依赖 `egomotion_domain`、`egomotion_contracts`、`egomotion_sampling`、`egomotion_simulation`、`egomotion_estimators`；**不链接 `egomotion_matio`、不包含 `matio.h`**。Runner 的必要 facade/RunOutcome 接口可候选放在 `include/egomotion/experiments/`，输出 Manifest/实验编排和入口配置解析属于 `src/experiments/` 私有层（最终公开头与参数位置待 P0.8）。MAT I/O 具体 Writer 只在 CLI Composition Root 装配。上述测试文件及 target 均未创建，真实测试/头文件/依赖版本未冻结。
+
+### 8.2 第一轮 Runner/Manifest 的固定替身验收场景（AF-049，设计补齐）
+
+以下通过**未来独立替身**输入可审查的结果序列，而非调用 MATLAB；此轮**没有**生成结果、编写测试或执行测试。
+
+| 固定场景 | 期望的输出/状态合同 | 最小证据与关联 TC |
+|---|---|---|
+| Comparison 八次皆有定义；八次提供各不相同的四误差数组和 `rottransratio` | 前四数组分别累加八次、**最后统一除以 8**；`rottransratio` 保留**第 8 次**，绝不求均值或采用之前一次 | 逐次独立输入、期望 600×1、每次计数/最后一轮身份；`TC-F-EXP-002` |
+| Comparison 在第 k 次失败或第 8 次没有可用比值 | 不能用七次或 k−1 次修改分母；不伪造“最后一次比值”，整体非 Complete 并保留真实已完成次数与失败阶段 | `RunOutcome` + Manifest 的 attempted/valid/failed/undefined 及底层 Failure；`TC-NF-RECOVERY-001` |
+| Update rates 的第 1/5/11/21 周期 | 每种对照配置独立刷新，主 `akkoeff` 按原帧规则更新，输出仅 **两个 allemit*（600×4）+ akrot（600×1）** | 固定帧号、刷新前/后状态与当前 save 三变量；`TC-F-EXP-003` |
+| 新 Update rates 输出被旧分析入口读取 | 没有 `rottransratio` 即 `MissingVariable`，不自动计算/填零或制造历史 `alleadap*` | 新/旧数据来源分类、分析失败状态；`TC-I-ANALYSIS-001` |
+| 两个 Bias 独立运行或两个 `RunContext` 交错 | seed/reset、随机流、输出 RunId、Manifest 和结果不可交叉污染；`origin/**` 始终只读 | 固定 RNG trace、独立 RunId/目录和来源 SHA；`TC-NF-SESSION-001` |
+| Writer 已存在/失败，或中断后仅有部分 MAT | 使用固定 output 根，非覆盖；失败不能宣称 `Complete`，不得删除旧 RunId 或复制历史额外字段 | `OutputExists/OutputFailed` 底层 cause、剩余产物/日志、只读源不变；`TC-I-RESULT-001`、`TC-NF-SAFETY-001` |
+
+**边界**：严格区分“原源码的更新次序/当前 save”、“独立 L3 固定输入参考”、“历史 MAT 实际已有字段”与“已执行 C++/CTest”四类证据。只有最后一类实测并取得相应数值/安全批准时才能关闭相关 AC。**AF-049 仍「未整改」**。
 
 ## 9. 原作者归档字段的实测数据合同
 
