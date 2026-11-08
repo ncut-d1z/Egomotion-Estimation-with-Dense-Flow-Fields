@@ -201,6 +201,15 @@
 
 | ID | 仓库根相对路径 | 具体整改目标 | 状态 |
 |---|---|---|---|
-| AF-083 | `docs/design/analysis_plotting.md` | §5 的 `graphs_bias_test.m` 聚合应明确 **xwerte 在 k 循环中每次覆盖，最终使用最后一个运行的 xwerte**；仅 `ywerte3…6` 四类累计后除以运行数，绘图选 `3:(iterationnumber+1)`，参考线 `100/sqrt(xwerte)`；给 APL-G01 和 TC-F-BIAS-003 明确的固定输入/状态区别，不能将 x 也平均或默默改按实际 N；真实 L2/L3/CTest 仍属 AF-050/051。 | 未整改 |
+| AF-083 | `docs/design/analysis_plotting.md` | §5 的 `graphs_bias_test.m` 聚合应明确 **xwerte 在 k 循环中每次覆盖，最终使用最后一个运行的 xwerte**；仅 `ywerte3…6` 四类累计后除以运行数，绘图选 `3:(iterationnumber+1)`，参考线 `100/sqrt(xwerte)`；给 APL-G01 和 TC-F-BIAS-003 明确的固定输入/状态区别，不能将 x 也平均或默默改按实际 N；真实 L2/L3/CTest 仍属 AF-050/051。 | 已整改 |
 
 **发现时**：原 83 项（60 已整改/23 未整改）新增 AF-083 后为 **84 项（60 已整改/24 未整改）**；原 `origin/**`、旧审批和报告均未修改。
+
+
+## 18. AF-083 修订结案及 AF-084 首次登记（2026-11-08）
+
+| ID | 相对路径 | 具体整改目标 | 状态 |
+|---|---|---|---|
+| AF-084 | `docs/design/contracts.md` | §3.1 与 `analysis_plotting.md` 的 `PlotErrorCode` 四种状态对齐：`BackendUnavailable`、`InvalidSeries`、`OutputForbidden`、`WriteFailed` 均需唯一候选 `exit_code/ErrorStage`；同步 `cli.md` 和 `TEST_PLAN.md` 中绘图/只读分析分层、底层错误溯源及无后端/无效曲线/路径拒绝/写失败的负例；保持实际代码、DEC-008/CTest 未完成边界。 | 未整改 |
+
+**先后顺序**：AF-083 于 `8f193ae` 首次登记未整改，实际目标在 `ab9470936eeea1a536709e05a909bee6256b1168` 修改并固定复读 **9/9 定向静态检查通过**，故转「已整改」。AF-084 尚只登记发现、**未修改目标合同**。此时 85 个独立 AF 行：61 已整改、24 未整改；不得把静态映射当真实接口/CTest PASS。

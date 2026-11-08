@@ -289,3 +289,8 @@ AF-041/047/055/058 与其它开放目标仍须独立数据/真实软件及审批
 ### 6.15 AF-082 现行动态状态描述的静态复核身份（非冻结）
 
 本轮固定复读提交 `8cd782b2f2558edf7cb51c101a40117b80e61dcc`：`docs/AUDIT.md` 的 Git blob 为 `7096fc8c37d58374af92a073b1ec54edab5f90b1`。两行文件介绍不再写死动态数量，旧固定快照/审批与实际 REQ/TC/软件基线无变化。本矩阵只保留该次**静态文本**身份，不将过程文档纳入正式已冻结范围。
+
+
+### 6.16 Bias 聚合原始统计合同的固定身份（仅文本）
+
+固定定向复读提交 `ab9470936eeea1a536709e05a909bee6256b1168`：分析 LLD v0.8 `docs/design/analysis_plotting.md` blob `92bd20e5b67bcf75830ee14172a955b0fa663040`；测试计划 v0.17 `docs/TEST_PLAN.md` blob `60d195cc9cf3604ba97e88fb560420d2fec19314`；新增 Bias 原文审计 `docs/reviews/AUDIT_BIAS_XWERTE_LAST_RUN_STATIC_2026-11-08.md` blob `b9653af0a0782b1a6fae1bbdd5e75c77257c338e`。这只证实 AF-083 的特定源码统计合同；AF-050/051、DEC-005/008、完整 L2/L3 与业务测试仍未满足。

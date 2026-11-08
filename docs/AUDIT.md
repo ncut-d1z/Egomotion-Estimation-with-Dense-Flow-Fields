@@ -68,7 +68,7 @@
 | `docs/PROGRESS.md` | 正在审计 | 真实证据与动态 DEC/里程碑；待 AF-053；AF-070 已定向复核；AF-053 真实证据待补 |
 | `docs/ARCHITECTURE.md` | 正在审计 | HLD/27 条设计边、部署/Writer；待 AF-038 |
 | `docs/OBJECT_MODEL.md` | 正在审计 | 生命周期、45 .m 映射；待 AF-039 |
-| `docs/design/contracts.md` | 正在审计 | Result/Status/ErrorDetail、所有权；待 AF-040；AF-077 已定向复核（候选映射）；AF-040 仍待实际 ABI/错误运行验证 |
+| `docs/design/contracts.md` | 正在审计 | Result/Status/ErrorDetail、所有权；待 AF-040；AF-077 已定向复核（候选映射）；AF-040 仍待实际 ABI/错误运行验证 ；AF-084 PlotErrorCode 对外映射未完整待修订 |
 | `docs/design/cli.md` | 正在审计 | 参数类型、RunId、JSONL/错误；待 AF-041 |
 | `docs/design/mat_io.md` | 正在审计 | MAT 类型、RAII、Reader/Writer/安全；AF-033 已整改，待 AF-042 |
 | `docs/design/kvd.md` | 正在审计 | Franz/KvD 公式、逐轮顺序；待 AF-043 |
@@ -78,7 +78,7 @@
 | `docs/design/sampling_noise.md` | 正在审计 | 有序采样与 RNG 消耗；待 AF-047 |
 | `docs/design/trajectory.md` | 正在审计 | AF-080 严格反向源返回已明确，TR-C01～04 静态候选已补；AF-048 仍缺独立 L3/CTest |
 | `docs/design/experiments.md` | 正在审计 | 五入口、Runner/Manifest/save；AF-034 已整改，待 AF-049 |
-| `docs/design/analysis_plotting.md` | 正在审计 | 四种分析、曲线、HistoricalOnly；待 AF-050；AF-075/076 已完成静态设计复核；AF-050 仍需独立 L3/真实 CTest ；新增 AF-083 Bias xwerte 逐次覆盖语义待修订 |
+| `docs/design/analysis_plotting.md` | 正在审计 | 四种分析、曲线、HistoricalOnly；待 AF-050；AF-075/076 已完成静态设计复核；AF-050 仍需独立 L3/真实 CTest ；AF-083 原文已复核，AF-050 实际数值/测试仍未通过 |
 | `docs/decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | 已审计 | DEC-004 现行处理已选 |
 | `docs/decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md` | 已审计 | 所有者已选技术方向 |
 | `docs/golden/NO_MATLAB_EXECUTION_POLICY.md` | 已审计 | L1 永久不必需 |
@@ -112,6 +112,7 @@
 | `docs/reviews/AUDIT_ANALYSIS_ERROR_MAPPING_SCAN_2026-11-08.md` | 已审计 | 分析错误枚举未纳入跨模块统一退出码的静态发现（AF-077） |
 | `docs/reviews/AN_G_LEVEL0_FACE_ORDER_STATIC_2026-11-08.md` | 已审计 | 初始 8/6/20 面有序单位中心的符号级静态推导；非 level1/2 独立 L3/CTest |
 | `docs/reviews/AN_G_RECURSION_INDEX_STATIC_2026-11-08.md` | 已审计 | AF-081：A/B/C/D 子面顶点与深度优先索引公式；仅静态/符号合同，不是完整 L3 |
+| `docs/reviews/AUDIT_BIAS_XWERTE_LAST_RUN_STATIC_2026-11-08.md` | 已审计 | Bias 多次聚合仅 y 求平均、x 取最后 k 的静态源码审计；非 L2/L3/CTest |
 | `AGENTS.md` | 已审计 | 仓库授权与数据安全规则 |
 | `README.md` | 已审计 | 项目范围、证据/许可状态 |
 | `LICENSE` | 已审计 | MIT 与上游作品边界 |
@@ -226,3 +227,10 @@
 ## 19. 新增 Bias 历史聚合合同缺口（AF-083，先登记）
 
 在固定输入 `19157a21221a8fde4447e3c96ff97a8da1a5746f` 静态对照 `origin/.../bias_test/data_analysis/graphs_bias_test.m` 与 [分析 LLD](design/analysis_plotting.md) §5、[测试计划](TEST_PLAN.md) 时发现：`k=1:number_of_cores` 中 `ywerte3…6` 的四组矩阵累加并在循环后除以 `number_of_cores`，但 `xwerte` 在**每次循环直接覆写**，最终绘图只使用**最后一个 k 的 xwerte**，不求 x 均值。现 LLD 的 Bias 聚合行及 APL-G01 还未明确此单侧更新顺序。整改在 [AUDIT_PROCESS](AUDIT_PROCESS.md) 先登记为「未整改」；既有阶段目标 AF-050 的独立 L2/L3/CTest 仍开放。
+
+
+## 20. AF-083 定向结案与 AF-084 新发现（2026-11-08）
+
+- **AF-083 已整改（仅合同文本）**：先于 `8f193ae` 登记原分析脚本的 `xwerte` 最后 k 覆写语义，再在 `ab9470936eeea1a536709e05a909bee6256b1168` 修改分析 LLD v0.8、TEST_PLAN v0.17 和 [静态审阅报告](reviews/AUDIT_BIAS_XWERTE_LAST_RUN_STATIC_2026-11-08.md)。固定提交上的 **9/9 静态合同断言**及本地链接检查通过。仅四组 `ywerte3…6` 跨 k 求均值、x 与理论参考始终用末轮 `xwerte`；AF-050/051 的 L2/L3/Analyzer/CTest 仍未完成。
+- **AF-084 新发现，先登记未整改**：`analysis_plotting.md` §2 候选接口定义 `PlotErrorCode::{BackendUnavailable,InvalidSeries,OutputForbidden,WriteFailed}`；[contracts.md §3.1](design/contracts.md) 只用笼统“可选 plot 后端不存在→exit7”覆盖一种来源，未给另外三种稳定 `ErrorStage/exit`。这与“公共错误映射唯一来源”的设计承诺不完整；须同步 `contracts.md`、分析 LLD、CLI 与原 66 TC 对应 TEST_PLAN，不得凭文档宣布 DEC-008 或 CTest 已批准。
+- 本轮状态（AF-083 结案、AF-084 登记）：**85 个目标：61 已整改、24 未整改**；新增一份 Bias 原文复核文件后 **60 个审计对象：37 已审计、23 正在审计、0 空白**。新的 AF-084 结案前始终保持「未整改」。
