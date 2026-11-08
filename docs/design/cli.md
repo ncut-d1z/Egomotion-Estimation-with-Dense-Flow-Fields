@@ -1,6 +1,6 @@
 # CLI 参数、退出码与诊断协议：详细设计草案
 
-> **候选 v0.4，未冻结、未编码、未执行 CTest。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
+> **候选 v0.5，未冻结、未编码、未执行 CTest。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
 
 ## 1. 语法与基本约束
 
@@ -36,17 +36,19 @@
 
 ## 3. 退出码、错误阶段与错误优先级（候选）
 
-**本表是面向命令行使用者的摘要，不是独立枚举映射表。** `MatErrorCode` / `NumericalErrorCode` / `ExperimentErrorCode` 到退出码的唯一候选来源是 [contracts.md §3.1](contracts.md)，不得从本表反向定义另一套错误编码；两表不一致时先记录待审差异，不擅自修改已批准的 SRS 义务。
+**本表是面向命令行使用者的摘要，不是独立枚举映射表。** `MatErrorCode` / `NumericalErrorCode` / `ExperimentErrorCode` / **`AnalysisErrorCode`** 到退出码的唯一候选来源是 [contracts.md §3.1](contracts.md)，不得从本表反向定义另一套错误编码；两表不一致时先记录待审差异，不擅自修改已批准的 SRS 义务。
 
 | exit | 类别 | 示例 |
 |---:|---|---|
 | 0 | 成功 | help、version 或正常完成 |
 | 2 | 参数错误 | 未知/重复/缺少参数、非法枚举、整数格式 |
-| 3 | 输入或 MAT 读取错误 | 文件不存在/拒绝访问、坏 MAT 头、损坏压缩块、缺变量、兼容多变量顺序不明（AmbiguousVariable） |
-| 4 | 变量类型/布局错误 | 不支持的 MAT class/data_type、rank/dims 不匹配、长度溢出 |
-| 5 | 数值或实验失败 | SingularSystem、NonFiniteResult、SolverFailed、IncompleteRun |
+| 3 | 输入或 MAT 读取错误 | 文件不存在/拒绝访问、坏 MAT 头、损坏压缩块、缺变量（含 Analyzer 发现必需的 rottransratio 缺失）、兼容多变量顺序不明（AmbiguousVariable） |
+| 4 | 变量类型/布局错误 | 不支持的 MAT class/data_type、rank/dims 不匹配、分析变量 ShapeMismatch、长度溢出 |
+| 5 | 数值、实验或分析失败 | SingularSystem、NonFiniteResult、SolverFailed、IncompleteRun；Analyzer 的 InvalidSegment / UndefinedStatistic / NonFiniteInput / UnsupportedExperiment |
 | 6 | 输出路径/结果安全冲突 | origin 路径、已有 RunId、写失败、独立回读不一致 |
 | 7 | 可选功能不可用 | 仅 plot 绘图后端不存在 |
+
+**分析路径跨层区分（AF-077）**：无效 `--experiment` 由 CLI parse 阶段拒绝（exit 2）；合法命令但缺少必需的分析输入/变量属 read(3)、shape 错误属 decode(4)，读入成功后段界/统计/非有限属 analyze(5)，严格按 [contracts §3.1](contracts.md) 的同一候选表，保留底层源错误身份，不能只按枚举同名就随意转换。
 
 阶段检查顺序为 **parse（2）→ input/read（3）→ decode/schema（4）→ output safety（6）→ solve/analyze（5）→ plot capability（7）**。如果一个请求包含多个问题，报告实际先触发的失败，保留原始错误码及上下文。具体错误枚举映射直接引用 [contracts.md §3.1](contracts.md) 的候选表，待 P0.8/P1.2 人类批准后冻结。
 

@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **测试计划草案 v0.12，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
+> **测试计划草案 v0.13，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
 
 > **审批后候选核对材料**：见 [HAR-2026-11-06-001 设计修订与待审材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md) §2、§3、§7～§9。其中历史上提出六类容差采集格式、582 MAT SHA-256 独立审核和正式 Reader 类型拒绝清单；**当前参考采集/核验路径以 L2/L3/L4 为准，完全不要求 MATLAB/Octave 执行或 L1 Golden**，见 [长期政策](golden/NO_MATLAB_EXECUTION_POLICY.md)。`atol=0.01`/`rtol=0.1` 已由所有者选作**首轮宽松筛查**，不是已冻结的最终验收阈值；测试实体/CTest 仍未执行，H-10/H-11 其他执行门禁未解除。
 
@@ -136,6 +136,19 @@
 2. 多更新率**平移图**：四列各以全部 600 行构造数据（前三列平滑半宽 2/5/10，第一列原样），统一绘制 **50:550 共 501 点**、无分段掩码；comparison 实验平移 mit/ohne 亦全区间不分段，旋转图另按阈值分段。必须选有阈值穿越和间隙的 ratio，确保平移线**不会丢掉中间 x**。
 
 沿用 `TC-F-AN-001`、`TC-I-ANALYSIS-001`、`APL-G04/05`，不新增 TC ID/测试 PASS；完整独立参考、Analyzer 和 CTest 尚未建立。旧扫描报告中关于“正确裁剪后的旋转内部值必然不同”的说法已在 [纠偏说明](reviews/AUDIT_ANALYSIS_SEGMENT_SMOOTHING_CORRECTION_2026-11-08.md) 限定，旧扫描仍保留历史原文。
+
+### 2.12 分析错误枚举到 CLI 退出码的合同负例（AF-077，未测试）
+
+根据 [contracts.md §3.1](design/contracts.md) 的**唯一候选**映射设计以下输入与 `stage/exit` 断言（非已经执行）：
+
+| 原 TC | 固定触发条件 | 预期候选返回 | 当前状态 |
+|---|---|---|---|
+| TC-I-ANALYSIS-001 | 新 update-rates 结果不含历史 `rottransratio`；或指定目录缺实际 MAT | `AnalysisErrorCode::MissingVariable/MissingResult`，`read` / exit 3；记录原 path/variable/source_error_code | 仅计划 |
+| TC-I-ANALYSIS-001 | MAT 解码后 shape 不能满足源曲线合同 | `AnalysisErrorCode::ShapeMismatch`，`decode` / exit 4 | 仅计划 |
+| TC-F-AN-001、TC-I-ANALYSIS-001 | ratio 形成非法分段、分析值非有限或统计未定义 | `InvalidSegment/NonFiniteInput/UndefinedStatistic`，`analyze` / exit 5 | 仅计划 |
+| TC-I-CLI-001、TC-I-ANALYSIS-001 | 非法 CLI `--experiment`；与合法命令内部传给 Analyzer 的 unsupported mode 分开 | CLI 无效枚举 `parse` / exit 2；运行期 `AnalysisErrorCode::UnsupportedExperiment` 为 `analyze` / exit 5 | 仅计划 |
+
+本表不重新定义 enum、增删 66 个 TC 或签署 DEC-008；真实接口、JSONL 转义/底层原因传播与 CTest 待后续授权和证据。
 
 ## 3. TC → 实体/CTest → AC 规划矩阵
 

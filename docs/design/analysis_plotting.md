@@ -1,6 +1,6 @@
 # MAT 结果分析与可选绘图——详细设计草案
 
-> **LLD v0.6 草案，未冻结、未运行任何可视化程序。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
+> **LLD v0.7 草案，未冻结、未运行任何可视化程序。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
 
 ## 1. 只读分析合同
 
@@ -157,6 +157,8 @@ enum class AnalysisErrorCode {
     NonFiniteInput, UndefinedStatistic, UnsupportedExperiment
 };
 ~~~
+
+**单一分析错误归属（AF-077）**：`AnalysisErrorCode` 七个状态只在本分析 LLD 定义；其对外 `exit_code/ErrorStage` **唯一候选映射**由 [contracts.md §3.1](contracts.md) 维护：缺结果/变量归 `read(3)`，shape 归 `decode(4)`，无效分段/非有限/无定义统计/Analyzer 内部不支持模式归 `analyze(5)`；不再在本模块定义第二份退出码表。非法 `--experiment` 值应在 CLI parse(2) 阶段被拒绝而非进入 Analyzer；底层缺 MAT/变量的原 `MatErrorCode` 通过 `ErrorDetail.source_error_code` 保留。例：新多更新率结果没有历史 `rottransratio` 时应报告 `AnalysisErrorCode::MissingVariable` 和缺失变量身份，**不得**编造比值。此映射为待 DEC-008 签署的**候选**，并无真实分析测试或 JSONL PASS。
 
 前置条件：源目录可只读加载、每条曲线要求的变量存在且形状可核实；任何 1-based→0-based 的转换必须在 Analyzer 内显式处理。后置条件：曲线数据自拥有且可在 MAT 文件关闭后独立消费；错误不得诱发求解器运行或写回源 MAT。
 
