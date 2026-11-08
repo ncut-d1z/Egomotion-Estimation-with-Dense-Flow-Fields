@@ -68,7 +68,7 @@
 | `docs/PROGRESS.md` | 正在审计 | 真实证据与动态 DEC/里程碑；待 AF-053；AF-070 已定向复核；AF-053 真实证据待补 |
 | `docs/ARCHITECTURE.md` | 正在审计 | HLD/27 条设计边、部署/Writer；待 AF-038 |
 | `docs/OBJECT_MODEL.md` | 正在审计 | 生命周期、45 .m 映射；待 AF-039 |
-| `docs/design/contracts.md` | 正在审计 | Result/Status/ErrorDetail、所有权；待 AF-040 |
+| `docs/design/contracts.md` | 正在审计 | Result/Status/ErrorDetail、所有权；待 AF-040；待 AF-077 AnalysisErrorCode 到 CLI 的单一候选映射 |
 | `docs/design/cli.md` | 正在审计 | 参数类型、RunId、JSONL/错误；待 AF-041 |
 | `docs/design/mat_io.md` | 正在审计 | MAT 类型、RAII、Reader/Writer/安全；AF-033 已整改，待 AF-042 |
 | `docs/design/kvd.md` | 正在审计 | Franz/KvD 公式、逐轮顺序；待 AF-043 |
@@ -109,6 +109,7 @@
 | `docs/reviews/AUDIT_FUNCTION_DECLARATIONS_AND_LEDGER_COMPACT_2026-11-08.md` | 已审计 | 45 个 .m/50 个函数定义与台账膨胀的静态发现；非数值测试 |
 | `docs/reviews/AN_G08_Z90_STATIC_CONVENTION_2026-11-08.md` | 已审计 | z90 特例的 R3/R5、m 次序及系数旋转方向代数核对；非通用递推或 L3 PASS |
 | `docs/reviews/AUDIT_ANALYSIS_SEGMENT_SMOOTHING_CORRECTION_2026-11-08.md` | 已审计 | 修正旧扫描报告关于窗口必不同的断言，逐域确认旋转/平移图差异；不代表 L3/CTest |
+| `docs/reviews/AUDIT_ANALYSIS_ERROR_MAPPING_SCAN_2026-11-08.md` | 已审计 | 分析错误枚举未纳入跨模块统一退出码的静态发现（AF-077） |
 | `AGENTS.md` | 已审计 | 仓库授权与数据安全规则 |
 | `README.md` | 已审计 | 项目范围、证据/许可状态 |
 | `LICENSE` | 已审计 | MIT 与上游作品边界 |
@@ -119,7 +120,7 @@
 
 ## 4. 最新审核结论与尚缺证据
 
-- 当前固定扫描：`150b975db4045fbc99a343fdf422c7836e1a797b`，并参考 [函数级声明检查](reviews/AUDIT_FUNCTION_DECLARATIONS_AND_LEDGER_COMPACT_2026-11-08.md)。共 **56 个审计路径**，其中 **33 已审计、23 正在审计、0 空白**；这些三态仅表示限定静态范围，不能代替软件/数学/批准状态。
+- 当前固定扫描：`150b975db4045fbc99a343fdf422c7836e1a797b`，并参考 [函数级声明检查](reviews/AUDIT_FUNCTION_DECLARATIONS_AND_LEDGER_COMPACT_2026-11-08.md)。共 **57 个审计路径**，其中 **34 已审计、23 正在审计、0 空白**；这些三态仅表示限定静态范围，不能代替软件/数学/批准状态。
 - 既有设计为**评审草案**；58 条正文 REQ＋8 条附录 REQ-DC＝66 REQ，对应 66 TC；98 P、原 45 个 .m、HLD 静态 27 边。已建立源 [45 文件/50 函数定义的迁移矩阵](MIGRATION_MATRIX.md)：SHRotate 主函数＋M/U/P/V/W 五个内部函数，**仅声明级审查，不是代码/数值验收**。
 - 历史 MAT 由独立 matio 探针报告 582/582 READ_OK；另将 582 Git MAT 路径/字节与既有字典作静态逐项交叉核对（0 个目录/元数据差异），但**没有**完成独立 SHA-256、逐元素 L2、Reader/Writer/TOCTOU、逐轮及退化 L3、必要 L4 或正式 CTest。候选 `AN-G01～12` 仍为 `DRAFT_UNAPPROVED_UNEXECUTED`；小范围手算及 AN-G08 的 z90 符号特例不代表一般 R5/Golden 通过。
 - 永久不要求 MATLAB/Octave/L1。物理旋转路线 Sophus 已选；R3/R5 的 Eigen-only 实现须核 Ivanic–Ruedenberg 1996/1998 原文、禁 sdla。首轮 `atol=0.01, rtol=0.1` 已选，**最终 DEC-005/006/008、H-10/H-11 与正式冻结/发布尚未通过**。
@@ -150,3 +151,9 @@
 ## 8. AF-075/076 定向文档合同结案（2026-11-08）
 
 先在 `8730c631` 登记 `analysis_plotting.md` 源码差异为两项「未整改」，再于 `98ff092` 修订分析 LLD v0.6、TEST_PLAN v0.12 及独立纠偏报告，`d8e7e64` 修复 §5.2.1 章节位置并在该提交定向复读：旋转**按区间局部平滑和裁剪**、平移**完整 600 行平滑和连续 501 点**、comparison 平移**不分段**与完整临时数组的独立断言均已明确。旋转正确裁剪内部窗口与全域平滑对应窗口的数值等价也已写清，**不能以假的差异判据充当测试通过**。本次只修订算法与测试设计，故 AF-075/076 在**文字合同范围已整改**；AF-050/051 仍需真实 L2/L3、Analyzer/CTest，保持未整改。
+
+
+## 9. 跨模块分析错误码扫描（2026-11-08，先登记）
+
+- 输入 `4ffbbf93d0acf8177bbc4d9dfd28ed6aaaef197b`。核对 `docs/design/analysis_plotting.md §6` 的 `AnalysisErrorCode` 七个候选枚举与 `docs/design/contracts.md §3.1` 统一退出码表：后者只覆盖 Mat/Numerical/Experiment，分析层的 MissingResult/MissingVariable/ShapeMismatch/InvalidSegment/NonFiniteInput/UndefinedStatistic/UnsupportedExperiment 尚缺明确且单一的映射。见 [静态扫描报告](reviews/AUDIT_ANALYSIS_ERROR_MAPPING_SCAN_2026-11-08.md)。
+- 新增 AF-077 先记「未整改」；后续应由 contracts 维护候选 stage/exit，分析与 CLI LLD 只引用而不复制，并把缺字段、坏形状、非法区间的 TC 检查点写清。DEC-008 正式批准、真实 JSONL/CTest 仍独立开放。
