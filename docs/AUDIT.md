@@ -64,7 +64,7 @@
 | `docs/PLAN.md` | 正在审计 | AF-052 WBS 静态追踪已复核；DEC-006 实测/批准仍待 AF-061 |
 | `docs/TEST_PLAN.md` | 正在审计 | 66 TC（含 8 TC-DC）→候选测试→AC；AF-063 已整改，AF-051 仍待真实 CTest |
 | `docs/design/README.md` | 已审计 | AF-059 已补各模块冻结前检查清单；仅静态合同检查，不代表实际冻结或测试 |
-| `docs/DOCUMENT_BASELINE_REGISTER.md` | 正在审计 | 36 项固定快照身份与正式冻结状态；AF-036 已整改，待 AF-058 |
+| `docs/DOCUMENT_BASELINE_REGISTER.md` | 正在审计 | 36 项固定快照身份与正式冻结状态；AF-036 已整改，待 AF-058 ；AF-071 小节编号待修复 |
 | `docs/PROGRESS.md` | 正在审计 | 真实证据与动态 DEC/里程碑；待 AF-053；AF-070 已定向复核；AF-053 真实证据待补 |
 | `docs/ARCHITECTURE.md` | 正在审计 | HLD/27 条设计边、部署/Writer；待 AF-038 |
 | `docs/OBJECT_MODEL.md` | 正在审计 | 生命周期、45 .m 映射；待 AF-039 |
@@ -208,3 +208,8 @@
 ## 17. AF-068～070 定向结案（2026-11-08）
 
 先以 `51acf7f` 扫描并在 `6a54726` 登记三项未整改，再在固定提交 `fa85cc638e58638768506b25c4b375566f6e8379` 分别复读：AUDIT §1～16 标题有序且无重号；AUDIT_PROCESS §1～13 无跳号、明确持续整改及真实验收门槛；PROGRESS 新增 E-DOC-035 不把历史停止口径当现行指令。三项**3/3 文档静态核对通过**，此后方更新两态。原 23 个阶段目标仍不自动结案。
+
+
+## 18. 版本矩阵章节一致性问题（先登记）
+
+静态检查当前核心规范的顶层与三级编号时，发现 [DOCUMENT_BASELINE_REGISTER.md](DOCUMENT_BASELINE_REGISTER.md) **§6.3 重号**，目前末尾顺序是 `6.1、6.2、6.3、6.3、6.4`；其他已检查的 20 份核心规范及 LLD 未发现同类重复。已新增 AF-071 且先标「未整改」；仅调整章节编号，不更改原文件 SHA、审批事实或数值内容。
