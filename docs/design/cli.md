@@ -1,6 +1,6 @@
 # CLI 参数、退出码与诊断协议：详细设计草案
 
-> **候选 v0.2，未冻结、未编码、未执行 CTest。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
+> **候选 v0.3，未冻结、未编码、未执行 CTest。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
 
 ## 1. 语法与基本约束
 
@@ -53,6 +53,18 @@
 失败诊断最少包含稳定的 `error_code`、`exit_code`、`stage`、`message`；涉及 MAT 需附 `path` 与已知 `variable`，涉及实验需附 RunId、算法与样本下标。正常输出使用 stdout、错误使用 stderr，文件里仍保存原 MATLAB 兼容 MAT。**现行设计已选 JSONL 为结构化诊断格式**：一行一个 UTF-8 JSON 对象，至少有 `stage`、`error_code`、`exit_code`、`message`，可选 `run_id/path/variable/observation_index/source_error_code`；stage 由 `contracts.md` 的稳定 `ErrorStage` 枚举序列化，字符串须正确转义，非有限数值不得输出不合法 JSON。无需大型 JSON 依赖，可实现小型可靠序列化器。**当前只有方案，未创建程序或 JSONL 测试**。
 
 **最新项目所有者决定**：CLI 输出根选项已明确删除；固定 `output/<RunId>/`、独立 RunId、JSONL、稳定错误阶段和轻量封装 Result 为已选择的设计方向（见 [最新决定](../decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md)）。其余 CLI 具体错误码与完整 CTest identity 仍属于 P0.8/DEC-008 的未冻结接口细节；本轮不执行任何命令，也不能把候选接口称为已测试。
+
+### 3.1 第一轮 CLI 冻结前边界矩阵（AF-041，部分文档工作）
+
+| 输入/情境 | 已确定或当前候选 | 未完成的决定/证据 |
+|---|---|---|
+| `--noise-scale` | `FINITE_DOUBLE` 拒绝 NaN/Inf/尾随内容；零噪声**仍按原源消耗 RNG** | 负系数在原 MATLAB 语义下应接收还是拒绝，需独立源码/设计批准与负例测试，不能无依据更改 |
+| `--seed` / `--level` | `UINT32`、`NONNEG_INT` 精确解析；不凭空设置人为规模上限 | 端值、溢出、资源失败状态与异常回退需实际测试 |
+| 手工/自动 RunId | 手工 ASCII 白名单；自动 OS 独立 128 bit、不得消耗实验 RNG；新目录独占，不复用/覆盖 | CSPRNG 失败、重复 RunId、软链接/TOCTOU、路径和回读负例待验证 |
+| 错误与退出码 | 唯一映射在 [contracts.md §3.1](contracts.md)，检查顺序 parse→read→decode→output→solve/analyze→plot | 多错并发出现时先到达阶段、跨层 code/stage 保留与所需退出码需 CTest 确认 |
+| 诊断 JSONL | UTF-8 每行对象、稳定字段、转义引号/反斜杠/控制字符、非有限数值不输出非法 token | 无有效 RunId 时字段省略/空值约定、stderr 与文件日志失败后的状态需批准与真实测试 |
+
+这些是冻结前核对项，**不授权**实现/执行；DEC-008/P0.8/P1.2 尚未批准，`AF-041` 保持「未整改」。
 
 ## 4. 验收映射与冻结界线
 

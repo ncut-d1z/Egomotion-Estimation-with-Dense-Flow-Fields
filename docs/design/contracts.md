@@ -1,6 +1,6 @@
 # C++17 公共详细设计合同（跨模块 LLD）
 
-> **跨模块合同草案 v0.2（未冻结、未建公共头文件、未编译）。** 此处集中定义候选值类型、状态、错误与 ABI 风格，以免 MAT I/O、KvD、Adaptive、实验和分析各自使用不同的 Result、形状和退出码。最终签名必须经 P0.7/P0.8 与项目所有者审批后才能成为编码基线。
+> **跨模块合同草案 v0.3（未冻结、未建公共头文件、未编译）。** 此处集中定义候选值类型、状态、错误与 ABI 风格，以免 MAT I/O、KvD、Adaptive、实验和分析各自使用不同的 Result、形状和退出码。最终签名必须经 P0.7/P0.8 与项目所有者审批后才能成为编码基线。
 
 ## 1. 适用范围与版本边界
 
@@ -129,6 +129,17 @@ private:
 | source_error_code | 跨 Mat/Numerical/Experiment 层封装时保留原始错误码的稳定名称 | Runner 不吞掉底层失败原因 |
 
 **诊断输出采用 JSONL**：每行一个 UTF-8 JSON 对象，至少包含 `stage`、`error_code`、`exit_code`、`message`；可选 `run_id/path/variable/observation_index/source_error_code`，必须有正确的引号/反斜杠/控制字符转义，非有限浮点不得输出非法 JSON token；日志失败也不能被当作正常完成。可以使用审计过的小型序列化逻辑，**不为 JSONL 强行引入大型依赖**。JSONL 文件的创建与 CLI stderr 消息分离，均不得覆盖原始 MAT。以上仅为已选设计，未实际写/测。
+
+### 3.0.1 第一轮错误合同未决边界（AF-040，部分文档工作）
+
+| 分支 | 当前合同检查点 | 真正未定/待验证 |
+|---|---|---|
+| `Result/Status` 正常与失败态 | 只有成功值或 `Failure<Code>{code,detail}`；`hasValue()` 不可将失败伪装为成功；接口模板只定义一处 | 真实 `<variant>/<optional>` include、模板 ODR、复制/移动、ABI 以及无异常构建兼容性待编译 |
+| `std::variant::valueless_by_exception()` | **不能**将无值内部状态当成功或返回默认 `T`；实现前必须给出能保留失败原因的稳定处理路径 | 使用哪一个公共错误码/异常边界仍待 P0.8 批准与故障注入，不凭文档编造映射 |
+| 对错误调用 `value()` / 成功调用 `error()` | 均属违反访问前置条件；不得泄漏无效引用或转换成默认值 | 选择抛异常/断言/显式返回等精确 ABI 行为待决定与测试 |
+| `ErrorDetail` 与 CLI JSONL | `run_id`、`observation_index` 可空；保持底层 code/stage；JSONL 对字符串/非有限值合法编码 | 实际跨 Mat→Experiment→CLI 嵌套错误、JSONL 转义/失败负例及多线程所有权未测 |
+
+**状态**：明确待批准项而非重新设计 Result/Status 方案；`MatDenseArray` 的定义仍仅见 [mat_io.md](mat_io.md)，本文件只引用，不创建第二套值类型。**AF-040 未整改**。
 
 ### 3.1 错误枚举与 CLI 退出码：唯一候选映射
 

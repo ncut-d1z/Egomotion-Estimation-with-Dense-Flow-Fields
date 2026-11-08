@@ -1,6 +1,6 @@
 # 系统概要设计（HLD）— MATLAB 自运动估计 C++ 移植
 
-> **状态：HLD v0.8 评审草案，未冻结。** 当前统一文档版本与冻结状态见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，实际 matio 探针/构建/CTest/数值证据仅见 [PROGRESS.md](PROGRESS.md)；此处只定义稳定架构边界，不以历史探针代替架构验收。 来源是已核对的 MATLAB 源码和原 PLAN §3/4/6。需求依据见 [REQUIREMENTS.md](REQUIREMENTS.md)，类职责附件见 [OBJECT_MODEL.md](OBJECT_MODEL.md)，详细设计待定见 [design/README.md](design/README.md)，执行安排见 [PLAN.md](PLAN.md)。以 [AGENTS.md](../AGENTS.md) 和项目所有者批准为准。
+> **状态：HLD v0.9 评审草案，未冻结。** 当前统一文档版本与冻结状态见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，实际 matio 探针/构建/CTest/数值证据仅见 [PROGRESS.md](PROGRESS.md)；此处只定义稳定架构边界，不以历史探针代替架构验收。 来源是已核对的 MATLAB 源码和原 PLAN §3/4/6。需求依据见 [REQUIREMENTS.md](REQUIREMENTS.md)，类职责附件见 [OBJECT_MODEL.md](OBJECT_MODEL.md)，详细设计待定见 [design/README.md](design/README.md)，执行安排见 [PLAN.md](PLAN.md)。以 [AGENTS.md](../AGENTS.md) 和项目所有者批准为准。
 
 ## 1. 架构目标、质量属性和约束
 
@@ -192,6 +192,7 @@ sequenceDiagram
   Run->>Solver: FlowField / 旧系数（如适用）
   Solver-->>Run: Result(估计值、状态、指标)
   Run->>Writer: 原变量名、shape、结果与唯一 RunId
+  Writer->>Writer: 写入前再校验固定根/RunId/路径与已有文件；拒绝软链/竞态/覆盖
   Writer-->>Run: 写入/验证状态（禁止写 origin）
   Run-->>User: 状态、输出位置和实际验证记录
 ```
@@ -214,11 +215,22 @@ sequenceDiagram
   Session-->>Runner: 本帧结果和可审计状态
 ```
 
-说明：实际 MATLAB 脚本在进行主状态 `akkoeff` 更新之前会分别对照 baseline 求解；设计时必须保留该先后关系。只有单步成功与失败行为经过源码/数值核对后，才能确定 Session 的异常状态转移与提交规则。
+说明：实际 MATLAB 脚本在进行主状态 `akkoeff` 更新之前会分别对照 baseline 求解；设计时必须保留该先后关系。**已选状态纪律**：单步失败不提交无效主系数；无法安全恢复的连续序列停止，Runner 保留可审计的部分结果。仍需独立 L3/CTest 确认原更新次序、边界输入及任何例外恢复路径，不得将已选纪律重新写成待选。
 
 ### 5.3 错误/状态流
 
 结果至少区分输入验证、MAT 解码/形状、输出覆盖保护、数值退化（零范数、奇异系统、非有限值）、可选绘图缺失及实验部分完成。错误应携带调用阶段、源/目标变量、RunId 和上下文，不把 NaN/Inf 当作通过。具体枚举与 CLI 退出码须在 LLD + SRS 验收条款冻结。
+
+### 5.4 第一轮跨文档时序核对（AF-038，部分文档工作）
+
+| 环节 | 单一合同及本轮核对 | 未完成验收 |
+|---|---|---|
+| 入口与输出身份 | `cli.md §1–3`：无自定义输出根；OS 独立随机/用户 `--run-id`，Composition Root 在仓库固定 `output/` 下独占建目录 | CLI 解析/随机源/并发目录创建未实测 |
+| Runner 与 Writer | `experiments.md §6–8`：RunContext 持有唯一身份并注入 Writer；`mat_io.md §3`：Writer 在实际写出时再次验证目标路径，拒绝覆盖/`origin/**` | `openat/O_NOFOLLOW` 等 TOCTOU、MAT 回读与异常负例未实施 |
+| 失败提交 | `OBJECT_MODEL.md §4`、`contracts.md §3`：Adaptive 失败不提交，不能恢复则停止连续序列；Manifest 保留真实部分结果 | 原子提交/Session 回归与真实异常测试缺失 |
+| 静态依赖 | §4 / §4.1 **27 条设计边**与 `contracts` / `matio` 分层，MAT 探针证据仅引用 PROGRESS | 真实 CMake target、替身跨模块编译/链接与 DEC-006 绩效没有证据 |
+
+**当前结果**：限定为文档数据流、职责与已选政策对照；不改变 27 边集合，也不签署 HLD。AF-038 保持「未整改」。
 
 ## 6. 实施依赖与并行约束（引用单一来源）
 

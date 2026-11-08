@@ -1,6 +1,6 @@
 # Egomotion Estimation with Dense Flow Fields：软件需求规格说明书（SRS）
 
-> **状态：草案 v0.13，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
+> **状态：草案 v0.14，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
 
 ## 1. 目的、范围与约束
 
@@ -466,6 +466,17 @@
 - **已核对**：MAT class/dtype、rank/dims、压缩状态、变量名/文件名及逐文件物理长度一致（当前全部为 double），这不是固定输入浮点数值与 MATLAB 逐元素一致的证明。正式报告采用 FNV-1a 64 位指纹用于变更检测，**不是 SHA-256**。
 - **仍未验证**：正式业务 Reader 的严格/兼容加载、读取后生命周期、错误负例、原始数据前后加密哈希、RunMatWriter、历史数据与 MATLAB save 的语义对应、Golden 和数值容差。项目 SRS/HLD/LLD 均保留“草案/待批准”状态。
 
+### 9.6 第一轮冻结前合同身份核对（AF-037，部分文档工作）
+
+| 范围 | 当前可追踪来源 | 仍需的独立证据/批准 |
+|---|---|---|
+| **58 正文 REQ + 8 个附录 REQ-DC = 66 REQ** | 本文 §4、附录 A；TEST_PLAN 的 **66 TC 含 8 TC-DC** | 逐 AC 的 TC、P、LLD 引用在冻结提交上联合复核；REQ-DC 仅是内部设计约束索引，不新增外部用户功能 |
+| CLI、结果与数据 AC | `design/cli.md §2–4`、`design/contracts.md §3`、`design/mat_io.md` | 记录各引用的相对路径、章节、文档版本、Git blob SHA、源 commit、适用 REQ/AC/TC/P 和例外；不得用动态 HEAD 链接当批准 |
+| KvD、Adaptive、球谐、采样、轨迹与分析 AC | 各 `design/*.md` 的数学/错误合同和 TEST_PLAN 的候选测试映射 | L2/L3/适用 L4 独立参考与真实 C++/CTest；保留未能观察到的原 MATLAB 运行行为限制 |
+| 正式基线 | [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 与 [TODO](TODO.md) | 项目所有者批准人、日期及时区、固定 Git 身份、开放 DEC-005/006/008 的处置/例外及实际证据 |
+
+**当前结果**：现有 REQ/AC/TC/LLD 导航关系可用于评审；尚未为全部 AC 建立签署后的逐行精确引用清单，更未完成独立测试、数值阈值批准或正式冻结。AF-037 保持「未整改」。
+
 ## 10. 需求变更与基线管理
 
 1. 需求提出者记录变更的 REQ/AC/TC ID、源码依据、问题与期望行为。
@@ -513,6 +524,7 @@
 | v0.11 | 依据 AF-010 明确 MAT 写出唯一固定目录 `output/<RunId>/`，不是任意与 `origin/**` 不重叠的目录；保留现有 REQ/AC/TC 以及已决定的 CLI 路线 | 历史评审草案 |
 | v0.12 | AF-022：将已选 MAT v5/zlib 首版二维密集实数非 logical double 范围与尚缺的正式 Reader/安全负例/基线批准分开表述，不新增 REQ、AC、TC，也不改变 HDF5/原 MAT 的事实边界 | 历史评审草案 |
 | v0.13 | AF-032：§5 明确 DEC-004 的 CurrentGenerated/HistoricalOnly/Unknown、缺字段显式失败与无需历史归因；保留原 REQ/AC/TC | 评审草案，未冻结/未执行 CTest |
+| v0.14 | AF-037：新增 AC→LLD 固定身份/证据冻结前检查点，保留原 REQ/AC/TC 编号与未冻结状态 | 评审草案，非批准基线 |
 
 
 ## 附录 A：内部设计约束清单（REQ-DC）

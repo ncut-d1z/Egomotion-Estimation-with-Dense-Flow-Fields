@@ -1,6 +1,6 @@
 # 对象模型与生命周期合同（Object Model）
 
-> **对象模型草案 v0.5；P0.7/P0.8 待评审，未冻结、未建立对应 C++ 类。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入；各文档当前版本、固定 SHA 和冻结状态统一由 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记，运行结果以 [PROGRESS](PROGRESS.md) 为准。
+> **对象模型草案 v0.6；P0.7/P0.8 待评审，未冻结、未建立对应 C++ 类。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入；各文档当前版本、固定 SHA 和冻结状态统一由 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记，运行结果以 [PROGRESS](PROGRESS.md) 为准。
 
 ## 1. 对象职责和约定
 
@@ -276,3 +276,16 @@ stateDiagram-v2
 | 批准 | **原只读 MATLAB 源文件 Git blob SHA、L2 原始 MAT 身份与 L3 独立参考生成器/输入 SHA**、评审人、批准日期、受影响 REQ/TC、开放 DEC；不要求 MATLAB 运行 | 架构审查记录 |
 
 **状态仍为草案：本文件尚不包含经批准的可编译类签名，P0.7/P0.8 不能记为完成。**
+
+
+### 8.1 第一轮对象与接口身份复读（AF-039，部分文档工作）
+
+| 对象/能力 | 统一来源 | 保留的边界 |
+|---|---|---|
+| `RunContext` / `IResultReader` / `IResultWriter` | [contracts.md](design/contracts.md)、[experiments.md](design/experiments.md) | RunContext 独占 RNG/RunId；业务接口不持有 matio C 句柄 |
+| `MatDenseArray` / `RunMatWriter` | [mat_io.md](design/mat_io.md) | MAT 资源由 I/O 层拥有，跨层自拥有 double 值，不传裸 `mat_t*` |
+| `AdaptiveMfaStepSolver` / `AdaptiveMfaSession` | [adaptive_mfa.md](design/adaptive_mfa.md)、本文 §4 | 单步无 Session 副作用；失败不提交主系数，单 Session 并发不承诺 |
+| `HarmonicRotator::blocks/rotate` / `RealSphericalHarmonics::reconstruct` | [harmonics.md](design/harmonics.md)、[专题声明](design/SH_ROTATION_IVANIC_RUEDENBERG.md) | Ivanic/1998 勘误 + Eigen-only，完整递推与接口尚未实现 |
+| 45 个原 `.m` 的首要职责 | 本文 §7、SRS §9.2 | 仅设计映射，不等于每个辅助函数已验证或实际建立 C++ 类 |
+
+此表不另定 C++ 方法签名，实际头文件、资源/线程回归、P0.7/P0.8 评审与正式批准仍缺；**AF-039 未整改**。
