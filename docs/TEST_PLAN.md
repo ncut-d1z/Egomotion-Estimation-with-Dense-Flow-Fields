@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **测试计划草案 v0.16，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
+> **测试计划草案 v0.17，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
 
 > **审批后候选核对材料**：见 [HAR-2026-11-06-001 设计修订与待审材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md) §2、§3、§7～§9。其中历史上提出六类容差采集格式、582 MAT SHA-256 独立审核和正式 Reader 类型拒绝清单；**当前参考采集/核验路径以 L2/L3/L4 为准，完全不要求 MATLAB/Octave 执行或 L1 Golden**，见 [长期政策](golden/NO_MATLAB_EXECUTION_POLICY.md)。`atol=0.01`/`rtol=0.1` 已由所有者选作**首轮宽松筛查**，不是已冻结的最终验收阈值；测试实体/CTest 仍未执行，H-10/H-11 其他执行门禁未解除。
 
@@ -163,6 +163,18 @@
 参见 [sampling_noise.md §7.1.2](design/sampling_noise.md) 与 [四叉路径审计记录](reviews/AN_G_RECURSION_INDEX_STATIC_2026-11-08.md)。针对既有 `TC-F-GEOM-002/003`，除 `level=0` 面表外，还必须在 `level=1/2` 区分**源原面 ID**、**输出块顺序**、`A/B/C/D` 子面序列及其 MATLAB 1-based 行号。先核 `32/24/80`、`128/96/320` 行数，再按深度优先字典序 `A,B,C,D`（层内四叉数字）逐行与**独立**数值参考比较，不能先排序后只检查集合相等。
 
 示例：缺损八面体输出首块来自原面 2，`L=2` 的 `AA`/ `DD` 分别位于行 `1/16`；第二块来自原面 3，分别在行 `17/32`；二十面体原 `F` 第 20 面的 `L=2` 叶子占行 `305…320`。这些是**索引恒等式**，没有实际计算任何一行坐标，不能标 L3/CTest PASS；失败/非有限边界及 DEC-005/008 仍待执行和批准。
+
+### 2.16 Bias 聚合中的 xwerte 末运行覆写与四组 y 平均（AF-083，未测试）
+
+原 `graphs_bias_test.m` 在 `k=1:number_of_cores` 读取各运行 `xwerte`，但**每轮直接覆写**它；只有 `ywerte3…6` 累加后除以运行数。故 `APL-G01` / `TC-F-BIAS-003` 的区分性夹具应分别检查：
+
+| 输入（均为规划、非历史真实值） | 应比对的静态合同 |
+|---|---|
+| K=1；合法 x 和 4 个 `(iterationnumber+1)×3` 的 y | `x_plot=x^(1)`；各 `ybar_j=Y_j^(1)`；理论线 `100/sqrt(x^(1))`（按原绘图行 3…end） |
+| K=2；两组 x 同 shape 但**故意不同**，两组 y 不同 | `x_plot=x^(2)`，**不能算 `(x^(1)+x^(2))/2`**；仅四组 y 算术平均，参考线取末轮 x。这是检测更新规则的人工负例，不是作者标准 Bias 源输出 |
+| K=0、文件/变量缺失、y shape 不一致 | 不得将空除数/缺字段/shape 错误包装为成功；C++ 的具体显式错误按尚未批准的 `contracts.md`、分析 LLD 判断，**不宣称原 MATLAB 有相同安全错误** |
+
+需保留实际 `k` 顺序、末轮 x 的 L2 MAT 路径/变量与四组 y 的每轮身份；参考线和输出横轴均不得替换成物理实际视线数量。此处不新增 TC、真实测试实体或通过记录；须在 AF-050/051 后续独立 L3 与 Analyzer/CTest 中真正验证。
 
 ## 3. TC → 实体/CTest → AC 规划矩阵
 

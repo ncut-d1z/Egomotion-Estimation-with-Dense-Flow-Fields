@@ -1,12 +1,12 @@
 # MAT 结果分析与可选绘图——详细设计草案
 
-> **LLD v0.7 草案，未冻结、未运行任何可视化程序。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
+> **LLD v0.8 草案，未冻结、未运行任何可视化程序。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
 
 ## 1. 只读分析合同
 
 | 原分析 | 输入 MAT 字段 | 数值操作与期望数据 |
 |---|---|---|
-| graphs_bias_test | 每个 1–40 目录 xwerte、ywerte3…6（ywerte1/2 在源脚本中注释） | 按每运行逐数组求平均；理论参考 100/sqrt(xwerte)；取源起始索引 3 及后续范围，log-log 横纵轴 |
+| graphs_bias_test | 目录 `k=1…number_of_cores` 的 xwerte、ywerte3…6（ywerte1/2 在源脚本中注释） | **仅四个 ywerte 累加后除运行数**；xwerte 在每轮直接覆写，最后使用 **k=number_of_cores 的 xwerte**，并据其计算 `100/sqrt(xwerte)`；绘图行 3…(iterationnumber+1)，log-log 双轴 |
 | graph_agent_in_sphere_initialization_test | allemittransfehler、allemitrotfehler；也读取 ohne* | mittrans 第 1–13 项与 mitrot 全序列（semilogy）；其他读取字段不意味着都参与该图 |
 | graph_agent_in_sphere_adaptive_matched_filter_test | allemittransfehler、allemitrotfehler、alleohnetransfehler、alleohnerotfehler、rottransratio | x=50:550；按 rottransratio <0.01 分段；旋转/平移角度误差与右侧比值双纵轴、对数刻度 |
 | graph_agent_in_sphere_adaptive_matched_filter_many_parameter | allemittransfehler、allemitrotfehler、rottransratio | x=50:550；阈值 0.02 分段，四个更新率曲线；平滑窗口半宽 2/5/10 |
@@ -65,7 +65,7 @@ public:
 
 | 来源分析函数 | MATLAB 索引与算法 | 结构化结果（建议） | 特别验证 |
 |---|---|---|---|
-| graphs_bias_test | 按 k=1..number_of_cores 读取 xwerte 和 ywerte3…6，四组求和再除以个数；从 anfang=3 到 ende=iterationnumber+1；参考线 y=100/sqrt(xwerte) | 每个噪声系数、Original/Modified 的平移/旋转四条原曲线，x=原 xwerte 和理论参考 | 不能把独立运行 40 份混成单次内部循环；ywerte1/2 在分析里被注释 |
+| graphs_bias_test | 按 k=1..number_of_cores **每次覆盖 xwerte**、仅将 ywerte3…6 四组累加；循环后只对四组 y 除以运行数；取 anfang=3、ende=iterationnumber+1，参考线 y=100/sqrt(最后一个 k 的 xwerte) | 每个噪声系数、Original/Modified 平移/旋转的四组跨运行均值曲线；横轴与理论参考取末轮原 xwerte | **不能把 xwerte 求平均或替换成真实 N**；原四类 y 的分母固定 number_of_cores，最后 k 的 x 来源要可追踪；ywerte1/2 在原分析中被注释 |
 | graph_agent_in_sphere_initialization_test | mittrans 的 MATLAB 1..13 行、mitrot 的全部行；semilogy | curve_id、x 的 MATLAB 1-based 下标、y 数组、log-y 语义 | 这两条曲线长度不同，不能强行补齐尾部 |
 | graph_agent_in_sphere_adaptive_matched_filter_test | x=50:550（501 点）；rottransratio 阈值 0.01 **仅控制旋转误差图**的四段 begin/end，平移误差图直接全域绘制 x=50:550 | 旋转：按段 mit/ohne 两曲线；平移：连续 mit/ohne 两曲线；两图均有右轴 ratio | **AF-076**：平移图不使用旋转图的分段掩码；不把方向角度误差改成测地角 |
 | graph_agent_in_sphere_adaptive_matched_filter_many_parameter | **旋转图**按 ratio 阈值 0.02 的四段单独切片：第 1 列原值，后 3 列对每段分别以 f=2/5/10 平滑并绘制段内 begin+f..end−f；**平移图**第 1 列原值，后 3 列对完整 600 行先全域平滑，再绘制 x=50:550（501 点） | 旋转需保留各段窗口输入/边缘零值及绘图区间；平移需保留全部 600 行平滑数据及连续 501 点绘图区间 | **AF-075/076**：平移不随 ratio 分段；历史 MAT 有 ratio、当前 update-rates 源不保存 ratio，缺失必须报错 |
@@ -129,6 +129,18 @@ for col in 1..4:
 - 如另行输出物理实际样本数，应使用 separate actual_flow_count 元信息及新的、明确标注的图表，不能把新图伪装成原论文结果；
 - **原版 Bias xwerte 与理论参考线是当前复现的既定要求**，不再因“是否提供另一种对照图”请求当前人工选择。若另行提供物理实际方向数，必须作为明确标注的 `actual_flow_count` 元信息，与原存 `xwerte` 并列且不得覆写；**额外使用实际 N 的对照图属于当前必要交付/验收范围之外的新增功能**，只有收到明确新需求才另行规划、验收，不能阻塞既定分析功能。
 
+#### 5.3.1 Bias 跨 RunId 聚合的非对称覆盖顺序（AF-083）
+
+原只读 `bias_test/data_analysis/graphs_bias_test.m` 的 MATLAB 结构是：先将四组 `allywerte3…6` 初始化为 `zeros(iterationnumber+1,3)`，然后执行 `k=1:number_of_cores`。**循环每次直接赋值** `xwerte=getflowfield([str 'xwerte'])`，但四组 y 值分别执行累加；循环结束之后才令 `anzahl=(number_of_cores-1)+1`，并且**只对四个 y 数组**做除法。结果是：
+
+\[
+ x_{\mathrm{plot}}=x^{(K)},\qquad \overline{Y}_j=\frac{1}{K}\sum_{k=1}^{K}Y_j^{(k)},\quad j\in\{3,4,5,6\},\ K=\mathrm{number\_of\_cores}\ge1.
+\]
+
+参考线使用 `100/sqrt(x_plot(i))`，绘图下标 `i=3:(iterationnumber+1)`；原分析函数并**不**检查不同 k 的 xwerte 是否一致。即使两次运行的 x 向量不相同，忠实复现原脚本时也不能悄然改成 `mean_k(x^k)`，或将其改用真实球面方向数。额外数据一致性告警/安全拒绝只可单独标记为候选增强，不能冒充原脚本具有此行为。
+
+**辨别用的独立输入资格（未执行）**：构造 K=2 的两个相同 shape 的人工 MAT 组，故意让 `x^(1)≠x^(2)`（只作区分性负例，**不是作者实际 Bias 生成器的正常输出**），同时令两组 `Y_j` 不相同。期待源算法的 `x_plot=x^(2)`、`Ybar_j=(Y_j^(1)+Y_j^(2))/2`、参考线取 `x^(2)`；以 K=1 确认单轮自反；K=0 以及读取缺失/shape 不匹配的情况下，C++ 候选应显式非成功，不能宣称 MATLAB 本身提供对应安全分类。关联 `APL-G01`、`TC-F-BIAS-003` 及 `TC-I-ANALYSIS-001`。完整 L2/独立 L3/Analyzer/CTest 仍未执行，AF-050/051 仍开放。
+
 ## 6. 候选 CurveSeries 输出 schema 与 C++17 错误合同
 
 ~~~cpp
@@ -171,7 +183,7 @@ PlotExporter 仅消费 AnalysisDataset，输出图形位置必须在独立 RunId
 
 | 计划 Golden | 输入来源与核验内容 | 对应 TC |
 |---|---|---|
-| APL-G01 | 40-run 两组 Bias 的 xwerte、ywerte3…6，四组平均和 100/sqrt(x) | TC-F-BIAS-003 |
+| APL-G01 | 两类 Bias（历史各40-run）：仅 ywerte3…6 跨 k 平均，xwerte 取最后一次 k 的原值；参考线 100/sqrt(x_last)，绘图从 MATLAB 行 3 开始；K=2 不同 x 的区分性负例 | TC-F-BIAS-003、TC-I-ANALYSIS-001 |
 | APL-G02 | init 的 1..13 与 1..35 原样索引，两个不等长度序列 | TC-F-AN-001 |
 | APL-G03 | comparison x=50..550、阈值 0.01、旋转/平移曲线、右轴 ratio 和各分段 | TC-F-AN-001 |
 | APL-G04 | many_parameter：**旋转**四段各自局部平滑/裁剪＋**平移**完整 600 行全局平滑后绘制 50:550；保留局部临时零边界和连续平移 x | TC-F-AN-001 |
@@ -201,7 +213,7 @@ PlotExporter 仅消费 AnalysisDataset，输出图形位置必须在独立 RunId
 
 | 场景/输入来源 | 独立比较的数组或错误语义 | 需保留的证据 |
 |---|---|---|
-| Bias 两组各 40 次的历史 L2 xwerte/ywerte | 用源 MAT `xwerte`（不是实际 N）及 `ywerte3…6` 独立重算四组曲线、均值和 `100/sqrt(xwerte)` | MAT 文件与变量身份、有效样本数、数值/维度及 Python/其它独立 L3 算法来源（不调用被测 Analyzer） |
+| Bias 两组各 40 次的历史 L2 xwerte/ywerte | `xwerte` 逐 RunId **覆盖并只取最后 k**，而 `ywerte3…6` 各自累加后除以 K；理论线从 `xwerte_last` 得出，绘图 MATLAB 行 3…end（不能用实际 N） | 每组实际 K、最后 k 的源路径和变量身份、四组均值及源 shape；用 K=2 且两组 x 不同的人工区分输入验证非对称更新；独立 L2/L3 数值仍缺 |
 | Initialization 的 35×1 输入 | `mittrans(1:13)` 为 13 点、`mitrot(:)` 为 35 点；不得补齐/截断成相同长度 | 原 MATLAB 1-based 下标、各自输出 shape、对数坐标元数据 |
 | Comparison/Update-rate 的历史 `rottransratio` | `x=50:550` 共 **501** 点；阈值分别 **0.01/0.02**，**等于阈值不转移**，`begin/end/zone` 顺序与最多四段按源定义 | 可逐点复查的 ratio、阈值状态、begin/end、真实绘制区间与 NaN/Inf 分类 |
 | 选定平滑半窗 `f=2/5/10`，包括短数组/越界分段 | **旋转**：各 begin/end 段分别构建长度 L 的平滑数组，边缘 f 个零，绘图 `begin+f..end-f`；**平移**：完整 600 行平滑，连续绘制 `x=50..550`，不使用 begin/end | 段级完整临时数组/零边缘、全局平移 600 行、各图绘制 x/y 和无效段错误；不能错误地断言正确裁剪的旋转内部值必与全局平滑不同 |
