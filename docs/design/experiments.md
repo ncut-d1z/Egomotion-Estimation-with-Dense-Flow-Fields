@@ -84,6 +84,26 @@ class UpdateRateRunner;
 
 Bias 六组 ywerte 对应顺序依次是：Franz 平移、Franz 旋转、Original KvD 平移、Original KvD 旋转、Modified KvD 平移、Modified KvD 旋转，六者都调用原 transfehler_div 的**尺度对齐向量差**，不能将名称含 rot 的列改为测地角。实验分析脚本在现有代码中主要读取 ywerte3…6。
 
+### 5.1 Adaptive 两个输出字段的物理单位与加噪前来源（AF-088/089，静态审阅）
+
+**`akrot` 的单位**：原只读 `adaptive_matched_filter_test/data_generation/agent_in_sphere_adaptive_matched_filter_many_parameter.m:79,91–93,199–203` 先将 `akrot=zeros(600,1)`，在帧 `i=2:599` 对 `bestrot=reldrehvektoren(i,:)'` 计算：
+
+\[
+\mathrm{akrot}(i)=\frac{360}{2\pi}\sqrt{\boldsymbol\omega_i^\top\boldsymbol\omega_i}=\frac{180}{\pi}\|\boldsymbol\omega_i\|\quad\text{(degree)}.
+\]
+
+这里 `bestrot` / `reldrehvektoren` 为**当前轨迹的真实相对旋转向量（rad）**；`akrot` 为其**角位移模长的度数（deg）**，不是 Adaptive 的估计旋转误差、不是 rad，也不是在没有时间步长时可解释的角速度。第 1、600 行保持源预分配的 0。原对比入口也在内循环计算 `akrot(i)`，但**未 `save akrot`**，故新 Comparison 仍只保存前述五类字段，不能错误扩展当前 save。未来可手算的固定输入候选：`bestrot=(0,0,0)` → 0°，`(0,0,π/2)` → 90°，`(0,0,π)` → 180°；实际轨迹逐帧 `bestrot` 与输出值仍须独立 L3/CTest。
+
+**`rottransratio` 的计算来源**：原 `agent_in_sphere_adaptive_matched_filter_test.m:83–90` 在 `erzeugeflussausnear` 中以原理想流场得到 `durchtransfluss`、`durchrotfluss` 两个**逐样本模长的平均值**；随后第 86 行调用 `nonpropfehler` 修改 `setofpoints`，最后第 90 行才赋值 `rottransratio(i)=durchrotfluss/durchtransfluss`。因此虽然**赋值发生在加噪之后**，用于除法的两个量都在**加噪之前已固定**，不允许从含噪观测重新估计比值，也不能把比值误写为 `mean(rot_component_norm/translation_component_norm)`：
+
+\[
+q_i=\frac{N^{-1}\sum_{j=1}^{N}\|\boldsymbol p^{\omega}_{ij}\|}{N^{-1}\sum_{j=1}^{N}\|\boldsymbol p^{t}_{ij}\|},\qquad \boldsymbol p_{ij}^{\rm ideal}=\boldsymbol p^{t}_{ij}+\boldsymbol p^{\omega}_{ij}.
+\]
+
+`rottransratio` **无量纲**，在外层 8 次运行中只是**最后一次运行的缓冲，不求平均**；其 600×1 首尾零是源 `zeros` 预分配/有效帧范围的离散行为，不应把那两行解释为有定义的分量比值。若 `durchtransfluss=0`、输入非有限、实际分量均值无定义，则 C++ 应按现有 `NumericalErrorCode` / `ExperimentErrorCode` 候选合同返回带原始原因的非成功；原 MATLAB 的除零传播并没有本轮运行证据，不得伪称已逐值验证。无噪/加噪同一固定理想场的测试应检查 **ratio 不依赖后来注入的噪声样本**；如改动理想流场本身则不能要求相等。
+
+**范围限定**：以上只补足当前 Comparison / Update rates 的 `TC-F-EXP-002/003`、`TC-F-AN-001` 的候选字段来源及单位；旧 `many_parameter` MAT 中的 `rottransratio` 仍为 `HistoricalOnly`，不得借这段公式给新 Update rates 输出补造该字段。独立 L3 数值、Reader/Writer、真实 C++/CTest、DEC-005/008、AF-049/050/051 依然未完成。
+
 ## 6. 拟议配置/结果接口与状态
 
 ~~~cpp
@@ -204,8 +224,8 @@ private:
 |---|---|---|
 | EX-G01 | **L3** 采样/固定注入 RNG；**L2** 作者归档 xwerte/ywerte；**L4** 跨 40 runs 统计 | 两类 Bias i=0/1/2 的 N、原存储 xwerte、六项 ywerte 的 shape/指标；固定 RNG 序列的消费次序与独立统计分母 | TC-F-BIAS-001/002/003 |
 | EX-G02 | **L2** 历史四类 35×1；**L3** 独立帧/状态 | 初始化 35 点、四类误差 shape、首尾数组与主/比较系数更新的独立参考 | TC-F-EXP-001 |
-| EX-G03 | **L3** 固定 8 次聚合；**L2** 历史五字段；**L4** 汇总 | 600 点、四误差先累加再除以 8，rottransratio 仅保留**最后一次运行**值；不假设 MATLAB RNG 同 seed 输出相同 | TC-F-EXP-002 |
-| EX-G04 | **L3** 固定帧号状态机；**L2** 历史结果 | 更新率 1/5/11/21、600×4/600×1、三个当前源 save 字段；主 akkoeff 和周期基线状态不串扰 | TC-F-EXP-003 |
+| EX-G03 | **L3** 固定 8 次聚合；**L2** 历史五字段；**L4** 汇总 | 600 点、四误差先累加再除以 8，rottransratio 来自**加噪前两种理想流分量的平均模长之比（无量纲）**且只保留**最后一次运行**值；另核分母为零/非有限状态，不假设 MATLAB RNG 同 seed 输出相同 | TC-F-EXP-002 |
+| EX-G04 | **L3** 固定帧号状态机；**L2** 历史结果 | 更新率 1/5/11/21、600×4/600×1、三个当前源 save 字段；`akrot=(180/π)·norm(bestrot)` 单位 **deg**，第一/末行源预分配为 0；主 akkoeff 和周期基线状态不串扰 | TC-F-EXP-003 |
 | EX-G05 | **L3** 独立构造错误/安全合同 | 输出路径冲突、MAT 写失败、近度/solver 非有限；日志含 RunId、原错误码和独立失败数，不能把异常计为有效 | TC-NF-SAFETY-001、TC-NF-RECOVERY-001 |
 
 历史 **MAT 类型/shape 字典已实测**；但算法的**独立 L3 逐节点参考**、完整 L2 逐值及 SHA-256、L4 统计、批准容差、CLI schema、生产写入/回读与 CTest 仍未建立，不能以最终结果文件能够被读取替代算法真实性测试。
@@ -234,7 +254,7 @@ private:
 |---|---|---|
 | Comparison 八次皆有定义；八次提供各不相同的四误差数组和 `rottransratio` | 前四数组分别累加八次、**最后统一除以 8**；`rottransratio` 保留**第 8 次**，绝不求均值或采用之前一次 | 逐次独立输入、期望 600×1、每次计数/最后一轮身份；`TC-F-EXP-002` |
 | Comparison 在第 k 次失败或第 8 次没有可用比值 | 不能用七次或 k−1 次修改分母；不伪造“最后一次比值”，整体非 Complete 并保留真实已完成次数与失败阶段 | `RunOutcome` + Manifest 的 attempted/valid/failed/undefined 及底层 Failure；`TC-NF-RECOVERY-001` |
-| Update rates 的第 1/5/11/21 周期 | 每种对照配置独立刷新，主 `akkoeff` 按原帧规则更新，输出仅 **两个 allemit*（600×4）+ akrot（600×1）** | 固定帧号、刷新前/后状态与当前 save 三变量；`TC-F-EXP-003` |
+| Update rates 的第 1/5/11/21 周期（含 `akrot` 角位移单位核验） | 每种对照配置独立刷新，主 `akkoeff` 按原帧规则更新，输出仅 **两个 allemit*（600×4）+ akrot（600×1）** | 固定帧号、刷新前/后状态与当前 save 三变量；`TC-F-EXP-003` |
 | 新 Update rates 输出被旧分析入口读取 | 没有 `rottransratio` 即 `MissingVariable`，不自动计算/填零或制造历史 `alleadap*` | 新/旧数据来源分类、分析失败状态；`TC-I-ANALYSIS-001` |
 | 两个 Bias 独立运行或两个 `RunContext` 交错 | seed/reset、随机流、输出 RunId、Manifest 和结果不可交叉污染；`origin/**` 始终只读 | 固定 RNG trace、独立 RunId/目录和来源 SHA；`TC-NF-SESSION-001` |
 | Writer 已存在/失败，或中断后仅有部分 MAT | 使用固定 output 根，非覆盖；失败不能宣称 `Complete`，不得删除旧 RunId 或复制历史额外字段 | `OutputExists/OutputFailed` 底层 cause、剩余产物/日志、只读源不变；`TC-I-RESULT-001`、`TC-NF-SAFETY-001` |
