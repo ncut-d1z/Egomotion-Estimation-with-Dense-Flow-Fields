@@ -262,6 +262,26 @@ public:
 
 黄金记录字段应有源 Git blob SHA、原始函数名、独立参考生成器/推导来源、固定输入身份、输出每个字段的 shape/dtype/数值、允许误差和对应 TC-F-FILTER-001、TC-F-KVD-001/002、TC-F-ERROR-001。**上述 G01–G05 只是测试设计编号，当前没有数据文件或运行证据。**
 
+### 9.1 源码逐段核对与可判别的数学性质（AF-043 第一轮）
+
+**已对照的只读来源**：`origin/.../help_functions/franzeigen.m`、`norm_koenderink_iteration.m`、`mue_norm_koenderink_iteration.m`。下表是**源码和代数的静态核对**，不是新增 L3 逐轮数值结果。
+
+| 源函数位置（MATLAB 1-based 行号） | 必须区分的行为 | 后续 L3 最小核验点 |
+|---|---|---|
+| `franzeigen.m:13–35` | 每轴累积平移/旋转模板响应与各自平方范数分母，最后按 `3/anzahlzellen` 缩放 | 三轴各自的响应、分母、Franz `t₀/ω₀`；分母为零时记录显式失败 |
+| `norm_koenderink_iteration.m:46–85` | near 估计、总和负时 near/t 同翻；Original 平移 `a=⟨μp⟩, b=⟨μd⟩, c=⟨μ²(t·d)d⟩` | 分别保留 `a/b/c` 及翻转前后的 t/near |
+| `mue_norm_koenderink_iteration.m:43–82` | Modified 平移 `a=⟨p⟩, b=⟨d⟩, c=⟨μ(t·d)d⟩` | 与 Original 使用**同一份固定样本和初态**，逐轮比较三项，不能仅比较最终 t |
+| Original `:88–112` / Modified `:85–109` | `ω_new=a_ω+t_old×b_ω+c_ω`，**用旧 t 算 ω 后才提交新 t** | 记录旧 t、副本、ω_new 与提交顺序 |
+| Original `:116–146` / Modified `:113–143` | 先求 MSE→RMS→delta→动态门限，循环后 `t *= mean(last_near)`；不重算最终 near | `k`、每轮 MSE/RMS/delta/grenze、最终近度均值与尺度；至少 6 次、常规上限 200 次 |
+
+**无需运行即可证明的判别性约束**（只针对给定同一轮近度、t、ω 和输入）：
+
+1. 若所有 `μ_i=1`，Original/Modified 的平移 `a/b/c` **逐项相等**，因此它们的本轮 `t_new` 相同（归一化有定义时）。**只有常数一近度的用例不能验证是否误删了 Original 的 `μ²`**。
+2. 为判别两条路径，独立 L3 固定输入必须覆盖**非恒一、非均匀近度**及非退化视线/流场，使至少一项 `a_O-a_M`、`b_O-b_M` 或 `c_O-c_M` 非零；只有最终方向不同而中间项不可见仍不充分。由于 near 来自源码估计而非任意注入，输入需同时记录 Franz 初态与 near 估计过程。
+3. `sum(near)<0` 的翻转先于 `a/b/c` 求和；`sum(near)=0` 不触发翻转。near 是**本轮开始**的 t/ω 计算结果，循环后也不重新计算；这是独立于连续值容差的离散合同。
+4. 上述等式是静态源码与代数性质，**并非** KVD-G01～05 数值 Golden、真实 C++ 等价或 CTest 通过。需获授权后产生独立来源的完整逐轮数据及失败证据，`AF-043` 仍为「未整改」。
+
+
 ## 10. 与架构及开发工作的绑定
 
 - P4.1/P4.2 → FranzMatchedFilter，验证三轴六类响应；P4.3/P4.4/P4.5/P4.9 → 两条 KvD 平移规则；P4.6 → while 与停止统计；P4.7 → 两个不同误差计算；P4.8 → Golden；P4.10 → 多次调用的状态隔离。

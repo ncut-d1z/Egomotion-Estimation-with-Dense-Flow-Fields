@@ -58,6 +58,9 @@
 
 对 Original/Modified KvD 的 near、t、ω、终止条件逐轮比对；Adaptive 比对 6×6 系统各子块、右端、旋转、残差与球谐系数更新。 **特别核验：Adaptive oneit 返回的 error 是 MSE，sqrt(error) 在 MATLAB 内部另算但没有返回；测试记录必须分列 error_mse 和仅用于诊断的 rms，不得将二者互作。** `double` 为数值精度要求；**历史** `rtol=1e-10` 不是现行容差候选。已决定的首轮探索筛查为 `atol=0.01`、`rtol=0.1`，另对物理不变量、近零理想残差和离散行为保留严格检查；参阅 [Golden/容差提案](golden/GOLDEN_TOLERANCE_PROPOSAL.md)。须按模块记录绝对/相对误差、条件数及样本有效性，DEC-005 审批前不得作为通过阈值。不对零向量、NaN、Inf 或未定义方向误差计入成功。
 
+**第一轮静态分支判别补充（不新增 TC/CTest）**：TC-F-KVD-001/002 除常数 near 场景，还须以同一固定流场/Franz 初态设计**非恒一近度**，分别比较 Original 的 `⟨μp⟩/⟨μd⟩/⟨μ²(t·d)d⟩` 与 Modified 的 `⟨p⟩/⟨d⟩/⟨μ(t·d)d⟩`，并记录 `ω_new` 使用旧 t 的顺序；参阅 [KvD §9.1](design/kvd.md)。TC-F-ADAPT-001/002 须覆盖正/负/零原始 near 均值，特别在 `s<0` 时归一后均值应为 **−1**（按原先翻 near、再除负 s 公式）；参阅 [Adaptive §10.1](design/adaptive_mfa.md)。这些是源码静态推导的**未来夹具资格条件**，并非已形成完整独立 L3 或通过测试。
+
+
 ### 2.6 已执行 matio 全量探针的证据与限制
 
 | 证据项 | 实测结果 | 当前验收边界 |

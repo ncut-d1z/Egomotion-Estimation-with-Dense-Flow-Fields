@@ -298,6 +298,19 @@ C++ 从 0 开始存帧时必须显式转换为源 MATLAB 的 1-based i，周期�
 
 **状态**：此文档定义了算法逐节点检查与入口专属状态合同；独立 L3 参考、**错误提交策略的实际实现/测试**、正式 API 及 CTest 均尚未实际形成；设计原则已明确。
 
+### 10.1 负均值近度的可手算分支不变量（AF-044 第一轮）
+
+**源依据**：只读 `oneit_adaptiv_matched_filter.m:19–29` 先取 `s=mean(near_raw)`，`s<0` 时翻转 near，**然后仍用翻转前的 s 除近度**。这不是 `near/abs(s)`：
+
+- 对 `s>0` 且有限：`mean(near_normalized)=1`。
+- 对 `s<0` 且有限：`mean(near_normalized)=-1`。例如手算 `near_raw=[-1,-3]`，`s=-2`，翻转为 `[1,3]` 后再除以原 `-2`，结果为 `[-0.5,-1.5]`，均值 **−1**。若改成除 `abs(s)` 或“先求新的 s”，就改变原分支。
+- 对 `s=0`：原源码仍执行除法，不能将它悄然描述为正常归一；C++ 的 `InvalidNearness` 显式失败是另行选定的安全合同，**不能声称已经实测原 MATLAB 的 NaN/Inf 传播**。
+
+**需要保存的区分性中间量**：`near_raw, s, near_after_sign, near_normalized, M1–M4, rhs, z, raw_t, normalized_t, ω, error_mse, near_new, C_new`。由于 `M1=I-⟨μ_i d_i d_iᵀ⟩`，负均值分支的 `μ` 符号还会改变 M1；只比较返回 t/ω 会掩盖这种差异。原 `oneit_adaptiv_matched_filter.m:91–117` 使用 `real(inv(M))` 并返回 **MSE**；`:120–129` 才以 `1e-11` 重估 near/系数，不能用先前求 M1 的近度冒充输出近度。
+
+**L3 资格边界**：该手算两元素例子仅验证归一化的**局部分支代数**，并非已构造一个可使 `near_aus_koeff` 从完整 N×6/3×5 输入产生这些值、且使 6×6 可解的独立 AD-G02 Golden。未来必须使用真实可复现的固定全输入、独立参考和 Source SHA，补 Session 状态 before/after 及 CTest。当前没有执行测试、没有改变用户已选的失败不提交规则；`AF-044` 仍「未整改」。
+
+
 ## 附录 A：无需运行 MATLAB 的证据边界
 
 按 [当前 L2/L3/L4 证据矩阵](../golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md) 和 [长期无需 MATLAB 执行政策](../golden/NO_MATLAB_EXECUTION_POLICY.md)，**不要求原 MATLAB 逐节点/逐调用的 L1，也不因没有 L1 阻塞本模块的设计/编码/测试/验收**。原 `.m` 作为只读公式、分支、时序和数据合同依据；当前应准备模块适用的 **L3 独立固定输入逐节点参考**，L2 历史 MAT 用于最终结果范围，L4 用于统计。需要保留真实 C++/CTest、DEC-005 容差、错误与来源限制记录，不能把 L3 宣称为原 MATLAB 实际运行的完整等价证据。本文及该矩阵均未宣布模块验收通过。
