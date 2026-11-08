@@ -3,7 +3,7 @@
 > **文件身份清单，静态快照**；原 `origin/**` 只读。此表来自 GitHub 源树的真实路径、blob SHA 与字节数，再与 [SRS §9.2](REQUIREMENTS.md) 的 REQ/TC 映射逐项比对。**不是代码移植、独立 SHA-256 的 MAT 验证、CTest 或正式来源审批。**
 
 - 来源目录：`origin/egomotion_estimation_dense_flow_fields_matlab_scripts/`；固定输入仓库提交：`e6d4e7af6eaba109e189fb647429bc691be22ea9`；来源目录 tree SHA：`459f9172df05a4cbcc966e8f5a3da7e86b992be9`。
-- **实际集合**：45 个 `.m`、582 个 `.mat`、1 个原始 `readme`（Git blob `e349e4ba44ec9d0e687ed130961ce5c8be87e33c`）。源脚本分组：`adaptive_matched_filter_test` 6；`bias_test` 3；`help_functions` 33；`illustrations` 3。
+- **实际集合**：45 个 `.m`（按函数声明共 50 个：44 个单函数文件＋`SHRotate.m` 的主函数及 M/U/P/V/W 五个内部子函数）、582 个 `.mat`、1 个原始 `readme`（Git blob `e349e4ba44ec9d0e687ed130961ce5c8be87e33c`）。源脚本分组：`adaptive_matched_filter_test` 6；`bias_test` 3；`help_functions` 33；`illustrations` 3。
 - **身份差别**：下表 Git blob SHA 是 Git 对象 ID，**不是**文件内容的独立 SHA-256，更不是原 matio 探针记录的 FNV64。582 MAT 的变量/dims/dtype/FNV/读取报告统一见 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md)，此处不重复 582 条。
 - C++ 候选方法的**唯一职责分配**见 [MIGRATION_MATRIX.md](MIGRATION_MATRIX.md)；正式数学、实现接口/所有权与测试证据分别在 [对象模型](OBJECT_MODEL.md)、[LLD 索引](design/README.md)、[TEST_PLAN](TEST_PLAN.md)、[PROGRESS](PROGRESS.md)。
 
@@ -56,3 +56,6 @@
 | `illustrations/spherical_harmonic_illustration.m` | `d7f97e0fe15c761f33f6ebd152610ec4144561e9` | 921 | REQ-F-AN-002 | TC-F-AN-002 |
 
 **逐文件集合检查（仅文档/源树静态）**：本表 45 条唯一相对路径与 Git 树、SRS §9.2、OBJECT_MODEL §7 的三份列表各自 **45/45** 一一对应，无漏项/额外项；这不检查原 `.m` 内全部嵌套函数、执行顺序、旧 MAT 数值或 C++ 产物。项目根 MIT 不自动为原作者源文件或 MAT 重新授权，实际复用文件须保留已有必要来源/notice。
+
+
+**函数声明核对（AF-072）**：在固定源码 Git 树中逐份阅读 45 个 `.m` 的 `function` 行，实际是 **50 个定义**；逐函数职责和 `SHRotate` 的内部五个子函数见 [MIGRATION_MATRIX 的函数声明级补充](MIGRATION_MATRIX.md)。该检查不包含分支覆盖/可编译 C++ 或 L3 测试。
