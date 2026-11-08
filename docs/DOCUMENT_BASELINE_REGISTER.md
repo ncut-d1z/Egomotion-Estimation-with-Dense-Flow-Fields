@@ -197,3 +197,9 @@ AF-041/047/055/058 与其它开放目标仍须独立数据/真实软件及审批
 | `docs/TEST_PLAN.md` | `bc326b773e6d627433c3b4ea06f5378f9ee04bf1` | v0.11，五处来源清单引用更新 |
 
 不扩大旧固定 36 文件快照的签署含义；当前审计集合增至 53 文件，所有软件/验收门槛保持原状态。
+
+
+### 6.8 函数级迁移清单及审计台账的定向身份（未冻结）
+
+- 固定函数清点提交 `150b975db4045fbc99a343fdf422c7836e1a797b`：`docs/MIGRATION_MATRIX.md` blob `3d61d69f7962a29c8720528f7fa71628c7008331`，`docs/SOURCE_INVENTORY.md` blob `9d72f7517e93f774c4b67338cc6b93f6723e7712`（45 文件、50 个函数声明，不含数学逐式验收）。
+- 固定审计压缩提交 `ae831be3a0901d69c0897044fd339fda38468963`：`docs/AUDIT.md` blob `05f8576cfdd868d4a846fa2773140eeb1891ac5e`，`docs/AUDIT_PROCESS.md` blob `926276afe93fa88d30d5113e94b68d14773685d2`，只作**当时**静态表行与文档压缩复核，不代表随后滚动状态或正式 ApprovedBaseline。

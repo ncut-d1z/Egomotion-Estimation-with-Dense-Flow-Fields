@@ -58,8 +58,8 @@
 
 | 仓库根相对路径 | 状态 | 核对重点 |
 |---|---|---|
-| `docs/AUDIT.md` | 正在审计 | AF-064～066 文档口径与时序说明已修并定向复核；静态审阅不等于实现验收；AF-068 已定向复核；AF-073 待复核 |
-| `docs/AUDIT_PROCESS.md` | 正在审计 | AF 目标和两态；历史已结案；AF-069 已定向复核；AF-074 待复核 |
+| `docs/AUDIT.md` | 已审计 | 精简后保留 28 AU、54 文件三态及当前结论，重复历史记录由 reviews/PROGRESS 追溯 |
+| `docs/AUDIT_PROCESS.md` | 已审计 | 压缩为 75 条唯一 AF 两态与真实缺口，历史详细证据保留 Git/reviews |
 | `docs/REQUIREMENTS.md` | 正在审计 | SRS 的 58 条正文 REQ + 8 条附录 REQ-DC、AC/DEC；待 AF-037 |
 | `docs/PLAN.md` | 正在审计 | AF-052 WBS 静态追踪已复核；DEC-006 实测/批准仍待 AF-061 |
 | `docs/TEST_PLAN.md` | 正在审计 | 66 TC（含 8 TC-DC）→候选测试→AC；AF-063 已整改，AF-051 仍待真实 CTest |
@@ -88,7 +88,7 @@
 | `docs/TODO.md` | 正在审计 | 分阶段人类输入与授权；待 AF-057 |
 | `docs/MAT_DATA_SCHEMA.md` | 正在审计 | 582 MAT 字典与历史证据；待 AF-056 |
 | `docs/SOURCE_INVENTORY.md` | 已审计 | 45 个源 .m 路径、Git blob、字节与 REQ/TC 的静态身份清单；非软件验收 |
-| `docs/MIGRATION_MATRIX.md` | 正在审计 | 45 个原源到候选 C++ 方法的职责映射；尚未代码移植；AF-072 待复核 |
+| `docs/MIGRATION_MATRIX.md` | 已审计 | 45 个源文件/50 个函数定义的声明级追踪已固定复核；完整数学/实现测试待 AF-039/045 |
 | `docs/approval/DECISION_IMPLEMENTATION_NOTES.md` | 已审计 | 历史权限/决定释义 |
 | `docs/approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md` | 已审计 | 历史审批包，保留当时事实 |
 | `docs/reviews/STATIC_TRACEABILITY_2026-11-06.md` | 已审计 | 历史审计/修订记录（只读） |
@@ -117,7 +117,7 @@
 
 ## 4. 最新审核结论与尚缺证据
 
-- 当前固定扫描：`150b975db4045fbc99a343fdf422c7836e1a797b`，并参考 [函数级声明检查](reviews/AUDIT_FUNCTION_DECLARATIONS_AND_LEDGER_COMPACT_2026-11-08.md)。共 **54 个审计路径**，其中 **28 已审计、26 正在审计、0 空白**；这些三态仅表示限定静态范围，不能代替软件/数学/批准状态。
+- 当前固定扫描：`150b975db4045fbc99a343fdf422c7836e1a797b`，并参考 [函数级声明检查](reviews/AUDIT_FUNCTION_DECLARATIONS_AND_LEDGER_COMPACT_2026-11-08.md)。共 **54 个审计路径**，其中 **31 已审计、23 正在审计、0 空白**；这些三态仅表示限定静态范围，不能代替软件/数学/批准状态。
 - 既有设计为**评审草案**；58 条正文 REQ＋8 条附录 REQ-DC＝66 REQ，对应 66 TC；98 P、原 45 个 .m、HLD 静态 27 边。已建立源 [45 文件/50 函数定义的迁移矩阵](MIGRATION_MATRIX.md)：SHRotate 主函数＋M/U/P/V/W 五个内部函数，**仅声明级审查，不是代码/数值验收**。
 - 历史 MAT 由独立 matio 探针报告 582/582 READ_OK，但**没有**完成独立 SHA-256、逐元素 L2、Reader/Writer/TOCTOU、逐轮及退化 L3、必要 L4 或正式 CTest。候选 `AN-G01～12` 仍为 `DRAFT_UNAPPROVED_UNEXECUTED`；小范围手算不代表 Golden 通过。
 - 永久不要求 MATLAB/Octave/L1。物理旋转路线 Sophus 已选；R3/R5 的 Eigen-only 实现须核 Ivanic–Ruedenberg 1996/1998 原文、禁 sdla。首轮 `atol=0.01, rtol=0.1` 已选，**最终 DEC-005/006/008、H-10/H-11 与正式冻结/发布尚未通过**。
@@ -126,3 +126,10 @@
 ## 5. 历史审计与版本来源
 
 历史 AF-001～071 的原扫描、修订顺序和固定提交由 Git 历史及 [FULL_DOCUMENT_AUDIT](reviews/FULL_DOCUMENT_AUDIT_2026-11-07.md)、[七数学文档复核](reviews/AUDIT_SEVEN_MATH_DOCS_RESOLUTION_2026-11-08.md)、[AF-028～031 扫描](reviews/AUDIT_FOUR_POLICY_DRIFTS_SCAN_2026-11-08.md)、[函数声明审查](reviews/AUDIT_FUNCTION_DECLARATIONS_AND_LEDGER_COMPACT_2026-11-08.md) 保留；真实过程证据/适用权限见 [PROGRESS.md](PROGRESS.md) 与 [TODO.md](TODO.md)，冻结身份见 [DOCUMENT_BASELINE_REGISTER.md](DOCUMENT_BASELINE_REGISTER.md)。旧审计或审批的时间点事实不应改写为当前 HEAD 的通过记录。
+
+
+## 6. AF-072～074 本轮复核结论（2026-11-08）
+
+- 先在 `d40b149` 登记三项目标为未整改，后修改源文件：函数级映射提交 `150b975`，两台账精简提交 `ae831be3a0901d69c0897044fd339fda38468963`；两次独立静态复读确认 45 文件/50 函数（含 5 个局部辅助）、28 个 AU、54 个审计文件与 75 个唯一 AF 均完整。
+- **AF-072～074 在文本/函数声明范围内已整改**。本轮追踪 **54 文件：31 已审计、23 正在审计、0 空白**；其余 23 个阶段目标仍需独立 L2/L3/L4、实际 C++/CTest、论文材料/DEC 批准或正式签署，不能因清单存在而关单。
+- 本次没有修改 `origin/**`、运行 MATLAB/Octave、Bash、CMake、CTest、MAT 写回读，也没有批准正式软件基线。
