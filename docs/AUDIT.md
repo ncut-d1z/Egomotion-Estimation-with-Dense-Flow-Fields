@@ -63,8 +63,8 @@
 | `docs/REQUIREMENTS.md` | 正在审计 | SRS 的 58 条正文 REQ + 8 条附录 REQ-DC、AC/DEC；待 AF-037 |
 | `docs/PLAN.md` | 正在审计 | AF-052 WBS 静态追踪已复核；DEC-006 实测/批准仍待 AF-061 |
 | `docs/TEST_PLAN.md` | 正在审计 | 66 TC（含 8 TC-DC）→候选测试→AC；AF-063 已整改，AF-051 仍待真实 CTest |
-| `docs/design/README.md` | 已审计 | AF-059 已补各模块冻结前检查清单；仅静态合同检查，不代表实际冻结或测试 |
-| `docs/DOCUMENT_BASELINE_REGISTER.md` | 正在审计 | 36 项固定快照身份与正式冻结状态；AF-036 已整改，待 AF-058 ；AF-071 章节编号已复核；AF-058 的正式批准/身份更新仍开放 |
+| `docs/design/README.md` | 正在审计 | AF-059 已补各模块冻结前检查清单；仅静态合同检查，不代表实际冻结或测试；AF-078 文档索引中的动态审计数与分析错误职责待同步 |
+| `docs/DOCUMENT_BASELINE_REGISTER.md` | 正在审计 | 36 项固定快照身份与正式冻结状态；AF-036 已整改，待 AF-058 ；AF-071 章节编号已复核；AF-058 的正式批准/身份更新仍开放；AF-079 需区分固定 36 文件快照与当前动态审计数 |
 | `docs/PROGRESS.md` | 正在审计 | 真实证据与动态 DEC/里程碑；待 AF-053；AF-070 已定向复核；AF-053 真实证据待补 |
 | `docs/ARCHITECTURE.md` | 正在审计 | HLD/27 条设计边、部署/Writer；待 AF-038 |
 | `docs/OBJECT_MODEL.md` | 正在审计 | 生命周期、45 .m 映射；待 AF-039 |
@@ -163,3 +163,10 @@
 
 - 先以 `4ffbbf93` 静态审计 `AnalysisErrorCode` 的 7 种状态与 `contracts.md §3.1` 统一退出码的缺口，在 `20b5fcaa` 登记未整改，再以固定提交 `e3c4c679` 复读 `contracts.md` v0.4、`analysis_plotting.md` v0.7、`cli.md` v0.5、`TEST_PLAN.md` v0.13：七种分析错误均对应单一候选 stage/exit，并区分非法命令参数 parse(2) 与 Analyzer 运行时不支持 analyze(5)，无重复 enum。
 - **AF-077 在文档合同一致性范围已整改**；尚须 DEC-008/P0.8 的人类批准、真实 JSONL/CTest、底层错误传播与输入负例，AF-040/041/050/051 保持未整改。当前 **78 个目标中 55 已整改、23 未整改**；审计文件 57 路径（34 已审计、23 正在审计）。
+
+
+## 11. 最新跨文档索引漂移（2026-11-08，先登记）
+
+- 固定扫描输入 `5bc71e6ceca2de9f746a2c911a135b56db2cccbd`；[LLD 索引](design/README.md) 的职责描述仍说 AUDIT“目前 50 个路径”，并将公共错误来源概括为 Mat/Numerical/Experiment，未同步已出现的 `AnalysisErrorCode`→[contracts §3.1](design/contracts.md) 候选映射（AF-078）。
+- [版本控制矩阵](DOCUMENT_BASELINE_REGISTER.md) §1 将 AUDIT 的 50 条当成现行范围，实际现行审计已跟踪 57 条；需只将**动态范围引用**改为 AUDIT 单一来源，不得改写 §2～3 36 项固定文件快照或历史某次的 50 条（AF-079）。
+- 新发现已在 [AUDIT_PROCESS.md](AUDIT_PROCESS.md) 登记「未整改」；本轮不改变任何 REQ/AC/TC/算法或正式冻结结论。
