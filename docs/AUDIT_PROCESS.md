@@ -253,3 +253,12 @@
 - **AF-086 固定复核**：源修订提交 `ae6bb72d0d2114ca55b7d85481581ffb1c311ea2`，矩阵严格为 **10 条模块/合同行、11 个不同 Markdown 文件**，额外 1 份为球谐专题 LLD，不再混称“10 文件”。
 - **AF-087 固定复核**：`docs/design/kvd.md` 候选 trace 提交 `e5ec72d26648222a72eea837d40ec28f3a28b29a`；`docs/TEST_PLAN.md` 映射提交 `db437096dfd7f382119329e5afd5231a19436661`。在新固定文本上检查 **8/8 静态断言满足**：Franz 初始化/逐轮 near 分母和符号/归一 t/旋转三项/残差预测/终止布尔/末轮缩放的候选字段齐全，现有 TC 追踪且 AF-043/051 不错误关闭。只读对照 `norm_koenderink_iteration.m` 和 `mue_norm_koenderink_iteration.m` 的计算先后，**未产生独立逐轮 L3 数值或执行程序**。
 - **现行问题两态：88 项，65 已整改、23 未整改**；文件三态仍为 [AUDIT §3](AUDIT.md) 的 **60 路径，37 已审计、23 正在审计、0 空白**。AF-086/087 只关闭可独立复核的**文档合同缺项**，并未关闭 AF-043、AF-051、DEC-005/008、授权、实际编码或数值测试。剩余 23 项保持原目标与状态；未达到开展第二轮全面审计的第一轮清零条件。
+
+## 24. 第二批源码—输出语义定向发现（先登记 AF-088/089）
+
+| ID | 仓库根相对路径 | 独立整改目标 | 状态 |
+|---|---|---|---|
+| AF-088 | `docs/design/experiments.md` | 原 `agent_in_sphere_adaptive_matched_filter_many_parameter.m:93` 的 `akrot(i)=360*norm(bestrot)/(2π)` 输出是**旋转向量模长（deg）**，不是 rad、旋转估计误差或角速度；首/末帧依源零预分配保持 0。补充单位、计算源、保存范围和现有 TC-F-EXP-003 的 0/π÷2 等固定向量判别用例；不改变原数学或宣称已跑测试。 | 未整改 |
+| AF-089 | `docs/design/experiments.md` | 原 `agent_in_sphere_adaptive_matched_filter_test.m:83–90` 在 `erzeugeflussausnear` 得到 `durchrotfluss/durchtransfluss` 后才调用 `nonpropfehler`，故 `rottransratio` 来自**加噪前的理想分量平均模长**，不是含噪 `setofpoints` 的观测比值；补充分母为零/非有限候选状态，区分“最后一次运行缓冲、不平均”和比值计算时序，在原 TC-F-EXP-002 和 TC-F-AN-001/独立 Golden 资格中对照。 | 未整改 |
+
+**边界**：本次发现不意味着可产生新历史 `rottransratio` 字段，`UpdateRateRunner` 仍不得写回 `HistoricalOnly`；所有原 `origin/**` 只读，当前无数值程序/真实测试权限。AF-088/089 登记后 **90 个整改目标：65 已整改、25 未整改**；第一轮待清零目标仍包括原 23 个阶段项和本批 2 个可定向处理的文本合同项。
