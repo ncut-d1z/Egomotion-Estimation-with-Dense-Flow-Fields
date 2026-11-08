@@ -58,8 +58,8 @@
 
 | 仓库根相对路径 | 状态 | 核对重点 |
 |---|---|---|
-| `docs/AUDIT.md` | 已审计 | AF-064～066 文档口径与时序说明已修并定向复核；静态审阅不等于实现验收；AF-068 已定向复核 |
-| `docs/AUDIT_PROCESS.md` | 已审计 | AF 目标和两态；历史已结案；AF-069 已定向复核 |
+| `docs/AUDIT.md` | 正在审计 | AF-064～066 文档口径与时序说明已修并定向复核；静态审阅不等于实现验收；AF-068 已定向复核；AF-073 待复核 |
+| `docs/AUDIT_PROCESS.md` | 正在审计 | AF 目标和两态；历史已结案；AF-069 已定向复核；AF-074 待复核 |
 | `docs/REQUIREMENTS.md` | 正在审计 | SRS 的 58 条正文 REQ + 8 条附录 REQ-DC、AC/DEC；待 AF-037 |
 | `docs/PLAN.md` | 正在审计 | AF-052 WBS 静态追踪已复核；DEC-006 实测/批准仍待 AF-061 |
 | `docs/TEST_PLAN.md` | 正在审计 | 66 TC（含 8 TC-DC）→候选测试→AC；AF-063 已整改，AF-051 仍待真实 CTest |
@@ -88,7 +88,7 @@
 | `docs/TODO.md` | 正在审计 | 分阶段人类输入与授权；待 AF-057 |
 | `docs/MAT_DATA_SCHEMA.md` | 正在审计 | 582 MAT 字典与历史证据；待 AF-056 |
 | `docs/SOURCE_INVENTORY.md` | 已审计 | 45 个源 .m 路径、Git blob、字节与 REQ/TC 的静态身份清单；非软件验收 |
-| `docs/MIGRATION_MATRIX.md` | 已审计 | 45 个原源到候选 C++ 方法的职责映射；尚未代码移植 |
+| `docs/MIGRATION_MATRIX.md` | 正在审计 | 45 个原源到候选 C++ 方法的职责映射；尚未代码移植；AF-072 待复核 |
 | `docs/approval/DECISION_IMPLEMENTATION_NOTES.md` | 已审计 | 历史权限/决定释义 |
 | `docs/approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md` | 已审计 | 历史审批包，保留当时事实 |
 | `docs/reviews/STATIC_TRACEABILITY_2026-11-06.md` | 已审计 | 历史审计/修订记录（只读） |
@@ -106,6 +106,7 @@
 | `docs/reviews/AUDIT_SEVEN_MATH_DOCS_RESOLUTION_2026-11-08.md` | 已审计 | 历史审计/修订记录（只读） |
 | `docs/reviews/AUDIT_FOUR_POLICY_DRIFTS_SCAN_2026-11-08.md` | 已审计 | 历史审计/修订记录（只读） |
 | `docs/reviews/AN_G_STATIC_FORMULA_REVIEW_2026-11-08.md` | 已审计 | 8 组候选局部代数手算复核，另外 4 组未独立核验；非 L3/CTest PASS |
+| `docs/reviews/AUDIT_FUNCTION_DECLARATIONS_AND_LEDGER_COMPACT_2026-11-08.md` | 已审计 | 45 个 .m/50 个函数定义与台账膨胀的静态发现；非数值测试 |
 | `AGENTS.md` | 已审计 | 仓库授权与数据安全规则 |
 | `README.md` | 已审计 | 项目范围、证据/许可状态 |
 | `LICENSE` | 已审计 | MIT 与上游作品边界 |
@@ -230,3 +231,11 @@
 - 实际新建 [SOURCE_INVENTORY](SOURCE_INVENTORY.md) 和 [MIGRATION_MATRIX](MIGRATION_MATRIX.md)，在固定提交 650546a06ff7bb89b8c6bf29cac48f712ed2f2fa 上读取真实原源 Git 树、SRS §9.2 和对象模型 §7，三组路径集合各 45 个，均唯一且无漏项；原 MAT 582 文件身份仍归现有数据字典。
 - 同一提交定向检查两个清单各 45 行、Git blob SHA 格式及文内相对引用；PLAN、TEST_PLAN 已改为引用真实存在的文件。这仅是静态交付，不是原 MATLAB 逐函数审计、独立 MAT SHA-256、C++ 移植或 CTest。
 - 两份新文件纳入审计：**53 文件，30 已审计、23 正在审计、0 空白**。P0.6 完整验收、AF-056 的 MAT L2 逐值/独立 SHA-256 和正式软件设计签署仍未完成。
+
+
+## 21. 新一轮静态审计：函数级遗漏与台账冗余（2026-11-08）
+
+- 固定输入 `fd05af47fdddb8d2f03ac404d509c2ff82bdbad8`；只读检查 45 个原始 .m 的函数声明，发现一共 50 个：`SHRotate.m` 含主函数与 M/U/P/V/W 五个内部子函数，其余 44 文件各一个声明。
+- **AF-072**：MIGRATION_MATRIX 仍只有文件级追踪，需补独立内部函数索引，防止将“45 文件”误认为“全部函数的数学/代码迁移已完成”；`rodrigues.m` 返回后示例不属于生产分支。
+- **AF-073/074**：两台账重新增长为约 15k/17k 字符，包含历史结案重复、过时动态状态和大量提交 SHA，应保留规则、28 AU、全部文件/AF 状态与简要历史证据，压缩重复描述。
+- 三项先在整改台账置「未整改」，实际修改并定向复读后再关闭；旧 23 条阶段性缺口保持原状态。

@@ -230,3 +230,14 @@
 - [SOURCE_INVENTORY](SOURCE_INVENTORY.md) 保存 45 个原源文件真实 Git 身份和 SRS REQ/TC；[MIGRATION_MATRIX](MIGRATION_MATRIX.md) 保存同 45 个文件的候选方法职责。固定复核提交：650546a06ff7bb89b8c6bf29cac48f712ed2f2fa，静态三方集合 **45/45/45** 一致。
 - PLAN v0.8 与 TEST_PLAN v0.11 已消除五处原先“SOURCE_INVENTORY 未创建”的现行描述；仍须补逐函数迁移、独立 L2/L3、业务 Reader/Writer、真实 CTest 与人类批准。AF-037、039、051、056 均只记录部分进展，不提前结案。
 - **整改两态仍为 72 项：49 已整改、23 未整改**；新增文件不等于新软件测试或签署基线。
+
+
+## 18. AF-072～074：最新审计发现（修订前）
+
+| ID | 相对路径 | 具体目标 | 状态 |
+|---|---|---|---|
+| AF-072 | `docs/MIGRATION_MATRIX.md` | 明确源 45 .m 对应 50 个函数定义；将 `SHRotate.m` 的内部 M/U/P/V/W 五函数与主入口逐个登记，并声明它们的递推/独立 L3/生产实现均未完成。 | 未整改 |
+| AF-073 | `docs/AUDIT.md` | 去掉重复历史审计过程、旧退出语句和冗长 SHA 段落，保留 AU 主题、文件三态、有效规则、最新进度及历史 review 引用。 | 未整改 |
+| AF-074 | `docs/AUDIT_PROCESS.md` | 压缩重复历轮结案，保留全部 AF 编号/相对路径/独立目标/两态及真正未完成证据，详细 SHA 仅由历史 reviews/PROGRESS 留存。 | 未整改 |
+
+发现时统计：75 个原子目标（49 已整改、26 未整改）；本次只登记，不提前修改目标状态。
