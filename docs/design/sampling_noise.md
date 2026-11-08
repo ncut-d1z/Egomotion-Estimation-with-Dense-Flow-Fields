@@ -1,6 +1,6 @@
 # 视线采样、光流合成与噪声——详细设计草案
 
-> **LLD v0.4 草案，未冻结；无生产实现或已执行的 L3 独立数值测试。** 对应 P2/P3、REQ-F-GEOM-*、REQ-F-FLOW-*、REQ-DC-RNG-001、REQ-DC-NOISE-001。
+> **LLD v0.5 草案，未冻结；无生产实现或已执行的 L3 独立数值测试。** 对应 P2/P3、REQ-F-GEOM-*、REQ-F-FLOW-*、REQ-DC-RNG-001、REQ-DC-NOISE-001。
 
 ## 1. 来源与输入输出
 
@@ -249,6 +249,16 @@ public:
 | 噪声倍数为 `0`、正常源用尽、返回 NaN/Inf | 零倍数仍执行源 `normal` 调用，不能优化跳过；耗尽/非有限值显式报错并保留 sample_index/来源 | 无实际异常/CTest 证据；非成功样本不擅改统计分母 |
 
 **原始返回差异**：`fixed_*_randomnear.m` 返回的 `near` 为逐点循环最后写入的 **标量**；C++ 候选 `FlowSynthesisResult.nearness` 的 N 维向量是新内部记录，不能伪称为原 MATLAB 返回向量。按 `TC-F-GEOM-002/003`、`TC-NF-RNG-001`、`TC-DC-RNG-001`、`TC-F-FLOW-001～004` 关联现有 TEST_PLAN，不新增 TC。**AF-047 仍「未整改」**，独立有序 L3、实现及 CTest 待授权。
+
+### 7.2 原始噪声系数正负与 RNG 抽样数（AF-047，静态合同）
+
+原 `nonpropfehler.m` 先用无噪声流场计算平均模长 `durchlaenge`，随后对每个 N×6 行，依次进行 x/y/z 三个 `randn * fehlerprozent * durchlaenge`，最后应用 `p - (p·d)d` 切向投影；不存在按 `fehlerprozent==0` 跳过抽样的分支。故：
+
+- 零噪声尺度仍为 **3N 次 normal 抽样**，只令加到 p 的值为零；不得据“输出无噪声”推断未消耗 RNG。
+- 负的有限尺度**在源码中没有显式拒绝**，固定注入相同的法向样本时，噪声项符号反转；其概率分布可能相同，**固定序列样本值不相同**。这与外部 CLI 是否最终允许负系数的 DEC-008 决策须分别标明。
+- 两种 Bias 原 `fixed_*randomnear.m` 均先有 N 次 uniform 近度，再各有 3N 次 normal；一个版本乘平均流模长，另一个乘逐分量原始 p。两者不得在复用函数时互换。
+
+这仅是对只读源码的调用顺序审查，不是注入随机源实际回归；相关现有 TC 为 TC-NF-RNG-001、TC-F-FLOW-003/004、TC-F-BIAS-001/002，独立 L3 和 CTest 未完成。
 
 ## 8. CMake 归属、头文件与 TC/CTest 候选（无实际实现）
 

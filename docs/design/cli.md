@@ -1,6 +1,6 @@
 # CLI 参数、退出码与诊断协议：详细设计草案
 
-> **候选 v0.3，未冻结、未编码、未执行 CTest。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
+> **候选 v0.4，未冻结、未编码、未执行 CTest。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
 
 ## 1. 语法与基本约束
 
@@ -65,6 +65,14 @@
 | 诊断 JSONL | UTF-8 每行对象、稳定字段、转义引号/反斜杠/控制字符、非有限数值不输出非法 token | 无有效 RunId 时字段省略/空值约定、stderr 与文件日志失败后的状态需批准与真实测试 |
 
 这些是冻结前核对项，**不授权**实现/执行；DEC-008/P0.8/P1.2 尚未批准，`AF-041` 保持「未整改」。
+
+### 3.2 负噪声尺度的原始源码静态边界（AF-041，非批准）
+
+只读原 `help_functions/nonpropfehler.m` 中，每个视线对 p 的三个分量**分别**执行 `randn * fehlerprozent * durchlaenge`，随后将 p 投影回切平面；`agent_in_sphere_adaptive_matched_filter_test.m` 仅将 `addederror` 传入该系数，没有显式的“必须非负”分支。因此：
+
+- `--noise-scale 0` 的数值噪声贡献为零，但 **3N 次正态随机抽样仍发生**；负有限系数以负号乘相同的随机抽样，会改变**固定注入序列**的具体噪声符号，不能为了统计分布相似而默默转成绝对值。
+- **候选忠实行为**：`FINITE_DOUBLE` 校验有限性，不额外对负号作非负拒绝；如将来选择“非负业务限制”，必须作为经 DEC-008 明确批准的外部语义变更，记录相应 TC 差异，不能声称来自原 `.m`。
+- 必须用零/正/负尺度、固定 3N 抽样、精确切向投影及被拒绝的 NaN/Inf 负例验证 CLI/噪声层；当前没有获得正式接口批准，也没有代码/CTest/独立 L3 执行。参见 [采样 LLD §7.2](sampling_noise.md) 与 [静态证明记录](../reviews/AN_G_STATIC_FORMULA_REVIEW_2026-11-08.md)。
 
 ## 4. 验收映射与冻结界线
 

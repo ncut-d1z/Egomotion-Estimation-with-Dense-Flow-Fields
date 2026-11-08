@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **测试计划草案 v0.9，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
+> **测试计划草案 v0.10，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
 
 > **审批后候选核对材料**：见 [HAR-2026-11-06-001 设计修订与待审材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md) §2、§3、§7～§9。其中历史上提出六类容差采集格式、582 MAT SHA-256 独立审核和正式 Reader 类型拒绝清单；**当前参考采集/核验路径以 L2/L3/L4 为准，完全不要求 MATLAB/Octave 执行或 L1 Golden**，见 [长期政策](golden/NO_MATLAB_EXECUTION_POLICY.md)。`atol=0.01`/`rtol=0.1` 已由所有者选作**首轮宽松筛查**，不是已冻结的最终验收阈值；测试实体/CTest 仍未执行，H-10/H-11 其他执行门禁未解除。
 
@@ -114,6 +114,19 @@
 | `TC-F-AN-001/002`、`TC-I-ANALYSIS-001` | 50:550 的 501 点、阈值等值不触发、分段与 f 半窗/零边界、更新率新数据缺 ratio 明确报错 | L2 原始变量/下标与独立 L3 曲线/分段/错误对照；详见 `analysis_plotting.md §8.1` |
 
 **不能自动宣称 PASS**：测试夹具未生成，运行许可 H-10/H-11 未开放，源输入/参考 SHA、逐值误差及 CTest stdout/stderr/exit 尚无本轮执行记录。本表仅完成 AF-051 的测试**设计部分**，AF-051 继续「未整改」。
+
+### 2.10 已可手算但未实际执行的数值/抽样负例（AF-041/047/055）
+
+根据 [AN-G 静态公式审阅](reviews/AN_G_STATIC_FORMULA_REVIEW_2026-11-08.md) 可用于未来独立 L3 的固定条件：
+
+| 原 TC/验证目标 | 固定条件及不可忽略的判据 | 当前实际状态 |
+|---|---|---|
+| TC-F-GEOM-001 / TC-NF-RNG-001 | `getvektor` 注入两个 uniform `(0.5,0)`，方向严格按 θ/φ 公式算，消耗 2 次；还须覆盖边界输入 0/1、耗尽与非法样本 | 仅静态推导；未运行 |
+| TC-F-FLOW-001～004 | `d=e_z, near=2, t=e_x, ω=e_y` 的生成光流 `(-3,0,0)`；另对 `nonpropfehler` 的 **0/+k/−k** 固定正态注入，记录每行 3 次调用与最终切向投影 | 数值点已手算；独立 L3/CTest 缺 |
+| TC-F-BIAS-001/002 | `iterationnumber=2` 的原 `xwerte=[6,24,96]`，缺损模式 N=6/24/96，完整球面 N=8/32/128；必须记录实际 N 与显示 x 分别来源 | 仅源表达式/形状复核；未运行 |
+| TC-F-SH-001、TC-F-ADAPT-001 | 常数近度 `Y00` 代数与对称方向下 M1～M4/rhs 的关系；另需非对称/近奇异例和 R3/R5 全元素、Session trace | 对称情况仅理论复核，不作数值 PASS |
+
+所有例子不新增 TC ID，不替代现有 66 TC 的文件创建、测试执行、L2/L3/L4 独立证据及 DEC-005/008 正式审批。负有限噪声的 CLI 接收策略仍须批准；原 `.m` 未显式禁止该数值。
 
 ## 3. TC → 实体/CTest → AC 规划矩阵
 
