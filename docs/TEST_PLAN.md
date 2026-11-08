@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **测试计划草案 v0.18，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
+> **测试计划草案 v0.19，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
 
 > **审批后候选核对材料**：见 [HAR-2026-11-06-001 设计修订与待审材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md) §2、§3、§7～§9。其中历史上提出六类容差采集格式、582 MAT SHA-256 独立审核和正式 Reader 类型拒绝清单；**当前参考采集/核验路径以 L2/L3/L4 为准，完全不要求 MATLAB/Octave 执行或 L1 Golden**，见 [长期政策](golden/NO_MATLAB_EXECUTION_POLICY.md)。`atol=0.01`/`rtol=0.1` 已由所有者选作**首轮宽松筛查**，不是已冻结的最终验收阈值；测试实体/CTest 仍未执行，H-10/H-11 其他执行门禁未解除。
 
@@ -192,6 +192,18 @@
 | 合法隔离目标中实际写图失败（磁盘权限/写入中断等） | `WriteFailed`，`output/6`；保留失败可追踪性，不把不完整图像/Manifest 伪装成功，不改变既有分析结果 |
 
 这里所有类型、阶段、退出码都是**待 DEC-008 批准的测试候选**；实际图形后端、JSONL、权限失败注入、真实 CTest 与输出文件系统安全尚未执行。图形能力缺失不能阻碍核心数值验收。
+
+### 2.18 三份原始 illustration 的数值与显示忠实性（AF-090/091，候选未执行）
+
+原 `illustrations/spherical_harmonic_illustration.m:10–30` 与核心求解用 `help_functions/kugelflfunc2.m` **不能共享“同一归一化球谐图”断言**。以下只在现有 `TC-F-AN-002/AC-F-AN-002` 下新增静态核对资格，不新增 TC、C++/绘图产物或运行证据。唯一显示算法候选合同在 [分析 LLD §3.1](design/analysis_plotting.md)。
+
+| 源入口及独立输入候选 | 预期原脚本语义与错误边界 | 真正尚缺的证据 |
+|---|---|---|
+| `spherical_harmonic_illustration(0,0)` | 41×41 的 theta/phi 网格、`P_0^0=1`、`yy=1`、`rho=8`；**不等同**于 `Y_00=1/sqrt(4π)` 的核心实球谐数值表示 | 独立参考全网格几何值与真实绘图数据 |
+| `spherical_harmonic_illustration(1,0)` 与 `(1,1)` | `(1,0)` 参考 `rho=5+3cos(theta)`；`(1,1)` 取含 Condon–Shortley 相位的 `P_1^1(cosθ)cosφ`，**没有负 m 的 sin 分支**，面坐标由径向 `rho` 换算。非法 order、零归一尺度应有明确 C++ 非成功状态；不宣称原 MATLAB 报相同错误码 | 独立 L3 几何节点/符号/边界及未来可选绘图适配测试 |
+| 圆示意（600、半径 0.6、高 0.3）与正弦示意（600、幅 0.5、长 1、周期 2、高 0.3） | 两者均 `sphere(50)`，**只把 y<=0 的球面 z 置 NaN**；需核原轨迹点和可见半球遮罩。正弦脚本真实标题仍写 `circular trajectory within the sphere`，要以**源标题 vs 轨迹类别**两个字段记录，不擅自更正为“原版标题” | 可选图形后端输出、原数学几何数组及 source SHA、原字面文本与 UI 来源标签 |
+
+**边界**：`TC-F-AN-002` 是可选图示数据的一致性审查，不意味着逐像素图形相同；核心 `TC-F-SH-001/002` 应继续以归一化九实基、R3/R5 全矩阵独立 L3 进行数值验收。未获 H-10/H-11 授权，不运行 MATLAB/Octave、CMake、CTest、绘图或 L3 生成；不改变 66 TC 总量、DEC-005/008 或软件状态。
 
 ## 3. TC → 实体/CTest → AC 规划矩阵
 
