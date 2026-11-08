@@ -1,6 +1,6 @@
 # 轨迹、相机旋转与球内环境——详细设计草案
 
-> **LLD v0.3 草案，未冻结、未运行数值测试。** 来源：kreis_trajektorie.m、sinuskurve_trajektorie.m、trajektorie_aus_punkten.m、drehvektor_aus_zwei_vektoren.m、rodrigues.m、getnear_in_kugel_Drehung.m。对应 P3.6、P6.1–P6.7、REQ-F-TRAJ-001。
+> **LLD v0.4 草案，未冻结、未运行数值测试。** 来源：kreis_trajektorie.m、sinuskurve_trajektorie.m、trajektorie_aus_punkten.m、drehvektor_aus_zwei_vektoren.m、rodrigues.m、getnear_in_kugel_Drehung.m。对应 P3.6、P6.1–P6.7、REQ-F-TRAJ-001。
 
 ## 1. 轨迹点列与离散化
 
@@ -98,7 +98,7 @@ n_c=\|\boldsymbol c\|,\quad
 |---|---|---|
 | v1、v2 正常非平行 | 单位旋转轴×角度 | 对照每个分量、rotvec 范数和 Rodrigues 方向 |
 | v1≈v2 | 叉积接近零、γ≈0 | 原 1e−11 分支与 acos 数值边界要 Golden |
-| **v1 与 v2 反向** | 叉积零但 γ≈π，原函数可能输出**零旋转向量而非有效 π 旋转** | 必须保留/标注原版行为，不能悄悄替换任意反向旋转轴 |
+| **非零 v1 与 v2 严格反向** | 对精确反向输入叉积**必为 0**、γ=acos(−1)=π，因源代码 `drehvektor=0*π` **确定返回零旋转向量**，不是有效 π 旋转；近反向但叉积非零另受 1e−11 分支影响 | 不得把此源返回当“真实零旋转”的有效估计；安全的 `InvalidDirection` 失败是候选 C++ 行为，需按已选 Result/Failure 与真实测试确认 |
 | 任一输入为零 | γ 的分母可为零 | 显式 NumericalErrorCode，同时记录原版 NaN/报错；未授权不称“等价” |
 | dot/(norms) 超出 [-1,1] 浮点范围 | acos 非有限或复数 | 是否显式 clamp 为安全增强待决定，忠实模式不能未经同意更改 |
 
@@ -161,6 +161,19 @@ public:
 | 世界运动转局部运动 | `TrajectoryKinematics` 使用原 `R^\top` 对向量变换；不向 `sampling` 模块输出 MAT 句柄/Session 状态 | 矩阵转置方向与平移、旋转量的固定输入 L3 |
 
 本合同明确 **TrajectoryGenerator/TrajectoryKinematics/SphereEnvironment** 与采样 `DirectionSet`、流场 `FlowSynthesizer` 的值传递职责；具体公共签名与 target 以 [contracts.md](contracts.md)、[sampling_noise.md](sampling_noise.md) 及 HLD 为准。关联 `TC-F-TRAJ-001`、`TC-F-FLOW-004`。**AF-048 仍「未整改」**：Sophus 生产依赖、近退化 L3、异常/CTest 及最终冻结尚缺。
+
+### 6.3 可手算的固定输入与源退化核对（AF-080；非已生成 Golden）
+
+以下逐项来自只读 `drehvektor_aus_zwei_vektoren.m:5–16`、`trajektorie_aus_punkten.m:9–30`、`getnear_in_kugel_Drehung.m:11–20`；分数写法用于保持符号与坐标方向可审查。**均是静态公式推导的候选，不是运行过的 MATLAB 或独立 L3/CTest PASS。**
+
+| 候选 | 输入及源定义 | 手算必得的结果／未来需检查项 |
+|---|---|---|
+| TR-C01：局部转置方向 | 三点 `q1=(0,-1/5,0)`，`q2=(0,0,0)`，`q3=(-1/5,0,0)`；原 `vabs=e_x` | `v1=(0,1/5,0)`、`v2=(-1/5,0,0)`；`v1×v2=(0,0,1/25)`，两条旋转向量 `absrot=(0,0,π/2)`、`absdrehvektoren(2)=(0,0,π/2)`；`R=R_z(π/2)`，`Rᵀv2=(0,1/5,0)`，`Rᵀabsrot=(0,0,π/2)`。如果误用 `R v2`，平移会变为 `(0,-1/5,0)`，可区分转置方向。首尾行原 zeros 预分配不代表有效零运动。 |
+| TR-C02：严格反向异常 | `v1=(1/5,0,0)`、`v2=(-1/5,0,0)`；可取 `q1=(-1/5,0,0), q2=(0,0,0), q3=(-1/5,0,0)` | `v1×v2=(0,0,0)` 且 `cosγ=-1`，`γ=π`；原函数**确定返回零向量**。由于由 `e_x` 到 `v1` 的绝对 rotvec 亦为零，原路径在中间行给 `R=I`、`alletrans=(-1/5,0,0)`、`reldrehvektoren=(0,0,0)`；但真实折返非零旋转，不能冒充正常输出。C++ 的显式失败类别/调用方继续策略仍须独立批准与测试。 |
+| TR-C03：旋转后的射线近度 | 单位视线 `d=(0,1,0)`，旋转向量 `ω=(0,0,-π/2)`，相机位置 `o=(1/4,0,0)` | `n=R_z(-π/2)d=(1,0,0)`，`b=1/4`、`c=1/16`、`Δ=1`，正向射线距离 `ρ=3/4`，`near=4/3`；若遗漏视线旋转，误得 `near=4/√15`。 |
+| TR-C04：反向射线根号 | 单位视线 `d=(-1,0,0)`，无旋转、`o=(1/4,0,0)` | `b=-1/4,c=1/16,Δ=1`，`ρ=5/4`，`near=4/5`；不能偷换成 `+b+√Δ` 或负根。 |
+
+**验收身份**：这些条件分别补充原 `TR-G03/04/05`、`TC-F-TRAJ-001`、`TC-F-FLOW-004` 的输入资格，不新增 TC/G ID。实际 L3 必须有独立来源、完整输入/输出/状态、SHA-256、批准容差与真实代码/CTest 对照，且至少另测零方向、非有限、球边界与一般旋转；源 MATLAB 的退化返回与 C++ 安全失败应分别记录。AF-048 仍「未整改」，AF-080 仅以**纠正明确的静态源码语义与输入候选**为整改范围。
 
 ## 7. 黄金样本与验收覆盖
 
