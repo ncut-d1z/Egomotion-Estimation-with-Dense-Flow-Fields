@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **测试计划草案 v0.14，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
+> **测试计划草案 v0.15，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
 
 > **审批后候选核对材料**：见 [HAR-2026-11-06-001 设计修订与待审材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md) §2、§3、§7～§9。其中历史上提出六类容差采集格式、582 MAT SHA-256 独立审核和正式 Reader 类型拒绝清单；**当前参考采集/核验路径以 L2/L3/L4 为准，完全不要求 MATLAB/Octave 执行或 L1 Golden**，见 [长期政策](golden/NO_MATLAB_EXECUTION_POLICY.md)。`atol=0.01`/`rtol=0.1` 已由所有者选作**首轮宽松筛查**，不是已冻结的最终验收阈值；测试实体/CTest 仍未执行，H-10/H-11 其他执行门禁未解除。
 
@@ -153,6 +153,10 @@
 ### 2.13 轨迹与近度的符号级候选（AF-048/080，未运行）
 
 参见 [trajectory.md §6.3](design/trajectory.md) 的 TR-C01～04：三点局部轨迹 `Rᵀ` 的正负号、严格反向输入 `(e_x,-e_x)` 的原函数**确定**输出零旋转向量（非有效折返），以及球内旋转视线的 `near=4/3` 与反向射线 `near=4/5`。将四组固定输入关联现有 `TC-F-TRAJ-001` 与 `TC-F-FLOW-004`；要求实际 L3/CTest 分别报告源返回/候选安全失败、端点有效性、坐标单位和真实误差。本文只给出静态可手算输入资格，**未生成独立 L3、未测试，也不批准 DEC-005/008**。
+
+### 2.14 AN-G01～03 初始面表行序的静态资格（AF-047/055）
+
+源码面表按 `level=0` 的三顶点单位中心公式，已经形成 [AN-G01/02/03 完整 8/6/20 行符号推导](reviews/AN_G_LEVEL0_FACE_ORDER_STATIC_2026-11-08.md)；关联原 `TC-F-GEOM-002/003` 的初始面顺序及零光流列。**仍不能据此通过 TC 或关闭 AF-047/055**：下一阶段必须覆盖 `level=1/2` 的全量 A/B/C/D 递归顺序、独立数值来源 SHA-256、边界输入及实际采样器/CTest。无 MATLAB/L1 强制门槛。
 
 ## 3. TC → 实体/CTest → AC 规划矩阵
 

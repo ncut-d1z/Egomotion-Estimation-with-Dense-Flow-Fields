@@ -1,6 +1,6 @@
 # 视线采样、光流合成与噪声——详细设计草案
 
-> **LLD v0.5 草案，未冻结；无生产实现或已执行的 L3 独立数值测试。** 对应 P2/P3、REQ-F-GEOM-*、REQ-F-FLOW-*、REQ-DC-RNG-001、REQ-DC-NOISE-001。
+> **LLD v0.6 草案，未冻结；无生产实现或已执行的 L3 独立数值测试。** 对应 P2/P3、REQ-F-GEOM-*、REQ-F-FLOW-*、REQ-DC-RNG-001、REQ-DC-NOISE-001。
 
 ## 1. 来源与输入输出
 
@@ -249,6 +249,10 @@ public:
 | 噪声倍数为 `0`、正常源用尽、返回 NaN/Inf | 零倍数仍执行源 `normal` 调用，不能优化跳过；耗尽/非有限值显式报错并保留 sample_index/来源 | 无实际异常/CTest 证据；非成功样本不擅改统计分母 |
 
 **原始返回差异**：`fixed_*_randomnear.m` 返回的 `near` 为逐点循环最后写入的 **标量**；C++ 候选 `FlowSynthesisResult.nearness` 的 N 维向量是新内部记录，不能伪称为原 MATLAB 返回向量。按 `TC-F-GEOM-002/003`、`TC-NF-RNG-001`、`TC-DC-RNG-001`、`TC-F-FLOW-001～004` 关联现有 TEST_PLAN，不新增 TC。**AF-047 仍「未整改」**，独立有序 L3、实现及 CTest 待授权。
+
+#### 7.1.1 AN-G01～03 零级面顺序的符号核对（AF-047/055，非数值 L3）
+
+已根据原始三份采样器与 `findeDreiecke.m` 的静态公式，按初始面表逐行核对 `AN-G01` 8 行、`AN-G02` 6 行、`AN-G03` 20 行的 **level=0 符号方向与次序**。推导和完整 20 行顶点索引见 [专项静态说明](../reviews/AN_G_LEVEL0_FACE_ORDER_STATIC_2026-11-08.md)。源 `findeDreiecke` 的 `A/B/C/D` 递归到 **level=1/2** 的全部行、独立数值 L3、浮点误差/异常以及 C++/CTest 均未核验；这只是对旧候选 JSON 初始有序面表的静态证据，不将任何 TC/AC 标为 PASS。AF-047/055 保持「未整改」。
 
 ### 7.2 原始噪声系数正负与 RNG 抽样数（AF-047，静态合同）
 
