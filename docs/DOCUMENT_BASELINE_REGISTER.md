@@ -113,3 +113,20 @@
 | [docs/design/README.md](design/README.md) | v0.7（仅补检查清单） | `6a1867a4b36ad71b1a523c4b3ed7372e276ece5d` | `021174c363d18d81773acbc8f6b61364a9059faa` | AF-059 10 模块 LLD 冻结前核对；不等于正式冻结、已编译或 CTest PASS |
 
 原 §2～3 的 36 项身份仍是较早固定快照，**不可**以新版本 blob 直接替换旧快照行并继续声称同一提交身份。审计新问题的状态见 [AUDIT](AUDIT.md)、[AUDIT_PROCESS](AUDIT_PROCESS.md)；本矩阵和滚动审计文件本身修改后的最新 blob 身份需在后续正式固定版本时统一登记。所有 SRS/HLD/LLD/TEST_PLAN 仍未冻结。
+
+
+### 6.2 AF-037～041 第一批文档修订的固定文件身份（仅设计草案）
+
+以下文件身份**属于固定提交** `306b9ac4e8c832344d703b8d29d371710055ae86`，不得与 §2–3 较早固定快照混成同一 SHA，也不因在本表登记就提升为已冻结。
+
+| 变更路径 | 文件版本 | 该固定提交的 Git blob SHA | 审计用途及限制 |
+|---|---|---|---|
+| `docs/REQUIREMENTS.md` | v0.14 | `51c0cfed22a80340eaadce059e5f579e9c56f3ef` | AF-037：AC/LLD 身份门禁，未冻结 |
+| `docs/ARCHITECTURE.md` | v0.9 | `549a74093bc128fb948e3e98a98f008e42ec585d` | AF-038：Writer/Session/HLD 责任对照，未编译 |
+| `docs/OBJECT_MODEL.md` | v0.6 | `9bc35d7d8b66c6337b85a9e37e3de530e0278176` | AF-039：唯一签名/所有权来源，待批准 |
+| `docs/design/contracts.md` | v0.3 | `cef56ac06e4f552d65790d8d42f3caff365a6c53` | AF-040：variant/错误边界待编译 |
+| `docs/design/cli.md` | v0.3 | `4e8f2cce1f6dad75ba576f8768646aa0baa900c0` | AF-041：端值/RunId/JSONL 候选待测试 |
+| `docs/PLAN.md` | v0.7（引用更新） | `58fef1368f9a866a5f39de0a8a16f80dab50172e` | SRS v0.14 引用，同步非动态进度 |
+| `docs/TEST_PLAN.md` | v0.8（引用更新） | `4f02e3c5b66b8cab6e0b633d8ce5b4b0fe306a28` | SRS v0.14 引用，未执行 CTest |
+
+上述目标仍为 AF-037～041 **未整改**，正式批准、接口实现/ABI、CMake/CTest/独立 L2/L3/L4 和 DEC-005/006/008 未完成；当前状态统一见 [AUDIT_PROCESS](AUDIT_PROCESS.md)。此登记不是软件或数学验收证据。

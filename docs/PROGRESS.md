@@ -169,3 +169,11 @@ reviewed_by / review_date:
 - AF-052：98 P 唯一、前置依赖存在且无环、REQ/TC/AC 与 SRS 98 条反向映射一致；66 REQ/66 TC、50 条 PLAN 相对文件引用均可定位；HLD 27 条设计边无环；M0～M5 在本文件 §3 **全部未通过**。此次仅 GitHub 连接器只读静态核对，未运行 Bash。
 - AF-059：LLD 索引新增 10 模块签名候选、唯一合同归属、TC/L3 入口及尚缺代码/验证/批准的清单。定向文本复读 **2/2** 通过，不批准任何编码合同或 DEC-005/006/008。
 - 最新 `AUDIT_PROCESS` 的 **67 项中 44 已整改、23 未整改**。遵照“剩余不为零即退出”，本轮在此停止，没有开展新的审计或第二轮整改；仍缺独立 L2/L3/L4、生产 C++/CTest、Reader/Writer、性能及正式人类签署。未改变 H-10/H-11、`origin/**`、历史审批/报告，也未执行 MAT 写入或 MATLAB/Octave。
+
+
+### E-DOC-032（2026-11-08：AF-037～041 设计合同部分整改）
+
+- **固定修订/复核输入**：`306b9ac4e8c832344d703b8d29d371710055ae86`；源文件 `docs/REQUIREMENTS.md`（SRS v0.14）、`docs/ARCHITECTURE.md`（HLD v0.9）、`docs/OBJECT_MODEL.md`（v0.6）、`docs/design/contracts.md`（v0.3）、`docs/design/cli.md`（v0.3），以及 PLAN/TEST_PLAN 中的 SRS v0.14 引用。
+- **实际完成**：新增 AC→候选 LLD 固定身份门禁、Writer 二次路径检查/Adaptive 已选失败纪律、对象与唯一签名来源表、Result/variant 未决错误语义表、CLI 输入/RunId/JSONL 负例矩阵。五处目标文档锚点定向复读均可定位；**此为文档推进，不是冻结或验收**。
+- **待完成**：AF-037～041 的正式批准与实际编码/ABI/负例/CTest、独立 L2/L3/L4 及其它 AF 阶段目标。AUDIT_PROCESS 当前仍 **44 已整改、23 未整改（67 总项）**；由于尚有未整改，按条件在第一轮停止，不开展新审计与第二轮整改。
+- **未执行** Bash/CMake/CTest、MATLAB/Octave、MAT 写入或独立数值/性能实验；`origin/**`、历史审批 JSON/reviews、H-10/H-11 均未改。
