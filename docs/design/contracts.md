@@ -153,7 +153,7 @@ private:
 | MatErrorCode::UnsupportedClassOrType、InvalidShape、SizeOverflow；**AnalysisErrorCode::ShapeMismatch**（已读取变量的维度/长度无法满足分析合同） | 4 | decode/schema |
 | 全部 NumericalErrorCode（含 InvalidShape、RandomSourceExhausted、InvalidRandomSample、SampleCountOverflow、ResourceLimitExceeded）；ExperimentErrorCode::SolverFailed、DataMismatch、IncompleteRun；**AnalysisErrorCode::InvalidSegment、NonFiniteInput、UndefinedStatistic、UnsupportedExperiment**（Analyzer 运行期） | 5 | solve/simulation/analyze |
 | MatErrorCode::OutputPathForbidden、OutputExists、WriteFailed、ReadbackMismatch；ExperimentErrorCode::OutputFailed | 6 | output |
-| **PlotErrorCode::OutputForbidden、WriteFailed**（可选图形发布或写出受阻） | 6 | output |
+| **PlotErrorCode::OutputForbidden、PlotErrorCode::WriteFailed**（可选图形发布或写出受阻） | 6 | output |
 | **PlotErrorCode::InvalidSeries**（输入已分析但无法作为合法绘图序列） | 5 | plot |
 | **PlotErrorCode::BackendUnavailable**（可选 plot 后端缺席） | 7 | plot |
 
