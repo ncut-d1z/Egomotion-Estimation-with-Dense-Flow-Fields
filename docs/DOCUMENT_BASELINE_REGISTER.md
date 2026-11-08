@@ -203,3 +203,17 @@ AF-041/047/055/058 与其它开放目标仍须独立数据/真实软件及审批
 
 - 固定函数清点提交 `150b975db4045fbc99a343fdf422c7836e1a797b`：`docs/MIGRATION_MATRIX.md` blob `3d61d69f7962a29c8720528f7fa71628c7008331`，`docs/SOURCE_INVENTORY.md` blob `9d72f7517e93f774c4b67338cc6b93f6723e7712`（45 文件、50 个函数声明，不含数学逐式验收）。
 - 固定审计压缩提交 `ae831be3a0901d69c0897044fd339fda38468963`：`docs/AUDIT.md` blob `05f8576cfdd868d4a846fa2773140eeb1891ac5e`，`docs/AUDIT_PROCESS.md` blob `926276afe93fa88d30d5113e94b68d14773685d2`，只作**当时**静态表行与文档压缩复核，不代表随后滚动状态或正式 ApprovedBaseline。
+
+
+### 6.9 AN-G08 特例静态审阅文件身份（未冻结）
+
+固定审阅提交 `ee3d9c9bb42e6d71f9808510402d1394e385647d`，仅登记该时点的文件 Git 身份：
+
+| 文件 | Git blob SHA | 复核边界 |
+|---|---|---|
+| `docs/reviews/AN_G08_Z90_STATIC_CONVENTION_2026-11-08.md` | `903544444af25a0a1832822225b3f635ab4cf573` | z90 系数的三角恒等式与 R3 原赋值；非通用 R5 L3 |
+| `docs/design/harmonics.md` | `05eac137a3334ad2d14ce1c0f5e5d2d0d4e471e0` | §7.1.1 明确 m 次序、系数方向，不是 Eigen 生产实现 |
+| `docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md` | `82687c7638e989eb06792139bf1adbc929409de2` | AN-G08 局部符号级来源，DEC-005 仍未批准 |
+| `docs/AUDIT.md` | `b65b70a0c43d95b1a9d8ecc52dea7bfbd06e9ca3` | 审计对象增加该历史报告后的固定身份 |
+
+原 36 选定基线矩阵的历史快照保持不变；本节不增加 ApprovedBaseline 或通过状态。
