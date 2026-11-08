@@ -271,3 +271,14 @@
 - **测试与分析合同**：`docs/TEST_PLAN.md` `cabb042916bb7e4bd7e6539fb204d22169a82482` 增补已有 TC 的 **0°/90°/180°** 与 AN-G05 单样本比值 0.5 夹具资格；`docs/design/analysis_plotting.md` `d7c3d5f93e1ef93317b0c68025d7b56146348a76` 声明 Analyzer 只消费真实存在的历史比值变量，不能从含噪观测重算、不能为新 Update rates 伪造 `rottransratio`。
 - **定向静态核查**：对固定修订文本与上述源行执行 **11/11 只读断言满足**，包括源本来先计算理想均值/再施噪/最后赋 ratio 的顺序、零预分配、单位、手算候选、失败状态、旧字段隔离和原 AF-049/050/051 开放状态。仅是**静态核对与纸面数学，尚无独立 L3 数值文件或 CTest**，也未测试真实 MATLAB 或新 C++。
 - **结案范围**：AF-088、AF-089 仅关闭上述两个清楚的**LLD/测试语义缺口**；第一轮仍 **90 AF：67 已整改、23 未整改**，审计路径仍 **60：37 已审计、23 正在审计、0 空白**；AF-049/050/051、DEC-005/008、H-10/H-11、生产 Runner/Analyzer/Reader/Writer 和正式软件验收全部仍缺。第一轮目标未清零，正式第二轮全面审计不启动。
+
+## 26. 第一轮继续审计：三份 illustration 原始算法语义（先登记）
+
+固定发现输入：`30cf2a71197ac12b17f8fa6af09aaf4f0baa3440`，只读 `origin/egomotion_estimation_dense_flow_fields_matlab_scripts/illustrations/` 三个源脚本，对照现行 `analysis_plotting.md §3` 与 `REQ-F-AN-002/TC-F-AN-002`。该批先登记两项，**尚非结案或软件测试**。
+
+| ID | 仓库根相对路径 | 原子整改目标 | 状态 |
+|---|---|---|---|
+| AF-090 | `docs/design/analysis_plotting.md` | `spherical_harmonic_illustration.m:10–30` 用 `theta=0:π/40:π`、`phi=0:π/20:2π`、`legendre(degree,cos(theta))` 的第 `order+1` 行、`cos(order*phi)`，然后 `rho=5+3*yy/max(abs(yy))`；它**不调用**归一化实球谐 `kugelflfunc2`，不使用负 m 的 sin 分支，不应把展示函数误当作核心九实基求解器。补完整示意数据/参数域与 TC-F-AN-002 候选核验，明确独立 L3/实际绘图未运行。 | 未整改 |
+| AF-091 | `docs/design/analysis_plotting.md` | 原 `circle_curve_in_the_sphere.m` 和 `sinosodial_curve_in_the_sphere.m` 均 `sphere(quality=50)`，把 `y<=0` 的球面点之 `z` 设 NaN 形成单侧遮罩，并绘制源给定的 600 点轨迹；正弦脚本虽然实际选正弦轨迹，图标题却仍是 `circular trajectory within the sphere`。在 LLD/既有 TC 中记录这一历史标题异常、遮罩与参数；原版忠实复现与可选纠正图标题要分开，不能静默把原行为当正确的正弦标题。 | 未整改 |
+
+**发现登记后问题两态**：92 项（67 已整改、25 未整改）；文件审计 60 项（37 已审计、23 正在审计）。AF-050/051、H-10/H-11、独立 L3、真正绘图和 CTest 均不因上述源码静态发现而关闭。
