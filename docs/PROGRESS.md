@@ -295,3 +295,25 @@ reviewed_by / review_date:
 - **固定变更证据**：初始远端 `f992a21163956f53d0aa21f70b2919e3be9fbe79`（85 AF：62 已整改、23 未整改；60 文件：37 已审计、23 在审）。新增 AF-085 的首次登记提交 `5f2938ab61c3b5c20636ff84cfd4bf1d76f86d77`；目标 AUDIT §4 修订 `1e3c99d3345143ad414afb5608b272ced907d751`；固定复读后结案 `1049ec7eb734a45510b9d14dde32fb8afbbea4de`；现行摘要同步 `0257169f4a32f238184d27ccb08d7d4495406961`。
 - **只读静态复核结果**：60/60 审计文件路径唯一（37 已审计、23 在审、0 空白），86/86 AF-ID 唯一（63 已整改、23 未整改）；AUDIT §4 把旧 `150b975` 时点的 58/35/23 归为历史快照，明确现行状态必须由实际表行读取。检查是在 GitHub 连接器返回的远端文本上进行，**不是 Bash 检查或 CTest**。
 - **未关闭**：AF-037～061（不含 AF-052、AF-059）共 23 项；缺 H-10/H-11 阶段授权、独立数值 L2/L3/L4、生产代码、真实 CTest、Ivanic 原文与 1998 勘误及相应人类批准。第一轮尚未完成，故**不开展以第一轮清零为前提的第二轮全面审计**。原 `origin/**`、MAT/审批历史不变；未执行 MATLAB/Octave、CMake/CTest、Bash、MAT 写回读或任何软件测试。
+
+
+### E-DOC-051（2026-11-08：AF-086/087 第一轮继续审查及候选 trace 合同收敛）
+
+- **基准**：远端 `3c171271400d7dacb09315152708da4585461152`，86 项 AF（63 已整改、23 未整改），60 个审计路径（37 已审计、23 在审）；本批首次登记 `a6e2595408b7cae20d2da5c710fddbc1f7d0c2ff`，两项先为未整改。
+- **源文件修订与可追溯性**：LLD 索引 `ae6bb72d0d2114ca55b7d85481581ffb1c311ea2` 修正为 10 条矩阵行/11 份实际设计文件；KvD LLD `e5ec72d26648222a72eea837d40ec28f3a28b29a` 增补 Franz/逐轮近度分母、符号翻转、归一前后 t、旋转三项、预测流、停止布尔及最终缩放的候选 trace；TEST_PLAN `db437096dfd7f382119329e5afd5231a19436661` 将该证据义务关联现有 TC-F-FILTER-001、TC-F-KVD-001/002、TC-DC-KVD-001，未新增 TC/软件。
+- **定向静态复核**：GitHub 连接器固定返回的目标文档满足 **8/8** 检查：矩阵 10 行/链接 11 文件、统计解释、14 个要求字段、原 `norm_koenderink_iteration.m` / `mue_norm_koenderink_iteration.m` 顺序约束的文档说明、原 TC 映射、AF-043/051 不错误关闭。首次检查因**检查脚本把矩阵范围外的其他表行纳入计数**而给出假失败；缩小到实际 LLD 覆盖矩阵后确认 **10 行**，保存该诊断限制，不能把它称为现场 Bash/CTest。
+- **问题结案**：审计整改台账结案提交 `37848668335c2abf0afc4545af62f11c3e608572`，审计当前摘要同步 `9315fd0c15d3368b4d6edd6811f6af60239a95b2`；当前 88 项 AF：**65 已整改、23 未整改**，文件三态仍 **60：37 已审计、23 在审、0 空白**。
+- **权限/证据边界**：此次只完成候选文档 schema 一致性，不代表 KvD 的任何独立 L3 数值、实际 C++ ABI、构建、CTest、DEC-005/008 或软件通过；`origin/**` 未修改。未运行 Bash、CMake、CTest、MATLAB/Octave、MAT 数据写回读或任何数值程序；H-10/H-11 尚未开放。
+
+**第一轮未结案 23 项的具体卡点（位置与原因）**：
+
+| 卡点所在位置 | 关联未整改 AF | 缺失证据或当前限制 | 可在当前文档权限内推进的部分 |
+|---|---|---|---|
+| `docs/REQUIREMENTS.md`、`ARCHITECTURE.md`、`OBJECT_MODEL.md`、`DOCUMENT_BASELINE_REGISTER.md` | AF-037/038/039/058 | SRS/HLD/LLD 精确版本及 AC 签署、真实构建/部署反馈不足；**正式批准仅能由所有者做出** | 继续核对 66 REQ/TC、27 DAG、45 源职责及版本/依赖，保留候选/未冻结 |
+| `docs/design/contracts.md`、`cli.md`、`mat_io.md`、`experiments.md`、`TEST_PLAN.md` | AF-040/041/042/049/051 | H-10/H-11 尚限制实际生产 C++、Bash/CMake/CTest、MAT Writer/负例、真实 JSONL/ABI | 对原只读源、候选接口、状态/输出/失败合同比对，提出不冒充执行的测试夹具 |
+| `docs/design/kvd.md`、`adaptive_mfa.md`、`sampling_noise.md`、`trajectory.md`、`analysis_plotting.md` | AF-043/044/047/048/050 | 一般/退化输入**独立 L3**、真实逐轮 trace、生产数学 CTest 和最终容差均缺；静态代数与候选 trace 不等价 | 继续校正源码公式、记录独立 L3 的可判别输入与节点、保持未整改 |
+| `docs/design/harmonics.md`、`SH_ROTATION_IVANIC_RUEDENBERG.md` | AF-045/046 | 原 Ivanic–Ruedenberg 1996 论文/1998 勘误尚待可审阅全文；R3/R5 一般递推的纯 Eigen 生产实现/全 9/25 元素 L3、CTest 均无 | 原 `SHRotate.m` 声明/特殊旋转静态核对、来源/符号备注，**不得代替论文逐式核验** |
+| `docs/MAT_DATA_SCHEMA.md`、`golden/analytic_golden_candidates.v1.json`、`golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md`、`golden/GOLDEN_TOLERANCE_PROPOSAL.md` | AF-054/055/056/060 | 582 MAT 独立 SHA-256/列主序逐值 L2、一般及退化独立 L3/必要 L4、批准的 DEC-005 最终阈值缺失；不能靠 582/582 READ_OK 代替 | 审阅字典静态身份、现有 12 个 AN-G 候选的来源/代数与缺口映射 |
+| `docs/TODO.md`、`PROGRESS.md`、`PLAN.md` | AF-053/057/061 | H-10/H-11 阶段授权、论文/正式批准；真实完整构建/运行 wall/CPU/RSS 尚无，DEC-006 资源目标须根据实测签署 | 记录冻结前置条件、证据模板与历史/现行区分，不捏造执行或性能通过 |
+
+**注意**：表格分组覆盖现存 **23 个唯一 AF-ID**；个别目标存在多重门槛，按归口文件仅列于一组。继续第一轮可授权静态整改；只有全部 23 项取得其原目标所要求的真实证据并结案后，才满足用户所指定的第二轮全面审计触发条件。
