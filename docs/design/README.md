@@ -2,7 +2,7 @@
 
 > **长期证据规则**：[不执行 MATLAB 的项目政策](../golden/NO_MATLAB_EXECUTION_POLICY.md) 已取消原 MATLAB L1 Golden 的强制门禁。LLD 与验收只要求来源清楚的 L2/L3/L4、真实 C++/CTest 和批准容差；**缺少 MATLAB 运行不阻塞冻结**，但不能宣称原脚本的未知异常/RNG/逐位输出已验证。
 
-> **LLD 索引 v0.8（所有模块草案、未冻结；未建立生产 C++/CTest 证据）。** 索引中的文件已实际创建，但其中的候选 C++17 接口、数学步骤、测试路径和错误枚举没有对应已实现代码。源 MATLAB 文件和已保存 MAT 仍由 origin/** 只读保存。
+> **LLD 索引 v0.9（所有模块草案、未冻结；未建立生产 C++/CTest 证据）。** 索引中的文件已实际创建，但其中的候选 C++17 接口、数学步骤、测试路径和错误枚举没有对应已实现代码。源 MATLAB 文件和已保存 MAT 仍由 origin/** 只读保存。
 
 ## 文档职责
 
@@ -21,7 +21,7 @@
 
 | 模块 | 对应文档 | 原只读 MATLAB 源范围 | 数学/数据约定 | 候选 API | L2/L3/L4 参考/实测 | 冻结状态 |
 |---|---|---|---|---|---|---|
-| 跨模块 C++17 合同 | [contracts.md](contracts.md) | SRS/OBJECT_MODEL/全部模块 | 值类型、ErrorDetail 稳定字段与 Mat/Numerical/Experiment 错误枚举；**AnalysisErrorCode 在 analysis_plotting 定义，stage/exit 仅由 contracts §3.1 映射**；MatDenseArray 归 io | **轻量封装 Result/Status（内部 variant）已选定，仍未实现**，DataMismatch 限定范围 | 无真实测试 | 未冻结，P0.8/DEC-008 |
+| 跨模块 C++17 合同 | [contracts.md](contracts.md) | SRS/OBJECT_MODEL/全部模块 | 值类型、ErrorDetail 稳定字段与 Mat/Numerical/Experiment 错误枚举；**AnalysisErrorCode/PlotErrorCode 均在 analysis_plotting 定义，stage/exit 仅由 contracts §3.1 映射**；MatDenseArray 归 io | **轻量封装 Result/Status（内部 variant）已选定，仍未实现**，DataMismatch 限定范围 | 无真实测试 | 未冻结，P0.8/DEC-008 |
 | CLI 参数与错误协议 | [cli.md](cli.md) | 五个实验入口、inspect、analyze、可选 plot | 按入口列出参数/合法范围、退出码与诊断字段 | 候选命令/错误 schema | 未测 | 阻塞 P0.8/P1.2、DEC-008 |
 | MAT I/O | [mat_io.md](mat_io.md) | getflowfield、各入口 load/save、582 MAT | **582/582 真实 v5+zlib/double 类型字典已获得**；生产 Reader/Writer、路径安全仍待验收 | 候选签名/错误码 | **独立探针已执行，非 CTest** | DEC-001/002 格式事实已证实，接口未冻结 |
 | 基础采样与噪声 | [sampling_noise.md](sampling_noise.md) | findeDreiecke、采样/流/噪声函数 | 数量、顺序、噪声方程、RNG 消耗与自拥有 FlowField/结果；**源 `fixed_*` 返回 near 是末次标量，C++ nearness 向量仅为新增诊断数据** | **egomotion_sampling/simulation 的接口、头文件边界与 TC/CTest 候选** | L3 独立有序方向/固定 RNG 仍待验证 | 未冻结，P0.8/DEC-008 |

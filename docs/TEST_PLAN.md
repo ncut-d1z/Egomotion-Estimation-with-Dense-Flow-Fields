@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **测试计划草案 v0.17，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
+> **测试计划草案 v0.18，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
 
 > **审批后候选核对材料**：见 [HAR-2026-11-06-001 设计修订与待审材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md) §2、§3、§7～§9。其中历史上提出六类容差采集格式、582 MAT SHA-256 独立审核和正式 Reader 类型拒绝清单；**当前参考采集/核验路径以 L2/L3/L4 为准，完全不要求 MATLAB/Octave 执行或 L1 Golden**，见 [长期政策](golden/NO_MATLAB_EXECUTION_POLICY.md)。`atol=0.01`/`rtol=0.1` 已由所有者选作**首轮宽松筛查**，不是已冻结的最终验收阈值；测试实体/CTest 仍未执行，H-10/H-11 其他执行门禁未解除。
 
@@ -175,6 +175,19 @@
 | K=0、文件/变量缺失、y shape 不一致 | 不得将空除数/缺字段/shape 错误包装为成功；C++ 的具体显式错误按尚未批准的 `contracts.md`、分析 LLD 判断，**不宣称原 MATLAB 有相同安全错误** |
 
 需保留实际 `k` 顺序、末轮 x 的 L2 MAT 路径/变量与四组 y 的每轮身份；参考线和输出横轴均不得替换成物理实际视线数量。此处不新增 TC、真实测试实体或通过记录；须在 AF-050/051 后续独立 L3 与 Analyzer/CTest 中真正验证。
+
+### 2.17 PlotErrorCode 四种失败的分层负例（AF-084，尚未执行）
+
+`IPlotExporter::exportPlot` 的四值只在 [分析 LLD §2](design/analysis_plotting.md) 定义；**唯一候选 `exit/stage` 映射见 [contracts §3.1](design/contracts.md)**。复用现有 `TC-F-CLI-005`、`TC-NF-HEADLESS-001`、`TC-I-RESULT-001`、`TC-NF-SAFETY-001`、`TC-I-ANALYSIS-001`，不产生新 TC：
+
+| 只在被授权测试时注入的情境 | 预期候选诊断与副作用边界 |
+|---|---|
+| `plot` 请求缺可选图形后端 | `BackendUnavailable`，`plot/7`；同一源数据的 `analyze` 不应需要后端、不产生伪造数值错误 |
+| 已得到 AnalysisDataset，但某 CurveSeries 不符合绘图接口约定 | `InvalidSeries`，`plot/5`，不可误认为后端不可用；原本在 Analyzer 阶段失败的 MAT/shape/分段错误须保留该原错误而不是改成 PlotErrorCode |
+| 请求持久输出时路径指向 `origin/**`、已存在 RunId/文件或越界目标 | `OutputForbidden`，`output/6`，不能修改原文件、不得覆盖已存在目标；底层已知代码、路径及 RunId 保留 |
+| 合法隔离目标中实际写图失败（磁盘权限/写入中断等） | `WriteFailed`，`output/6`；保留失败可追踪性，不把不完整图像/Manifest 伪装成功，不改变既有分析结果 |
+
+这里所有类型、阶段、退出码都是**待 DEC-008 批准的测试候选**；实际图形后端、JSONL、权限失败注入、真实 CTest 与输出文件系统安全尚未执行。图形能力缺失不能阻碍核心数值验收。
 
 ## 3. TC → 实体/CTest → AC 规划矩阵
 

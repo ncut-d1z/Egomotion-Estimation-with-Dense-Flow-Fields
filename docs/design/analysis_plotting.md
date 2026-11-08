@@ -1,6 +1,6 @@
 # MAT 结果分析与可选绘图——详细设计草案
 
-> **LLD v0.8 草案，未冻结、未运行任何可视化程序。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
+> **LLD v0.9 草案，未冻结、未运行任何可视化程序。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
 
 ## 1. 只读分析合同
 
@@ -25,7 +25,7 @@ kurveglaetten.m 使用窗口内均值；原代码在头尾保留零值。该行�
 struct CurveSeries;
 struct AnalysisDataset;
 enum class AnalysisErrorCode;
-enum class PlotErrorCode { BackendUnavailable, InvalidSeries, OutputForbidden, WriteFailed };
+enum class PlotErrorCode { BackendUnavailable, InvalidSeries, OutputForbidden, WriteFailed }; // 仅本模块定义；exit/stage 见 contracts §3.1
 class BiasResultAnalyzer {
 public:
     Result<AnalysisDataset, AnalysisErrorCode> aggregate(
@@ -175,6 +175,8 @@ enum class AnalysisErrorCode {
 前置条件：源目录可只读加载、每条曲线要求的变量存在且形状可核实；任何 1-based→0-based 的转换必须在 Analyzer 内显式处理。后置条件：曲线数据自拥有且可在 MAT 文件关闭后独立消费；错误不得诱发求解器运行或写回源 MAT。
 
 PlotExporter 仅消费 AnalysisDataset，输出图形位置必须在独立 RunId 中且不得覆盖原数据；禁用绘图或没有图形终端时 CLI analyze 仍可返回全部数值与分析状态。
+
+**绘图错误的唯一外部映射（AF-084）**：`PlotErrorCode` 四值在 §2 定义，跨模块 `exit_code/ErrorStage` 的**唯一候选**为 [contracts.md §3.1](contracts.md)；`BackendUnavailable` 只指缺后端，`InvalidSeries` 指已到绘图层的数据不合法，`OutputForbidden/WriteFailed` 指持久图像写入的文件系统失败。不能把四类统一当作 exit 7，也不能在 IPlotExporter/CLI 复制第二份映射。分析器内部先发生的 `MatErrorCode/AnalysisErrorCode` 不应被改写成 `PlotErrorCode`；底层来源身份、输入/输出路径和已分配 RunId 应按 ErrorDetail 保留。真实后端、异常测试和 DEC-008 仍未验证。
 
 ## 7. 对应 Golden、边界数据与测试映射
 

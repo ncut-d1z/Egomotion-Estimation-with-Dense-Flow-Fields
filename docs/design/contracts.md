@@ -1,6 +1,6 @@
 # C++17 公共详细设计合同（跨模块 LLD）
 
-> **跨模块合同草案 v0.4（未冻结、未建公共头文件、未编译）。** 此处集中定义候选值类型、状态、错误与 ABI 风格，以免 MAT I/O、KvD、Adaptive、实验和分析各自使用不同的 Result、形状和退出码。最终签名必须经 P0.7/P0.8 与项目所有者审批后才能成为编码基线。
+> **跨模块合同草案 v0.5（未冻结、未建公共头文件、未编译）。** 此处集中定义候选值类型、状态、错误与 ABI 风格，以免 MAT I/O、KvD、Adaptive、实验和分析各自使用不同的 Result、形状和退出码。最终签名必须经 P0.7/P0.8 与项目所有者审批后才能成为编码基线。
 
 ## 1. 适用范围与版本边界
 
@@ -153,11 +153,21 @@ private:
 | MatErrorCode::UnsupportedClassOrType、InvalidShape、SizeOverflow；**AnalysisErrorCode::ShapeMismatch**（已读取变量的维度/长度无法满足分析合同） | 4 | decode/schema |
 | 全部 NumericalErrorCode（含 InvalidShape、RandomSourceExhausted、InvalidRandomSample、SampleCountOverflow、ResourceLimitExceeded）；ExperimentErrorCode::SolverFailed、DataMismatch、IncompleteRun；**AnalysisErrorCode::InvalidSegment、NonFiniteInput、UndefinedStatistic、UnsupportedExperiment**（Analyzer 运行期） | 5 | solve/simulation/analyze |
 | MatErrorCode::OutputPathForbidden、OutputExists、WriteFailed、ReadbackMismatch；ExperimentErrorCode::OutputFailed | 6 | output |
-| 可选 plot 后端不存在（CLI capability，非 MatErrorCode） | 7 | plot |
+| **PlotErrorCode::OutputForbidden、WriteFailed**（可选图形发布或写出受阻） | 6 | output |
+| **PlotErrorCode::InvalidSeries**（输入已分析但无法作为合法绘图序列） | 5 | plot |
+| **PlotErrorCode::BackendUnavailable**（可选 plot 后端缺席） | 7 | plot |
 
 **分析错误映射候选（AF-077）**：`AnalysisErrorCode` 的七个枚举值**仅由 [analysis_plotting.md §6](analysis_plotting.md) 定义，不在此复制第二套 enum**；本表作为唯一对外 `exit_code + ErrorStage` 候选来源。分析对缺少真实 MAT 结果或必需字段返回 `MissingResult/MissingVariable → read(3)`，已解码变量的 shape 错误返回 `ShapeMismatch → decode(4)`，分段/统计/非有限与 Analyzer 不支持模式返回 `InvalidSegment/NonFiniteInput/UndefinedStatistic/UnsupportedExperiment → analyze(5)`。**非法的 CLI `--experiment` 枚举在 Parse 阶段即返回 exit 2，不得让它穿透至 Analyzer 后误映射成 5**。跨层若 Mat 错误已发生，保留原 `MatErrorCode` 和 `ErrorDetail::source_error_code`，不可丢失 path/variable/RunId。所有上述退出码仍须 DEC-008/P0.8 签署及真实 CTest。
 
 **优先级候选**：解析参数 → 输入读取 → 数据解码 → 输出路径安全 → 数值计算/分析 → 仅 plot 命令的后端检查。以实际首先失败的阶段报告，不跨层改写错误为成功；保留底层 code、stage、path 和可用 RunId。上表仍未获项目所有者批准，未生成真实 CLI/CTest 证据。
+
+**可选绘图错误映射候选（AF-084）**：四个 `PlotErrorCode` 值只由 [analysis_plotting.md §2](analysis_plotting.md) 的 `IPlotExporter` 候选接口定义，**本表只负责对外 `exit_code/ErrorStage`**，禁止在 CLI 或绘图模块复制另一份退出码映射。
+
+- `BackendUnavailable → plot(7)`：没有可选绘图后端，不是分析算法错误；`analyze` 仍可返回数值。
+- `InvalidSeries → plot(5)`：导出器收到无法生成有效绘图的 `AnalysisDataset/CurveSeries`，不将其误报为“缺图形后端”；如果错误实际上起源于分析器的 MAT 解码/分段，仍应保留并传播原 `MatErrorCode/AnalysisErrorCode` 及其 `ErrorStage`，不重写为 PlotErrorCode。
+- `OutputForbidden/WriteFailed → output(6)`：仅写出持久图表时发生，沿用固定 `output/<RunId>/` 的安全创建、独占、不覆盖原则；未获授权不得写 MAT 或新增输出。任何已知底层错误须附 `ErrorDetail::source_error_code`、输出路径及可用 RunId。
+
+这个候选映射不等于后端已实现、四类错误已触发或获 DEC-008/P0.8/CTest 批准；诊断中的 `stage` 必须按实际发生层设置。对应 [测试计划 §2.17](../TEST_PLAN.md)。
 
 ### 3.2 随机源接口与失败语义候选
 
