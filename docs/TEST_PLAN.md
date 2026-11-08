@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **测试计划草案 v0.15，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
+> **测试计划草案 v0.16，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
 
 > **审批后候选核对材料**：见 [HAR-2026-11-06-001 设计修订与待审材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md) §2、§3、§7～§9。其中历史上提出六类容差采集格式、582 MAT SHA-256 独立审核和正式 Reader 类型拒绝清单；**当前参考采集/核验路径以 L2/L3/L4 为准，完全不要求 MATLAB/Octave 执行或 L1 Golden**，见 [长期政策](golden/NO_MATLAB_EXECUTION_POLICY.md)。`atol=0.01`/`rtol=0.1` 已由所有者选作**首轮宽松筛查**，不是已冻结的最终验收阈值；测试实体/CTest 仍未执行，H-10/H-11 其他执行门禁未解除。
 
@@ -157,6 +157,12 @@
 ### 2.14 AN-G01～03 初始面表行序的静态资格（AF-047/055）
 
 源码面表按 `level=0` 的三顶点单位中心公式，已经形成 [AN-G01/02/03 完整 8/6/20 行符号推导](reviews/AN_G_LEVEL0_FACE_ORDER_STATIC_2026-11-08.md)；关联原 `TC-F-GEOM-002/003` 的初始面顺序及零光流列。**仍不能据此通过 TC 或关闭 AF-047/055**：下一阶段必须覆盖 `level=1/2` 的全量 A/B/C/D 递归顺序、独立数值来源 SHA-256、边界输入及实际采样器/CTest。无 MATLAB/L1 强制门槛。
+
+### 2.15 球面递归行号/面 ID 的静态合同（AF-081）
+
+参见 [sampling_noise.md §7.1.2](design/sampling_noise.md) 与 [四叉路径审计记录](reviews/AN_G_RECURSION_INDEX_STATIC_2026-11-08.md)。针对既有 `TC-F-GEOM-002/003`，除 `level=0` 面表外，还必须在 `level=1/2` 区分**源原面 ID**、**输出块顺序**、`A/B/C/D` 子面序列及其 MATLAB 1-based 行号。先核 `32/24/80`、`128/96/320` 行数，再按深度优先字典序 `A,B,C,D`（层内四叉数字）逐行与**独立**数值参考比较，不能先排序后只检查集合相等。
+
+示例：缺损八面体输出首块来自原面 2，`L=2` 的 `AA`/ `DD` 分别位于行 `1/16`；第二块来自原面 3，分别在行 `17/32`；二十面体原 `F` 第 20 面的 `L=2` 叶子占行 `305…320`。这些是**索引恒等式**，没有实际计算任何一行坐标，不能标 L3/CTest PASS；失败/非有限边界及 DEC-005/008 仍待执行和批准。
 
 ## 3. TC → 实体/CTest → AC 规划矩阵
 
