@@ -246,3 +246,10 @@ reviewed_by / review_date:
 
 - 发现 `analysis_plotting.md §6` 的 `AnalysisErrorCode` 七个枚举没有加入原 `contracts.md §3.1` 统一退出码单一来源，先登记 AF-077 未整改，再于 `e3c4c6794b3d2b562ebc39e92251eaaa52f44c34` 同步 contracts v0.4、analysis v0.7、CLI v0.5、TEST_PLAN v0.13。审阅确认 **7/7 候选错误码有唯一来源和候选 stage/exit**：缺文件/变量 read(3)，shape decode(4)，分析内部状态 analyze(5)，非法 CLI 参数 parse(2)；底层 `ErrorDetail.source_error_code` 不得丢弃。
 - AF-077 的静态合同一致性复核通过并结案；DEC-008、实际解析/分析器、错误传播、JSONL 和 CTest 仍须独立授权与测试。现为 78 个 AF（55 已整改、23 未整改）；旧 66 TC 不增加/伪造 PASS，原始数据未变。
+
+
+### E-DOC-044（2026-11-08：索引漂移及严格反向轨迹契约）
+
+- 新发现 AF-078/079/080 先以未整改登记；定向修订提交 `02a2a17fb49c911cdadd978033d14127cf48122d` 将 LLD 索引的旧“50 路径”与错误枚举归属修正、将基线矩阵的 36 文件固定快照和实时审计范围严格分开；`07d3abbd41cc6caa3d3fb57b3b5064ed0448fd6a` 将轨迹严格反向的原 rotvec **确定返回 0** 及四个手算输入候选写入 `trajectory.md` v0.4 / TEST_PLAN v0.14。
+- 只读原 `drehvektor_aus_zwei_vektoren.m`、`trajektorie_aus_punkten.m`、`getnear_in_kugel_Drehung.m` 的式子用于静态核对；TR-C01 的 Rᵀ 符号、TR-C02 的反向丢失 π、TR-C03/04 的 near 4/3 与 4/5 均明确是数学**待独立 L3 复核的候选**，没有声称原 MATLAB/生产 C++ 已运行。
+- AF-078～080 只关闭已发现的文档矛盾；目前 81 个 AF：58 已整改、23 未整改；57 文件：34 已审计、23 正在审计。H-10/H-11 仍暂缓，DEC-005/006/008 尚未签署；`origin/**` 保持不变。

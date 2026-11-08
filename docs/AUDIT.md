@@ -63,8 +63,8 @@
 | `docs/REQUIREMENTS.md` | 正在审计 | SRS 的 58 条正文 REQ + 8 条附录 REQ-DC、AC/DEC；待 AF-037 |
 | `docs/PLAN.md` | 正在审计 | AF-052 WBS 静态追踪已复核；DEC-006 实测/批准仍待 AF-061 |
 | `docs/TEST_PLAN.md` | 正在审计 | 66 TC（含 8 TC-DC）→候选测试→AC；AF-063 已整改，AF-051 仍待真实 CTest |
-| `docs/design/README.md` | 正在审计 | AF-059 已补各模块冻结前检查清单；仅静态合同检查，不代表实际冻结或测试；AF-078 文档索引中的动态审计数与分析错误职责待同步 |
-| `docs/DOCUMENT_BASELINE_REGISTER.md` | 正在审计 | 36 项固定快照身份与正式冻结状态；AF-036 已整改，待 AF-058 ；AF-071 章节编号已复核；AF-058 的正式批准/身份更新仍开放；AF-079 需区分固定 36 文件快照与当前动态审计数 |
+| `docs/design/README.md` | 已审计 | AF-078：实时审计数改由 AUDIT 维护，AnalysisErrorCode 定义与退出映射归属已对齐；非软件验收 |
+| `docs/DOCUMENT_BASELINE_REGISTER.md` | 正在审计 | AF-079：固定 36 文件历史快照与实时审计集合分离；AF-058 正式身份/批准仍未完 |
 | `docs/PROGRESS.md` | 正在审计 | 真实证据与动态 DEC/里程碑；待 AF-053；AF-070 已定向复核；AF-053 真实证据待补 |
 | `docs/ARCHITECTURE.md` | 正在审计 | HLD/27 条设计边、部署/Writer；待 AF-038 |
 | `docs/OBJECT_MODEL.md` | 正在审计 | 生命周期、45 .m 映射；待 AF-039 |
@@ -76,7 +76,7 @@
 | `docs/design/harmonics.md` | 正在审计 | 九项实球谐、R3/R5、Eigen；待 AF-045 |
 | `docs/design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 正在审计 | 论文/勘误和声明级边界；待 AF-046 |
 | `docs/design/sampling_noise.md` | 正在审计 | 有序采样与 RNG 消耗；待 AF-047 |
-| `docs/design/trajectory.md` | 正在审计 | Sophus、Rᵀ、近零、球内近度；待 AF-048；AF-080 严格反向退化的原返回语义待复核 |
+| `docs/design/trajectory.md` | 正在审计 | AF-080 严格反向源返回已明确，TR-C01～04 静态候选已补；AF-048 仍缺独立 L3/CTest |
 | `docs/design/experiments.md` | 正在审计 | 五入口、Runner/Manifest/save；AF-034 已整改，待 AF-049 |
 | `docs/design/analysis_plotting.md` | 正在审计 | 四种分析、曲线、HistoricalOnly；待 AF-050；AF-075/076 已完成静态设计复核；AF-050 仍需独立 L3/真实 CTest |
 | `docs/decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | 已审计 | DEC-004 现行处理已选 |
@@ -175,3 +175,10 @@
 ## 12. 轨迹反向退化的确定性行为（先登记）
 
 固定输入 `02a2a17fb49c911cdadd978033d14127cf48122d`：源 `drehvektor_aus_zwei_vektoren.m:8–16` 对严格反向非零向量求得叉积零、`acos(-1)=π`，从而实际返回**零旋转向量**。现 `trajectory.md §5` 称“可能输出零”，容易弱化这一确定性的原版异常行为；应显式记录精确向量例、继发轨迹/旋转后果，并将原 MATLAB 数学返回与候选 C++ 安全失败区分，关联原 `TC-F-TRAJ-001`（AF-080）。
+
+
+## 13. AF-078～080 定向整改与复读（2026-11-08）
+
+- 首先登记三个问题：动态审计文件数被 LLD 索引及版本矩阵重复写死（AF-078/079）；源严格反向旋转的**确定零向量**被描述为“可能”（AF-080）。随后 `02a2a17` 修改索引与版本矩阵，`07d3abb` 修改轨迹 LLD v0.4、TEST_PLAN v0.14。
+- 固定复读确认两份索引以 AUDIT 为当前统计单一来源、36 项历史文件身份不改；轨迹修订给出严格反向 `0·π=0` 以及 Rᵀ 三点、单位球正根四组手算输入，全部只作静态候选。AF-078～080 **文本一致性整改完成**，未执行独立 L3/CTest 或批准任何新安全阈值。
+- **当前三态：57 文件，34 已审计、23 正在审计；两态：81 个目标，58 已整改、23 未整改。** AF-048/037/058 等正式测试、数值与签署门槛继续开放。

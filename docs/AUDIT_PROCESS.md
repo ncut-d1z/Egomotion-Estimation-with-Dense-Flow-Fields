@@ -139,8 +139,8 @@
 
 | ID | 仓库根相对路径 | 整改目标 | 状态 |
 |---|---|---|---|
-| AF-078 | `docs/design/README.md` | 移除把 AUDIT 的“50 个路径”误作当前计数的旧文字，改链接动态审计表；跨模块模块矩阵说明 `AnalysisErrorCode` 在分析 LLD 定义、对外 exit/stage 由 contracts 单一候选映射，保持其他所有者/冻结状态不变。 | 未整改 |
-| AF-079 | `docs/DOCUMENT_BASELINE_REGISTER.md` | §1 将 AUDIT 的 50 条当作现行审计范围，须明确**历史 36 项身份快照不变、实时审计对象数与三态只在 AUDIT 维护**；禁止覆盖历史固定 SHA/批准栏。 | 未整改 |
+| AF-078 | `docs/design/README.md` | 移除把 AUDIT 的“50 个路径”误作当前计数的旧文字，改链接动态审计表；跨模块模块矩阵说明 `AnalysisErrorCode` 在分析 LLD 定义、对外 exit/stage 由 contracts 单一候选映射，保持其他所有者/冻结状态不变。 | 已整改 |
+| AF-079 | `docs/DOCUMENT_BASELINE_REGISTER.md` | §1 将 AUDIT 的 50 条当作现行审计范围，须明确**历史 36 项身份快照不变、实时审计对象数与三态只在 AUDIT 维护**；禁止覆盖历史固定 SHA/批准栏。 | 已整改 |
 
 **登记时**：80 项整改目标（55 已整改、25 未整改）；两项目标尚未实际修改，不能提前关闭。
 
@@ -149,6 +149,13 @@
 
 | ID | 文件相对路径 | 整改目标 | 状态 |
 |---|---|---|---|
-| AF-080 | `docs/design/trajectory.md` | 将源 `drehvektor_aus_zwei_vektoren.m` 对非零严格反向 v1/v2 的“可能零向量”纠正为**由叉积0与 acos(-1)=π 确定返回零向量**，并给出可手算的三点局部 Rᵀ、正根近度案例及现有 TC/Golden 候选，不把源异常等同 C++ 有效旋转或测试 PASS。 | 未整改 |
+| AF-080 | `docs/design/trajectory.md` | 将源 `drehvektor_aus_zwei_vektoren.m` 对非零严格反向 v1/v2 的“可能零向量”纠正为**由叉积0与 acos(-1)=π 确定返回零向量**，并给出可手算的三点局部 Rᵀ、正根近度案例及现有 TC/Golden 候选，不把源异常等同 C++ 有效旋转或测试 PASS。 | 已整改 |
 
 登记时累计 81 项：55 已整改、26 未整改；本节只是发现记录，未修改目标 LLD 或产生独立 L3。
+
+
+## 11. AF-078～080 修订结案（2026-11-08）
+
+- AF-078/079：`02a2a17` 已把 LLD 目录与基线矩阵的实时审计数交给 AUDIT，保留 36 项固定 SHA 的历史语境，并将 `AnalysisErrorCode` 的定义与唯一候选退出映射分层；静态复读通过。
+- AF-080：`07d3abb` 已将严格反向非零向量的原返回明确为 `cross=0, acos(-1)=π → rotationVector=0`；轨迹 LLD 与 TEST_PLAN 新增 TR-C01～04 的符号级输入（Rᵀ 局部变换、球内正根 near），**不标为已生成 L3/CTest**。
+- **最新状态：81 项中 58 已整改、23 未整改**；仍需真实实现、独立数值/生产测试、论文材料及人类批准的原 AF-037～061 不变。第二轮正式全面审计尚未具备清零条件。

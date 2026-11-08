@@ -244,3 +244,15 @@ AF-041/047/055/058 与其它开放目标仍须独立数据/真实软件及审批
 | `docs/TEST_PLAN.md` | `d56199932442da7648a6076d6dd91b67361b6d6e` | v0.13；现有 TC 对应候选负例，未实际建立/执行 |
 
 以上仅固定此提交的文档身份；DEC-008/实际 ABI、MAT 数据及 CTest/数值没有签署或通过。
+
+
+### 6.12 动态索引与轨迹静态候选的固定版本身份（未冻结）
+
+| 文件 | 固定复读提交及 blob SHA | 限制 |
+|---|---|---|
+| `docs/design/README.md` | `02a2a17` · `0727c8951a2db8405bc4ea840bd1c16705b85703` | v0.8；实时审计三态仅引用 AUDIT、公共分析错误语义不重复定义 |
+| `docs/DOCUMENT_BASELINE_REGISTER.md` | `02a2a17` · `cfb3e08f04dcf458a6ca038c1c55e7c3579b2664` | 当前范围链接更新，36 项历史身份快照保持原样 |
+| `docs/design/trajectory.md` | `07d3abb` · `b749ba78545d561c664acc079e54cbc1beb6083b` | v0.4；严格反向与 TR-C01～04 仅手算候选 |
+| `docs/TEST_PLAN.md` | `07d3abb` · `149fbb7c34843fcb957919deec9b34b447fc0343` | v0.14；原 66 TC 不变，未运行测试 |
+
+以上是修订时点的 Git blob 身份而非已批准版本；实际签署、性能及数值证据仍按 TODO/PROGRESS 处理。
