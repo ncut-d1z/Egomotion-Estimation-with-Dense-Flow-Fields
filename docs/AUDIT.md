@@ -107,6 +107,7 @@
 | `docs/reviews/AUDIT_FOUR_POLICY_DRIFTS_SCAN_2026-11-08.md` | 已审计 | 历史审计/修订记录（只读） |
 | `docs/reviews/AN_G_STATIC_FORMULA_REVIEW_2026-11-08.md` | 已审计 | 8 组候选局部代数手算复核，另外 4 组未独立核验；非 L3/CTest PASS |
 | `docs/reviews/AUDIT_FUNCTION_DECLARATIONS_AND_LEDGER_COMPACT_2026-11-08.md` | 已审计 | 45 个 .m/50 个函数定义与台账膨胀的静态发现；非数值测试 |
+| `docs/reviews/AN_G08_Z90_STATIC_CONVENTION_2026-11-08.md` | 已审计 | z90 特例的 R3/R5、m 次序及系数旋转方向代数核对；非通用递推或 L3 PASS |
 | `AGENTS.md` | 已审计 | 仓库授权与数据安全规则 |
 | `README.md` | 已审计 | 项目范围、证据/许可状态 |
 | `LICENSE` | 已审计 | MIT 与上游作品边界 |
@@ -117,7 +118,7 @@
 
 ## 4. 最新审核结论与尚缺证据
 
-- 当前固定扫描：`150b975db4045fbc99a343fdf422c7836e1a797b`，并参考 [函数级声明检查](reviews/AUDIT_FUNCTION_DECLARATIONS_AND_LEDGER_COMPACT_2026-11-08.md)。共 **54 个审计路径**，其中 **31 已审计、23 正在审计、0 空白**；这些三态仅表示限定静态范围，不能代替软件/数学/批准状态。
+- 当前固定扫描：`150b975db4045fbc99a343fdf422c7836e1a797b`，并参考 [函数级声明检查](reviews/AUDIT_FUNCTION_DECLARATIONS_AND_LEDGER_COMPACT_2026-11-08.md)。共 **55 个审计路径**，其中 **32 已审计、23 正在审计、0 空白**；这些三态仅表示限定静态范围，不能代替软件/数学/批准状态。
 - 既有设计为**评审草案**；58 条正文 REQ＋8 条附录 REQ-DC＝66 REQ，对应 66 TC；98 P、原 45 个 .m、HLD 静态 27 边。已建立源 [45 文件/50 函数定义的迁移矩阵](MIGRATION_MATRIX.md)：SHRotate 主函数＋M/U/P/V/W 五个内部函数，**仅声明级审查，不是代码/数值验收**。
 - 历史 MAT 由独立 matio 探针报告 582/582 READ_OK，但**没有**完成独立 SHA-256、逐元素 L2、Reader/Writer/TOCTOU、逐轮及退化 L3、必要 L4 或正式 CTest。候选 `AN-G01～12` 仍为 `DRAFT_UNAPPROVED_UNEXECUTED`；小范围手算不代表 Golden 通过。
 - 永久不要求 MATLAB/Octave/L1。物理旋转路线 Sophus 已选；R3/R5 的 Eigen-only 实现须核 Ivanic–Ruedenberg 1996/1998 原文、禁 sdla。首轮 `atol=0.01, rtol=0.1` 已选，**最终 DEC-005/006/008、H-10/H-11 与正式冻结/发布尚未通过**。
