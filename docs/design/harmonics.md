@@ -65,6 +65,8 @@ a_{lm}=a_{lm}^{num}/a_{lm}^{den}.
 
 这不是把九个系数一起求解的正规方程/联合最小二乘；如果改变了基函数间的耦合关系，可能改变原始实验结果。即使两个 4π 因子可在代数上相消，也应先对照 MATLAB 原先的乘除顺序及浮点误差。
 
+**源码与图示职责分离（AF-090）**：`illustrations/spherical_harmonic_illustration.m` 是另一份独立的可选绘图脚本，仅用 `legendre(degree,cosθ)` 的 `order+1` 行与 `cos(order·φ)` 组合并作 `rho=5+3·yy/max(abs(yy))` 径向显示；它**不调用**本模块的 `kugelflfunc2`、`near_aus_koeff` 或 `koeff_aus_near`，不使用九个归一化实基/负 m 的正弦分支。该展示的行为与异常原样见 [分析与绘图 LLD §3.1](analysis_plotting.md)；其 `TC-F-AN-002` 只能验证原插图数据，不能用来证明 `TC-F-SH-001/002` 的数值正确性或取代独立 L3。
+
 ### 2.1 拟议输入输出与不变量
 
 - `RealSphericalHarmonics::evaluate(int degree, int order, double theta_rad, double phi_rad) const`：有限角输入、l≤2 和 `-l≤m≤l`；错误使用公共 `Result<double, NumericalErrorCode>`。
