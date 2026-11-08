@@ -168,3 +168,18 @@
 ### 6.5 本轮治理文件的复读身份（非冻结）
 
 固定复读提交 `fa85cc638e58638768506b25c4b375566f6e8379`：`docs/AUDIT.md` blob `55ab0daad40d23ab0a12edf9ab20820d2a6fa05b`、`docs/AUDIT_PROCESS.md` blob `0d5b59847f2a7a09a8f7d0aaf8a6daae02b19a2c`、`docs/PROGRESS.md` blob `006d55de69f6e2fa98c01caa7163499b35c6bab4`。审计规则和标题核对仅属静态治理修订，后续动态台账有变化时依新的固定提交复读；正式 SRS/HLD/LLD/DEC/测试仍未冻结或验收。
+
+
+### 6.6 候选公式与测试规划文档的本轮身份（非冻结）
+
+本次静态复核输入 `a27b092421a0465b10fb46054d158ab06a2c729f`（历史 §2～3 的固定文件集合与结论不被改写）：
+
+| 当前文件 | 该提交的 Git blob SHA | 新草案 / 限制 |
+|---|---|---|
+| `docs/design/cli.md` | `a5a8230e4ec98e11f57ac095f529122603baf1a6` | v0.4；负噪声只是原源码静态候选 |
+| `docs/design/sampling_noise.md` | `1435f344755a2b119cbc897a63a5a17a9cd48910` | v0.5；零/负尺度 3N 抽样静态合同 |
+| `docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md` | `bf2866c853e192fdc25f1dab9cfd93ca94877f26` | v0.4；8 组局部符号复核非 L3 PASS |
+| `docs/TEST_PLAN.md` | `9a464e37dc25d249749c27bafad644d968c71dda` | v0.10；未创建/执行 66 TC |
+| `docs/reviews/AN_G_STATIC_FORMULA_REVIEW_2026-11-08.md` | `e82f04464e09ebcc29024fdf203368ed4091ebb4` | 只读原式的局部代数证据 |
+
+AF-041/047/055/058 与其它开放目标仍须独立数据/真实软件及审批；本矩阵新增章节不构成签署冻结。
