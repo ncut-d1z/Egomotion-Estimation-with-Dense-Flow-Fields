@@ -183,3 +183,17 @@
 | `docs/reviews/AN_G_STATIC_FORMULA_REVIEW_2026-11-08.md` | `e82f04464e09ebcc29024fdf203368ed4091ebb4` | 只读原式的局部代数证据 |
 
 AF-041/047/055/058 与其它开放目标仍须独立数据/真实软件及审批；本矩阵新增章节不构成签署冻结。
+
+
+### 6.7 本轮源文件清单及迁移矩阵的固定身份（非冻结）
+
+固定静态复核提交 650546a06ff7bb89b8c6bf29cac48f712ed2f2fa：
+
+| 文件 | Git blob SHA | 范围 |
+|---|---|---|
+| `docs/SOURCE_INVENTORY.md` | `3159b8c93219a7bc828fc8daa23aba536c36a948` | 45 个原 .m 的 Git 身份、字节与 REQ/TC |
+| `docs/MIGRATION_MATRIX.md` | `8926c4fb9e37118f469660c6ce3c6f83f9b906c5` | 45 个原 .m 的候选 C++ 责任，未实现 |
+| `docs/PLAN.md` | `74bfba0b94c4a0cb615a6cea1da1f03b567322eb` | v0.8，P0.6 阶段事实更新 |
+| `docs/TEST_PLAN.md` | `bc326b773e6d627433c3b4ea06f5378f9ee04bf1` | v0.11，五处来源清单引用更新 |
+
+不扩大旧固定 36 文件快照的签署含义；当前审计集合增至 53 文件，所有软件/验收门槛保持原状态。

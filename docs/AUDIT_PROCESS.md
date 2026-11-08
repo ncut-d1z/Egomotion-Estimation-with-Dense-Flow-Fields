@@ -223,3 +223,10 @@
 - **AF-055 的部分进展**：AN-G04/05/06/07/09/10/11/12 仅做局部公式代数复核，其余 AN-G01～03 全序与 AN-G08 的 R3/R5 仍需独立核验；JSON 保持 `DRAFT_UNAPPROVED_UNEXECUTED`。
 
 **当前统计**：72 个原子 AF，49 已整改、23 未整改。后 23 个继续依原 ID 跟踪完整验证、签署和实际授权，不新增伪测试 PASS 或据此提前启动第二轮正式审计。
+
+
+## 17. P0.6 两份来源/迁移文件完成文件级建设（阶段进展）
+
+- [SOURCE_INVENTORY](SOURCE_INVENTORY.md) 保存 45 个原源文件真实 Git 身份和 SRS REQ/TC；[MIGRATION_MATRIX](MIGRATION_MATRIX.md) 保存同 45 个文件的候选方法职责。固定复核提交：650546a06ff7bb89b8c6bf29cac48f712ed2f2fa，静态三方集合 **45/45/45** 一致。
+- PLAN v0.8 与 TEST_PLAN v0.11 已消除五处原先“SOURCE_INVENTORY 未创建”的现行描述；仍须补逐函数迁移、独立 L2/L3、业务 Reader/Writer、真实 CTest 与人类批准。AF-037、039、051、056 均只记录部分进展，不提前结案。
+- **整改两态仍为 72 项：49 已整改、23 未整改**；新增文件不等于新软件测试或签署基线。

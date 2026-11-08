@@ -213,3 +213,9 @@ reviewed_by / review_date:
 - 改动提交 `a27b092421a0465b10fb46054d158ab06a2c729f`：补 [AN-G 静态公式记录](reviews/AN_G_STATIC_FORMULA_REVIEW_2026-11-08.md) 及 CLI v0.4、sampling v0.5、Golden v0.4、TEST_PLAN v0.10 的对应设计边界；逐个检查八个手算候选 ID、未核验的四组、零/负噪声下 3N 抽样纪律及非实测声明。**并非** 8/12 独立 L3 已验收。
 - 控制矩阵 §6.1～6.5 的静态连续性通过（AF-071），问题台账转为 49 已整改/23 未整改，文件审计含新增公式记录共 51 路径。
 - 尚未获得 H-10/H-11 运行权限或 Ivanic 原文/勘误与最终批准；无 MAT 逐值、业务 C++/CTest、独立 L3/L4、MAT 写回读或性能数值。原始 `origin/**` 保持只读。
+
+
+### E-DOC-039（2026-11-08：45 文件 SOURCE_INVENTORY 与 MIGRATION_MATRIX）
+
+- 固定提交 650546a06ff7bb89b8c6bf29cac48f712ed2f2fa 建立两份新来源/迁移文档，45 个源 .m 文件与 Git 树、SRS、OBJECT_MODEL 的实际路径集合一一对应，另核 MAT 文件数量 582；PLAN v0.8 / TEST_PLAN v0.11 改为引用已建静态来源。
+- 只读静态检查路径、Git SHA 格式、行数、文内相对链接通过；没有真实源码移植、原 MAT 独立逐值 SHA-256、CMake/CTest/数值 L3/L4/性能或冻结批准。P0.6 仅文件级来源清单建成，方法级与真实验收仍开放。

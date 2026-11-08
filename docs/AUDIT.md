@@ -87,6 +87,8 @@
 | `docs/golden/analytic_golden_candidates.v1.json` | 正在审计 | AN-G01～12 独立 L3 参考核验；待 AF-055 |
 | `docs/TODO.md` | 正在审计 | 分阶段人类输入与授权；待 AF-057 |
 | `docs/MAT_DATA_SCHEMA.md` | 正在审计 | 582 MAT 字典与历史证据；待 AF-056 |
+| `docs/SOURCE_INVENTORY.md` | 已审计 | 45 个源 .m 路径、Git blob、字节与 REQ/TC 的静态身份清单；非软件验收 |
+| `docs/MIGRATION_MATRIX.md` | 已审计 | 45 个原源到候选 C++ 方法的职责映射；尚未代码移植 |
 | `docs/approval/DECISION_IMPLEMENTATION_NOTES.md` | 已审计 | 历史权限/决定释义 |
 | `docs/approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md` | 已审计 | 历史审批包，保留当时事实 |
 | `docs/reviews/STATIC_TRACEABILITY_2026-11-06.md` | 已审计 | 历史审计/修订记录（只读） |
@@ -221,3 +223,10 @@
 - 新的 AF-071 先于矩阵修订登记为「未整改」，随后在 `a27b092421a0465b10fb46054d158ab06a2c729f` 确认 [版本矩阵](DOCUMENT_BASELINE_REGISTER.md) §6.1～6.5 **5/5 唯一且连续**；故仅该治理问题可转为「已整改」，AF-058 仍需要正式文档身份/批准与真实证据。
 - [AN-G 静态公式复核](reviews/AN_G_STATIC_FORMULA_REVIEW_2026-11-08.md) 从原只读源码手算/论证 8 组局部输入，明确 4 组尚缺独立全量核验；CLI/采样/TEST_PLAN/Golden 的本轮候选文字同步通过定向阅读。**不是独立 L3 数值、MATLAB/C++/CTest 实际执行。**
 - **本轮文件三态**：新增上述审查证据 1 条，共 **51 文件：已审计 28，正在审计 23，空白 0**。AF-041/047/055 等阶段目标继续保留「未整改」；不因为有审阅文档而自动结案。
+
+
+## 20. P0.6 来源与迁移文件的静态交付（2026-11-08）
+
+- 实际新建 [SOURCE_INVENTORY](SOURCE_INVENTORY.md) 和 [MIGRATION_MATRIX](MIGRATION_MATRIX.md)，在固定提交 650546a06ff7bb89b8c6bf29cac48f712ed2f2fa 上读取真实原源 Git 树、SRS §9.2 和对象模型 §7，三组路径集合各 45 个，均唯一且无漏项；原 MAT 582 文件身份仍归现有数据字典。
+- 同一提交定向检查两个清单各 45 行、Git blob SHA 格式及文内相对引用；PLAN、TEST_PLAN 已改为引用真实存在的文件。这仅是静态交付，不是原 MATLAB 逐函数审计、独立 MAT SHA-256、C++ 移植或 CTest。
+- 两份新文件纳入审计：**53 文件，30 已审计、23 正在审计、0 空白**。P0.6 完整验收、AF-056 的 MAT L2 逐值/独立 SHA-256 和正式软件设计签署仍未完成。
