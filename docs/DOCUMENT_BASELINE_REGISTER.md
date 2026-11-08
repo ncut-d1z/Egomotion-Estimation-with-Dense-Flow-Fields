@@ -109,5 +109,7 @@
 | 变更文档 | 修订版本 | 固定复核提交 | Git blob SHA | 效力 |
 |---|---|---|---|---|
 | [docs/TEST_PLAN.md](TEST_PLAN.md) | v0.8 | `edd56c99dc04e3774788699ed61c26d3bad3c465` | `c867d1fb8aa13203bb96ab4e41412b67b77ce940` | 修正五处尚未创建 SOURCE_INVENTORY 的引用口径；无新增 TC/CTest 或软件验收 |
+| [docs/PLAN.md](PLAN.md) | v0.6（仅补静态核对） | `6a1867a4b36ad71b1a523c4b3ed7372e276ece5d` | `cda72332eb32a77a5c353929011dcc47663d31d4` | AF-052 WBS 98 P 静态追踪/退出证据审阅；M0～M5 均未通过 |
+| [docs/design/README.md](design/README.md) | v0.7（仅补检查清单） | `6a1867a4b36ad71b1a523c4b3ed7372e276ece5d` | `021174c363d18d81773acbc8f6b61364a9059faa` | AF-059 10 模块 LLD 冻结前核对；不等于正式冻结、已编译或 CTest PASS |
 
 原 §2～3 的 36 项身份仍是较早固定快照，**不可**以新版本 blob 直接替换旧快照行并继续声称同一提交身份。审计新问题的状态见 [AUDIT](AUDIT.md)、[AUDIT_PROCESS](AUDIT_PROCESS.md)；本矩阵和滚动审计文件本身修改后的最新 blob 身份需在后续正式固定版本时统一登记。所有 SRS/HLD/LLD/TEST_PLAN 仍未冻结。

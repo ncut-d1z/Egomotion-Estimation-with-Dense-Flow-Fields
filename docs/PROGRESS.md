@@ -161,3 +161,11 @@ reviewed_by / review_date:
 | E-DOC-030（修订复核） | `docs/TEST_PLAN.md` v0.8、`docs/AUDIT.md` 在固定提交 `edd56c99dc04e3774788699ed61c26d3bad3c465` 进行 **AF-063～066 的 4/4 定向静态复读**，已区别不存在的 SOURCE_INVENTORY 与已建追踪/归档文档，原 66 TC/98 P/27 边保留 | 只有文本与编号复核，未新建测试/读取器，不批准 DEC-005/006/008、H-10/H-11，也不冻结 SRS/HLD/LLD |
 
 状态以 [AUDIT.md](AUDIT.md) 和 [AUDIT_PROCESS.md](AUDIT_PROCESS.md) 为准：新发现四项文档目标已按“先登记、后修改、再复核”结案；**AF-037～061 的 25 项独立阶段目标仍开放**。
+
+
+### E-DOC-031（2026-11-08：第一轮阶段性整改，非软件测试）
+
+- 固定检查输入 `b75998bc8fc6644d76050bf88d45c75887ce2006`，源文档修订/定向复核提交 `6a1867a4b36ad71b1a523c4b3ed7372e276ece5d`；`docs/PLAN.md` blob `cda72332eb32a77a5c353929011dcc47663d31d4`，`docs/design/README.md` blob `021174c363d18d81773acbc8f6b61364a9059faa`。
+- AF-052：98 P 唯一、前置依赖存在且无环、REQ/TC/AC 与 SRS 98 条反向映射一致；66 REQ/66 TC、50 条 PLAN 相对文件引用均可定位；HLD 27 条设计边无环；M0～M5 在本文件 §3 **全部未通过**。此次仅 GitHub 连接器只读静态核对，未运行 Bash。
+- AF-059：LLD 索引新增 10 模块签名候选、唯一合同归属、TC/L3 入口及尚缺代码/验证/批准的清单。定向文本复读 **2/2** 通过，不批准任何编码合同或 DEC-005/006/008。
+- 最新 `AUDIT_PROCESS` 的 **67 项中 44 已整改、23 未整改**。遵照“剩余不为零即退出”，本轮在此停止，没有开展新的审计或第二轮整改；仍缺独立 L2/L3/L4、生产 C++/CTest、Reader/Writer、性能及正式人类签署。未改变 H-10/H-11、`origin/**`、历史审批/报告，也未执行 MAT 写入或 MATLAB/Octave。

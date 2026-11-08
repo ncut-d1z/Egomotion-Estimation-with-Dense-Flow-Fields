@@ -73,14 +73,14 @@
 | AF-049 | 验证·阶段 | `docs/design/experiments.md` | 实现/核五个 Runner 的当前 save、Writer 注入、RunContext/Manifest/失败继续策略、8 次聚合分母；旧 MAT 只读、HistoricalOnly 不补造。 | 未整改 |
 | AF-050 | 验证·阶段 | `docs/design/analysis_plotting.md` | 对四类分析的 L2→独立 L3 曲线、begin/end/zone、平滑边缘、单位/索引和 MissingVariable 负例逐项复核；绘图后端可选，不阻塞数值。 | 未整改 |
 | AF-051 | 验证·阶段 | `docs/TEST_PLAN.md` | 将 66 TC→候选实体/CTest→AC 转成获授权的真实测试与日志，覆盖负例、Session、Writer、L2/L3/必要 L4；不得以 matio 探针宣称整体验收。 | 未整改 |
-| AF-052 | 治理·阶段 | `docs/PLAN.md` | 复核 98 P 与 SRS/HLD/LLD/TC 依赖和里程碑退出证据；只保留稳定 WBS、通过 PROGRESS 引用实测，不捏造进度或工期。 | 未整改 |
+| AF-052 | 治理·阶段 | `docs/PLAN.md` | 复核 98 P 与 SRS/HLD/LLD/TC 依赖和里程碑退出证据；只保留稳定 WBS、通过 PROGRESS 引用实测，不捏造进度或工期。 | 已整改 |
 | AF-053 | 证据·阶段 | `docs/PROGRESS.md` | 在获授权实际实施/测试后回填固定源码/输入身份、命令、stdout/stderr/exit、失败数、wall/CPU/RSS 与里程碑证据；历史 E-DOC 不能当最新 HEAD PASS。 | 未整改 |
 | AF-054 | 证据·阶段 | `docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md` | 以独立 L2/L3/适用 L4 及真实 C++ 误差确定 DEC-005 最终分模块 PASS 阈值；0.01/0.1 仅首轮筛查，几何/计数/shape 单列严格判据。 | 未整改 |
 | AF-055 | 证据·阶段 | `docs/golden/analytic_golden_candidates.v1.json` | 核验 AN-G01～12 的固定输入、公式与参考值来源，补独立 L3 核对；不得将候选 JSON 或 AN/APL 编号一致当成已执行测试。 | 未整改 |
 | AF-056 | 证据·阶段 | `docs/MAT_DATA_SCHEMA.md` | 独立复核 582 MAT 的文件身份/SHA-256、变量与 shape、L2 原始 double 逐值；FNV64 与 SHA-256 分开，不改写 origin/**。 | 未整改 |
 | AF-057 | 治理·阶段 | `docs/TODO.md` | 在进入相应阶段时收齐论文 PDF、H-10/H-11 操作授权、DEC-005/006、正式基线/发布批准；已选 MIT/DEC-004/CLI 等不得重复申请。 | 未整改 |
 | AF-058 | 治理·阶段 | `docs/DOCUMENT_BASELINE_REGISTER.md` | 正式签署前更新文档版本/blob/commit/范围/批准人/日期时区/例外及测试证据；滚动 PROGRESS/AUDIT 不伪装为已冻结规范。 | 未整改 |
-| AF-059 | 设计·阶段 | `docs/design/README.md` | 逐模块核对 LLD 签名、唯一合同归属、独立 L3/TC 映射与真实代码边界，建立可编码/可验证的冻结清单；不以目录齐全等同实现。 | 未整改 |
+| AF-059 | 设计·阶段 | `docs/design/README.md` | 逐模块核对 LLD 签名、唯一合同归属、独立 L3/TC 映射与真实代码边界，建立可编码/可验证的冻结清单；不以目录齐全等同实现。 | 已整改 |
 | AF-060 | 证据·阶段 | `docs/golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md` | 逐 AC 复核 L2 逐值、L3 一般/退化/逐节点、适用 L4 的缺口与实际证据；L1/MATLAB 永久不列为必需门槛。 | 未整改 |
 | AF-061 | 证据·阶段 | `docs/PLAN.md` | DEC-006 性能/资源目标基于未来真实全工程构建及运行 wall/CPU/RSS、平台事实与批准标准确定；VM 容量快照不能当性能验收。 | 未整改 |
 | AF-062 | 治理·低 | `docs/design/README.md` | §1 不再将 36 个选定文档的固定版本身份矩阵称作“全部当前规范和过程文档”；另引用 AUDIT 50 条审计路径，明确两者用途及非冻结边界。 | 已整改 |
@@ -110,4 +110,12 @@
 
 先按固定提交 `3492067` 审计，在 `795afb7` 登记四条「未整改」，再实际修改 `docs/TEST_PLAN.md` 和 `docs/AUDIT.md`，并在固定提交 `edd56c99dc04e3774788699ed61c26d3bad3c465` 逐条复读：**4/4 通过**。其中 TEST_PLAN v0.8 的五条历史引用已改为真实可用文档与“计划、未创建”的 SOURCE_INVENTORY 两类；58 正文 + 8 REQ-DC = 66 REQ，66 TC 包含 8 TC-DC。此次没有创建测试、SOURCE_INVENTORY 或任何新数据。
 
-**最新两态：67 条原子目标，42 已整改，25 未整改（AF-037～061）。** 所有仍未关闭的目标需要正式设计/代码、独立 L2/L3/L4、CTest、性能或人类批准的实际证据，不以本轮纯文本核查代替。
+**本节结案时两态：67 条原子目标，42 已整改，25 未整改（AF-037～061）。** 所有仍未关闭的目标需要正式设计/代码、独立 L2/L3/L4、CTest、性能或人类批准的实际证据，不以本轮纯文本核查代替。
+
+
+## 7. 第一轮整改结案与停止条件（2026-11-08）
+
+- **AF-052 已整改（仅 WBS 文档核对）**：`docs/PLAN.md §6.5` 完成 98 P→REQ/TC/AC、98 条 SRS 反向映射、前置关系、50 条相对引用及 HLD 27 边的只读静态检查；六个里程碑均未验收，动态证据只归 PROGRESS。
+- **AF-059 已整改（仅冻结前清单）**：`docs/design/README.md` 补齐 10 个模块候选签名/所有者/TC/L3/实现缺口的索引；**不表示任何模块已冻结或 C++ 已测试**。
+- 两份实际源文档已在固定提交 `6a1867a4b36ad71b1a523c4b3ed7372e276ece5d` 上复读确认（定向 **2/2**）；详细输入身份与适用边界见 [PROGRESS.md](PROGRESS.md) 及 [控制矩阵](DOCUMENT_BASELINE_REGISTER.md)。
+- **第一轮最新两态：67 项中 44 已整改、23 未整改**（AF-037～061，**不含 AF-052/059**）。尚缺正式源码/独立数值/CTest/性能/批准的目标保持「未整改」。依据用户的停止条件，本轮至此退出，**不启动下一轮 AUDIT 扫描或第二轮整改**。
