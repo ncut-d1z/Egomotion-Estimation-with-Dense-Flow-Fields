@@ -185,3 +185,11 @@ reviewed_by / review_date:
 - **实际覆盖**：MAT 安全/列主序、八面体层数和 N/3N 抽样、轨迹和正根、八次聚合/Manifest、501 点分析和缺字段、66 TC 的夹具规划、L2/L3/L4 有效样本与身份字段；0.01/0.1 仍仅**已选首轮宽松筛查**而非正式 DEC-005。
 - **当前证据边界**：没有运行 Bash/CMake/CTest/MATLAB/Octave、MAT 逐值/独立 SHA-256、L3/L4 生成、生产 Reader/Writer、异常负例、性能实验或 MAT 写入。原 `origin/**` 和历史审批文件不变。真实软件验收及人类签署仍缺；H-10/H-11 未改变。
 - **第一轮结论**：整改台账维持 **67 项＝44 已整改＋23 未整改**；文件三态 **50＝27 已审计＋23 正在审计**。依停止条件不进行新 AUDIT 扫描和第二轮整改。
+
+
+### E-DOC-034（2026-11-08：定向源码数学检查、AF-067 来源 SHA 纠错）
+
+- **原只读源**：`franzeigen.m` blob `6fe556fd038b983f8d80aac5c76ee2ea11c08f38`；Original KvD `d48048f37b859bfb19402ca85b0f4c20e76afbfd`；Modified KvD `9ffdac1baaecac06db20bcc6849bf4cdd165a484`；Adaptive oneit `48e51bcd52fb8f27cf35b3fce38b28507af36e55`。限定为源码静态/代数核对。
+- **设计修订**：固定提交 `d5265cc576e1c66ba1c63f8621ff1ad91d981195` 将 KVD/Adaptive 可判别输入、负均值近度符号、旧 t 计算 ω、MSE 与非均匀近度覆盖写入 LLD、Golden 提案、TEST_PLAN。没有独立生成逐轮 L3 或执行测试。
+- **新问题 AF-067**：在输入 `d5265cc` 发现 1/19 原始源 SHA 仅 39 位，在 `86e3755` 先登记；`18ddb7198490e9d2ff49ee2f66e8b3a4945ee58a` 修正 JSON 元数据。该提交上按 JSON 声明的来源提交 `ddb4b15e78dbd617d5d083d80c2d75aa47f14464` 核验 **19/19 文件 SHA 一致、12/12 AN-G 编号完整唯一**；原候选数值未修改。AF-055 独立 L3 仍缺。
+- **退出判定**：67 项既有目标 + AF-067 = 68 项；**45 已整改、23 未整改**。尚无真实 C++/CTest、L2/L3/L4、正式容差或人类批准；不借来源核对声明数值 PASS。已按要求停止，不开始第二轮审计/整改。

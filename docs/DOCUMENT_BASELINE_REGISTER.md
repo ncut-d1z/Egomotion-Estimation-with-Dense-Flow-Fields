@@ -148,3 +148,18 @@
 | `docs/design/README.md` | v0.7（MAT 版本引用更新） | `c437eaba39e7f39e1a378c9df8756a7db6d8c6e4` | 仅引用 mat_io v0.10；不冻结 LLD |
 
 **本表仅作文件身份追踪**：AF-042/047/048/049/050/051/060 仍未整改，未取得实际 C++/CTest、独立 L2/L3/L4、最终 DEC-005/006/008 或正式批准；两台账当前进度见 [AUDIT](AUDIT.md) / [AUDIT_PROCESS](AUDIT_PROCESS.md)。
+
+
+### 6.3 数学文档和 JSON 的本轮固定身份（未冻结）
+
+本节不改写 §2～3 的历史快照；`d5265cc576e1c66ba1c63f8621ff1ad91d981195` 是**静态数学设计修订**，`18ddb7198490e9d2ff49ee2f66e8b3a4945ee58a` 是**JSON 来源 SHA 修订**。
+
+| 文件路径 | 文件 Git blob SHA | 修订输入/作用 |
+|---|---|---|
+| `docs/design/kvd.md` | `e5e4281ef3c3b704b616ba070f75e6dab7f6834d` | `d5265cc`；AF-043 静态来源与分支判别 |
+| `docs/design/adaptive_mfa.md` | `eb1d9f43083a203b240dc66f071cca7f9f6fb336` | `d5265cc`；AF-044 负均值/矩阵合同 |
+| `docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md` | `bb5498ad6541bfa90cd7c3562eeddd212b331954` | `d5265cc`；AF-054 未来区分性 L3 条件 |
+| `docs/TEST_PLAN.md` | `c19a01f44c59e3fcaed7bca58a8303866272ad18` | `d5265cc`；AF-051 对应既有 TC |
+| `docs/golden/analytic_golden_candidates.v1.json` | `1e6499eff3ce5b55503f8cd913b9f492629da499` | `18ddb719`；AF-067 补齐一处原源 blob SHA |
+
+**范围**：仅文档和参考元数据，AF-043/044/051/054/055 及其它需要真实数值/源码/验收的阶段目标仍未完成。无正式文档签署、软件构建、CTest 或 MAT 读写证据。

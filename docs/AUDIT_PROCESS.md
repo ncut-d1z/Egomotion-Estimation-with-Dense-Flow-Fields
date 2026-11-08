@@ -163,6 +163,20 @@
 
 | ID | 相对文件路径 | 首次发现与整改目标 | 状态 |
 |---|---|---|---|
-| AF-067 | `docs/golden/analytic_golden_candidates.v1.json` | `source_blob_shas["bias_test/data_generation/bias_test_spherical_prop_error.m"]` 登记 39 位 SHA `fc3c4f0a7a417171415fb5e3d869a744ba24d04`，与固定来源提交真实 40 位 blob `fc3c4f0a7a417171415fb5e3d869a744ba24d04f` 不符；修正元数据并复核 19/19 来源，不修改 AN-G 数值或源 `.m`。 | 未整改 |
+| AF-067 | `docs/golden/analytic_golden_candidates.v1.json` | `source_blob_shas["bias_test/data_generation/bias_test_spherical_prop_error.m"]` 登记 39 位 SHA `fc3c4f0a7a417171415fb5e3d869a744ba24d04`，与固定来源提交真实 40 位 blob `fc3c4f0a7a417171415fb5e3d869a744ba24d04f` 不符；修正元数据并复核 19/19 来源，不修改 AN-G 数值或源 `.m`。 | 已整改 |
 
-此项仅属**引用来源身份**错误，不代表 AN-G 数学数值已独立验证；AF-055、AF-043/044、AF-054 仍须独立 L3 和真实 C++/CTest 才能结案。先登记未整改，随后修改实际目标并在新提交复读。当前台账 **68 项：44 已整改、24 未整改**。
+此项仅属**引用来源身份**错误，不代表 AN-G 数学数值已独立验证；AF-055、AF-043/044、AF-054 仍须独立 L3 和真实 C++/CTest 才能结案。先登记未整改，随后修改实际目标并在新提交复读。**登记当时状态**：68 项中 44 已整改、24 未整改；结案后的状态见 §12。
+
+
+## 12. 第一轮源码静态数学核对与 AF-067 结案（2026-11-08）
+
+**实质修改**（已推送 `d5265cc576e1c66ba1c63f8621ff1ad91d981195`）：
+
+- **AF-043 未整改**：`docs/design/kvd.md §9.1` 从原 `franzeigen.m` 和 Original/Modified KvD 提取分段行号、旧 t 计算 ω、near 符号翻转、最终均值尺度，增加**近度恒 1 时两分支相同／非均匀近度才能判别 `μ²`**的静态证明和测试资格。仍缺逐轮独立 L3、真实 C++/CTest。
+- **AF-044 未整改**：`docs/design/adaptive_mfa.md §10.1` 源码确认 `s<0` 时翻 near 后仍除旧负 s，手算示例使归一 near 均值为 **−1**；要求 M1～M4、6×6、MSE、重新估近度、Session 状态独立核验。仍缺完整固定输入独立 L3/CTest。
+- **AF-051、AF-054 未整改**：`docs/TEST_PLAN.md §2.5`、`docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md §3.1` 分别补充上述可判别输入与“离散严格判据≠0.01/0.1 宽松筛查”说明；不新增 TC、测试 PASS 或最终 DEC-005 容差。
+- **AF-055 未整改**：只验证 `analytic_golden_candidates.v1.json` 的来源身份、编号与文件存在性；**没有对 12 个候选数值进行独立 L3 数值验收**。
+
+**AF-067 已整改（仅来源身份元数据）**：输入 `d5265cc` 的 JSON `source_blob_shas` 19 项原始 Git SHA 中 1 条仅 39 位，先在 `86e3755` 登记「未整改」，再于 `18ddb7198490e9d2ff49ee2f66e8b3a4945ee58a` 实际修改 JSON。复核 JSON 所指来源提交 `ddb4b15e78dbd617d5d083d80c2d75aa47f14464` 的树，**19/19 Git blob SHA 匹配**、AN-G01～12 完整唯一，候选数据及其他字段未改。原始 `.m` 未改，不将身份校验冒充独立数值真值。
+
+**第一轮停止判断**：共 **68 个原子整改目标，45 已整改、23 未整改**。剩余目标需要真实数值/代码/CTest/性能或审批；按照用户指示，第一轮到此结束，**不执行新的 AUDIT 扫描或第二轮整改**。没有运行 Bash/CMake/CTest/MATLAB/Octave、生成独立 L2/L3/L4 或写入 MAT；H-10/H-11、`origin/**`、历史审批 JSON 均未变更。
