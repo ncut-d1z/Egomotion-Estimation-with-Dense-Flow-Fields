@@ -68,7 +68,7 @@
 | `docs/PROGRESS.md` | 正在审计 | 真实证据与动态 DEC/里程碑；待 AF-053；AF-070 已定向复核；AF-053 真实证据待补 |
 | `docs/ARCHITECTURE.md` | 正在审计 | HLD/27 条设计边、部署/Writer；待 AF-038 |
 | `docs/OBJECT_MODEL.md` | 正在审计 | 生命周期、45 .m 映射；待 AF-039 |
-| `docs/design/contracts.md` | 正在审计 | Result/Status/ErrorDetail、所有权；待 AF-040；AF-077 已定向复核（候选映射）；AF-040 仍待实际 ABI/错误运行验证 ；AF-084 PlotErrorCode 对外映射未完整待修订 |
+| `docs/design/contracts.md` | 正在审计 | Result/Status/ErrorDetail、所有权；待 AF-040；AF-077 已定向复核（候选映射）；AF-040 仍待实际 ABI/错误运行验证 ；AF-084 绘图四错误映射已复读；AF-040 真实 Result/ABI 仍未完成 |
 | `docs/design/cli.md` | 正在审计 | 参数类型、RunId、JSONL/错误；待 AF-041 |
 | `docs/design/mat_io.md` | 正在审计 | MAT 类型、RAII、Reader/Writer/安全；AF-033 已整改，待 AF-042 |
 | `docs/design/kvd.md` | 正在审计 | Franz/KvD 公式、逐轮顺序；待 AF-043 |
@@ -234,3 +234,10 @@
 - **AF-083 已整改（仅合同文本）**：先于 `8f193ae` 登记原分析脚本的 `xwerte` 最后 k 覆写语义，再在 `ab9470936eeea1a536709e05a909bee6256b1168` 修改分析 LLD v0.8、TEST_PLAN v0.17 和 [静态审阅报告](reviews/AUDIT_BIAS_XWERTE_LAST_RUN_STATIC_2026-11-08.md)。固定提交上的 **9/9 静态合同断言**及本地链接检查通过。仅四组 `ywerte3…6` 跨 k 求均值、x 与理论参考始终用末轮 `xwerte`；AF-050/051 的 L2/L3/Analyzer/CTest 仍未完成。
 - **AF-084 新发现，先登记未整改**：`analysis_plotting.md` §2 候选接口定义 `PlotErrorCode::{BackendUnavailable,InvalidSeries,OutputForbidden,WriteFailed}`；[contracts.md §3.1](design/contracts.md) 只用笼统“可选 plot 后端不存在→exit7”覆盖一种来源，未给另外三种稳定 `ErrorStage/exit`。这与“公共错误映射唯一来源”的设计承诺不完整；须同步 `contracts.md`、分析 LLD、CLI 与原 66 TC 对应 TEST_PLAN，不得凭文档宣布 DEC-008 或 CTest 已批准。
 - 本轮状态（AF-083 结案、AF-084 登记）：**85 个目标：61 已整改、24 未整改**；新增一份 Bias 原文复核文件后 **60 个审计对象：37 已审计、23 正在审计、0 空白**。新的 AF-084 结案前始终保持「未整改」。
+
+
+## 21. AF-084 绘图错误的单一映射定向复核（2026-11-08）
+
+- 在首次登记 AF-084 为「未整改」后，实际修订 `docs/design/contracts.md` v0.5、`docs/design/analysis_plotting.md` v0.9、`docs/design/cli.md` v0.6、`docs/TEST_PLAN.md` v0.18、`docs/design/README.md` v0.9。初次固定复读发现 `WriteFailed` 只作了简写，随即在下一单独提交补成 `PlotErrorCode::WriteFailed`，**失败检查后修复才结案**。
+- 固定复核提交 `597efb7f44e135fc2bc4b03ba3d31dffe734d3b1`：**10/10 静态合同断言及相对链接检查通过**，`BackendUnavailable→plot/7`、`InvalidSeries→plot/5`、`OutputForbidden/WriteFailed→output/6`；全部四个枚举身份与分析 LLD 的唯一声明相符，CLI 只引用 `contracts.md §3.1`，既有 TC 增补四类未来负例。
+- **当前审计三态**：60 文件，37 已审计、23 正在审计、0 空白；**问题两态**：85 项，62 已整改、23 未整改。AF-084 **仅文本/候选映射已整改**；原 AF-040、041、050、051 等真实 ABI、CLI、绘图/分析 CTest、DEC-008 等仍开放，不能误作正式验收。正式第二轮全量审计仍须等待完整第一轮目标实际闭环。

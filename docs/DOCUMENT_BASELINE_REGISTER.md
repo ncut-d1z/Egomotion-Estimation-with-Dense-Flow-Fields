@@ -294,3 +294,18 @@ AF-041/047/055/058 与其它开放目标仍须独立数据/真实软件及审批
 ### 6.16 Bias 聚合原始统计合同的固定身份（仅文本）
 
 固定定向复读提交 `ab9470936eeea1a536709e05a909bee6256b1168`：分析 LLD v0.8 `docs/design/analysis_plotting.md` blob `92bd20e5b67bcf75830ee14172a955b0fa663040`；测试计划 v0.17 `docs/TEST_PLAN.md` blob `60d195cc9cf3604ba97e88fb560420d2fec19314`；新增 Bias 原文审计 `docs/reviews/AUDIT_BIAS_XWERTE_LAST_RUN_STATIC_2026-11-08.md` blob `b9653af0a0782b1a6fae1bbdd5e75c77257c338e`。这只证实 AF-083 的特定源码统计合同；AF-050/051、DEC-005/008、完整 L2/L3 与业务测试仍未满足。
+
+
+### 6.17 AF-084 绘图错误静态合同的固定身份（非批准基线）
+
+固定核对提交 `597efb7f44e135fc2bc4b03ba3d31dffe734d3b1`：
+
+| 文档 | Git blob SHA | 限定范围 |
+|---|---|---|
+| `docs/design/contracts.md` | `f7369e836820603fdb9237bf685f12c7f5daaed4` | v0.5；四种 PlotErrorCode 的唯一外部映射 |
+| `docs/design/analysis_plotting.md` | `ae211915bd31a0c02017ab2b755ce15852b41622` | v0.9；四个 enum 仍只在分析/绘图 LLD 声明 |
+| `docs/design/cli.md` | `82c38559d48fb1ad6cc6a76c8c1c6533b6a4977d` | v0.6；CLI 仅引用公共候选错误表 |
+| `docs/TEST_PLAN.md` | `9597586d6c7615e0599d05c1e503eca21b2e9474` | v0.18；旧 TC 的绘图负例规划，未实际执行 |
+| `docs/design/README.md` | `1d1a3941bee1719fa37ee4493f1bff703888892a` | v0.9；错误归属与文档索引 |
+
+这是本轮静态文件身份和文档合同结案，并不表示生产 `IPlotExporter` 已实现、四类错误实际发生、DEC-008/CTest 或整个 SRS/HLD/LLD 已批准。

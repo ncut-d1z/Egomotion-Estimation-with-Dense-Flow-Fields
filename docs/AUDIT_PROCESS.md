@@ -210,6 +210,13 @@
 
 | ID | 相对路径 | 具体整改目标 | 状态 |
 |---|---|---|---|
-| AF-084 | `docs/design/contracts.md` | §3.1 与 `analysis_plotting.md` 的 `PlotErrorCode` 四种状态对齐：`BackendUnavailable`、`InvalidSeries`、`OutputForbidden`、`WriteFailed` 均需唯一候选 `exit_code/ErrorStage`；同步 `cli.md` 和 `TEST_PLAN.md` 中绘图/只读分析分层、底层错误溯源及无后端/无效曲线/路径拒绝/写失败的负例；保持实际代码、DEC-008/CTest 未完成边界。 | 未整改 |
+| AF-084 | `docs/design/contracts.md` | §3.1 与 `analysis_plotting.md` 的 `PlotErrorCode` 四种状态对齐：`BackendUnavailable`、`InvalidSeries`、`OutputForbidden`、`WriteFailed` 均需唯一候选 `exit_code/ErrorStage`；同步 `cli.md` 和 `TEST_PLAN.md` 中绘图/只读分析分层、底层错误溯源及无后端/无效曲线/路径拒绝/写失败的负例；保持实际代码、DEC-008/CTest 未完成边界。 | 已整改 |
 
 **先后顺序**：AF-083 于 `8f193ae` 首次登记未整改，实际目标在 `ab9470936eeea1a536709e05a909bee6256b1168` 修改并固定复读 **9/9 定向静态检查通过**，故转「已整改」。AF-084 尚只登记发现、**未修改目标合同**。此时 85 个独立 AF 行：61 已整改、24 未整改；不得把静态映射当真实接口/CTest PASS。
+
+
+## 19. AF-084 四种绘图错误协议结案（2026-11-08）
+
+先登记问题，再修订五份现行接口/测试文档。首次静态复读未通过完整枚举限定检查，修正 `PlotErrorCode::WriteFailed` 的显式名称后，在固定提交 `597efb7f44e135fc2bc4b03ba3d31dffe734d3b1` 执行**10/10 定向静态复核通过**（四成员一次覆盖、5/6/7 退出码和 plot/output stage、唯一表归口、负例、草案状态、版本和链接）。于是 AF-084 转为「已整改」；未声明程序运行、绘图结果、CMake/CTest 或 DEC-008 已批准。
+
+**最新**：独立整改目标 **85 项：62 已整改、23 未整改**；对应 [AUDIT.md](AUDIT.md) **60 个文件：37 已审计、23 正在审计、0 空白**。余下 23 项确实需要生产代码/独立 L2-L4/真实测试/论文或正式签署，继续保留「未整改」。

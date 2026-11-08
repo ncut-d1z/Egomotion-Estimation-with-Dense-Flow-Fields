@@ -280,3 +280,10 @@ reviewed_by / review_date:
 - [Bias 静态审计](reviews/AUDIT_BIAS_XWERTE_LAST_RUN_STATIC_2026-11-08.md) 对原 `graphs_bias_test.m` 证明 `xwerte` 在 k 循环只取末轮，`ywerte3…6` 则累计除以 K。目标修订固定提交 `ab9470936eeea1a536709e05a909bee6256b1168`，分析 LLD v0.8、TEST_PLAN v0.17 和报告 **9/9 静态断言通过**；没有实际读取 MAT 逐值或生成曲线 L3/CTest。AF-083 因文本合同已修订结案，AF-050/051 继续开放。
 - 新发现 AF-084：`PlotErrorCode` 四成员尚无全部候选退出码/阶段映射，先在整改台账登记「未整改」，待新提交修订后定向核查；不得凭静态合同填 DEC-008 已批准。
 - 当前 85 AF：61 已整改、24 未整改；文件审计 60（37 已审计、23 正在审计）；原 `origin/**`、权限、历史审批、MAT/源码均未改。
+
+
+### E-DOC-049（2026-11-08：AF-084 绘图错误候选映射）
+
+- 发现 `analysis_plotting.md` 中 `PlotErrorCode` 四个成员未完全归入公共合同单一 `ErrorStage/exit` 表，按先登记、后修订、固定复核的顺序处理。最终固定核对 `597efb7f44e135fc2bc4b03ba3d31dffe734d3b1`，确认四成员：缺后端 plot/7、无效曲线 plot/5、输出路径拒绝与写失败 output/6；CLI 不另造枚举，TEST_PLAN 关联原有负例 TC。
+- 初轮检查因 `WriteFailed` 没写完整枚举限定而未通过，随后独立提交修正，最终静态合同检查 **10/10 通过**，没有编译/运行/写图/写 MAT。
+- 两态变为 62 已整改、23 未整改（共85）；文件 60 个，37 已审计、23 在审；AF-040/041/050/051 的真实 ABI/测试以及 DEC-008/P0.8 仍开放。MATLAB/L1 永久非必需，H-10/H-11 仍暂缓，原 `origin/**` 未修改。
