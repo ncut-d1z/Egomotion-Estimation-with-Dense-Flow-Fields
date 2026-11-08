@@ -1,6 +1,6 @@
 # 轨迹、相机旋转与球内环境——详细设计草案
 
-> **LLD v0.2 草案，未冻结、未运行数值测试。** 来源：kreis_trajektorie.m、sinuskurve_trajektorie.m、trajektorie_aus_punkten.m、drehvektor_aus_zwei_vektoren.m、rodrigues.m、getnear_in_kugel_Drehung.m。对应 P3.6、P6.1–P6.7、REQ-F-TRAJ-001。
+> **LLD v0.3 草案，未冻结、未运行数值测试。** 来源：kreis_trajektorie.m、sinuskurve_trajektorie.m、trajektorie_aus_punkten.m、drehvektor_aus_zwei_vektoren.m、rodrigues.m、getnear_in_kugel_Drehung.m。对应 P3.6、P6.1–P6.7、REQ-F-TRAJ-001。
 
 ## 1. 轨迹点列与离散化
 
@@ -148,6 +148,19 @@ public:
 - 值对象不借用外部 MAT 的短生命周期内存。TrajectoryGenerator 不绘图，不修改 Session，也不产生全局随机状态。
 - 对不能形成前后两段位移的端点，返回原来的预分配零值，同时标注没有有效运动；不能用“端点真值零”掩盖其非估计状态。
 - **原始小角合同已确定**：对 `rodrigues.m` 的旋转向量→矩阵分支，原源码在 `theta < eps` 时返回**单位旋转矩阵**；§5.1 规划 `omega.norm() < std::numeric_limits<double>::epsilon()` 优先返回单位阵，否则采用已选定的 Sophus `SO3d::exp`。这不是将任意“近零角度”强制置零的新增可选策略，也不等于 `drehvektor_aus_zwei_vektoren.m` 的叉积范数 **1e−11** 判断门槛。**是否扩大原 eps 阈值、对非法/非有限输入如何显式失败、是否支持球外位置**仍须依据源代码与独立 L3/异常测试审查；不得把未知 MATLAB 行为写成已验证实现。
+
+### 6.2 第一轮轨迹—采样—光流边界用例（AF-048，设计补齐）
+
+| 场景 | 明确接口/数值语义 | 待独立核验的条件 |
+|---|---|---|
+| 圆轨迹 35 点、正弦轨迹 600 点 | `TrajectoryGenerator` 仅输出世界坐标的 N×3 点；原源以 **N** 而非 `N−1` 作为参数分母，首尾按源预分配规则 | 逐行 L3 轨迹、首末点与对偶差分的真实 C++ 对照 |
+| 第 1 和第 N 帧 | 原 `alletrans` 预分配的端点为零，`has_original_matlab_motion=false`；不得作为“真实零运动”的有效测量 | 端点状态/误差分母的 Session/Runner 验证 |
+| 零旋转与 `norm(omega) < eps` | 仅对**旋转向量→旋转矩阵**分支优先返回单位阵；否则应用 Sophus `SO3d::exp`，不扩大 eps 门槛 | 单位阵/三轴/近 π/组合矩阵的独立 L3 全元素参考 |
+| 反向、近同向及零长度方向 | 源 `drehvektor_aus_zwei_vektoren` 的叉积 `1e−11` 条件与 Rodrigues eps **不是同一阈值**；非定义结果应按已选 Result/Failure 报告而非伪造有效旋转 | 向量方向、符号、非有限/零模负例及源无法实测的 MATLAB 行为分列 |
+| 单位球内相机位置、射线指向球面 | `SphereEnvironment` 消费 `DirectionSet` 与自拥有轨迹/旋转输入，先按既定 R 旋转方向、取**正向射线**距离的正根再倒数得到 near；不在此层读取 MAT 或生成随机数 | 球心/近边界/负判别式或球外失败分类的独立参考 |
+| 世界运动转局部运动 | `TrajectoryKinematics` 使用原 `R^\top` 对向量变换；不向 `sampling` 模块输出 MAT 句柄/Session 状态 | 矩阵转置方向与平移、旋转量的固定输入 L3 |
+
+本合同明确 **TrajectoryGenerator/TrajectoryKinematics/SphereEnvironment** 与采样 `DirectionSet`、流场 `FlowSynthesizer` 的值传递职责；具体公共签名与 target 以 [contracts.md](contracts.md)、[sampling_noise.md](sampling_noise.md) 及 HLD 为准。关联 `TC-F-TRAJ-001`、`TC-F-FLOW-004`。**AF-048 仍「未整改」**：Sophus 生产依赖、近退化 L3、异常/CTest 及最终冻结尚缺。
 
 ## 7. 黄金样本与验收覆盖
 
