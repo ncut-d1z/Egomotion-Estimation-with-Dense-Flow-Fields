@@ -278,7 +278,15 @@
 
 | ID | 仓库根相对路径 | 原子整改目标 | 状态 |
 |---|---|---|---|
-| AF-090 | `docs/design/analysis_plotting.md` | `spherical_harmonic_illustration.m:10–30` 用 `theta=0:π/40:π`、`phi=0:π/20:2π`、`legendre(degree,cos(theta))` 的第 `order+1` 行、`cos(order*phi)`，然后 `rho=5+3*yy/max(abs(yy))`；它**不调用**归一化实球谐 `kugelflfunc2`，不使用负 m 的 sin 分支，不应把展示函数误当作核心九实基求解器。补完整示意数据/参数域与 TC-F-AN-002 候选核验，明确独立 L3/实际绘图未运行。 | 未整改 |
-| AF-091 | `docs/design/analysis_plotting.md` | 原 `circle_curve_in_the_sphere.m` 和 `sinosodial_curve_in_the_sphere.m` 均 `sphere(quality=50)`，把 `y<=0` 的球面点之 `z` 设 NaN 形成单侧遮罩，并绘制源给定的 600 点轨迹；正弦脚本虽然实际选正弦轨迹，图标题却仍是 `circular trajectory within the sphere`。在 LLD/既有 TC 中记录这一历史标题异常、遮罩与参数；原版忠实复现与可选纠正图标题要分开，不能静默把原行为当正确的正弦标题。 | 未整改 |
+| AF-090 | `docs/design/analysis_plotting.md` | `spherical_harmonic_illustration.m:10–30` 用 `theta=0:π/40:π`、`phi=0:π/20:2π`、`legendre(degree,cos(theta))` 的第 `order+1` 行、`cos(order*phi)`，然后 `rho=5+3*yy/max(abs(yy))`；它**不调用**归一化实球谐 `kugelflfunc2`，不使用负 m 的 sin 分支，不应把展示函数误当作核心九实基求解器。补完整示意数据/参数域与 TC-F-AN-002 候选核验，明确独立 L3/实际绘图未运行。 | 已整改 |
+| AF-091 | `docs/design/analysis_plotting.md` | 原 `circle_curve_in_the_sphere.m` 和 `sinosodial_curve_in_the_sphere.m` 均 `sphere(quality=50)`，把 `y<=0` 的球面点之 `z` 设 NaN 形成单侧遮罩，并绘制源给定的 600 点轨迹；正弦脚本虽然实际选正弦轨迹，图标题却仍是 `circular trajectory within the sphere`。在 LLD/既有 TC 中记录这一历史标题异常、遮罩与参数；原版忠实复现与可选纠正图标题要分开，不能静默把原行为当正确的正弦标题。 | 已整改 |
 
 **发现登记后问题两态**：92 项（67 已整改、25 未整改）；文件审计 60 项（37 已审计、23 正在审计）。AF-050/051、H-10/H-11、独立 L3、真正绘图和 CTest 均不因上述源码静态发现而关闭。
+
+
+## 27. AF-090/091 illustration 合同定向复核与结案（2026-11-08）
+
+- **顺序与固定来源**：基准远端 `30cf2a71197ac12b17f8fa6af09aaf4f0baa3440`；登记提交 `b39529c114c49c970e6374802752c5bb69b2e0aa` 将 AF-090/091 先标「未整改」；目标修订分别为 `docs/design/analysis_plotting.md` `4782a0a9bac84365066d7a02a536f2725411f408`、`docs/TEST_PLAN.md` `58e80305e30df8b3345b89068008c62b70367bbc`、`docs/design/harmonics.md` `af6cd8a4663086830ead8ac963f6d62ad7e83043`。
+- **固定源静态证据**：逐行对照 `spherical_harmonic_illustration.m:10–30` 的 `legendre(degree,cosθ)`、`cos(order·φ)`、`rho=5+3yy/max(abs(yy))`、41×41 网格与核心 `kugelflfunc2` 的归一化公式差异；对照 `circle_curve_in_the_sphere.m:6–44` 和 `sinosodial_curve_in_the_sphere.m:7–45` 的 600 点轨迹参数、`sphere(50)`、`y<=0 → z=NaN`、正弦轨迹的**源标题仍为 circular**。定向复读 **14/14 静态检查通过**。
+- **定向结案范围**：AF-090/091 只涉及现有 `TC-F-AN-002` 的**文档级原版展示语义**，不改变或声称通过任何核心 `TC-F-SH-001/002`，不新增 TC、MAT 输出、L3 程序或可选绘图的实际软件。AF-050/051、H-10/H-11、DEC-005/008 和原源只读边界仍保持。
+- **本批结案后**：92 条唯一 AF，**69 已整改、23 未整改**；审计文件三态仍为 60 路径（37 已审计、23 正在审计、0 空白）。没有完成第一轮全部 23 项实际验收目标，所以不开始依赖第一轮清零的第二轮全面审计/整改。
