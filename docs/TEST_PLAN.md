@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **测试计划草案 v0.11，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
+> **测试计划草案 v0.12，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
 
 > **审批后候选核对材料**：见 [HAR-2026-11-06-001 设计修订与待审材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md) §2、§3、§7～§9。其中历史上提出六类容差采集格式、582 MAT SHA-256 独立审核和正式 Reader 类型拒绝清单；**当前参考采集/核验路径以 L2/L3/L4 为准，完全不要求 MATLAB/Octave 执行或 L1 Golden**，见 [长期政策](golden/NO_MATLAB_EXECUTION_POLICY.md)。`atol=0.01`/`rtol=0.1` 已由所有者选作**首轮宽松筛查**，不是已冻结的最终验收阈值；测试实体/CTest 仍未执行，H-10/H-11 其他执行门禁未解除。
 
@@ -111,7 +111,7 @@
 | `TC-F-GEOM-002/003`、`TC-NF-RNG-001`、`TC-DC-RNG-001` | 完整/缺损八面体 levels 0/1/2，有序行；固定注入时先 N 次 uniform 后 3N 次 normal；0 噪声仍抽样 | 原源码 SHA、独立方向 L3/固定 RNG 输入、调用数/顺序、非有限与耗尽负例；详见 `sampling_noise.md §7.1` |
 | `TC-F-TRAJ-001`、`TC-F-FLOW-004` | 35/600 轨迹、N 分母、端点无有效运动、`R^\top`、小角 epsilon/反向/近 π、球内正根 | 全矩阵独立 L3、状态/维度、球外失败分类；详见 `trajectory.md §6.2` |
 | `TC-F-EXP-002/003`、`TC-I-RESULT-001`、`TC-NF-RECOVERY-001` | 8 次四误差平均而 ratio 只留第 8 次、单轮失败/Manifest、周期刷新和当前三个 save | 独立固定八轮和帧号、RunId、保存字段/源只读确认；详见 `experiments.md §8.2` |
-| `TC-F-AN-001/002`、`TC-I-ANALYSIS-001` | 50:550 的 501 点、阈值等值不触发、分段与 f 半窗/零边界、更新率新数据缺 ratio 明确报错 | L2 原始变量/下标与独立 L3 曲线/分段/错误对照；详见 `analysis_plotting.md §8.1` |
+| `TC-F-AN-001/002`、`TC-I-ANALYSIS-001` | 50:550 的 501 点、阈值等值不触发；多更新率**旋转逐段平滑且裁剪**、**平移先全长平滑且不分段**；comparison 平移不分段；缺 ratio 明确报错 | 独立 L3 对比段级完整中间数组、绘制 x/y、连续平移 501 点和原值来源；不能以“正确裁剪后的旋转内部值不同于全局平滑”作假断言。详见 `analysis_plotting.md §5.2.1/§8.1` |
 
 **不能自动宣称 PASS**：测试夹具未生成，运行许可 H-10/H-11 未开放，源输入/参考 SHA、逐值误差及 CTest stdout/stderr/exit 尚无本轮执行记录。本表仅完成 AF-051 的测试**设计部分**，AF-051 继续「未整改」。
 
@@ -127,6 +127,15 @@
 | TC-F-SH-001、TC-F-ADAPT-001 | 常数近度 `Y00` 代数与对称方向下 M1～M4/rhs 的关系；另需非对称/近奇异例和 R3/R5 全元素、Session trace | 对称情况仅理论复核，不作数值 PASS |
 
 所有例子不新增 TC ID，不替代现有 66 TC 的文件创建、测试执行、L2/L3/L4 独立证据及 DEC-005/008 正式审批。负有限噪声的 CLI 接收策略仍须批准；原 `.m` 未显式禁止该数值。
+
+### 2.11 分析分段与平滑数据域的区分性测试（AF-075/076，规划）
+
+同一组有 **4 个有效旋转区间**的合成 ratio 与非恒定误差输入，应建立两类独立 L3：
+
+1. 多更新率**旋转图**：分段时读取每个区间切片（列 2/3/4），每段分别调用窗口半宽 2/5/10 的平滑；保存完整的局部零边界和裁剪后 x/y，不允许将源逻辑写成全局预处理。若全局平滑后按 **同样有效内部区间**裁剪，内部均值应**一致**，故不得将差异作为正确性断言。要查的是窗口调用域、完整临时数组、段边界与异常/日志身份。
+2. 多更新率**平移图**：四列各以全部 600 行构造数据（前三列平滑半宽 2/5/10，第一列原样），统一绘制 **50:550 共 501 点**、无分段掩码；comparison 实验平移 mit/ohne 亦全区间不分段，旋转图另按阈值分段。必须选有阈值穿越和间隙的 ratio，确保平移线**不会丢掉中间 x**。
+
+沿用 `TC-F-AN-001`、`TC-I-ANALYSIS-001`、`APL-G04/05`，不新增 TC ID/测试 PASS；完整独立参考、Analyzer 和 CTest 尚未建立。旧扫描报告中关于“正确裁剪后的旋转内部值必然不同”的说法已在 [纠偏说明](reviews/AUDIT_ANALYSIS_SEGMENT_SMOOTHING_CORRECTION_2026-11-08.md) 限定，旧扫描仍保留历史原文。
 
 ## 3. TC → 实体/CTest → AC 规划矩阵
 
@@ -371,4 +380,4 @@ bash scripts/check_docs_traceability.sh
 **v0.8 文档修订（AF-063）**：五个 TC 行的尚未创建来源清单与现有可用文档分开列示，不修改 TC/AC/REQ、Golden 数值、授权或任何 PASS 状态。
 
 
-**v0.11 文件身份索引补充（P0.6）**：已新增 45 个 `.m` 的 [SOURCE_INVENTORY](SOURCE_INVENTORY.md) 与 [MIGRATION_MATRIX](MIGRATION_MATRIX.md)；改变的只是五个 TC 行可引用的**已存在静态来源**，TC/REQ/AC 名称、66 个 TC 测试函数未执行事实及 H-10/H-11 仍不变。
+**v0.11 历史文件身份索引补充（P0.6）**：已新增 45 个 `.m` 的 [SOURCE_INVENTORY](SOURCE_INVENTORY.md) 与 [MIGRATION_MATRIX](MIGRATION_MATRIX.md)；改变的只是五个 TC 行可引用的**已存在静态来源**，TC/REQ/AC 名称、66 个 TC 测试函数未执行事实及 H-10/H-11 仍不变。

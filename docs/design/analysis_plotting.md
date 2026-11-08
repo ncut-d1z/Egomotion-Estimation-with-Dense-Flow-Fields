@@ -1,6 +1,6 @@
 # MAT 结果分析与可选绘图——详细设计草案
 
-> **LLD v0.5 草案，未冻结、未运行任何可视化程序。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
+> **LLD v0.6 草案，未冻结、未运行任何可视化程序。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
 
 ## 1. 只读分析合同
 
@@ -67,12 +67,12 @@ public:
 |---|---|---|---|
 | graphs_bias_test | 按 k=1..number_of_cores 读取 xwerte 和 ywerte3…6，四组求和再除以个数；从 anfang=3 到 ende=iterationnumber+1；参考线 y=100/sqrt(xwerte) | 每个噪声系数、Original/Modified 的平移/旋转四条原曲线，x=原 xwerte 和理论参考 | 不能把独立运行 40 份混成单次内部循环；ywerte1/2 在分析里被注释 |
 | graph_agent_in_sphere_initialization_test | mittrans 的 MATLAB 1..13 行、mitrot 的全部行；semilogy | curve_id、x 的 MATLAB 1-based 下标、y 数组、log-y 语义 | 这两条曲线长度不同，不能强行补齐尾部 |
-| graph_agent_in_sphere_adaptive_matched_filter_test | x=50:550（501 点），rottransratio 参与右纵轴与阈值 0.01 分段；绘制 mit/ohne 的旋转及平移误差 | 数值曲线 + 左轴 angle_deg/右轴 ratio、段边界及原始样本 | 不能用 SO(3) 测地角替换原脚本方向角度误差 |
-| graph_agent_in_sphere_adaptive_matched_filter_many_parameter | x=50:550，rottransratio 阈值 0.02，四种刷新频率对应的曲线；后 3 组用半窗 2、5、10 平滑 | 每个频率一组 curve、应用的窗口/段范围/非有限标志 | 多更新率当前源码不保存 rottransratio，但**现有历史 MAT 包含**，两种数据来源必须区分 |
+| graph_agent_in_sphere_adaptive_matched_filter_test | x=50:550（501 点）；rottransratio 阈值 0.01 **仅控制旋转误差图**的四段 begin/end，平移误差图直接全域绘制 x=50:550 | 旋转：按段 mit/ohne 两曲线；平移：连续 mit/ohne 两曲线；两图均有右轴 ratio | **AF-076**：平移图不使用旋转图的分段掩码；不把方向角度误差改成测地角 |
+| graph_agent_in_sphere_adaptive_matched_filter_many_parameter | **旋转图**按 ratio 阈值 0.02 的四段单独切片：第 1 列原值，后 3 列对每段分别以 f=2/5/10 平滑并绘制段内 begin+f..end−f；**平移图**第 1 列原值，后 3 列对完整 600 行先全域平滑，再绘制 x=50:550（501 点） | 旋转需保留各段窗口输入/边缘零值及绘图区间；平移需保留全部 600 行平滑数据及连续 501 点绘图区间 | **AF-075/076**：平移不随 ratio 分段；历史 MAT 有 ratio、当前 update-rates 源不保存 ratio，缺失必须报错 |
 
 ### 5.1 分段选择逻辑（保留 MATLAB 规则）
 
-原两个 Adaptive 分析脚本均采用 3 个分段区域的设置和 4 组 begin/end 数组，先设置 begin(1)=50，然后逐个 i=50..550 检查：
+原两个 Adaptive 分析脚本都**先为旋转误差图**计算 3 个分段区域的设置和 4 组 begin/end 数组，先设置 begin(1)=50，然后逐个 i=50..550 检查（这些数组**不用于**平移图绘制）：
 - ratio(i) < threshold **且**先前 zone==0：将当前 i 写入 end(j)，j+1，zone←1；
 - ratio(i) > threshold **且**先前 zone==1：将当前 i 写入 begin(j)，zone←0；
 - 将第四段 end(4)=550；threshold=0.01（comparison）或 0.02（many_parameter）。
@@ -99,6 +99,35 @@ y_i=0\text{ （原始 zeros 预分配的其余边缘）}.
 - **原始复现视图**必须使用历史文件的 xwerte 和理论曲线，不把 x 替换成真实 N；
 - 如另行输出物理实际样本数，应使用 separate actual_flow_count 元信息及新的、明确标注的图表，不能把新图伪装成原论文结果；
 - **原版 Bias xwerte 与理论参考线是当前复现的既定要求**，不再因“是否提供另一种对照图”请求当前人工选择。若另行提供物理实际方向数，必须作为明确标注的 `actual_flow_count` 元信息，与原存 `xwerte` 并列且不得覆写；**额外使用实际 N 的对照图属于当前必要交付/验收范围之外的新增功能**，只有收到明确新需求才另行规划、验收，不能阻塞既定分析功能。
+
+#### 5.2.1 旋转/平移平滑的不同数据域（AF-075/076）
+
+**多更新率的旋转面板（四段局部平滑）**，按 MATLAB 1-based 逐段：
+
+```text
+for z = 1..4:
+    b, e = begin[z], end[z]
+    col1: plot x=b..e, y=rot[b..e,1]  # 不平滑
+    for (col,f) in [(2,2),(3,5),(4,10)]:
+        segment = rot[b..e,col]         # 局部长度 L=e-b+1
+        smooth = kurveglaetten(segment,f) # 两端各 f 个 zeros
+        plot x=b+f..e-f, y=smooth[f+1..L-f]
+```
+
+**多更新率的平移面板（全量平滑、不分段）**：
+
+```text
+for col in 1..4:
+    full = trans[1..600,col]
+    smooth = full if col==1 else kurveglaetten(full,[2,5,10][col-2])
+    plot x=50..550, y=smooth[50..550]
+```
+
+`graph_agent_in_sphere_adaptive_matched_filter_test.m` 同样区分：**旋转图**按照比值阈值 0.01 画分段 mit/ohne，**平移图**直接对未平滑的 mit/ohne 绘制完整 `x=50..550`，两图的右轴 `rottransratio(x,1)` 均有完整范围。以上是两份 MATLAB 分析脚本的**实际执行域**，不新增输出指标。
+
+**重要的可判别性限定**：若按 `begin+f..end-f` 对旋转段严格裁剪，则这些**实际绘制的内部均值**与先对整条 600 行做相同均值平滑、再裁剪同一个内部区间的数值相同——因为内部窗口不越过段边界。故**不能谎称只凭这些内部曲线值即可区分两种平滑流程**。需要在独立 L3 中比对各段平滑的*完整临时数组*（两端 f 个零）、各段长度/来源、段界有效性、实际绘制的 x/y 与平移图**不分段的全部 501 个 x 值**。对于短于窗口的段，忠实记录源的空绘制/索引行为及 C++ 明确错误策略，不能据假想跨段混值声称图像不同。
+
+测试来源：原只读 `graph_agent_in_sphere_adaptive_matched_filter_many_parameter.m`、`graph_agent_in_sphere_adaptive_matched_filter_test.m`、`kurveglaetten.m`；见 [补充审计纠偏](../reviews/AUDIT_ANALYSIS_SEGMENT_SMOOTHING_CORRECTION_2026-11-08.md)。此处只建立静态 LLD，独立 L3、Analyzer/CTest 和最终阈值仍缺，原 AF-050/051 继续「未整改」。
 
 ## 6. 候选 CurveSeries 输出 schema 与 C++17 错误合同
 
@@ -143,8 +172,8 @@ PlotExporter 仅消费 AnalysisDataset，输出图形位置必须在独立 RunId
 | APL-G01 | 40-run 两组 Bias 的 xwerte、ywerte3…6，四组平均和 100/sqrt(x) | TC-F-BIAS-003 |
 | APL-G02 | init 的 1..13 与 1..35 原样索引，两个不等长度序列 | TC-F-AN-001 |
 | APL-G03 | comparison x=50..550、阈值 0.01、旋转/平移曲线、右轴 ratio 和各分段 | TC-F-AN-001 |
-| APL-G04 | many_parameter 的四组曲线、阈值 0.02、窗口 f=2/5/10、分段裁剪 | TC-F-AN-001 |
-| APL-G05 | rottransratio 缺失、NaN/Inf、穿越区域不足、f 超过数据长度、MAT 形状错误 | TC-I-ANALYSIS-001、TC-NF-HEADLESS-001 |
+| APL-G04 | many_parameter：**旋转**四段各自局部平滑/裁剪＋**平移**完整 600 行全局平滑后绘制 50:550；保留局部临时零边界和连续平移 x | TC-F-AN-001 |
+| APL-G05 | rottransratio 缺失、NaN/Inf、穿越区域不足、**旋转局部段短于窗口**、平移全域窗长不足、MAT 形状错误 | TC-I-ANALYSIS-001、TC-NF-HEADLESS-001 |
 | APL-G06 | 单位球圆/正弦轨迹、l≤2 实球谐三种插图数据 | TC-F-AN-002 |
 
 所有参考数据须来自原只读 .m 源公式/历史 MAT L2 及独立 L3 曲线实现，带原源码 SHA、输入 MAT SHA、参考生成过程与明确 Golden 版本；**不要求运行原 MATLAB 分析脚本**。图像像素一致性不要求，但**数据值、MATLAB 索引、绘图分段、单位和有效数量必须可审查**。
@@ -173,7 +202,7 @@ PlotExporter 仅消费 AnalysisDataset，输出图形位置必须在独立 RunId
 | Bias 两组各 40 次的历史 L2 xwerte/ywerte | 用源 MAT `xwerte`（不是实际 N）及 `ywerte3…6` 独立重算四组曲线、均值和 `100/sqrt(xwerte)` | MAT 文件与变量身份、有效样本数、数值/维度及 Python/其它独立 L3 算法来源（不调用被测 Analyzer） |
 | Initialization 的 35×1 输入 | `mittrans(1:13)` 为 13 点、`mitrot(:)` 为 35 点；不得补齐/截断成相同长度 | 原 MATLAB 1-based 下标、各自输出 shape、对数坐标元数据 |
 | Comparison/Update-rate 的历史 `rottransratio` | `x=50:550` 共 **501** 点；阈值分别 **0.01/0.02**，**等于阈值不转移**，`begin/end/zone` 顺序与最多四段按源定义 | 可逐点复查的 ratio、阈值状态、begin/end、真实绘制区间与 NaN/Inf 分类 |
-| 选定平滑半窗 `f=2/5/10`，包括短数组/越界分段 | 中间每个样本使用 `2f+1` 长度均值，首尾各 f 个值保留源 zeros 预分配的零；绘图段以 `begin+f..end-f` 裁剪 | 完整平滑数组（含零边界）、裁剪索引、空/非法窗口错误 |
+| 选定平滑半窗 `f=2/5/10`，包括短数组/越界分段 | **旋转**：各 begin/end 段分别构建长度 L 的平滑数组，边缘 f 个零，绘图 `begin+f..end-f`；**平移**：完整 600 行平滑，连续绘制 `x=50..550`，不使用 begin/end | 段级完整临时数组/零边缘、全局平移 600 行、各图绘制 x/y 和无效段错误；不能错误地断言正确裁剪的旋转内部值必与全局平滑不同 |
 | 当前 Update rates 三份 save 缺 `rottransratio` 或历史字段不全 | 明确 `AnalysisErrorCode::MissingVariable`（或合同指定的非成功），**不得**推导比值/回退另一字段；旧历史结果只读分析能力保留 | MissingVariable 诊断含 source/path/variable，来源 `CurrentGenerated/HistoricalOnly` |
 | 绘图后端未安装或无显示环境 | 只读数值 Analyzer 仍应返回完整 `AnalysisDataset`；可选 plot 独立返回能力错误，不改变数值/文件 | 有图/无图两路输出的曲线值与有效样本身份一致 |
 
