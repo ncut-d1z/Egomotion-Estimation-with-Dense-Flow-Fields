@@ -32,7 +32,7 @@
 | 实验 Runner | [experiments.md](experiments.md) | 2 Bias + 3 Adaptive 生成入口 | 参数/save、8 次聚合、刷新策略及 L2/L3/L4 证据等级 | **RunContext 候选接口、DataMismatch 边界、egomotion_experiments/TC/CTest** | 新 Runner/完整 L3/CTest 均未实现 | 未冻结，P0.8/DEC-008 |
 | 分析与可选绘图 | [analysis_plotting.md](analysis_plotting.md) | 4 分析入口、kurveglaetten、3 插图 | 已列数据/索引/阈值/窗口与 DEC-004 缺字段规则；**历史 Bias xwerte 不变，新增实际 N 对照图不是当前交付项** | 候选接口 | **必需的 L2 原 MAT/L3 独立数值曲线和 CTest 尚未验收** | 可选绘图后端尚未选定，但**不阻塞核心数值分析、设计和验证** |
 
-覆盖范围是**10 份文档：1 份跨模块合同（contracts.md）和 9 份模块 LLD（含 cli.md）**的存在性，不是代码/接口实现比例。无论数值公式写得多完整，缺少 Golden 和批准容差就不能把相应模块标为已完成。
+覆盖范围为**11 份实际 Markdown 文件**：**1 份跨模块合同**（`contracts.md`）、**9 份模块 LLD**（`cli.md`、`mat_io.md`、`sampling_noise.md`、`trajectory.md`、`kvd.md`、`harmonics.md`、`adaptive_mfa.md`、`experiments.md`、`analysis_plotting.md`），另有**1 份球谐专题 LLD**（`SH_ROTATION_IVANIC_RUEDENBERG.md`）。矩阵共 **10 个模块/合同条目**，球谐专题与 `harmonics.md` 同属一条模块行；**10 条覆盖项 ≠ 10 份文件**。这仅是文档存在性，不是代码/接口实现比例。无论数值公式写得多完整，缺少 Golden 和批准容差就不能把相应模块标为已完成。
 
 **术语约定**：此目录仍可能保留历史测试编号中的 `Golden` 字样；如无特殊说明，现行数值参考明确指向 **L2 作者已存 MAT、L3 独立解析/非被测实现、L4 统计**，而不是已经取消强制获取的 **L1 MATLAB 运行输出**。任何候选值均须给出来源等级、独立生成器和数据 SHA，不可凭名称推断已通过。
 
