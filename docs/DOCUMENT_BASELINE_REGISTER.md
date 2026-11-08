@@ -217,3 +217,16 @@ AF-041/047/055/058 与其它开放目标仍须独立数据/真实软件及审批
 | `docs/AUDIT.md` | `b65b70a0c43d95b1a9d8ecc52dea7bfbd06e9ca3` | 审计对象增加该历史报告后的固定身份 |
 
 原 36 选定基线矩阵的历史快照保持不变；本节不增加 ApprovedBaseline 或通过状态。
+
+
+### 6.10 分段分析合同与测试计划版本身份（未冻结）
+
+固定静态复读提交 `d8e7e64e5affd97130a2b7436a039e4681de502d`：
+
+| 文件 | 复读时的 Git blob SHA | 意义 |
+|---|---|---|
+| `docs/design/analysis_plotting.md` | `0eac034b5d54e99b498c1044e8e4f03728599af1` | v0.6；AF-075/076 已按源码明确旋转段级/平移全域数据路径 |
+| `docs/TEST_PLAN.md` | `cd977141f8e7bfa63e0d6748eb80e50ac58fe6d3` | v0.12；沿用 66 TC，未生成/运行分析测试 |
+| `docs/reviews/AUDIT_ANALYSIS_SEGMENT_SMOOTHING_CORRECTION_2026-11-08.md` | `fd30206e5fc7a29125d4b64946354d09b6156558` | 扫描错误断言的后续纠偏，旧报告不回写 |
+
+正式 L2/L3/Analyzer/CTest、原文件哈希与批准仍未通过，历史 §2～3 的固定 36 文件登记不作为 HEAD 当前基线。

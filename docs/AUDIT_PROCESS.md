@@ -107,7 +107,14 @@
 
 | ID | 仓库根相对路径 | 原子整改目标 | 状态 |
 |---|---|---|---|
-| AF-075 | `docs/design/analysis_plotting.md` | 原 `many_parameter` **旋转误差**应每个 begin/end 分段单独调用 `kurveglaetten(segment,f)`（f=2/5/10），先处理 segment 后裁剪 begin+f…end−f；与对 600 行全局平滑后裁段不同。须补明确算法和既有 TC 的对照输入。 | 未整改 |
-| AF-076 | `docs/design/analysis_plotting.md` | 原 comparison 平移误差图直接以完整曲线 x=50:550 绘制（不按 ratio 分段）；原 many_parameter 平移误差四曲线先对完整 600 行（后三条 f=2/5/10）全局平滑，再取 x=50:550。须与旋转路径分离且加独立 TC/Golden 断言。 | 未整改 |
+| AF-075 | `docs/design/analysis_plotting.md` | 原 `many_parameter` **旋转误差**应每个 begin/end 分段单独调用 `kurveglaetten(segment,f)`（f=2/5/10），先处理 segment 后裁剪 begin+f…end−f；与对 600 行全局平滑后裁段不同。须补明确算法和既有 TC 的对照输入。 | 已整改 |
+| AF-076 | `docs/design/analysis_plotting.md` | 原 comparison 平移误差图直接以完整曲线 x=50:550 绘制（不按 ratio 分段）；原 many_parameter 平移误差四曲线先对完整 600 行（后三条 f=2/5/10）全局平滑，再取 x=50:550。须与旋转路径分离且加独立 TC/Golden 断言。 | 已整改 |
 
 **发现后当前两态**：77 项中 52 已整改、25 未整改；本节是先登记，不能仅凭源代码扫描就关闭 AF-075/076 或尚缺实际独立数值的 AF-050/051。
+
+
+## 6. AF-075/076 修订与定向复核结案（2026-11-08）
+
+- 发现登记提交：`8730c631`；分析 LLD/TEST_PLAN 修订 `98ff092`，小节顺序与静态复核 `d8e7e64`。**AF-075** 已区分局部旋转分段平滑、局部零边缘和显示裁剪；**AF-076** 已明确两种分析脚本的平移**不分段**，多更新率平移先全局平滑再绘制 50:550。测试映射仍是现有 `TC-F-AN-001`、`TC-I-ANALYSIS-001`、APL-G04/05。
+- 原扫描报告中“相同裁剪后内部旋转均值必不同”的论断过强，**保留旧扫描作为历史事实**并在 [纠偏报告](reviews/AUDIT_ANALYSIS_SEGMENT_SMOOTHING_CORRECTION_2026-11-08.md) 明确反例：裁剪内部窗口时均值本应相等。后续必须检查完整段级临时数组、边界/短段及平移绘制域，而非编造差异。
+- 两项**只在文档算法合同范围结案**；AF-050/051、实际独立 L3/CTest/正式签署均未关闭。当前共 **77 项：54 已整改、23 未整改**。

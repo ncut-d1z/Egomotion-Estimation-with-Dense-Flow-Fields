@@ -233,3 +233,10 @@ reviewed_by / review_date:
 - **原 MAT Git 元数据对照**：在固定树 `bffd10c` 上只读比较 `origin/**` 下 582 个 `.mat` 文件的相对路径/字节大小，与 [MAT_DATA_SCHEMA](MAT_DATA_SCHEMA.md) 的 582 行逐项匹配，**路径/字节 582/582 一致**；表中变量名与 MAT basename、MAT v5/zlib/double、`dims×8=data_bytes`、FNV64 字符串格式和 `READ_OK` 状态检查范围错误 **0**。五种 shape 计数为 `10×1:80, 10×3:480, 35×1:4, 600×1:14, 600×4:4`；这是旧读取报告的**文本/目录元数据交叉审计**，**未重新解压 MAT/独立 SHA-256/逐值验证**，AF-056 仍未整改。
 - **AN-G08 z90 公式静态复核**：修订固定提交 `ee3d9c9bb42e6d71f9808510402d1394e385647d`，详见 [专门审计报告](reviews/AN_G08_Z90_STATIC_CONVENTION_2026-11-08.md)。由 `SHRotate.m` R3 九项排列及 `kugelflfunc2.m` 的 sin/cos 相位在 `φ→φ+π/2` 特例下得到与候选 JSON 一致的 R3/R5 和三组系数；`transfor_koeff.m` 的左乘方向已显式限定。**没有**用独立数值程序验证一般 R5/全部递推、Ivanic 论文/勘误或生产 C++/CTest，故 AF-045/055 均继续「未整改」。
 - H-10/H-11 原授权未改变，`origin/**` 没有变更；此证据只表示静态元数据/代数核验范围，不能推导 MAT 解码或软件验收通过。
+
+
+### E-DOC-042（2026-11-08：分析分段/平滑忠实性 AF-075/076）
+
+- 根据只读 `graph_agent_in_sphere_adaptive_matched_filter_many_parameter.m` 和 `graph_agent_in_sphere_adaptive_matched_filter_test.m`，先登记 AF-075/076，随后分别修订 `analysis_plotting.md` v0.6 与 `TEST_PLAN.md` v0.12，保留四段旋转局部平滑/边缘零值/裁剪、平移全 600 行（或未平滑）后连续绘制 50:550 的**不同执行域**；见 [审计纠偏](reviews/AUDIT_ANALYSIS_SEGMENT_SMOOTHING_CORRECTION_2026-11-08.md)。
+- 定向复读输入 `d8e7e64e5affd97130a2b7436a039e4681de502d`，§5.1/5.2/5.2.1/5.3 顺序连续，保留 66 项 TC 编号及 L3 未执行说明。修正最初扫描报告中关于“相同内部裁剪后的均值必不同”的错误断言，不把纠偏当成 L3 PASS。
+- AF-075/076 文档层关闭；AF-050/051 真实 Analyzer、独立曲线、CTest 及 DEC-005/008 未通过。现台账 77 项（54 已整改、23 未整改），审计路径 56（33 已审计、23 正在审计）。未变更任何 `origin/**`、生产代码或授权。
