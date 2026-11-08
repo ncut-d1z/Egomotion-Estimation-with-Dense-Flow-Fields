@@ -76,7 +76,7 @@
 | `docs/design/harmonics.md` | 正在审计 | 九项实球谐、R3/R5、Eigen；待 AF-045 |
 | `docs/design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 正在审计 | 论文/勘误和声明级边界；待 AF-046 |
 | `docs/design/sampling_noise.md` | 正在审计 | 有序采样与 RNG 消耗；待 AF-047 |
-| `docs/design/trajectory.md` | 正在审计 | Sophus、Rᵀ、近零、球内近度；待 AF-048 |
+| `docs/design/trajectory.md` | 正在审计 | Sophus、Rᵀ、近零、球内近度；待 AF-048；AF-080 严格反向退化的原返回语义待复核 |
 | `docs/design/experiments.md` | 正在审计 | 五入口、Runner/Manifest/save；AF-034 已整改，待 AF-049 |
 | `docs/design/analysis_plotting.md` | 正在审计 | 四种分析、曲线、HistoricalOnly；待 AF-050；AF-075/076 已完成静态设计复核；AF-050 仍需独立 L3/真实 CTest |
 | `docs/decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | 已审计 | DEC-004 现行处理已选 |
@@ -170,3 +170,8 @@
 - 固定扫描输入 `5bc71e6ceca2de9f746a2c911a135b56db2cccbd`；[LLD 索引](design/README.md) 的职责描述仍说 AUDIT“目前 50 个路径”，并将公共错误来源概括为 Mat/Numerical/Experiment，未同步已出现的 `AnalysisErrorCode`→[contracts §3.1](design/contracts.md) 候选映射（AF-078）。
 - [版本控制矩阵](DOCUMENT_BASELINE_REGISTER.md) §1 将 AUDIT 的 50 条当成现行范围，实际现行审计已跟踪 57 条；需只将**动态范围引用**改为 AUDIT 单一来源，不得改写 §2～3 36 项固定文件快照或历史某次的 50 条（AF-079）。
 - 新发现已在 [AUDIT_PROCESS.md](AUDIT_PROCESS.md) 登记「未整改」；本轮不改变任何 REQ/AC/TC/算法或正式冻结结论。
+
+
+## 12. 轨迹反向退化的确定性行为（先登记）
+
+固定输入 `02a2a17fb49c911cdadd978033d14127cf48122d`：源 `drehvektor_aus_zwei_vektoren.m:8–16` 对严格反向非零向量求得叉积零、`acos(-1)=π`，从而实际返回**零旋转向量**。现 `trajectory.md §5` 称“可能输出零”，容易弱化这一确定性的原版异常行为；应显式记录精确向量例、继发轨迹/旋转后果，并将原 MATLAB 数学返回与候选 C++ 安全失败区分，关联原 `TC-F-TRAJ-001`（AF-080）。
