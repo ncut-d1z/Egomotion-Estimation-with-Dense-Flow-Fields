@@ -78,7 +78,7 @@
 | `docs/design/sampling_noise.md` | 正在审计 | 有序采样与 RNG 消耗；待 AF-047 |
 | `docs/design/trajectory.md` | 正在审计 | Sophus、Rᵀ、近零、球内近度；待 AF-048 |
 | `docs/design/experiments.md` | 正在审计 | 五入口、Runner/Manifest/save；AF-034 已整改，待 AF-049 |
-| `docs/design/analysis_plotting.md` | 正在审计 | 四种分析、曲线、HistoricalOnly；待 AF-050 |
+| `docs/design/analysis_plotting.md` | 正在审计 | 四种分析、曲线、HistoricalOnly；待 AF-050；新发现 AF-075/076 待整改 |
 | `docs/decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | 已审计 | DEC-004 现行处理已选 |
 | `docs/decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md` | 已审计 | 所有者已选技术方向 |
 | `docs/golden/NO_MATLAB_EXECUTION_POLICY.md` | 已审计 | L1 永久不必需 |
@@ -134,3 +134,13 @@
 - 先在 `d40b149` 登记三项目标为未整改，后修改源文件：函数级映射提交 `150b975`，两台账精简提交 `ae831be3a0901d69c0897044fd339fda38468963`；两次独立静态复读确认 45 文件/50 函数（含 5 个局部辅助）、28 个 AU、54 个审计文件与 75 个唯一 AF 均完整。
 - **AF-072～074 在文本/函数声明范围内已整改**。本轮追踪 **54 文件：31 已审计、23 正在审计、0 空白**；其余 23 个阶段目标仍需独立 L2/L3/L4、实际 C++/CTest、论文材料/DEC 批准或正式签署，不能因清单存在而关单。
 - 本次没有修改 `origin/**`、运行 MATLAB/Octave、Bash、CMake、CTest、MAT 写回读，也没有批准正式软件基线。
+
+
+## 7. 新增分析流程审计（2026-11-08，先登记）
+
+在固定提交 `02d59d7a118870073bdad3b043b1fd01df7f9628` 上只读核对原始 `graph_agent_in_sphere_adaptive_matched_filter_test.m`、`graph_agent_in_sphere_adaptive_matched_filter_many_parameter.m` 和 `kurveglaetten.m`。发现图形路径**不可把旋转/平移误差通用化成同一分段和平滑策略**：
+
+- **AF-075**：多更新率旋转误差对每个 begin/end 段独立平滑；第 1 条原曲线不平滑，后三条分别半窗 2/5/10，绘制 begin+f…end−f。现有分析 LLD 只笼统介绍平滑范围，需写清**每段重新开始的窗口**，不能拿全长数据平滑后再裁剪。
+- **AF-076**：比较实验的平移误差图完全不使用 begin/end；多更新率平移误差则先在全 600 行上平滑，再提取 x=50:550，不随旋转误差四段切片。需补两脚本的差异和不同错误/测试断言。
+
+先在 [整改台账](AUDIT_PROCESS.md) 登记未整改；原有 AF-050/051 因缺独立 L3/真实 Analyzer/CTest 仍开放。详细扫描见 [审查报告](reviews/AUDIT_ANALYSIS_SEGMENT_SMOOTHING_2026-11-08.md)。
