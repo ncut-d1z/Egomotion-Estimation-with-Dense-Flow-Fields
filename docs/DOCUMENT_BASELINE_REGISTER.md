@@ -256,3 +256,17 @@ AF-041/047/055/058 与其它开放目标仍须独立数据/真实软件及审批
 | `docs/TEST_PLAN.md` | `07d3abb` · `149fbb7c34843fcb957919deec9b34b447fc0343` | v0.14；原 66 TC 不变，未运行测试 |
 
 以上是修订时点的 Git blob 身份而非已批准版本；实际签署、性能及数值证据仍按 TODO/PROGRESS 处理。
+
+
+### 6.13 零级采样符号参考的固定身份（未冻结）
+
+固定修订/复读提交 `844b64747f50f0e2284fc0aa61d792d59b82ea2c`：
+
+| 文档 | Git blob SHA | 边界 |
+|---|---|---|
+| `docs/reviews/AN_G_LEVEL0_FACE_ORDER_STATIC_2026-11-08.md` | `47e50aa5ff1db49e79206425bb218014578cd1f3` | 8/6/20 初始面行序的源码符号推导，不是已执行 L3 |
+| `docs/design/sampling_noise.md` | `6a7a4fb36e6f0f31dc5266d262bf1fcb3bdff29b` | v0.6，level0 静态审阅与后续递归缺口 |
+| `docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md` | `ebcf703eda27aa0fe22614e274be108eeef28f08` | v0.5，AN-G 候选状态仍未批准 |
+| `docs/TEST_PLAN.md` | `e974b80d0df87e61eefb5f84546e40e1f617e1e6` | v0.15，仍仅候选 TC 及数学前置条件 |
+
+此处不改变旧 36 文件固定版本身份矩阵的历史值或任何批准/CTest 状态；最新审计集合与阶段目标分别见 AUDIT/AUDIT_PROCESS。

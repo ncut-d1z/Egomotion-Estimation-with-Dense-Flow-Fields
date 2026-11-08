@@ -110,6 +110,7 @@
 | `docs/reviews/AN_G08_Z90_STATIC_CONVENTION_2026-11-08.md` | 已审计 | z90 特例的 R3/R5、m 次序及系数旋转方向代数核对；非通用递推或 L3 PASS |
 | `docs/reviews/AUDIT_ANALYSIS_SEGMENT_SMOOTHING_CORRECTION_2026-11-08.md` | 已审计 | 修正旧扫描报告关于窗口必不同的断言，逐域确认旋转/平移图差异；不代表 L3/CTest |
 | `docs/reviews/AUDIT_ANALYSIS_ERROR_MAPPING_SCAN_2026-11-08.md` | 已审计 | 分析错误枚举未纳入跨模块统一退出码的静态发现（AF-077） |
+| `docs/reviews/AN_G_LEVEL0_FACE_ORDER_STATIC_2026-11-08.md` | 已审计 | 初始 8/6/20 面有序单位中心的符号级静态推导；非 level1/2 独立 L3/CTest |
 | `AGENTS.md` | 已审计 | 仓库授权与数据安全规则 |
 | `README.md` | 已审计 | 项目范围、证据/许可状态 |
 | `LICENSE` | 已审计 | MIT 与上游作品边界 |
@@ -120,7 +121,7 @@
 
 ## 4. 最新审核结论与尚缺证据
 
-- 当前固定扫描：`150b975db4045fbc99a343fdf422c7836e1a797b`，并参考 [函数级声明检查](reviews/AUDIT_FUNCTION_DECLARATIONS_AND_LEDGER_COMPACT_2026-11-08.md)。共 **57 个审计路径**，其中 **34 已审计、23 正在审计、0 空白**；这些三态仅表示限定静态范围，不能代替软件/数学/批准状态。
+- 当前固定扫描：`150b975db4045fbc99a343fdf422c7836e1a797b`，并参考 [函数级声明检查](reviews/AUDIT_FUNCTION_DECLARATIONS_AND_LEDGER_COMPACT_2026-11-08.md)。共 **58 个审计路径**，其中 **35 已审计、23 正在审计、0 空白**；这些三态仅表示限定静态范围，不能代替软件/数学/批准状态。
 - 既有设计为**评审草案**；58 条正文 REQ＋8 条附录 REQ-DC＝66 REQ，对应 66 TC；98 P、原 45 个 .m、HLD 静态 27 边。已建立源 [45 文件/50 函数定义的迁移矩阵](MIGRATION_MATRIX.md)：SHRotate 主函数＋M/U/P/V/W 五个内部函数，**仅声明级审查，不是代码/数值验收**。
 - 历史 MAT 由独立 matio 探针报告 582/582 READ_OK；另将 582 Git MAT 路径/字节与既有字典作静态逐项交叉核对（0 个目录/元数据差异），但**没有**完成独立 SHA-256、逐元素 L2、Reader/Writer/TOCTOU、逐轮及退化 L3、必要 L4 或正式 CTest。候选 `AN-G01～12` 仍为 `DRAFT_UNAPPROVED_UNEXECUTED`；小范围手算及 AN-G08 的 z90 符号特例不代表一般 R5/Golden 通过。
 - 永久不要求 MATLAB/Octave/L1。物理旋转路线 Sophus 已选；R3/R5 的 Eigen-only 实现须核 Ivanic–Ruedenberg 1996/1998 原文、禁 sdla。首轮 `atol=0.01, rtol=0.1` 已选，**最终 DEC-005/006/008、H-10/H-11 与正式冻结/发布尚未通过**。
@@ -182,3 +183,10 @@
 - 首先登记三个问题：动态审计文件数被 LLD 索引及版本矩阵重复写死（AF-078/079）；源严格反向旋转的**确定零向量**被描述为“可能”（AF-080）。随后 `02a2a17` 修改索引与版本矩阵，`07d3abb` 修改轨迹 LLD v0.4、TEST_PLAN v0.14。
 - 固定复读确认两份索引以 AUDIT 为当前统计单一来源、36 项历史文件身份不改；轨迹修订给出严格反向 `0·π=0` 以及 Rᵀ 三点、单位球正根四组手算输入，全部只作静态候选。AF-078～080 **文本一致性整改完成**，未执行独立 L3/CTest 或批准任何新安全阈值。
 - **当前三态：57 文件，34 已审计、23 正在审计；两态：81 个目标，58 已整改、23 未整改。** AF-048/037/058 等正式测试、数值与签署门槛继续开放。
+
+
+## 14. 初始面行序的静态对照补记（2026-11-08）
+
+依据原 `erzeugerichtungsvektoren*.m`、`richtungsvektoren_icosahedron.m`、`findeDreiecke.m` 与现有 AN-G JSON，已在 [符号级审查报告](reviews/AN_G_LEVEL0_FACE_ORDER_STATIC_2026-11-08.md) 按面表核对 AN-G01/02/03 的 `level=0` **8/6/20** 行方向与次序。固定修改提交 `844b647` 的静态校验核对符号类别及行序，未执行采样器或 MATLAB，level1/2 与独立 L3 尚缺。
+
+该批报告作为第 58 个审计对象：**35 已审计、23 正在审计**。AF-047/055 仅新增静态候选证据，正式数值/CTest/批准缺口不变；当前 81 项中 58 已整改、23 未整改。

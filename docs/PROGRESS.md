@@ -253,3 +253,10 @@ reviewed_by / review_date:
 - 新发现 AF-078/079/080 先以未整改登记；定向修订提交 `02a2a17fb49c911cdadd978033d14127cf48122d` 将 LLD 索引的旧“50 路径”与错误枚举归属修正、将基线矩阵的 36 文件固定快照和实时审计范围严格分开；`07d3abbd41cc6caa3d3fb57b3b5064ed0448fd6a` 将轨迹严格反向的原 rotvec **确定返回 0** 及四个手算输入候选写入 `trajectory.md` v0.4 / TEST_PLAN v0.14。
 - 只读原 `drehvektor_aus_zwei_vektoren.m`、`trajektorie_aus_punkten.m`、`getnear_in_kugel_Drehung.m` 的式子用于静态核对；TR-C01 的 Rᵀ 符号、TR-C02 的反向丢失 π、TR-C03/04 的 near 4/3 与 4/5 均明确是数学**待独立 L3 复核的候选**，没有声称原 MATLAB/生产 C++ 已运行。
 - AF-078～080 只关闭已发现的文档矛盾；目前 81 个 AF：58 已整改、23 未整改；57 文件：34 已审计、23 正在审计。H-10/H-11 仍暂缓，DEC-005/006/008 尚未签署；`origin/**` 保持不变。
+
+
+### E-DOC-045（2026-11-08：AN-G01～03 零级面顺序静态公式审查）
+
+- 固定修订提交 `844b64747f50f0e2284fc0aa61d792d59b82ea2c` 新建 [源面次序审阅](reviews/AN_G_LEVEL0_FACE_ORDER_STATIC_2026-11-08.md)，使用四个只读采样源函数的顶点/面索引、中心归一公式，与现有 AN-G01/02/03 JSON 的 **8/6/20 行符号和顺序**做逐行静态检查，未检出不一致；同时修订 sampling LLD v0.6、Golden 容差草案 v0.5 和 TEST_PLAN v0.15。
+- 仅为输入 `level=0` 的符号/声明级交叉核对：`findeDreiecke` 的 `A/B/C/D` 递归到 i=1/2 的完整有序数值、独立生成器、MATLAB/真实业务 C++/CTest 与 DEC-005 正式签署均未执行；AF-047/055 继续「未整改」。
+- AUDIT 新增该报告至审计对象，更新为 58 项；问题状态仍 81 项中 58 已整改/23 未整改，`origin/**` 保持只读。
