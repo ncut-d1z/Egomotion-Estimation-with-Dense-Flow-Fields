@@ -80,6 +80,8 @@ public:
 
 该脚本假设预期的阈值穿越次数和有效段数；当历史数据不满足条件时，部分 begin/end 可能为零，导致 MATLAB 索引无效。忠实模式需首先记录真实分段和失败行为，不能悄悄使用“自动发现所有片段”的新算法替代作者的四区域逻辑；改进策略属于单独需求。
 
+**AF-089 来源边界（分析模块只消费存档变量）**：`rottransratio` 原由 Comparison Runner 使用**注入噪声前**的理想平移/旋转分量平均模长求比（虽然源码在 `nonpropfehler` 之后赋值），保留该轮缓冲，**不是从含噪光流重新计算得到的比值**，参见 [实验 LLD §5.1](experiments.md)。本 Analyzer 对历史已有的 `rottransratio` 按 MAT 变量原值做阈值比较与绘图，不在本模块重新估计、不用含噪流代替、不为新 Update rates 生成缺少的历史专属字段。比值变量含 NaN/Inf 或缺失时遵守现有 `AnalysisErrorCode` / `contracts §3.1` 非成功候选合同；真实 MAT 逐值/独立 L3/CTest 仍为 AF-050/051 的开放项。
+
 ### 5.2 平滑窗口的完整边界行为
 
 原 kurveglaetten(kurve,fenster)：
