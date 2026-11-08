@@ -1,6 +1,6 @@
 # 文档类型、版本、Git SHA 与基线状态控制矩阵
 
-> **文件身份登记，不是已签署基线。** 下列 §2～3 的 **36 项选定文件**按固定提交 `3e3ad2aba75d6ec8d16d2875ad3c846cee7d671d` 登记 Git blob SHA（包含规范、附件与历史证据，不等于全部核心规范）；本矩阵自身的后续修改不在该快照中。当前 SRS v0.13、MAT I/O v0.9、experiments v0.4、PLAN/TEST_PLAN/LLD 索引 v0.7；**所有规范仍未冻结，新增审计对象不表示通过验收**。
+> **文件身份登记，不是已签署基线。** 下列 §2～3 的 **36 项选定文件**按固定提交 `3e3ad2aba75d6ec8d16d2875ad3c846cee7d671d` 登记 Git blob SHA（包含规范、附件与历史证据，不等于全部核心规范）；本矩阵自身的后续修改不在该快照中。该固定快照包含 SRS v0.13、MAT I/O v0.9、experiments v0.4、PLAN/TEST_PLAN/LLD 索引 v0.7；**后续 TEST_PLAN v0.8 的身份另记 §6**；**所有规范仍未冻结，新增审计对象不表示通过验收**。
 
 ## 1. 文档职责与唯一规范来源
 
@@ -102,3 +102,12 @@
 ## 6. 后续变更
 
 最新审计和问题状态始终以 [AUDIT.md](AUDIT.md)、[AUDIT_PROCESS.md](AUDIT_PROCESS.md) 为准，实际执行证据以 [PROGRESS.md](PROGRESS.md) 为准；此处保存上方**单个固定提交的文件身份**。后续修订应另登记新固定提交，禁止把旧 SHA 当作 HEAD，亦不得借登记宣称签署或 CTest 通过。
+
+
+### 6.1 本轮新增文件身份（仅记录，不冻结）
+
+| 变更文档 | 修订版本 | 固定复核提交 | Git blob SHA | 效力 |
+|---|---|---|---|---|
+| [docs/TEST_PLAN.md](TEST_PLAN.md) | v0.8 | `edd56c99dc04e3774788699ed61c26d3bad3c465` | `c867d1fb8aa13203bb96ab4e41412b67b77ce940` | 修正五处尚未创建 SOURCE_INVENTORY 的引用口径；无新增 TC/CTest 或软件验收 |
+
+原 §2～3 的 36 项身份仍是较早固定快照，**不可**以新版本 blob 直接替换旧快照行并继续声称同一提交身份。审计新问题的状态见 [AUDIT](AUDIT.md)、[AUDIT_PROCESS](AUDIT_PROCESS.md)；本矩阵和滚动审计文件本身修改后的最新 blob 身份需在后续正式固定版本时统一登记。所有 SRS/HLD/LLD/TEST_PLAN 仍未冻结。
