@@ -155,3 +155,14 @@
 **状态不提前结案**：七项仍为 §3 中的原编号「未整改」，本节只是进展说明，**不新增重复 AF 整改行**。其余 16 个开放目标也未获得真实软件/数值/人类批准证据。现有 **67 项：已整改 44，未整改 23**；[AUDIT.md](AUDIT.md) **50 文件：已审计 27，正在审计 23**。因此按用户停止条件**第一轮结束后立即退出，不开展新一轮 AUDIT 扫描与第二轮整改**。
 
 **执行边界**：本轮只有 GitHub 端纯文档修改/静态复读；没有实现 C++、运行 Bash/CMake/CTest/MATLAB/Octave、读取 MAT 逐值、生成独立 L3/L4 或写 MAT；`origin/**`、历史审批与 H-10/H-11 状态未改。
+
+
+## 11. 第一轮整改期间的来源身份问题（2026-11-08，修正前记录）
+
+**静态核对输入**：`d5265cc576e1c66ba1c63f8621ff1ad91d981195`，JSON `docs/golden/analytic_golden_candidates.v1.json`。解析其 12 个 `AN-G01～12` 候选及 19 个 `source_blob_shas` 来源条目，以 JSON 自述的来源提交 `ddb4b15e78dbd617d5d083d80c2d75aa47f14464` Git 树为准，**18/19 个 blob SHA 匹配**。
+
+| ID | 相对文件路径 | 首次发现与整改目标 | 状态 |
+|---|---|---|---|
+| AF-067 | `docs/golden/analytic_golden_candidates.v1.json` | `source_blob_shas["bias_test/data_generation/bias_test_spherical_prop_error.m"]` 登记 39 位 SHA `fc3c4f0a7a417171415fb5e3d869a744ba24d04`，与固定来源提交真实 40 位 blob `fc3c4f0a7a417171415fb5e3d869a744ba24d04f` 不符；修正元数据并复核 19/19 来源，不修改 AN-G 数值或源 `.m`。 | 未整改 |
+
+此项仅属**引用来源身份**错误，不代表 AN-G 数学数值已独立验证；AF-055、AF-043/044、AF-054 仍须独立 L3 和真实 C++/CTest 才能结案。先登记未整改，随后修改实际目标并在新提交复读。当前台账 **68 项：44 已整改、24 未整改**。
