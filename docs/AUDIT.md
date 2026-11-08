@@ -190,3 +190,10 @@
 依据原 `erzeugerichtungsvektoren*.m`、`richtungsvektoren_icosahedron.m`、`findeDreiecke.m` 与现有 AN-G JSON，已在 [符号级审查报告](reviews/AN_G_LEVEL0_FACE_ORDER_STATIC_2026-11-08.md) 按面表核对 AN-G01/02/03 的 `level=0` **8/6/20** 行方向与次序。固定修改提交 `844b647` 的静态校验核对符号类别及行序，未执行采样器或 MATLAB，level1/2 与独立 L3 尚缺。
 
 该批报告作为第 58 个审计对象：**35 已审计、23 正在审计**。AF-047/055 仅新增静态候选证据，正式数值/CTest/批准缺口不变；当前 81 项中 58 已整改、23 未整改。
+
+
+## 15. 深层球面递归行号的静态审计发现（2026-11-08）
+
+- **固定输入**：`08de8d7af114afd70b078e88917c3434882ac032`；只读对照 `help_functions/findeDreiecke.m` 与完整八面体、缺损八面体、二十面体三个采样入口，以及 [零级审计报告](reviews/AN_G_LEVEL0_FACE_ORDER_STATIC_2026-11-08.md)。
+- **AF-081 新发现**：当前采样 LLD 已规定 `A→B→C→D`，但没有明确每一级的三个子三角顶点次序、深度优先的四进制路径到 MATLAB 1-based 行号的转换，以及缺损面 `2/3/5/6/7/8` 的“原面编号”和“输出块序号”之区别。新增 [整改台账](AUDIT_PROCESS.md) 先登记「未整改」，再补充精确索引规则和测试资格。
+- **边界**：不运行原 MATLAB，不生成 level=1/2 全量数值 L3、不改 AN-G JSON，也不将采样器/CTest/DEC-005 记为通过。原有 AF-047、AF-055 继续未整改。
