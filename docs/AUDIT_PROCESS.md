@@ -258,7 +258,16 @@
 
 | ID | 仓库根相对路径 | 独立整改目标 | 状态 |
 |---|---|---|---|
-| AF-088 | `docs/design/experiments.md` | 原 `agent_in_sphere_adaptive_matched_filter_many_parameter.m:93` 的 `akrot(i)=360*norm(bestrot)/(2π)` 输出是**旋转向量模长（deg）**，不是 rad、旋转估计误差或角速度；首/末帧依源零预分配保持 0。补充单位、计算源、保存范围和现有 TC-F-EXP-003 的 0/π÷2 等固定向量判别用例；不改变原数学或宣称已跑测试。 | 未整改 |
-| AF-089 | `docs/design/experiments.md` | 原 `agent_in_sphere_adaptive_matched_filter_test.m:83–90` 在 `erzeugeflussausnear` 得到 `durchrotfluss/durchtransfluss` 后才调用 `nonpropfehler`，故 `rottransratio` 来自**加噪前的理想分量平均模长**，不是含噪 `setofpoints` 的观测比值；补充分母为零/非有限候选状态，区分“最后一次运行缓冲、不平均”和比值计算时序，在原 TC-F-EXP-002 和 TC-F-AN-001/独立 Golden 资格中对照。 | 未整改 |
+| AF-088 | `docs/design/experiments.md` | 原 `agent_in_sphere_adaptive_matched_filter_many_parameter.m:93` 的 `akrot(i)=360*norm(bestrot)/(2π)` 输出是**旋转向量模长（deg）**，不是 rad、旋转估计误差或角速度；首/末帧依源零预分配保持 0。补充单位、计算源、保存范围和现有 TC-F-EXP-003 的 0/π÷2 等固定向量判别用例；不改变原数学或宣称已跑测试。 | 已整改 |
+| AF-089 | `docs/design/experiments.md` | 原 `agent_in_sphere_adaptive_matched_filter_test.m:83–90` 在 `erzeugeflussausnear` 得到 `durchrotfluss/durchtransfluss` 后才调用 `nonpropfehler`，故 `rottransratio` 来自**加噪前的理想分量平均模长**，不是含噪 `setofpoints` 的观测比值；补充分母为零/非有限候选状态，区分“最后一次运行缓冲、不平均”和比值计算时序，在原 TC-F-EXP-002 和 TC-F-AN-001/独立 Golden 资格中对照。 | 已整改 |
 
 **边界**：本次发现不意味着可产生新历史 `rottransratio` 字段，`UpdateRateRunner` 仍不得写回 `HistoricalOnly`；所有原 `origin/**` 只读，当前无数值程序/真实测试权限。AF-088/089 登记后 **90 个整改目标：65 已整改、25 未整改**；第一轮待清零目标仍包括原 23 个阶段项和本批 2 个可定向处理的文本合同项。
+
+
+## 25. AF-088/089 加噪前量与角度单位修订复核（2026-11-08）
+
+- **先登记**：源输出语义缺口登记提交 `8fae3e5d1b27607997893b4f9c7a9d240f47742f`，两项均先为「未整改」。本批固定比对只读原 `agent_in_sphere_adaptive_matched_filter_many_parameter.m:79,91–93,199–203` 与 `agent_in_sphere_adaptive_matched_filter_test.m:83–90` 及 `erzeugeflussausnear.m:17–29`。
+- **实际修改**：`docs/design/experiments.md` 提交 `66f199ff53d3d87451337db85edb3c0fe94cc43f`：**akrot=(180/π)||bestrot|| 单位 deg**，原 600×1 首末行零预分配；**rottransratio 是理想光流平均平移/旋转分量模长之比**，比值赋值在加噪之后但分子分母在加噪之前得到，仍只保存对比入口末次缓冲，分母零/非有限候选失败须单列。
+- **测试与分析合同**：`docs/TEST_PLAN.md` `cabb042916bb7e4bd7e6539fb204d22169a82482` 增补已有 TC 的 **0°/90°/180°** 与 AN-G05 单样本比值 0.5 夹具资格；`docs/design/analysis_plotting.md` `d7c3d5f93e1ef93317b0c68025d7b56146348a76` 声明 Analyzer 只消费真实存在的历史比值变量，不能从含噪观测重算、不能为新 Update rates 伪造 `rottransratio`。
+- **定向静态核查**：对固定修订文本与上述源行执行 **11/11 只读断言满足**，包括源本来先计算理想均值/再施噪/最后赋 ratio 的顺序、零预分配、单位、手算候选、失败状态、旧字段隔离和原 AF-049/050/051 开放状态。仅是**静态核对与纸面数学，尚无独立 L3 数值文件或 CTest**，也未测试真实 MATLAB 或新 C++。
+- **结案范围**：AF-088、AF-089 仅关闭上述两个清楚的**LLD/测试语义缺口**；第一轮仍 **90 AF：67 已整改、23 未整改**，审计路径仍 **60：37 已审计、23 正在审计、0 空白**；AF-049/050/051、DEC-005/008、H-10/H-11、生产 Runner/Analyzer/Reader/Writer 和正式软件验收全部仍缺。第一轮目标未清零，正式第二轮全面审计不启动。
