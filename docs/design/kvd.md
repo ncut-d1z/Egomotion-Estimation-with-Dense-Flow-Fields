@@ -183,28 +183,51 @@ struct KvDParameters {
     std::size_t minimum_iterations = 6;
     std::size_t nominal_maximum_iterations = 200;
 };
+// Franz 初始化的每轴原始响应和分母必须单独观察，不能只存最终运动。
+struct FranzInitializationTrace {
+    Vector3 translation_responses;
+    Vector3 translation_denominators;
+    Vector3 rotation_responses;
+    Vector3 rotation_denominators;
+    MotionEstimate before_translation_normalization;
+    Scalar initial_translation_norm;
+};
 struct KvDIterationTrace {
-    std::size_t k;
+    std::size_t k;  // MATLAB 循环内 x：1-based；不是 C++ 容器下标
     Vector3 translation_before_sign;
-    Vector3 translation_after_sign;
+    Vector3 translation_after_sign;  // 此状态是旋转更新使用的 old t
     Vector3 rotation_before;
+    Eigen::VectorXd nearness_denominators; // N 项，含 1e-13
     Eigen::VectorXd nearness_raw;
+    Scalar nearness_sum_raw;
+    bool sign_flipped;  // 源码严格 sum < 0
     Eigen::VectorXd nearness_after_sign;
     Vector3 translation_sum_a;
     Vector3 translation_sum_b;
     Vector3 translation_sum_c;
-    Vector3 translation_candidate;
-    Vector3 rotation_after;
+    Vector3 translation_candidate_raw; // 归一化前的 -(a+omega×b-c)
+    Scalar translation_candidate_norm;
+    Vector3 translation_candidate_normalized;
+    Vector3 rotation_sum_a;
+    Vector3 rotation_sum_b;
+    Vector3 rotation_sum_c;
+    Vector3 rotation_after; // 必须用 translation_after_sign 计算
+    Vector3 translation_after_commit; // 旋转更新完成后才提交
+    Eigen::MatrixXd predicted_flow_xyz; // N×3，逐点 pstrich，仅 Golden trace
     Scalar residual_mse;
     Scalar residual_rms;
     Scalar previous_rms;
     Scalar residual_change;
-    Scalar active_threshold;
+    Scalar active_threshold; // 本轮 residual_rms/(1000*N)
+    bool continue_after_iteration; // 精确复算源 while 的 (A&&B&&C)||k<6
 };
 struct KvDResult {
-    MotionEstimate motion;
-    Eigen::VectorXd final_nearness;
+    MotionEstimate motion;  // translation 已乘 mean(final_nearness)
+    Eigen::VectorXd final_nearness; // 最后一轮开头生成，不重新估计
+    Scalar final_nearness_mean;
+    Vector3 final_translation_direction_before_scale;
     std::size_t iteration_count;
+    FranzInitializationTrace initial_franz; // Golden 逐轴诊断候选
     std::vector<KvDIterationTrace> trace; // 可按设置输出；Golden 模式必须可见
 };
 class FranzMatchedFilter {
@@ -224,6 +247,10 @@ public:
 };
 }
 ~~~
+
+**AF-087 逐轮证据字段与原源码对应（仅未冻结候选）**：原 `norm_koenderink_iteration.m:46–60,62–112,116–146` 和 `mue_norm_koenderink_iteration.m:43–57,59–109,113–143` 每轮有如下顺序。`nearness_denominators` 使用翻号前 t 的平方项（翻号不改变平方），`nearness_sum_raw/sign_flipped` 在求 a/b/c **之前**确定；`translation_candidate_raw/norm/normalized` 是源码先归一的新候选 t，但 `rotation_sum_a/b/c` 和 `rotation_after` 必须使用 `translation_after_sign`，**随后**才记录 `translation_after_commit`。残差预测 `predicted_flow_xyz` 使用的是**更新后的 t/ω 与本轮旧 near**，不能换成下一轮重算 near。记录 `previous_rms`、本轮 MSE/RMS、delta、动态门限、`k` 和 `continue_after_iteration`，方可逐轮验证最低 6 次和常规 200 次上限及 `||` 优先级。
+
+`FranzInitializationTrace` 单独保存三轴的响应和归一分母，以及开始 KvD 之前归一 t 的模；终局 `final_nearness_mean` 与归一 t 和 `motion` 的比例应可独立核验。**这些是逐轮/逐轴诊断字段的拟议存储 schema，不是改动求解数学或宣称算法性能模式必须长期保存 N×3 数据**；性能模式 trace 能否关闭、溢出/非有限状态的诊断以及内存限制仍由 P0.8/DEC-008 和真实测试决定。由于原 .m 对病态数值没有稳定错误码，C++ 的非成功路径应另外保存上次有效节点与错误来源，不应假造完整成功 trace。
 
 **合同待定项**：NumericalErrorCode 单独 enum 是否足以携带上下文、Result 如何表达 NaN/Inf 的原版行为、trace 在性能模式是否可关闭，以及是否允许方法接收非单位视线。须依 P0.8 与经独立复核的 L3 Golden 冻结，不能仅凭该示例签名开始实现。
 
