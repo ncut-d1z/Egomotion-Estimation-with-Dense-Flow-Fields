@@ -888,7 +888,7 @@
     "help_functions/kurveglaetten.m": "eced66659205a6386ec84723e37a46517d06c017",
     "help_functions/oneit_adaptiv_matched_filter.m": "48e51bcd52fb8f27cf35b3fce38b28507af36e55",
     "bias_test/data_generation/bias_test_nonspherical.m": "00a3e974fbf068ccd1af4e541a659862beffcad5",
-    "bias_test/data_generation/bias_test_spherical_prop_error.m": "fc3c4f0a7a417171415fb5e3d869a744ba24d04"
+    "bias_test/data_generation/bias_test_spherical_prop_error.m": "fc3c4f0a7a417171415fb5e3d869a744ba24d04f"
   },
   "evidence_level": "L3",
   "l1_matlab_runtime_reference_status": "not_collected",
