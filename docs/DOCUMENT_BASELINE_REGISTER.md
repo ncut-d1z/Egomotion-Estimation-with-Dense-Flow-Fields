@@ -163,3 +163,8 @@
 | `docs/golden/analytic_golden_candidates.v1.json` | `1e6499eff3ce5b55503f8cd913b9f492629da499` | `18ddb719`；AF-067 补齐一处原源 blob SHA |
 
 **范围**：仅文档和参考元数据，AF-043/044/051/054/055 及其它需要真实数值/源码/验收的阶段目标仍未完成。无正式文档签署、软件构建、CTest 或 MAT 读写证据。
+
+
+### 6.4 本轮治理文件的复读身份（非冻结）
+
+固定复读提交 `fa85cc638e58638768506b25c4b375566f6e8379`：`docs/AUDIT.md` blob `55ab0daad40d23ab0a12edf9ab20820d2a6fa05b`、`docs/AUDIT_PROCESS.md` blob `0d5b59847f2a7a09a8f7d0aaf8a6daae02b19a2c`、`docs/PROGRESS.md` blob `006d55de69f6e2fa98c01caa7163499b35c6bab4`。审计规则和标题核对仅属静态治理修订，后续动态台账有变化时依新的固定提交复读；正式 SRS/HLD/LLD/DEC/测试仍未冻结或验收。
