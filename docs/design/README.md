@@ -83,6 +83,23 @@
 - MATLAB 原始函数、原始 MAT 文件和版权 notice 一律不在文档维护任务中更改；尤其不能通过改动已有 MAT 获得“通过”。
 - 模块签名只有在 SRS/HLD、[contracts.md](contracts.md)、源 MATLAB、CLI/error schema、真实 MAT 数据合同之间一致且项目所有者批准后才能冻结。批准之前不应称这些草案为“编码基线”。
 
+## AF-059：逐模块 LLD 冻结前核对清单（静态审阅，非批准）
+
+| 单一合同归属与模块 | 候选签名/边界核对入口 | 尚缺的可编码、可验证证据 |
+|---|---|---|
+| [contracts](contracts.md)（公共值/错误） | §2～4：`FlowField`、`Result/Status`、`Failure/ErrorDetail`；`MatDenseArray` 由 MAT I/O 定义 | C++17 公共头、`valueless_by_exception`/ABI/线程/错误传播实测，DEC-008 批准 |
+| [CLI](cli.md)（Composition Root） | §2～4：命令类型、`RunId`、JSONL；错误码映射**引用** contracts | 自动/手工 RunId、负噪声、JSON 转义及退出优先级的真实测试与签署 |
+| [MAT I/O](mat_io.md)（具体 Reader/Writer） | §2、§7：自拥有 `MatDenseArray`、RAII、严格/兼容读、Writer；不向领域层暴露 matio C 指针 | 生产代码、L2 逐值/SHA-256、路径安全/写回读/异常负例与 CTest |
+| [采样/噪声](sampling_noise.md)（sampling/simulation） | §3、§6：方向采样、注入 RNG/噪声，接口归 contracts；源 `near_last` 与新向量分离 | i=1/2 完整有序 L3、抽样次数/非有限负例、真实 C++/CTest |
+| [轨迹](trajectory.md)（simulation） | §5～6：`TrajectoryGenerator`、局部运动、Sophus 私有调用 | 零角/反向/近 π、求交边界的 L3、依赖锁定与 CTest |
+| [Franz/KvD](kvd.md)（estimators） | §7～9：两种 KvD 参数、结果与逐轮 trace；不依赖 matio | 两版完整逐轮 L3、失败分类、签名编译与 DEC-005 |
+| [实球谐](harmonics.md)＋[论文专题](SH_ROTATION_IVANIC_RUEDENBERG.md)（harmonics） | §2～3、专题 §3：`RealSphericalHarmonics`、`HarmonicRotator`、R0/R3/R5；Eigen-only/禁 sdla | 1996 原文/1998 勘误、R3 9 项/R5 25 项独立 L3、实际递推实现/CTest |
+| [Adaptive](adaptive_mfa.md)（estimators/Session） | §8～9：StepSolver/Session、MSE、状态原子不提交 | 6×6/M1～M4/刷新时序逐节点 L3、并发/异常 CTest |
+| [实验](experiments.md)（experiments） | §6～8：独立 Config、`RunContext`、`RunOutcome`、接口注入 Writer；不可直接链接 matio | 五 Runner、当前 save/DEC-004、Manifest/8 次聚合、真实 Reader 替身/CTest |
+| [分析/绘图](analysis_plotting.md)（analysis，plotting 可选） | §2、§6～8：`AnalysisDataset` / `CurveSeries`、只读 IResultReader、可选 IPlotExporter | L2→独立 L3 曲线、索引/分段/缺字段负例、C++/CTest；绘图后端不阻塞数值 |
+
+**核对结果**：候选签名所在章节、单一合同所有者、HLD target 和 TEST_PLAN §3 的 TC→候选测试实体索引已定位；上表尚缺项均**未取得生产代码、独立数值实测或批准的证据**。这是各 LLD 的**冻结前检查清单**，不自动冻结任何 LLD，不生成或运行 C++/CTest，也不改变 AF-037～051 等仍开放的实际验收目标。详细真实证据仅由 [PROGRESS.md](../PROGRESS.md) 登记。
+
 ## 本期未完成的先决工作
 
 1. **已完成的独立子能力**：582/582 MAT 已通过 matio 解压/变量元数据检查；**尚待** P1 生产 Reader/Writer 按值加载、错误负例及 P10.4 独立结果审核。
