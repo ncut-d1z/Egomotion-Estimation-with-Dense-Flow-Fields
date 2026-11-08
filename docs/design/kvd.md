@@ -1,6 +1,6 @@
 # Franz / Original KvD / Modified KvD 详细设计草案
 
-> **LLD v0.5（未冻结、未实现、未验证）**。下列伪代码和公式根据源 MATLAB 函数重新核对，仍需有**独立 L3 固定输入逐轮 Golden** 与经 DEC-005 批准的容差后才能冻结；**无需执行 MATLAB**。需求：REQ-F-FILTER-001、REQ-F-KVD-001/002、REQ-F-ERROR-001、REQ-DC-KVD-001、REQ-NF-NUM-001/002；任务：P4.1–P4.10。
+> **LLD v0.6（未冻结、未实现、未验证）**。下列伪代码和公式根据源 MATLAB 函数重新核对，仍需有**独立 L3 固定输入逐轮 Golden** 与经 DEC-005 批准的容差后才能冻结；**无需执行 MATLAB**。需求：REQ-F-FILTER-001、REQ-F-KVD-001/002、REQ-F-ERROR-001、REQ-DC-KVD-001、REQ-NF-NUM-001/002；任务：P4.1–P4.10。
 
 ## 1. 精确来源与函数合同
 
@@ -338,7 +338,7 @@ public:
 (a_M,b_M,c_M)=(-e_x,0,0).
 \]
 
-候选归一化前向量分别为 `+(5h/3)e_x` 与 `+e_x`，其模长**不同**，归一后的 `t_new` 却都为 `e_x`。因此**仅核最后的平移方向会漏检 Original 的 near 权重与 near² 分支**；必须核每项 `a/b/c` 和归一前的向量（本例 `c=0`，仍须另用 t·d、near 同时非零的输入检验 `mu²` 项本身）。
+候选归一化前向量分别为 `+(5h/3)e_x` 与 `+e_x`，其模长**不同**，归一后的 `t_new` 却都为 `e_x`。因此**仅核最后的平移方向会漏检 Original 的 near 权重与 near² 分支**；必须核每项 `a/b/c` 和归一前的向量（本例 `c=0`，相应非零 `mu²` 区分见下文 §9.3 的第二份独立静态夹具）。
 
 两条路径共有的旋转项为：
 
@@ -358,7 +358,53 @@ c_\omega=(0,0,1/6),\quad
 
 `h` 很接近 1；以源 `absgrenze=10^{-7}` 和每轮都稳定的符号公式，`k<6` 分支确保**至少 6 次**，第六次末满足停止并返回 `x=6`（这是**数学候选**，真实浮点路径仍须独立验证）。源循环后不重新估计 near，输出 `near=(0,0,h,h,2h,2h)`、`trans=h e_x`、`rot=(0,0,1/2)`。该夹具**没有**覆盖 200 次上限、near 翻号、退化零分母、MSE/浮点舍入一般性或带噪数据，不能用本例关闭 AF-043。
 
-**核查与保存资格**：未来独立 L3 需将六行 `double[6×6]` 的精确值、上述每轴 Franz 响应/分母、每轮 `near/a/b/c/t_raw/t_norm/omega/MSE/RMS/grenze/k` 写成有 SHA-256 的完整参考数据，再用**真实已授权**的 C++/CTest 验证，并另补可区分 `c_O=\langle\mu^2(t·d)d\rangle` 与 `c_M=\langle\mu(t·d)d\rangle` 的非零案例。此处只有只读源码约定下的代数推导，**没有运行、没有数据文件、没有正式容差或批准**；AF-043、AF-051 保持「未整改」。
+**核查与保存资格**：未来独立 L3 需将六行 `double[6×6]` 的精确值、上述每轴 Franz 响应/分母、每轮 `near/a/b/c/t_raw/t_norm/omega/MSE/RMS/grenze/k` 写成有 SHA-256 的完整参考数据，再用**真实已授权**的 C++/CTest 验证，并由 §9.3 的非零 c 候选开展独立数值核验，再补一般/异常案例。此处只有只读源码约定下的代数推导，**没有运行、没有数据文件、没有正式容差或批准**；AF-043、AF-051 保持「未整改」。
+
+### 9.3 另一组六方向非轴对齐夹具：`mu²` 与 `mu` 的非零 c 项（AF-043，静态代数）
+
+§9.2 的 `c_O=c_M=0` **不能**捕获 Original 误用 Modified 的 `c` 更新式。为覆盖这一缺口，再定义一个独立的**纸面候选**：令 `u=1/sqrt(2)`，依下表人工组成 6 行切向 N×6 输入。前四行取全部 `(±u,±u,0)` 组合，末两行取 `±e_z`：
+
+| i | `d_i` | `p_i` |
+|---:|---|---|
+| 1 | (+u,+u,0) | (−1,+1,0) |
+| 2 | (+u,−u,0) | (−1,−1,0) |
+| 3 | (−u,+u,0) | (−1,−1,0) |
+| 4 | (−u,−u,0) | (−1,+1,0) |
+| 5 | (0,0,+1) | (−1,0,0) |
+| 6 | (0,0,−1) | (−1,0,0) |
+
+这相当于 `t_true=e_x,omega_true=0` 的理想平移光流：斜向四行 `near_true=2`，末两行 `near_true=1`。六行均满足 `d_i·p_i=0`；其单位向量和几何对称性使 Franz 的**所有方向轴分母非零**、平移初始化为 `(3/2)e_x`、旋转初始化为 `0`，归一化后 `t_old=e_x`。这里仍令原 `nulldiv=epsilon=10^{-13}`，定义
+
+\[
+\eta=\frac1{1+2\epsilon},\qquad \beta=\frac1{1+\epsilon}.
+\]
+
+斜向 `(t·d)^2=1/2`、`t·p=-1`，故按**原 near 分母**得到 `near=2eta`；z± 方向则得到 `near=beta`。六行的源近度为 `(2eta,2eta,2eta,2eta,beta,beta)`，均值 `(4eta+beta)/3`，不触发翻号。直接按 §3.1/3.2 计算平移中间量：
+
+\[
+\begin{aligned}
+\boldsymbol a_O&=-\frac{4\eta+\beta}{3}\,\boldsymbol e_x,
+&\boldsymbol b_O&=0,
+&\boldsymbol c_O&=\frac43\eta^2\,\boldsymbol e_x,\\
+\boldsymbol a_M&=-\boldsymbol e_x,
+&\boldsymbol b_M&=0,
+&\boldsymbol c_M&=\frac23\eta\,\boldsymbol e_x.
+\end{aligned}
+\]
+
+在两种更新式中 `omega=0`，故 `t_candidate_O=((4eta+beta+4eta²)/3)e_x`、`t_candidate_M=(1+2eta/3)e_x`；它们的 `c` **均非零且不同**，而归一化方向仍同为 `e_x`。因此必须用本例的 `a/b/c` 逐项和归一前候选值区分两种实现；只检查最终方向/角度将**不能**检测错误使用 `mu` 或 `mu²`。
+
+由于成对样本的平移流关于 `d→-d` 为偶，旋转模板与 `p×d` 成对抵消，纸面 `omega_new=0`。每轮 near 不重算终点；固定点状态下误差可进一步按每个样本求得：
+
+\[
+\mathrm{MSE}=\frac43(1-\eta)^2+\frac13(1-\beta)^2,\qquad
+\mathrm{RMS}=\sqrt{\mathrm{MSE}},\quad
+\mathrm{grenze}=\mathrm{RMS}/6000.
+\]
+
+精确算术下源 `k<6` 仍令这组稳定场完成 6 轮，并在循环后返回 `trans=((4eta+beta)/3)e_x`、`rot=0` 和当前六行近度；真实 `double` 逐轮误差、`absgrenze` 分支与退出次数**仍须独立 L3 和真实运行核对**，不能用纸面推导当 PASS。
+
+**适用边界**：这不是原作者 i=0 球面有序采样，不是 Matlab 实测，不是 C++ 算法输出，也不替代一般/噪声/near 翻号/200 次上限/异常测试。本例只把先前 `c=0` 的测试盲区变成了可辨认的固定公式、输入/trace 候选；`KVD-G01～05` 和 `TC-F-KVD-001/002` 的独立 L3 数值身份、真实测试、DEC-005/008 及 AF-043/051 的完整验收仍开放。
 
 ## 10. 与架构及开发工作的绑定
 
