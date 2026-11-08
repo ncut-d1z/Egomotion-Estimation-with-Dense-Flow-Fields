@@ -1,17 +1,10 @@
-# 文档整改目标与进度（AUDIT_PROCESS）
+# 审计整改进度（AUDIT_PROCESS）
 
-> 只用 **未整改 / 已整改** 两态；与 [AUDIT.md](AUDIT.md) 的文件三态分开。历史结案仅证明**对应文字/合同**已修订，不代表数学、实现、测试或基线验收。
+> **问题两态**：仅「未整改 / 已整改」。一条目标一行，**实际修改目标并以新固定提交复核**才能记已整改；软件/数学/权限/正式批准目标必须有真实证据，不可用文档修改代替。文件审计的「空白 / 正在审计 / 已审计」独立见 [AUDIT](AUDIT.md)。原 `origin/**` 只读，H-10/H-11 现未授权运行/实施，MATLAB/L1 永久不必需。
 
-## 1. 更新规则
+## 1. 最新整改台账（按 ID 唯一登记）
 
-1. 扫描发现一个可独立核验的目标，立即登记 **AF ID、仓库根相对路径、目标、未整改**；一文件多目标逐行列出。
-2. 仅在**修改实际目标文件、复读新固定提交并保留证据**后改为「已整改」；证据/人类批准类目标须实际取得证据或批准，不可仅改措辞关闭。
-3. 历史审批/旧审计报告保留原日期、SHA 和当时状态；不改 `origin/**`、权限或历史 JSON。当前不运行被 H-10/H-11 暂缓的代码/命令/测试。
-4. **继续整改**：有「未整改」时继续推进可实施的部分；历史“停止”仅记录上一轮，不是本轮指令。需要外部权限、论文、数值验证或正式签署时保留原 ID 与真实缺口，不为追求零未整改而降低标准。
-
-## 2. 已结案的历史目标（AF-001～031，32 项）
-
-| ID | 文件 | 整改目标（简述） | 状态 |
+| ID | 相对路径 | 独立整改/验收目标 | 状态 |
 |---|---|---|---|
 | AF-001a | `docs/design/experiments.md` | 取消自定义输出根参数的旧语义 | 已整改 |
 | AF-001b | `docs/design/experiments.md` | 固定 output/<RunId>、独占写入及 Writer 二次校验 | 已整改 |
@@ -45,199 +38,56 @@
 | AF-029 | `docs/PROGRESS.md` | PROGRESS MAT 首版类型范围已选 | 已整改 |
 | AF-030 | `AGENTS.md` | AGENTS 不重复审批 DEC-004 来源归因 | 已整改 |
 | AF-031 | `AGENTS.md` | AGENTS 不重复审批 MAT 首版范围 | 已整改 |
-
-**历史结论**：32 项文字修订已按先登记、后改源、再复读流程结案；证明范围不含 C++/CTest/L2-L4 真实数值。详细证据仍由 `docs/reviews/AUDIT_*.md` 与 [PROGRESS.md](PROGRESS.md) 按当时固定版本保存，不再复制提交哈希。
-
-## 3. 本轮新登记的整改目标（AF-032～062）
-
-**口径**：前 5 项为低优先级文字/治理事项；余下 25 项为阶段性设计、真实证据与批准门槛，并非仅靠文字修改就能结案。项目处于文档阶段，**首次发现时全部先记「未整改」**，下表为整改后当前状态。实际实现/运行/签署均须尊重授权与 [TODO.md](TODO.md)；不要求 MATLAB/L1。
-
-| ID | 类型 | 仓库根相对路径 | 具体整改/验收目标 | 状态 |
-|---|---|---|---|---|
-| AF-032 | 文字·低 | `docs/REQUIREMENTS.md` | §5 将“来源未明”统一为 DEC-004：当前有效 save／历史 HistoricalOnly／分析缺字段报错；历史成因不作前置门禁。 | 已整改 |
-| AF-033 | 文字·低 | `docs/design/mat_io.md` | §4.1 标清 alleadap*/rottransratio 的 HistoricalOnly 身份；不要求先归因，不扩大当前 Writer save 字段。 | 已整改 |
-| AF-034 | 文字·低 | `docs/design/experiments.md` | §5 五入口对照表简化“来源未知/未证实”残留，统一 HistoricalOnly、当前 save 及缺字段失败语义。 | 已整改 |
-| AF-035 | 文字·低 | `docs/TEST_PLAN.md` | §5.1 with_errors 七份历史 MAT 中两份 alleadap* 显式标 HistoricalOnly；保留真实 shape 与 7/7 读取事实。 | 已整改 |
-| AF-036 | 治理·低 | `docs/DOCUMENT_BASELINE_REGISTER.md` | 解释该矩阵 36 项固定版本/身份登记与 AUDIT 本轮 50 个审计对象口径不同；新增审计对象不自动成为已冻结基线。 | 已整改 |
-| AF-037 | 基线·阶段 | `docs/REQUIREMENTS.md` | 正式冻结前复核 66 REQ/AC、附录 8 REQ-DC 内部约束身份，并为 AC→LLD 章节绑定精确版本/SHA/批准；DEC-005/006/008 及例外明确。 | 未整改 |
-| AF-038 | 设计·阶段 | `docs/ARCHITECTURE.md` | 复核 27 边 DAG、部署/质量场景、Composition Root→固定 output/<RunId>→Writer 与 CLI/mat_io/Runner 一致；动态探针/DEC 证据仅引用，待真实构建再关闭。 | 未整改 |
-| AF-039 | 设计·阶段 | `docs/OBJECT_MODEL.md` | 对齐 45 .m 职责映射、类名/所有权/Adaptive 状态机及 contracts/LLD 候选签名；正式冻结需一致且有批准记录。 | 未整改 |
-| AF-040 | 设计·阶段 | `docs/design/contracts.md` | 冻结 Result/Status、Failure、ErrorDetail、异常/线程与 valueless_by_exception 行为；MatDenseArray 仅引用 mat_io，不重复定义；真实编译/ABI 与错误传播待验证。 | 未整改 |
-| AF-041 | 设计·阶段 | `docs/design/cli.md` | 冻结负噪声参数边界、自动/手工 RunId、JSONL 转义、错误码/退出码及优先级；以 contracts 为唯一来源，真实 CLI 负例待测试。 | 未整改 |
-| AF-042 | 验证·阶段 | `docs/design/mat_io.md` | 在授权后实现/验收 Reader/Writer、MatDenseArray、严格/兼容读、列主序、RAII、TOCTOU/路径隔离/非覆盖、负例与写回读；以独立 L2/来源 SHA-256 核验。 | 未整改 |
-| AF-043 | 验证·阶段 | `docs/design/kvd.md` | 补 Franz/Original/Modified KvD 的逐轮 L3 参考（near/t/ω、停止阈值、次数、失败分类）；最终 DEC-005 阈值与 CTest 待批准/执行。 | 未整改 |
-| AF-044 | 验证·阶段 | `docs/design/adaptive_mfa.md` | 补 M1～M4/6×6/rhs/MSE/near_new/C_new 的独立 L3；验证 Session 主/对照状态、异常原子不提交及周期刷新。 | 未整改 |
-| AF-045 | 验证·阶段 | `docs/design/harmonics.md` | 取得 1996 原论文/1998 勘误后逐式核 R0/R3/R5、九项实基的 m/相位；Eigen-only 禁 sdla，验证 R3 全9/R5 全25元素并保留必要来源 notice。 | 未整改 |
-| AF-046 | 设计·阶段 | `docs/design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 专题声明与 harmonics/object model 的文件、命名空间、类/方法一致；论文确认后才推进 Eigen 递推实现及独立 L3/CTest。 | 未整改 |
-| AF-047 | 验证·阶段 | `docs/design/sampling_noise.md` | 补 i=1/2 有序方向、缺损球面、N uniform/3N normal、固定 RNG 耗尽/非有限样本的独立 L3 与 CTest；保留 near_last 标量区别。 | 未整改 |
-| AF-048 | 验证·阶段 | `docs/design/trajectory.md` | 验证 Sophus/原 epsilon/反向向量/近 π、Rᵀ、球内近度正根及端点零值；明确 sampling/flow 的接口边界与独立 L3。 | 未整改 |
-| AF-049 | 验证·阶段 | `docs/design/experiments.md` | 实现/核五个 Runner 的当前 save、Writer 注入、RunContext/Manifest/失败继续策略、8 次聚合分母；旧 MAT 只读、HistoricalOnly 不补造。 | 未整改 |
-| AF-050 | 验证·阶段 | `docs/design/analysis_plotting.md` | 对四类分析的 L2→独立 L3 曲线、begin/end/zone、平滑边缘、单位/索引和 MissingVariable 负例逐项复核；绘图后端可选，不阻塞数值。 | 未整改 |
-| AF-051 | 验证·阶段 | `docs/TEST_PLAN.md` | 将 66 TC→候选实体/CTest→AC 转成获授权的真实测试与日志，覆盖负例、Session、Writer、L2/L3/必要 L4；不得以 matio 探针宣称整体验收。 | 未整改 |
-| AF-052 | 治理·阶段 | `docs/PLAN.md` | 复核 98 P 与 SRS/HLD/LLD/TC 依赖和里程碑退出证据；只保留稳定 WBS、通过 PROGRESS 引用实测，不捏造进度或工期。 | 已整改 |
-| AF-053 | 证据·阶段 | `docs/PROGRESS.md` | 在获授权实际实施/测试后回填固定源码/输入身份、命令、stdout/stderr/exit、失败数、wall/CPU/RSS 与里程碑证据；历史 E-DOC 不能当最新 HEAD PASS。 | 未整改 |
-| AF-054 | 证据·阶段 | `docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md` | 以独立 L2/L3/适用 L4 及真实 C++ 误差确定 DEC-005 最终分模块 PASS 阈值；0.01/0.1 仅首轮筛查，几何/计数/shape 单列严格判据。 | 未整改 |
-| AF-055 | 证据·阶段 | `docs/golden/analytic_golden_candidates.v1.json` | 核验 AN-G01～12 的固定输入、公式与参考值来源，补独立 L3 核对；不得将候选 JSON 或 AN/APL 编号一致当成已执行测试。 | 未整改 |
-| AF-056 | 证据·阶段 | `docs/MAT_DATA_SCHEMA.md` | 独立复核 582 MAT 的文件身份/SHA-256、变量与 shape、L2 原始 double 逐值；FNV64 与 SHA-256 分开，不改写 origin/**。 | 未整改 |
-| AF-057 | 治理·阶段 | `docs/TODO.md` | 在进入相应阶段时收齐论文 PDF、H-10/H-11 操作授权、DEC-005/006、正式基线/发布批准；已选 MIT/DEC-004/CLI 等不得重复申请。 | 未整改 |
-| AF-058 | 治理·阶段 | `docs/DOCUMENT_BASELINE_REGISTER.md` | 正式签署前更新文档版本/blob/commit/范围/批准人/日期时区/例外及测试证据；滚动 PROGRESS/AUDIT 不伪装为已冻结规范。 | 未整改 |
-| AF-059 | 设计·阶段 | `docs/design/README.md` | 逐模块核对 LLD 签名、唯一合同归属、独立 L3/TC 映射与真实代码边界，建立可编码/可验证的冻结清单；不以目录齐全等同实现。 | 已整改 |
-| AF-060 | 证据·阶段 | `docs/golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md` | 逐 AC 复核 L2 逐值、L3 一般/退化/逐节点、适用 L4 的缺口与实际证据；L1/MATLAB 永久不列为必需门槛。 | 未整改 |
-| AF-061 | 证据·阶段 | `docs/PLAN.md` | DEC-006 性能/资源目标基于未来真实全工程构建及运行 wall/CPU/RSS、平台事实与批准标准确定；VM 容量快照不能当性能验收。 | 未整改 |
-| AF-062 | 治理·低 | `docs/design/README.md` | §1 不再将 36 个选定文档的固定版本身份矩阵称作“全部当前规范和过程文档”；另引用 AUDIT 50 条审计路径，明确两者用途及非冻结边界。 | 已整改 |
-
-**AF-062 结案时的历史统计**：32 项历史 + 6 项纯文档结案，25 项阶段目标仍开放；当时共 **63 项（已整改 38、未整改 25）**。后续增量结论见 §6。治理文档的“已审计”不等于这些目标“已整改”；冻结或真实测试证据缺失时，禁止将阶段门槛提前关闭。
-
-## 4. 本轮六项文档修订结案（2026-11-08）
-
-- **先审计并登记**：输入 `6c22fe7`，审计登记提交 `ae87532`，六项在修改前均标「未整改」。
-- **实际修改与复读**：SRS、mat_io、experiments、TEST_PLAN、LLD 索引、PLAN 的文本修订提交 `3e3ad2a`；AF-032～035、AF-062 五项定向静态检查通过。控制矩阵 AF-036 在提交 `2d608b9` 完成，**36/36 个登记文件的 blob SHA 均匹配其明确标注的固定快照**；非最新动态 HEAD 的验收状态。
-- **边界**：AF-037～061 的 25 个分阶段目标仍需实际 C++/CTest、独立 L2/L3/L4、性能数据、DEC-005/006/008 和相应批准，不得以静态审计关闭；原 `origin/**` 与历史审批/报告未变。
-
-## 5. 新发现的四项文档冲突（2026-11-08：先登记）
-
-**扫描输入**：`349206743af23abf039cbe5e97ea8b8c13341608`。以下问题已在修改目标文件**之前**登记为「未整改」，不得以审计报告完成代替整改。
-
-| ID | 仓库根相对路径 | 整改目标 | 状态 |
-|---|---|---|---|
+| AF-032 | `docs/REQUIREMENTS.md` | §5 将“来源未明”统一为 DEC-004：当前有效 save／历史 HistoricalOnly／分析缺字段报错；历史成因不作前置门禁。 | 已整改 |
+| AF-033 | `docs/design/mat_io.md` | §4.1 标清 alleadap*/rottransratio 的 HistoricalOnly 身份；不要求先归因，不扩大当前 Writer save 字段。 | 已整改 |
+| AF-034 | `docs/design/experiments.md` | §5 五入口对照表简化“来源未知/未证实”残留，统一 HistoricalOnly、当前 save 及缺字段失败语义。 | 已整改 |
+| AF-035 | `docs/TEST_PLAN.md` | §5.1 with_errors 七份历史 MAT 中两份 alleadap* 显式标 HistoricalOnly；保留真实 shape 与 7/7 读取事实。 | 已整改 |
+| AF-036 | `docs/DOCUMENT_BASELINE_REGISTER.md` | 解释该矩阵 36 项固定版本/身份登记与 AUDIT 本轮 50 个审计对象口径不同；新增审计对象不自动成为已冻结基线。 | 已整改 |
+| AF-037 | `docs/REQUIREMENTS.md` | 正式冻结前复核 66 REQ/AC、附录 8 REQ-DC 内部约束身份，并为 AC→LLD 章节绑定精确版本/SHA/批准；DEC-005/006/008 及例外明确。 | 未整改 |
+| AF-038 | `docs/ARCHITECTURE.md` | 复核 27 边 DAG、部署/质量场景、Composition Root→固定 output/<RunId>→Writer 与 CLI/mat_io/Runner 一致；动态探针/DEC 证据仅引用，待真实构建再关闭。 | 未整改 |
+| AF-039 | `docs/OBJECT_MODEL.md` | 对齐 45 .m 职责映射、类名/所有权/Adaptive 状态机及 contracts/LLD 候选签名；正式冻结需一致且有批准记录。 | 未整改 |
+| AF-040 | `docs/design/contracts.md` | 冻结 Result/Status、Failure、ErrorDetail、异常/线程与 valueless_by_exception 行为；MatDenseArray 仅引用 mat_io，不重复定义；真实编译/ABI 与错误传播待验证。 | 未整改 |
+| AF-041 | `docs/design/cli.md` | 冻结负噪声参数边界、自动/手工 RunId、JSONL 转义、错误码/退出码及优先级；以 contracts 为唯一来源，真实 CLI 负例待测试。 | 未整改 |
+| AF-042 | `docs/design/mat_io.md` | 在授权后实现/验收 Reader/Writer、MatDenseArray、严格/兼容读、列主序、RAII、TOCTOU/路径隔离/非覆盖、负例与写回读；以独立 L2/来源 SHA-256 核验。 | 未整改 |
+| AF-043 | `docs/design/kvd.md` | 补 Franz/Original/Modified KvD 的逐轮 L3 参考（near/t/ω、停止阈值、次数、失败分类）；最终 DEC-005 阈值与 CTest 待批准/执行。 | 未整改 |
+| AF-044 | `docs/design/adaptive_mfa.md` | 补 M1～M4/6×6/rhs/MSE/near_new/C_new 的独立 L3；验证 Session 主/对照状态、异常原子不提交及周期刷新。 | 未整改 |
+| AF-045 | `docs/design/harmonics.md` | 取得 1996 原论文/1998 勘误后逐式核 R0/R3/R5、九项实基的 m/相位；Eigen-only 禁 sdla，验证 R3 全9/R5 全25元素并保留必要来源 notice。 | 未整改 |
+| AF-046 | `docs/design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 专题声明与 harmonics/object model 的文件、命名空间、类/方法一致；论文确认后才推进 Eigen 递推实现及独立 L3/CTest。 | 未整改 |
+| AF-047 | `docs/design/sampling_noise.md` | 补 i=1/2 有序方向、缺损球面、N uniform/3N normal、固定 RNG 耗尽/非有限样本的独立 L3 与 CTest；保留 near_last 标量区别。 | 未整改 |
+| AF-048 | `docs/design/trajectory.md` | 验证 Sophus/原 epsilon/反向向量/近 π、Rᵀ、球内近度正根及端点零值；明确 sampling/flow 的接口边界与独立 L3。 | 未整改 |
+| AF-049 | `docs/design/experiments.md` | 实现/核五个 Runner 的当前 save、Writer 注入、RunContext/Manifest/失败继续策略、8 次聚合分母；旧 MAT 只读、HistoricalOnly 不补造。 | 未整改 |
+| AF-050 | `docs/design/analysis_plotting.md` | 对四类分析的 L2→独立 L3 曲线、begin/end/zone、平滑边缘、单位/索引和 MissingVariable 负例逐项复核；绘图后端可选，不阻塞数值。 | 未整改 |
+| AF-051 | `docs/TEST_PLAN.md` | 将 66 TC→候选实体/CTest→AC 转成获授权的真实测试与日志，覆盖负例、Session、Writer、L2/L3/必要 L4；不得以 matio 探针宣称整体验收。 | 未整改 |
+| AF-052 | `docs/PLAN.md` | 复核 98 P 与 SRS/HLD/LLD/TC 依赖和里程碑退出证据；只保留稳定 WBS、通过 PROGRESS 引用实测，不捏造进度或工期。 | 已整改 |
+| AF-053 | `docs/PROGRESS.md` | 在获授权实际实施/测试后回填固定源码/输入身份、命令、stdout/stderr/exit、失败数、wall/CPU/RSS 与里程碑证据；历史 E-DOC 不能当最新 HEAD PASS。 | 未整改 |
+| AF-054 | `docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md` | 以独立 L2/L3/适用 L4 及真实 C++ 误差确定 DEC-005 最终分模块 PASS 阈值；0.01/0.1 仅首轮筛查，几何/计数/shape 单列严格判据。 | 未整改 |
+| AF-055 | `docs/golden/analytic_golden_candidates.v1.json` | 核验 AN-G01～12 的固定输入、公式与参考值来源，补独立 L3 核对；不得将候选 JSON 或 AN/APL 编号一致当成已执行测试。 | 未整改 |
+| AF-056 | `docs/MAT_DATA_SCHEMA.md` | 独立复核 582 MAT 的文件身份/SHA-256、变量与 shape、L2 原始 double 逐值；FNV64 与 SHA-256 分开，不改写 origin/。 | 未整改 |
+| AF-057 | `docs/TODO.md` | 在进入相应阶段时收齐论文 PDF、H-10/H-11 操作授权、DEC-005/006、正式基线/发布批准；已选 MIT/DEC-004/CLI 等不得重复申请。 | 未整改 |
+| AF-058 | `docs/DOCUMENT_BASELINE_REGISTER.md` | 正式签署前更新文档版本/blob/commit/范围/批准人/日期时区/例外及测试证据；滚动 PROGRESS/AUDIT 不伪装为已冻结规范。 | 未整改 |
+| AF-059 | `docs/design/README.md` | 逐模块核对 LLD 签名、唯一合同归属、独立 L3/TC 映射与真实代码边界，建立可编码/可验证的冻结清单；不以目录齐全等同实现。 | 已整改 |
+| AF-060 | `docs/golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md` | 逐 AC 复核 L2 逐值、L3 一般/退化/逐节点、适用 L4 的缺口与实际证据；L1/MATLAB 永久不列为必需门槛。 | 未整改 |
+| AF-061 | `docs/PLAN.md` | DEC-006 性能/资源目标基于未来真实全工程构建及运行 wall/CPU/RSS、平台事实与批准标准确定；VM 容量快照不能当性能验收。 | 未整改 |
+| AF-062 | `docs/design/README.md` | §1 不再将 36 个选定文档的固定版本身份矩阵称作“全部当前规范和过程文档”；另引用 AUDIT 50 条审计路径，明确两者用途及非冻结边界。 | 已整改 |
 | AF-063 | `docs/TEST_PLAN.md` | §3 五个 TC 行引用的 `docs/SOURCE_INVENTORY.md` 尚不存在；明确它是 P0.6 待创建交付物，并引用现存 SRS §9.2 / OBJECT_MODEL / MAT_DATA_SCHEMA 的相应可用证据，不伪称来源审计完毕。 | 已整改 |
 | AF-064 | `docs/AUDIT.md` | 追踪计数明确为 58 正文 REQ + 8 REQ-DC = 66 总 REQ，TC 同理；不得把“66 + 8”重复计数。 | 已整改 |
 | AF-065 | `docs/AUDIT.md` | 逐文件进度表移除已整改 AF-032～036、AF-062 的“待”标签，只保留实际尚未完成的 AF-037～061。 | 已整改 |
 | AF-066 | `docs/AUDIT.md` | §4 登记阶段的“当时尚未整改”与 §7 当前已完成的六项结案分开标注，避免旧进度冒充最新状态。 | 已整改 |
-
-**登记后两态**：总 67 项，其中历史已整改 38、新发现未整改 4、阶段未整改 25；故已整改 **38**、未整改 **29**。后续必须先修改对应文件并在新固定提交复读，再逐项结案；历史报告/审批 JSON、`origin/**` 不改。
-
-## 6. AF-063～066 定向文档整改完成（2026-11-08）
-
-先按固定提交 `3492067` 审计，在 `795afb7` 登记四条「未整改」，再实际修改 `docs/TEST_PLAN.md` 和 `docs/AUDIT.md`，并在固定提交 `edd56c99dc04e3774788699ed61c26d3bad3c465` 逐条复读：**4/4 通过**。其中 TEST_PLAN v0.8 的五条历史引用已改为真实可用文档与“计划、未创建”的 SOURCE_INVENTORY 两类；58 正文 + 8 REQ-DC = 66 REQ，66 TC 包含 8 TC-DC。此次没有创建测试、SOURCE_INVENTORY 或任何新数据。
-
-**本节结案时两态：67 条原子目标，42 已整改，25 未整改（AF-037～061）。** 所有仍未关闭的目标需要正式设计/代码、独立 L2/L3/L4、CTest、性能或人类批准的实际证据，不以本轮纯文本核查代替。
-
-
-## 7. 第一轮整改结案与停止条件（2026-11-08）
-
-- **AF-052 已整改（仅 WBS 文档核对）**：`docs/PLAN.md §6.5` 完成 98 P→REQ/TC/AC、98 条 SRS 反向映射、前置关系、50 条相对引用及 HLD 27 边的只读静态检查；六个里程碑均未验收，动态证据只归 PROGRESS。
-- **AF-059 已整改（仅冻结前清单）**：`docs/design/README.md` 补齐 10 个模块候选签名/所有者/TC/L3/实现缺口的索引；**不表示任何模块已冻结或 C++ 已测试**。
-- 两份实际源文档已在固定提交 `6a1867a4b36ad71b1a523c4b3ed7372e276ece5d` 上复读确认（定向 **2/2**）；详细输入身份与适用边界见 [PROGRESS.md](PROGRESS.md) 及 [控制矩阵](DOCUMENT_BASELINE_REGISTER.md)。
-- **第一轮最新两态：67 项中 44 已整改、23 未整改**（AF-037～061，**不含 AF-052/059**）。尚缺正式源码/独立数值/CTest/性能/批准的目标保持「未整改」。依据用户的停止条件，本轮至此退出，**不启动下一轮 AUDIT 扫描或第二轮整改**。
-
-
-## 8. 新一轮第一批设计合同整改记录（2026-11-08，未关闭阶段目标）
-
-**固定整改复读提交**：`306b9ac4e8c832344d703b8d29d371710055ae86`。此次依据 §3 未整改事项，完成 **AF-037～041 的文档层初步整改**；已推送源文档修订并静态复读 5 项对应锚点。下面仅列可确认的完成部分，不把阶段性证据缺口改成「已整改」。
-
-以下仅补记 §3 中同一目标的推进证据，**不重复新增 AF 目标行**：
-
-- **AF-037（文档部分已推进，仍未整改）**：`docs/REQUIREMENTS.md` v0.14 新增 §9.6：66 REQ/AC（含 8 REQ-DC）→候选 LLD/TC 固定身份检查项；**待结案**：逐 AC 精确 SHA 绑定、独立测试与所有者签署/DEC-005/006/008。
-- **AF-038（文档部分已推进，仍未整改）**：`docs/ARCHITECTURE.md` v0.9：§5.1 Writer 写入前二次路径校验，§5.2 确认已选失败不提交；§5.4 跨文档职责表；**待结案**：真正的 CMake 27 边、IO 安全负例、Session 回归和 HLD 批准。
-- **AF-039（文档部分已推进，仍未整改）**：`docs/OBJECT_MODEL.md` v0.6 §8.1：对象/值类型/唯一签名来源与 45 .m 映射边界复读；**待结案**：可编译类声明、线程/资源实测及 P0.7/P0.8 签署。
-- **AF-040（文档部分已推进，仍未整改）**：`docs/design/contracts.md` v0.3 §3.0.1：列出 `variant` 空态、访问前置条件、ErrorDetail/JSONL 的未决行为；**待结案**：具体异常/错误映射批准，公共头及 ABI/跨层测试。
-- **AF-041（文档部分已推进，仍未整改）**：`docs/design/cli.md` v0.3 §3.1：负噪声、RunId、参数端值、错误优先级、JSONL 的冻结前边界矩阵；**待结案**：DEC-008 逐命令决策、真实 CLI/路径/JSONL 负例及 CTest。
-
-`docs/PLAN.md`、`docs/TEST_PLAN.md` 已同步 SRS v0.14 引用；[PROGRESS.md](PROGRESS.md) 与 [文件身份矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记本批静态证据。**没有**创建/编译生产代码、运行 Bash/CMake/CTest/MATLAB/Octave、生成独立 L3 或写 MAT；H-10/H-11 保持原状态。
-
-**停止判定**：67 项仍为 **44 已整改、23 未整改**，包括上述五个阶段性目标；依据用户条件，**第一轮在此停止，不开展 AUDIT 新扫描，不实施第二轮整改**。该统计以本轮固定源文档提交与本台账更新为依据，不等于软件验收。
-
-
-## 9. 再次执行的第一轮整改：七项设计与验证准备（2026-11-08）
-
-本轮**先读取最新 67 项台账**（输入 `f62a8a3`），依原有未整改目标补充目标文档并及时提交：首批 `0dccbff`（MAT I/O、采样、轨迹、LLD 索引），第二批 `f846e7b`（Runner、分析、TEST_PLAN、L2/L3/L4 证据分级）。在固定 `f846e7b96a1b75b5d1d29621b4a295fd6504bade` 上完成七项目标文档的**7/7 定向静态复读**；仍未创建或运行真正的业务测试和独立 Golden。
-
-以下是已登记目标的**补充进展**，不另设整改目标表行：
-
-- **AF-042：文档部分已完成** `mat_io.md §8.1`：读/写与 TOCTOU、列主序、回读、路径负例的夹具/预期。**结案仍需：**Reader/Writer 及路径安全生产代码、真实负例/回读、L2 SHA-256、CTest、授权。
-- **AF-047：文档部分已完成** `sampling_noise.md §7.1`：八面体/缺损有序样本数、N uniform/3N normal、零噪声与 RNG 耗尽。**结案仍需：**完整有序独立 L3、真实 RNG trace/CTest、数值批准。
-- **AF-048：文档部分已完成** `trajectory.md §6.2`：轨迹端点、Sophus eps、反向/近 π、Rᵀ、球内正根与模块边界。**结案仍需：**Sophus 实际编译、独立 L3/负例、接口冻结。
-- **AF-049：文档部分已完成** `experiments.md §8.2`：八次聚合、最后比值、更新率、Manifest/RunContext/Writer 失败及历史字段。**结案仍需：**五个 Runner 实现、L2/L3/L4、负例/CTest、状态证据。
-- **AF-050：文档部分已完成** `analysis_plotting.md §8.1`：501 点、阈值等值、分段/平滑、缺字段/无图形环境。**结案仍需：**L2 全曲线逐值、独立 L3、Analyzer 与 CTest。
-- **AF-051：文档部分已完成** `TEST_PLAN.md §2.9`：上述固定夹具关联原 66 TC，不新增编号/PASS。**结案仍需：**真正测试实体、独立参考、运行日志与验收。
-- **AF-060：文档部分已完成** `GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md §4.1`：证据身份与有效样本口径；纠正“0.01/0.1 仍未选”的旧句，区分已选首轮筛查与最终 DEC-005。**结案仍需：**独立 L2/L3/L4 数据、TC/AC 逐项复核及批准。
-
-**状态不提前结案**：七项仍为 §3 中的原编号「未整改」，本节只是进展说明，**不新增重复 AF 整改行**。其余 16 个开放目标也未获得真实软件/数值/人类批准证据。现有 **67 项：已整改 44，未整改 23**；[AUDIT.md](AUDIT.md) **50 文件：已审计 27，正在审计 23**。因此按用户停止条件**第一轮结束后立即退出，不开展新一轮 AUDIT 扫描与第二轮整改**。
-
-**执行边界**：本轮只有 GitHub 端纯文档修改/静态复读；没有实现 C++、运行 Bash/CMake/CTest/MATLAB/Octave、读取 MAT 逐值、生成独立 L3/L4 或写 MAT；`origin/**`、历史审批与 H-10/H-11 状态未改。
-
-
-## 10. 第一轮整改期间的来源身份问题（2026-11-08，修正前记录）
-
-**静态核对输入**：`d5265cc576e1c66ba1c63f8621ff1ad91d981195`，JSON `docs/golden/analytic_golden_candidates.v1.json`。解析其 12 个 `AN-G01～12` 候选及 19 个 `source_blob_shas` 来源条目，以 JSON 自述的来源提交 `ddb4b15e78dbd617d5d083d80c2d75aa47f14464` Git 树为准，**18/19 个 blob SHA 匹配**。
-
-| ID | 相对文件路径 | 首次发现与整改目标 | 状态 |
-|---|---|---|---|
 | AF-067 | `docs/golden/analytic_golden_candidates.v1.json` | `source_blob_shas["bias_test/data_generation/bias_test_spherical_prop_error.m"]` 登记 39 位 SHA `fc3c4f0a7a417171415fb5e3d869a744ba24d04`，与固定来源提交真实 40 位 blob `fc3c4f0a7a417171415fb5e3d869a744ba24d04f` 不符；修正元数据并复核 19/19 来源，不修改 AN-G 数值或源 `.m`。 | 已整改 |
-
-此项仅属**引用来源身份**错误，不代表 AN-G 数学数值已独立验证；AF-055、AF-043/044、AF-054 仍须独立 L3 和真实 C++/CTest 才能结案。先登记未整改，随后修改实际目标并在新提交复读。**登记当时状态**：68 项中 44 已整改、24 未整改；结案后的状态见 §12。
-
-
-## 11. 第一轮源码静态数学核对与 AF-067 结案（2026-11-08）
-
-**实质修改**（已推送 `d5265cc576e1c66ba1c63f8621ff1ad91d981195`）：
-
-- **AF-043 未整改**：`docs/design/kvd.md §9.1` 从原 `franzeigen.m` 和 Original/Modified KvD 提取分段行号、旧 t 计算 ω、near 符号翻转、最终均值尺度，增加**近度恒 1 时两分支相同／非均匀近度才能判别 `μ²`**的静态证明和测试资格。仍缺逐轮独立 L3、真实 C++/CTest。
-- **AF-044 未整改**：`docs/design/adaptive_mfa.md §10.1` 源码确认 `s<0` 时翻 near 后仍除旧负 s，手算示例使归一 near 均值为 **−1**；要求 M1～M4、6×6、MSE、重新估近度、Session 状态独立核验。仍缺完整固定输入独立 L3/CTest。
-- **AF-051、AF-054 未整改**：`docs/TEST_PLAN.md §2.5`、`docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md §3.1` 分别补充上述可判别输入与“离散严格判据≠0.01/0.1 宽松筛查”说明；不新增 TC、测试 PASS 或最终 DEC-005 容差。
-- **AF-055 未整改**：只验证 `analytic_golden_candidates.v1.json` 的来源身份、编号与文件存在性；**没有对 12 个候选数值进行独立 L3 数值验收**。
-
-**AF-067 已整改（仅来源身份元数据）**：输入 `d5265cc` 的 JSON `source_blob_shas` 19 项原始 Git SHA 中 1 条仅 39 位，先在 `86e3755` 登记「未整改」，再于 `18ddb7198490e9d2ff49ee2f66e8b3a4945ee58a` 实际修改 JSON。复核 JSON 所指来源提交 `ddb4b15e78dbd617d5d083d80c2d75aa47f14464` 的树，**19/19 Git blob SHA 匹配**、AN-G01～12 完整唯一，候选数据及其他字段未改。原始 `.m` 未改，不将身份校验冒充独立数值真值。
-
-**第一轮停止判断**：共 **68 个原子整改目标，45 已整改、23 未整改**。剩余目标需要真实数值/代码/CTest/性能或审批；按照用户指示，第一轮到此结束，**不执行新的 AUDIT 扫描或第二轮整改**。没有运行 Bash/CMake/CTest/MATLAB/Octave、生成独立 L2/L3/L4 或写入 MAT；H-10/H-11、`origin/**`、历史审批 JSON 均未变更。
-
-
-## 12. 本轮继续整改时新增问题：先登记后修订（2026-11-08）
-
-| ID | 文件相对路径 | 整改目标 | 状态 |
-|---|---|---|---|
 | AF-068 | `docs/AUDIT.md` | 末尾 §11/12 重复编号；统一章节顺序，并区分历史“退出”事实与本轮继续整改的最新执行原则。 | 已整改 |
 | AF-069 | `docs/AUDIT_PROCESS.md` | §9→§11 跳号；规范剩余未整改项的继续处理、阶段证据与限制说明，不把未执行的授权/测试误关单。 | 已整改 |
 | AF-070 | `docs/PROGRESS.md` | 增加本轮滚动证据记录：明确当前仍有 23 项未整改，按最新请求继续推进可执行的整改；将 H-10/H-11、论文/数字参考/审批的外部门槛保持可追踪。 | 已整改 |
-
-**此时初始两态**：71 项＝45 已整改＋26 未整改；当前仅审计登记，不意味着三条治理问题已修复或任何软件数值门槛已关闭。
-
-
-## 13. 继续处理的阶段性开放目标（2026-11-08）
-
-- **合同/基线**：AF-037～041、046；设计复读已有进展，但仍缺最终签名、独立验证和批准。
-- **算法/数据/测试**：AF-042～045、047～051、054～056、060；matio 独立探针、静态公式或夹具计划不能替代真实 C++、L2/L3/L4、CTest。
-- **人类授权与滚动证据**：AF-053、057、058、061；文档更新不得冒充 H-10/H-11、DEC-005/006/008 的正式批准。
-- **新增治理问题**：AF-068～070 已先登记为「未整改」，要实际修订并固定 SHA 复核后结案。历史“第一轮退出”仅属当时快照，本轮仍继续推进有权限的修订。
-
-
-## 14. AF-068～070 结案与继续执行状态（2026-11-08）
-
-首次提交 `6a54726` 时均为「未整改」；目标文件实际修订提交 `fa85cc638e58638768506b25c4b375566f6e8379` 静态复读**3/3 通过**（仅章节/过程证据一致性），此后改为「已整改」。现 **71 个原子目标：48 已整改、23 未整改**。剩余 23 条仍按原 AF-ID 保留真实证据/授权要求；不是因仍有开放目标就停止本轮文档及只读源码改进，也不宣称通过 C++/CTest、L2/L3 或签署冻结。
-
-
-## 15. 本轮新发现：控制矩阵子章节重号（先登记）
-
-| ID | 仓库根相对路径 | 整改目标 | 状态 |
-|---|---|---|---|
 | AF-071 | `docs/DOCUMENT_BASELINE_REGISTER.md` | §6.3 两次出现、后续 §6.4 顺序错位；调整为连续唯一的 6.1～6.5，保留原有固定文件身份/历史快照、审批和内容事实。 | 已整改 |
-
-**登记时**：72 项＝48 已整改、24 未整改；只有实际修改目标矩阵并在新提交检查编号后才可结案。
-
-
-## 16. AF-071 结案与既有阶段目标的静态进展（2026-11-08）
-
-- **AF-071 已整改**：先发现/登记，再修订 [控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，固定 `a27b092421a0465b10fb46054d158ab06a2c729f` 下 §6.1～6.5 逐个唯一且连续；**5/5 静态标题检查通过**，其余历史 SHA/许可不改变。
-- **AF-041、047 的部分进展**：原 `nonpropfehler.m` 对 N 个方向逐行 x/y/z 抽样，零尺度仍消耗 3N 个 normal、负有限尺度原源未显式拒绝；CLI 是否接受负系数仍属于 DEC-008 签署/CTest，不能替源创设非负门禁。
-- **AF-055 的部分进展**：AN-G04/05/06/07/09/10/11/12 仅做局部公式代数复核，其余 AN-G01～03 全序与 AN-G08 的 R3/R5 仍需独立核验；JSON 保持 `DRAFT_UNAPPROVED_UNEXECUTED`。
-
-**当前统计**：72 个原子 AF，49 已整改、23 未整改。后 23 个继续依原 ID 跟踪完整验证、签署和实际授权，不新增伪测试 PASS 或据此提前启动第二轮正式审计。
-
-
-## 17. P0.6 两份来源/迁移文件完成文件级建设（阶段进展）
-
-- [SOURCE_INVENTORY](SOURCE_INVENTORY.md) 保存 45 个原源文件真实 Git 身份和 SRS REQ/TC；[MIGRATION_MATRIX](MIGRATION_MATRIX.md) 保存同 45 个文件的候选方法职责。固定复核提交：650546a06ff7bb89b8c6bf29cac48f712ed2f2fa，静态三方集合 **45/45/45** 一致。
-- PLAN v0.8 与 TEST_PLAN v0.11 已消除五处原先“SOURCE_INVENTORY 未创建”的现行描述；仍须补逐函数迁移、独立 L2/L3、业务 Reader/Writer、真实 CTest 与人类批准。AF-037、039、051、056 均只记录部分进展，不提前结案。
-- **整改两态仍为 72 项：49 已整改、23 未整改**；新增文件不等于新软件测试或签署基线。
-
-
-## 18. AF-072～074：最新审计发现（修订前）
-
-| ID | 相对路径 | 具体目标 | 状态 |
-|---|---|---|---|
 | AF-072 | `docs/MIGRATION_MATRIX.md` | 明确源 45 .m 对应 50 个函数定义；将 `SHRotate.m` 的内部 M/U/P/V/W 五函数与主入口逐个登记，并声明它们的递推/独立 L3/生产实现均未完成。 | 未整改 |
 | AF-073 | `docs/AUDIT.md` | 去掉重复历史审计过程、旧退出语句和冗长 SHA 段落，保留 AU 主题、文件三态、有效规则、最新进度及历史 review 引用。 | 未整改 |
 | AF-074 | `docs/AUDIT_PROCESS.md` | 压缩重复历轮结案，保留全部 AF 编号/相对路径/独立目标/两态及真正未完成证据，详细 SHA 仅由历史 reviews/PROGRESS 留存。 | 未整改 |
 
-发现时统计：75 个原子目标（49 已整改、26 未整改）；本次只登记，不提前修改目标状态。
+## 2. 本轮范围与未关闭条件
+
+- **发现前**原有 72 项：49 已整改、23 未整改；新 AF-072～074 为函数级审计追踪及两份台账压缩，首次登记时状态为未整改。**当前登记**合计 **75 项：49 已整改、26 未整改**；待后续真实提交复核再转状态。
+- 剩余 23 项为 AF-037～061 的阶段目标（不含已完成的 AF-052、AF-059），涉及正式 SRS/HLD/LLD 身份与接口、MAT 逐值 SHA-256、安全 Reader/Writer、KvD/Adaptive/采样/轨迹/球谐/分析的 L2/L3/L4、真实 C++/CTest、DEC-005/006/008、论文及人类签署。
+- **局部进展不等于结案**：`MIGRATION_MATRIX.md` 已核 45 文件/50 函数声明；CLI/噪声候选与部分 AN-G 手算、SOURCE_INVENTORY/TEST_PLAN 静态对应已经补充。它们不解除缺失的独立数值与实施门槛。
+
+## 3. 证据与更新流程
+
+每轮先锁定分支提交并扫描 → 新 AF 先填「未整改」 → 修改原目标文档/实现/实测数据 → 在**新提交**复读并把证据记入 [PROGRESS.md](PROGRESS.md)/[版本登记](DOCUMENT_BASELINE_REGISTER.md) → 方可改「已整改」；旧的未解决项目保留 ID、缺口与状态。历史完整发现与核验可按固定提交从 [审计报告](reviews/FULL_DOCUMENT_AUDIT_2026-11-07.md)、[AF-067 来源 SHA 纠正](reviews/AUDIT_SEVEN_MATH_DOCS_RESOLUTION_2026-11-08.md)及 [本轮函数声明报告](reviews/AUDIT_FUNCTION_DECLARATIONS_AND_LEDGER_COMPACT_2026-11-08.md) 追溯。此处不重复不断追加旧轮次日志和 hash 表。第二轮全面审计仅在第一轮全部适用目标实际完成后启动。
