@@ -1,6 +1,6 @@
 # MAT 结果分析与可选绘图——详细设计草案
 
-> **LLD v0.9 草案，未冻结、未运行任何可视化程序。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
+> **LLD v0.10 草案，未冻结、未运行任何可视化程序。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
 
 ## 1. 只读分析合同
 
@@ -50,9 +50,26 @@ public:
 
 - circle_curve_in_the_sphere：绘制单位球与圆轨迹；
 - sinosodial_curve_in_the_sphere：绘制单位球与正弦轨迹；
-- spherical_harmonic_illustration：在球面角网格上绘制球谐函数形状。
+- spherical_harmonic_illustration：绘制由原脚本定义的**未归一化关联勒让德项与 cos 方位项形成的径向示意面**；**不能**直接拿求解器的九项归一化实球谐基函数图替代。
 - 图形几何和曲线数值/范围需与原 MATLAB 相符；无需声称像素级一致。禁止引入 Python/MATLAB Runtime。
 - 若无法使用 gnuplot 或其他可选后端，analyze 命令必须仍能完成数值输出，且清楚报告图形不可用状态。
+
+### 3.1 插图专用数学/显示合同与源异常（AF-090/091，未冻结）
+
+本段只审查原作者 **`illustrations/`** 下三份可选展示脚本；它们与 `help_functions/kugelflfunc2.m` 的数值球谐计算、`near_aus_koeff.m` 的重建、轨迹数据生成以及 `AnalysisDataset` 的只读分析是**不同的职责**。不得以插图公式反向更改核心数学模块，亦不得因绘图依赖不可用阻塞不含绘图的 `analyze`。以下源行是**只读静态证据**，不是实际 MATLAB 运行或独立 L3。
+
+| 源脚本与定位 | 原始数值/显示行为 | 必须保留的原版区别 |
+|---|---|---|
+| `spherical_harmonic_illustration.m:10–30` | `delta=π/40`；极角 `θ=0:delta:π`（41 值），方位角 `φ=0:2delta:2π`（41 值）；`meshgrid` 形成角网格。取 `P_degree^order(cosθ)` 即 MATLAB `legendre(degree,cos(theta(:,1)))` 的第 `order+1` 行，沿方位角重复并乘 `cos(order·φ)`，得到 `yy`；随后 `scale=max(max(abs(yy)))`、`rho=5+3·yy/scale`，再按 `x=rho·sinθ·cosφ`、`y=rho·sinθ·sinφ`、`z=rho·cosθ` 生成面。 | **没有** `kugelflfunc2` 的 `A_{l|m|}` 正交归一化，也没有其 `m<0` 对应的 `sin(|m|φ)` 分支；参数 `order` 在源脚本里被**覆写为幅值 scale**，不是新增球谐阶数。只承诺源直接索引的非负整数 `0≤order≤degree` 之候选输入域；`scale=0`/非法 degree/order 的显式失败属于 C++ 安全候选，原源可能报错/除零，不得伪称已实测。 |
+| `circle_curve_in_the_sphere.m:6–44` | 选择 `kreis_trajektorie(stellen=600,parameter=0.6,hoehe=0.3)`。先 `sphere(quality=50)` 生成单位球表面，再对满足 `y<=0` 的球面**只令 z=NaN**（不改 x/y），绘制球面与圆轨迹，标题文本是 `circular trajectory within the sphere`。 | 球面是原图的**单侧遮罩示意**，不能当作完整无缺的可见球壳；轨迹仍用源 `kreis_trajektorie.m` 的 `2π(i-1)/stellen`，不改变数值轨迹。 |
+| `sinosodial_curve_in_the_sphere.m:7–45` | 选择 `sinuskurve_trajektorie(stellen=600,amplithude=0.5,laenge=1,anzahlperioden=2,hoehe=0.3)`；相同 `sphere(50)` 和 `y<=0 → z=NaN` 球面遮罩，按正弦点列叠加轨迹。 | 源代码第 45 行**依然写** `title('circular trajectory within the sphere')`，而所谓正弦标题只在第 46 行被注释。这个**标题错误是原版事实**：忠实显示需保留或明确标注该差异；如另提供修正标题，须标记为非原版展示选项，不能称其为 MATLAB 原始标题。 |
+
+**防止混淆的静态夹具资格（沿用 `TC-F-AN-002`）**：
+
+1. 插图 `degree=0,order=0`：`P_0^0=1`、`yy=1`、`scale=1`，因而全部格点 `rho=8`（**不是**归一化的 `Y_{00}=1/√(4π)`）；`degree=1,order=0` 时 `yy=cosθ`、`rho=5+3cosθ`。两者为手工代数候选，不是已生成的 L3 文件。
+2. 插图 `degree=1,order=1`：只使用 `P_1^1(cosθ)cosφ`，不得以 `Y_{1,-1}` 的 `sinφ` 分支代替；检查 41×41 角网格、`rho`、x/y/z 的单位和显示值；非法 `order`/零尺度必须单独有非成功状态。
+3. 圆与正弦分别核对 600 点、固定参数、`sphere(50)`、`y<=0` 的 z-only NaN 遮罩、源标题与真实轨迹类别的差异；`kreis_trajektorie.m`、`sinuskurve_trajektorie.m` 内部均有 `line` 显示副作用，**数值轨迹生成模块不能复制该副作用**，图像组合交由可选绘图层。
+4. 这些只是未来**数值几何/源标题**的 `TC-F-AN-002` 候选断言，不新增 TC、不执行绘图/数值程序。像素级图形等价、渲染器灯光等不作为当前数值 AC 的自动通过条件。核心球谐归一化与相位只由 [harmonics.md](harmonics.md) 负责，其 `TC-F-SH-001/002` 仍独立未验收。
 
 ## 4. 验收、Golden 和阻塞
 
