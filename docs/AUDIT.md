@@ -78,7 +78,7 @@
 | `docs/design/sampling_noise.md` | 正在审计 | 有序采样与 RNG 消耗；待 AF-047 |
 | `docs/design/trajectory.md` | 正在审计 | AF-080 严格反向源返回已明确，TR-C01～04 静态候选已补；AF-048 仍缺独立 L3/CTest |
 | `docs/design/experiments.md` | 正在审计 | 五入口、Runner/Manifest/save；AF-034 已整改，待 AF-049 |
-| `docs/design/analysis_plotting.md` | 正在审计 | 四种分析、曲线、HistoricalOnly；待 AF-050；AF-075/076 已完成静态设计复核；AF-050 仍需独立 L3/真实 CTest |
+| `docs/design/analysis_plotting.md` | 正在审计 | 四种分析、曲线、HistoricalOnly；待 AF-050；AF-075/076 已完成静态设计复核；AF-050 仍需独立 L3/真实 CTest ；新增 AF-083 Bias xwerte 逐次覆盖语义待修订 |
 | `docs/decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | 已审计 | DEC-004 现行处理已选 |
 | `docs/decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md` | 已审计 | 所有者已选技术方向 |
 | `docs/golden/NO_MATLAB_EXECUTION_POLICY.md` | 已审计 | L1 永久不必需 |
@@ -221,3 +221,8 @@
 原扫描 `669ef11` 发现表内仍有“54 文件/75 条 AF”作为**现行**说明；先在 `f29e406` 登记「未整改」，再以 `8cd782b2f2558edf7cb51c101a40117b80e61dcc` 的静态复核确认两行已改为从 AUDIT 当前相对路径与 AUDIT_PROCESS 当前唯一 AF-ID 计算，**7/7 定向检查通过**（含保留历史轮次原数字、路径/AF 唯一性）。这不是改写历史数值。
 
 **目前整改项目 83 项：60 已整改、23 未整改；审计对象 59 个：36 已审计、23 正在审计、0 空白。** 真正的 L2/L3/L4、软件/CTest、P0 基线/DEC 仍缺，不因此宣布软件完成或启动正式第二轮全面审计。
+
+
+## 19. 新增 Bias 历史聚合合同缺口（AF-083，先登记）
+
+在固定输入 `19157a21221a8fde4447e3c96ff97a8da1a5746f` 静态对照 `origin/.../bias_test/data_analysis/graphs_bias_test.m` 与 [分析 LLD](design/analysis_plotting.md) §5、[测试计划](TEST_PLAN.md) 时发现：`k=1:number_of_cores` 中 `ywerte3…6` 的四组矩阵累加并在循环后除以 `number_of_cores`，但 `xwerte` 在**每次循环直接覆写**，最终绘图只使用**最后一个 k 的 xwerte**，不求 x 均值。现 LLD 的 Bias 聚合行及 APL-G01 还未明确此单侧更新顺序。整改在 [AUDIT_PROCESS](AUDIT_PROCESS.md) 先登记为「未整改」；既有阶段目标 AF-050 的独立 L2/L3/CTest 仍开放。
