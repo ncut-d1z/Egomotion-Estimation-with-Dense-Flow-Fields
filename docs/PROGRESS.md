@@ -260,3 +260,10 @@ reviewed_by / review_date:
 - 固定修订提交 `844b64747f50f0e2284fc0aa61d792d59b82ea2c` 新建 [源面次序审阅](reviews/AN_G_LEVEL0_FACE_ORDER_STATIC_2026-11-08.md)，使用四个只读采样源函数的顶点/面索引、中心归一公式，与现有 AN-G01/02/03 JSON 的 **8/6/20 行符号和顺序**做逐行静态检查，未检出不一致；同时修订 sampling LLD v0.6、Golden 容差草案 v0.5 和 TEST_PLAN v0.15。
 - 仅为输入 `level=0` 的符号/声明级交叉核对：`findeDreiecke` 的 `A/B/C/D` 递归到 i=1/2 的完整有序数值、独立生成器、MATLAB/真实业务 C++/CTest 与 DEC-005 正式签署均未执行；AF-047/055 继续「未整改」。
 - AUDIT 新增该报告至审计对象，更新为 58 项；问题状态仍 81 项中 58 已整改/23 未整改，`origin/**` 保持只读。
+
+
+### E-DOC-046（2026-11-08：AF-081 索引级静态复核）
+
+- 先在 `a0f52a6` 登记 AF-081，随后 `4f9e48252f8be2994c67e09aefd4c036b38e9f68` 修订采样/测试/Golden 和 [递归索引审计](reviews/AN_G_RECURSION_INDEX_STATIC_2026-11-08.md)；固定新树上**10/10 源码字符串、算式索引与链接检查通过**，源 `origin/**` 树未变。
+- 静态行号按原面块序号和 `A/B/C/D` 四进制路径对应 MATLAB 1-based 行；level1 的 32/24/80、level2 的 128/96/320 只核**行数与索引逻辑**。没有独立计算所有三维方向，不宣称 Golden/CTest 通过或批准 DEC-005。
+- AF-081 已结案（仅文档），当前 82 项整改：59 已整改、23 未整改；AUDIT 59 文件：36 已审计、23 正在审计。H-10/H-11 尚未解除，无生产 C++、MATLAB/Octave 或 MAT 写入。

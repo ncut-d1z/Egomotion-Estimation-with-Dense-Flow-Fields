@@ -270,3 +270,17 @@ AF-041/047/055/058 与其它开放目标仍须独立数据/真实软件及审批
 | `docs/TEST_PLAN.md` | `e974b80d0df87e61eefb5f84546e40e1f617e1e6` | v0.15，仍仅候选 TC 及数学前置条件 |
 
 此处不改变旧 36 文件固定版本身份矩阵的历史值或任何批准/CTest 状态；最新审计集合与阶段目标分别见 AUDIT/AUDIT_PROCESS。
+
+
+### 6.14 新的递归行号合同固定身份（非签署基线）
+
+定向静态复核输入 `4f9e48252f8be2994c67e09aefd4c036b38e9f68`，仅保留下列当时 Git blob SHA，不将旧 36 文件矩阵追溯改成新版本：
+
+| 文件 | 该提交的 blob SHA | 范围 |
+|---|---|---|
+| `docs/design/sampling_noise.md` | `d74ee2fc2fcb55caa235f0030bb9a2309c15f9e6` | v0.7；原递归索引和测试资格，不是 L3 PASS |
+| `docs/TEST_PLAN.md` | `38765a42c335254e369aeef83ddbc5e27122dc5b` | v0.16；既有 TC 的额外索引条件 |
+| `docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md` | `fe1ad898090eb2d66ca99149dfeac189cf7c5696` | v0.6；level1/2 数值仍待独立 L3 |
+| `docs/reviews/AN_G_RECURSION_INDEX_STATIC_2026-11-08.md` | `3d6c44bb6f5a7d1baf31c72dcfd476dd17f0e9e3` | 静态子面顺序、四叉行号的审阅报告 |
+
+**权限和基线界限不变**：此轮没有真实 CMake/CTest、MAT 逐值、数学独立 L3 或批准签署。
