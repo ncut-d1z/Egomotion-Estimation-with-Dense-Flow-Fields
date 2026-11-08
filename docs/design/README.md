@@ -2,7 +2,7 @@
 
 > **长期证据规则**：[不执行 MATLAB 的项目政策](../golden/NO_MATLAB_EXECUTION_POLICY.md) 已取消原 MATLAB L1 Golden 的强制门禁。LLD 与验收只要求来源清楚的 L2/L3/L4、真实 C++/CTest 和批准容差；**缺少 MATLAB 运行不阻塞冻结**，但不能宣称原脚本的未知异常/RNG/逐位输出已验证。
 
-> **LLD 索引 v0.7（所有模块草案、未冻结；未建立生产 C++/CTest 证据）。** 索引中的文件已实际创建，但其中的候选 C++17 接口、数学步骤、测试路径和错误枚举没有对应已实现代码。源 MATLAB 文件和已保存 MAT 仍由 origin/** 只读保存。
+> **LLD 索引 v0.8（所有模块草案、未冻结；未建立生产 C++/CTest 证据）。** 索引中的文件已实际创建，但其中的候选 C++17 接口、数学步骤、测试路径和错误枚举没有对应已实现代码。源 MATLAB 文件和已保存 MAT 仍由 origin/** 只读保存。
 
 ## 文档职责
 
@@ -13,7 +13,7 @@
 - [PLAN.md](../PLAN.md)：98 个 P0–P10 最小工作项、任务依赖、风险与里程碑。
 - [PROGRESS.md](../PROGRESS.md)：阶段及里程碑、DEC 处理、实际执行结果、人员/批准的**唯一动态登记**。历史证据可在 [reviews/](../reviews/) 中查验；固定 Git SHA 后的变更不能被前一份报告覆盖。
 - [TODO.md](../TODO.md)：**仅需人类参与且可推迟**的材料/授权/最终基线事项，逐项记原因与建议处理时间；普通 C++ 私有实现技术细节不作人类待审项。
-- [DOCUMENT_BASELINE_REGISTER.md](../DOCUMENT_BASELINE_REGISTER.md)：**选定规范及证据文件的固定版本、状态和 Git blob SHA 登记**（原快照共 36 项，含附件/历史证据，非全部文件）；全部当前审计对象及进度见 [AUDIT.md](../AUDIT.md)（目前 50 个路径）。新增审计对象**不自动取得正式基线资格**；不在每个 LLD 重复维护 SHA 表。
+- [DOCUMENT_BASELINE_REGISTER.md](../DOCUMENT_BASELINE_REGISTER.md)：**选定规范及证据文件的固定版本、状态和 Git blob SHA 登记**（原快照共 36 项，含附件/历史证据，非全部文件）；全部**实时**审计对象数量与逐文件三态只见 [AUDIT.md](../AUDIT.md)，不在静态索引复制会过期的路径计数。新增审计对象**不自动取得正式基线资格**；不在每个 LLD 重复维护 SHA 表。
 - [contracts.md](contracts.md)：C++17 领域值类型、Result<T,E>、错误分类、资源生命周期与跨模块接口的**统一候选合同**。
 - 本目录每份文档是**对应模块的 LLD 草案**，具体签名、公式、错误处理、数据布局应在 P0.8 以后逐个确认。
 
@@ -21,7 +21,7 @@
 
 | 模块 | 对应文档 | 原只读 MATLAB 源范围 | 数学/数据约定 | 候选 API | L2/L3/L4 参考/实测 | 冻结状态 |
 |---|---|---|---|---|---|---|
-| 跨模块 C++17 合同 | [contracts.md](contracts.md) | SRS/OBJECT_MODEL/全部模块 | 值类型、ErrorDetail 稳定字段与唯一 Mat/Num/Experiment 错误码；MatDenseArray 归 io | **轻量封装 Result/Status（内部 variant）已选定，仍未实现**，DataMismatch 限定范围 | 无真实测试 | 未冻结，P0.8/DEC-008 |
+| 跨模块 C++17 合同 | [contracts.md](contracts.md) | SRS/OBJECT_MODEL/全部模块 | 值类型、ErrorDetail 稳定字段与 Mat/Numerical/Experiment 错误枚举；**AnalysisErrorCode 在 analysis_plotting 定义，stage/exit 仅由 contracts §3.1 映射**；MatDenseArray 归 io | **轻量封装 Result/Status（内部 variant）已选定，仍未实现**，DataMismatch 限定范围 | 无真实测试 | 未冻结，P0.8/DEC-008 |
 | CLI 参数与错误协议 | [cli.md](cli.md) | 五个实验入口、inspect、analyze、可选 plot | 按入口列出参数/合法范围、退出码与诊断字段 | 候选命令/错误 schema | 未测 | 阻塞 P0.8/P1.2、DEC-008 |
 | MAT I/O | [mat_io.md](mat_io.md) | getflowfield、各入口 load/save、582 MAT | **582/582 真实 v5+zlib/double 类型字典已获得**；生产 Reader/Writer、路径安全仍待验收 | 候选签名/错误码 | **独立探针已执行，非 CTest** | DEC-001/002 格式事实已证实，接口未冻结 |
 | 基础采样与噪声 | [sampling_noise.md](sampling_noise.md) | findeDreiecke、采样/流/噪声函数 | 数量、顺序、噪声方程、RNG 消耗与自拥有 FlowField/结果；**源 `fixed_*` 返回 near 是末次标量，C++ nearness 向量仅为新增诊断数据** | **egomotion_sampling/simulation 的接口、头文件边界与 TC/CTest 候选** | L3 独立有序方向/固定 RNG 仍待验证 | 未冻结，P0.8/DEC-008 |
@@ -87,7 +87,7 @@
 
 | 单一合同归属与模块 | 候选签名/边界核对入口 | 尚缺的可编码、可验证证据 |
 |---|---|---|
-| [contracts](contracts.md)（公共值/错误） | §2～4：`FlowField`、`Result/Status`、`Failure/ErrorDetail`；`MatDenseArray` 由 MAT I/O 定义 | C++17 公共头、`valueless_by_exception`/ABI/线程/错误传播实测，DEC-008 批准 |
+| [contracts](contracts.md)（公共值/错误） | §2～4：`FlowField`、`Result/Status`、`Failure/ErrorDetail`；`MatDenseArray` 由 MAT I/O 定义，分析模块 `AnalysisErrorCode` 的 stage/exit 候选只在 contracts §3.1 维护 | C++17 公共头、`valueless_by_exception`/ABI/线程/错误传播实测，DEC-008 批准 |
 | [CLI](cli.md)（Composition Root） | §2～4：命令类型、`RunId`、JSONL；错误码映射**引用** contracts | 自动/手工 RunId、负噪声、JSON 转义及退出优先级的真实测试与签署 |
 | [MAT I/O](mat_io.md)（具体 Reader/Writer） | §2、§7：自拥有 `MatDenseArray`、RAII、严格/兼容读、Writer；不向领域层暴露 matio C 指针 | 生产代码、L2 逐值/SHA-256、路径安全/写回读/异常负例与 CTest |
 | [采样/噪声](sampling_noise.md)（sampling/simulation） | §3、§6：方向采样、注入 RNG/噪声，接口归 contracts；源 `near_last` 与新向量分离 | i=1/2 完整有序 L3、抽样次数/非有限负例、真实 C++/CTest |
