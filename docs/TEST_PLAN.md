@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **测试计划草案 v0.7，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
+> **测试计划草案 v0.8，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
 
 > **审批后候选核对材料**：见 [HAR-2026-11-06-001 设计修订与待审材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md) §2、§3、§7～§9。其中历史上提出六类容差采集格式、582 MAT SHA-256 独立审核和正式 Reader 类型拒绝清单；**当前参考采集/核验路径以 L2/L3/L4 为准，完全不要求 MATLAB/Octave 执行或 L1 Golden**，见 [长期政策](golden/NO_MATLAB_EXECUTION_POLICY.md)。`atol=0.01`/`rtol=0.1` 已由所有者选作**首轮宽松筛查**，不是已冻结的最终验收阈值；测试实体/CTest 仍未执行，H-10/H-11 其他执行门禁未解除。
 
@@ -141,10 +141,10 @@
 | TC-D-MAT-001 | REQ-D-MAT-001 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-D-MAT-001 | 独立 matio 探针 582/582 已实测；业务 TC/CTest 及 P10.4 复核未完成 |
 | TC-D-MAT-002 | REQ-D-MAT-002 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-D-MAT-002 | 未编写/未运行 |
 | TC-D-MAT-003 | REQ-D-MAT-003 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-D-MAT-003 | 未编写/未运行 |
-| TC-DC-DOMAIN-001 | REQ-DC-DOMAIN-001 | docs/OBJECT_MODEL.md / docs/SOURCE_INVENTORY.md | 人工设计/来源评审；部分接口需合同测试 | AC-DC-DOMAIN-001 | 未编写/未运行 |
-| TC-DC-IO-001 | REQ-DC-IO-001 | **候选** tests/contracts/test_mat_raii.cpp；docs/OBJECT_MODEL.md / docs/SOURCE_INVENTORY.md | **候选** egomotion.mat.raii.* ＋人工设计/来源评审 | AC-DC-IO-001 | 未编写/未运行；MatDenseArray 自拥有/移动、ErrorDetail 传播、句柄释放待验证 |
-| TC-DC-RNG-001 | REQ-DC-RNG-001 | **候选** tests/unit/test_sampling.cpp ＋ tests/unit/test_flow_simulation.cpp；docs/OBJECT_MODEL.md / docs/SOURCE_INVENTORY.md | **候选** egomotion.geometry.* / egomotion.flow.* ＋人工设计评审（依 [sampling_noise.md §8](design/sampling_noise.md)） | AC-DC-RNG-001 | 未编写/未运行；固定 RNG 值、调用数/耗尽和上下文待验证 |
-| TC-DC-NOISE-001 | REQ-DC-NOISE-001 | **候选** tests/unit/test_flow_simulation.cpp；docs/OBJECT_MODEL.md / docs/SOURCE_INVENTORY.md | **候选** egomotion.flow.* ＋人工设计评审（依 [sampling_noise.md §8](design/sampling_noise.md)） | AC-DC-NOISE-001 | 未编写/未运行；两噪声模型、错误上下文和样本数待验证 |
+| TC-DC-DOMAIN-001 | REQ-DC-DOMAIN-001 | 现有：[OBJECT_MODEL.md](OBJECT_MODEL.md)、[REQUIREMENTS.md §9.2](REQUIREMENTS.md) 的 45 源文件追踪；待建：SOURCE_INVENTORY（P0.6，未创建） | 人工设计/来源评审；部分接口需合同测试 | AC-DC-DOMAIN-001 | 未编写/未运行 |
+| TC-DC-IO-001 | REQ-DC-IO-001 | **候选** tests/contracts/test_mat_raii.cpp；现有：[OBJECT_MODEL.md](OBJECT_MODEL.md)、[MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md) 的归档证据；待建：SOURCE_INVENTORY（P0.6，未创建） | **候选** egomotion.mat.raii.* ＋人工设计/来源评审 | AC-DC-IO-001 | 未编写/未运行；MatDenseArray 自拥有/移动、ErrorDetail 传播、句柄释放待验证 |
+| TC-DC-RNG-001 | REQ-DC-RNG-001 | **候选** tests/unit/test_sampling.cpp ＋ tests/unit/test_flow_simulation.cpp；现有：[OBJECT_MODEL.md](OBJECT_MODEL.md)、[REQUIREMENTS.md §9.2](REQUIREMENTS.md)；待建：SOURCE_INVENTORY（P0.6，未创建） | **候选** egomotion.geometry.* / egomotion.flow.* ＋人工设计评审（依 [sampling_noise.md §8](design/sampling_noise.md)） | AC-DC-RNG-001 | 未编写/未运行；固定 RNG 值、调用数/耗尽和上下文待验证 |
+| TC-DC-NOISE-001 | REQ-DC-NOISE-001 | **候选** tests/unit/test_flow_simulation.cpp；现有：[OBJECT_MODEL.md](OBJECT_MODEL.md)、[REQUIREMENTS.md §9.2](REQUIREMENTS.md)；待建：SOURCE_INVENTORY（P0.6，未创建） | **候选** egomotion.flow.* ＋人工设计评审（依 [sampling_noise.md §8](design/sampling_noise.md)） | AC-DC-NOISE-001 | 未编写/未运行；两噪声模型、错误上下文和样本数待验证 |
 | TC-DC-KVD-001 | REQ-DC-KVD-001 | tests/unit/test_estimators.cpp | egomotion.estimators.* | AC-DC-KVD-001 | 未编写/未运行 |
 | TC-DC-ADAPT-001 | REQ-DC-ADAPT-001 | tests/unit/test_adaptive_mfa.cpp | egomotion.adaptive.* | AC-DC-ADAPT-001 | 未编写/未运行 |
 | TC-DC-EXPERIMENT-001 | REQ-DC-EXPERIMENT-001 | tests/integration/test_adaptive_experiments.cpp | egomotion.experiments.* | AC-DC-EXPERIMENT-001 | 未编写/未运行 |
@@ -163,7 +163,7 @@
 | TC-NF-PORTABLE-001 | REQ-NF-PORTABLE-001 | tests/integration/test_deployment.cpp | egomotion.deployment.* | AC-NF-PORTABLE-001 | 未编写/未运行 |
 | TC-NF-RUNTIME-001 | REQ-NF-RUNTIME-001 | tests/benchmarks/benchmark_original_runs.cpp | 非 CTest 基准 | AC-NF-RUNTIME-001 | 未编写/未运行 |
 | TC-NF-SESSION-001 | REQ-NF-SESSION-001 | tests/contracts/test_state_isolation.cpp | egomotion.isolation.* | AC-NF-SESSION-001 | 未编写/未运行 |
-| TC-NF-COPYRIGHT-001 | REQ-NF-COPYRIGHT-001 | docs/OBJECT_MODEL.md / docs/SOURCE_INVENTORY.md | 人工设计/来源评审；部分接口需合同测试 | AC-NF-COPYRIGHT-001 | 未编写/未运行 |
+| TC-NF-COPYRIGHT-001 | REQ-NF-COPYRIGHT-001 | 现有：[OBJECT_MODEL.md](OBJECT_MODEL.md)、[所有者技术决定](decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md)、[LICENSE](../LICENSE)；待建：SOURCE_INVENTORY（P0.6，未创建） | 人工设计/来源评审；部分接口需合同测试 | AC-NF-COPYRIGHT-001 | 未编写/未运行 |
 | TC-F-CLI-002 | REQ-F-CLI-002 | tests/integration/test_cli.cpp | egomotion.cli.* | AC-F-CLI-002 | 未编写/未运行 |
 | TC-F-CLI-003 | REQ-F-CLI-003 | tests/integration/test_cli.cpp | egomotion.cli.* | AC-F-CLI-003 | 未编写/未运行 |
 | TC-F-CLI-004 | REQ-F-CLI-004 | tests/integration/test_cli.cpp | egomotion.cli.* | AC-F-CLI-004 | 未编写/未运行 |
@@ -172,6 +172,8 @@
 | TC-I-MAT-001 | REQ-I-MAT-001 | tests/golden/test_mat_archive.cpp | egomotion.mat.* | AC-I-MAT-001 | 未编写/未运行 |
 | TC-I-RESULT-001 | REQ-I-RESULT-001 | tests/integration/test_adaptive_experiments.cpp | egomotion.experiments.* | AC-I-RESULT-001 | 未编写/未运行 |
 | TC-I-ANALYSIS-001 | REQ-I-ANALYSIS-001 | tests/golden/test_analysis.cpp | egomotion.analysis.* | AC-I-ANALYSIS-001 | 未编写/未运行 |
+
+**来源资料状态（AF-063）**：当前可使用 [SRS 的 45 个 .m 路径/REQ/TC 映射](REQUIREMENTS.md)、[对象模型](OBJECT_MODEL.md)、[MAT 数据字典](MAT_DATA_SCHEMA.md) 和已选技术决定；P0.6 中的 `SOURCE_INVENTORY` / `MIGRATION_MATRIX` 仍是**未创建的计划交付物**，不能作为已取得的人工来源审核证据。上述五行保留原 TC/REQ/AC 编号，真实测试文件、来源验收与 CTest 仍未执行。
 
 ## 4. 非功能指标和验收记录格式
 
@@ -335,3 +337,5 @@ bash scripts/check_docs_traceability.sh
 任何更改 MATLAB 对应公式、输出变量、MAT 读取边界、随机数处理、数值容差或实验输入都必须更新 REQ/TC/AC 对照并重新生成对照证据；不能通过跳过失败样本、修改阈值或者仅重新绘图来宣布结果通过。真实构建与 CTest 开始之前须遵守 AGENTS.md 的远程检查点规则。
 
 **当前状态：66 个 TC 均未创建真实测试函数或 CTest，不能计为通过。**
+
+**v0.8 文档修订（AF-063）**：五个 TC 行的尚未创建来源清单与现有可用文档分开列示，不修改 TC/AC/REQ、Golden 数值、授权或任何 PASS 状态。

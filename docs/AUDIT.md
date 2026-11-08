@@ -59,24 +59,24 @@
 |---|---|---|
 | `docs/AUDIT.md` | 正在审计 | 审计规则、AU 主题、逐文件三态；新增 AF-064～066 待修 |
 | `docs/AUDIT_PROCESS.md` | 已审计 | AF 目标和两态；历史已结案 |
-| `docs/REQUIREMENTS.md` | 正在审计 | SRS/66 REQ/AC、REQ-DC、DEC；待 AF-032、AF-037 |
+| `docs/REQUIREMENTS.md` | 正在审计 | SRS 的 58 条正文 REQ + 8 条附录 REQ-DC、AC/DEC；待 AF-037 |
 | `docs/PLAN.md` | 正在审计 | WBS 98 P、依赖和里程碑；待 AF-052、AF-061 |
-| `docs/TEST_PLAN.md` | 正在审计 | 66 TC→候选测试→AC/L2～L4；AF-035 已修，新增 AF-063 需修，AF-051 仍待真实测试 |
-| `docs/design/README.md` | 正在审计 | LLD 索引、单一来源；待 AF-059、AF-062 |
-| `docs/DOCUMENT_BASELINE_REGISTER.md` | 正在审计 | 36 登记项与固定身份、冻结状态；待 AF-036、AF-058 |
+| `docs/TEST_PLAN.md` | 正在审计 | 66 TC（含 8 条 TC-DC）→候选测试→AC；AF-063 已改源待静态复核，AF-051 仍待真实测试 |
+| `docs/design/README.md` | 正在审计 | LLD 索引、单一来源；AF-062 已整改，待 AF-059 |
+| `docs/DOCUMENT_BASELINE_REGISTER.md` | 正在审计 | 36 项固定快照身份与正式冻结状态；AF-036 已整改，待 AF-058 |
 | `docs/PROGRESS.md` | 正在审计 | 真实证据与动态 DEC/里程碑；待 AF-053 |
 | `docs/ARCHITECTURE.md` | 正在审计 | HLD/27 条设计边、部署/Writer；待 AF-038 |
 | `docs/OBJECT_MODEL.md` | 正在审计 | 生命周期、45 .m 映射；待 AF-039 |
 | `docs/design/contracts.md` | 正在审计 | Result/Status/ErrorDetail、所有权；待 AF-040 |
 | `docs/design/cli.md` | 正在审计 | 参数类型、RunId、JSONL/错误；待 AF-041 |
-| `docs/design/mat_io.md` | 正在审计 | MAT 类型、RAII、Reader/Writer/安全；待 AF-033、AF-042 |
+| `docs/design/mat_io.md` | 正在审计 | MAT 类型、RAII、Reader/Writer/安全；AF-033 已整改，待 AF-042 |
 | `docs/design/kvd.md` | 正在审计 | Franz/KvD 公式、逐轮顺序；待 AF-043 |
 | `docs/design/adaptive_mfa.md` | 正在审计 | M1～M4、MSE、Session；待 AF-044 |
 | `docs/design/harmonics.md` | 正在审计 | 九项实球谐、R3/R5、Eigen；待 AF-045 |
 | `docs/design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 正在审计 | 论文/勘误和声明级边界；待 AF-046 |
 | `docs/design/sampling_noise.md` | 正在审计 | 有序采样与 RNG 消耗；待 AF-047 |
 | `docs/design/trajectory.md` | 正在审计 | Sophus、Rᵀ、近零、球内近度；待 AF-048 |
-| `docs/design/experiments.md` | 正在审计 | 五入口、Runner/Manifest/save；待 AF-034、AF-049 |
+| `docs/design/experiments.md` | 正在审计 | 五入口、Runner/Manifest/save；AF-034 已整改，待 AF-049 |
 | `docs/design/analysis_plotting.md` | 正在审计 | 四种分析、曲线、HistoricalOnly；待 AF-050 |
 | `docs/decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | 已审计 | DEC-004 现行处理已选 |
 | `docs/decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md` | 已审计 | 所有者已选技术方向 |
@@ -112,14 +112,14 @@
 ## 4. 本轮新增审计与整改任务（2026-11-08）
 
 - **新增审计对象**：`docs/golden/analytic_golden_candidates.v1.json`；连同原 49 个路径，现共 **50 个对象**。本轮处于「正在审计」的 24 个目标文件，是因为新增文字整改或证据/批准检查尚未闭环；其余 26 个「已审计」仅指既有静态范围，空白 0。
-- **新增事项**：`AF-032～035`（4 条历史字段措辞统一）、`AF-036`（36 份版本登记与 50 个审计对象的**不同统计口径**）、`AF-037～061`（25 条设计冻结、真实验证、数据及批准证据）。每条的**文件、具体目标、两态**统一见 [AUDIT_PROCESS.md §3](AUDIT_PROCESS.md)。所有新条目首先标「未整改」，没有因编制台账而假称已实施。
+- **首次登记事项**：`AF-032～035`（4 条历史字段措辞统一）、`AF-036`（36 份版本登记与 50 个审计对象的**不同统计口径**）、`AF-037～061`（25 条设计冻结、真实验证、数据及批准证据）。具体目标和**最新两态**见 [AUDIT_PROCESS.md §3](AUDIT_PROCESS.md)；首次发现时均为「未整改」，后来六项文档整改（含 AF-062）见 §7。
 - **建议顺序**：先修四处措辞及登记口径 → SRS/AC/REQ-DC → HLD/对象模型/contracts → 各模块 LLD → 在获授权后建测试及 L2/L3/L4 证据 → DEC-005/006/008、冻结签署 → 更新版本矩阵。绘图后端可选；无 MATLAB/L1 强制门禁。
-- **阶段边界**：本轮仅压缩两台账并登记计划，**尚未整改上述源文件或执行 C++、Bash、CMake、CTest、MAT 写入、MATLAB/Octave**；历史 AF-001～031 已结案事实不因此重开。
+- **初次登记时的边界（历史）**：当时仅压缩两台账并登记 AF-032～061，未改目标源文件；其后 AF-032～036、AF-062 的文档修订与结案见 §7，**当前仍未完成的是 AF-037～061**。此前与本次均未执行 C++、Bash、CMake、CTest、MAT 写入或 MATLAB/Octave；历史 AF-001～031 的结案不被重开。
 
 ## 5. 历史审计结论与证据限制
 
 - **此前静态审阅**：49 个路径曾在限定静态范围记为「已审计」；旧 AF-001～031 共 32 个原子问题的**文本一致性整改**均有历史复核记录，概要保留在 [AUDIT_PROCESS.md](AUDIT_PROCESS.md)。
-- **设计追踪**：66 REQ / 66 TC / 98 P / 8 REQ-DC / 45 个原 .m 映射、27 条 HLD 静态 DAG 边；不是 CMake/CTest 实绩。
+- **设计追踪**：**58 条正文 REQ + 附录 8 条 REQ-DC = 66 条 REQ**；相应 66 条 TC（其中 8 条 TC-DC）；98 P、45 个原 .m 映射及 27 条 HLD 静态 DAG 边。**8 REQ-DC 已包含在 66 中，不是额外新增**；不是 CMake/CTest 实绩。
 - **MAT 数据**：独立 matio 探针曾报 582/582 READ_OK；尚缺独立 SHA-256、逐值 L2、正式业务 Reader/Writer/回读和安全负例。
 - **数学/实现**：尚缺 Ivanic 1996/1998 原文复核、R3/R5 与一般/退化 L3、必要 L4、真实 C++/CTest；首轮 `atol=0.01,rtol=0.1` 已选，最终 DEC-005/006/008、文档冻结/发布仍未完成。
 - 历史详细过程及固定 SHA 留在 [FULL_DOCUMENT_AUDIT](reviews/FULL_DOCUMENT_AUDIT_2026-11-07.md)、[七份数学文档复核](reviews/AUDIT_SEVEN_MATH_DOCS_RESOLUTION_2026-11-08.md)、[增量扫描](reviews/AUDIT_FOUR_POLICY_DRIFTS_SCAN_2026-11-08.md) 和 PROGRESS；此处不重复长篇日志或 hash 表。
