@@ -94,8 +94,10 @@ printf '\n[1/3] CMake configure\n' | tee -a "${LOG_FILE}"
 printf '\n[2/3] Build\n' | tee -a "${LOG_FILE}"
 "${CMAKE_BIN}" --build "${BUILD_DIR}" --config "${BUILD_TYPE}" --parallel "${JOBS}" 2>&1 | tee -a "${LOG_FILE}"
 
-printf '\n[3/3] CTest\n' | tee -a "${LOG_FILE}"
+# 仅执行一次 CTest：verbose 在通过时也保留 PASS 检查数、样本数和最大残差。
+# 不再要求用户手动重复运行 ctest -V；pipefail 确保测试失败仍使脚本失败。
+printf '\n[3/3] CTest (verbose; single run)\n' | tee -a "${LOG_FILE}"
 "${CTEST_BIN}" --test-dir "${BUILD_DIR}" -C "${BUILD_TYPE}" \
-    --output-on-failure --no-tests=error --parallel "${JOBS}" 2>&1 | tee -a "${LOG_FILE}"
+    --verbose --no-tests=error --parallel "${JOBS}" 2>&1 | tee -a "${LOG_FILE}"
 
 printf '\nPASS: build and CTest finished. Log: %s\n' "${LOG_FILE}" | tee -a "${LOG_FILE}"
