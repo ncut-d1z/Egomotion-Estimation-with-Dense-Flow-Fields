@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **测试计划草案 v0.27，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
+> **测试计划草案 v0.28，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
 
 > **候选核对材料**：见 [HAR-2026-11-06-001 材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md)；历史提出的 MAT 类型/安全、Golden/容差仍要逐项执行。当前参考等级为 L2/L3/L4，不要求 MATLAB/Octave/L1；`atol=0.01`/`rtol=0.1` 仅首轮探索筛查。**低阶球谐已在 `8eab5dd`、`445ed151`、含624非零四元数/错误码检查的 `601c74de` 三个固定提交获得用户报告的 1/1 CTest Passed**，其他模块与完整验收未因此批准。
 
@@ -303,6 +303,12 @@ regression_tolerance=9.0949470177292824e-13
 
 两夹具的 Franz 平移皆为 `(1.5,0,0)`、每轴模板分母 `4`；第一夹具旋转为 `0.5e_z`、第二夹具旋转为0。首轮 `delta=RMS<1e-7`，第2至6轮 `delta=0`；因此`k<6` 分支强制前五轮继续，并在第六轮后停止。**这仅证明这两组夹具**的6轮结果，不代表所有运动6轮收敛，也不覆盖 near 翻号/200轮/零分母或一般噪声。现有 TC-F-FILTER-001、TC-F-KVD-001/002、TC-DC-KVD-001 的逐轮数学参考已实质增加，但生产KvD/Franz与CTest未授权实施，最终 DEC-005、全源数值及 AC 验收仍未满足。
 
+### 2.19.2 八方向 near 首次负总和/翻号的完整理论 trace（AF-043/051，非真实软件）
+
+§9.5 [KvD LLD](design/kvd.md) 另外构造 **N=8** 切向光流，前四方向近轴且源有符号近度为 (-10)，后四方向为 (+1)。Franz 初始 (oldsymbol t=(90/101)e_x)、(omega=0)，第一次 `sum(near_raw)<0`，**near 与 t 在平移规则执行前同时翻号**。定义 (alpha=1/(1+100epsilon))、(eta=1/(1+epsilon)) （源 (epsilon=10^{-13})），第一轮之后 (armu=(5alpha-eta)/2)、(widetilde t_O=-(alpha+eta+99alpha^2)e_x/2)、(widetilde t_M=-(99alpha-9)e_x/20)，两个归一化方向同为 (-e_x)，最后输出 (-[(5alpha-eta)/2]e_x)。
+
+独立 [Wolfram完整六轮脚本](../verification/kvd/verify_near_sign_flip_exact_trace.wl) 与 [全部12轮参考](../verification/kvd/near_sign_flip_exact_trace.v1.json) 确认 Original/Modified 均按 `[true,false,false,false,false,false]` 触发 near 翻号，第1轮 `RMS≈7.071421356346968e-12`，第二至第六轮 `delta=0`，第六轮后停止，11/11数学自检通过。**这测试的是混合正负构造近度下的控制流，并非正深度物理场景或生产软件通过**；还缺 200轮/异常/一般输入、C++/CTest和最终DEC-005。仍归原 `TC-F-FILTER-001`、`TC-F-KVD-001/002`、`TC-DC-KVD-001`，无新 TC。
+
 ## 3. TC → 实体/CTest → AC 规划矩阵
 
 下列表格共 66 项，与 SRS **v0.14 草案**逐项对应；MAT I/O 的拟议数据结构、独立负例及测试文件映射详见 [mat_io.md §2、§5、§8–9](design/mat_io.md)。**独立 matio 探针已编写并执行**，但除球谐低阶叶子外，绝大多数拟议测试源文件、测试函数和 CTest 名称尚未创建；探针不是 CTest 注册项。人工审查项与自动测试区分。原始 45 个 MATLAB 源文件映射请参见 [REQUIREMENTS.md §9.2](REQUIREMENTS.md)。
@@ -447,7 +453,7 @@ MAT 全量字典和来源证据**已经生成**：见 [MAT_DATA_SCHEMA.md](MAT_D
 
 | 重点 TC | 采用的可行参考 | 剩余缺项（不包括 L1） |
 |---|---|---|
-| TC-F-FILTER-001、TC-F-KVD-001/002 | L3 独立逐轴 Franz 响应/分母与逐轮 near 分母/符号、平移 raw/normalized、旋转 aω/bω/cω（旧 t）、逐点预测流、MSE/RMS、停止布尔、终局 near 均值/尺度；对应 KvD §7 的候选 trace 与真实 C++/CTest | 多组 L3 生成与核验、容差批准、真实 C++/CTest |
+| TC-F-FILTER-001、TC-F-KVD-001/002 | 已执行Wolfram：轴向/斜向两组六方向Original/Modified共24轮数学trace；再增加混合有符号near的N=8两方法共12轮，首轮翻号、六轮停止、MSE/RMS/delta/grenze及原始 a/b/c/tRaw均已记录（共36轮） | 这些是独立数学参考，**不是**生产KvD/Franz真实C++/CTest；仍缺严格正深度下的一般退化、异常/200轮及DEC-005/正式全AC批准 |
 | TC-F-ADAPT-001/002/003、TC-DC-ADAPT-001 | L3 独立 M1～M4/b/z/MSE/系数、连续帧状态；L2 最终误差 | 一般场景、退化输入、Session 状态和 C++/CTest |
 | TC-F-GEOM-002/003、TC-F-FLOW-002/003、TC-DC-RNG-001、TC-NF-RNG-001 | i=0/1/2 全714行有序参考已保存，独立Wolfram按原20面/子面顺序对2142坐标完成逐元素验证，最大误差1.11e-16；uniform/normal、L4仍为候选 | 尚无生产采样/噪声C++或CTest；RNG耗尽/非有限、正式DEC-005/最终批准仍缺，不能标TC PASS |
 | TC-F-SH-001/002、TC-F-TRAJ-001 | L3 R0/R3/R5 全元素、系数与几何旋转、轨迹解析值 | 多轴/复合/非平凡角独立参考、版权/适配、CTest |
