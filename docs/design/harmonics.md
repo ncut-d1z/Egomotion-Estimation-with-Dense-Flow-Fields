@@ -1,6 +1,6 @@
 # 实球谐、近度重建及系数旋转——详细设计
 
-> **LLD v0.10，未冻结、完整业务数值未验收。** 2026-11-09 用户仅开放低阶球谐 C++ 实现与 Wolfram 符号验证，`egomotion::harmonics::low_order` 叶子代码及专项测试已提交；九基直接/递推与 IR96/IR98、Choi1999 的**一般 SO(3) 精确符号验证已执行**。项目所有者又提供了固定 SHA `8eab5dd` 的 Ubuntu/GCC16.2/Eigen3.4 Release **1/1 CTest Passed** 原生结果；随后增加的测试锚点尚未再次执行。正式三类公共接口、离散拟合、全业务集成、独立全部边界和最终容差尚未完成。权限见[专项授权](../decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md)，证据见[三路报告](../reviews/LOW_ORDER_SH_THREE_ROUTE_VERIFICATION_2026-11-09.md)、[PROGRESS E-DOC-056](../PROGRESS.md)。
+> **LLD v0.11，未冻结、完整业务数值未验收。** 2026-11-09 用户仅开放低阶球谐 C++ 实现与 Wolfram 符号验证，`egomotion::harmonics::low_order` 叶子代码及专项测试已提交；九基直接/递推与 IR96/IR98、Choi1999 的**一般 SO(3) 精确符号验证已执行**。项目所有者又提供了固定 SHA `8eab5dd` 与增强回归 `445ed151` 的 Ubuntu/GCC16.2/Eigen3.4 Release **各1/1 CTest Passed** 原生结果；解析/相位锚点已在后者实际执行。正式三类公共接口、离散拟合、全业务集成、独立全部边界和最终容差尚未完成。权限见[专项授权](../decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md)，证据见[三路报告](../reviews/LOW_ORDER_SH_THREE_ROUTE_VERIFICATION_2026-11-09.md)、[PROGRESS E-DOC-056](../PROGRESS.md)。
 
 关联REQ-F-SH-001/002、REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001及P7.1–P7.6/P7.10。原`winkelausvektor`、`kugelflfunc2`、`near_aus_koeff`、`koeff_aus_near`、`transfor_koeff`、`SHRotate`仍只读；四篇论文材料齐备，不再以缺PDF阻塞。纯Eigen、C++17、double，禁止sdla；Don Williamson仅辅助参考，无直接代码移入。
 
@@ -105,7 +105,7 @@ l=2的w对全部m精确为0，不求W；u=0先跳过辅助项再访问前阶数�
 
 命名空间为`egomotion::harmonics::low_order`，不冒充已实现[专题§5](SH_ROTATION_IVANIC_RUEDENBERG.md)中旧规划的RealSphericalHarmonics/HarmonicFitter/HarmonicRotator公共ABI。domain/contracts未获实施授权，新叶子不引入这些尚不存在的公共类型；局部Result封装variant，仅是本模块可独立验证的边界。
 
-**已建立且通过用户首次本机编译的 `egomotion_harmonics` CMake 静态库 target，以及单个 `low_order_harmonics` CTest。** HLD 原27条设计DAG未修改、尚未接入其它模块；现有叶子仅依赖 C++17/Eigen、禁 sdla。未来公共三类接口、共享类型/生命周期/ABI/全业务适配仍须核对；新增断言在该次通过提交之后产生，不得以旧1/1结果假称新测试已执行。
+**已建立且通过用户首次本机编译的 `egomotion_harmonics` CMake 静态库 target，以及单个 `low_order_harmonics` CTest。** HLD 原27条设计DAG未修改、尚未接入其它模块；现有叶子仅依赖 C++17/Eigen、禁 sdla。未来公共三类接口、共享类型/生命周期/ABI/全业务适配仍须核对；增补解析/dyadic/MATLAB相位断言已在 `445ed151` CTest 实际通过，未来任何新变更不得借用旧 HEAD 的通过结果。
 
 ## 6. 独立参考、异常与验收
 
@@ -113,7 +113,7 @@ l=2的w对全部m精确为0，不求W；u=0先跳过辅助项再访问前阶数�
 
 代码拒绝非有限、非单位方向、非SO(3)及反射，不归一化或投影。`128*epsilon(double)`仅输入/虚部舍入检查；`4096*epsilon`仅专项测试源码的比较余量，不替代DEC-005最终阈值。输出矩阵、旋转系数、重建值均检查非有限；全部自拥有，不持有MAT/RNG/Session或可变全局缓存。
 
-测试源码覆盖轴向、一般、近零/近pi、非交换组合、逐基场重建、独立25值参考、旧相位反例、非法输入；**这些native用例没有执行，不记PASS**。源码逐式复读与Wolfram精确恒等证明不能自动证明编译器/浮点/所有异常行为。
+测试源码覆盖轴向、一般、近零/近pi、非交换组合、逐基场重建、独立25值参考、旧相位反例、非法输入及增强解析/dyadic/MATLAB相位锚点；**其所在固定版本 `445ed151` 已由用户原生执行，CTest 1/1 Passed**。源码逐式复读与Wolfram精确恒等证明不能自动证明编译器/浮点/所有异常行为。
 
 关联TC-F-SH-001/002、TC-NF-NUM-001/002与TC-D-SOURCE-002；既有66TC总量不变，专项子用例不是新TC。AF-045/046/051/055的符号数学部分已有实证，但整体原生、公共接口、其他Golden与批准义务尚缺，继续开放。
 
