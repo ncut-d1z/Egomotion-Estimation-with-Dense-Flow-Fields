@@ -208,8 +208,8 @@ void testMatlabSourcePhase() {
 void testDeterministicQuaternionGrid() {
     constexpr std::array<int, 5> components{{-3, -1, 0, 1, 3}};
     const sh::Direction generalDirection = sh::Direction(2, -1, 3).normalized();
-    const sh::Coefficients nontrivial = (sh::Coefficients() <<
-        1.0, -3.0, 2.0, 5.0, -7.0, 11.0, -13.0, 17.0, -19.0).finished();
+    sh::Coefficients nontrivial;
+    nontrivial << 1.0, -3.0, 2.0, 5.0, -7.0, 11.0, -13.0, 17.0, -19.0;
     for (const int w : components) {
         for (const int x : components) {
             for (const int y : components) {
