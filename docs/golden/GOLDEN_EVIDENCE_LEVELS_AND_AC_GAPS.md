@@ -27,7 +27,7 @@
 
 | 模块 | 从 L2 不能直接得到的量 | 现行 L3 生成及核验方式 |
 |---|---|---|
-| Franz/KvD | 每轴模板响应/归一分母、t0/ω0；逐轮 near、sum/sign、a/b/c、旧 t 算 ω、新 t、RMS/delta/grenze、迭代次数与最终尺度 | 根据只读源公式使用独立参考逐轮演算，复核先后赋值、至少六轮和 200 次上限，与 C++ trace 做逐节点对照 |
+| Franz/KvD | 已有两组六方向 N×6 固定输入×Original/Modified 两路径的**24轮独立 Wolfram 精确数学迭代**：Franz各轴响应/范数、near、a/b/c、旧 t 算 ω、tRaw/tNorm、MSE/RMS/delta/grenze、停机x=6和末次尺度，见 `verification/kvd/six_direction_exact_trace.v1.json` | 当前只覆盖两个构造的稳定、近度正均值场景；仍缺near翻号、退化/噪声/200轮、其它一般输入和生产C++/CTest的实际逐节点误差及DEC-005 |
 | Adaptive/Session | near_raw/mean/normalized、M1～M4、rhs、z、t/ω、error=MSE、新 near/系数、帧/周期/主基线状态 | 固定多组 N×6 与 3×5，一般和病态案例，独立生成矩阵与运行时序参考；核验八次平均与最后一次 rottransratio |
 | RNG/噪声 | 原 MATLAB 每次具体 uniform/normal 数字及场景生成轨迹 | 注入固定已知 uniform/normal 序列，静态核验调用次数和重置次序；统计结果另作 L4；不要求跨语言同 seed 一致 |
 | SHRotation | R0、R3(9)、R5(25) 和九项系数前后及相位 | 解析固定旋转和 Don Williamson 独立参考，核坐标、相位、旋转方向、正交性与第三方许可 |
@@ -38,7 +38,7 @@
 
 | AC/TC 组（共用后缀） | 当前允许的数值参考 | 仍未完成的真实工作 |
 |---|---|---|
-| F-FILTER-001、F-KVD-001/002 | L3 Franz/KvD 逐轴逐轮 + L2 Bias 最终 | 完整一般/退化参考、真实 C++ trace/CTest、DEC-005 |
+| F-FILTER-001、F-KVD-001/002 | 两组六方向×两求解器已各执行6轮独立Wolfram精确算术并保存完整24轮数值及source blob；仍有 L2 Bias 最终/更广L3待办 | 真实生产C++ trace/CTest、near翻号/一般及病态情形、200轮上限和正式DEC-005仍缺 |
 | F-ADAPT-001/002/003、DC-ADAPT-001 | 对称AN-G12/20方向的一次迭代已独立Wolfram实算 `M1～M4/b/z/t/ω/MSE`、正则近度与更新系数；其余一般/病态输入、Session与L2终值继续候选 | 这只覆盖一个对称理想单步，不替代负/零均值、非对称/病态L3、Adaptive生产C++/CTest、Session原子提交、DEC-005与实际L2/L4 |
 | F-SH-001/002 | L3 九基/一般R3/R5与系数转换已由独立Wolfram精确证明；原AN-G06/07/08固定参考与受限koeff_aus_near七方向九系数新增数学参考/测试 | 用户旧SH回归在601c74de原生CTest 1/1 Passed；**固定5e522198用户已实际构建SH源投影CPP并通过归档176次、源二阶拟合76次检查，三个SH CTest合计3/3 Passed**，广泛L2/L3/正式DEC-005/公共ABI仍缺，不得整项关闭 |
 | F-GEOM-002/003 | 已保存 i=0/1/2 全714行有序方向参考；独立Wolfram对全部2,142坐标完成逐行比较、最大绝对差1.1102230246251565e-16；候选和复核脚本SHA-256见 `verification/geometry/full_ordered_row_verification.v1.json` | 生产采样C++/CTest未获授权且未执行；本证据限数学参考，仍缺正式DEC-005、非法/退化/资源边界、RNG耗尽及其它采样噪声义务 |
