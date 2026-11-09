@@ -1,6 +1,6 @@
 # Adaptive MFA 单步计算与轨迹状态——详细设计草案
 
-> **LLD v0.4：未冻结、未实现、未测。** 已核对原 MATLAB 的 oneit_adaptiv_matched_filter.m 关键表达式，但仍须独立 L3 逐节点参考和真实测试、确定最终数值容差；**异常时不提交无效状态的原则已由所有者确定**。需求：REQ-F-ADAPT-001/002/003、REQ-F-EXP-001/002/003、REQ-DC-ADAPT-001；任务 P7.7–P7.11、P8.1–P8.9。
+> **LLD v0.5：未冻结、没有生产Adaptive C++/CTest。** 已逐段核对原 MATLAB 公式；除 AN-G12 理想对称案例外，新增九方向非对称正/负均值近度的独立 Wolfram 逐节点数学参考，并发现 s<0 归一化与 M1 矩阵模型之间存在确定的 2I 差异。一般状态、Session、正式接口及 DEC-005 仍未完成。
 
 ## 1. 单步输入/输出与接口候选
 
@@ -326,6 +326,66 @@ C++ 从 0 开始存帧时必须显式转换为源 MATLAB 的 1-based i，周期�
 | `C_new`（源CS九有效项） | 单极项 `3.544907701718864`，其余有限微小偏差；相对原常数近度系数最大绝对差 `9.216760687991155e-11` |
 
 **重要区分**：原源码在 near_new 重新估计时含 `nulldiv=1e-11`，因此即使输入/解运动理想、MSE严格为0，**near_new 与 C_new也只是近似于原常数近度和初始系数，不能在 CTest 里断言精确等于1或原C**。原 `AN-G12` JSON 记为 `near_after_update_approx=1` 是近似描述，不是等式或原 MATLAB 某次实际输出；不擅自修改其 `DRAFT_UNAPPROVED_UNEXECUTED` 状态。此对称理想例无法覆盖一般非对称与近奇异M1～M4、负/零近度均值、错误提交、Session状态、eight-run聚合，也未批准最终DEC-005；AF-044/055继续开放。
+
+### 10.3 非对称正/负均值近度的独立完整单步数学参考（AF-044/055）
+
+为避免只用 AN-G12 的20点中心对称输入，新增九个**非对称、单位且坐标为有理数**的方向：三个正坐标轴、三个负坐标轴，另加 (3/5,4/5,0)、(0,3/5,4/5)、(4/5,0,3/5)。令旧原CS三阶行布局系数的非零项如下（**仅 l≤1，二阶五个系数为0**）：
+
+\[
+C_{00}=\sqrt{4\pi},\quad
+C_{1,-1}=\frac14\sqrt{\frac{4\pi}{3}},\quad
+C_{1,0}=\frac15\sqrt{\frac{4\pi}{3}},\quad
+C_{1,+1}=-\frac13\sqrt{\frac{4\pi}{3}}.
+\]
+
+原球谐定义直接给出不恒一的正近度场：
+
+\[
+\mu_i^+=1+\frac{x_i}{3}-\frac{y_i}{4}+\frac{z_i}{5},\qquad
+s_+=\langle\mu_i^+\rangle=\frac{2819}{2700}>0.
+\]
+
+固定生成运动 τ=e_x、ω=(1/5,-1/7,1/11)，构造切向光流：
+
+\[
+\boldsymbol p_i=-\mu_i^\pm
+\left(\boldsymbol e_x-x_i\boldsymbol d_i\right)
+-\boldsymbol\omega\times\boldsymbol d_i.
+\]
+
+**正均值案例**：将上述原3×5系数、九个方向和流场按原 near_aus_koeff → 原均值归一 → M1～M4/rhs → 6×6 求解 → t/ω → MSE → +1e−11 的 near_new → koeff_aus_near 顺序，使用 Wolfram 精确有理算术计算，得到：
+
+\[
+\boldsymbol z=\left(\frac{2819}{2700},\,0,\,0,\,
+\frac15,\,-\frac17,\,\frac1{11}\right)^\top,\quad
+\boldsymbol t=\boldsymbol e_x,\quad
+\boldsymbol\omega=\left(\frac15,-\frac17,\frac1{11}\right)^\top,\quad
+\mathrm{MSE}=0.
+\]
+
+此时 M2、M3 均非零，M1～M4 存在非对角耦合，det(M)≈0.0580696456535、2-范数条件数≈2.46656。因此**不依赖对称消项或奇异逆矩阵**；还能检查非恒一正近度下该单步几何方程是否正确构造。near_new、C_new 因原分母 +1e−11 并非逐项严格等于旧系数，完整九方向与逐节点数值在下述参考 JSON 中。
+
+**负均值符号分支**：把上述旧3×5系数整体乘 −1，并按相同运动生成新的有符号流场。此时原始 near 全为负，s−=−2819/2700。按原 oneit.m 第19～29行，源先计算 s−，把 near 翻正，随后**仍除以先前的负 s−**，所以最终归一化近度的均值为 −1，而非 +1。设 Pi=I−d_i d_iᵀ，对于任意归一化近度 μ_i，有严格恒等式：
+
+\[
+M_1-\left\langle\mu_i
+\left(I-\boldsymbol d_i\boldsymbol d_i^\top\right)\right\rangle
+=\left(1-\langle\mu_i\rangle\right)I.
+\]
+
+因此原 M1 与按 μ 加权的真实切向投影矩阵的差异，**正均值分支为零、负均值分支为 2I**。这是代数恒等式，不依赖求解器容差，也不能在文档中把源 near/s 偷换为 near/abs(s)。该人工负近度场的6×6矩阵仍可逆，det(M)≈0.8221279399701、2-范数条件数≈2.61270；独立计算得到：
+
+\[
+\boldsymbol t\approx(-0.9958264582,\ 0.0709966776,\ 0.0573509974)^\top,
+\qquad
+\boldsymbol\omega\approx(0.1700641552,\ -0.6211414742,\ 0.2756858501)^\top,
+\qquad
+\mathrm{MSE}\approx0.21140062258.
+\]
+
+该分支未恢复我们用来合成有符号输入流场的生成运动；**不应将其直接外推为任何正距离真实场景都不正确**，因为这里的原始近度全部为负（非物理距离），数学目的在于构造可逆矩阵下的负均值控制流反例。若未来要纠正源负均值行为，必须单独提出数学合同/适用域决策，不能以“符号调好即可”为由在 C++ 移植中悄悄改动。
+
+两套数据的原CS系数、N×6流场、九组近度、M1～M4、rhs、精确六维解、更新近度及九个新系数均已在 [可重放 Wolfram 计算](../../verification/adaptive/verify_asymmetric_signed_near_one_step.wl) 与 [固定逐节点数值](../../verification/adaptive/asymmetric_signed_near_one_step.v1.json) 保存。所有原 .m 均保持只读；本次 **Wolfram 数学实际执行、生产 Adaptive C++/CTest 未执行**，DEC-005 未批准。AF-044/055 的一般动态场景、退化、Session 提交与失败路径仍为未整改。
 
 ## 附录 A：无需运行 MATLAB 的证据边界
 
