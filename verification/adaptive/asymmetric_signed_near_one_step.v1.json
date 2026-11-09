@@ -6,14 +6,14 @@
   "generator_git_blob_sha": "472c7059d98c6cab293e13830ce037ad0e1f3451",
   "read_only_sources": {
     "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/oneit_adaptiv_matched_filter.m": "48e51bcd52fb8f27cf35b3fce38b28507af36e55",
-    "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/near_aus_koeff.m": "not frozen in this evidence; fetch exact blob before release",
-    "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/kugelflfunc2.m": "not frozen in this evidence; fetch exact blob before release",
-    "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/koeff_aus_near.m": "not frozen in this evidence; fetch exact blob before release"
+    "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/near_aus_koeff.m": "7373c4376dfd5bbf281136ced39657d411a10ffa",
+    "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/kugelflfunc2.m": "edc0caa1f88bf91d2a189e4d3a283334f809b905",
+    "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/koeff_aus_near.m": "5ff91a2210a20e5acf79dec6e59ddd33b55529d3"
   },
   "math": {
     "model": "p_i = -near_raw_i*(e_x - d_ix*d_i) - omega_true cross d_i",
     "positive_field": "near_raw=1+x/3-y/4+z/5",
-    "negative_field": "near_raw=-(1+x/3-y/4+z/5), artificial mixed-signed/nonphysical negative inverse depth",
+    "negative_field": "near_raw=-(1+x/3-y/4+z/5), strictly negative signed inverse depth (not positive-depth physical scene)",
     "true_translation": [
       1,
       0,
