@@ -1,0 +1,94 @@
+(* Exact source-order 8-direction sign-flip fixture for Original/Modified
+   Koenderink–van Doorn. All calculations are Mathematica with epsilon=1e-13.
+   No MATLAB/Octave or C++ source modification/execution. *)
+Module[{eps=1/10^13,c=Sqrt[99]/10,s=1/10,ex={1,0,0},
+ d,p,n=8,alpha,beta,qt,qw,nt,nw,st,sw,franzT,franzW,trace,results},
+ d={{c,s,0},{c,-s,0},{-c,s,0},{-c,-s,0},
+   {0,1,0},{0,-1,0},{0,0,1},{0,0,-1}};
+ p=Table[If[i<=4,10,-1](ex-(ex.d[[i]])d[[i]]),{i,n}];
+ alpha=1/(1+100 eps);beta=1/(1+eps);
+ qt=Table[-(UnitVector[3,j]-(UnitVector[3,j].d[[i]])d[[i]]),
+   {j,3},{i,n}];
+ qw=Table[-Cross[UnitVector[3,j],d[[i]]],{j,3},{i,n}];
+ nt=Table[Sum[qt[[j,i]].qt[[j,i]],{i,n}],{j,3}];
+ nw=Table[Sum[qw[[j,i]].qw[[j,i]],{i,n}],{j,3}];
+ st=Table[Sum[qt[[j,i]].p[[i]],{i,n}],{j,3}];
+ sw=Table[Sum[qw[[j,i]].p[[i]],{i,n}],{j,3}];
+ franzT=FullSimplify[st/nt];franzW=FullSimplify[sw/nw];
+ trace[mode_]:=Module[{t=FullSimplify[franzT/Sqrt[franzT.franzT]],
+    w=franzW,k=0,delta=10^-3,threshold=10^-4,prior=0,
+    rawNear,near,flipped,a,b,cTerm,tRaw,tNext,omegaA,omegaB,omegaC,omegaNext,
+    mse,rms,pred,rows={},first,meanNear,pattern},
+   While[(delta>threshold&&k<200&&delta>10^-7)||k<6,
+     k++;
+     rawNear=Table[FullSimplify[-t.(p[[i]]-Cross[d[[i]],w])/
+       (1-(t.d[[i]])^2+eps)],{i,n}];
+     flipped=Total[rawNear]<0;
+     near=If[flipped,-rawNear,rawNear];
+     If[flipped,t=-t];
+     meanNear=FullSimplify[Mean[near]];
+     If[mode=="Original",
+       a=FullSimplify[Total[MapThread[Times,{near,p}]]/n];
+       b=FullSimplify[Total[MapThread[Times,{near,d}]]/n];
+       cTerm=FullSimplify[Sum[near[[i]]^2(t.d[[i]])d[[i]],{i,n}]/n],
+       a=FullSimplify[Total[p]/n];
+       b=FullSimplify[Total[d]/n];
+       cTerm=FullSimplify[Sum[near[[i]](t.d[[i]])d[[i]],{i,n}]/n]];
+     tRaw=FullSimplify[-(a+Cross[w,b]-cTerm)];
+     tNext=FullSimplify[tRaw/Sqrt[tRaw.tRaw]];
+     omegaA=FullSimplify[Total[MapThread[Cross,{p,d}]]/n];
+     omegaB=FullSimplify[Total[MapThread[Times,{near,d}]]/n];
+     omegaC=FullSimplify[Sum[(w.d[[i]])d[[i]],{i,n}]/n];
+     omegaNext=FullSimplify[omegaA+Cross[t,omegaB]+omegaC];
+     t=tNext;w=omegaNext;
+     pred=Table[-near[[i]](t-(t.d[[i]])d[[i]])-
+       Cross[w,d[[i]]],{i,n}];
+     mse=FullSimplify[Sum[(p[[i]]-pred[[i]]).(p[[i]]-pred[[i]]),
+       {i,n}]/n];
+     rms=FullSimplify[Sqrt[mse]];
+     delta=FullSimplify[Abs[prior-rms]];
+     prior=rms;
+     threshold=FullSimplify[rms/(1000 n)];
+     If[k==1,first=<|"rawNear"->N[rawNear,17],
+        "nearAfterFlip"->N[near,17],
+        "a"->N[a,17],"b"->N[b,17],"c"->N[cTerm,17],
+        "rawCandidate"->N[tRaw,17],
+        "nearRawSum"->N[Total[rawNear],17],
+        "rotA"->N[omegaA,17],"rotB"->N[omegaB,17],
+        "rotC"->N[omegaC,17],
+        "expectedRawNearAnalytic"->
+          N[Join[ConstantArray[-10 alpha,4],
+             ConstantArray[beta,4]],17],
+        "originalCandidateFormulaMatches"->
+          If[mode=="Original",
+            FullSimplify[tRaw[[1]]+(alpha+beta+99 alpha^2)/2]==0,
+            FullSimplify[tRaw[[1]]+(99 alpha-9)/20]==0],
+        "MSEFormulaMatches"->
+          FullSimplify[mse-((1-alpha)^2+(1-beta)^2)/2]==0|>];
+     AppendTo[rows,<|"k"->k,"signFlip"->flipped,
+       "nearMean"->N[meanNear,17],"tRawX"->N[tRaw[[1]],17],
+       "normalizedT"->N[t,17],"omega"->N[w,17],
+       "RMS"->N[rms,17],"delta"->N[delta,17],
+       "threshold"->N[threshold,17],
+       "exit"->Not[(delta>threshold&&k<200&&delta>10^-7)||k<6]|>];
+     If[k>10,Break[]]
+   ];
+   pattern=Lookup[rows,"signFlip"];
+   <|"mode"->mode,"iterationCount"->k,"firstRound"->first,
+     "trace"->rows,"signFlipPattern"->pattern,
+     "expectedFlipOnlyFirst"->(pattern===Join[{True},ConstantArray[False,5]]),
+     "firstRoundFormulaChecks"->(TrueQ[first["originalCandidateFormulaMatches"]]&&
+       TrueQ[first["MSEFormulaMatches"]]),
+     "positiveMeanAfterFlip"->(AllTrue[rows,#["nearMean"]>0&]),
+     "normalizedDirectionStaysNegativeX"->AllTrue[rows,#["normalizedT"]=={-1,0,0}&],
+     "exactSixIterations"->(k==6&&rows[[6,"exit"]]&&
+       And@@(Not/@Lookup[rows[[1;;5]],"exit"])),
+     "finalTranslation"->N[FullSimplify[meanNear*t],17],
+     "finalOmega"->N[w,17]|>
+ ];
+ results=<|"Franz"-><|"tResponse"->st,"tNorm"->nt,
+    "omegaResponse"->sw,"omegaNorm"->nw,
+    "FranzT"->N[franzT,17],"FranzOmega"->N[franzW,17]|>,
+    "Original"->trace["Original"],"Modified"->trace["Modified"]|>;
+ ExportString[results,"RawJSON","Compact"->True]
+]
