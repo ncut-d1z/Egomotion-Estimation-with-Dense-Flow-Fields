@@ -2,9 +2,9 @@
 
 > **长期证据规则**：[不执行 MATLAB 的项目政策](../golden/NO_MATLAB_EXECUTION_POLICY.md) 已取消原 MATLAB L1 Golden 的强制门禁。LLD 与验收只要求来源清楚的 L2/L3/L4、真实 C++/CTest 和批准容差；**缺少 MATLAB 运行不阻塞冻结**，但不能宣称原脚本的未知异常/RNG/逐位输出已验证。
 
-> **LLD 索引 v0.10（所有模块草案、未冻结；未建立生产 C++/CTest 证据）。** 索引中的文件已实际创建，但其中的候选 C++17 接口、数学步骤、测试路径和错误枚举没有对应已实现代码。源 MATLAB 文件和已保存 MAT 仍由 origin/** 只读保存。
+> **LLD 索引 v0.11（所有规范草案未冻结）。** 仅低阶球谐叶子已有 C++17/Eigen 实现、根 CMake target 和用户提供的固定提交 `8eab5dd` 构建/CTest 1/1 Passed 证据；此后新增的专项断言还未重新运行。其它跨模块候选接口/软件目标未实现，`origin/**` 继续只读。
 
-> **2026-11-09 材料更新**：用户已提供IR96原文、IR98勘误及CIGR99全文，已登记附件身份并完成限定范围静态审阅；**不再等待上传**。发现勘误表项冲突、源矩阵转置和实基相位问题，见[论文审计](../reviews/SH_PAPERS_SOURCE_AUDIT_2026-11-09.md)与[独立验证候选](../golden/SH_PAPER_VERIFICATION_CASES.md)。这不开放H-10/H-11，也不表示AF-045/046或数值验收完成。
+> **2026-11-09 材料更新**：用户已提供IR96原文、IR98勘误及CIGR99全文，已登记附件身份并完成限定范围静态审阅；**不再等待上传**。发现勘误表项冲突、源矩阵转置和实基相位问题，见[论文审计](../reviews/SH_PAPERS_SOURCE_AUDIT_2026-11-09.md)与[独立验证候选](../golden/SH_PAPER_VERIFICATION_CASES.md)。随后用户已**单独开放低阶球谐 C++ 实现**，并实际运行一次限定范围的构建/CTest；不等于其它模块/H-11 全工程授权或AF-045/046全部验收完成。
 
 ## 文档职责
 
@@ -29,7 +29,7 @@
 | 基础采样与噪声 | [sampling_noise.md](sampling_noise.md) | findeDreiecke、采样/流/噪声函数 | 数量、顺序、噪声方程、RNG 消耗与自拥有 FlowField/结果；**源 fixed_* 返回 near 是末次标量，C++ nearness 向量仅为新增诊断数据** | **egomotion_sampling/simulation 的接口、头文件边界与 TC/CTest 候选** | L3 独立有序方向/固定 RNG 仍待验证 | 未冻结，P0.8/DEC-008 |
 | 几何与轨迹 | [trajectory.md](trajectory.md) | Kreis/Sinus/trajectory、球内近度与旋转 | 已列离散轨迹/求交公式；**Sophus SO(3) 替代 rodrigues.m 已选定**，源脚本只读 | 候选接口 | L3 小角/反向等边界与真实 CTest 未执行 | **设计路线已确定**；实际 Sophus 依赖版本、调用和数值测试尚未验证，不再等待普通版权选型 |
 | Franz / KvD | [kvd.md](kvd.md) | zellendefinieren、franzeigen、两种 KvD、误差 | 已列各平移公式、RMS、终止规则 | 候选接口 | 未测 | 阻塞 DEC-005 |
-| 实球谐 | [harmonics.md](harmonics.md) + [Ivanic–Ruedenberg 论文与纯 Eigen 方案](SH_ROTATION_IVANIC_RUEDENBERG.md) | kugelflfunc2、near/koeff、SHRotate | 九项索引/公式；IR96/98及CIGR99材料已齐，勘误冲突与转置/相位分别核验；Eigen-only禁sdla | **egomotion_harmonics 显式依赖 egomotion_contracts**；[专题 LLD §5](SH_ROTATION_IVANIC_RUEDENBERG.md)维护唯一预定文件/类型/方法声明；§4为候选数学，均非生产实现 | 已有纸面反例、Table3全25项公式与交叉参考候选；尚缺实际L3/CTest | 数学约定仍待一般输入闭合；实现/DEC-005未冻结 |
+| 实球谐 | [harmonics.md](harmonics.md) + [Ivanic–Ruedenberg 论文与纯 Eigen 方案](SH_ROTATION_IVANIC_RUEDENBERG.md) | kugelflfunc2、near/koeff、SHRotate | 九项直接/递推、一般SO(3)三路符号证明及相位/转置已有精确Wolfram结果；IR98冲突已定位 | **现有叶子 `egomotion_harmonics` 只依赖 Eigen3，不依赖尚未实现的 `egomotion_contracts`**；未来正式公共 harmonics→contracts 架构边仍是候选，见专题§5 | GCC16.2/CMake4.3.4/Eigen3.4 下固定 HEAD `8eab5dd` 的1/1原生球谐CTest经用户报告通过；其后新增专项断言未执行，广义完整L3/异常/ABI/DEC-005仍待 | 叶子已实现及有首次原生测试；完整球谐模块/全业务合同未冻结 |
 | Adaptive 单步/Session | [adaptive_mfa.md](adaptive_mfa.md) | oneit、3 个 Adaptive 入口 | 已列 M1–M4、RHS、MSE 及会话差异 | 候选接口 | 未测 | 阻塞 DEC-005 |
 | 实验 Runner | [experiments.md](experiments.md) | 2 Bias + 3 Adaptive 生成入口 | 参数/save、8 次聚合、刷新策略及 L2/L3/L4 证据等级 | **RunContext 候选接口、DataMismatch 边界、egomotion_experiments/TC/CTest** | 新 Runner/完整 L3/CTest 均未实现 | 未冻结，P0.8/DEC-008 |
 | 分析与可选绘图 | [analysis_plotting.md](analysis_plotting.md) | 4 分析入口、kurveglaetten、3 插图 | 已列数据/索引/阈值/窗口与 DEC-004 缺字段规则；**历史 Bias xwerte 不变，新增实际 N 对照图不是当前交付项** | 候选接口 | **必需的 L2 原 MAT/L3 独立数值曲线和 CTest 尚未验收** | 可选绘图后端尚未选定，但**不阻塞核心数值分析、设计和验证** |
@@ -70,7 +70,7 @@
 | mat_io.md | v0.10候选自拥有double、严格/有界compat、RunContext/Writer、target/负例映射；历史格式shape已测 | 正式接口、L2逐值/SHA、L3负例、Reader/Writer、回读安全CTest/P10.4 |
 | cli.md | 参数/类型、固定根、独立OS RunId、ErrorStage/JSONL | 真实CLI、负例/转义及CTest |
 | kvd.md | 两种平移/旋转、循环条件、trace和两组六方向静态候选 | 独立逐轮L3、一般/病态/停止边界、容差与CTest |
-| harmonics.md | 九实基、R3转置、论文/源相位分层、IR98冲突反例、完整R5公式参考 | 一般旋转语义、全元素独立L3、Eigen实现、真实CTest/批准；**不再缺论文** |
+| harmonics.md | 九实基、IR/Choi与张量一般SO(3)精确证明；叶子低阶C++/测试及GCC16首次CTest已有 | 完整全业务适配、增加的回归测试重跑、异常边界、最终DEC-005/ABI与批准；**不再缺论文或首次原生编译** |
 | adaptive_mfa.md | M1～M4/rhs/MSE、入口专属Session时序 | 逐节点L3、失败不提交真实测试、最终容差 |
 | sampling_noise.md | 有序采样、RNG/噪声、所有权、target/TC | levels0/1/2全量独立参考与实际测试 |
 | trajectory.md | 圆/正弦、方向奇异性、Rᵀ、正根、Sophus路线 | 锁定依赖/调用、边界参考与CTest |
@@ -91,7 +91,7 @@
 | [采样/噪声](sampling_noise.md) | §3/§6注入接口、near_last与新向量分离 | 有序L3、消耗/非法样本测试 |
 | [轨迹](trajectory.md) | §5～6轨迹/局部运动/Sophus | 零角/反向/近π/求交参考与CTest |
 | [Franz/KvD](kvd.md) | §7～9候选接口、trace及固定输入，不依赖matio | 完整逐轮参考、失败分类、编译/DEC-005 |
-| [实球谐](harmonics.md)及[专题](SH_ROTATION_IVANIC_RUEDENBERG.md) | harmonics §2～3；专题§3约定、§4数学、**§5唯一声明** | 一般方向/相位和IR98冲突的全元素验证、Eigen/CTest/最终批准 |
+| [实球谐](harmonics.md)及[专题](SH_ROTATION_IVANIC_RUEDENBERG.md) | harmonics §2～3；专题§3约定、§4数学、§5未来公共声明；现有 `low_order.hpp` 是局部叶子 API | 一般SO(3)符号与低阶叶子首次CTest已有；未完成正式公共API/ABI、额外回归重测、完整集成和最终批准 |
 | [Adaptive](adaptive_mfa.md) | §8～9StepSolver/Session和原子提交 | 6×6/刷新/异常的独立L3与真实CTest |
 | [实验](experiments.md) | §6～8独立Config/RunContext/RunOutcome、Writer注入，不直连matio | 五Runner/save/Manifest/聚合与替身测试 |
 | [分析/绘图](analysis_plotting.md) | §2/§6～8自拥有只读分析、可选Exporter | L2→L3曲线、分段/缺字段负例、C++/CTest |
