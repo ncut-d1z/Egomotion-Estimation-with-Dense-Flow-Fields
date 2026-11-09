@@ -10,7 +10,7 @@ Module[{poly,scale,basis,base,fb,gb,db,tb,pb,biased,f,g,d,t,p,beta,expectedBeta,
  ones,witness={2/3,-2/3,-1/3},rec,normalizedB,normalizedG,sourceC,
  stereo,distinct,fd,gd,dd,betad,witnessExact,cube,fc,gc,cubeZero,
  cone,h,fh,gh,coneZero,cross,system,mcube,mcone,gramUnit,checks,result,
- num,aa,bb,nn,distinctCoefficientSign,discrepancy},
+ num,aa,bb,nn,discrepancy},
  poly[v_]:=With[{x=v[[1]],y=v[[2]],z=v[[3]]},
    {1,-y,z,-x,x*y,-y*z,3z^2-1,-x*z,x^2-y^2}];
  scale={1/Sqrt[4Pi],Sqrt[3/(4Pi)],Sqrt[3/(4Pi)],Sqrt[3/(4Pi)],
@@ -82,11 +82,11 @@ Module[{poly,scale,basis,base,fb,gb,db,tb,pb,biased,f,g,d,t,p,beta,expectedBeta,
   "cubeMotionMatrixWellConditioned"->(mcube==2IdentityMatrix[6]/3),
   "narrowConeUndefinedChannel2Minus2"->(coneZero=={5}),
   "narrowConeMotionMatrixInvertibleAtQuarter"->(Det[mcone/.h->1/4]>0)
- | >;
+ |>;
  result=<|"kernel"->$Version,"checkCount"->Length[checks],"passedCount"->Count[Values[checks],True],
   "allChecksPassed"->And@@Values[checks],"checks"->checks,
   "balancedControl"-><|"rows"->24,"rank"->9,"polynomialGramDiagonal"->(ToString[#,InputForm]&/@Diagonal[gb])|>,
-  "biasedConstantCase"-><|"baseRows"->24,"additionalRepeatedRows"->12,"repeatedDirection"->{1/3,2/3,2/3},
+  "biasedConstantCase"-><|"baseRows"->24,"additionalRepeatedRows"->12,"repeatedDirection"->num[{1,2,2}/3],
    "rawNearAll"->1,"rank"->9,"allDenominatorsPositive"->True,
    "polynomialCoefficientsExact"->(ToString[#,InputForm]&/@beta),
    "sourceCoefficientsApprox"->num[sourceC],"observedWitnessDirection"->num[witness],
