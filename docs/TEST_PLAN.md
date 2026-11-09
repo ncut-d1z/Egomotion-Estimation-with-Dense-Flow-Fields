@@ -1,20 +1,20 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **测试计划草案 v0.21，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
+> **测试计划草案 v0.21，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
 
+> **候选核对材料**：见 [HAR-2026-11-06-001 材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md)；历史提出的 MAT 类型/安全、Golden/容差仍要逐项执行。当前参考等级为 L2/L3/L4，不要求 MATLAB/Octave/L1；`atol=0.01`/`rtol=0.1` 仅首轮探索筛查。**低阶球谐已在固定提交 `8eab5dd` 完成用户报告的原生 CTest 1/1 Passed**，其他模块与完整验收未因此批准。
 
+> **长期约束**：[无需运行 MATLAB 政策](golden/NO_MATLAB_EXECUTION_POLICY.md) 取消 MATLAB/Octave/L1 强制前提；该决定不等于所有模块的 C++/CTest/MAT 运行授权，也不批准 DEC-005 最终数值门槛。
 
-> **长期约束**：[无需运行 MATLAB 政策](golden/NO_MATLAB_EXECUTION_POLICY.md) 已取消 MATLAB/Octave 运行与 L1 Golden 的一切强制取证前提；现行测试参考为 L2 已存 MAT、L3 独立解析/重实现和 L4 统计。此决定不解除代码/CTest 的实际执行门禁，也不批准数值容差。
+> **当前实现现状**：仅球谐叶子模块已有 `tests/unit/test_low_order_harmonics.cpp` 和根 `CMakeLists.txt` 注册的单项 CTest；其余 66 TC 中未实际实现的测试实体仍为候选。历史独立 `src/mat_data_dict_probe.cpp` 对 582/582 MAT 的 READ_OK 仅证明数据字典读取，不等于正式 Reader/Writer 业务验收。
 
-
-
-
+**权限与验收分层**：球谐 C++/专项测试已取得用户的局部实现授权，用户本人运行了本次球谐编译/CTest；其他模块代码、代理自行运行项目命令、MAT 写回读、DEC-005/006、基线及发布仍按 [TODO](TODO.md) 的具体限制办理。
 
 ### 2026-11-09 首次低阶球谐原生构建及 CTest 证据（AF-096）
 
 用户提供了 Ubuntu 终端从 `./build.sh` 开始至末尾 `PASS` 的完整文本输出，**不是代理本人在用户机器执行的命令，也没有取得原始日志文件字节**。受测 Git HEAD：`8eab5dd7971f9ba9263528d62e9dccdeb926d638`；Ubuntu 24.04、GCC 16.2.0、CMake 4.3.4、Eigen 3.4.0、Release/C++17、4 jobs。CMake 配置/生成成功，`egomotion_harmonics` 静态库及 `test_low_order_harmonics` 可执行文件构建成功；用户文本未显示 warning；CTest 单项 `low_order_harmonics` 为 **1/1 Passed、0 failed**，测试本身 0.07 秒，CTest 墙钟总耗时 0.11 秒。脚本打印 `PASS`，但未另行提供独立的 `$?` 数字或日志文件 SHA-256，不能伪称已经独立核验这些信息。
 
-用户机器日志位置：`build/low-order-harmonics/logs/build-20261109T071118Z-451487.log`。这说明**一个 CTest 程序**运行并通过，其内部实际包含多项断言，但不等于 66 TC 均通过。Wolfram 全域精确符号证明另有来源，不混同本次 C++ double 运行。**现有测试通过的固定提交与后续新增测试源码必须区别对待**：新增加的独立基函数锚点、2015 论文第 30 页 (h_4) 符号/dyadic 断言、MATLAB CS 相位重建断言，还没有实际运行证据，须在新 HEAD 上重跑。其它模块仍未实现/未获相同授权；DEC-005/006/008 和基线未批准。
+用户机器日志位置：`build/low-order-harmonics/logs/build-20261109T071118Z-451487.log`。这说明**一个 CTest 程序**运行并通过，其内部实际包含多项断言，但不等于 66 TC 均通过。Wolfram 全域精确符号证明另有来源，不混同本次 C++ double 运行。**现有测试通过的固定提交与后续新增测试源码必须区别对待**：新增加的独立基函数锚点、2015 论文第 30 页 `h4` 符号/dyadic 断言、MATLAB CS 相位重建断言，还没有实际运行证据，须在新 HEAD 上重跑。其它模块仍未实现/未获相同授权；DEC-005/006/008 和基线未批准。
 
 ## 1. 验证分层和前提
 
@@ -24,6 +24,8 @@
 - 每条 M 级需求应有验收条件与至少一个真实测试或经批准的人工核查；任何尚未执行的用例不能宣称通过。
 
 
+
+**2026-11-07 历史设计决定（不是当前执行状态）**：固定 output/<RunId>/、轻量 Result/Status、ErrorStage/JSONL、独立 Runner 配置、Eigen-only/禁 sdla 等路线当时已确定；当时尚待论文及球谐实现。现行三篇论文已阅读、球谐叶子已实现，已有用户提供的首次 CTest 通过证据；其余模块仍未编程或实际验收。本文件不改写历史审批 JSON。
 
 ## 2. 首批关键测试的具体条件
 
