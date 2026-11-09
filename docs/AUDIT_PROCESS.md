@@ -203,3 +203,11 @@
 - **双来源验证**：固定候选 AN-G01/02/03 i=0 的34行**逐坐标**与新增数据最大差 `1.1102230246251565e-16`；独立 Wolfram 15.0.1 实际执行 `verification/geometry/verify_source_direction_levels.wl`（blob `d4a448790bd1518c825b221faed039e53c26c5e3`），对9组深度/采样类别计算 `N` 与按 MATLAB 1-based 行号加权的 `Σ(i d_i)`、`Σ(i² d_i)`。JavaScript 只读源重建候选与 Wolfram 签名最大绝对差 `9.313225746154785e-10`、相对差 `1.495521319253601e-15`；每行单位范数平方误差最多 `4.440892098500626e-16`。**签名一致不是714行逐点双实现严格恒等的证明**；原AN-G候选JSON未改，仍 DRAFT_UNAPPROVED_UNEXECUTED。
 - **目标真正卡点**：AF-047采样/噪声尚无获准生产C++/CTest、退化/负层级/资源溢出、固定N uniform与3N normal、耗尽/非有限等真实测试；AF-055剩余AN-G04～12和全部逐节点独立L3/Golden身份审批仍缺；AF-060全部AC的L2（历史582 MAT SHA256/逐值）与适用L4和批准仍缺。新增候选不自动授予其它模块代码/运行权限，亦不冒充实际MAT或软件输出。
 - **台账现行状态**：本轮开始97 AF（74已整改/23未整改）、82个审计文件（50已审计/32正在审计/0空白）；增加1份已审计的Wolfram脚本与1份仍在审计的714行JSON，变为**97 AF＝74已整改/23未整改；84个文件＝51已审计/33正在审计/0未审计**。无新AF编号、无误关单。第一轮未清零，不开始用户条件性的第二轮全面审计/整改。
+
+## 12. AF-047/055/060 全714行独立逐坐标复核完成（2026-11-09，保留复合目标）
+
+- **问题与修复**：原先§11只完成了 i=0 的34行候选逐值交叉核对及 i=0/1/2 的九组行号加权签名，明确“签名不能替代全714行独立逐元素”。本轮首次临时Wolfram核验输入漏掉二十面体F表 `{11,3,7}`，产生19面形状不匹配；对只读 `richtungsvektoren_icosahedron.m` 核对20面后纠正并加入固定20面/逐级维度守卫。该临时错误不在仓库原JSON/原MATLAB内，未计通过。
+- **确实运行的独立数学检查**：`verification/geometry/verify_full_source_direction_rows.wl`（Git blob `f63f6f874bc93a2c94cffa87df038638c1933956`）在 Wolfram 15.0.1 中与原JS source-derived候选逐元素核对：**全部714有序行/2142 XYZ坐标**，最大绝对差 `1.1102230246251565e-16`，`coordinatesAbove1eMinus12=0`，`allComparedWithin1eMinus12=True`。此`1e-12`为数学复核的探索性容差，非最终DEC-005；未运行采样生产C++/CTest。
+- **完整来源与独立SHA-256**：候选文件 `verification/geometry/source_direction_levels_0_2.v1.json` blob `85998162fb7e32ffed76cfe037e692ae101d9169`，UTF-8 SHA-256 `67fde0f3af0eaf62fde607edfa483a85d202818583a0ff40125504cce5e8a434`；新Wolfram核验脚本SHA-256 `6bf9a98efd6bf3d40a97a942485849fe75fcf3a3dbcc4603c92e2a76a2d11f41`。执行摘要与九级逐坐标误差已另存 `verification/geometry/full_ordered_row_verification.v1.json`（Git blob `8e6a9895ce1d98956f8af695dabb743339124ff9`），不修改原始候选或任一 `origin/**`。
+- **真实边界**：这将 `AF-047/055` 的“源方向数学候选缺乏完整双语言逐元素复核”子缺口转为有证据；`AF-047` 仍缺获准的采样器实现、固定RNG/N uniform+3N normal/异常真实测试；`AF-055` 其它AN-G参考及Golden批准未全完成；`AF-060` 其余TC/AC L2/L3/L4、历史582 MAT SHA-256/逐值及最终DEC仍缺。没有授权执行未实施的C++，不能直接关闭上述原复合AF。
+- **本批计数**：原问题台账97唯一AF＝74已整改/23未整改维持；新核验WL和结果JSON均限定审阅通过，旧714行候选JSON因数学源身份和完整逐行核验完成从“正在审计”转为“已审计”，文件三态由 `84=51已审计+33正在审计+0空白` 变为 **`86=54已审计+32正在审计+0空白`**。全项目第一轮仍有23项未整改，条件性第二轮全面审计/整改不能在此宣称启动。
