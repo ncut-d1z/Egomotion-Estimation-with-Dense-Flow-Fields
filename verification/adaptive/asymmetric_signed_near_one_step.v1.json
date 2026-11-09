@@ -1,0 +1,670 @@
+{
+  "schema": "egomotion.adaptive.asymmetric-positive-negative-mean-math.v1",
+  "created_at": "2026-11-09",
+  "status": "INDEPENDENT_WOLFRAM_EXACT_SYMBOLIC_AND_NUMERIC_CPP_NOT_RUN_NO_MATLAB_NO_DEC005_APPROVAL",
+  "generator": "verification/adaptive/verify_asymmetric_signed_near_one_step.wl",
+  "generator_git_blob_sha": "472c7059d98c6cab293e13830ce037ad0e1f3451",
+  "read_only_sources": {
+    "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/oneit_adaptiv_matched_filter.m": "48e51bcd52fb8f27cf35b3fce38b28507af36e55",
+    "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/near_aus_koeff.m": "not frozen in this evidence; fetch exact blob before release",
+    "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/kugelflfunc2.m": "not frozen in this evidence; fetch exact blob before release",
+    "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/koeff_aus_near.m": "not frozen in this evidence; fetch exact blob before release"
+  },
+  "math": {
+    "model": "p_i = -near_raw_i*(e_x - d_ix*d_i) - omega_true cross d_i",
+    "positive_field": "near_raw=1+x/3-y/4+z/5",
+    "negative_field": "near_raw=-(1+x/3-y/4+z/5), artificial mixed-signed/nonphysical negative inverse depth",
+    "true_translation": [
+      1,
+      0,
+      0
+    ],
+    "true_rotation": [
+      0.2,
+      -0.14285714285714285,
+      0.09090909090909091
+    ],
+    "original_positive_CS_coefficients": "C00=Sqrt[4Pi], C1,-1=Sqrt[4Pi/3]/4, C1,0=Sqrt[4Pi/3]/5, C1,+1=-Sqrt[4Pi/3]/3, all other entries zero",
+    "original_negative_CS_coefficients": "entire 3x5 matrix of positive case multiplied by -1",
+    "source_normalization": "s=mean(near_raw); if s<0 near_after_sign=-near_raw; normalized=near_after_sign/s",
+    "M1": "I-average(normalized_near_i*d_i*d_i^T)",
+    "weighted_tangent": "average(normalized_near_i*(I-d_i*d_i^T))",
+    "exact_identity": "M1-weighted_tangent=(1-mean(normalized_near))*I",
+    "positive_gap": "0",
+    "negative_gap": "2I",
+    "exact_positive_raw_mean": "2819/2700",
+    "exact_negative_raw_mean": "-2819/2700",
+    "interpretation": "The matrix block M1 corresponds to the weighted tangential projection only in the positive branch. In the negative branch, the source flips near but divides by the original negative mean, so its normalized mean is -1 and the standard identity differs by 2I.",
+    "warning": "The negative mean signed-nearness fixture is intentionally not a positive-depth physical scene; it demonstrates source branch algebra and is not a proof of failure for all physical camera motions."
+  },
+  "numerical_condition_numbers": {
+    "positive_mean_2norm": 2.4665640260248853,
+    "negative_mean_2norm": 2.61270309538765,
+    "method": "Independent Wolfram SingularValueList of archived 6x6 numerical M blocks; both well away from singular."
+  },
+  "results": {
+    "positiveMean": {
+      "sign": 1,
+      "directions": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ],
+        [
+          -1,
+          0,
+          0
+        ],
+        [
+          0,
+          -1,
+          0
+        ],
+        [
+          0,
+          0,
+          -1
+        ],
+        [
+          0.6,
+          0.8,
+          0
+        ],
+        [
+          0,
+          0.6,
+          0.8
+        ],
+        [
+          0.8,
+          0,
+          0.6
+        ]
+      ],
+      "inputCSCoefficients3x5": [
+        [
+          3.544907701811032,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0.5116633539732443,
+          0.4093306831785954,
+          -0.682217805297659,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "oldNearReconstructed": [
+        1.3333333333333333,
+        0.75,
+        1.2,
+        0.6666666666666666,
+        1.25,
+        0.8,
+        1,
+        1.01,
+        1.3866666666666667
+      ],
+      "oldNearMeanExact": "2819/2700",
+      "oldNearMean": 1.0440740740740742,
+      "meanAfterNormalizationExact": 1,
+      "nearAfterSignFlip": [
+        1.3333333333333333,
+        0.75,
+        1.2,
+        0.6666666666666666,
+        1.25,
+        0.8,
+        1,
+        1.01,
+        1.3866666666666667
+      ],
+      "nearNormalized": [
+        1.2770485987938984,
+        0.7183398368215679,
+        1.1493437389145087,
+        0.6385242993969493,
+        1.1972330613692799,
+        0.7662291592763392,
+        0.9577864490954239,
+        0.9673643135863782,
+        1.3281305427456545
+      ],
+      "syntheticTangentialFlow": [
+        [
+          0,
+          -0.09090909090909091,
+          -0.14285714285714285
+        ],
+        [
+          -0.6590909090909091,
+          0,
+          -0.2
+        ],
+        [
+          -1.0571428571428572,
+          0.2,
+          0
+        ],
+        [
+          0,
+          0.09090909090909091,
+          0.14285714285714285
+        ],
+        [
+          -1.3409090909090908,
+          0,
+          0.2
+        ],
+        [
+          -0.9428571428571428,
+          -0.2,
+          0
+        ],
+        [
+          -0.5672727272727273,
+          0.4254545454545455,
+          -0.24571428571428572
+        ],
+        [
+          -0.8411688311688311,
+          0.16,
+          -0.12
+        ],
+        [
+          -0.4134857142857143,
+          0.04727272727272727,
+          0.5513142857142858
+        ]
+      ],
+      "M1": [
+        [
+          0.6544022703086201,
+          -0.05108194395175594,
+          -0.07083362894643491
+        ],
+        [
+          -0.05108194395175594,
+          0.6803547357218872,
+          -0.0515927633912735
+        ],
+        [
+          -0.07083362894643491,
+          -0.0515927633912735,
+          0.6652429939694927
+        ]
+      ],
+      "M2": [
+        [
+          0,
+          0.15555555555555556,
+          -0.15555555555555556
+        ],
+        [
+          -0.15555555555555556,
+          0,
+          0.15555555555555556
+        ],
+        [
+          0.15555555555555556,
+          -0.15555555555555556,
+          0
+        ]
+      ],
+      "M3": [
+        [
+          0,
+          -0.21709826179496275,
+          0.09641716920893934
+        ],
+        [
+          0.21709826179496275,
+          0,
+          -0.25285562256119193
+        ],
+        [
+          -0.09641716920893934,
+          0.25285562256119193,
+          0
+        ]
+      ],
+      "M4": [
+        [
+          0.6666666666666666,
+          -0.05333333333333333,
+          -0.05333333333333333
+        ],
+        [
+          -0.05333333333333333,
+          0.6666666666666666,
+          -0.05333333333333333
+        ],
+        [
+          -0.05333333333333333,
+          -0.05333333333333333,
+          0.6666666666666666
+        ]
+      ],
+      "rhs": [
+        0.6468808080808081,
+        -0.0703030303030303,
+        -0.020622222222222222,
+        0.1361038961038961,
+        0.11591341991341991,
+        -0.04310822510822511
+      ],
+      "detM": 0.05806964565352594,
+      "solvedMotionSix": [
+        1.0440740740740742,
+        0,
+        0,
+        0.2,
+        -0.14285714285714285,
+        0.09090909090909091
+      ],
+      "translationNormalized": [
+        1,
+        0,
+        0
+      ],
+      "rotationEstimated": [
+        0.2,
+        -0.14285714285714285,
+        0.09090909090909091
+      ],
+      "errorMse": 0,
+      "newNearMin": 0,
+      "newNearMax": 1.3866666666281482,
+      "newNearAll": [
+        0,
+        0.7499999999925,
+        1.199999999988,
+        0,
+        1.2499999999875,
+        0.799999999992,
+        0.999999999984375,
+        1.0099999999899,
+        1.3866666666281482
+      ],
+      "newCoefficientsSourceNine": [
+        2.9133889593362294,
+        -0.6180893315904281,
+        1.3917243227832163,
+        -1.1661376351613801,
+        1.9068567351030574,
+        -1.9259253024649212,
+        0.4669505734978958,
+        -2.6441746726441058,
+        -0.6961943190127998
+      ],
+      "M1MinusWeightedTangent": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "M1MinusWeightedTangentEquals2I": true,
+      "matrixNonsingular": true,
+      "M2Nonzero": true,
+      "M3Nonzero": true,
+      "positiveBranchExactMotionRecovered": true,
+      "negativeBranchRawMean": false
+    },
+    "negativeMeanSigned": {
+      "sign": -1,
+      "directions": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ],
+        [
+          -1,
+          0,
+          0
+        ],
+        [
+          0,
+          -1,
+          0
+        ],
+        [
+          0,
+          0,
+          -1
+        ],
+        [
+          0.6,
+          0.8,
+          0
+        ],
+        [
+          0,
+          0.6,
+          0.8
+        ],
+        [
+          0.8,
+          0,
+          0.6
+        ]
+      ],
+      "inputCSCoefficients3x5": [
+        [
+          -3.544907701811032,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          -0.5116633539732443,
+          -0.4093306831785954,
+          0.682217805297659,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "oldNearReconstructed": [
+        -1.3333333333333333,
+        -0.75,
+        -1.2,
+        -0.6666666666666666,
+        -1.25,
+        -0.8,
+        -1,
+        -1.01,
+        -1.3866666666666667
+      ],
+      "oldNearMeanExact": "-2819/2700",
+      "oldNearMean": -1.0440740740740742,
+      "meanAfterNormalizationExact": -1,
+      "nearAfterSignFlip": [
+        1.3333333333333333,
+        0.75,
+        1.2,
+        0.6666666666666666,
+        1.25,
+        0.8,
+        1,
+        1.01,
+        1.3866666666666667
+      ],
+      "nearNormalized": [
+        -1.2770485987938984,
+        -0.7183398368215679,
+        -1.1493437389145087,
+        -0.6385242993969493,
+        -1.1972330613692799,
+        -0.7662291592763392,
+        -0.9577864490954239,
+        -0.9673643135863782,
+        -1.3281305427456545
+      ],
+      "syntheticTangentialFlow": [
+        [
+          0,
+          -0.09090909090909091,
+          -0.14285714285714285
+        ],
+        [
+          0.8409090909090909,
+          0,
+          -0.2
+        ],
+        [
+          1.342857142857143,
+          0.2,
+          0
+        ],
+        [
+          0,
+          0.09090909090909091,
+          0.14285714285714285
+        ],
+        [
+          1.1590909090909092,
+          0,
+          0.2
+        ],
+        [
+          0.6571428571428571,
+          -0.2,
+          0
+        ],
+        [
+          0.7127272727272728,
+          -0.5345454545454545,
+          -0.24571428571428572
+        ],
+        [
+          1.1788311688311688,
+          0.16,
+          -0.12
+        ],
+        [
+          0.5849142857142857,
+          0.04727272727272727,
+          -0.7798857142857143
+        ]
+      ],
+      "M1": [
+        [
+          1.34559772969138,
+          0.05108194395175594,
+          0.07083362894643491
+        ],
+        [
+          0.05108194395175594,
+          1.319645264278113,
+          0.0515927633912735
+        ],
+        [
+          0.07083362894643491,
+          0.0515927633912735,
+          1.3347570060305074
+        ]
+      ],
+      "M2": [
+        [
+          0,
+          0.15555555555555556,
+          -0.15555555555555556
+        ],
+        [
+          -0.15555555555555556,
+          0,
+          0.15555555555555556
+        ],
+        [
+          0.15555555555555556,
+          -0.15555555555555556,
+          0
+        ]
+      ],
+      "M3": [
+        [
+          0,
+          0.21709826179496275,
+          -0.09641716920893934
+        ],
+        [
+          -0.21709826179496275,
+          0,
+          0.25285562256119193
+        ],
+        [
+          0.09641716920893934,
+          -0.25285562256119193,
+          0
+        ]
+      ],
+      "M4": [
+        [
+          0.6666666666666666,
+          -0.05333333333333333,
+          -0.05333333333333333
+        ],
+        [
+          -0.05333333333333333,
+          0.6666666666666666,
+          -0.05333333333333333
+        ],
+        [
+          -0.05333333333333333,
+          -0.05333333333333333,
+          0.6666666666666666
+        ]
+      ],
+      "rhs": [
+        -0.7196080808080808,
+        0.03636363636363636,
+        0.1272888888888889,
+        0.1361038961038961,
+        -0.3374199134199134,
+        0.15822510822510824
+      ],
+      "detM": 0.8221279399700818,
+      "solvedMotionSix": [
+        -0.4335987799002173,
+        0.03091308986341341,
+        0.02497154227677647,
+        0.1700641552425584,
+        -0.6211414741551088,
+        0.27568585009435687
+      ],
+      "translationNormalized": [
+        -0.9958264582065043,
+        0.07099667761515982,
+        0.05735099740630944
+      ],
+      "rotationEstimated": [
+        0.1700641552425584,
+        -0.6211414741551088,
+        0.27568585009435687
+      ],
+      "errorMse": 0.21140062257948003,
+      "newNearMin": -4.867977131878886,
+      "newNearMax": 4.867977131878886,
+      "newNearAll": [
+        -4.867977131878886,
+        0.5674413125017942,
+        0.7189429143401795,
+        4.867977131878886,
+        1.4343014447732256,
+        1.2792824388033777,
+        0.7083313106566567,
+        0.5177337298905279,
+        0.5150733390846529
+      ],
+      "newCoefficientsSourceNine": [
+        2.2612991792774464,
+        -0.007125870166276713,
+        0.11112745632137397,
+        6.070985848625198,
+        1.3506863304311263,
+        -0.987244049847206,
+        0.41288036211613593,
+        -0.9821710657209377,
+        -0.8153944297541761
+      ],
+      "M1MinusWeightedTangent": [
+        [
+          2,
+          0,
+          0
+        ],
+        [
+          0,
+          2,
+          0
+        ],
+        [
+          0,
+          0,
+          2
+        ]
+      ],
+      "M1MinusWeightedTangentEquals2I": true,
+      "matrixNonsingular": true,
+      "M2Nonzero": true,
+      "M3Nonzero": true,
+      "positiveBranchExactMotionRecovered": false,
+      "negativeBranchRawMean": true
+    }
+  },
+  "math_checks": {
+    "count": 12,
+    "passed": 12,
+    "checks": {
+      "two branches": true,
+      "source near reconstruction match": true,
+      "positive raw mean": true,
+      "negative raw mean": true,
+      "different tangent identity": true,
+      "positive exact recovery": true,
+      "negative nonzero error": true,
+      "non-singular both": true,
+      "cross blocks nonzero both": true,
+      "negative omega not ideal": true,
+      "negative t not parallel ex": true,
+      "nine values new near+coef": true
+    }
+  },
+  "scope_limits": [
+    "The positive synthetic flow is from nine rational non-symmetric unit bearings and source-CS SH coefficients with nonconstant positive near; its 6x6 solution is exact rational before normalization.",
+    "The negative input uses negative signed inverse depth and should be interpreted only as a branch-control counterexample, not a physically valid positive-depth reconstruction.",
+    "New nearness uses source denominator +1e-11, not KvD +1e-13; recomputed C uses per-channel ratio projection, not global least squares.",
+    "No Adaptive production C++, CMake, CTest, MATLAB runtime, Session or state rollback implemented or tested here.",
+    "Matrix/float comparisons are mathematics generated by Wolfram and not approved DEC-005 scientific acceptance thresholds."
+  ]
+}
