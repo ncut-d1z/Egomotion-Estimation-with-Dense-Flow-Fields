@@ -2,7 +2,7 @@
 
 > **问题两态**：仅「未整改 / 已整改」。实际修改目标并在新固定提交复读后才可结案；软件、数学验证、权限及批准目标不能以文字更新代替。文件三态见 [AUDIT](AUDIT.md)。`origin/**` 只读，H-10/H-11 不因上传论文自动开放，MATLAB/L1 永久非必需。
 >
-> **历史证据保留**：本轮把分散的 AF 行集中到同一表，不删除编号、原目标或开放义务。先前 §2～28 的完整发现、提交顺序和结案记录保留在 [本轮开始前的固定版本](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/98e95e2f867dc7142fa0d5ac0f1c79f5d6429ed1/docs/AUDIT_PROCESS.md) 及 PROGRESS/reviews；历史“论文未提供”只描述当时状态，不能继续作为当前阻塞。
+> **历史证据保留**：分散的AF行已集中到同一表，编号、开放义务与状态不丢失。先前§2～28的完整发现、提交顺序和结案记录保留在[本轮开始前固定版本](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/98e95e2f867dc7142fa0d5ac0f1c79f5d6429ed1/docs/AUDIT_PROCESS.md)及PROGRESS/reviews；历史“论文未提供”只描述当时状态，不能继续作为当前阻塞。
 
 ## 1. 现行唯一问题台账
 
@@ -64,7 +64,7 @@
 | AF-053 | `docs/PROGRESS.md` | 在获授权实际实施/测试后回填固定源码/输入身份、命令、stdout/stderr/exit、失败数、wall/CPU/RSS 与里程碑证据；历史 E-DOC 不能当最新 HEAD PASS。 | 未整改 |
 | AF-054 | `docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md` | 以独立 L2/L3/适用 L4 及真实 C++ 误差确定 DEC-005 最终分模块 PASS 阈值；0.01/0.1 仅首轮筛查，几何/计数/shape 单列严格判据。 | 未整改 |
 | AF-055 | `docs/golden/analytic_golden_candidates.v1.json` | 核验 AN-G01～12 的固定输入、公式与参考值来源，补独立 L3 核对；不得将候选 JSON 或 AN/APL 编号一致当成已执行测试。 | 未整改 |
-| AF-056 | `docs/MAT_DATA_SCHEMA.md` | 独立复核 582 MAT 的文件身份/SHA-256、变量与 shape、L2 原始 double 逐值；FNV64 与 SHA-256 分开，不改写 origin/。 | 未整改 |
+| AF-056 | `docs/MAT_DATA_SCHEMA.md` | 独立复核 582 MAT 的文件身份/SHA-256、变量与 shape、L2 原始 double 逐值；FNV64 與 SHA-256 分开，不改写 origin/。 | 未整改 |
 | AF-057 | `docs/TODO.md` | 在进入相应阶段时收齐论文 PDF、H-10/H-11 操作授权、DEC-005/006、正式基线/发布批准；已选 MIT/DEC-004/CLI 等不得重复申请。 | 未整改 |
 | AF-058 | `docs/DOCUMENT_BASELINE_REGISTER.md` | 正式签署前更新文档版本/blob/commit/范围/批准人/日期时区/例外及测试证据；滚动 PROGRESS/AUDIT 不伪装为已冻结规范。 | 未整改 |
 | AF-059 | `docs/design/README.md` | 逐模块核对 LLD 签名、唯一合同归属、独立 L3/TC 映射与真实代码边界，建立可编码/可验证的冻结清单；不以目录齐全等同实现。 | 已整改 |
@@ -75,24 +75,24 @@
 | AF-064 | `docs/AUDIT.md` | 58 正文 REQ + 8 REQ-DC = 66，总 TC 同理，不重复计数。 | 已整改 |
 | AF-065 | `docs/AUDIT.md` | 文件状态描述移除已经整改的旧“待”标签，保留真实开放目标。 | 已整改 |
 | AF-066 | `docs/AUDIT.md` | 历史发现阶段与现行结案统计分开。 | 已整改 |
-| AF-067 | `docs/golden/analytic_golden_candidates.v1.json` | 修复 bias_test_spherical_prop_error.m 的 39 位 SHA 为真实 40 位 fc3c4f0a7a417171415fb5e3d869a744ba24d04f；19/19 来源复核，不改候选数值。 | 已整改 |
+| AF-067 | `docs/golden/analytic_golden_candidates.v1.json` | 修复 bias_test_spherical_prop_error.m 的39位SHA为真实40位fc3c4f0a7a417171415fb5e3d869a744ba24d04f；19/19来源复核，不改候选数值。 | 已整改 |
 | AF-068 | `docs/AUDIT.md` | 修复重复章节号，历史退出事实与现行继续整改规则分开。 | 已整改 |
 | AF-069 | `docs/AUDIT_PROCESS.md` | 修复章节跳号，未执行授权/测试不关单。 | 已整改 |
-| AF-070 | `docs/PROGRESS.md` | 记录继续整改和 23 个开放阶段门槛，保留授权/论文/数值/批准的追踪。 | 已整改 |
-| AF-071 | `docs/DOCUMENT_BASELINE_REGISTER.md` | §6.1～6.5 唯一顺序，保持历史固定文件身份及审批不变。 | 已整改 |
-| AF-072 | `docs/MIGRATION_MATRIX.md` | 45 .m / 50 函数，SHRotate 的主函数及 M/U/P/V/W 独立登记；非数学或软件验收。 | 已整改 |
-| AF-073 | `docs/AUDIT.md` | 压缩重复历史，保留 AU、完整文件三态、现行规则、历史证据。 | 已整改 |
-| AF-074 | `docs/AUDIT_PROCESS.md` | 压缩重复结案但保留全部 AF 编号/路径/目标/两态，历史证据由固定 Git/PROGRESS/reviews 留存。 | 已整改 |
+| AF-070 | `docs/PROGRESS.md` | 记录继续整改和23个开放阶段门槛，保留授权/论文/数值/批准的追踪。 | 已整改 |
+| AF-071 | `docs/DOCUMENT_BASELINE_REGISTER.md` | §6.1～6.5唯一顺序，保持历史固定文件身份及审批不变。 | 已整改 |
+| AF-072 | `docs/MIGRATION_MATRIX.md` | 45 .m/50函数，SHRotate的主函数及M/U/P/V/W独立登记；非数学或软件验收。 | 已整改 |
+| AF-073 | `docs/AUDIT.md` | 压缩重复历史，保留AU、完整文件三态、现行规则、历史证据。 | 已整改 |
+| AF-074 | `docs/AUDIT_PROCESS.md` | 压缩重复结案但保留全部AF编号/路径/目标/两态，历史证据由固定Git/PROGRESS/reviews留存。 | 已整改 |
 | AF-075 | `docs/design/analysis_plotting.md` | 旋转按段局部平滑并裁剪，保留完整段级边缘数组；纠正“裁剪后内部值必不同”的旧断言。 | 已整改 |
-| AF-076 | `docs/design/analysis_plotting.md` | comparison 平移不分段；many_parameter 平移先全600行平滑，再取50:550；与旋转分开。 | 已整改 |
-| AF-077 | `docs/design/contracts.md` | 七种 AnalysisErrorCode 的唯一候选 exit/stage 与 CLI/TC 对齐，DEC-008/真实测试不关闭。 | 已整改 |
-| AF-078 | `docs/design/README.md` | 动态审计数归 AUDIT；分析错误定义与公共退出映射分层。 | 已整改 |
+| AF-076 | `docs/design/analysis_plotting.md` | comparison平移不分段；many_parameter平移先全600行平滑，再取50:550；与旋转分开。 | 已整改 |
+| AF-077 | `docs/design/contracts.md` | 七种AnalysisErrorCode的唯一候选exit/stage与CLI/TC对齐，DEC-008/真实测试不关闭。 | 已整改 |
+| AF-078 | `docs/design/README.md` | 动态审计数归AUDIT；分析错误定义与公共退出映射分层。 | 已整改 |
 | AF-079 | `docs/DOCUMENT_BASELINE_REGISTER.md` | 历史36项固定身份与现行审计集合分离，旧快照不覆盖。 | 已整改 |
-| AF-080 | `docs/design/trajectory.md` | 严格反向非零向量的源结果确定为零 rotvec，不能描述为“可能”；补 TR-C01～04 候选，不当有效π旋转。 | 已整改 |
-| AF-081 | `docs/design/sampling_noise.md` | A/B/C/D 子面顶点、深度优先四进制行号、缺损原面ID与连续输出块区分；level1/2索引资格，非全量L3。 | 已整改 |
+| AF-080 | `docs/design/trajectory.md` | 严格反向非零向量的源结果确定为零rotvec，不能描述为“可能”；补TR-C01～04候选，不当有效π旋转。 | 已整改 |
+| AF-081 | `docs/design/sampling_noise.md` | A/B/C/D子面顶点、深度优先四进制行号、缺损原面ID与连续输出块区分；level1/2索引资格，非全量L3。 | 已整改 |
 | AF-082 | `docs/AUDIT.md` | 现行描述移除过期54文件/75AF计数；历史数字保持原时点。 | 已整改 |
-| AF-083 | `docs/design/analysis_plotting.md` | Bias xwerte 只取最后k，四组y累计除K；绘图3:end、100/sqrt(xwerte)，不把x平均或换实际N。 | 已整改 |
-| AF-084 | `docs/design/contracts.md` | PlotErrorCode 四成员唯一exit/stage、CLI/分析/TC和输出安全对齐；不代表绘图/CTest/批准。 | 已整改 |
+| AF-083 | `docs/design/analysis_plotting.md` | Bias xwerte只取最后k，四组y累计除K；绘图3:end、100/sqrt(xwerte)，不把x平均或换实际N。 | 已整改 |
+| AF-084 | `docs/design/contracts.md` | PlotErrorCode四成员唯一exit/stage、CLI/分析/TC和输出安全对齐；不代表绘图/CTest/批准。 | 已整改 |
 | AF-085 | `docs/AUDIT.md` | 现行摘要与150b975历史58/35/23统计区分，实际唯一行是计数源。 | 已整改 |
 | AF-086 | `docs/design/README.md` | 区分10条模块/合同行与11个实际Markdown文件（含球谐专题）。 | 已整改 |
 | AF-087 | `docs/design/kvd.md` | 补Franz、near分母/翻号、归一前后t、旋转a/b/c、预测流、停止布尔和末轮缩放的候选trace，并映射原TC；不改变源数学。 | 已整改 |
@@ -100,17 +100,30 @@
 | AF-089 | `docs/design/experiments.md` | ratio虽在加噪后赋值，分子分母取加噪前理想分量平均模长；零分母/非有限候选与末次缓冲规则，禁止补造历史字段。 | 已整改 |
 | AF-090 | `docs/design/analysis_plotting.md` | 球谐插图P_l^m*cos(mφ)、41×41网格及rho=5+3yy/max(abs(yy))不等同核心九实基；既有TC-F-AN-002候选。 | 已整改 |
 | AF-091 | `docs/design/analysis_plotting.md` | 两轨迹插图600点、sphere(50)、y<=0的z-only NaN遮罩；正弦源的circular标题错误与可选纠正分开。 | 已整改 |
-| AF-092 | `docs/TODO.md`；`docs/design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 登记用户已提供1996原文、1998勘误、1999论文的页码/文件身份及审阅范围；撤销这些现行文件的“等待上传”卡点，不擅自开放H-10/H-11。 | 未整改 |
-| AF-093 | `docs/design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 建立1996→1998公式6.7/7.9a/b/c及Table1/2→原M/U/P/V/W的对应；显式记录1998 Table2的sqrt(1−δ)与源码sqrt(1+δ)冲突、边界P索引及零权重不求值规则，给可复核反例，不能默改论文。 | 未整改 |
-| AF-094 | `docs/design/harmonics.md` | 明确1999式8.15与原SHRotate一阶块的转置、系数左乘及现有九实基相位；加入绕x/y及非交换旋转的区分性检查，不把z90特例当一般物理方向证明，不自动修改原算法。 | 未整改 |
-| AF-095 | `docs/golden/SH_PAPER_VERIFICATION_CASES.md` | 从1996 Table3重排全25元素的独立非递归参考候选，结合1999 F/G与W变换构造交叉验证路线；关联既有TC-F-SH-001/002，文献高阶速度/精度不冒充本项目实测。 | 未整改 |
+| AF-092 | `docs/TODO.md`；`docs/design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 登记用户已提供1996原文、1998勘误、1999论文的页码/文件身份及审阅范围；撤销这些现行文件的“等待上传”卡点，不擅自开放H-10/H-11。 | 已整改 |
+| AF-093 | `docs/design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 建立1996→1998公式6.7/7.9a/b/c及Table1/2→原M/U/P/V/W的对应；显式记录1998 Table2的sqrt(1−δ)与源码sqrt(1+δ)冲突、边界P索引及零权重不求值规则，给可复核反例，不能默改论文。 | 已整改 |
+| AF-094 | `docs/design/harmonics.md` | 明确1999式8.15与原SHRotate一阶块的转置、系数左乘及现有九实基相位；加入绕x/y及非交换旋转的区分性检查，不把z90特例当一般物理方向证明，不自动修改原算法。 | 已整改 |
+| AF-095 | `docs/golden/SH_PAPER_VERIFICATION_CASES.md` | 从1996 Table3重排全25元素的独立非递归参考候选，结合1999 F/G与W变换构造交叉验证路线；关联既有TC-F-SH-001/002，文献高阶速度/精度不冒充本项目实测。 | 已整改 |
 
-## 2. 本轮输入及登记状态（2026-11-09）
+## 2. 本轮登记与结案证据（2026-11-09）
 
-本轮固定输入 `98e95e2f867dc7142fa0d5ac0f1c79f5d6429ed1`：92项＝69已整改＋23未整改。用户本轮提供三篇完整PDF，已读取全文并检查关键公式/表格页面；文档文件身份散列不等于MAT逐值或L3算法执行。新增AF-092～095后：**96项＝69已整改＋27未整改**，先登记，未宣称修复。
+本轮固定输入`98e95e2f867dc7142fa0d5ac0f1c79f5d6429ed1`：92项＝69已整改＋23未整改。先在`d0618b8f02ba35ff47ae8355eca8f319cde8b7ed`登记四项为未整改，此时96项＝69已整改＋27未整改。随后实际修改目标，在固定提交`f2c3aca4205035d670df625d22d4b48935cb4a2f`复读下列内容后，只关闭四个文档级目标。
 
-原23项阶段目标均保留：AF-037～061，排除已完成AF-052/059。AF-045/046/057的**材料缺失子卡点**已因附件到位而消除，完整目标仍需公式约定、独立数值、真实实现/CTest或批准；不能继续把“未上传论文”作为这些目标的当前原因。
+| AF | 实际修订提交 | 固定复读确认的限定结果 |
+|---|---|---|
+| 092 | 论文记录`c30078b`、专题`138f45b`、TODO`04a57d4`、索引`f2c3aca` | 三PDF字节数/SHA-256与附件一致；PAPER-SH=EvidenceAccepted；现行目标不再等待上传；H-10/H-11仍未授权 |
+| 093 | `c30078b`、`138f45b` | 四公式勘误、P前阶边界、IR98负m因子的实际印刷冲突、x45的√3/4与√3/2纸面反例、精确零系数短路均已明示，未假称作者额外勘误 |
+| 094 | `ad34ed0`、`138f45b` | 原R3=P rᵀ Pᵀ与论文P R Pᵀ分层；现有基的J相位反例、z90不足、x/y/非交换用例及保留源行为明确 |
+| 095 | `e37f392` | Table3两轴重排后的5×5共25公式、SH-P01～10候选和原TC映射、1999 W共轭转置及文献性能非项目实测边界均存在 |
 
-## 3. 证据和结案规则
+**结案后现行两态：96项＝73已整改＋23未整改。** 附件哈希是文档材料身份检查，非MAT逐值、独立数学程序或项目测试。上述复读是限定文字/源公式/纸面代数核对，不是CTest，不宣称一般R5实现正确或物理旋转语义已全部闭合。
 
-先登记 → 修改目标 → 固定提交复读 → 记录证据 → 才改已整改。原source、MAT、旧审批和reviews不回写；论文原PDF不自动上传公共仓库。新增审计报告、设计与测试候选只能证明其声明范围。第一轮全部适用目标实际清零以后，才触发用户要求的第二轮全面审计。
+## 3. 原23项目标的实际变化与剩余卡点
+
+开放ID仍为AF-037～061，排除已完成AF-052/059，原目标不降级。**AF-045/046/057的缺论文子卡点已解除**；完整目标仍因一般方向/相位合同、独立全元素L3、Eigen实现/真实CTest和相应批准未完成而开放。AF-055的既有JSON未修改，不以新增公式表冒充其全部验收。
+
+独立材料与审阅见[论文报告](reviews/SH_PAPERS_SOURCE_AUDIT_2026-11-09.md)，具体用例见[SH-PAPER](golden/SH_PAPER_VERIFICATION_CASES.md)，最新人类材料/权限见[TODO](TODO.md)。不要再从历史记录复制“未提供PDF”为当前原因，也不能因PDF上传就进入生产编码或运行阶段。
+
+## 4. 证据和后续规则
+
+先登记 → 修改目标 → 固定提交复读 → 记录证据 → 才改已整改。原source、MAT、旧审批和reviews不回写；论文原PDF不自动上传公共仓库。新增审计报告、设计与测试候选只证明其声明范围。第一轮全部适用目标实际清零以后，才触发用户要求的第二轮全面审计；本轮仍在第一轮内。
