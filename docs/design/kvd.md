@@ -427,76 +427,86 @@ c_\omega=(0,0,1/6),\quad
 
 ### 9.5 首轮 near 负总和的判别性八方向精确夹具（AF-043，理论数学执行）
 
-§9.2/9.3两个固定流场的 near 总和均为正，**没有覆盖原源码 `sum(near)<0` 时在平移项求和之前同时反转 near 与 trans 的路径**。现构造原函数可接收的混合正负**数学光流输入**（不宣称符合所有物点正距离的物理假设），验证算法该离散分支。
+§9.2/9.3 的两个固定流场的 near 总和均为正，**没有覆盖原源码 sum(near)<0 时在平移项求和之前同时反转 near 与 trans 的路径**。现构造混合正负的**数学光流输入**，只验证这一离散分支，并不宣称所有物点距离为正。
 
-令 `s=1/10`、`c=√99/10`，`ε=10^{-13}`，按行输入八个单位方向
+令 \(s=1/10\)、\(c=\sqrt{99}/10\)、\(\epsilon=10^{-13}\)，按行输入八个单位视线
 
-[
-(c,s,0), (c,-s,0), (-c,s,0), (-c,-s,0),
-quad e_y,-e_y,e_z,-e_z.
-]
+\[
+(c,s,0),\ (c,-s,0),\ (-c,s,0),\ (-c,-s,0),
+\quad \boldsymbol e_y,-\boldsymbol e_y,\boldsymbol e_z,-\boldsymbol e_z.
+\]
 
-对前四行给光流 (oldsymbol p_i=10(oldsymbol e_x-d_{ix}oldsymbol d_i))，对后四行给 (oldsymbol p_i=-(oldsymbol e_x-d_{ix}oldsymbol d_i))；全部均严格满足 (oldsymbol d_i^	opoldsymbol p_i=0)。这等效于第一组近轴方向的**有符号**近度 (-10) 和末四方向的近度 (+1)，**仅用于非物理分支单元理论诊断**。
+对前四行给 \(\boldsymbol p_i=10(\boldsymbol e_x-d_{ix}\boldsymbol d_i)\)，后四行给 \(\boldsymbol p_i=-(\boldsymbol e_x-d_{ix}\boldsymbol d_i)\)；全部满足 \(\boldsymbol d_i^\top\boldsymbol p_i=0\)。这等效于第一组近轴方向的**有符号**近度 \(-10\)，以及末四个方向的近度 \(+1\)，仅适用于非物理的控制流测试。
 
-Franz 的三轴平移模板响应 ((18/5,0,0))，分母 ((101/25,149/25,6))，初始
+Franz 的三轴平移响应 \((18/5,0,0)\)，平方范数分母 \((101/25,149/25,6)\)，所以
 
-[
-oldsymbol t_{m Franz}=(90/101)oldsymbol e_x,qquad
-oldsymbolomega_{m Franz}=0.
-]
+\[
+\boldsymbol t_{\mathrm{Franz}}=\frac{90}{101}\boldsymbol e_x,\qquad
+\boldsymbol\omega_{\mathrm{Franz}}=\boldsymbol 0.
+\]
 
-定义 (alpha=1/(1+100epsilon))、(eta=1/(1+epsilon))。第一次近度估计的八项为 ((-10alpha,-10alpha,-10alpha,-10alpha,eta,eta,eta,eta))，总和 (-40alpha+4eta<0)。**原源先将 near 翻转为 ((10alpha)^4,(-eta)^4)，再将旧 (t) 从 (+e_x) 翻为 (-e_x)，之后才求平移 (a,b,c)**。翻号后近度均值 ((5alpha-eta)/2>0)。于是
+设 \(\alpha=1/(1+100\epsilon)\)、\(\beta=1/(1+\epsilon)\)。第一次估计的近度为四个 \(-10\alpha\) 和四个 \(+\beta\)，总和 \(-40\alpha+4\beta<0\)。因此原源码**先将 near 翻转为四个 \(10\alpha\) 与四个 \(-\beta\)，再将旧 t 从 \(+\boldsymbol e_x\) 翻为 \(-\boldsymbol e_x\)，最后才求平移 \(a,b,c\)**。翻号后的 near 均值为 \((5\alpha-\beta)/2>0\)。直接代入两条源码规则：
 
-[
-egin{aligned}
-a_O&=	frac12(alpha+eta)e_x,& b_O&=0,&
-c_O&=-	frac{99}{2}alpha^2e_x,\
-a_M&=-	frac9{20}e_x,& b_M&=0,&
-c_M&=-	frac{99}{20}alpha e_x.
-end{aligned}
-]
+\[
+\begin{aligned}
+\boldsymbol a_O&=\frac{\alpha+\beta}{2}\boldsymbol e_x,&
+\boldsymbol b_O&=\boldsymbol 0,&
+\boldsymbol c_O&=-\frac{99}{2}\alpha^2\boldsymbol e_x,\\
+\boldsymbol a_M&=-\frac9{20}\boldsymbol e_x,&
+\boldsymbol b_M&=\boldsymbol 0,&
+\boldsymbol c_M&=-\frac{99}{20}\alpha\boldsymbol e_x.
+\end{aligned}
+\]
 
-进而
+从而得到归一化之前的候选平移
 
-[
-widetilde t_O=-	frac{alpha+eta+99alpha^2}{2}e_x,qquad
-widetilde t_M=-	frac{99alpha-9}{20}e_x .
-]
+\[
+\widetilde{\boldsymbol t}_O
+=-\frac{\alpha+\beta+99\alpha^2}{2}\boldsymbol e_x,\qquad
+\widetilde{\boldsymbol t}_M
+=-\frac{99\alpha-9}{20}\boldsymbol e_x .
+\]
 
-两者都归一为 (-e_x)，旋转始终为零。逐项预测流的
+二者均归一为 \(-\boldsymbol e_x\)，旋转保持零。模型的单轮误差为
 
-[
-mathrm{MSE}=	frac12(1-alpha)^2+
-              	frac12(1-eta)^2,qquad
-mathrm{RMS}approx7.071421356346968	imes10^{-12}.
-]
+\[
+\mathrm{MSE}=\frac12(1-\alpha)^2+\frac12(1-\beta)^2,\qquad
+\mathrm{RMS}\approx7.071421356346968\times10^{-12}.
+\]
 
-第一次 (delta=mathrm{RMS}<10^{-7})，此后第2～6轮 (delta=0)，动态门限约 (8.839276695433711	imes10^{-16})。`k<6` 强制六轮，**首轮翻号为true、后五轮均false**，最终 (oldsymbol t_{m out}=-[(5alpha-eta)/2]e_xapprox-4.49999999995005e_x)、(oldsymbolomega=0)。
+首轮 \(\delta=\mathrm{RMS}<10^{-7}\)，第2～6轮 \(\delta=0\)，动态门限约 \(8.839276695433711\times10^{-16}\)。由于条件 **x<6**，前五轮仍继续，第六轮后退出。首轮翻号为真，后五轮为假，最后返回
 
-以上完整**两种算法×六轮，共12轮**近度/符号/原始平移/旋转/MSE/RMS/门限/终止的独立数值已通过Wolfram 11/11理论检查，保存于 [符号复算脚本](../../verification/kvd/verify_near_sign_flip_exact_trace.wl) 和 [固定逐轮数值](../../verification/kvd/near_sign_flip_exact_trace.v1.json)。该结果**不是源码MATLAB或生产C++运行，不是经过DEC-005批准的Golden**。本夹具仍不覆盖200轮上限、真实非有限/零向量异常、带噪一般场或满足严格正深度先验的翻号可能性；但现在可明确检查 near翻号与旧t翻号的赋值先后，而不仅是旧正均值夹具。
+\[
+\boldsymbol t_{\mathrm{out}}
+=-\frac{5\alpha-\beta}{2}\boldsymbol e_x
+\approx-4.49999999995005\boldsymbol e_x,\qquad
+\boldsymbol\omega=\boldsymbol 0.
+\]
 
-### 9.6 原循环 `|| x<6` 和 `x<200` 的严格布尔界限（AF-043，纯理论）
+这些结果已由 [Wolfram精确运算脚本](../../verification/kvd/verify_near_sign_flip_exact_trace.wl) 分别对 Original/Modified 执行6轮、累计12轮，并保留在 [固定逐轮参考](../../verification/kvd/near_sign_flip_exact_trace.v1.json)，11/11数学自检通过。**这不是MATLAB或生产C++运行、正式DEC-005批准的Golden，也不是正距离场景的物理结果**。仍缺200轮可达性、一般噪声、Franz零分母和病态情形；AF-043继续开放。
 
-原版两条 `while` 条件均是
+### 9.6 原循环最少6轮和最多200轮的严格布尔界限（AF-043，纯理论）
 
-[
-B_k=(Delta_k>g_k)land(k<200)land(Delta_k>10^{-7})
- lor (k<6),
-]
+原版两条 KvD 函数共同使用的 while 条件为
 
-其中 `k=x` 是**检查下一轮前**已完成的迭代次数，初值 `k=0`，循环体第一句 `x=x+1`。括号必须原样保留：不能把最右的 `k<6` 合并到三个 `&&` 之内，也不能把 `k<200` 错误推广为对最后 `|| k<6` 的约束（虽然当前常数满足6<200）。
+\[
+B_k=((\Delta_k>g_k)\land(k<200)\land(\Delta_k>10^{-7}))
+\lor(k<6).
+\]
 
-**第一条可证性质：只要循环体没有抛异常/失败提前终止，完成迭代至少6轮。** 对 `k=0,1,2,3,4,5`，`k<6` 恒为真，所以即使 `Δ` 为0、动态门限很大或任意有序浮点比较不满足，仍继续进入第 `k+1` 轮。若源计算中发生异常、不可恢复失败或语言层未定义情况，则本证明不承诺已返回正常结果。
+其中 \(k=x\) 表示**检查下一轮之前已完成**的次数，初值 \(k=0\)，每个循环体首先执行 x=x+1。末尾的逻辑或与前三项的逻辑与优先级不能混淆。
 
-**第二条可证性质：正常控制流不可能执行第201轮。** 检查下一轮时若 `k>=200`，第一支的 `k<200` 必为假，第二支的 `k<6` 也必为假；从0开始每轮恰好加1，故正常返回的迭代次数满足
+**下界**：当 \(k=0,1,\ldots,5\) 时，第二个析取项 \(k<6\) 必真。因此若没有异常或提前失败，至少运行6轮。
 
-[
-oxed{6leq k_{mathrm{return}}leq200}.
-]
+**上界**：当 \(k\geq200\) 时，两支均为假，下一轮不执行。每轮从0自增1，所以对任何正常返回，
 
-**可区分的200轮布尔路径候选**：只在理论停止判定器上输入人工 `RMS(k)=1`（奇数轮）与 `RMS(k)=2`（偶数轮），前轮 `RMS(0)=0`，那么对所有 `k>=1` 有 `Δ(k)=1>10^{-7}`，且任意整数 `N>=1` 的 `g(k)=RMS(k)/(1000N)<=0.002<1`。因而每次在 `k<200` 时继续，第200轮结束后 `k<200` 和 `k<6` 均假，恰好返回200。**这只是布尔控制流的可行数值序列，不证明任意真实固定光流场的KvD迭代残差能按该序列交替**，也不构成200次原MATLAB/C++真实执行或生产 L3 Golden。
+\[
+\boxed{6\leq k_{\mathrm{return}}\leq200}.
+\]
 
-已有§9.4/9.5的源公式固定输入均在6轮结束，实算证据与上述纯布尔证明相互补充，但**不能**据此将 AF-043 的真实极限迭代测试、异常状态、动态门限数值误差或正式DEC-005判为完成。
+为了仅验证这一**布尔控制结构**能够允许200轮，可以给定人工 RMS 序列 \(r_0=0\)，奇数轮 \(r_k=1\)，偶数轮 \(r_k=2\)。于是 \(\Delta_k=|r_k-r_{k-1}|=1>10^{-7}\)；对任意正整数样本数 \(N\)，\(g_k=r_k/(1000N)\leq0.002<1\)。所以当 \(k<200\) 第一支继续成立，完成第200轮后两支都为假。
+
+**人工残差序列并不证明实际固定光流场中的 KvD 运动迭代可产生该序列**；这既非原 MATLAB 运行，也不是生产 C++ 的200轮数值测试。§9.4/9.5 的三组源公式输入分别在6轮停止，而理论上下界适用于所有没有失败的正常控制流；不能以这两种证据直接关闭 AF-043/DEC-005。
 
 ## 10. 与架构及开发工作的绑定
 
