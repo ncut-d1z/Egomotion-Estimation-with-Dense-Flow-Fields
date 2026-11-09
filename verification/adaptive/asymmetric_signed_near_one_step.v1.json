@@ -3,7 +3,7 @@
   "created_at": "2026-11-09",
   "status": "INDEPENDENT_WOLFRAM_EXACT_SYMBOLIC_AND_NUMERIC_CPP_NOT_RUN_NO_MATLAB_NO_DEC005_APPROVAL",
   "generator": "verification/adaptive/verify_asymmetric_signed_near_one_step.wl",
-  "generator_git_blob_sha": "472c7059d98c6cab293e13830ce037ad0e1f3451",
+  "generator_git_blob_sha": "60804374cfcfb5c58b36e8385cf1c9d072a78a51",
   "read_only_sources": {
     "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/oneit_adaptiv_matched_filter.m": "48e51bcd52fb8f27cf35b3fce38b28507af36e55",
     "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/near_aus_koeff.m": "7373c4376dfd5bbf281136ced39657d411a10ffa",
@@ -275,6 +275,7 @@
         -0.04310822510822511
       ],
       "detM": 0.05806964565352594,
+      "conditionNumber2": 2.466564026024885,
       "solvedMotionSix": [
         1.0440740740740742,
         0,
@@ -574,6 +575,7 @@
         0.15822510822510824
       ],
       "detM": 0.8221279399700818,
+      "conditionNumber2": 2.61270309538765,
       "solvedMotionSix": [
         -0.4335987799002173,
         0.03091308986341341,
