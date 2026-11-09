@@ -1,8 +1,8 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **测试计划草案 v0.21，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
+> **测试计划草案 v0.22，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
 
-> **候选核对材料**：见 [HAR-2026-11-06-001 材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md)；历史提出的 MAT 类型/安全、Golden/容差仍要逐项执行。当前参考等级为 L2/L3/L4，不要求 MATLAB/Octave/L1；`atol=0.01`/`rtol=0.1` 仅首轮探索筛查。**低阶球谐已在固定提交 `8eab5dd` 完成用户报告的原生 CTest 1/1 Passed**，其他模块与完整验收未因此批准。
+> **候选核对材料**：见 [HAR-2026-11-06-001 材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md)；历史提出的 MAT 类型/安全、Golden/容差仍要逐项执行。当前参考等级为 L2/L3/L4，不要求 MATLAB/Octave/L1；`atol=0.01`/`rtol=0.1` 仅首轮探索筛查。**低阶球谐已在 `8eab5dd` 和含增强回归的 `445ed151` 两个固定提交完成用户报告的原生 CTest，各 1/1 Passed**，其他模块与完整验收未因此批准。
 
 > **长期约束**：[无需运行 MATLAB 政策](golden/NO_MATLAB_EXECUTION_POLICY.md) 取消 MATLAB/Octave/L1 强制前提；该决定不等于所有模块的 C++/CTest/MAT 运行授权，也不批准 DEC-005 最终数值门槛。
 
@@ -16,6 +16,12 @@
 
 用户机器日志位置：`build/low-order-harmonics/logs/build-20261109T071118Z-451487.log`。这说明**一个 CTest 程序**运行并通过，其内部实际包含多项断言，但不等于 66 TC 均通过。Wolfram 全域精确符号证明另有来源，不混同本次 C++ double 运行。**现有测试通过的固定提交与后续新增测试源码必须区别对待**：新增加的独立基函数锚点、2015 论文第 30 页 `h4` 符号/dyadic 断言、MATLAB CS 相位重建断言，还没有实际运行证据，须在新 HEAD 上重跑。其它模块仍未实现/未获相同授权；DEC-005/006/008 和基线未批准。
 
+### 2026-11-09 第二次低阶球谐增强回归实测（E-DOC-057）
+
+用户在本轮终端输出 `git pl && ./build.sh`，fast-forward 至 **`445ed151e5fc1faaad34b920f86363e29fb0a484`**。环境为 Ubuntu 24.04 VirtualBox、GCC 16.2.0、CMake 4.3.4、Eigen 3.4.0、Release/C++17、4 jobs。静态库复用上次构建，球谐测试源新增的 87 行被实际重编译并链接成功；`low_order_harmonics` **1/1 Passed，0 Failed**，单项 0.06 秒，CTest 墙钟 0.07 秒；未见编译器警告行。脚本最终打印 PASS。完整原始日志文件仍在用户 VM 路径 `build/low-order-harmonics/logs/build-20261109T082009Z-457660.log`，**代理只持有用户提供的完整终端文本，并未读到该日志文件字节或独立获取 shell exit/SHA-256**。
+
+本次通过的源码版本**确实包含** `testAnalyticBasisAndDyadic` 与 `testMatlabSourcePhase` 两项新增函数的主程序调用，覆盖独立解析九基、2015 p.30 的 `h4` 符号、全部六个二次张量独立表达式，以及 3×5 MATLAB Condon–Shortley 相位及填充隔离。单项 CTest 并不能证明所有输入/全部业务 TC/正式容差；测试源码在这个提交之后若再次改动应重新运行并留新证据。实际记录归 [PROGRESS E-DOC-057](PROGRESS.md)。
+
 ## 1. 验证分层和前提
 
 - 顺序：源文件审计及 MAT 格式核验 → 单元测试 → 合同测试 → 入口集成测试 → L2 最终 MAT/L3 独立逐节点 Golden 比对 → L4 论文统计复现。
@@ -25,7 +31,7 @@
 
 
 
-**2026-11-07 历史设计决定（不是当前执行状态）**：固定 output/<RunId>/、轻量 Result/Status、ErrorStage/JSONL、独立 Runner 配置、Eigen-only/禁 sdla 等路线当时已确定；当时尚待论文及球谐实现。现行三篇论文已阅读、球谐叶子已实现，已有用户提供的首次 CTest 通过证据；其余模块仍未编程或实际验收。本文件不改写历史审批 JSON。
+**2026-11-07 历史设计决定（不是当前执行状态）**：固定 output/<RunId>/、轻量 Result/Status、ErrorStage/JSONL、独立 Runner 配置、Eigen-only/禁 sdla 等路线当时已确定；当时尚待论文及球谐实现。现行三篇论文已阅读、球谐叶子已实现，已有用户提供的两次 CTest 通过证据；其余模块仍未编程或实际验收。本文件不改写历史审批 JSON。
 
 ## 2. 首批关键测试的具体条件
 
@@ -105,7 +111,7 @@
 | 将来需要的对照 | 预定输入/观察量 | 当前状态 |
 |---|---|---|
 | H-02 Sophus 取代 Rodrigues | 原 MATLAB 固定 `ω=0`、小角低于 eps、x/y/z、复合、接近 π；核对 3×3 物理旋转、Rᵀ 局部运动 | **已选路线，未运行** |
-| Ivanic–Ruedenberg 原论文/勘误驱动的低阶 Eigen 球谐 | 核对九基、R0/R3/R5 全元素、相位/转置、三条路线与独立参考 | **论文已取得，Wolfram 精确证明已执行；专项 C++ 已实现，在 `8eab5dd` 用户环境配置/编译成功且 CTest 1/1 Passed。新增加的解析锚点/相位断言尚未重新运行；全工程、最终 DEC-005/ABI 均未验收** |
+| Ivanic–Ruedenberg 原论文/勘误驱动的低阶 Eigen 球谐 | 核对九基、R0/R3/R5 全元素、相位/转置、三条路线与独立参考 | **论文已取得，Wolfram 精确证明已执行；球谐叶子在 `8eab5dd` 及含增强解析/相位回归的 `445ed151` 上均由用户实测 CTest 1/1 Passed。未来公共API、全工程、DEC-005/ABI及更大输入范围尚未验收** |
 | H-12 `output/<RunId>/` 结果及负例 | 原 `origin/**` 前后哈希不变；重复 RunId、软链接越界、异常读写、MAT 写后回读、运行输出排除在 Git 上传之外 | **只完成忽略规则的文档/配置，H-10 暂缓、writeMat=false，未运行** |
 | H-04 Ubuntu VM 资源快照 | 用户提供的 `uname/df/free`；将来记录实际 CMake/CTest 和 peak RSS/wall/CPU | **只有环境资料，未批准时间/性能门槛** |
 
@@ -125,7 +131,7 @@
 | `TC-F-EXP-002/003`、`TC-I-RESULT-001`、`TC-NF-RECOVERY-001` | 8 次四误差平均；加噪前理想流均值比 ratio 只留第 8 次；更新率 `akrot` 由原相对 rotvec 由 rad 换算为 deg；单轮失败/Manifest、周期刷新和当前三个 save | 独立固定八轮和帧号、RunId、保存字段/源只读确认；详见 `experiments.md §8.2` |
 | `TC-F-AN-001/002`、`TC-I-ANALYSIS-001` | 50:550 的 501 点、阈值等值不触发；多更新率**旋转逐段平滑且裁剪**、**平移先全长平滑且不分段**；comparison 平移不分段；缺 ratio 明确报错 | 独立 L3 对比段级完整中间数组、绘制 x/y、连续平移 501 点和原值来源；不能以“正确裁剪后的旋转内部值不同于全局平滑”作假断言。详见 `analysis_plotting.md §5.2.1/§8.1` |
 
-**执行范围限界**：在 `8eab5dd` 的现有球谐 CTest 已由用户现场运行并报告通过；这不代表全部 66 TC 或独立 L2/L3/DEC-005 验收已完成。其后新增的球谐解析锚点与 MATLAB 相位断言尚未执行；其它模块的实际测试、负例和日志仍缺。AF-051 保持「未整改」。
+**执行范围限界**：`8eab5dd` 与 `445ed151` 的同一球谐 CTest 均已由用户现场运行并报告通过，后者包括独立基函数、dyadic 符号及 MATLAB 相位回归；并不代表全部 66 TC 或 MAT L2/更广 L3/DEC-005 验收完成。其它模块的实际测试、负例和日志仍缺；凡在 `445ed151` 以后修改的测试必须重新实测。AF-051 保持「未整改」。
 
 ### 2.10 已可手算但未实际执行的数值/抽样负例（AF-041/047/055）
 
@@ -228,9 +234,9 @@
 
 ## 3. TC → 实体/CTest → AC 规划矩阵
 
-下列表格共 66 项，与 SRS **v0.14 草案**逐项对应；MAT I/O 的拟议数据结构、独立负例及测试文件映射详见 [mat_io.md §2、§5、§8–9](design/mat_io.md)。**独立 matio 探针已编写并执行**，但绝大多数拟议测试源文件、测试函数和 CTest 名称尚未创建；探针不是 CTest 注册项。人工审查项与自动测试区分。原始 45 个 MATLAB 源文件映射请参见 [REQUIREMENTS.md §9.2](REQUIREMENTS.md)。
+下列表格共 66 项，与 SRS **v0.14 草案**逐项对应；MAT I/O 的拟议数据结构、独立负例及测试文件映射详见 [mat_io.md §2、§5、§8–9](design/mat_io.md)。**独立 matio 探针已编写并执行**，但除球谐低阶叶子外，绝大多数拟议测试源文件、测试函数和 CTest 名称尚未创建；探针不是 CTest 注册项。人工审查项与自动测试区分。原始 45 个 MATLAB 源文件映射请参见 [REQUIREMENTS.md §9.2](REQUIREMENTS.md)。
 
-**L2/L3/L4 来源及测试文件唯一索引**：`contracts.md §3/§3.0`、`experiments.md §8.1`、`harmonics.md §4.1`、`sampling_noise.md §8`、`mat_io.md §5/§8` 仅补充对应模块的候选测试细节。本表仍是 66 项 TC 的单一归档，不产生新编号；其 test 文件、CTest 名称与来源证明尚未创建/批准，H-10/H-11 实际执行权限保持暂缓。
+**L2/L3/L4 来源及测试文件唯一索引**：`contracts.md §3/§3.0`、`experiments.md §8.1`、`harmonics.md §4.1`、`sampling_noise.md §8`、`mat_io.md §5/§8` 仅补充对应模块的候选测试细节。本表仍是 66 项 TC 的单一归档，不产生新编号；**除已有球谐低阶叶子外**，其余多数 test 文件和 CTest 名称仍是候选；完整来源/批准尚未完成，H-10/H-11 实际执行权限保持暂缓。
 
 | TC ID | REQ | 候选测试文件或审核文档 | CTest/审核 | AC | 状态 |
 |---|---|---|---|---|---|
@@ -254,8 +260,8 @@
 | TC-F-BIAS-002 | REQ-F-BIAS-002 | tests/integration/test_bias.cpp | egomotion.bias.* | AC-F-BIAS-002 | 未编写/未运行 |
 | TC-F-BIAS-003 | REQ-F-BIAS-003 | tests/integration/test_bias.cpp | egomotion.bias.* | AC-F-BIAS-003 | 未编写/未运行 |
 | TC-F-TRAJ-001 | REQ-F-TRAJ-001 | tests/unit/test_trajectory.cpp | egomotion.trajectory.* | AC-F-TRAJ-001 | 未编写/未运行 |
-| TC-F-SH-001 | REQ-F-SH-001 | tests/unit/test_harmonics.cpp | egomotion.harmonics.* | AC-F-SH-001 | 未编写/未运行 |
-| TC-F-SH-002 | REQ-F-SH-002 | tests/unit/test_harmonics.cpp | egomotion.harmonics.* | AC-F-SH-002 | 未编写/未运行 |
+| TC-F-SH-001 | REQ-F-SH-001 | tests/unit/test_low_order_harmonics.cpp（现有低阶叶子） | low_order_harmonics（实际1项CTest） | AC-F-SH-001 | `445ed151`：九基/递推、解析锚点及 MATLAB 相位回归用户报告 1/1 Passed；完整近度拟合/正式公共接口/DEC-005仍未验收 |
+| TC-F-SH-002 | REQ-F-SH-002 | tests/unit/test_low_order_harmonics.cpp（现有低阶叶子） | low_order_harmonics（实际1项CTest） | AC-F-SH-002 | `445ed151`：Tensor/IR/Choi全矩阵、独立25值、场作用与旋转复合用户报告 1/1 Passed；未来公共rotator/集成/DEC-005仍未验收 |
 | TC-F-ADAPT-001 | REQ-F-ADAPT-001 | tests/unit/test_adaptive_mfa.cpp | egomotion.adaptive.* | AC-F-ADAPT-001 | 未编写/未运行 |
 | TC-F-ADAPT-002 | REQ-F-ADAPT-002 | tests/unit/test_adaptive_mfa.cpp | egomotion.adaptive.* | AC-F-ADAPT-002 | 未编写/未运行 |
 | TC-F-ADAPT-003 | REQ-F-ADAPT-003 | tests/unit/test_adaptive_mfa.cpp | egomotion.adaptive.* | AC-F-ADAPT-003 | 未编写/未运行 |
