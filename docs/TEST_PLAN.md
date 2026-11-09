@@ -1,8 +1,8 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **测试计划草案 v0.22，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
+> **测试计划草案 v0.23，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
 
-> **候选核对材料**：见 [HAR-2026-11-06-001 材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md)；历史提出的 MAT 类型/安全、Golden/容差仍要逐项执行。当前参考等级为 L2/L3/L4，不要求 MATLAB/Octave/L1；`atol=0.01`/`rtol=0.1` 仅首轮探索筛查。**低阶球谐已在 `8eab5dd` 和含增强回归的 `445ed151` 两个固定提交完成用户报告的原生 CTest，各 1/1 Passed**，其他模块与完整验收未因此批准。
+> **候选核对材料**：见 [HAR-2026-11-06-001 材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md)；历史提出的 MAT 类型/安全、Golden/容差仍要逐项执行。当前参考等级为 L2/L3/L4，不要求 MATLAB/Octave/L1；`atol=0.01`/`rtol=0.1` 仅首轮探索筛查。**低阶球谐已在 `8eab5dd`、`445ed151`、含624非零四元数/错误码检查的 `601c74de` 三个固定提交获得用户报告的 1/1 CTest Passed**，其他模块与完整验收未因此批准。
 
 > **长期约束**：[无需运行 MATLAB 政策](golden/NO_MATLAB_EXECUTION_POLICY.md) 取消 MATLAB/Octave/L1 强制前提；该决定不等于所有模块的 C++/CTest/MAT 运行授权，也不批准 DEC-005 最终数值门槛。
 
@@ -22,17 +22,31 @@
 
 本次通过的源码版本**确实包含** `testAnalyticBasisAndDyadic` 与 `testMatlabSourcePhase` 两项新增函数的主程序调用，覆盖独立解析九基、2015 p.30 的 `h4` 符号、全部六个二次张量独立表达式，以及 3×5 MATLAB Condon–Shortley 相位及填充隔离。单项 CTest 并不能证明所有输入/全部业务 TC/正式容差；测试源码在这个提交之后若再次改动应重新运行并留新证据。实际记录归 [PROGRESS E-DOC-057](PROGRESS.md)。
 
-### 2026-11-09 球谐下一轮测试增量（已提交，**尚未执行**）
+### 2026-11-09 球谐624四元数与错误码增量（初始设计状态已保留；**现已在601c74de实测**）
 
 在用户刚刚实测通过的 `445ed151` 之后，球谐专项测试新增了以下两组确定性数值/错误分支覆盖，不增加 66 个既有 TC 编号，也不改变任何生产求解公式：
 
 | 增量测试（唯一源 `tests/unit/test_low_order_harmonics.cpp`） | 可复核的静态目标 | 实际状态 |
 |---|---|---|
-| `testDeterministicQuaternionGrid` | 对每个 `(w,x,y,z)` 分量各取 `{-3,-1,0,1,3}`、排除零四元数，**5⁴−1=624** 个有限非零四元数；对每组校验三路线的一阶/二阶块、二阶正交性、任意固定9系数在一般方向的 `mu_new(d)=mu_old(A*d)` | 源码已提交；**未原生编译/CTest** |
-| `testFailureTaxonomyAndFiniteOverflow` | 检查非单位/非有限方向、反射矩阵、非法旋转算法值、MATLAB无效填充的Inf输入是否返回正确 ErrorCode；设置有限 `DBL_MAX` 的一阶/二阶正系数，在 `e_x` 重建应报 `NonFiniteResult` | 源码已提交；**未原生编译/CTest** |
-| 现有所有 `requireNear` 与标量比较 | 单独汇总 `max_matrix_vector_abs_residual`、`max_scalar_abs_residual` 和回归比较阈值；输出属于探索性测试诊断，**不是已批准的 DEC-005** | 提供输出逻辑；**尚无真实测量值** |
+| `testDeterministicQuaternionGrid` | 对每个 `(w,x,y,z)` 分量各取 `{-3,-1,0,1,3}`、排除零四元数，**5⁴−1=624** 个有限非零四元数（并非624个不同旋转），逐组校验三路线的一阶/二阶块、二阶正交性、固定九系数场作用 | **已在 `601c74de` 原生编译/CTest通过**；用户详细输出确认 `quaternion_grid=624` |
+| `testFailureTaxonomyAndFiniteOverflow` | 检查非单位/非有限方向、反射矩阵、非法旋转算法值、MATLAB无效填充的Inf输入是否返回正确 ErrorCode；有限 `DBL_MAX` 正系数产生非有限重建结果须报 `NonFiniteResult` | **所在 `601c74de` CTest实际通过**；未取得逐断言错误码单独统计，不冒称覆盖所有异常路径 |
+| 现有所有 `requireNear` 与标量比较 | 单独汇总 `max_matrix_vector_abs_residual`、`max_scalar_abs_residual` 和回归比较阈值；不冒充最终DEC-005 | **已有用户详细实测：8.8817841970012523e-16、1.0658141036401503e-14，阈值9.0949470177292824e-13** |
 
-当前 `build.sh` 的 CTest 默认在通过时隐藏测试程序标准输出；下一次用户运行 `./build.sh` 后，可**另行**执行 `ctest --test-dir build/low-order-harmonics -V` 查看上述残差/断言计数。两项命令均须在用户授权的 Ubuntu 环境执行，代理本轮不会自行执行。与历史成功提交 `445ed151` 的 1/1 结果分开记录新 HEAD、新日志和实际运行结果。
+**初次试验事实**：`601c74de` 的 `build.sh` 尚未采用 CTest verbose，因此用户确实另外执行了 `ctest --test-dir build/low-order-harmonics -V` 才看到全部诊断。之后根 `build.sh` 已改为**一次 CTest 内启用 `--verbose`**，通过时也留存测试程序输出，不再要求重复运行；**此新脚本尚未得到下一次用户原生运行证据**。原来三次成功始终绑定各自固定 SHA。
+
+### 2026-11-09 第三次低阶球谐压力回归实测（E-DOC-059）
+
+受测固定 HEAD 为 `601c74de315fdeb7b913cecd2eceeadee56fb6b2`。用户在 Ubuntu 24.04/VirtualBox、GCC16.2.0、CMake4.3.4、Eigen3.4.0、Release/C++17 下运行 `./build.sh`，configure/build 成功、单个 `low_order_harmonics` CTest **1/1 Passed、0 failed**（CTest 总0.08秒）；随后执行 `ctest --test-dir build/low-order-harmonics -V`，仍为 **1/1 Passed、0 failed**（总0.11秒），测试程序真实输出：
+
+```text
+checks=53532
+quaternion_grid=624
+max_matrix_vector_abs_residual=8.8817841970012523e-16
+max_scalar_abs_residual=1.0658141036401503e-14
+regression_tolerance=9.0949470177292824e-13
+```
+
+两个最大绝对残差都小于本专项回归比较阈值。该阈值是代码中 `4096*epsilon(double)`，**不是正式批准的 DEC-005**；624个非零四元数中允许 `q` 与 `-q` 等价，同一测试程序的53,532条检查不是53,532个独立样本。错误码/有限大数溢出路径为该提交的测试内容，实际单项CTest通过；尚无逐断言独立失败/运行时浮点异常全面取证。成功输出来自**用户的命令文本**，未获取用户VM日志文件的字节/哈希，且脚本后续加入verbose输出的**新提交仍未实测**。链接 [PROGRESS E-DOC-059](PROGRESS.md)；原 AF-045/046/051/055 的广义数学/公共接口/完整TC义务仍开放。
 
 ## 1. 验证分层和前提
 
@@ -43,7 +57,7 @@
 
 
 
-**2026-11-07 历史设计决定（不是当前执行状态）**：固定 output/<RunId>/、轻量 Result/Status、ErrorStage/JSONL、独立 Runner 配置、Eigen-only/禁 sdla 等路线当时已确定；当时尚待论文及球谐实现。现行三篇论文已阅读、球谐叶子已实现，已有用户提供的两次 CTest 通过证据；其余模块仍未编程或实际验收。本文件不改写历史审批 JSON。
+**2026-11-07 历史设计决定（不是当前执行状态）**：固定 output/<RunId>/、轻量 Result/Status、ErrorStage/JSONL、独立 Runner 配置、Eigen-only/禁 sdla 等路线当时已确定；当时尚待论文及球谐实现。现行三篇论文已阅读、球谐叶子已实现，已有用户提供的三次 CTest 通过证据；其余模块仍未编程或实际验收。本文件不改写历史审批 JSON。
 
 ## 2. 首批关键测试的具体条件
 
@@ -123,7 +137,7 @@
 | 将来需要的对照 | 预定输入/观察量 | 当前状态 |
 |---|---|---|
 | H-02 Sophus 取代 Rodrigues | 原 MATLAB 固定 `ω=0`、小角低于 eps、x/y/z、复合、接近 π；核对 3×3 物理旋转、Rᵀ 局部运动 | **已选路线，未运行** |
-| Ivanic–Ruedenberg 原论文/勘误驱动的低阶 Eigen 球谐 | 核对九基、R0/R3/R5 全元素、相位/转置、三条路线与独立参考 | **论文已取得，Wolfram 精确证明已执行；球谐叶子在 `8eab5dd` 及含增强解析/相位回归的 `445ed151` 上均由用户实测 CTest 1/1 Passed。未来公共API、全工程、DEC-005/ABI及更大输入范围尚未验收** |
+| Ivanic–Ruedenberg 原论文/勘误驱动的低阶 Eigen 球谐 | 核对九基、R0/R3/R5 全元素、相位/转置、三条路线与独立参考 | **论文已取得，Wolfram一般SO(3)精确证明已执行；低阶叶子在 `8eab5dd`、`445ed151`、`601c74de` 均由用户实测CTest 1/1 Passed。最近一次执行624非零四元数、53,532个require检查、错态与双类残差汇总；更广浮点输入、公共API/ABI、全工程/DEC-005尚未验收** |
 | H-12 `output/<RunId>/` 结果及负例 | 原 `origin/**` 前后哈希不变；重复 RunId、软链接越界、异常读写、MAT 写后回读、运行输出排除在 Git 上传之外 | **只完成忽略规则的文档/配置，H-10 暂缓、writeMat=false，未运行** |
 | H-04 Ubuntu VM 资源快照 | 用户提供的 `uname/df/free`；将来记录实际 CMake/CTest 和 peak RSS/wall/CPU | **只有环境资料，未批准时间/性能门槛** |
 
@@ -272,8 +286,8 @@
 | TC-F-BIAS-002 | REQ-F-BIAS-002 | tests/integration/test_bias.cpp | egomotion.bias.* | AC-F-BIAS-002 | 未编写/未运行 |
 | TC-F-BIAS-003 | REQ-F-BIAS-003 | tests/integration/test_bias.cpp | egomotion.bias.* | AC-F-BIAS-003 | 未编写/未运行 |
 | TC-F-TRAJ-001 | REQ-F-TRAJ-001 | tests/unit/test_trajectory.cpp | egomotion.trajectory.* | AC-F-TRAJ-001 | 未编写/未运行 |
-| TC-F-SH-001 | REQ-F-SH-001 | tests/unit/test_low_order_harmonics.cpp（现有低阶叶子） | low_order_harmonics（实际1项CTest） | AC-F-SH-001 | `445ed151`：九基/递推、解析锚点及 MATLAB 相位回归用户报告 1/1 Passed；完整近度拟合/正式公共接口/DEC-005仍未验收 |
-| TC-F-SH-002 | REQ-F-SH-002 | tests/unit/test_low_order_harmonics.cpp（现有低阶叶子） | low_order_harmonics（实际1项CTest） | AC-F-SH-002 | `445ed151`：Tensor/IR/Choi全矩阵、独立25值、场作用与旋转复合用户报告 1/1 Passed；未来公共rotator/集成/DEC-005仍未验收 |
+| TC-F-SH-001 | REQ-F-SH-001 | tests/unit/test_low_order_harmonics.cpp（现有低阶叶子） | low_order_harmonics（实际1项CTest） | AC-F-SH-001 | `601c74de`：含九基/递推、解析/相位/二次张量锚点与624四元数的1/1 CTest用户实测通过；完整近度拟合/正式公共接口/DEC-005仍未验收 |
+| TC-F-SH-002 | REQ-F-SH-002 | tests/unit/test_low_order_harmonics.cpp（现有低阶叶子） | low_order_harmonics（实际1项CTest） | AC-F-SH-002 | `601c74de`：Tensor/IR/Choi全矩阵、独立25值、624四元数/错态/溢出回归用户报告1/1 Passed；公共rotator/ABI/全业务集成/DEC-005仍未验收 |
 | TC-F-ADAPT-001 | REQ-F-ADAPT-001 | tests/unit/test_adaptive_mfa.cpp | egomotion.adaptive.* | AC-F-ADAPT-001 | 未编写/未运行 |
 | TC-F-ADAPT-002 | REQ-F-ADAPT-002 | tests/unit/test_adaptive_mfa.cpp | egomotion.adaptive.* | AC-F-ADAPT-002 | 未编写/未运行 |
 | TC-F-ADAPT-003 | REQ-F-ADAPT-003 | tests/unit/test_adaptive_mfa.cpp | egomotion.adaptive.* | AC-F-ADAPT-003 | 未编写/未运行 |
