@@ -108,6 +108,91 @@ void testBasisAndAction() {
     }
 }
 
+// 源独立的基函数锚点：不能只用直接式与递推式互比，两条路径可能共用同一个错系数。
+void testAnalyticBasisAndDyadic() {
+    const double pi = std::acos(-1.0);
+    const double g0 = 1.0 / std::sqrt(4.0 * pi);
+    const double dipole = std::sqrt(3.0 / (4.0 * pi));
+    const double zonal = std::sqrt(5.0 / (16.0 * pi));
+    const double difference = std::sqrt(15.0 / (16.0 * pi));
+    const double mixed = std::sqrt(15.0 / (4.0 * pi));
+
+    const std::array<sh::Direction, 4> axes{{
+        sh::Direction::UnitX(), sh::Direction::UnitY(),
+        sh::Direction::UnitZ(), sh::Direction(1, 1, 1).normalized()
+    }};
+    std::array<sh::BasisValues, 4> expected;
+    expected[0] << g0, dipole, 0, 0, -zonal, 0, 0, difference, 0;
+    expected[1] << g0, 0, dipole, 0, -zonal, 0, 0, -difference, 0;
+    expected[2] << g0, 0, 0, dipole, 2*zonal, 0, 0, 0, 0;
+    const double inv_sqrt_three = 1.0 / std::sqrt(3.0);
+    expected[3] << g0, dipole*inv_sqrt_three, dipole*inv_sqrt_three,
+        dipole*inv_sqrt_three, 0, mixed/3.0, mixed/3.0, 0, mixed/3.0;
+
+    for (std::size_t index = 0; index < axes.size(); ++index) {
+        const auto direct = sh::basisDirect(axes[index]);
+        const auto recurrence = sh::basisRecurrence(axes[index]);
+        require(direct.hasValue() && recurrence.hasValue(), "analytic basis input rejected");
+        requireNear(direct.value(), expected[index], "direct basis vs independently specified anchor");
+        requireNear(recurrence.value(), expected[index], "recurrence basis vs independently specified anchor");
+    }
+
+    // 2015 p.30 的 d1^2/d2^2 展开把 h4 符号写反；式(63)--(67)定义要求下述恒等式。
+    const double isotropic_scale = std::sqrt(4.0*pi/9.0);
+    const double zonal_scale = std::sqrt(4.0*pi/45.0);
+    const double quadrupole_scale = std::sqrt(4.0*pi/15.0);
+    for (const auto& direction : directions()) {
+        const auto result = sh::basisDirect(direction);
+        require(result.hasValue(), "dyadic basis input rejected");
+        const auto& h = result.value();
+        const double isotropic = isotropic_scale*h(0);
+        const double zterm = zonal_scale*h(4);
+        require(std::abs(isotropic-zterm+quadrupole_scale*h(7)-direction.x()*direction.x()) <= kTolerance,
+                "2015 dyadic xx h4 sign");
+        require(std::abs(isotropic-zterm-quadrupole_scale*h(7)-direction.y()*direction.y()) <= kTolerance,
+                "2015 dyadic yy h4 sign");
+        require(std::abs(isotropic+2.0*zterm-direction.z()*direction.z()) <= kTolerance,
+                "2015 dyadic zz");
+        require(std::abs(quadrupole_scale*h(5)-direction.x()*direction.z()) <= kTolerance,
+                "2015 dyadic xz");
+        require(std::abs(quadrupole_scale*h(6)-direction.y()*direction.z()) <= kTolerance,
+                "2015 dyadic yz");
+        require(std::abs(quadrupole_scale*h(8)-direction.x()*direction.y()) <= kTolerance,
+                "2015 dyadic xy");
+    }
+}
+
+void testMatlabSourcePhase() {
+    sh::MatlabCoefficients matlab = sh::MatlabCoefficients::Zero();
+    matlab(0,0)=2.0;
+    matlab(1,0)=3.0; matlab(1,1)=5.0; matlab(1,2)=7.0;
+    matlab(2,0)=11.0; matlab(2,1)=13.0; matlab(2,2)=17.0;
+    matlab(2,3)=19.0; matlab(2,4)=23.0;
+    // 源 3x5 中不属于 l<=2 的位置不得参与求和。
+    matlab(0,1)=101.0; matlab(0,2)=103.0; matlab(0,3)=107.0;
+    matlab(0,4)=109.0; matlab(1,3)=113.0; matlab(1,4)=127.0;
+    const auto converted = sh::fromMatlabLayout(matlab);
+    require(converted.hasValue(), "legacy matlab coefficient conversion failed");
+    const double pi = std::acos(-1.0);
+    const double d1 = std::sqrt(3.0/(4.0*pi));
+    const double d2z = std::sqrt(5.0/(16.0*pi));
+    const double d2mixed = std::sqrt(15.0/(4.0*pi));
+    const double d2diff = std::sqrt(15.0/(16.0*pi));
+    for (const auto& d : directions()) {
+        // 这是原 MATLAB 含 Condon-Shortley 相位的九项多项式，独立于布局转换实现。
+        const double legacy = matlab(0,0)/std::sqrt(4.0*pi)
+            + d1*(-matlab(1,0)*d.y() + matlab(1,1)*d.z() - matlab(1,2)*d.x())
+            + d2mixed*(matlab(2,0)*d.x()*d.y() - matlab(2,1)*d.y()*d.z()
+                        - matlab(2,3)*d.x()*d.z())
+            + d2z*matlab(2,2)*(3.0*d.z()*d.z()-1.0)
+            + d2diff*matlab(2,4)*(d.x()*d.x()-d.y()*d.y());
+        const auto result = sh::reconstruct(converted.value(), d);
+        require(result.hasValue(), "converted MATLAB polynomial reconstruction failed");
+        require(std::abs(result.value()-legacy)<=kTolerance,
+                "MATLAB CS phase or invalid padding changed the scalar field");
+    }
+}
+
 void testIndependentReference() {
     // 独立张量/精确算术参考，Wolfram结果写于专项报告；不是被测递推自生成。
     const sh::Matrix3 r = quaternionRotation(1,2,2,0);
@@ -187,6 +272,8 @@ void testFailures() {
 int main() {
     try {
         testBasisAndAction();
+        testAnalyticBasisAndDyadic();
+        testMatlabSourcePhase();
         testIndependentReference();
         testCompositionAndLayout();
         testFailures();
