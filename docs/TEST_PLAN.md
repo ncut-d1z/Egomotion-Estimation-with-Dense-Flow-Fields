@@ -315,7 +315,7 @@ regression_tolerance=9.0949470177292824e-13
 | TC-F-BIAS-003 | REQ-F-BIAS-003 | tests/integration/test_bias.cpp | egomotion.bias.* | AC-F-BIAS-003 | 未编写/未运行 |
 | TC-F-TRAJ-001 | REQ-F-TRAJ-001 | tests/unit/test_trajectory.cpp | egomotion.trajectory.* | AC-F-TRAJ-001 | 未编写/未运行 |
 | TC-F-SH-001 | REQ-F-SH-001 | tests/unit/test_low_order_harmonics.cpp；tests/unit/test_low_order_archived_golden.cpp；tests/unit/test_low_order_source_projection.cpp（SH-only） | low_order_harmonics（5e522198实测）；low_order_harmonics_archived_golden、low_order_harmonics_source_projection（5e522198实测） | AC-F-SH-001 | 5e522198的SH低阶3项CTest均通过：原回归53,532、AN-G06/07/08归档176、源二阶逐系数投影76次检查；全业务HarmonicFitter、DEC-005仍缺 |
-| TC-F-SH-002 | REQ-F-SH-002 | tests/unit/test_low_order_harmonics.cpp；tests/unit/test_low_order_archived_golden.cpp（仅低阶叶子） | low_order_harmonics（5e522198实测）；low_order_harmonics_archived_golden（新注册、未执行） | AC-F-SH-002 | `601c74de` 三路线旧回归用户实测 1/1 Passed；新 AN-G08 的源相位完整 R3/R5 及 3×5 系数由独立表提供，尚未原生执行；正式 rotator/ABI/DEC-005未验收 |
+| TC-F-SH-002 | REQ-F-SH-002 | tests/unit/test_low_order_harmonics.cpp；tests/unit/test_low_order_archived_golden.cpp（SH叶子） | low_order_harmonics、low_order_harmonics_archived_golden（5e522198均实测通过） | AC-F-SH-002 | 5e522198三种低阶旋转路线、归档AN-G08的R3全9/R5全25与原3×5系数已获真实CTest证据；公共rotator/ABI/全业务集成/正式DEC-005仍未验收 |
 | TC-F-ADAPT-001 | REQ-F-ADAPT-001 | tests/unit/test_adaptive_mfa.cpp | egomotion.adaptive.* | AC-F-ADAPT-001 | 未编写/未运行 |
 | TC-F-ADAPT-002 | REQ-F-ADAPT-002 | tests/unit/test_adaptive_mfa.cpp | egomotion.adaptive.* | AC-F-ADAPT-002 | 未编写/未运行 |
 | TC-F-ADAPT-003 | REQ-F-ADAPT-003 | tests/unit/test_adaptive_mfa.cpp | egomotion.adaptive.* | AC-F-ADAPT-003 | 未编写/未运行 |
