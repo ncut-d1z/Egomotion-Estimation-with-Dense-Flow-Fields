@@ -183,3 +183,12 @@ IR98印刷减号变体被拒绝：Rx45目标元素正确sqrt(3)/2，减号sqrt(3
 - **本轮原生测试的新覆盖**：固定 HEAD `445ed151` 包含 `ba78d407` 添加的 `testAnalyticBasisAndDyadic` 与 `testMatlabSourcePhase` 调用。这次成功确实覆盖了上轮尚未执行的 `e_x/e_y/e_z/(1,1,1)/sqrt(3)` 独立解析九基锚点、2015 p.30 的 `h4` 符号/6 个二次张量恒等式、3×5 MATLAB 含 CS 相位和无效填充值对应的重建。两个不同静态里程碑必须分开：`8eab5dd` 的早期球谐测试 1/1、`445ed151` 的增补回归 1/1。
 - **用户 VM 本地日志路径（仅来源路径，不是已取得文件）**：`/home/ros/Dev/Egomotion-Estimation-with-Dense-Flow-Fields/build/low-order-harmonics/logs/build-20261109T082009Z-457660.log`。源 `origin/**`、MAT 数据仍只读。CTest 的 1/1 指一个测试可执行文件，不代表 66 TC、全域 IEEE double 或最终 DEC-005/008 验收。Wolfram 精确一般 SO(3) 证明另有来源，不能代替现场数值误差统计。
 - **后续状态规则**：此提交及新增测试的**编译/执行/通过**现均有用户实证；凡在 `445ed151` 后新修改的测试或球谐代码，都必须以其新 HEAD 再次实测才能标记通过。此日志不开放其它模块实现/代理自行运行全部工程测试。原 AF-045/046/051/055 仍为复合目标，不能因球谐单项 CTest 自动结案。
+
+## 12. E-DOC-058：已证实增强回归与新数值压力测试的状态隔离（2026-11-09）
+
+- **本轮开始固定事实**：分支 HEAD `445ed151e5fc1faaad34b920f86363e29fb0a484`；从用户粘贴的 `git pl && ./build.sh` 日志可以确认现有 `testAnalyticBasisAndDyadic`、`testMatlabSourcePhase` 与先前三路线相关用例所在的单个 `low_order_harmonics` CTest 已编译并通过 **1/1**。该实际结果单列 E-DOC-057，属于用户VM运行，不等于代理本地执行。
+- **发现并修复 TC 路径漂移**：`docs/TEST_PLAN.md` 中已登记 `TC-F-SH-001/002` 的候选文件仍是不存在的 `tests/unit/test_harmonics.cpp`。实际已实现的路径与CTest是 `tests/unit/test_low_order_harmonics.cpp` → `low_order_harmonics`。在提交 `ebb352a2e707909fdb6b3ee88fbec30ea0dd97f2` 修订原两条映射和局部结果，保留其完整公共接口/正式容差/全部 TC 未验收状态，不新增 TC。
+- **扩大球谐单测覆盖，但没有冒充执行**：`tests/unit/test_low_order_harmonics.cpp` 提交 `974889b0bd4f6c2d45e3369228817c7fcbdef380` 新增确定性整数四元数格点 `5^4-1=624`（全体非零），比较 TensorDirect/IR96/Choi99 的R3/R5、正交性和单个一般方向非平凡九系数场；另增加 `NotUnitDirection`、`NonFiniteInput`、`NotProperRotation`、`InvalidMethod`、`NonFiniteResult` 等错态及 MATLAB 无效填充拒绝。提交 `9d4c71abd74d233e4eb9626292e67a210ee8c030` 将矩阵/向量和标量最大绝对残差分开统计（原统一输出只能追踪矩阵比较，不能误当所有比较的误差）；提交 `8d40f1a3ce680475507ab86f14201f14155cc647` 简化 Eigen 固定输入初始化。
+- **测试结果边界**：上述 624 组、错误码、有限大数溢出及新误差诊断只是**已提交的源码**，**不是已经执行的测试或数值数据**。唯一已实测过的新基线仍为 `445ed151`；下一次运行应保留新 Git SHA/工具链/CTest stdout/stderr/退出码与是否警告。如需检查最大残差，用户可在 `./build.sh` 后执行 `ctest --test-dir build/low-order-harmonics -V`（现有脚本默认只显示通过摘要），不要在尚未运行前填报数字。
+- **模块/操作权限**：本批没有修改三个球谐生产 `.cpp` 或公共 `.hpp`，也没有为 MAT/CLI/KvD/Adaptive/Runner 等编写代码、触碰 `origin/**` 或改写审批历史；未执行项目 Bash、CMake/CTest、MATLAB、MAT 读写、性能试验。所有实际外部执行均明确标为用户证据。
+- **阶段状态仍真实**：AF-045/046/051/055/057 相关专项推进但完整目标未满足；唯一 `97 AF＝74 已整改＋23 未整改`，文件审计 `76＝47 已审计＋29 在审`。第一轮仍有阶段门槛，没有进入前置条件未满足的第二轮全面审计。
