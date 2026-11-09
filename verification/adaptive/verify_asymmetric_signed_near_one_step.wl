@@ -17,7 +17,7 @@ Module[{dirs,ex={1,0,0},omegaTrue={1/5,-1/7,1/11},basis,coeffBase,
    {0,0,0,0,0}};
  crossMat[v_]:={{0,-v[[3]],v[[2]]},{v[[3]],0,-v[[1]]},
    {-v[[2]],v[[1]],0}};
- fixture[sign_]:=Module[{Nrows=Length[dirs],coeff,flat,basisRows,nearRaw,
+ fixture[sign_]:=Module[{countRows=Length[dirs],coeff,flat,basisRows,nearRaw,
      meanRaw,nearAfterSign,nearN,flow,m1,m2,m3,m4,mat,rhs,
      solved,rawT,trans,omega,flowN,predicted,mse,nearNew,
      coeffNew,sourceProjection,projectionIdentity,positiveBranchProof,
@@ -33,13 +33,13 @@ Module[{dirs,ex={1,0,0},omegaTrue={1/5,-1/7,1/11},basis,coeffBase,
    flow=MapThread[-#1(ex-(ex.#2)#2)-Cross[omegaTrue,#2]&,
       {nearRaw,dirs}];
    m1=IdentityMatrix[3]-Total[MapThread[#1 Outer[Times,#2,#2]&,
-      {nearN,dirs}]]/Nrows;
-   m4=IdentityMatrix[3]-Total[Outer[Times,#,#]& /@ dirs]/Nrows;
-   m2=crossMat[-Total[dirs]/Nrows];
-   m3=crossMat[Total[MapThread[Times,{nearN,dirs}]]/Nrows];
+      {nearN,dirs}]]/countRows;
+   m4=IdentityMatrix[3]-Total[Outer[Times,#,#]& /@ dirs]/countRows;
+   m2=crossMat[-Total[dirs]/countRows];
+   m3=crossMat[Total[MapThread[Times,{nearN,dirs}]]/countRows];
    mat=ArrayFlatten[{{m1,m2},{m3,m4}}];
-   rhs=Join[-Total[flow]/Nrows,
-      Total[MapThread[Cross,{flow,dirs}]]/Nrows];
+   rhs=Join[-Total[flow]/countRows,
+      Total[MapThread[Cross,{flow,dirs}]]/countRows];
    detMat=Det[mat];
    solved=LinearSolve[mat,rhs];
    rawT=solved[[1;;3]];
@@ -57,7 +57,7 @@ Module[{dirs,ex={1,0,0},omegaTrue={1/5,-1/7,1/11},basis,coeffBase,
       {j,1,9}];
    differenceM1=FullSimplify[
       m1-Total[MapThread[#1(IdentityMatrix[3]-
-         Outer[Times,#2,#2])&,{nearN,dirs}]]/Nrows];
+         Outer[Times,#2,#2])&,{nearN,dirs}]]/countRows];
    positiveBranchProof=If[sign==1,
       FullSimplify[solved-Join[{meanRaw,0,0},omegaTrue]]===
         ConstantArray[0,6],
