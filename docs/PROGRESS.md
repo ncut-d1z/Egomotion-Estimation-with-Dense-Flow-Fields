@@ -175,3 +175,11 @@ IR98印刷减号变体被拒绝：Rx45目标元素正确sqrt(3)/2，减号sqrt(3
 - **AF-051 的现有目标继续推进**：`tests/unit/test_low_order_harmonics.cpp` 在 `ba78d407e9868aabb3cfbf16f0e379bbf8bac77d` 增加独立的 `e_x/e_y/e_z/(1,1,1)/sqrt3` 九基解析锚点，避免两个计算分支共同错误而互比通过；增加 2015论文p.30 (h_4) 正负号、全部6个对称二次项的 dyadic 恒等式，以及非零且有无效填充项的 3×5 MATLAB CS 相位源公式重建。均归既有 `TC-F-SH-001/002`，无新 TC/模块/依赖。**这些新增断言不属于用户已执行的旧提交；不能标记测试 PASS，必须在新的 HEAD 上重跑。**
 - 本次没有修订低阶球谐生产公式或引入其他模块；构建文件仍只注册一项 SH CTest，没有把 matio 探针或尚不存在模块纳入业务 target。严格区分现有 (8eab5dd) 实测和其后的新增回归。
 - 本轮静态核查依据：GitHub 固定远端 blob 比对、CMake/脚本目标、源/测试对应及文档状态；没有原生二次运行。AF-045/046/051/055 等整体依然因其它接口/数学/完整测试/批准义务未清零。
+
+## 11. E-DOC-057：增强球谐回归测试的首次原生成功（2026-11-09）
+
+- **实际执行者与证据等级**：项目所有者在 Ubuntu 24.04 VirtualBox 上执行 `git pl && ./build.sh`，将原 `8eab5dd` fast-forward 到完整 SHA `445ed151e5fc1faaad34b920f86363e29fb0a484`。Git HEAD 在脚本打印时与该 SHA 一致。Git 下载/更新提示共 9 个文件，新增 87 行测试。用户提供从 git 更新至构建、CTest、PASS 结束的**完整终端文本**；代理没有在该主机上运行命令或读取日志文件字节。
+- **可复核环境/实际流程**：用户文本载明 `/usr/bin/g++` GCC `16.2.0`、CMake `4.3.4`、Eigen `3.4.0`、Release/C++17，4 jobs。Configure/Generate 成功；`egomotion_harmonics` 既有静态库被复用，`test_low_order_harmonics.cpp.o` 与测试可执行文件**重新编译/链接成功**。CTest：`low_order_harmonics` **1/1 Passed、0 failed**，单个测试 0.06s，CTest 总墙钟 `0.07s`，末尾 `PASS`。输出未显示编译警告，但没有另行检查所有历史警告文件/完整编译器命令或独立 shell `$?`。
+- **本轮原生测试的新覆盖**：固定 HEAD `445ed151` 包含 `ba78d407` 添加的 `testAnalyticBasisAndDyadic` 与 `testMatlabSourcePhase` 调用。这次成功确实覆盖了上轮尚未执行的 `e_x/e_y/e_z/(1,1,1)/sqrt(3)` 独立解析九基锚点、2015 p.30 的 `h4` 符号/6 个二次张量恒等式、3×5 MATLAB 含 CS 相位和无效填充值对应的重建。两个不同静态里程碑必须分开：`8eab5dd` 的早期球谐测试 1/1、`445ed151` 的增补回归 1/1。
+- **用户 VM 本地日志路径（仅来源路径，不是已取得文件）**：`/home/ros/Dev/Egomotion-Estimation-with-Dense-Flow-Fields/build/low-order-harmonics/logs/build-20261109T082009Z-457660.log`。源 `origin/**`、MAT 数据仍只读。CTest 的 1/1 指一个测试可执行文件，不代表 66 TC、全域 IEEE double 或最终 DEC-005/008 验收。Wolfram 精确一般 SO(3) 证明另有来源，不能代替现场数值误差统计。
+- **后续状态规则**：此提交及新增测试的**编译/执行/通过**现均有用户实证；凡在 `445ed151` 后新修改的测试或球谐代码，都必须以其新 HEAD 再次实测才能标记通过。此日志不开放其它模块实现/代理自行运行全部工程测试。原 AF-045/046/051/055 仍为复合目标，不能因球谐单项 CTest 自动结案。
