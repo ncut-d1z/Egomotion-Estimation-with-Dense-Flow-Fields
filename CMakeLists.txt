@@ -53,6 +53,21 @@ if(BUILD_TESTING)
         LABELS "harmonics;low-order"
         TIMEOUT 120
     )
+
+    # 与既有大规模回归相互独立：直接对照归档 AN-G06/07/08 固定数值及源 CS 相位。
+    add_executable(test_low_order_archived_golden
+        tests/unit/test_low_order_archived_golden.cpp
+    )
+    target_link_libraries(test_low_order_archived_golden PRIVATE egomotion_harmonics)
+    target_compile_features(test_low_order_archived_golden PRIVATE cxx_std_17)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_compile_options(test_low_order_archived_golden PRIVATE -Wall -Wextra -Wpedantic)
+    endif()
+    add_test(NAME low_order_harmonics_archived_golden COMMAND test_low_order_archived_golden)
+    set_tests_properties(low_order_harmonics_archived_golden PROPERTIES
+        LABELS "harmonics;low-order;archived-golden"
+        TIMEOUT 120
+    )
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
