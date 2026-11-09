@@ -172,3 +172,11 @@
 - **补齐被遗漏的构建日志能力**：原 `build.sh` 仅用 `--output-on-failure`，通过时隐藏PASS诊断，迫使用户额外重复运行 `ctest -V`。后续提交 `2e059fb3717619a70e1433fe65e21f153a1567fc` 已把脚本改为**只执行一次 `ctest --verbose --no-tests=error`**，保留原 `pipefail`/日志/严格失败；**此脚本版本尚未在用户环境实际运行，不可把 `601c74de` 的通过作为新脚本通过**。
 - **数学及统计边界**：`q` 与 `-q` 表示同一旋转，且整数分量可有其它等比例重复；624代表非零四元数样本数，不能称624个不同SO(3)旋转。两类最大绝对残差低于现有4096eps专项回归阈值，**不能代表DEC-005已批准或全部IEEE double异常/可移植性已经形式化验证**。
 - **当前台账不虚关**：原AF-045/046/051等仍需公共API/ABI、完整异常覆盖、独立参考范围及最终数值批准；AF-053/057仍缺其它模块工程/授权/性能/正式门槛。97个唯一AF＝**74已整改、23未整改**；76个审计文件＝**47已审计、29正在审计**。用户执行的是球谐叶子，非球谐生产代码与`origin/**`仍没有开放写权限，第一轮全清零前不启动条件性的第二轮全面审计。
+
+## 8. AF-045/051/055 继续整改：AN-G06/07/08 独立候选接入（2026-11-09，完整目标仍开放）
+
+- **实际变更范围**：仅新增 `tests/unit/test_low_order_archived_golden.cpp`（球谐专项，独立于旧回归），注册 `low_order_harmonics_archived_golden` 第二个CTest，更新 `CMakeLists.txt` 与 `build.sh` 的Scope显示；存储可重放 `verification/harmonics/verify_archived_sh_candidates.wl`，并更新 TEST_PLAN、harmonics LLD、PROGRESS、AUDIT。所有 `origin/**`、MAT 数据、已通过的 `tests/unit/test_low_order_harmonics.cpp`、球谐生产三路实现及非球谐生产代码均**未修改**。
+- **固定来源/静态字面复核**：候选 JSON blob `1e6499eff3ce5b55503f8cd913b9f492629da499`；AN-G03的20行（60数）、AN-G06九基、AN-G08系数15值及R3九项/R5二十五项在新增C++文件与原JSON中逐字面一致，全部 `max_abs_difference=0`；20方向 `max_abs_squared_norm_error≈3.3306690738754696e-16`。AN-G07采用候选的`3.5449077018110318`原字面系数，不以被测结果反填。该核查**不代表原采样器/正式MAT数据已复现**。
+- **实际独立数学核对**：Wolfram 15.0.1 已执行原MATLAB含CS相位低阶实基的代数检查，`AN_G06_9Residuals={0,…,0}`、`AN_G07_constantOne=1`、`AN_G08_R3_3Residuals={0,0,0}`、`AN_G08_R5_5Residuals={0,…,0}`、`AN_G08_9CoefficientsFieldResidual=0`，`allExact=True`；输入源 `verification/harmonics/verify_archived_sh_candidates.wl` 已保存。Wolfram符号正确性 ≠ 新C++编译/CTest/浮点验证。
+- **是否可结案**：**不能关闭**AF-045/051/055，因为这是限定低阶叶子的数学子证据与候选测试，实现公共API、全部既有Golden、各类数值/异常完整覆盖、正式DEC-005/008、全部66TC及原业务阶段测试仍缺。本批新增的第二个CTest处于 `NOT_RUN`，绝不可把用户在 `601c74de` 上的旧单项 `1/1 Passed` 当新版本 `2/2 Passed`。未获更广H-10/H-11授权的MAT/CLI/KvD/Adaptive等代码保持未实施。
+- **问题两态与文件三态**：97个唯一 AF＝**74已整改、23未整改**（未新增人为小目标）；文件三态本轮从 **76＝47已审计＋29正在审计＋0空白** 增加为 **78＝48已审计＋30正在审计＋0空白**：一个新C++测试在审，一个已完成限定符号审查的Wolfram输入文件已审。第一轮复合项目尚未清零，因此第二轮正式全面审计/整改**未启动**。
