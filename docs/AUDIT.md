@@ -64,7 +64,7 @@
 | `docs/design/cli.md` | 正在审计 | 参数、RunId、JSONL与真实负例；AF-041 |
 | `docs/design/mat_io.md` | 正在审计 | Reader/Writer、RAII、TOCTOU、安全与L2；AF-042 |
 | `docs/design/kvd.md` | 正在审计 | 两组六方向与新增8方向翻号例已由独立Wolfram精确执行Original/Modified共36轮数学trace；一般/病态/200轮、正式DEC-005和生产C++/CTest仍缺，AF-043 |
-| `docs/design/adaptive_mfa.md` | 正在审计 | AN-G12的对称20方向M1～M4/rhs、MSE、源1e-11正则后near/C已由独立Wolfram实际算出；一般非对称/奇异、Session与生产CTest仍缺，AF-044 |
+| `docs/design/adaptive_mfa.md` | 正在审计 | AN-G12对称及新9方向正/负均值非对称M1～M4/6×6/rhs/z/MSE/near/C均有独立Wolfram数学实算；负支归一均值=-1、M1投影差2I已证明；近奇异/零均值/Session/生产CTest/DEC仍缺，AF-044 |
 | `docs/design/harmonics.md` | 正在审计 | 九基/旋转/二阶源逐系数投影均有独立数学与固定 5e522198 原生数值验收；公共ABI/完整动态阶数/最终DEC-005仍缺，AF-045 |
 | `docs/design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 正在审计 | 原规划公共接口仍待适配，当前叶子/证明见三路报告；AF-046 |
 | `docs/design/sampling_noise.md` | 正在审计 | 已保存三类采样i=0/1/2完整714行有序候选，并经Wolfram独立加权行序签名核对；生产采样/噪声CTest、异常/RNG仍缺；AF-047 |
@@ -129,6 +129,8 @@
 | `verification/geometry/full_ordered_row_verification.v1.json` | 已审计 | 实际Wolfram完整逐元素比较数值与候选JSON/脚本的源Git blob及SHA-256归档；未批准DEC-005和采样软件资格 |
 | `verification/adaptive/verify_AN_G12_symmetric_one_step.wl` | 已审计 | 实际Wolfram20方向M1～M4、6×6、MSE与1e-11正则near/C的限定数学复核，非Adaptive生产CTest |
 | `verification/adaptive/AN_G12_symmetric_one_step_evidence.v1.json` | 已审计 | AN-G12独立数值输出/源码及候选blob和近度非严格1的证据边界已核，非正式Golden |
+| `verification/adaptive/verify_asymmetric_signed_near_one_step.wl` | 已审计 | 9方向非对称正/负均值含CS源系数与非零M2/M3、2I恒等式、完整六维解、MSE及条件数的Wolfram数学脚本已真实执行；非生产CTest |
+| `verification/adaptive/asymmetric_signed_near_one_step.v1.json` | 已审计 | 固定9方向N×6及3×5、M1～M4、rhs、z、t/ω、near/C与12/12数学自检；源4个Git blob及两个工件SHA-256有证据，不是正式Golden |
 | `verification/kvd/verify_six_direction_exact_trace.wl` | 已审计 | Wolfram精确执行轴向/斜向六方向各Original/Modified的Franz→6轮trace，共24次数学迭代，14/14定向自检；非生产C++ |
 | `verification/kvd/six_direction_exact_trace.v1.json` | 已审计 | 四条6轮近度/a/b/c/tRaw/omega/MSE/RMS/delta/grenze/停止输出源身份与SHA-256已核；不冒充正式Golden |
 | `verification/kvd/verify_near_sign_flip_exact_trace.wl` | 已审计 | Wolfram精确执行8方向有符号近度第一轮翻号的Original/Modified各6轮；11/11自检；非物理正距离/生产CTest |
@@ -143,7 +145,10 @@
 | `verification/harmonics/source_projection_reference.v1.json` | 已审计 | 七方向9个精确根式系数+固定近度与Wolfram版本来源已复核；标注CPP_NOT_RUN、未批准DEC-005 |
 | `docs/reviews/LOW_ORDER_SH_THREE_ROUTE_VERIFICATION_2026-11-09.md` | 已审计 | 三路一般证明、C++逐式对应、纸面错误与实际执行限制 |
 
-## 4. 现行结论与进度变化（2026-11-09 KvD独立36轮数学轨迹）
+## 4. 现行结论与进度变化（2026-11-09 Adaptive非对称正/负近度数学复核）
+
+- **新增AF-044/055数学证据**：在固定9个非对称有理方向上用原CS九基构造非恒定正近度并合成切向流，独立Wolfram精确恢复生成运动和MSE=0；两个非零M2/M3的6×6系统均非奇异。负支是**全部原始近度为负、非正距离物理场景**，原算法先翻近度又除旧负均值令normalized mean=−1，严格得`M1-mean(mu*(I-dd^T))=2I`；对应数学输出MSE≈0.21140062258。完整数值与源Git blob/数学脚本SHA-256见 [PROGRESS E-DOC-067](PROGRESS.md) 和 [AUDIT_PROCESS §15](AUDIT_PROCESS.md)。**这不是Adaptive生产C++/CTest，也没有批准DEC-005，不能将源负分支的数学反例扩大为正距离物理恢复的一般断言**。
+
 
 - **本轮KvD新增可复算证据**：固定两组六方向（轴向/斜向）×Original/Modified共24轮精确Wolfram；新增8方向**首轮near总和负而翻号**的Original/Modified共12轮，合计36次数学迭代，均沿源Franz→near→翻号→raw t→旧t算omega→RMS/停止执行。14/14与11/11定向自检通过、四工件及SHA-256见[PROGRESS E-DOC-066](PROGRESS.md)。不写MATLAB/C++运行，仍缺一般正深度/病态/200轮、正式DEC-005与生产软件资格；AF-043/051/054/060继续开放。
 
@@ -157,7 +162,7 @@
 - **最新固定结果**：用户在`5e5221988cf093dbfddb88f2f65f06632460f3a1` 上实际编译完整SH叶子（含原二阶逐系数投影），并通过三个独立CTest **3/3，0失败**；程序分别报告53,532、176、76次内部检查，最大残差和环境日志见[PROGRESS E-DOC-062](PROGRESS.md)。这更新了下文旧HEAD的“第二/第三测试未执行”历史快照；用户日志未提供原始文件SHA-256或正式DEC-005批准，不能将SH局部PASS解释为全工程验收。
 
 
-- **文件三态：92个唯一对象＝60已审计＋32正在审计＋0空白。** 从上一轮 74/45/29 新纳入根构建文件2份，均限定为静态审核；6份球谐源/测试仍因公共接口与数值边界/正式验收未完成而在审。历史从62/39/23增加12份工件，再新增根构建文件2份，均已单独记录。分母扩大不表示此前工作倒退。
+- **文件三态：94个唯一对象＝62已审计＋32正在审计＋0空白。** 从上一轮 74/45/29 新纳入根构建文件2份，均限定为静态审核；6份球谐源/测试仍因公共接口与数值边界/正式验收未完成而在审。历史从62/39/23增加12份工件，再新增根构建文件2份，均已单独记录。分母扩大不表示此前工作倒退。
 - **问题两态：97个唯一AF＝74已整改＋23未整改。** AF-096 已依据用户提供的固定 SHA 球谐构建/CTest 记录、跨文档修订和新提交定向复核结案；原 AF-045/046/051/055 的完整工程、数值、异常和批准义务仍全部开放。增强解析/相位测试在 `445ed151` 通过；后新增的624非零四元数、错误分类和误差报告已经在用户 `601c74de` 实测 1/1 Passed。**再后来修改的build.sh仅完成静态复核，尚无新版本运行结果**。 本轮直接推进AF-045/046/051/055/057的数学/实现子目标，不人为新造小问题并关闭以改变百分比。
 - 九基值定义与递推、一般SO(3)三路线全矩阵和布局同场性已有 Wolfram 精确结果；**GCC 16.2/CMake4.3.4/Eigen3.4 下球谐旧版在用户VM实际构建成功且 1/1 CTest Passed**。增强解析值、dyadic符号、MATLAB相位锚点已在 `445ed151` 实测通过；624四元数/53,532检查/错态/残差在 `601c74de` 实测通过。未解决的卡点是更广浮点边界、正式公共接口、工程集成、DEC-005和新脚本运行证据。
 - 2015 p.30的d1²/d2²展开h4符号错误已按定义证明并记录在AF-045子项；IR98残留减号被全域证明与区分性反例排除。不改原PDF，不开启其他模块代码。
