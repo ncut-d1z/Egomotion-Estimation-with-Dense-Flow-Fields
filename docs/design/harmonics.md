@@ -1,6 +1,6 @@
 # 实球谐、近度重建及系数旋转——详细设计
 
-> **LLD v0.9，未冻结、原生数值未验收。** 2026-11-09用户仅开放低阶球谐C++实现与Wolfram符号验证。`egomotion::harmonics::low_order`叶子代码及测试源码已提交；九基直接/递推值与IR96/IR98、Choi1999两种旋转递推的**一般SO(3)精确恒等验证已执行**。并非所有球谐业务接口、离散拟合、原生编译/CTest或工程集成均完成。权限见[专项授权](../decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md)，证据见[三路报告](../reviews/LOW_ORDER_SH_THREE_ROUTE_VERIFICATION_2026-11-09.md)。
+> **LLD v0.10，未冻结、完整业务数值未验收。** 2026-11-09 用户仅开放低阶球谐 C++ 实现与 Wolfram 符号验证，`egomotion::harmonics::low_order` 叶子代码及专项测试已提交；九基直接/递推与 IR96/IR98、Choi1999 的**一般 SO(3) 精确符号验证已执行**。项目所有者又提供了固定 SHA `8eab5dd` 的 Ubuntu/GCC16.2/Eigen3.4 Release **1/1 CTest Passed** 原生结果；随后增加的测试锚点尚未再次执行。正式三类公共接口、离散拟合、全业务集成、独立全部边界和最终容差尚未完成。权限见[专项授权](../decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md)，证据见[三路报告](../reviews/LOW_ORDER_SH_THREE_ROUTE_VERIFICATION_2026-11-09.md)、[PROGRESS E-DOC-056](../PROGRESS.md)。
 
 关联REQ-F-SH-001/002、REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001及P7.1–P7.6/P7.10。原`winkelausvektor`、`kugelflfunc2`、`near_aus_koeff`、`koeff_aus_near`、`transfor_koeff`、`SHRotate`仍只读；四篇论文材料齐备，不再以缺PDF阻塞。纯Eigen、C++17、double，禁止sdla；Don Williamson仅辅助参考，无直接代码移入。
 
@@ -105,7 +105,7 @@ l=2的w对全部m精确为0，不求W；u=0先跳过辅助项再访问前阶数�
 
 命名空间为`egomotion::harmonics::low_order`，不冒充已实现[专题§5](SH_ROTATION_IVANIC_RUEDENBERG.md)中旧规划的RealSphericalHarmonics/HarmonicFitter/HarmonicRotator公共ABI。domain/contracts未获实施授权，新叶子不引入这些尚不存在的公共类型；局部Result封装variant，仅是本模块可独立验证的边界。
 
-**未创建CMake target，未更改HLD设计DAG，未接入其他模块。** 未来公共三类适配、共享类型与生命周期仍须单独核对，不能把叶子实现当成全业务接口完成。仅依赖C++17/Eigen，禁止sdla，实际native编译未验证。
+**已建立且通过用户首次本机编译的 `egomotion_harmonics` CMake 静态库 target，以及单个 `low_order_harmonics` CTest。** HLD 原27条设计DAG未修改、尚未接入其它模块；现有叶子仅依赖 C++17/Eigen、禁 sdla。未来公共三类接口、共享类型/生命周期/ABI/全业务适配仍须核对；新增断言在该次通过提交之后产生，不得以旧1/1结果假称新测试已执行。
 
 ## 6. 独立参考、异常与验收
 
