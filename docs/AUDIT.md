@@ -46,7 +46,7 @@
 
 ## 3. 审计对象与逐文件三态
 
-保留此前62个路径，依次新增12份原球谐专项工件、2份根构建文件和本轮2份AN-G06/07/08专项验证工件。原6份球谐代码/测试仍在审；新归档C++测试正在审计（**尚未原生运行**），新增Wolfram脚本已在限定符号域执行并完成源码/结果核查。**三次已通过的用户原生CTest都在新归档CTest创建之前，不能用旧结果冒充新2/2通过。**
+保留历史62个路径，随后已新增12个球谐专项工件、2个根构建文件、2个AN-G06/07/08归档测试/证明和本轮4个原koeff_aus_near二阶投影工件。新增SH生产源及测试源码**正在审计，未原生编译/测试**；新增Wolfram脚本与独立参考JSON的有限数学身份已审阅。现有旧通过结果只属于601c74de及更早固定HEAD，不能把新增组合冒充为已通过3/3。
 
 | 仓库根相对路径 | 状态 | 核对重点 |
 |---|---|---|
@@ -54,7 +54,7 @@
 | `docs/AUDIT_PROCESS.md` | 已审计 | 唯一AF、完整目标、状态及本轮数学子项证据 |
 | `docs/REQUIREMENTS.md` | 正在审计 | 58正文+8附录REQ、AC/DEC与正式冻结；AF-037 |
 | `docs/PLAN.md` | 正在审计 | 98P静态追踪已核；真实DEC-006/性能仍缺；AF-061 |
-| `docs/TEST_PLAN.md` | 正在审计 | 原66TC；旧球谐回归在`601c74de` 1/1通过；新AN-G06/07/08第二项CTest已登记但NOT_RUN，源相位/独立参考/DEC-005及其余业务继续审查；AF-051开放 |
+| `docs/TEST_PLAN.md` | 正在审计 | 原66TC；旧球谐回归在601c74de 1/1通过，AN-G06/07/08第2个CTest与源逐项拟合第3个CTest均已登记但NOT_RUN；其它业务/正式DEC-005继续审查；AF-051开放 |
 | `docs/design/README.md` | 已审计 | LLD索引的限定静态范围；球谐新进展由harmonics/PROGRESS覆盖，非全软件通过 |
 | `docs/DOCUMENT_BASELINE_REGISTER.md` | 正在审计 | 固定36项历史身份与实时集合分离；正式签署AF-058 |
 | `docs/PROGRESS.md` | 正在审计 | Wolfram全SO(3)与用户三次球谐原生CTest分SHA记录，601c下53,532检查与双类残差已归档；完整工程/资源证据AF-053仍缺 |
@@ -65,7 +65,7 @@
 | `docs/design/mat_io.md` | 正在审计 | Reader/Writer、RAII、TOCTOU、安全与L2；AF-042 |
 | `docs/design/kvd.md` | 正在审计 | 两种公式/完整trace、六方向候选，独立逐轮L3/CTest仍缺；AF-043 |
 | `docs/design/adaptive_mfa.md` | 正在审计 | M1～M4、MSE、Session与原子提交；AF-044；本轮没有实现 |
-| `docs/design/harmonics.md` | 正在审计 | 三路精确证明和601c旧球谐回归已实测；新AN-G06/07/08 CTest与Wolfram参照已建立，新CTest尚未执行；公共API/ABI/正式DEC及集成仍缺；AF-045 |
+| `docs/design/harmonics.md` | 正在审计 | 三路低阶旋转精确证明/601c旧回归实测；新增AN-G独立候选与原koeff_aus_near二阶逐项投影+精确7方向参考；两个新CTest与投影源尚未运行，动态HarmonicFitter/ABI/DEC仍缺；AF-045 |
 | `docs/design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 正在审计 | 原规划公共接口仍待适配，当前叶子/证明见三路报告；AF-046 |
 | `docs/design/sampling_noise.md` | 正在审计 | 全量有序采样/RNG独立参考与测试；AF-047 |
 | `docs/design/trajectory.md` | 正在审计 | 严格反向源异常/TR-C候选已核，独立L3/CTest仍缺；AF-048 |
@@ -109,8 +109,8 @@
 | `README.md` | 已审计 | 原项目范围/历史证据；最新代码状态以PROGRESS为准 |
 | `LICENSE` | 已审计 | MIT与上游作品边界 |
 | `.gitignore` | 已审计 | 输出/构建忽略，不绕过排除规则 |
-| `CMakeLists.txt` | 已审计 | C++17/Eigen3及仅球谐静态库不变；现在注册原有低阶回归和新AN-G06/07/08归档测试共2项CTest，后者未运行；用户先前GCC16证据只覆盖单测旧HEAD |
-| `build.sh` | 已审计 | 保留源外构建、严格pipefail与日志、一次verbose CTest调用；Scope文本已与两个低阶测试目标同步，**此更新版本及新增第二项CTest尚未在用户VM运行** |
+| `CMakeLists.txt` | 已审计 | 静态核对：C++17/Eigen3的SH-only静态库现在包括低阶源标量投影，实现3个独立SH CTest；仅历史601c74de单项已由用户实测，新增2项与新增SH生产CPP仍待原生验收 |
+| `build.sh` | 已审计 | 保留源外构建/pipefail/日志和一次verbose CTest调用；Scope已更新3个仅SH测试目标；**当前新增SH生产CPP与2个新测试尚未在用户VM运行** |
 | `scripts/check_docs_traceability.sh` | 已审计 | 仅脚本源码审阅，本轮未执行 |
 | `docs/reviews/SH_PAPERS_SOURCE_AUDIT_2026-11-09.md` | 已审计 | 上轮三PDF/勘误/相位静态记录，保持历史范围 |
 | `docs/golden/SH_PAPER_VERIFICATION_CASES.md` | 已审计 | 上轮25公式/10用例设计；新增实际执行另记，不回填为历史通过 |
@@ -120,18 +120,22 @@
 | `src/harmonics/low_order_basis.cpp` | 正在审计 | 九基/递推/重建/转换已符号对照，旧固定 HEAD 经用户球谐 CTest 运行；仍缺独立异常/全面浮点边界覆盖 |
 | `src/harmonics/low_order_rotation.cpp` | 正在审计 | 张量与IR公式全域符号核查，旧固定 HEAD 已成功编译/运行单项 CTest；尚缺全部边界及接口冻结 |
 | `src/harmonics/low_order_choi.cpp` | 正在审计 | 复递推/W共轭一般符号已核，旧固定 HEAD 已编译/运行单项 CTest；仍缺超常边界和高精度参考扩充 |
+| `src/harmonics/low_order_source_projection.cpp` | 正在审计 | 原koeff_aus_near固定二阶逐项归一公式及九CS映射已与Wolfram精确参考核对；C++新功能尚未原生编译/CTest |
 | `tests/unit/test_low_order_harmonics.cpp` | 正在审计 | `601c74de` 已实测 1/1 CTest：53,532检查、624非零四元数、错误码/溢出、双类残差；仍缺更广输入/ABI/正式容差 |
 | `tests/unit/test_low_order_archived_golden.cpp` | 正在审计 | 新增独立AN-G06/07/08固定候选数值、20方向/源相位、R3/R5全元素；静态字面一致已核，CTest尚未编译/运行，不记PASS |
+| `tests/unit/test_low_order_source_projection.cpp` | 正在审计 | 七非对称方向独立精确九系数/负例/额外列隔离/有限大数异常，源码已提交；尚无原生CTest或真实误差，不记PASS |
 | `verification/harmonics/verify_low_order_basis.wl` | 已审计 | 已执行：九基定义/递推、Gram81、Laplacian和dyadic恒等式 |
 | `verification/harmonics/verify_low_order_rotations.wl` | 已审计 | 已执行：一般四元数SO(3)、两递推各34项对定义精确零差 |
 | `verification/harmonics/verify_low_order_layout.wl` | 已审计 | 已执行：任意系数同场性、往返和旧相位反例 |
 | `verification/harmonics/verify_archived_sh_candidates.wl` | 已审计 | 独立CS多项式的AN-G06九基/AN-G07常数/AN-G08全R3/R5和场作用已实际Wolfram精确验证，allExact=True；不等于新CTest PASS |
+| `verification/harmonics/verify_source_projection_order2.wl` | 已审计 | 受限SH源逐项投影7方向数学公式在Wolfram精确执行，9差为0且分母均正、离散Gram有非零交叉项；不等于C++运行 |
 | `verification/harmonics/verification_results_2026-11-09.json` | 已审计 | 实际Wolfram输出/版本/固定输入/独立25值，native明确未执行 |
+| `verification/harmonics/source_projection_reference.v1.json` | 已审计 | 七方向9个精确根式系数+固定近度与Wolfram版本来源已复核；标注CPP_NOT_RUN、未批准DEC-005 |
 | `docs/reviews/LOW_ORDER_SH_THREE_ROUTE_VERIFICATION_2026-11-09.md` | 已审计 | 三路一般证明、C++逐式对应、纸面错误与实际执行限制 |
 
 ## 4. 现行结论与进度变化（2026-11-09球谐构建回填）
 
-- **文件三态：78个唯一对象＝48已审计＋30正在审计＋0空白。** 从上一轮 74/45/29 新纳入根构建文件2份，均限定为静态审核；6份球谐源/测试仍因公共接口与数值边界/正式验收未完成而在审。历史从62/39/23增加12份工件，再新增根构建文件2份，均已单独记录。分母扩大不表示此前工作倒退。
+- **文件三态：82个唯一对象＝50已审计＋32正在审计＋0空白。** 从上一轮 74/45/29 新纳入根构建文件2份，均限定为静态审核；6份球谐源/测试仍因公共接口与数值边界/正式验收未完成而在审。历史从62/39/23增加12份工件，再新增根构建文件2份，均已单独记录。分母扩大不表示此前工作倒退。
 - **问题两态：97个唯一AF＝74已整改＋23未整改。** AF-096 已依据用户提供的固定 SHA 球谐构建/CTest 记录、跨文档修订和新提交定向复核结案；原 AF-045/046/051/055 的完整工程、数值、异常和批准义务仍全部开放。增强解析/相位测试在 `445ed151` 通过；后新增的624非零四元数、错误分类和误差报告已经在用户 `601c74de` 实测 1/1 Passed。**再后来修改的build.sh仅完成静态复核，尚无新版本运行结果**。 本轮直接推进AF-045/046/051/055/057的数学/实现子目标，不人为新造小问题并关闭以改变百分比。
 - 九基值定义与递推、一般SO(3)三路线全矩阵和布局同场性已有 Wolfram 精确结果；**GCC 16.2/CMake4.3.4/Eigen3.4 下球谐旧版在用户VM实际构建成功且 1/1 CTest Passed**。增强解析值、dyadic符号、MATLAB相位锚点已在 `445ed151` 实测通过；624四元数/53,532检查/错态/残差在 `601c74de` 实测通过。未解决的卡点是更广浮点边界、正式公共接口、工程集成、DEC-005和新脚本运行证据。
 - 2015 p.30的d1²/d2²展开h4符号错误已按定义证明并记录在AF-045子项；IR98残留减号被全域证明与区分性反例排除。不改原PDF，不开启其他模块代码。
@@ -145,6 +149,8 @@
 **本轮新增固定证据**：用户 `601c74de` 的详细输出记录 **624个非零四元数输入、53,532次require检查、1/1 CTest Passed**，另有双类最大绝对残差。见 [PROGRESS E-DOC-059](PROGRESS.md)；`build.sh` 后续verbose调整**未运行**，参见 [AUDIT_PROCESS §7](AUDIT_PROCESS.md)。
 
 **最新增量（AN-G06/07/08）**：已接入第二个独立球谐 CTest，并且另存重放 Wolfram 精确核对。20行方向与9基/15系数/R3九项/R5二十五项和归档候选的字面差异都为0；Wolfram返回allExact=True。**当前完整可执行CTest为2项，但最新版本尚未由用户执行，不能写2/2通过**。详见 [PROGRESS E-DOC-060](PROGRESS.md)、[TEST_PLAN 当前状态](TEST_PLAN.md) 与 [AUDIT_PROCESS §8](AUDIT_PROCESS.md)。
+
+**新一期数学与代码分层（AF-045/051/055）**：原`koeff_aus_near.m` 的二阶**逐系数投影**现有单独SH实现、独立7方向Wolfram精确参考及第三个CTest（源代码尚未编译）。归档AN-G06/07/08第二CTest同样尚未原生运行；因此当前是3个已注册 SH CTest、仅历史旧版1/1有用户证据，不能标3/3通过。证明与差异详见 [PROGRESS E-DOC-061](PROGRESS.md)、[AUDIT_PROCESS §9](AUDIT_PROCESS.md)、[TEST_PLAN](TEST_PLAN.md)。
 
 ## 5. 固定证据与历史访问
 
