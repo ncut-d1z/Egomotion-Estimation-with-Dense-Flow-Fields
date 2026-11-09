@@ -1,6 +1,8 @@
 # Ivanic–Ruedenberg 球谐旋转：论文、勘误与纯 Eigen 候选合同
 
-> **专题 LLD v0.3，未冻结、未实现、未编译。** 用户已提供1996原文、1998勘误及1999 Choi等论文；全文及关键公式/表格页面已经审阅，详见 [固定论文审计记录](../reviews/SH_PAPERS_SOURCE_AUDIT_2026-11-09.md)。**“等待论文上传”已经解除**，但材料到位不开放H-10/H-11，不等于一般SO(3)约定闭合、独立L3或CTest完成。
+> **专题 LLD v0.4，公共接口与全工程未冻结、未实现。** IR96、IR98、Choi99 论文已经审阅，低阶叶子 `egomotion::harmonics::low_order` 的 C++/Eigen 独立实现现已提交，且项目所有者提供固定 SHA `8eab5dd` 的 GCC16.2/Release **1/1 CTest Passed**。本文件§5 中未来的公共类/头文件方案仍属未创建、未编译的候选，不能与已经构建的叶子混淆。新增的解析/相位测试断言尚未再次执行；完整 ABI/集成、最终 DEC-005 和广义异常测试未完成。详见 [PROGRESS E-DOC-056](../PROGRESS.md)。
+
+**原生证据适用范围**：根 `CMakeLists.txt` 只生成 `egomotion_harmonics` 静态库，编译 `src/harmonics/low_order_basis.cpp`、`low_order_rotation.cpp`、`low_order_choi.cpp`，并执行 `tests/unit/test_low_order_harmonics.cpp`。用户观察到构建成功及 CTest 1/1 Passed，这并不表示下文规划的 `real_spherical_harmonics.hpp`、`harmonic_fitter.hpp`、`harmonic_rotator.hpp` 等公共/拟合器已实现，更不表示其它模块获准编码。每次新回归或源码变更需新 HEAD 的真实测试记录。
 
 ## 1. 原始依据及本轮已确认范围
 
