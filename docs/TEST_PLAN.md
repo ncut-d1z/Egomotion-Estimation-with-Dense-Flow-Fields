@@ -116,7 +116,7 @@ regression_tolerance=9.0949470177292824e-13
 
 分别对完整八面体 8·4^i、缺损八面体 6·4^i、二十面体 20·4^i 在 i=0、1、2 核对数量、单位范数、缺损面及**相同顺序下的每行三维方向**；不能只比较无序集合或哈希。Golden 输入应由原只读源码面表/递归规则**独立生成并交叉核验 L3**，覆盖 i=0、1、2 全部有序方向；不得由被测 C++ 自算，数值容差经 DEC-005 批准，**无需运行 MATLAB**。
 
-**2026-11-09 已取得的有序参考证据（AF-047/055，非已执行采样 CTest）**：[完整方向数据](../verification/geometry/source_direction_levels_0_2.v1.json) 已覆盖八面体8/32/128、缺损6/24/96、二十面体20/80/320，共 **714 行**。已逐值核对现存 AN-G01/02/03 的 i=0 全部34行，最大差约1.11e-16；独立 [Wolfram 源序签名](../verification/geometry/verify_source_direction_levels.wl) 在九组输出中对每行的 i·(x,y,z) 和 i²·(x,y,z) 求加权和，与另一语言重建的最大相对差1.50e-15，最大绝对差9.31e-10（加权平方、部分和量级约3e6）。这两层证据**不能替代全714行双实现逐元素相等或实际C++/CTest**。现行参考为未经正式DEC-005批准的数学候选；用户目前未授权采样模块生产 C++，原 MAT/源文件保持只读。
+**2026-11-09 已取得的有序参考证据（AF-047/055，非已执行采样 CTest）**：[完整方向数据](../verification/geometry/source_direction_levels_0_2.v1.json) 已覆盖八面体8/32/128、缺损6/24/96、二十面体20/80/320，共 **714 行**。已逐值核对现存 AN-G01/02/03 的 i=0 全部34行，最大差约1.11e-16；独立 [Wolfram 源序签名](../verification/geometry/verify_source_direction_levels.wl) 在九组输出中对每行的 i·(x,y,z) 和 i²·(x,y,z) 求加权和，与另一语言重建的最大相对差1.50e-15，最大绝对差9.31e-10（加权平方、部分和量级约3e6）。这两层**属于早期阶段的加权签名证据**；随后另用 [完整714行独立Wolfram逐元素复核](../verification/geometry/verify_full_source_direction_rows.wl) 与 [固定执行结果](../verification/geometry/full_ordered_row_verification.v1.json) 对比全部2,142个坐标，最大绝对差 `1.1102230246251565e-16`、超过诊断阈值 `1e-12` 的坐标数为0，**已解除此前“未做跨语言全行逐值比较”的数学证据缺口**。参考 JSON 和新脚本的原始字节 SHA-256 已独立计算并记录在执行结果；但依然未经DEC-005批准，未生成实际采样 C++/CTest，也未触及原MAT或源 `.m` 文件。
 
 ### 2.4 600 点 Adaptive 轨迹输出（TC-F-EXP-002）
 
@@ -434,7 +434,7 @@ MAT 全量字典和来源证据**已经生成**：见 [MAT_DATA_SCHEMA.md](MAT_D
 |---|---|---|
 | TC-F-FILTER-001、TC-F-KVD-001/002 | L3 独立逐轴 Franz 响应/分母与逐轮 near 分母/符号、平移 raw/normalized、旋转 aω/bω/cω（旧 t）、逐点预测流、MSE/RMS、停止布尔、终局 near 均值/尺度；对应 KvD §7 的候选 trace 与真实 C++/CTest | 多组 L3 生成与核验、容差批准、真实 C++/CTest |
 | TC-F-ADAPT-001/002/003、TC-DC-ADAPT-001 | L3 独立 M1～M4/b/z/MSE/系数、连续帧状态；L2 最终误差 | 一般场景、退化输入、Session 状态和 C++/CTest |
-| TC-F-GEOM-002/003、TC-F-FLOW-002/003、TC-DC-RNG-001、TC-NF-RNG-001 | i=0/1/2 全714行有序几何参考已保存，独立 Wolfram 签名核对完成；uniform/normal 固定调用序列及 L4 仍是候选 | 尚无采样/噪声生产实现与 CTest；独立逐元素数值比较、RNG耗尽/非有限、正式DEC-005与批准仍缺 |
+| TC-F-GEOM-002/003、TC-F-FLOW-002/003、TC-DC-RNG-001、TC-NF-RNG-001 | i=0/1/2 全714行有序参考已保存，独立Wolfram按原20面/子面顺序对2142坐标完成逐元素验证，最大误差1.11e-16；uniform/normal、L4仍为候选 | 尚无生产采样/噪声C++或CTest；RNG耗尽/非有限、正式DEC-005/最终批准仍缺，不能标TC PASS |
 | TC-F-SH-001/002、TC-F-TRAJ-001 | L3 R0/R3/R5 全元素、系数与几何旋转、轨迹解析值 | 多轴/复合/非平凡角独立参考、版权/适配、CTest |
 | TC-F-EXP-001/002/003 | L3 固定两帧/8 次聚合/刷新规则；L2 历史 MAT、L4 统计 | 一般输入参考、Runner、CTest、L4 |
 | TC-F-AN-001、TC-I-ANALYSIS-001 | 从 L2 只读 MAT 独立重算为 L3 begin/end/zone/平滑/曲线 | 原始值逐元素导出、独立分析结果、CTest |
