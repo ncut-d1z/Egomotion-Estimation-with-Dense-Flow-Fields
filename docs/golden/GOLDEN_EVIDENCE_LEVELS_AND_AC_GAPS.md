@@ -41,7 +41,7 @@
 | F-FILTER-001、F-KVD-001/002 | L3 Franz/KvD 逐轴逐轮 + L2 Bias 最终 | 完整一般/退化参考、真实 C++ trace/CTest、DEC-005 |
 | F-ADAPT-001/002/003、DC-ADAPT-001 | L3 M1～M4/b/z/MSE/Session + L2 终值 | 多组独立固定输入、状态/失败合同与真实测试 |
 | F-SH-001/002 | L3 九基/一般R3/R5与系数转换已由独立Wolfram精确证明；原AN-G06/07/08固定参考与受限koeff_aus_near七方向九系数新增数学参考/测试 | 用户旧SH回归在601c74de原生CTest 1/1 Passed；**固定5e522198用户已实际构建SH源投影CPP并通过归档176次、源二阶拟合76次检查，三个SH CTest合计3/3 Passed**，广泛L2/L3/正式DEC-005/公共ABI仍缺，不得整项关闭 |
-| F-GEOM-002/003 | 已生成 i=0/1/2 全部714行有序方向的数学候选 `verification/geometry/source_direction_levels_0_2.v1.json`；AN-G01/02/03的i=0逐坐标交叉核对，i=1/2另由Wolfram行号加权签名独立复核 | 生产采样C++/CTest未授权未执行；Wolfram签名不等同全部714行逐元素核对，尚缺来源SHA-256归档/最终DEC-005、非法/退化输入、RNG相关义务 |
+| F-GEOM-002/003 | 已保存 i=0/1/2 全714行有序方向参考；独立Wolfram对全部2,142坐标完成逐行比较、最大绝对差1.1102230246251565e-16；候选和复核脚本SHA-256见 `verification/geometry/full_ordered_row_verification.v1.json` | 生产采样C++/CTest未获授权且未执行；本证据限数学参考，仍缺正式DEC-005、非法/退化/资源边界、RNG耗尽及其它采样噪声义务 |
 | F-FLOW-002/003、DC-RNG-001、NF-RNG-001 | L3 固定 RNG 值与调用数；L4 统计 | 固定源替身和真实统计/测试 |
 | F-EXP-001/002/003 | L3 固定逐帧/多运行聚合与刷新；L2 最终 MAT；L4 | Runner 实现、完整 CTest 和历史字段差异 |
 | F-TRAJ-001、F-AN-001、I-ANALYSIS-001 | L3 轨迹及从 L2 独立计算的曲线 | L2 值导出、L3 数值参考与生产 Analyzer/CTest |
@@ -63,7 +63,7 @@
 ## 5. 下一步（不含任何 MATLAB/Octave 操作）
 
 1. 只读复核 582 MAT 的 SHA-256、class/dtype/rank/dims、列主序数值；
-2. AN-G01～03 的 i=0/1/2 完整方向候选已形成且通过跨语言加权行序签名；**继续**复核所有714行逐元素独立性、来源SHA-256/最终阈值和生产CTest，并补齐 AN-G04～12 剩余一般/退化输入、KvD逐轮、Adaptive与Session时序及分析曲线参考；
+2. AN-G01～03 i=0/1/2 的714行已完成独立Wolfram逐元素比对，候选及脚本SHA-256已计算；**继续**处理其正式批准/采样生产CTest/异常边界，并补齐 AN-G04～12 其他一般/退化输入、KvD逐轮、Adaptive与Session时序、分析曲线L3及必要的L2/L4参考；
 3. 利用固定序列检查 RNG 调用顺序，利用 L2 数据执行有记录的 L4 统计；
 4. 待 H-10/H-11 的**其他实际执行许可**明确后才运行 C++/CTest/数据安全测试；根据 DEC-005 的批准容差和真实错误数量逐 TC/AC 审定；
 5. 不安排 MATLAB 运行、插桩、MATLAB Golden 采集或 Octave 替代；不因缺 L1 挂起或重启项目任务。
