@@ -188,3 +188,11 @@
 - **代码/测试现状**：`tests/unit/test_low_order_source_projection.cpp` 使用上述独立九系数，并新增 shape、非有限、单位向量、零平方基范数、极大有限近度溢出和多余流列隔离测试；根 `CMakeLists.txt` 新增第三个SH-only `low_order_harmonics_source_projection` 测试。旧原回归、AN-G06/07/08第二个CTest不覆盖、不删除。实际三项 CTest 的新组合与新增生产CPP **尚未获用户Ubuntu原生编译和运行结果，全部作为新 HEAD NOT_RUN**；此前单项 `601c74de` 的1/1 PASS只能作为历史旧SHA证据。
 - **错误处理差异明确保留**：空输入/非一致shape返回InvalidSampleShape，零基范数返回ZeroProjectionNorm，非有限和运算溢出分别NonFiniteInput/NonFiniteResult；原MATLAB非有限传播/警告并无原生证据，故仅承诺明确失败，不冒充逐位忠实MATLAB异常。仍未支持任意阶、多模块fitter、MAT/Session/Adaptive，DEC-005/008与所有其它TC未批准。
 - **台账状态**：没有新造独立小目标/虚关原AF。仍为 **97个唯一AF＝74已整改＋23未整改**；审计路径新登记4项（1个SH生产CPP、1个SH测试CPP、1个已实跑Wolfram脚本、1个独立数学参考JSON）后为 **82＝50已审计＋32正在审计＋0空白**。AF-045/051/055仍开放；旧其它23项均未缩减承诺。第一轮未清零，用户条件性的第二轮全面审计不启动。
+
+## 10. AF-045/046/051/055/060 第一轮整改的首次 SH 3/3 实测闭环（2026-11-09，复合目标仍开放）
+
+- **用户提交的原生实测证据**：受测源码/脚本Git HEAD `5e5221988cf093dbfddb88f2f65f06632460f3a1`，Ubuntu 24.04、GCC 16.2.0、CMake 4.3.4、Eigen 3.4.0、Release/C++17、4 jobs。用户贴出的 `./build.sh` 完整可见输出确认CMake配置/生成、四个SH源文件的构建（含新 `low_order_source_projection.cpp`）与三项测试可执行程序链接成功；可见输出没有编译警告。**单次verbose CTest为3/3 Passed、0 failed、总墙钟0.10秒**。
+- **三项详细结果**：`low_order_harmonics` 53,532内部检查/624非零四元数，最大矩阵/向量残差 `8.8817841970012523e-16`、标量 `1.0658141036401503e-14`；`low_order_harmonics_archived_golden` 176检查、最大绝对差 `8.8817841970012523e-16`；`low_order_harmonics_source_projection` 76检查、最大绝对差 `1.7763568394002505e-15`；现行回归阈值均为 `9.0949470177292824e-13`。合计53,784内部检查 ≠ 53,784个CTest或独立输入数，624非零四元数中可存在重复旋转。
+- **来源与限制**：用户VM日志路径 `build/low-order-harmonics/logs/build-20261109T104655Z-470926.log`，只由其终端文本提供；**未获取日志文件字节/SHA256或独立shell `$?`**。用户执行不赋予代理其它模块原生构建、MAT读写、业务代码开发或审批权限。数学Wolfram独立符号结果与双精度实测分开保存；原AN-G候选 JSON和源MATLAB均不改写。
+- **更新旧状态而非覆盖历史**：先前§8/§9及E-DOC-060/061把新归档与投影C++标为NOT_RUN，是当时真实历史；当前事实由 `PROGRESS E-DOC-062`、`TEST_PLAN v0.26`、`AUDIT.md` 和此条闭环。固定此提交后的新代码/测试不得直接继承旧PASS。
+- **不得虚关原AF**：AF-045/046仍包括正式公共接口/ABI、非本叶子范围；AF-051包括其它业务66TC；AF-055/060包括AN-G01～12全面源身份、L2/L3/L4与AC证据；DEC-005/008及正式签署仍无批准。故原23项中**一项也不因球谐3/3测试单独关闭**。现行唯一AF仍为97：74已整改、23未整改；文件三态82：50已审计、32正在审计、0空白，未达启动条件性第二轮全面审计条件。
