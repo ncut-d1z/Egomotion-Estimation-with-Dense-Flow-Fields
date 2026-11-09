@@ -115,8 +115,8 @@
 | `docs/reviews/SH_PAPERS_SOURCE_AUDIT_2026-11-09.md` | 已审计 | 上轮三PDF/勘误/相位静态记录，保持历史范围 |
 | `docs/golden/SH_PAPER_VERIFICATION_CASES.md` | 已审计 | 上轮25公式/10用例设计；新增实际执行另记，不回填为历史通过 |
 | `docs/decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md` | 已审计 | 仅SH代码和Wolfram授权、其他模块及native边界 |
-| `include/egomotion/harmonics/low_order.hpp` | 正在审计 | API语义/所有权/局部Result已静态核；未编译/native验收 |
-| `src/harmonics/low_order_detail.hpp` | 正在审计 | 输入校验/舍入余量/排列；实际异常与编译待验 |
+| `include/egomotion/harmonics/low_order.hpp` | 正在审计 | 局部Result/API已有GCC16球谐构建实证；公共contracts/ABI未冻结，仍在审 |
+| `src/harmonics/low_order_detail.hpp` | 正在审计 | SO(3)/方向校验、舍入边界静态核；GCC16构建已成功，未全面覆盖浮点/异常边界 |
 | `src/harmonics/low_order_basis.cpp` | 正在审计 | 九基/递推/重建/转换已符号对照，旧固定 HEAD 经用户球谐 CTest 运行；仍缺独立异常/全面浮点边界覆盖 |
 | `src/harmonics/low_order_rotation.cpp` | 正在审计 | 张量与IR公式全域符号核查，旧固定 HEAD 已成功编译/运行单项 CTest；尚缺全部边界及接口冻结 |
 | `src/harmonics/low_order_choi.cpp` | 正在审计 | 复递推/W共轭一般符号已核，旧固定 HEAD 已编译/运行单项 CTest；仍缺超常边界和高精度参考扩充 |
