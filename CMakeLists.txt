@@ -20,6 +20,7 @@ add_library(egomotion_harmonics STATIC
     src/harmonics/low_order_basis.cpp
     src/harmonics/low_order_rotation.cpp
     src/harmonics/low_order_choi.cpp
+    src/harmonics/low_order_source_projection.cpp
 )
 add_library(egomotion::harmonics ALIAS egomotion_harmonics)
 
@@ -66,6 +67,22 @@ if(BUILD_TESTING)
     add_test(NAME low_order_harmonics_archived_golden COMMAND test_low_order_archived_golden)
     set_tests_properties(low_order_harmonics_archived_golden PROPERTIES
         LABELS "harmonics;low-order;archived-golden"
+        TIMEOUT 120
+    )
+
+    # 原 MATLAB koeff_aus_near.m 的逐系数拟合，按独立解析七方向参考验收。
+    # 仅SH叶子；不引入 Adaptive/Runner/采样器/非球谐的业务测试。
+    add_executable(test_low_order_source_projection
+        tests/unit/test_low_order_source_projection.cpp
+    )
+    target_link_libraries(test_low_order_source_projection PRIVATE egomotion_harmonics)
+    target_compile_features(test_low_order_source_projection PRIVATE cxx_std_17)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_compile_options(test_low_order_source_projection PRIVATE -Wall -Wextra -Wpedantic)
+    endif()
+    add_test(NAME low_order_harmonics_source_projection COMMAND test_low_order_source_projection)
+    set_tests_properties(low_order_harmonics_source_projection PROPERTIES
+        LABELS "harmonics;low-order;source-projection"
         TIMEOUT 120
     )
 endif()
