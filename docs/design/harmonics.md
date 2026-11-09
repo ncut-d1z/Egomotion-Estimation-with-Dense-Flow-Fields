@@ -1,6 +1,6 @@
 # 实球谐、近度重建及系数旋转——详细设计
 
-> **LLD v0.14，未冻结、完整业务数值未验收。** 2026-11-09 用户仅开放低阶球谐 C++ 实现与 Wolfram 符号验证，`egomotion::harmonics::low_order` 叶子代码及专项测试已提交；九基直接/递推与 IR96/IR98、Choi1999 的**一般 SO(3) 精确符号验证已执行**。项目所有者又提供了固定 SHA `8eab5dd`、增强回归 `445ed151` 和624四元数/错态压力 `601c74de` 的 Ubuntu/GCC16.2/Eigen3.4 Release **各1/1 CTest Passed** 原生结果；真实最大绝对残差分别为8.8817841970012523e-16（矩阵/向量）、1.0658141036401503e-14（标量），回归比较阈值9.0949470177292824e-13。正式三类公共接口、离散拟合、全业务集成、独立全部边界和最终容差尚未完成。权限见[专项授权](../decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md)，证据见[三路报告](../reviews/LOW_ORDER_SH_THREE_ROUTE_VERIFICATION_2026-11-09.md)、[PROGRESS E-DOC-056/057/059](../PROGRESS.md)。
+> **LLD v0.15，未冻结、完整业务数值未验收。** 2026-11-09 用户仅开放低阶球谐 C++ 实现与 Wolfram 符号验证，`egomotion::harmonics::low_order` 叶子代码及专项测试已提交；九基直接/递推与 IR96/IR98、Choi1999 的**一般 SO(3) 精确符号验证已执行**。项目所有者又提供了固定 SHA `8eab5dd`、增强回归 `445ed151` 和624四元数/错态压力 `601c74de` 的 Ubuntu/GCC16.2/Eigen3.4 Release **各1/1 CTest Passed** 原生结果；真实最大绝对残差分别为8.8817841970012523e-16（矩阵/向量）、1.0658141036401503e-14（标量），回归比较阈值9.0949470177292824e-13。正式三类公共接口、离散拟合、全业务集成、独立全部边界和最终容差尚未完成。权限见[专项授权](../decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md)，证据见[三路报告](../reviews/LOW_ORDER_SH_THREE_ROUTE_VERIFICATION_2026-11-09.md)、[PROGRESS E-DOC-056/057/059](../PROGRESS.md)。
 
 关联REQ-F-SH-001/002、REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001及P7.1–P7.6/P7.10。原`winkelausvektor`、`kugelflfunc2`、`near_aus_koeff`、`koeff_aus_near`、`transfor_koeff`、`SHRotate`仍只读；四篇论文材料齐备，不再以缺PDF阻塞。纯Eigen、C++17、double，禁止sdla；Don Williamson仅辅助参考，无直接代码移入。
 
@@ -58,7 +58,7 @@ a^{num}_{lm}=\frac{4\pi}{N}\sum_i\mu_iY_{lm}(d_i),\quad
 
 **当前新增的球谐叶子功能**：`projectSourceCoefficientsOrderTwo(nearness,setofpoints)` 专门复现 `koeff_aus_near.m` 的固定 `ordnung=2` 分支。接受 N>0 的有限近度和 N×K (K≥3) 样本，仅解释前三列的有限单位方向；按原 m 排列的九个源 CS 基函数**分别**求和，先算 `a=(sum(near*Y)/N)*4pi` 与 `b=(sum(Y²)/N)*4pi` 再相除，不将其替换为九元联合 LS；返回 3×5 源布局且无效位置填零。错误返回：空/维度错 `InvalidSampleShape`，近度/方向非有限 `NonFiniteInput`，非单位方向 `NotUnitDirection`，零平方范数 `ZeroProjectionNorm`，累加/比值溢出 `NonFiniteResult`；原 MATLAB 在这些病态数据上的警告/NaN 传播未取证，因此不能主张等价。**一般化跨模块 HarmonicFitter、动态阶数、Adaptive/Session 接口仍未实现，且这一新 C++ 代码尚未原生编译/CTest。**
 
-**独立精确参考（不是被测实现生成）**：取七个单位方向 `e_x,e_y,e_z,(3/5,4/5,0),(0,3/5,4/5),(4/5,0,3/5),(1/3,2/3,2/3)` 与近度 `(2,-1,4,1/2,-3,5/4,11/2)`。已实际执行 [Wolfram 精确计算](../../verification/harmonics/verify_source_projection_order2.wl)，九项系数差全部为0，所有平方范数分母严格为正；离散 Gram 的非对角项 `G[2,3]≈-0.2206948544` 非零，所以**此固定场能够区分源逐项比值与联合最小二乘**。精确有理/根式值单独保存于 [source_projection_reference.v1.json](../../verification/harmonics/source_projection_reference.v1.json)，其状态是独立数学参考、**非已运行的 C++/批准 Golden**；本模块专有测试 `test_low_order_source_projection.cpp` 覆盖所有九项、六处无效填充、额外流列忽略、零/维度/非有限/非单位/溢出等负例，仍为 `NOT_RUN`。
+**独立精确参考（不是被测实现生成）**：取七个单位方向 `e_x,e_y,e_z,(3/5,4/5,0),(0,3/5,4/5),(4/5,0,3/5),(1/3,2/3,2/3)` 与近度 `(2,-1,4,1/2,-3,5/4,11/2)`。已实际执行 [Wolfram 精确计算](../../verification/harmonics/verify_source_projection_order2.wl)，九项系数差全部为0，所有平方范数分母严格为正；离散 Gram 的非对角项 `G[2,3]≈-0.2206948544` 非零，所以**此固定场能够区分源逐项比值与联合最小二乘**。精确有理/根式值单独保存于 [source_projection_reference.v1.json](../../verification/harmonics/source_projection_reference.v1.json)，其状态是独立数学参考、**非已运行的 C++/批准 Golden**；本模块专有测试 `test_low_order_source_projection.cpp` 覆盖所有九项、六处无效填充、额外流列忽略、零/维度/非有限/非单位/溢出等负例；**现已在5e522198用户原生CTest通过**。
 
 AF-090仍适用：`spherical_harmonic_illustration`的rho=5+3yy/max(abs(yy))是独立图示，不作为核心九基或旋转验证依据，见[分析LLD](analysis_plotting.md)。
 
@@ -103,14 +103,14 @@ l=2的w对全部m精确为0，不求W；u=0先跳过辅助项再访问前阶数�
 | `src/harmonics/low_order_basis.cpp` | 已创建，直接/递推基值、重建、旋转列系数与转换 |
 | `src/harmonics/low_order_rotation.cpp` | 已创建，独立张量与IR实现 |
 | `src/harmonics/low_order_choi.cpp` | 已创建，复递推与实基转换 |
-| `src/harmonics/low_order_source_projection.cpp` | 新增仅低阶源逐系数投影；真实原数据/原程序未运行，C++原生测试未执行 |
+| `src/harmonics/low_order_source_projection.cpp` | 受限二阶源逐系数投影；固定5e522198下用户实际GCC16编译，专项76次检查的CTest通过；原MATLAB并未运行 |
 | `tests/unit/test_low_order_harmonics.cpp` | 已创建，旧版在固定601c74de完成53,532项检查/624四元数及三路线，1/1 CTest通过；更广验证/批准仍开放 |
-| `tests/unit/test_low_order_archived_golden.cpp` | AN-G06/07/08原CS相位与归档R3/R5/3×5候选的第二个CTest；**已提交、尚未编译/运行** |
-| `tests/unit/test_low_order_source_projection.cpp` | 新增非对称七方向的独立精确九系数、分母异常/尺寸/非有限/无效列回归第三个CTest；**已提交、尚未编译/运行** |
+| `tests/unit/test_low_order_archived_golden.cpp` | AN-G06/07/08原CS相位与归档R3/R5/3×5候选；5e522198用户原生CTest 176次检查通过 |
+| `tests/unit/test_low_order_source_projection.cpp` | 七方向精确九系数、分母异常/维度/非有限/额外列回归；5e522198用户原生CTest 76次检查通过 |
 
 命名空间为`egomotion::harmonics::low_order`，不冒充已实现[专题§5](SH_ROTATION_IVANIC_RUEDENBERG.md)中旧规划的RealSphericalHarmonics/HarmonicFitter/HarmonicRotator公共ABI。domain/contracts未获实施授权，新叶子不引入这些尚不存在的公共类型；局部Result封装variant，仅是本模块可独立验证的边界。
 
-**当前根 CMake 已注册三个独立低阶球谐 CTest：原 `low_order_harmonics` 在固定提交 `601c74de` 的旧版本实际通过；`low_order_harmonics_archived_golden` 和新增 `low_order_harmonics_source_projection` 均尚未由用户原生编译/执行，不得写3/3 PASS。** HLD 原27条设计DAG未修改、尚未接入其它模块；现有叶子仅依赖 C++17/Eigen、禁 sdla。未来公共三类接口、共享类型/生命周期/ABI/全业务适配仍须核对；增补解析/dyadic/MATLAB相位断言已在 `445ed151` 实测，624非零四元数/错误码/溢出又在 `601c74de` 实测；未来任何新变更不得借用旧 HEAD 通过结果。
+**固定 `5e5221988cf093dbfddb88f2f65f06632460f3a1` 上三个独立低阶球谐CTest已由用户在Ubuntu GCC16.2实际编译并3/3 Passed**：原回归53,532次检查、归档AN-G06/07/08参考176次、二阶逐系数投影76次。用户提交的完整可见日志记录真实误差，详见[PROGRESS E-DOC-062](../PROGRESS.md)。**这不是通用公共ABI/动态阶数/最终DEC-005验收**，下一提交的新代码不能沿用此前PASS。 HLD 原27条设计DAG未修改、尚未接入其它模块；现有叶子仅依赖 C++17/Eigen、禁 sdla。未来公共三类接口、共享类型/生命周期/ABI/全业务适配仍须核对；增补解析/dyadic/MATLAB相位断言已在 `445ed151` 实测，624非零四元数/错误码/溢出又在 `601c74de` 实测；未来任何新变更不得借用旧 HEAD 通过结果。
 
 ## 6. 独立参考、异常与验收
 
@@ -122,7 +122,7 @@ l=2的w对全部m精确为0，不求W；u=0先跳过辅助项再访问前阶数�
 
 关联TC-F-SH-001/002、TC-NF-NUM-001/002与TC-D-SOURCE-002；既有66TC总量不变，专项子用例不是新TC。AF-045/046/051/055的符号数学部分已有实证，但整体原生、公共接口、其他Golden与批准义务尚缺，继续开放。
 
-**归档候选交叉校验补充（2026-11-09）**：当前 AN-G06 原CS 9基、AN-G07 20个归档方向近度1、AN-G08 原m顺序z90的R3/R5与3×5系数都有**独立字面参考**，不从被测Eigen递推中构造Expected。对其候选值已用独立 Wolfram CS多项式计算核对（全域表达式相应的限定恒等式 `allExact=True`），脚本位于 [verify_archived_sh_candidates.wl](../../verification/harmonics/verify_archived_sh_candidates.wl)。当前第二个CTest尚属 `NOT_RUN`，不以原来的1/1通过替代；不代表已实现完整原MATLAB近度离散拟合或全业务源忠实移植，正式 DEC-005/008 仍需批准。对应 [TEST_PLAN](../TEST_PLAN.md) 和 [PROGRESS E-DOC-060](../PROGRESS.md)。
+**归档候选交叉校验补充（2026-11-09）**：当前 AN-G06 原CS 9基、AN-G07 20个归档方向近度1、AN-G08 原m顺序z90的R3/R5与3×5系数都有**独立字面参考**，不从被测Eigen递推中构造Expected。对其候选值已用独立 Wolfram CS多项式计算核对（全域表达式相应的限定恒等式 `allExact=True`），脚本位于 [verify_archived_sh_candidates.wl](../../verification/harmonics/verify_archived_sh_candidates.wl)。第二个归档CTest已在5e522198实际通过176次检查，但不把该局部证据扩展为全部Golden/TC通过；不代表已实现完整原MATLAB近度离散拟合或全业务源忠实移植，正式 DEC-005/008 仍需批准。对应 [TEST_PLAN](../TEST_PLAN.md) 和 [PROGRESS E-DOC-060](../PROGRESS.md)。
 
 ## 7. 后续进入条件
 
