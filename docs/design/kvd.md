@@ -1,6 +1,6 @@
 # Franz / Original KvD / Modified KvD 详细设计草案
 
-> **LLD v0.7（未冻结、无生产实现）**。源 MATLAB 的Franz/两种KvD算式已核对；本文件§9.4的两组六方向夹具已用独立Wolfram**精确算术实际执行合计24个数学迭代轮次**，保留逐轮near/平移/旋转/误差/门限与最少6轮的停止路径。仍缺一般/退化/翻号/200轮和真实生产C++/CTest、完整独立L3以及最终DEC-005批准；**无需执行MATLAB**。需求：REQ-F-FILTER-001、REQ-F-KVD-001/002、REQ-F-ERROR-001、REQ-DC-KVD-001、REQ-NF-NUM-001/002；任务：P4.1–P4.10。
+> **LLD v0.8（未冻结、无生产实现）**。原 MATLAB 的Franz/Original/Modified KvD公式和赋值次序已核对；§9.4/§9.5的固定方向夹具已用Wolfram精确算术分别验证**两组六方向4条×6轮、一次8方向翻号2条×6轮，共36次数学迭代**。其中精确轨迹覆盖near正均值、Original/Modified近度加权差异、首轮near翻号、RMS/delta/动态门限及最低六次停止；但不覆盖全部一般运动、200轮极端、生产C++/CTest与最终DEC-005。
 
 ## 1. 精确来源与函数合同
 
@@ -424,6 +424,56 @@ c_\omega=(0,0,1/6),\quad
 **真实数学迭代停止分支**：轴向两算法首轮RMS均 `1.2909944487356765e-13`，动态门限 `2.1516574145594608e-17`；斜向两算法首轮RMS `2.3804761428471544e-13`，动态门限 `3.967460238078591e-17`。四组首轮 `delta=RMS<10^{-7}`，第2～6轮 `delta=0`，且两类归一化 `t=e_x`、初始旋转和 near 均为固定点；因此`x<6`维持前五次继续，第六次执行完退出并返回 `x=6`。归一化前平移不同，却得到相同的末次方向与尺度，证明**必须观察原始 a/b/c/tRaw**，而非仅最终t或误差。
 
 **证据范围与未决**：本次有独立Wolfram准确输入与实际逐轮数字、14项静态/数值自检（14/14），但不是源码 MATLAB、经批准的生产 C++/CTest 或正式Golden；只包含固定的两组六方向和 `near` 正均值、没有 near 翻号、病态 Franz 模板、噪声、200轮上限或一般连续状态。迭代恒定来自本固定数学场景，不能把它扩展成所有输入均在6轮停止的结论。AF-043仍须更多一般/失败逐轮参考、真实实现与DEC-005批准，继续保持「未整改」。
+
+### 9.5 首轮 near 负总和的判别性八方向精确夹具（AF-043，理论数学执行）
+
+§9.2/9.3两个固定流场的 near 总和均为正，**没有覆盖原源码 `sum(near)<0` 时在平移项求和之前同时反转 near 与 trans 的路径**。现构造原函数可接收的混合正负**数学光流输入**（不宣称符合所有物点正距离的物理假设），验证算法该离散分支。
+
+令 `s=1/10`、`c=√99/10`，`ε=10^{-13}`，按行输入八个单位方向
+
+[
+(c,s,0), (c,-s,0), (-c,s,0), (-c,-s,0),
+quad e_y,-e_y,e_z,-e_z.
+]
+
+对前四行给光流 (oldsymbol p_i=10(oldsymbol e_x-d_{ix}oldsymbol d_i))，对后四行给 (oldsymbol p_i=-(oldsymbol e_x-d_{ix}oldsymbol d_i))；全部均严格满足 (oldsymbol d_i^	opoldsymbol p_i=0)。这等效于第一组近轴方向的**有符号**近度 (-10) 和末四方向的近度 (+1)，**仅用于非物理分支单元理论诊断**。
+
+Franz 的三轴平移模板响应 ((18/5,0,0))，分母 ((101/25,149/25,6))，初始
+
+[
+oldsymbol t_{m Franz}=(90/101)oldsymbol e_x,qquad
+oldsymbolomega_{m Franz}=0.
+]
+
+定义 (alpha=1/(1+100epsilon))、(eta=1/(1+epsilon))。第一次近度估计的八项为 ((-10alpha,-10alpha,-10alpha,-10alpha,eta,eta,eta,eta))，总和 (-40alpha+4eta<0)。**原源先将 near 翻转为 ((10alpha)^4,(-eta)^4)，再将旧 (t) 从 (+e_x) 翻为 (-e_x)，之后才求平移 (a,b,c)**。翻号后近度均值 ((5alpha-eta)/2>0)。于是
+
+[
+egin{aligned}
+a_O&=	frac12(alpha+eta)e_x,& b_O&=0,&
+c_O&=-	frac{99}{2}alpha^2e_x,\
+a_M&=-	frac9{20}e_x,& b_M&=0,&
+c_M&=-	frac{99}{20}alpha e_x.
+end{aligned}
+]
+
+进而
+
+[
+widetilde t_O=-	frac{alpha+eta+99alpha^2}{2}e_x,qquad
+widetilde t_M=-	frac{99alpha-9}{20}e_x .
+]
+
+两者都归一为 (-e_x)，旋转始终为零。逐项预测流的
+
+[
+mathrm{MSE}=	frac12(1-alpha)^2+
+              	frac12(1-eta)^2,qquad
+mathrm{RMS}approx7.071421356346968	imes10^{-12}.
+]
+
+第一次 (delta=mathrm{RMS}<10^{-7})，此后第2～6轮 (delta=0)，动态门限约 (8.839276695433711	imes10^{-16})。`k<6` 强制六轮，**首轮翻号为true、后五轮均false**，最终 (oldsymbol t_{m out}=-[(5alpha-eta)/2]e_xapprox-4.49999999995005e_x)、(oldsymbolomega=0)。
+
+以上完整**两种算法×六轮，共12轮**近度/符号/原始平移/旋转/MSE/RMS/门限/终止的独立数值已通过Wolfram 11/11理论检查，保存于 [符号复算脚本](../../verification/kvd/verify_near_sign_flip_exact_trace.wl) 和 [固定逐轮数值](../../verification/kvd/near_sign_flip_exact_trace.v1.json)。该结果**不是源码MATLAB或生产C++运行，不是经过DEC-005批准的Golden**。本夹具仍不覆盖200轮上限、真实非有限/零向量异常、带噪一般场或满足严格正深度先验的翻号可能性；但现在可明确检查 near翻号与旧t翻号的赋值先后，而不仅是旧正均值夹具。
 
 ## 10. 与架构及开发工作的绑定
 
