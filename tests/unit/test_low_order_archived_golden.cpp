@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstddef>
 #include <iomanip>
+#include <initializer_list>
 #include <iostream>
 #include <limits>
 #include <sstream>
@@ -16,6 +17,8 @@ namespace {
 
 std::size_t checks = 0;
 double max_residual = 0.0;
+// Fixed archived candidate values copied from docs/golden/analytic_golden_candidates.v1.json
+// audited Git blob 1e6499eff3ce5b55503f8cd913b9f492629da499; no parser at runtime.
 // Exploration/regression only; this does not approve DEC-005.
 constexpr double kTolerance = 4096.0 * std::numeric_limits<double>::epsilon();
 
@@ -82,7 +85,8 @@ void testAN_G06_SourcePhaseAtUnitX() {
 void testAN_G07_ConstantNearOnArchivedTwentyDirections() {
     const auto directions = archivedIcosahedronDirections();
     sh::MatlabCoefficients original = sh::MatlabCoefficients::Zero();
-    original(0,0) = std::sqrt(4.0 * std::acos(-1.0));
+    // AN-G07 archived literal, not an output-derived coefficient.
+    original(0,0) = 3.5449077018110318;
     const auto converted = sh::fromMatlabLayout(original);
     if (!converted.hasValue()) throw std::runtime_error("AN-G07 conversion failed");
     for (std::size_t i = 0; i < directions.size(); ++i) {
