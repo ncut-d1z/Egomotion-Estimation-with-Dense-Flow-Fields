@@ -67,16 +67,16 @@
 | `docs/design/adaptive_mfa.md` | 正在审计 | M1～M4、MSE、Session与原子提交；AF-044；本轮没有实现 |
 | `docs/design/harmonics.md` | 正在审计 | 九基/旋转/二阶源逐系数投影均有独立数学与固定 5e522198 原生数值验收；公共ABI/完整动态阶数/最终DEC-005仍缺，AF-045 |
 | `docs/design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 正在审计 | 原规划公共接口仍待适配，当前叶子/证明见三路报告；AF-046 |
-| `docs/design/sampling_noise.md` | 正在审计 | 全量有序采样/RNG独立参考与测试；AF-047 |
+| `docs/design/sampling_noise.md` | 正在审计 | 已保存三类采样i=0/1/2完整714行有序候选，并经Wolfram独立加权行序签名核对；生产采样/噪声CTest、异常/RNG仍缺；AF-047 |
 | `docs/design/trajectory.md` | 正在审计 | 严格反向源异常/TR-C候选已核，独立L3/CTest仍缺；AF-048 |
 | `docs/design/experiments.md` | 正在审计 | 五入口/save/Manifest/聚合，实际Runner仍缺；AF-049 |
 | `docs/design/analysis_plotting.md` | 正在审计 | 曲线、分段/平滑、源插图与历史字段；完整L3/CTest仍缺；AF-050 |
 | `docs/decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | 已审计 | 已选规则，历史来源未知不阻塞 |
 | `docs/decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md` | 已审计 | 保留当时所有者技术决定 |
 | `docs/golden/NO_MATLAB_EXECUTION_POLICY.md` | 已审计 | L1永久非必需 |
-| `docs/golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md` | 正在审计 | 逐AC真实L2/L3/L4缺口；SH新增实证不代表全部完成；AF-060 |
+| `docs/golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md` | 正在审计 | i=0/1/2几何全量候选已登记；其它逐AC L2/L3/L4与C++/正式DEC仍缺，AF-060 |
 | `docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md` | 正在审计 | 精确等式不等于最终double容差；AF-054 |
-| `docs/golden/analytic_golden_candidates.v1.json` | 正在审计 | 原AN-G01～12未改，不以新SH结果替代整体验收；AF-055 |
+| `docs/golden/analytic_golden_candidates.v1.json` | 正在审计 | 原AN-G01～12保持DRAFT；新增AN-G01/02/03 i=0/1/2 全714行参考及跨语言签名，但余下范围/批准/CTest未完；AF-055 |
 | `docs/TODO.md` | 正在审计 | 材料、SH专项实现/Wolfram与用户两次球谐native均有证据；代理执行权限/其它批准仍缺；AF-057 |
 | `docs/MAT_DATA_SCHEMA.md` | 正在审计 | 历史582元数据与独立SHA-256/逐值区别；AF-056 |
 | `docs/SOURCE_INVENTORY.md` | 已审计 | 45源文件静态身份，不等于软件验收 |
@@ -124,6 +124,8 @@
 | `tests/unit/test_low_order_harmonics.cpp` | 正在审计 | `601c74de` 已实测 1/1 CTest：53,532检查、624非零四元数、错误码/溢出、双类残差；仍缺更广输入/ABI/正式容差 |
 | `tests/unit/test_low_order_archived_golden.cpp` | 正在审计 | AN-G06/07/08 的源CS布局、R3/R5固定值在5e522198 原生CTest 176次检查通过；完整L3/正式批准仍缺 |
 | `tests/unit/test_low_order_source_projection.cpp` | 正在审计 | 原源7方向二阶逐项拟合及异常负例在5e522198 原生CTest 76次检查通过；其他场景/通用API尚缺 |
+| `verification/geometry/verify_source_direction_levels.wl` | 已审计 | Wolfram15.0.1独立计算9组有序方向的行数、一次/二次行号加权坐标签名；真实执行并与JS候选相对误差≤1.50e-15，非采样CTest |
+| `verification/geometry/source_direction_levels_0_2.v1.json` | 正在审计 | 714行完整有序单位方向/源Git blob/各级签名已保存，i=0对AN-G01/02/03共34行逐坐标核查；还缺生产逐行CTest/正式Golden |
 | `verification/harmonics/verify_low_order_basis.wl` | 已审计 | 已执行：九基定义/递推、Gram81、Laplacian和dyadic恒等式 |
 | `verification/harmonics/verify_low_order_rotations.wl` | 已审计 | 已执行：一般四元数SO(3)、两递推各34项对定义精确零差 |
 | `verification/harmonics/verify_low_order_layout.wl` | 已审计 | 已执行：任意系数同场性、往返和旧相位反例 |
@@ -133,12 +135,15 @@
 | `verification/harmonics/source_projection_reference.v1.json` | 已审计 | 七方向9个精确根式系数+固定近度与Wolfram版本来源已复核；标注CPP_NOT_RUN、未批准DEC-005 |
 | `docs/reviews/LOW_ORDER_SH_THREE_ROUTE_VERIFICATION_2026-11-09.md` | 已审计 | 三路一般证明、C++逐式对应、纸面错误与实际执行限制 |
 
-## 4. 现行结论与进度变化（2026-11-09 SH 3/3 实测回填）
+## 4. 现行结论与进度变化（2026-11-09 几何714行参考增量）
+
+- **新增本轮证据**：AF-047/055/060 的三类源有序采样 `i=0,1,2` 714行候选现已独立存档；原AN-G01/02/03的i=0全部34行逐值最大差1.11e-16；Wolfram独立9组加权行序签名最大相对差1.50e-15。旧源和候选数据不修改，签名仍不能替代全部714行逐元素双实现相等、实际采样C++/CTest、正式L3/DEC-005。详见 [PROGRESS E-DOC-063](PROGRESS.md) 与 [AUDIT_PROCESS §11](AUDIT_PROCESS.md)。
+
 
 - **最新固定结果**：用户在`5e5221988cf093dbfddb88f2f65f06632460f3a1` 上实际编译完整SH叶子（含原二阶逐系数投影），并通过三个独立CTest **3/3，0失败**；程序分别报告53,532、176、76次内部检查，最大残差和环境日志见[PROGRESS E-DOC-062](PROGRESS.md)。这更新了下文旧HEAD的“第二/第三测试未执行”历史快照；用户日志未提供原始文件SHA-256或正式DEC-005批准，不能将SH局部PASS解释为全工程验收。
 
 
-- **文件三态：82个唯一对象＝50已审计＋32正在审计＋0空白。** 从上一轮 74/45/29 新纳入根构建文件2份，均限定为静态审核；6份球谐源/测试仍因公共接口与数值边界/正式验收未完成而在审。历史从62/39/23增加12份工件，再新增根构建文件2份，均已单独记录。分母扩大不表示此前工作倒退。
+- **文件三态：84个唯一对象＝51已审计＋33正在审计＋0空白。** 从上一轮 74/45/29 新纳入根构建文件2份，均限定为静态审核；6份球谐源/测试仍因公共接口与数值边界/正式验收未完成而在审。历史从62/39/23增加12份工件，再新增根构建文件2份，均已单独记录。分母扩大不表示此前工作倒退。
 - **问题两态：97个唯一AF＝74已整改＋23未整改。** AF-096 已依据用户提供的固定 SHA 球谐构建/CTest 记录、跨文档修订和新提交定向复核结案；原 AF-045/046/051/055 的完整工程、数值、异常和批准义务仍全部开放。增强解析/相位测试在 `445ed151` 通过；后新增的624非零四元数、错误分类和误差报告已经在用户 `601c74de` 实测 1/1 Passed。**再后来修改的build.sh仅完成静态复核，尚无新版本运行结果**。 本轮直接推进AF-045/046/051/055/057的数学/实现子目标，不人为新造小问题并关闭以改变百分比。
 - 九基值定义与递推、一般SO(3)三路线全矩阵和布局同场性已有 Wolfram 精确结果；**GCC 16.2/CMake4.3.4/Eigen3.4 下球谐旧版在用户VM实际构建成功且 1/1 CTest Passed**。增强解析值、dyadic符号、MATLAB相位锚点已在 `445ed151` 实测通过；624四元数/53,532检查/错态/残差在 `601c74de` 实测通过。未解决的卡点是更广浮点边界、正式公共接口、工程集成、DEC-005和新脚本运行证据。
 - 2015 p.30的d1²/d2²展开h4符号错误已按定义证明并记录在AF-045子项；IR98残留减号被全域证明与区分性反例排除。不改原PDF，不开启其他模块代码。
