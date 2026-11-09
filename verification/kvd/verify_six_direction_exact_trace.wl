@@ -1,0 +1,79 @@
+(* Exact source-order Franz -> Original/Modified KvD trace.
+   Input: two fixed six-direction tangential optical-flow fixtures from
+   docs/design/kvd.md §9.2 and §9.3.
+   Arithmetic: symbolic exact fractions, epsilon=1/10^13.
+   This is not MATLAB/C++ execution or approved DEC-005 Golden. *)
+Module[{eps=1/10^13,u=1/Sqrt[2],run,dA,pA,dB,pB,results},
+ run[d_,p_,mode_]:=Module[{n=Length[d],qt,qw,nt,nw,st,sw,t0,w0,t,w,mu,
+   flipped,aa,bb,cc,tRaw,tNew,wa,wb,wc,wNext,pred,mse,rms,prior=0,
+   delta=10^-3,thr=10^-4,k=0,records={},snapshot,muMean},
+  qt=Table[-(UnitVector[3,j]-(UnitVector[3,j].d[[i]])d[[i]]),{j,3},{i,n}];
+  qw=Table[-Cross[UnitVector[3,j],d[[i]]],{j,3},{i,n}];
+  nt=Table[Sum[qt[[j,i]].qt[[j,i]],{i,n}],{j,3}];
+  nw=Table[Sum[qw[[j,i]].qw[[j,i]],{i,n}],{j,3}];
+  st=Table[Sum[qt[[j,i]].p[[i]],{i,n}],{j,3}];
+  sw=Table[Sum[qw[[j,i]].p[[i]],{i,n}],{j,3}];
+  t0=FullSimplify[st/nt];w0=FullSimplify[sw/nw];
+  t=FullSimplify[t0/Sqrt[t0.t0]];w=w0;
+  While[(delta>thr&&k<200&&delta>10^-7)||k<6,
+   k++;
+   mu=Table[FullSimplify[-t.(p[[i]]-Cross[d[[i]],w])/
+     (1-(t.d[[i]])^2+eps)],{i,n}];
+   flipped=Total[mu]<0;
+   If[flipped,mu=-mu;t=-t];
+   muMean=FullSimplify[Mean[mu]];
+   If[mode=="Original",
+     aa=FullSimplify[Total[MapThread[Times,{mu,p}]]/n];
+     bb=FullSimplify[Total[MapThread[Times,{mu,d}]]/n];
+     cc=FullSimplify[Sum[mu[[i]]^2(t.d[[i]])d[[i]],{i,n}]/n],
+     aa=FullSimplify[Total[p]/n];
+     bb=FullSimplify[Total[d]/n];
+     cc=FullSimplify[Sum[mu[[i]](t.d[[i]])d[[i]],{i,n}]/n]
+   ];
+   tRaw=FullSimplify[-(aa+Cross[w,bb]-cc)];
+   tNew=FullSimplify[tRaw/Sqrt[tRaw.tRaw]];
+   wa=FullSimplify[Total[MapThread[Cross,{p,d}]]/n];
+   wb=FullSimplify[Total[MapThread[Times,{mu,d}]]/n];
+   wc=FullSimplify[Sum[(w.d[[i]])d[[i]],{i,n}]/n];
+   wNext=FullSimplify[wa+Cross[t,wb]+wc];
+   t=tNew;w=wNext;
+   pred=Table[-mu[[i]](t-(t.d[[i]])d[[i]])-Cross[w,d[[i]]],{i,n}];
+   mse=FullSimplify[Sum[(p[[i]]-pred[[i]]).(p[[i]]-pred[[i]]),{i,n}]/n];
+   rms=FullSimplify[Sqrt[mse]];
+   delta=FullSimplify[Abs[prior-rms]];
+   thr=FullSimplify[rms/(1000 n)];
+   prior=rms;
+   If[k==1,snapshot=<|"near"->N[mu,17],"a"->N[aa,17],
+     "b"->N[bb,17],"c"->N[cc,17],"tRaw"->N[tRaw,17],
+     "omegaA"->N[wa,17],"omegaB"->N[wb,17],
+     "omegaC"->N[wc,17],"mse"->N[mse,17]|>];
+   AppendTo[records,<|"k"->k,"nearMean"->N[muMean,17],
+     "tRawX"->N[tRaw[[1]],17],"tNormX"->N[t[[1]],17],
+     "omegaZ"->N[w[[3]],17],"rms"->N[rms,17],
+     "delta"->N[delta,17],"threshold"->N[thr,17],
+     "exit"->Not[(delta>thr&&k<200&&delta>10^-7)||k<6],
+     "signFlip"->flipped|>];
+   If[k>12,Break[]];
+  ];
+  <|"method"->mode,"n"->n,
+    "FranzT"->N[t0,17],"FranzOmega"->N[w0,17],
+    "FranzTNorms"->nt,"FranzTResponses"->st,
+    "FranzOmegaNorms"->nw,"FranzOmegaResponses"->sw,
+    "first"->snapshot,"perIteration"->records,
+    "iterations"->k,"finalNear"->N[mu,17],
+    "finalTranslation"->N[muMean*t,17],"finalRotation"->N[w,17],
+    "positiveRaw"->AllTrue[records,#["tRawX"]>0&],
+    "stableNear"->AllTrue[records,#["nearMean"]==records[[1,"nearMean"]]&],
+    "exactSixIterations"->(k==6&&records[[6,"exit"]]&&
+       And@@(Not/@Lookup[records[[1;;5]],"exit"]))|>
+ ];
+ dA={{1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1}};
+ pA={{0,-1/2,0},{0,1/2,0},{-1/2,0,0},{-3/2,0,0},{-2,0,0},{-2,0,0}};
+ dB={{u,u,0},{u,-u,0},{-u,u,0},{-u,-u,0},{0,0,1},{0,0,-1}};
+ pB={{-1,1,0},{-1,-1,0},{-1,-1,0},{-1,1,0},{-1,0,0},{-1,0,0}};
+ results=<|"axialOriginal"->run[dA,pA,"Original"],
+   "axialModified"->run[dA,pA,"Modified"],
+   "obliqueOriginal"->run[dB,pB,"Original"],
+   "obliqueModified"->run[dB,pB,"Modified"]|>;
+ ExportString[results,"RawJSON","Compact"->True]
+]
