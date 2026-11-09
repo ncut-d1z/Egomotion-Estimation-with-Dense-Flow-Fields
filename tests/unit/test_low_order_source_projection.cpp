@@ -104,10 +104,10 @@ void testProjectionErrors() {
     auto result = sh::projectSourceCoefficientsOrderTwo(emptyNear, emptyPoints);
     require(!result.hasValue() && result.error().code==sh::ErrorCode::InvalidSampleShape,
             "N=0 should be rejected as invalid sample shape");
-    result = sh::projectSourceCoefficientsOrderTwo(input.near.head(6), input.points);
+    result = sh::projectSourceCoefficientsOrderTwo(input.near.head(6).eval(), input.points);
     require(!result.hasValue() && result.error().code==sh::ErrorCode::InvalidSampleShape,
             "mismatched near/point row count must be rejected");
-    result = sh::projectSourceCoefficientsOrderTwo(input.near,input.points.leftCols(2));
+    result = sh::projectSourceCoefficientsOrderTwo(input.near,input.points.leftCols(2).eval());
     require(!result.hasValue() && result.error().code==sh::ErrorCode::InvalidSampleShape,
             "missing direction columns must be rejected");
 
