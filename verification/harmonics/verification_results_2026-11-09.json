@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-09",
+  "source_checkpoint": "7eb04ede3d6f381caad5be2f80bba88b16d21b3c",
+  "executor": "Wolfram.WolframLanguageEvaluator",
+  "kernel": "15.0.1 for Linux x86 (64-bit) (July 2, 2026)",
+  "arithmetic": "exact symbolic arithmetic, not machine-double execution",
+  "basis_order": ["g0", "f1", "f2", "f3", "h1", "h2", "h3", "h4", "h5"],
+  "field_action": "mu_new(d) = mu_old(A*d)",
+  "rotation_domain": "A in SO(3), parameterized by every real nonzero quaternion q divided by q.q",
+  "basis_verification": {
+    "script": "verification/harmonics/verify_low_order_basis.wl",
+    "definitionResiduals": [0,0,0,0,0,0,0,0,0],
+    "recurrenceResiduals": [0,0,0,0,0,0,0,0,0],
+    "gramIdentity81": true,
+    "harmonicLaplacians": [0,0,0,0,0,0,0,0,0],
+    "dyadicResiduals": [[0,0,0],[0,0,0],[0,0,0]],
+    "printedXXEqualsYY": true,
+    "printedYYEqualsXX": true,
+    "allExact": true
+  },
+  "rotation_verification": {
+    "script": "verification/harmonics/verify_low_order_rotations.wl",
+    "rotationOrthogonalityZeros": 9,
+    "rotationDeterminantResidual": 0,
+    "dipoleIrZeros": 9,
+    "dipoleChoiZeros": 9,
+    "quadrupoleIrZeros": 25,
+    "quadrupoleChoiZeros": 25,
+    "fieldActionZeros": 5,
+    "quadrupoleOrthogonalityZeros": 25,
+    "printedMinusFactorRejected": true,
+    "x45CorrectAndPrinted": ["sqrt(3)/2", "sqrt(3)/4"],
+    "allExact": true
+  },
+  "layout_verification": {
+    "script": "verification/harmonics/verify_low_order_layout.wl",
+    "allCoefficientRoundtripResiduals": [0,0,0,0,0,0,0,0,0],
+    "sameFieldPolynomialResidual": 0,
+    "legacyAtYFor2PlusZ": 1,
+    "specifiedPullbackAtYFor2PlusZ": 3,
+    "allExact": true
+  },
+  "independent_exact_reference": {
+    "generator": "quadratic basis Hessians; (8*pi/15)*Tr(Q_i*A^T*Q_j*A), evaluated independently in Wolfram",
+    "quaternion": [1,2,2,0],
+    "argument_rotation_numerator": [[1,8,4],[8,1,-4],[-4,4,-7]],
+    "argument_rotation_denominator": 9,
+    "determinant": 1,
+    "orthogonal": true,
+    "quadrupole_exact_algebraic_literals": [
+      ["11/27", "-28/(27*sqrt(3))", "28/(27*sqrt(3))", "0", "-16/(27*sqrt(3))"],
+      ["28/(27*sqrt(3))", "-23/81", "-40/81", "4/9", "28/81"],
+      ["-28/(27*sqrt(3))", "-40/81", "-23/81", "4/9", "-28/81"],
+      ["0", "-4/9", "-4/9", "-7/9", "0"],
+      ["-16/(27*sqrt(3))", "-28/81", "28/81", "0", "65/81"]
+    ]
+  },
+  "cpp": {
+    "implementation_written": true,
+    "native_compilation": "NOT_RUN_NOT_AUTHORIZED",
+    "ctest": "NOT_RUN_NOT_AUTHORIZED",
+    "test_source": "tests/unit/test_low_order_harmonics.cpp",
+    "planned_rotation_cases": 30,
+    "planned_directions": 10,
+    "planned_basis_components": 9,
+    "planned_rotation_methods": 3,
+    "note": "Planned cases are not executed/pass counts. This certificate does not prove compiler semantics, all floating-point behavior or integration."
+  },
+  "diagnostics": {
+    "exploratory_rotation_run": "An earlier exploratory evaluator call returned Symbol::undefined2 warnings for uppercase globals while producing zero residuals. It is not the sole certificate; the committed Module-local verification bodies were reevaluated, returned allExact=true and no messages.",
+    "github_container_download": "A read-only raw.githubusercontent.com fetch failed DNS; repository reads/writes used the GitHub connector. No native build was attempted.",
+    "pdf_web_screenshot": "Public DLR PDF screenshot endpoint failed; uploaded PDF page images were read successfully with Files."
+  },
+  "pdf_sha256": {
+    "AMF2015": "da0f9df06e42f0d3323c43bb425e9a5f384c73ede547586fdfd0c1426fa6f0ab",
+    "IR1996": "4ab5accb70c64a296271c156dc429ba708662ca57a8497b1048a18649dedf176",
+    "IR1998": "ad096931df0eedfb74e7d8461e964ec3c7532709f0269571a4ca27a0d7b0f266",
+    "Choi1999": "1c29c61bcd1eb1b3152ee252f75365309b84f29df388d55fa7b4376e9df6e2db"
+  }
+}
