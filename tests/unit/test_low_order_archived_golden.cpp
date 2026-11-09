@@ -1,5 +1,6 @@
 #include "egomotion/harmonics/low_order.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
