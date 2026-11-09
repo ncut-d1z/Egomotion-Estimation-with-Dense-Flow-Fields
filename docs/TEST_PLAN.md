@@ -1,14 +1,20 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **测试计划草案 v0.20，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
+> **测试计划草案 v0.21，未冻结。** 本文件是 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前对应的 SRS/HLD/LLD 版本与文件 SHA 在 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 中定位。实际命令、结果和通过数量仅由 [PROGRESS.md](PROGRESS.md) 与 [reviews/](reviews/) 的固定 SHA 证据记录。
 
-> **审批后候选核对材料**：见 [HAR-2026-11-06-001 设计修订与待审材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md) §2、§3、§7～§9。其中历史上提出六类容差采集格式、582 MAT SHA-256 独立审核和正式 Reader 类型拒绝清单；**当前参考采集/核验路径以 L2/L3/L4 为准，完全不要求 MATLAB/Octave 执行或 L1 Golden**，见 [长期政策](golden/NO_MATLAB_EXECUTION_POLICY.md)。`atol=0.01`/`rtol=0.1` 已由所有者选作**首轮宽松筛查**，不是已冻结的最终验收阈值；测试实体/CTest 仍未执行，H-10/H-11 其他执行门禁未解除。
+
 
 > **长期约束**：[无需运行 MATLAB 政策](golden/NO_MATLAB_EXECUTION_POLICY.md) 已取消 MATLAB/Octave 运行与 L1 Golden 的一切强制取证前提；现行测试参考为 L2 已存 MAT、L3 独立解析/重实现和 L4 统计。此决定不解除代码/CTest 的实际执行门禁，也不批准数值容差。
 
-> **草案，未冻结。** 测试标识 TC 均为拟定名称；下面的测试文件、CTest 前缀均为未来可能的产物，尚未建立。需求参见 [REQUIREMENTS.md](REQUIREMENTS.md)，实施参见 [PLAN.md](PLAN.md)。已编写并在 Ubuntu 24.04 上编译运行**独立 C++17 matio 数据字典探针**，582/582 MAT 均 `READ_OK`；**未创建完整业务 C++/CTest，也未执行业务级或数值 Golden 测试**。
 
-**实际执行和最终阈值可推迟**：所有需项目所有者授权的 C++ 修改、Bash/CMake/CTest、隔离 MAT 写回读、DEC-005/006、基线/发布记录统一见 [TODO.md](TODO.md)；本测试计划只规定将来测试什么与保留什么证据，不在当前纯文档阶段请求运行权限。
+
+
+
+### 2026-11-09 首次低阶球谐原生构建及 CTest 证据（AF-096）
+
+用户提供了 Ubuntu 终端从 `./build.sh` 开始至末尾 `PASS` 的完整文本输出，**不是代理本人在用户机器执行的命令，也没有取得原始日志文件字节**。受测 Git HEAD：`8eab5dd7971f9ba9263528d62e9dccdeb926d638`；Ubuntu 24.04、GCC 16.2.0、CMake 4.3.4、Eigen 3.4.0、Release/C++17、4 jobs。CMake 配置/生成成功，`egomotion_harmonics` 静态库及 `test_low_order_harmonics` 可执行文件构建成功；用户文本未显示 warning；CTest 单项 `low_order_harmonics` 为 **1/1 Passed、0 failed**，测试本身 0.07 秒，CTest 墙钟总耗时 0.11 秒。脚本打印 `PASS`，但未另行提供独立的 `$?` 数字或日志文件 SHA-256，不能伪称已经独立核验这些信息。
+
+用户机器日志位置：`build/low-order-harmonics/logs/build-20261109T071118Z-451487.log`。这说明**一个 CTest 程序**运行并通过，其内部实际包含多项断言，但不等于 66 TC 均通过。Wolfram 全域精确符号证明另有来源，不混同本次 C++ double 运行。**现有测试通过的固定提交与后续新增测试源码必须区别对待**：新增加的独立基函数锚点、2015 论文第 30 页 (h_4) 符号/dyadic 断言、MATLAB CS 相位重建断言，还没有实际运行证据，须在新 HEAD 上重跑。其它模块仍未实现/未获相同授权；DEC-005/006/008 和基线未批准。
 
 ## 1. 验证分层和前提
 
@@ -17,7 +23,7 @@
 - 所有测试须记录 RunId、源 Git SHA、数据文件哈希、实际 Debian/Ubuntu/编译器/依赖版本、命令、参数、随机种子、预期与实测、误差、退出码及日志。
 - 每条 M 级需求应有验收条件与至少一个真实测试或经批准的人工核查；任何尚未执行的用例不能宣称通过。
 
-**2026-11-07 已选定策略**：按 [最新项目决定](decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md)，所有新输出路径固定、采用轻量封装的 Result/Status 与 JSONL、独立 Runner 配置及失败/部分结果状态，球谐 Eigen-only 且等待用户上传 1996 原文与 1998 勘误。本轮只修改设计，不运行 MATLAB、Bash、CTest 或写 MAT。现有 TC 编号/数量不变。
+
 
 ## 2. 首批关键测试的具体条件
 
@@ -97,11 +103,11 @@
 | 将来需要的对照 | 预定输入/观察量 | 当前状态 |
 |---|---|---|
 | H-02 Sophus 取代 Rodrigues | 原 MATLAB 固定 `ω=0`、小角低于 eps、x/y/z、复合、接近 π；核对 3×3 物理旋转、Rᵀ 局部运动 | **已选路线，未运行** |
-| Ivanic–Ruedenberg 原论文/1998 勘误驱动的 Eigen 球谐旋转（H-14 当前路线） | 对原 `SHRotate(r,2)` 的 R0=1、R3 全 9 项、R5 全 25 项及九个有效球谐系数进行独立 L3 对照；核查 m 顺序、相位、轴/基底排列、正向/逆向旋转，并确认生产依赖不含 sdla | **数学/实现路线已定，Don Williamson 仅供代码参考；原论文 PDF 待用户上传，未实现、未编译、未执行 CTest，L3 参考未完整核验** |
+| Ivanic–Ruedenberg 原论文/勘误驱动的低阶 Eigen 球谐 | 核对九基、R0/R3/R5 全元素、相位/转置、三条路线与独立参考 | **论文已取得，Wolfram 精确证明已执行；专项 C++ 已实现，在 `8eab5dd` 用户环境配置/编译成功且 CTest 1/1 Passed。新增加的解析锚点/相位断言尚未重新运行；全工程、最终 DEC-005/ABI 均未验收** |
 | H-12 `output/<RunId>/` 结果及负例 | 原 `origin/**` 前后哈希不变；重复 RunId、软链接越界、异常读写、MAT 写后回读、运行输出排除在 Git 上传之外 | **只完成忽略规则的文档/配置，H-10 暂缓、writeMat=false，未运行** |
 | H-04 Ubuntu VM 资源快照 | 用户提供的 `uname/df/free`；将来记录实际 CMake/CTest 和 peak RSS/wall/CPU | **只有环境资料，未批准时间/性能门槛** |
 
-> **H-10=deferred、H-11=deferred**；本次 JSON 的 `runCMake/runCTest/runMatlab/writeMat/runBash/measurePerformance` 全为 false。没有现场命令、运行结果或数值测试可在本轮回填。审阅/格式检查不触发工具执行授权。
+> **审批历史与当前用户授权分开**：旧 JSON 的 H-10/H-11 曾为 deferred；后来已专门允许球谐 C++，用户又提供该叶子模块一次真实 Ubuntu CMake/CTest 结果。其他模块的代码/代理自行执行项目命令/全工程集成与 MAT 写回读仍未授权；不要回写旧 JSON 或把本次输出当作全项目执行权限。
 
 **参考术语的唯一解释**：本文件中历史标题/测试名如出现 `Golden`，除明确标明“历史 L1 分类”外，都必须逐个注明为 **L2（原作者现存 MAT）/L3（独立固定输入数值）/L4（统计）**；**L1 原 MATLAB 运行数据永久不作为强制取得/通过条件**。有编号不表示已有测试函数，唯一候选实体矩阵见 §3，真实执行证据只写入 [PROGRESS.md](PROGRESS.md)/[reviews/](reviews/) 的指定 Git SHA 记录。
 
@@ -117,7 +123,7 @@
 | `TC-F-EXP-002/003`、`TC-I-RESULT-001`、`TC-NF-RECOVERY-001` | 8 次四误差平均；加噪前理想流均值比 ratio 只留第 8 次；更新率 `akrot` 由原相对 rotvec 由 rad 换算为 deg；单轮失败/Manifest、周期刷新和当前三个 save | 独立固定八轮和帧号、RunId、保存字段/源只读确认；详见 `experiments.md §8.2` |
 | `TC-F-AN-001/002`、`TC-I-ANALYSIS-001` | 50:550 的 501 点、阈值等值不触发；多更新率**旋转逐段平滑且裁剪**、**平移先全长平滑且不分段**；comparison 平移不分段；缺 ratio 明确报错 | 独立 L3 对比段级完整中间数组、绘制 x/y、连续平移 501 点和原值来源；不能以“正确裁剪后的旋转内部值不同于全局平滑”作假断言。详见 `analysis_plotting.md §5.2.1/§8.1` |
 
-**不能自动宣称 PASS**：测试夹具未生成，运行许可 H-10/H-11 未开放，源输入/参考 SHA、逐值误差及 CTest stdout/stderr/exit 尚无本轮执行记录。本表仅完成 AF-051 的测试**设计部分**，AF-051 继续「未整改」。
+**执行范围限界**：在 `8eab5dd` 的现有球谐 CTest 已由用户现场运行并报告通过；这不代表全部 66 TC 或独立 L2/L3/DEC-005 验收已完成。其后新增的球谐解析锚点与 MATLAB 相位断言尚未执行；其它模块的实际测试、负例和日志仍缺。AF-051 保持「未整改」。
 
 ### 2.10 已可手算但未实际执行的数值/抽样负例（AF-041/047/055）
 
