@@ -84,7 +84,7 @@ fi
     "${CMAKE_BIN}" --version | sed -n '1p'
     "${CXX_COMPILER}" --version | sed -n '1p'
     printf 'C++ standard: C++17 (project contract; compiler may support up to C++23)\n'
-    printf 'Scope: egomotion_harmonics + test_low_order_harmonics only\n'
+    printf 'Scope: egomotion_harmonics + low-order regression and archived-golden CTests only\n'
     printf 'Log: %s\n' "${LOG_FILE}"
 } 2>&1 | tee -a "${LOG_FILE}"
 
