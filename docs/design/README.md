@@ -2,9 +2,9 @@
 
 > **长期证据规则**：[不执行 MATLAB 的项目政策](../golden/NO_MATLAB_EXECUTION_POLICY.md) 已取消原 MATLAB L1 Golden 的强制门禁。LLD 与验收只要求来源清楚的 L2/L3/L4、真实 C++/CTest 和批准容差；**缺少 MATLAB 运行不阻塞冻结**，但不能宣称原脚本的未知异常/RNG/逐位输出已验证。
 
-> **LLD 索引 v0.12（所有规范草案未冻结）。** 仅低阶球谐叶子已有 C++17/Eigen 实现、根 CMake target 和用户提供的固定提交 `8eab5dd` 与含解析/相位回归的 `445ed151` 构建/CTest 各 1/1 Passed 证据。其它跨模块候选接口/软件目标未实现，`origin/**` 继续只读。
+> **LLD 索引 v0.13（所有规范草案未冻结）。** 仅低阶球谐叶子已有 C++17/Eigen 实现、根 CMake target 和用户提供的固定提交 `8eab5dd`、含解析/相位回归的 `445ed151`、含624四元数/错态的 `601c74de` 三次构建/CTest 均1/1 Passed的用户证据。其它跨模块候选接口/软件目标未实现，`origin/**` 继续只读。
 
-> **2026-11-09 材料更新**：用户已提供IR96原文、IR98勘误及CIGR99全文，已登记附件身份并完成限定范围静态审阅；**不再等待上传**。发现勘误表项冲突、源矩阵转置和实基相位问题，见[论文审计](../reviews/SH_PAPERS_SOURCE_AUDIT_2026-11-09.md)与[独立验证候选](../golden/SH_PAPER_VERIFICATION_CASES.md)。随后用户已**单独开放低阶球谐 C++ 实现**，并在两个固定提交实际运行限定范围构建/CTest；不等于其它模块/H-11 全工程授权或AF-045/046全部验收完成。
+> **2026-11-09 材料更新**：用户已提供IR96原文、IR98勘误及CIGR99全文，已登记附件身份并完成限定范围静态审阅；**不再等待上传**。发现勘误表项冲突、源矩阵转置和实基相位问题，见[论文审计](../reviews/SH_PAPERS_SOURCE_AUDIT_2026-11-09.md)与[独立验证候选](../golden/SH_PAPER_VERIFICATION_CASES.md)。随后用户已**单独开放低阶球谐 C++ 实现**，并在三个固定提交实际运行限定范围构建/CTest；不等于其它模块/H-11 全工程授权或AF-045/046全部验收完成。
 
 ## 文档职责
 
@@ -29,7 +29,7 @@
 | 基础采样与噪声 | [sampling_noise.md](sampling_noise.md) | findeDreiecke、采样/流/噪声函数 | 数量、顺序、噪声方程、RNG 消耗与自拥有 FlowField/结果；**源 fixed_* 返回 near 是末次标量，C++ nearness 向量仅为新增诊断数据** | **egomotion_sampling/simulation 的接口、头文件边界与 TC/CTest 候选** | L3 独立有序方向/固定 RNG 仍待验证 | 未冻结，P0.8/DEC-008 |
 | 几何与轨迹 | [trajectory.md](trajectory.md) | Kreis/Sinus/trajectory、球内近度与旋转 | 已列离散轨迹/求交公式；**Sophus SO(3) 替代 rodrigues.m 已选定**，源脚本只读 | 候选接口 | L3 小角/反向等边界与真实 CTest 未执行 | **设计路线已确定**；实际 Sophus 依赖版本、调用和数值测试尚未验证，不再等待普通版权选型 |
 | Franz / KvD | [kvd.md](kvd.md) | zellendefinieren、franzeigen、两种 KvD、误差 | 已列各平移公式、RMS、终止规则 | 候选接口 | 未测 | 阻塞 DEC-005 |
-| 实球谐 | [harmonics.md](harmonics.md) + [Ivanic–Ruedenberg 论文与纯 Eigen 方案](SH_ROTATION_IVANIC_RUEDENBERG.md) | kugelflfunc2、near/koeff、SHRotate | 九项直接/递推、一般SO(3)三路符号证明及相位/转置已有精确Wolfram结果；IR98冲突已定位 | **现有叶子 `egomotion_harmonics` 只依赖 Eigen3，不依赖尚未实现的 `egomotion_contracts`**；未来正式公共 harmonics→contracts 架构边仍是候选，见专题§5 | GCC16.2/CMake4.3.4/Eigen3.4 下固定 HEAD `8eab5dd` 与增强回归 `445ed151` 的球谐 CTest 均由用户报告1/1通过，广义完整L3/异常/ABI/DEC-005仍待 | 叶子已实现及有首次原生测试；完整球谐模块/全业务合同未冻结 |
+| 实球谐 | [harmonics.md](harmonics.md) + [Ivanic–Ruedenberg 论文与纯 Eigen 方案](SH_ROTATION_IVANIC_RUEDENBERG.md) | kugelflfunc2、near/koeff、SHRotate | 九项直接/递推、一般SO(3)三路符号证明及相位/转置已有精确Wolfram结果；IR98冲突已定位 | **现有叶子 `egomotion_harmonics` 只依赖 Eigen3，不依赖尚未实现的 `egomotion_contracts`**；未来正式公共 harmonics→contracts 架构边仍是候选，见专题§5 | GCC16.2/CMake4.3.4/Eigen3.4 下固定 HEAD `8eab5dd`、`445ed151` 和624样本版本 `601c74de` 的球谐 CTest 均由用户报告1/1通过，广义完整L3/异常/ABI/DEC-005仍待 | 叶子已实现及有首次原生测试；完整球谐模块/全业务合同未冻结 |
 | Adaptive 单步/Session | [adaptive_mfa.md](adaptive_mfa.md) | oneit、3 个 Adaptive 入口 | 已列 M1–M4、RHS、MSE 及会话差异 | 候选接口 | 未测 | 阻塞 DEC-005 |
 | 实验 Runner | [experiments.md](experiments.md) | 2 Bias + 3 Adaptive 生成入口 | 参数/save、8 次聚合、刷新策略及 L2/L3/L4 证据等级 | **RunContext 候选接口、DataMismatch 边界、egomotion_experiments/TC/CTest** | 新 Runner/完整 L3/CTest 均未实现 | 未冻结，P0.8/DEC-008 |
 | 分析与可选绘图 | [analysis_plotting.md](analysis_plotting.md) | 4 分析入口、kurveglaetten、3 插图 | 已列数据/索引/阈值/窗口与 DEC-004 缺字段规则；**历史 Bias xwerte 不变，新增实际 N 对照图不是当前交付项** | 候选接口 | **必需的 L2 原 MAT/L3 独立数值曲线和 CTest 尚未验收** | 可选绘图后端尚未选定，但**不阻塞核心数值分析、设计和验证** |
@@ -70,7 +70,7 @@
 | mat_io.md | v0.10候选自拥有double、严格/有界compat、RunContext/Writer、target/负例映射；历史格式shape已测 | 正式接口、L2逐值/SHA、L3负例、Reader/Writer、回读安全CTest/P10.4 |
 | cli.md | 参数/类型、固定根、独立OS RunId、ErrorStage/JSONL | 真实CLI、负例/转义及CTest |
 | kvd.md | 两种平移/旋转、循环条件、trace和两组六方向静态候选 | 独立逐轮L3、一般/病态/停止边界、容差与CTest |
-| harmonics.md | 九实基、IR/Choi与张量一般SO(3)精确证明；叶子低阶C++/测试及GCC16首次CTest已有 | 完整全业务适配、增强回归已在 `445ed151` 重跑通过；进一步边界测试与、异常边界、最终DEC-005/ABI与批准；**不再缺论文或首次原生编译** |
+| harmonics.md | 九实基、IR/Choi与张量一般SO(3)精确证明；叶子低阶C++/测试及GCC16首次CTest已有 | 完整全业务适配仍缺；增强回归在 `445ed151`、624四元数/错误码压力在 `601c74de` 均已实测通过；仍需更广异常边界、最终DEC-005/ABI与批准；**不再缺论文或首次原生编译** |
 | adaptive_mfa.md | M1～M4/rhs/MSE、入口专属Session时序 | 逐节点L3、失败不提交真实测试、最终容差 |
 | sampling_noise.md | 有序采样、RNG/噪声、所有权、target/TC | levels0/1/2全量独立参考与实际测试 |
 | trajectory.md | 圆/正弦、方向奇异性、Rᵀ、正根、Sophus路线 | 锁定依赖/调用、边界参考与CTest |
