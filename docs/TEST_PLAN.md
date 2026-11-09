@@ -22,6 +22,18 @@
 
 本次通过的源码版本**确实包含** `testAnalyticBasisAndDyadic` 与 `testMatlabSourcePhase` 两项新增函数的主程序调用，覆盖独立解析九基、2015 p.30 的 `h4` 符号、全部六个二次张量独立表达式，以及 3×5 MATLAB Condon–Shortley 相位及填充隔离。单项 CTest 并不能证明所有输入/全部业务 TC/正式容差；测试源码在这个提交之后若再次改动应重新运行并留新证据。实际记录归 [PROGRESS E-DOC-057](PROGRESS.md)。
 
+### 2026-11-09 球谐下一轮测试增量（已提交，**尚未执行**）
+
+在用户刚刚实测通过的 `445ed151` 之后，球谐专项测试新增了以下两组确定性数值/错误分支覆盖，不增加 66 个既有 TC 编号，也不改变任何生产求解公式：
+
+| 增量测试（唯一源 `tests/unit/test_low_order_harmonics.cpp`） | 可复核的静态目标 | 实际状态 |
+|---|---|---|
+| `testDeterministicQuaternionGrid` | 对每个 `(w,x,y,z)` 分量各取 `{-3,-1,0,1,3}`、排除零四元数，**5⁴−1=624** 个有限非零四元数；对每组校验三路线的一阶/二阶块、二阶正交性、任意固定9系数在一般方向的 `mu_new(d)=mu_old(A*d)` | 源码已提交；**未原生编译/CTest** |
+| `testFailureTaxonomyAndFiniteOverflow` | 检查非单位/非有限方向、反射矩阵、非法旋转算法值、MATLAB无效填充的Inf输入是否返回正确 ErrorCode；设置有限 `DBL_MAX` 的一阶/二阶正系数，在 `e_x` 重建应报 `NonFiniteResult` | 源码已提交；**未原生编译/CTest** |
+| 现有所有 `requireNear` 与标量比较 | 单独汇总 `max_matrix_vector_abs_residual`、`max_scalar_abs_residual` 和回归比较阈值；输出属于探索性测试诊断，**不是已批准的 DEC-005** | 提供输出逻辑；**尚无真实测量值** |
+
+当前 `build.sh` 的 CTest 默认在通过时隐藏测试程序标准输出；下一次用户运行 `./build.sh` 后，可**另行**执行 `ctest --test-dir build/low-order-harmonics -V` 查看上述残差/断言计数。两项命令均须在用户授权的 Ubuntu 环境执行，代理本轮不会自行执行。与历史成功提交 `445ed151` 的 1/1 结果分开记录新 HEAD、新日志和实际运行结果。
+
 ## 1. 验证分层和前提
 
 - 顺序：源文件审计及 MAT 格式核验 → 单元测试 → 合同测试 → 入口集成测试 → L2 最终 MAT/L3 独立逐节点 Golden 比对 → L4 论文统计复现。
