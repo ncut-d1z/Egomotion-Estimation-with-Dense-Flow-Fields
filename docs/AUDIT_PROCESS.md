@@ -211,3 +211,10 @@
 - **完整来源与独立SHA-256**：候选文件 `verification/geometry/source_direction_levels_0_2.v1.json` blob `85998162fb7e32ffed76cfe037e692ae101d9169`，UTF-8 SHA-256 `67fde0f3af0eaf62fde607edfa483a85d202818583a0ff40125504cce5e8a434`；新Wolfram核验脚本SHA-256 `6bf9a98efd6bf3d40a97a942485849fe75fcf3a3dbcc4603c92e2a76a2d11f41`。执行摘要与九级逐坐标误差已另存 `verification/geometry/full_ordered_row_verification.v1.json`（Git blob `8e6a9895ce1d98956f8af695dabb743339124ff9`），不修改原始候选或任一 `origin/**`。
 - **真实边界**：这将 `AF-047/055` 的“源方向数学候选缺乏完整双语言逐元素复核”子缺口转为有证据；`AF-047` 仍缺获准的采样器实现、固定RNG/N uniform+3N normal/异常真实测试；`AF-055` 其它AN-G参考及Golden批准未全完成；`AF-060` 其余TC/AC L2/L3/L4、历史582 MAT SHA-256/逐值及最终DEC仍缺。没有授权执行未实施的C++，不能直接关闭上述原复合AF。
 - **本批计数**：原问题台账97唯一AF＝74已整改/23未整改维持；新核验WL和结果JSON均限定审阅通过，旧714行候选JSON因数学源身份和完整逐行核验完成从“正在审计”转为“已审计”，文件三态由 `84=51已审计+33正在审计+0空白` 变为 **`86=54已审计+32正在审计+0空白`**。全项目第一轮仍有23项未整改，条件性第二轮全面审计/整改不能在此宣称启动。
+
+## 13. AF-044/055 理想对称 Adaptive AN-G12 的可重复独立数值参考（2026-11-09，复合目标仍开放）
+
+- **只读数学输入与实际Wolfram执行**：参照原 `oneit_adaptiv_matched_filter.m` 与 `koeff_aus_near.m`，对 AN-G03 固定20方向、常数近度1、`t=e_x,ω=0,p=-e_x+d_xd`，用独立Wolfram 15.0.1 逐项演算 `M1～M4/rhs/6×6解、t/ω、MSE、near_new、九个源CS系数`，原 `origin/**` 和 AN-G01～12 候选JSON均不修改。新增 `verification/adaptive/verify_AN_G12_symmetric_one_step.wl`（blob `04f547eb6120b6aa72a8496d9fb5efc774b64b29`），独立结果 `verification/adaptive/AN_G12_symmetric_one_step_evidence.v1.json`。
+- **真实计算结果**：`M1/M4-(2/3)I` 最大差 `1.1102230246251565e-16`，`M2=M3=0`，rhs与 `(2/3,0,0,0,0,0)` 最大差 `1.1102230246251565e-16`；估计 `t=e_x,ω=0`、MSE=0；但原 `near_new` 分母 `1-(t·d)^2+10^-11` 导致近度并非精确1，实际 `min=0.999999999921459, max=0.99999999999`，新系数 `C_new` 与旧 `C` 最大差 `9.216760687991155e-11`。原 AN-G12 `approx` 字段不得写成严格数值相等，且未经正式DEC-005签署。
+- **完全不宣称的结果**：无生产Adaptive/Session代码、无真实C++/CTest/用户运行、无负近度均值/一般非对称6×6/奇异M/失败回滚/连续帧状态等实际验收。旧 `5e522198` 的3/3只属于低阶SH模块。数学证据改善AF-044/055的单一对称子问题，不得直接关闭完整AF，也不扩展其它模块权限。
+- **台账净变化**：本批新增数学脚本和数值证据JSON两项，分别限定数学审阅为“已审计”，所以相对于上一子批 `86=54已审计+32正在审计+0空白` 变为 `88=56已审计+32正在审计+0空白`；整改目标总数不增删，仍 `97=74已整改+23未整改`。第一轮不清零，第二轮完整审计尚不能启动。
