@@ -54,7 +54,7 @@
 | `docs/AUDIT_PROCESS.md` | 已审计 | 唯一AF、完整目标、状态及本轮数学子项证据 |
 | `docs/REQUIREMENTS.md` | 正在审计 | 58正文+8附录REQ、AC/DEC与正式冻结；AF-037 |
 | `docs/PLAN.md` | 正在审计 | 98P静态追踪已核；真实DEC-006/性能仍缺；AF-061 |
-| `docs/TEST_PLAN.md` | 正在审计 | 原66TC；SH固定 `445ed151` 的解析/相位增强回归已实测 1/1 Passed，现有TC-F-SH-001/002映射已校正；AF-051仍开放 |
+| `docs/TEST_PLAN.md` | 正在审计 | 原66TC；SH在固定 `445ed151` 的增强回归实测 1/1 Passed，TC-F-SH-001/002已映射真实低阶测试；再新增624四元数/错态覆盖尚待运行，AF-051仍开放 |
 | `docs/design/README.md` | 已审计 | LLD索引的限定静态范围；球谐新进展由harmonics/PROGRESS覆盖，非全软件通过 |
 | `docs/DOCUMENT_BASELINE_REGISTER.md` | 正在审计 | 固定36项历史身份与实时集合分离；正式签署AF-058 |
 | `docs/PROGRESS.md` | 正在审计 | Wolfram全SO(3)与用户两次球谐原生CTest均分SHA记录；完整工程/资源证据AF-053仍缺 |
@@ -120,7 +120,7 @@
 | `src/harmonics/low_order_basis.cpp` | 正在审计 | 九基/递推/重建/转换已符号对照，旧固定 HEAD 经用户球谐 CTest 运行；仍缺独立异常/全面浮点边界覆盖 |
 | `src/harmonics/low_order_rotation.cpp` | 正在审计 | 张量与IR公式全域符号核查，旧固定 HEAD 已成功编译/运行单项 CTest；尚缺全部边界及接口冻结 |
 | `src/harmonics/low_order_choi.cpp` | 正在审计 | 复递推/W共轭一般符号已核，旧固定 HEAD 已编译/运行单项 CTest；仍缺超常边界和高精度参考扩充 |
-| `tests/unit/test_low_order_harmonics.cpp` | 正在审计 | 固定`445ed151`含解析基/dyadic/MATLAB相位的1/1 CTest用户已实测通过；后续新增测试仍应按新SHA实测 |
+| `tests/unit/test_low_order_harmonics.cpp` | 正在审计 | `445ed151` 的解析基/dyadic/MATLAB相位已原生1/1通过；后新增624非零四元数/三路/错态/有限溢出及残差报告尚未执行 |
 | `verification/harmonics/verify_low_order_basis.wl` | 已审计 | 已执行：九基定义/递推、Gram81、Laplacian和dyadic恒等式 |
 | `verification/harmonics/verify_low_order_rotations.wl` | 已审计 | 已执行：一般四元数SO(3)、两递推各34项对定义精确零差 |
 | `verification/harmonics/verify_low_order_layout.wl` | 已审计 | 已执行：任意系数同场性、往返和旧相位反例 |
@@ -130,13 +130,15 @@
 ## 4. 现行结论与进度变化（2026-11-09球谐构建回填）
 
 - **文件三态：76个唯一对象＝47已审计＋29正在审计＋0空白。** 从上一轮 74/45/29 新纳入根构建文件2份，均限定为静态审核；6份球谐源/测试仍因新增回归及完整验收未完成而在审。 从62/39/23新增12份专项工件，其中6份源码/测试待原生验收、6份文档/符号证据已限定审阅。分母扩大不表示此前工作倒退。
-- **问题两态：97个唯一AF＝74已整改＋23未整改。** AF-096 已依据用户提供的固定 SHA 球谐构建/CTest 记录、跨文档修订和新提交定向复核结案；原 AF-045/046/051/055 的完整工程、数值、异常和批准义务仍全部开放。增强测试现已在用户最新受测 HEAD `445ed151` 通过；之后如再修改源码/测试必须重新实测。 本轮直接推进AF-045/046/051/055/057的数学/实现子目标，不人为新造小问题并关闭以改变百分比。
-- 九基值定义与递推、一般SO(3)三路线全矩阵和布局同场性已有 Wolfram 精确结果；**GCC 16.2/CMake4.3.4/Eigen3.4 下球谐旧版在用户VM实际构建成功且 1/1 CTest Passed**。增强测试的解析值、dyadic 符号和 MATLAB 相位锚点**已在 `445ed151` 实测通过**；其他集成/DEC-005/全量异常验证仍为卡点。
+- **问题两态：97个唯一AF＝74已整改＋23未整改。** AF-096 已依据用户提供的固定 SHA 球谐构建/CTest 记录、跨文档修订和新提交定向复核结案；原 AF-045/046/051/055 的完整工程、数值、异常和批准义务仍全部开放。增强解析/相位测试已在用户固定 `445ed151` 通过；其后又新增624四元数压力、错误分类及误差报告**尚无实测**，不得继承旧HEAD的通过记录。 本轮直接推进AF-045/046/051/055/057的数学/实现子目标，不人为新造小问题并关闭以改变百分比。
+- 九基值定义与递推、一般SO(3)三路线全矩阵和布局同场性已有 Wolfram 精确结果；**GCC 16.2/CMake4.3.4/Eigen3.4 下球谐旧版在用户VM实际构建成功且 1/1 CTest Passed**。增强解析值、dyadic 符号和 MATLAB 相位锚点**已在 `445ed151` 实测通过**；其后新增的数值压力/错态覆盖**尚未重跑**，其他集成/DEC-005仍为卡点。
 - 2015 p.30的d1²/d2²展开h4符号错误已按定义证明并记录在AF-045子项；IR98残留减号被全域证明与区分性反例排除。不改原PDF，不开启其他模块代码。
 - 原66REQ/66TC/98P/45.m/50函数/27设计边不变；MAT字典、其他模块参考与正式工程验收不被专项结果替代。
 - 第一轮整体未清零，不启动条件性的第二轮全面审计。
 
 本次原生结果的范围和剩余缺口见 [PROGRESS E-DOC-056](PROGRESS.md) 与 [AUDIT_PROCESS AF-096 结案](AUDIT_PROCESS.md)；上轮 74 文件、96 AF 的事实为旧 HEAD 快照，不能再充当动态统计。
+
+更多当前事实与未来测试的界限见 [PROGRESS E-DOC-057/058](PROGRESS.md) 和 [TEST_PLAN](TEST_PLAN.md)；AF-045/046/051 等完整目标仍为开放状态。
 
 ## 5. 固定证据与历史访问
 
