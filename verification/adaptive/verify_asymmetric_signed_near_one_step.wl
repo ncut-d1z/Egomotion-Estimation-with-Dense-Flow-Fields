@@ -20,7 +20,7 @@ Module[{dirs,ex={1,0,0},omegaTrue={1/5,-1/7,1/11},basis,coeffBase,
  fixture[sign_]:=Module[{countRows=Length[dirs],coeff,flat,basisRows,nearRaw,
      meanRaw,nearAfterSign,nearN,flow,m1,m2,m3,m4,mat,rhs,
      solved,rawT,trans,omega,flowN,predicted,mse,nearNew,
-     coeffNew,sourceProjection,projectionIdentity,positiveBranchProof,
+     coeffNew,sourceProjection,projectionIdentity,positiveBranchProof,sv,
      result,detMat,meanN,differenceM1,d1,d2},
    coeff=sign coeffBase;
    flat=Join[{coeff[[1,1]]},coeff[[2,1;;3]],coeff[[3,1;;5]]];
@@ -41,6 +41,7 @@ Module[{dirs,ex={1,0,0},omegaTrue={1/5,-1/7,1/11},basis,coeffBase,
    rhs=Join[-Total[flow]/countRows,
       Total[MapThread[Cross,{flow,dirs}]]/countRows];
    detMat=Det[mat];
+   sv=SingularValueList[N[mat,MachinePrecision]];
    solved=LinearSolve[mat,rhs];
    rawT=solved[[1;;3]];
    trans=N[rawT/Sqrt[rawT.rawT],24];
@@ -74,6 +75,7 @@ Module[{dirs,ex={1,0,0},omegaTrue={1/5,-1/7,1/11},basis,coeffBase,
      "M1"->N[m1,17],"M2"->N[m2,17],
      "M3"->N[m3,17],"M4"->N[m4,17],
      "rhs"->N[rhs,17],"detM"->N[detMat,17],
+     "conditionNumber2"->N[Max[sv]/Min[sv],17],
      "solvedMotionSix"->N[solved,17],
      "translationNormalized"->N[trans,17],
      "rotationEstimated"->N[omega,17],
