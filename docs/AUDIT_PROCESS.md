@@ -180,3 +180,11 @@
 - **实际独立数学核对**：Wolfram 15.0.1 已执行原MATLAB含CS相位低阶实基的代数检查，`AN_G06_9Residuals={0,…,0}`、`AN_G07_constantOne=1`、`AN_G08_R3_3Residuals={0,0,0}`、`AN_G08_R5_5Residuals={0,…,0}`、`AN_G08_9CoefficientsFieldResidual=0`，`allExact=True`；输入源 `verification/harmonics/verify_archived_sh_candidates.wl` 已保存。Wolfram符号正确性 ≠ 新C++编译/CTest/浮点验证。
 - **是否可结案**：**不能关闭**AF-045/051/055，因为这是限定低阶叶子的数学子证据与候选测试，实现公共API、全部既有Golden、各类数值/异常完整覆盖、正式DEC-005/008、全部66TC及原业务阶段测试仍缺。本批新增的第二个CTest处于 `NOT_RUN`，绝不可把用户在 `601c74de` 上的旧单项 `1/1 Passed` 当新版本 `2/2 Passed`。未获更广H-10/H-11授权的MAT/CLI/KvD/Adaptive等代码保持未实施。
 - **问题两态与文件三态**：97个唯一 AF＝**74已整改、23未整改**（未新增人为小目标）；文件三态本轮从 **76＝47已审计＋29正在审计＋0空白** 增加为 **78＝48已审计＋30正在审计＋0空白**：一个新C++测试在审，一个已完成限定符号审查的Wolfram输入文件已审。第一轮复合项目尚未清零，因此第二轮正式全面审计/整改**未启动**。
+
+## 9. AF-045/051/055 原始SH二阶逐系数拟合缺口（2026-11-09，增量推进、整项目仍未结案）
+
+- **发现与允许范围**：原 `koeff_aus_near.m` 中 \(a_{lm}=\frac{(4\pi/N)\sum_i\mu_iY_{lm}(d_i)}{(4\pi/N)\sum_iY_{lm}(d_i)^2}\) 是每项分别求标量归一分母，**不是联合9元最小二乘**。现有SH叶子此前只实现九基、三种旋转、单点近度重建与CS布局转换；尚无源二阶逐系数投影。依用户已开放的**仅SH模块**实现权限补 `src/harmonics/low_order_source_projection.cpp`、声明在 `include/egomotion/harmonics/low_order.hpp`，限固定 `ordnung=2` 和源3×5九有效项，不开发其它模块、不擅建跨模块 `HarmonicFitter`。
+- **数学验证实际执行**：已运行 `verification/harmonics/verify_source_projection_order2.wl` 的 Wolfram 15.0.1 精确运算：7个非对称单位方向+允许负值的固定近度，九项原CS投影与独立解析参考差均0，九个基范数分母均正，Gram非对角项 `G[2,3]≈-0.2206948544207615` 非零（能区分联合LS）；`allExact=True`。新数学参考 JSON `verification/harmonics/source_projection_reference.v1.json` 含输入、准确根式、近似17位双精度、生成脚本及**UNAPPROVED、CPP_NOT_RUN**身份。独立JS double算术模型从固定JSON与代码的9通道映射复核，最大绝对差 `2.6645352591003757e-15`；**不是C++运行**。
+- **代码/测试现状**：`tests/unit/test_low_order_source_projection.cpp` 使用上述独立九系数，并新增 shape、非有限、单位向量、零平方基范数、极大有限近度溢出和多余流列隔离测试；根 `CMakeLists.txt` 新增第三个SH-only `low_order_harmonics_source_projection` 测试。旧原回归、AN-G06/07/08第二个CTest不覆盖、不删除。实际三项 CTest 的新组合与新增生产CPP **尚未获用户Ubuntu原生编译和运行结果，全部作为新 HEAD NOT_RUN**；此前单项 `601c74de` 的1/1 PASS只能作为历史旧SHA证据。
+- **错误处理差异明确保留**：空输入/非一致shape返回InvalidSampleShape，零基范数返回ZeroProjectionNorm，非有限和运算溢出分别NonFiniteInput/NonFiniteResult；原MATLAB非有限传播/警告并无原生证据，故仅承诺明确失败，不冒充逐位忠实MATLAB异常。仍未支持任意阶、多模块fitter、MAT/Session/Adaptive，DEC-005/008与所有其它TC未批准。
+- **台账状态**：没有新造独立小目标/虚关原AF。仍为 **97个唯一AF＝74已整改＋23未整改**；审计路径新登记4项（1个SH生产CPP、1个SH测试CPP、1个已实跑Wolfram脚本、1个独立数学参考JSON）后为 **82＝50已审计＋32正在审计＋0空白**。AF-045/051/055仍开放；旧其它23项均未缩减承诺。第一轮未清零，用户条件性的第二轮全面审计不启动。
