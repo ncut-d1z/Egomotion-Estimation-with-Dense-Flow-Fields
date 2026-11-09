@@ -5,6 +5,7 @@
 #include <array>
 #include <cmath>
 #include <iostream>
+#include <iomanip>
 #include <limits>
 #include <stdexcept>
 #include <string>
@@ -13,6 +14,8 @@
 namespace sh = egomotion::harmonics::low_order;
 namespace {
 std::size_t checks = 0;
+std::size_t checkedQuaternionGrid = 0;
+double maximumObservedAbsoluteResidual = 0.0;
 // 专项回归比较余量，不宣称替代最终DEC-005阈值。
 constexpr double kTolerance = 4096.0 * std::numeric_limits<double>::epsilon();
 constexpr std::array<sh::RotationMethod, 3> kMethods{{
@@ -29,7 +32,9 @@ void requireNear(const Eigen::MatrixBase<Left>& left,
                  const Eigen::MatrixBase<Right>& right, const char* message) {
     require(left.rows() == right.rows() && left.cols() == right.cols(), "shape mismatch");
     require(left.allFinite() && right.allFinite(), "non-finite comparison");
-    require((left - right).cwiseAbs().maxCoeff() <= kTolerance, message);
+    const double residual = (left - right).cwiseAbs().maxCoeff();
+    maximumObservedAbsoluteResidual = std::max(maximumObservedAbsoluteResidual, residual);
+    require(residual <= kTolerance, message);
 }
 
 sh::Matrix3 quaternionRotation(double w, double x, double y, double z) {
@@ -193,6 +198,99 @@ void testMatlabSourcePhase() {
     }
 }
 
+// 有限且确定的四元数格点：不使用 RNG，也不把有限样本宣称为全域数学证明。
+// 目的：在已由 Wolfram 全域证明的恒等式之外，检查当前 GCC/Eigen double 执行路径。
+void testDeterministicQuaternionGrid() {
+    constexpr std::array<int, 5> components{{-3, -1, 0, 1, 3}};
+    const sh::Direction generalDirection = sh::Direction(2, -1, 3).normalized();
+    const sh::Coefficients nontrivial = (sh::Coefficients() <<
+        1.0, -3.0, 2.0, 5.0, -7.0, 11.0, -13.0, 17.0, -19.0).finished();
+    for (const int w : components) {
+        for (const int x : components) {
+            for (const int y : components) {
+                for (const int z : components) {
+                    if (w == 0 && x == 0 && y == 0 && z == 0) continue;
+                    const sh::Matrix3 rotation = quaternionRotation(w, x, y, z);
+                    const auto tensor = sh::rotationDirect(rotation);
+                    const auto ivanic = sh::rotationIvanic(rotation);
+                    const auto choi = sh::rotationChoi(rotation);
+                    require(tensor.hasValue() && ivanic.hasValue() && choi.hasValue(),
+                            "quaternion-grid SO(3) rejected");
+                    requireNear(tensor.value().dipole, rotation.transpose(),
+                                "quaternion-grid direct dipole");
+                    requireNear(ivanic.value().dipole, tensor.value().dipole,
+                                "quaternion-grid Ivanic dipole");
+                    requireNear(choi.value().dipole, tensor.value().dipole,
+                                "quaternion-grid Choi dipole");
+                    requireNear(ivanic.value().quadrupole, tensor.value().quadrupole,
+                                "quaternion-grid Ivanic quadrupole");
+                    requireNear(choi.value().quadrupole, tensor.value().quadrupole,
+                                "quaternion-grid Choi quadrupole");
+                    requireNear(choi.value().quadrupole.transpose() * choi.value().quadrupole,
+                                sh::Matrix5::Identity(), "quaternion-grid quadrupole orthogonality");
+                    const auto expectedField = sh::reconstruct(nontrivial, rotation*generalDirection);
+                    require(expectedField.hasValue(), "quaternion-grid expected field failed");
+                    for (const auto method : kMethods) {
+                        const auto coefficients = sh::rotate(nontrivial, rotation, method);
+                        require(coefficients.hasValue(), "quaternion-grid coefficient rotation failed");
+                        const auto actualField = sh::reconstruct(coefficients.value(), generalDirection);
+                        require(actualField.hasValue(), "quaternion-grid actual field failed");
+                        require(std::abs(actualField.value() - expectedField.value()) <= kTolerance,
+                                "quaternion-grid field action");
+                    }
+                    ++checkedQuaternionGrid;
+                }
+            }
+        }
+    }
+    require(checkedQuaternionGrid == 624, "quaternion-grid count mismatch");
+}
+
+void testFailureTaxonomyAndFiniteOverflow() {
+    const double inf = std::numeric_limits<double>::infinity();
+    const double maximum = std::numeric_limits<double>::max();
+    const auto invalidDirection = sh::basisDirect(sh::Direction(2, 0, 0));
+    require(!invalidDirection.hasValue(), "nonunit direction accepted");
+    require(invalidDirection.error().code == sh::ErrorCode::NotUnitDirection,
+            "nonunit direction wrong error code");
+
+    const auto infiniteDirection = sh::basisRecurrence(sh::Direction(inf, 0, 0));
+    require(!infiniteDirection.hasValue(), "infinite direction accepted");
+    require(infiniteDirection.error().code == sh::ErrorCode::NonFiniteInput,
+            "infinite direction wrong error code");
+
+    sh::Matrix3 reflection = sh::Matrix3::Identity();
+    reflection(0, 0) = -1.0;
+    const sh::Coefficients zero = sh::Coefficients::Zero();
+    for (const auto method : kMethods) {
+        const auto result = sh::rotate(zero, reflection, method);
+        require(!result.hasValue(), "reflection incorrectly accepted");
+        require(result.error().code == sh::ErrorCode::NotProperRotation,
+                "reflection wrong error code");
+    }
+
+    const auto invalidMethod =
+        sh::rotate(zero, sh::Matrix3::Identity(), static_cast<sh::RotationMethod>(999));
+    require(!invalidMethod.hasValue(), "invalid rotation method accepted");
+    require(invalidMethod.error().code == sh::ErrorCode::InvalidMethod,
+            "invalid rotation method wrong error code");
+
+    sh::MatlabCoefficients badPadding = sh::MatlabCoefficients::Zero();
+    badPadding(0, 4) = inf;
+    const auto layout = sh::fromMatlabLayout(badPadding);
+    require(!layout.hasValue(), "nonfinite MATLAB padding accepted");
+    require(layout.error().code == sh::ErrorCode::NonFiniteInput,
+            "nonfinite MATLAB padding wrong error code");
+
+    sh::Coefficients large = sh::Coefficients::Zero();
+    large(1) = maximum; // at e_x both f1 and h4 are positive
+    large(7) = maximum; // their positive weighted sum exceeds DBL_MAX
+    const auto overflow = sh::reconstruct(large, sh::Direction::UnitX());
+    require(!overflow.hasValue(), "finite input with overflowing reconstruction accepted");
+    require(overflow.error().code == sh::ErrorCode::NonFiniteResult,
+            "overflowing reconstruction wrong error code");
+}
+
 void testIndependentReference() {
     // 独立张量/精确算术参考，Wolfram结果写于专项报告；不是被测递推自生成。
     const sh::Matrix3 r = quaternionRotation(1,2,2,0);
@@ -274,10 +372,15 @@ int main() {
         testBasisAndAction();
         testAnalyticBasisAndDyadic();
         testMatlabSourcePhase();
+        testDeterministicQuaternionGrid();
         testIndependentReference();
         testCompositionAndLayout();
         testFailures();
-        std::cout << "PASS spherical-harmonics checks=" << checks << '\n';
+        testFailureTaxonomyAndFiniteOverflow();
+        std::cout << std::setprecision(17) << "PASS spherical-harmonics checks=" << checks
+                  << " quaternion_grid=" << checkedQuaternionGrid
+                  << " max_abs_residual=" << maximumObservedAbsoluteResidual
+                  << " regression_tolerance=" << kTolerance << '\n';
         return 0;
     } catch (const std::exception& error) {
         std::cerr << "FAIL after checks=" << checks << ": " << error.what() << '\n';
