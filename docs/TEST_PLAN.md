@@ -116,6 +116,8 @@ regression_tolerance=9.0949470177292824e-13
 
 分别对完整八面体 8·4^i、缺损八面体 6·4^i、二十面体 20·4^i 在 i=0、1、2 核对数量、单位范数、缺损面及**相同顺序下的每行三维方向**；不能只比较无序集合或哈希。Golden 输入应由原只读源码面表/递归规则**独立生成并交叉核验 L3**，覆盖 i=0、1、2 全部有序方向；不得由被测 C++ 自算，数值容差经 DEC-005 批准，**无需运行 MATLAB**。
 
+**2026-11-09 已取得的有序参考证据（AF-047/055，非已执行采样 CTest）**：[完整方向数据](../verification/geometry/source_direction_levels_0_2.v1.json) 已覆盖八面体8/32/128、缺损6/24/96、二十面体20/80/320，共 **714 行**。已逐值核对现存 AN-G01/02/03 的 i=0 全部34行，最大差约1.11e-16；独立 [Wolfram 源序签名](../verification/geometry/verify_source_direction_levels.wl) 在九组输出中对每行的 i·(x,y,z) 和 i²·(x,y,z) 求加权和，与另一语言重建的最大相对差1.50e-15，最大绝对差9.31e-10（加权平方、部分和量级约3e6）。这两层证据**不能替代全714行双实现逐元素相等或实际C++/CTest**。现行参考为未经正式DEC-005批准的数学候选；用户目前未授权采样模块生产 C++，原 MAT/源文件保持只读。
+
 ### 2.4 600 点 Adaptive 轨迹输出（TC-F-EXP-002）
 
 原始 agent_in_sphere_adaptive_matched_filter_test.m 采用 stellen=600、anzahliterationen=4、anzahldurchlaeufe=8、帧循环 i=2:599。当前代码明确 save 五个变量：allemittransfehler、allemitrotfehler、alleohnetransfehler、alleohnerotfehler、rottransratio，均保存为同名 MAT 文件。前四项为八次运行平均得到的 600×1 缓冲；rottransratio 仅保留代码在运行循环中最后赋值的 600×1 缓冲，不能擅自平均。with_errors 历史 `alleadap*` 按 [DEC-004](decisions/DEC-004_HISTORICAL_MAT_FIELDS.md) 标为 `HistoricalOnly`、只读保留；新 C++ 结果严格只生成五项当前有效 save 字段，**不以历史来源未明阻塞开发**。
@@ -228,7 +230,7 @@ regression_tolerance=9.0949470177292824e-13
 
 ### 2.14 AN-G01～03 初始面表行序的静态资格（AF-047/055）
 
-源码面表按 `level=0` 的三顶点单位中心公式，已经形成 [AN-G01/02/03 完整 8/6/20 行符号推导](reviews/AN_G_LEVEL0_FACE_ORDER_STATIC_2026-11-08.md)；关联原 `TC-F-GEOM-002/003` 的初始面顺序及零光流列。**仍不能据此通过 TC 或关闭 AF-047/055**：下一阶段必须覆盖 `level=1/2` 的全量 A/B/C/D 递归顺序、独立数值来源 SHA-256、边界输入及实际采样器/CTest。无 MATLAB/L1 强制门槛。
+源码面表按 `level=0` 的三顶点单位中心公式，已经形成 [AN-G01/02/03 完整 8/6/20 行符号推导](reviews/AN_G_LEVEL0_FACE_ORDER_STATIC_2026-11-08.md)；关联原 `TC-F-GEOM-002/003` 的初始面顺序及零光流列。**本段为历史静态审查结论**：当时 level=1/2 尚无完整方向文件；当前已在 `verification/geometry/source_direction_levels_0_2.v1.json` 保存全714行有序候选并进行独立Wolfram加权行序校验，但仍缺原生采样器/CTest、正式数值容差及核准来源身份，**不能据此将 TC/AF-047/055 标为PASS**。无 MATLAB/L1 强制门槛。
 
 ### 2.15 球面递归行号/面 ID 的静态合同（AF-081）
 
@@ -432,7 +434,7 @@ MAT 全量字典和来源证据**已经生成**：见 [MAT_DATA_SCHEMA.md](MAT_D
 |---|---|---|
 | TC-F-FILTER-001、TC-F-KVD-001/002 | L3 独立逐轴 Franz 响应/分母与逐轮 near 分母/符号、平移 raw/normalized、旋转 aω/bω/cω（旧 t）、逐点预测流、MSE/RMS、停止布尔、终局 near 均值/尺度；对应 KvD §7 的候选 trace 与真实 C++/CTest | 多组 L3 生成与核验、容差批准、真实 C++/CTest |
 | TC-F-ADAPT-001/002/003、TC-DC-ADAPT-001 | L3 独立 M1～M4/b/z/MSE/系数、连续帧状态；L2 最终误差 | 一般场景、退化输入、Session 状态和 C++/CTest |
-| TC-F-GEOM-002/003、TC-F-FLOW-002/003、TC-DC-RNG-001、TC-NF-RNG-001 | L3 i=0/1/2 **全部有序方向**、固定 uniform/normal 和调用数；L4 统计 | i=1/2 L3 参考、独立 RNG/噪声测试、CTest |
+| TC-F-GEOM-002/003、TC-F-FLOW-002/003、TC-DC-RNG-001、TC-NF-RNG-001 | i=0/1/2 全714行有序几何参考已保存，独立 Wolfram 签名核对完成；uniform/normal 固定调用序列及 L4 仍是候选 | 尚无采样/噪声生产实现与 CTest；独立逐元素数值比较、RNG耗尽/非有限、正式DEC-005与批准仍缺 |
 | TC-F-SH-001/002、TC-F-TRAJ-001 | L3 R0/R3/R5 全元素、系数与几何旋转、轨迹解析值 | 多轴/复合/非平凡角独立参考、版权/适配、CTest |
 | TC-F-EXP-001/002/003 | L3 固定两帧/8 次聚合/刷新规则；L2 历史 MAT、L4 统计 | 一般输入参考、Runner、CTest、L4 |
 | TC-F-AN-001、TC-I-ANALYSIS-001 | 从 L2 只读 MAT 独立重算为 L3 begin/end/zone/平滑/曲线 | 原始值逐元素导出、独立分析结果、CTest |
