@@ -40,7 +40,7 @@
 |---|---|---|
 | F-FILTER-001、F-KVD-001/002 | L3 Franz/KvD 逐轴逐轮 + L2 Bias 最终 | 完整一般/退化参考、真实 C++ trace/CTest、DEC-005 |
 | F-ADAPT-001/002/003、DC-ADAPT-001 | L3 M1～M4/b/z/MSE/Session + L2 终值 | 多组独立固定输入、状态/失败合同与真实测试 |
-| F-SH-001/002 | L3 九基/一般R3/R5与系数转换已由独立Wolfram精确证明；原AN-G06/07/08固定参考与受限koeff_aus_near七方向九系数新增数学参考/测试 | 用户旧SH回归在601c74de原生CTest 1/1 Passed；**新归档Golden及新源二阶投影两个CTest/新SH生产CPP尚未运行**，广泛L2/L3/正式DEC-005/公共ABI仍缺，不得整项关闭 |
+| F-SH-001/002 | L3 九基/一般R3/R5与系数转换已由独立Wolfram精确证明；原AN-G06/07/08固定参考与受限koeff_aus_near七方向九系数新增数学参考/测试 | 用户旧SH回归在601c74de原生CTest 1/1 Passed；**固定5e522198用户已实际构建SH源投影CPP并通过归档176次、源二阶拟合76次检查，三个SH CTest合计3/3 Passed**，广泛L2/L3/正式DEC-005/公共ABI仍缺，不得整项关闭 |
 | F-GEOM-002/003 | L3 i=0、1、2 的**完整有序**方向矩阵 | i=1/2 的参考复核、C++/CTest 与容差 |
 | F-FLOW-002/003、DC-RNG-001、NF-RNG-001 | L3 固定 RNG 值与调用数；L4 统计 | 固定源替身和真实统计/测试 |
 | F-EXP-001/002/003 | L3 固定逐帧/多运行聚合与刷新；L2 最终 MAT；L4 | Runner 实现、完整 CTest 和历史字段差异 |
