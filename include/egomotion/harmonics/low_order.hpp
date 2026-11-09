@@ -26,7 +26,9 @@ enum class ErrorCode {
     NotProperRotation,
     NonFiniteResult,
     ComplexResidue,
-    InvalidMethod
+    InvalidMethod,
+    InvalidSampleShape,
+    ZeroProjectionNorm
 };
 
 struct Error {
@@ -75,6 +77,15 @@ Result<Coefficients> rotate(const Coefficients& coefficients,
                             RotationMethod method);
 Result<double> reconstruct(const Coefficients& coefficients,
                            const Direction& direction);
+
+// 原 koeff_aus_near.m 固定 ordnung=2 的逐个实球谐系数投影，不是联合最小二乘。
+// 输入 N 个有限近度与 N×K 样本（K>=3，只有前三列单位视线被使用）；N>0。
+// 输出 MATLAB/CS 原有 3×5 布局，只有九项有效，其他位置严格填 0。
+// 对 Y_lm 逐样本求 a=(sum near*Y/N)*4pi、b=(sum Y²/N)*4pi，再取 a/b。
+// 无原 MATLAB warnings/NaN 传播保证：非有限、空/错尺寸、非单位方向或 b=0
+// 会返回明确错误，不会在此引入 Adaptive/Session/联合拟合器。
+Result<MatlabCoefficients> projectSourceCoefficientsOrderTwo(
+    const Eigen::VectorXd& nearness, const Eigen::MatrixXd& setofpoints);
 
 // 只转换同一个函数的表示，不复刻旧 SHRotate 未共轭相位的系数动作。
 // MATLAB 九有效项顺序：(0,0), (1,-1..1), (2,-2..2)，含CS相位。
