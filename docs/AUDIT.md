@@ -1,15 +1,16 @@
 # 审计计划与文件进度（AUDIT）
 
-> **范围**：规范、设计、测试、治理及已明确授权的球谐实现/验证工件。文件三态见§3，问题两态以[AUDIT_PROCESS](AUDIT_PROCESS.md)唯一AF行维护。数学符号证明、C++源码审阅、实际编译/浮点测试和正式验收必须分别陈述。
+> 现行规则与唯一文件三态表。数学证明、来源复核、源代码审阅、实际编译/CTest及正式批准必须分开；已审计只代表该行限定范围完成。问题两态及完整AF义务见 [AUDIT_PROCESS](AUDIT_PROCESS.md)。
 
-## 1. 规则
+## 1. 规则与本轮边界
 
-- 文件状态只用**空白 / 正在审计 / 已审计**；已审计仅表示该行核对重点所限定的范围，不自动表示软件测试或批准通过。
-- 发现问题登记路径、义务和未整改；既有目标的新子问题可在原AF下登记，不以新增文档条目虚增结案数。实际修改并在固定提交复读/实际验证后才能按完整义务结案。
-- 先锁定分支/提交，再查SRS↔HLD↔LLD、REQ↔AC↔TC↔P、版本/链接、数据及错误合同；证据归[PROGRESS](PROGRESS.md)，冻结身份归[版本矩阵](DOCUMENT_BASELINE_REGISTER.md)。旧审批JSON和历史reviews不回写。
-- 遵守[AGENTS](../AGENTS.md)、[TODO](TODO.md)和[球谐专项授权](decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md)：**仅球谐C++及其专项测试源码允许实现，Wolfram符号验证允许执行**；其他模块不开工。用户已亲自执行三次限于球谐的 CMake/CTest（`8eab5dd`、`445ed151`、`601c74de` 均 1/1 Passed），但代理仍没有其他模块/全工程/MAT写回读的执行授权。origin只读，MATLAB/Octave/L1永久非必需。
-- SRS管REQ/AC；HLD/ADR管架构及27边设计DAG；对象模型管生命周期；LLD管接口/数学；TEST_PLAN管66TC；PLAN管98P；PROGRESS管实际证据；版本矩阵管SHA/签署；TODO管人类事项。新专项用例不新增TC。
-- 持续推进可授权部分并及时提交。第一轮未清零的整体义务不能以局部成功代替，第二轮全面审计仍以第一轮完成为前提。
+- 文件状态只用**空白 / 正在审计 / 已审计**；问题只用未整改/已整改。原复合AF的数学子义务有新证据，不等于整个AF可以关闭。
+- **当前用户明确要求：只做理论推导，允许符号计算，禁止C++实现。** 本轮不修改C++、头文件、CMake、CTest、Bash、MAT或`origin/**`；既往球谐代码授权及用户已有3/3测试不构成本轮新增代码许可。
+- 先锁定分支/提交，再核SRS↔HLD↔LLD、REQ↔AC↔TC↔P和数据/状态合同。来源与实测归PROGRESS；冻结身份归DOCUMENT_BASELINE_REGISTER；历史审批JSON和review不回写。
+- 发现问题先登记路径/义务；在已有AF范围内的子问题不另造易结案小目标。取得实际修改和固定提交复核后方可按完整义务结案。
+- SRS管理REQ/AC；HLD管理27条设计边；对象模型管理生命周期；LLD管理接口/数学；TEST_PLAN管理66TC；PLAN管理98P；新数学参考只映射既有TC，不新增正式TC。
+- MATLAB/Octave/L1永久不列为必需门槛；源文件和MAT只读。符号计算与独立参考不是原MATLAB运行或生产C++/CTest，不能用其替代软件证据。
+- 第一轮所有开放目标清零后，才进入用户条件性的第二轮全面审计。不得以局部SH或数学参考通过冒充全工程通过。
 
 ## 2. 历轮评审要点（28项保留）
 
@@ -24,7 +25,7 @@
 | AU-007 | MatDenseArray自拥有、RAII、边界 |
 | AU-008 | 严格/兼容读取、路径安全、无覆盖 |
 | AU-009 | CLI精确类型及错误码单一来源 |
-| AU-010 | 无自定义output-root，固定output/<RunId>/ |
+| AU-010 | 无自定义output-root，固定output/RunId |
 | AU-011 | Result/Status/ErrorDetail、JSONL显式失败 |
 | AU-012 | 五实验原更新顺序与save忠实 |
 | AU-013 | Bias xwerte与N、RNG消耗公平性 |
@@ -33,7 +34,7 @@
 | AU-016 | Ivanic 1996/1998、Eigen-only、禁sdla |
 | AU-017 | Sophus物理旋转、Rᵀ、epsilon/反向 |
 | AU-018 | DEC-004当前生成/历史专属/缺字段 |
-| AU-019 | 分析索引、分段、平滑、数值曲线 |
+| AU-019 | 分析索引、分段/平滑、数值曲线 |
 | AU-020 | 不运行MATLAB/L1；L2/L3/L4分级 |
 | AU-021 | 0.01/0.1仅筛查；最终DEC-005待定 |
 | AU-022 | 66TC实体/CTest证据真实性 |
@@ -46,145 +47,116 @@
 
 ## 3. 审计对象与逐文件三态
 
-保留历史62个路径，随后已新增12个球谐专项工件、2个根构建文件、2个AN-G06/07/08归档测试/证明和本轮4个原koeff_aus_near二阶投影工件。新增SH生产源及测试源码**正在审计，未原生编译/测试**；新增Wolfram脚本与独立参考JSON的有限数学身份已审阅。现有旧通过结果只属于601c74de及更早固定HEAD，不能把新增组合冒充为已通过3/3。
+保留本轮起点 `982537556be1ac5a414af368a0082806a9179d32` 的94个路径和各自状态；新增3份限定理论工件，均仅在数学复核范围内标为已审计。现有32份在审文件不因新增数学证明而自动关闭。旧的“新SH源/测试未运行”叙述属于历史时点，用户已在固定`5e522198`完成SH 3/3原生测试，不能继续当作当前缺口。
 
 | 仓库根相对路径 | 状态 | 核对重点 |
 |---|---|---|
-| `docs/AUDIT.md` | 已审计 | AU规则、完整路径/三态、现行与历史统计分开 |
-| `docs/AUDIT_PROCESS.md` | 已审计 | 唯一AF、完整目标、状态及本轮数学子项证据 |
+| `docs/AUDIT.md` | 已审计 | AU规则、唯一文件三态、现行与历史统计分开 |
+| `docs/AUDIT_PROCESS.md` | 已审计 | 唯一AF、完整目标、状态及数学子义务证据 |
 | `docs/REQUIREMENTS.md` | 正在审计 | 58正文+8附录REQ、AC/DEC与正式冻结；AF-037 |
 | `docs/PLAN.md` | 正在审计 | 98P静态追踪已核；真实DEC-006/性能仍缺；AF-061 |
-| `docs/TEST_PLAN.md` | 正在审计 | SH 5e522198 已在 Ubuntu/GCC16 原生3/3 CTest PASS（53532/176/76 checks）；正式66TC/DEC-005、其它模块继续开放，AF-051 |
-| `docs/design/README.md` | 已审计 | LLD索引的限定静态范围；球谐新进展由harmonics/PROGRESS覆盖，非全软件通过 |
+| `docs/TEST_PLAN.md` | 正在审计 | SH 5e522198原生3/3已记录；新均值/几何/平移归一数学专题映射既有Adaptive TC，软件及正式阈值仍缺；AF-051 |
+| `docs/design/README.md` | 已审计 | LLD索引限定静态范围，非全软件通过 |
 | `docs/DOCUMENT_BASELINE_REGISTER.md` | 正在审计 | 固定36项历史身份与实时集合分离；正式签署AF-058 |
-| `docs/PROGRESS.md` | 正在审计 | 用户原生 5e522198 的构建/3项CTest报告归 E-DOC-062；全工程/资源/正式证据仍缺，AF-053 |
-| `docs/ARCHITECTURE.md` | 正在审计 | 27条设计边；本轮未创建业务target；AF-038 |
+| `docs/PROGRESS.md` | 正在审计 | 用户SH原生及独立数学结果分SHA记录；全工程/资源/批准仍缺；AF-053 |
+| `docs/ARCHITECTURE.md` | 正在审计 | 27条设计边、真实部署与质量场景；AF-038 |
 | `docs/OBJECT_MODEL.md` | 正在审计 | 生命周期、45.m职责与批准；叶子不冒充公共类；AF-039 |
-| `docs/design/contracts.md` | 正在审计 | 实际公共ABI/异常AF-040；未获准开启该模块代码 |
+| `docs/design/contracts.md` | 正在审计 | 公共ABI/异常AF-040，本轮不实施代码 |
 | `docs/design/cli.md` | 正在审计 | 参数、RunId、JSONL与真实负例；AF-041 |
 | `docs/design/mat_io.md` | 正在审计 | Reader/Writer、RAII、TOCTOU、安全与L2；AF-042 |
-| `docs/design/kvd.md` | 正在审计 | 两组六方向与新增8方向翻号例已由独立Wolfram精确执行Original/Modified共36轮数学trace；一般/病态/200轮、正式DEC-005和生产C++/CTest仍缺，AF-043 |
-| `docs/design/adaptive_mfa.md` | 正在审计 | AN-G12对称及新9方向正/负均值非对称M1～M4/6×6/rhs/z/MSE/near/C均有独立Wolfram数学实算；负支归一均值=-1、M1投影差2I已证明；近奇异/零均值/Session/生产CTest/DEC仍缺，AF-044 |
-| `docs/design/harmonics.md` | 正在审计 | 九基/旋转/二阶源逐系数投影均有独立数学与固定 5e522198 原生数值验收；公共ABI/完整动态阶数/最终DEC-005仍缺，AF-045 |
-| `docs/design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 正在审计 | 原规划公共接口仍待适配，当前叶子/证明见三路报告；AF-046 |
-| `docs/design/sampling_noise.md` | 正在审计 | 已保存三类采样i=0/1/2完整714行有序候选，并经Wolfram独立加权行序签名核对；生产采样/噪声CTest、异常/RNG仍缺；AF-047 |
-| `docs/design/trajectory.md` | 正在审计 | 严格反向源异常/TR-C候选已核，独立L3/CTest仍缺；AF-048 |
-| `docs/design/experiments.md` | 正在审计 | 五入口/save/Manifest/聚合，实际Runner仍缺；AF-049 |
-| `docs/design/analysis_plotting.md` | 正在审计 | 曲线、分段/平滑、源插图与历史字段；完整L3/CTest仍缺；AF-050 |
-| `docs/decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | 已审计 | 已选规则，历史来源未知不阻塞 |
-| `docs/decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md` | 已审计 | 保留当时所有者技术决定 |
+| `docs/design/kvd.md` | 正在审计 | 36轮独立数学trace和首翻号已有；一般/病态/200轮、正式DEC-005和生产CTest仍缺；AF-043 |
+| `docs/design/adaptive_mfa.md` | 正在审计 | 对称及非对称正/负均值参考已有；本轮均值零/抵消/正深度窄锥/零raw平移专题另列；Session、软件负例与批准仍缺；AF-044 |
+| `docs/design/harmonics.md` | 正在审计 | 九基/旋转/二阶投影已有独立数学及5e522198原生证据；公共ABI/动态阶数/正式DEC仍缺；AF-045 |
+| `docs/design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 正在审计 | 公共接口/声明适配及冻结仍缺；AF-046 |
+| `docs/design/sampling_noise.md` | 正在审计 | 714行有序候选及独立逐坐标核查完成；生产采样/噪声CTest、异常/RNG仍缺；AF-047 |
+| `docs/design/trajectory.md` | 正在审计 | 源反向/TR-C候选，完整独立参考/CTest仍缺；AF-048 |
+| `docs/design/experiments.md` | 正在审计 | 五入口/save/Manifest/聚合，真实Runner仍缺；AF-049 |
+| `docs/design/analysis_plotting.md` | 正在审计 | 曲线、分段/平滑、历史字段，完整L3/CTest仍缺；AF-050 |
+| `docs/decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | 已审计 | 已选来源规则，不重复审批 |
+| `docs/decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md` | 已审计 | 保留当时所有者决定 |
 | `docs/golden/NO_MATLAB_EXECUTION_POLICY.md` | 已审计 | L1永久非必需 |
-| `docs/golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md` | 正在审计 | i=0/1/2几何全量候选已登记；其它逐AC L2/L3/L4与C++/正式DEC仍缺，AF-060 |
-| `docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md` | 正在审计 | 精确等式不等于最终double容差；AF-054 |
-| `docs/golden/analytic_golden_candidates.v1.json` | 正在审计 | 原AN-G01～12保持DRAFT；新增AN-G01/02/03 i=0/1/2 全714行参考及跨语言签名，但余下范围/批准/CTest未完；AF-055 |
-| `docs/TODO.md` | 正在审计 | 材料、SH专项实现/Wolfram与用户两次球谐native均有证据；代理执行权限/其它批准仍缺；AF-057 |
-| `docs/MAT_DATA_SCHEMA.md` | 正在审计 | 历史582元数据与独立SHA-256/逐值区别；AF-056 |
+| `docs/golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md` | 正在审计 | 逐AC数学/软件/批准分层；本轮无量纲与谱例不能替代正式阈值；AF-060 |
+| `docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md` | 正在审计 | 精确等式及高精度SVD不等于最终double容差；AF-054 |
+| `docs/golden/analytic_golden_candidates.v1.json` | 正在审计 | 原AN-G01～12保持DRAFT，完整来源/软件/批准未齐；AF-055 |
+| `docs/TODO.md` | 正在审计 | 用户既有SH实测与本轮禁止C++分开；其它授权/批准仍缺；AF-057 |
+| `docs/MAT_DATA_SCHEMA.md` | 正在审计 | 582 MAT独立SHA-256/逐值仍缺；AF-056 |
 | `docs/SOURCE_INVENTORY.md` | 已审计 | 45源文件静态身份，不等于软件验收 |
-| `docs/MIGRATION_MATRIX.md` | 已审计 | 45文件/50函数历史声明映射；新叶子与公共适配分开 |
-| `docs/approval/DECISION_IMPLEMENTATION_NOTES.md` | 已审计 | 历史权限/决定释义，不回写 |
-| `docs/approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md` | 已审计 | 历史审批包，不回写 |
-| `docs/reviews/STATIC_TRACEABILITY_2026-11-06.md` | 已审计 | 固定历史静态记录，只读 |
-| `docs/reviews/DOC_CONSISTENCY_RECONCILIATION_2026-11-06.md` | 已审计 | 固定历史静态记录，只读 |
-| `docs/reviews/LLD_MAT_IO_AND_CONSISTENCY_2026-11-07.md` | 已审计 | 固定历史静态记录，只读 |
-| `docs/reviews/LLD_CONTRACTS_TARGETS_TESTS_ALIGNMENT_2026-11-07.md` | 已审计 | 固定历史静态记录，只读 |
-| `docs/reviews/OWNER_TECH_DECISIONS_ALIGNMENT_2026-11-07.md` | 已审计 | 固定历史决定对齐记录，只读 |
-| `docs/reviews/DOCUMENT_REVIEW_AND_SH_DECLARATIONS_2026-11-07.md` | 已审计 | 历史声明级记录，只读 |
+| `docs/MIGRATION_MATRIX.md` | 已审计 | 45文件/50函数历史映射；叶子与公共适配分开 |
+| `docs/approval/DECISION_IMPLEMENTATION_NOTES.md` | 已审计 | 历史审批不回写 |
+| `docs/approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md` | 已审计 | 历史审批包不回写 |
+| `docs/reviews/STATIC_TRACEABILITY_2026-11-06.md` | 已审计 | 固定历史静态记录 |
+| `docs/reviews/DOC_CONSISTENCY_RECONCILIATION_2026-11-06.md` | 已审计 | 固定历史静态记录 |
+| `docs/reviews/LLD_MAT_IO_AND_CONSISTENCY_2026-11-07.md` | 已审计 | 固定历史静态记录 |
+| `docs/reviews/LLD_CONTRACTS_TARGETS_TESTS_ALIGNMENT_2026-11-07.md` | 已审计 | 固定历史静态记录 |
+| `docs/reviews/OWNER_TECH_DECISIONS_ALIGNMENT_2026-11-07.md` | 已审计 | 固定历史决定对齐 |
+| `docs/reviews/DOCUMENT_REVIEW_AND_SH_DECLARATIONS_2026-11-07.md` | 已审计 | 历史声明级记录 |
 | `docs/reviews/FULL_DOCUMENT_AUDIT_2026-11-07.md` | 已审计 | 历史全量扫描，不冒充当前HEAD |
-| `docs/reviews/AUDIT_AF001_AF012_RESOLUTION_2026-11-07.md` | 已审计 | 历史整改证据，只读 |
-| `docs/reviews/AUDIT_AF013_AF020_RESOLUTION_2026-11-07.md` | 已审计 | 历史整改证据，只读 |
-| `docs/reviews/AUDIT_FOLLOWUP_SCAN_2026-11-07.md` | 已审计 | 历史增量扫描，只读 |
-| `docs/reviews/AUDIT_AF021_AF025_RESOLUTION_2026-11-07.md` | 已审计 | 历史整改证据，只读 |
-| `docs/reviews/AUDIT_SEVEN_MATH_DOCS_SCAN_2026-11-08.md` | 已审计 | 历史数学文档扫描，只读 |
-| `docs/reviews/AUDIT_SEVEN_MATH_DOCS_RESOLUTION_2026-11-08.md` | 已审计 | 历史限定修订，只读 |
-| `docs/reviews/AUDIT_FOUR_POLICY_DRIFTS_SCAN_2026-11-08.md` | 已审计 | 历史决策漂移扫描，只读 |
-| `docs/reviews/AN_G_STATIC_FORMULA_REVIEW_2026-11-08.md` | 已审计 | 部分静态代数，不是L3/CTest通过 |
-| `docs/reviews/AUDIT_FUNCTION_DECLARATIONS_AND_LEDGER_COMPACT_2026-11-08.md` | 已审计 | 45.m/50函数及治理压缩历史证据 |
-| `docs/reviews/AN_G08_Z90_STATIC_CONVENTION_2026-11-08.md` | 已审计 | z90限定特例，旧结论不扩张 |
-| `docs/reviews/AUDIT_ANALYSIS_SEGMENT_SMOOTHING_CORRECTION_2026-11-08.md` | 已审计 | 纠正旧窗口差异断言，不是软件测试 |
+| `docs/reviews/AUDIT_AF001_AF012_RESOLUTION_2026-11-07.md` | 已审计 | 历史整改证据 |
+| `docs/reviews/AUDIT_AF013_AF020_RESOLUTION_2026-11-07.md` | 已审计 | 历史整改证据 |
+| `docs/reviews/AUDIT_FOLLOWUP_SCAN_2026-11-07.md` | 已审计 | 历史增量扫描 |
+| `docs/reviews/AUDIT_AF021_AF025_RESOLUTION_2026-11-07.md` | 已审计 | 历史整改证据 |
+| `docs/reviews/AUDIT_SEVEN_MATH_DOCS_SCAN_2026-11-08.md` | 已审计 | 历史数学文档扫描 |
+| `docs/reviews/AUDIT_SEVEN_MATH_DOCS_RESOLUTION_2026-11-08.md` | 已审计 | 历史限定修订 |
+| `docs/reviews/AUDIT_FOUR_POLICY_DRIFTS_SCAN_2026-11-08.md` | 已审计 | 历史决策漂移扫描 |
+| `docs/reviews/AN_G_STATIC_FORMULA_REVIEW_2026-11-08.md` | 已审计 | 历史静态代数，非正式验收 |
+| `docs/reviews/AUDIT_FUNCTION_DECLARATIONS_AND_LEDGER_COMPACT_2026-11-08.md` | 已审计 | 45.m/50函数及治理压缩历史 |
+| `docs/reviews/AN_G08_Z90_STATIC_CONVENTION_2026-11-08.md` | 已审计 | z90限定特例 |
+| `docs/reviews/AUDIT_ANALYSIS_SEGMENT_SMOOTHING_CORRECTION_2026-11-08.md` | 已审计 | 旧窗口差异断言修正 |
 | `docs/reviews/AUDIT_ANALYSIS_ERROR_MAPPING_SCAN_2026-11-08.md` | 已审计 | AF-077发现证据 |
-| `docs/reviews/AN_G_LEVEL0_FACE_ORDER_STATIC_2026-11-08.md` | 已审计 | 初始面有序符号推导，非完整递归L3 |
-| `docs/reviews/AN_G_RECURSION_INDEX_STATIC_2026-11-08.md` | 已审计 | A/B/C/D索引证明，非全量数值参考 |
-| `docs/reviews/AUDIT_BIAS_XWERTE_LAST_RUN_STATIC_2026-11-08.md` | 已审计 | Bias末轮x/均值y静态审查 |
-| `AGENTS.md` | 已审计 | 既有安全规则与最新用户专项授权共同适用 |
-| `README.md` | 已审计 | 原项目范围/历史证据；最新代码状态以PROGRESS为准 |
+| `docs/reviews/AN_G_LEVEL0_FACE_ORDER_STATIC_2026-11-08.md` | 已审计 | 初始面有序符号推导 |
+| `docs/reviews/AN_G_RECURSION_INDEX_STATIC_2026-11-08.md` | 已审计 | A/B/C/D索引历史证明 |
+| `docs/reviews/AUDIT_BIAS_XWERTE_LAST_RUN_STATIC_2026-11-08.md` | 已审计 | Bias末轮x/均值y审查 |
+| `AGENTS.md` | 已审计 | 既有规则服从最新本轮理论限定 |
+| `README.md` | 已审计 | 原项目范围；当前证据归PROGRESS |
 | `LICENSE` | 已审计 | MIT与上游作品边界 |
-| `.gitignore` | 已审计 | 输出/构建忽略，不绕过排除规则 |
-| `CMakeLists.txt` | 已审计 | 静态配置 C++17、Eigen3、3个SH-only独立CTest；固定 5e522198 用户原生 CMake/GCC16 成功、3/3 CTest通过，未授权其它模块 |
-| `build.sh` | 已审计 | 一次 --verbose CTest、源外构建、日志、pipefail 由固定5e522198真实执行，3/3 PASS；新脚本以后变更仍需按SHA实测 |
-| `scripts/check_docs_traceability.sh` | 已审计 | 仅脚本源码审阅，本轮未执行 |
-| `docs/reviews/SH_PAPERS_SOURCE_AUDIT_2026-11-09.md` | 已审计 | 上轮三PDF/勘误/相位静态记录，保持历史范围 |
-| `docs/golden/SH_PAPER_VERIFICATION_CASES.md` | 已审计 | 上轮25公式/10用例设计；新增实际执行另记，不回填为历史通过 |
-| `docs/decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md` | 已审计 | 仅SH代码和Wolfram授权、其他模块及native边界 |
-| `include/egomotion/harmonics/low_order.hpp` | 正在审计 | 局部Result/API已有GCC16球谐构建实证；公共contracts/ABI未冻结，仍在审 |
-| `src/harmonics/low_order_detail.hpp` | 正在审计 | SO(3)/方向校验、舍入边界静态核；GCC16构建已成功，未全面覆盖浮点/异常边界 |
-| `src/harmonics/low_order_basis.cpp` | 正在审计 | 九基/递推/重建/转换已符号对照，旧固定 HEAD 经用户球谐 CTest 运行；仍缺独立异常/全面浮点边界覆盖 |
-| `src/harmonics/low_order_rotation.cpp` | 正在审计 | 张量与IR公式全域符号核查，旧固定 HEAD 已成功编译/运行单项 CTest；尚缺全部边界及接口冻结 |
-| `src/harmonics/low_order_choi.cpp` | 正在审计 | 复递推/W共轭一般符号已核，旧固定 HEAD 已编译/运行单项 CTest；仍缺超常边界和高精度参考扩充 |
-| `src/harmonics/low_order_source_projection.cpp` | 正在审计 | 固定 5e522198 已于用户 Ubuntu GCC16 编译并经单独 source_projection CTest 76次检查通过；仍非完整公共Fitter/ABI/DEC-005 |
-| `tests/unit/test_low_order_harmonics.cpp` | 正在审计 | `601c74de` 已实测 1/1 CTest：53,532检查、624非零四元数、错误码/溢出、双类残差；仍缺更广输入/ABI/正式容差 |
-| `tests/unit/test_low_order_archived_golden.cpp` | 正在审计 | AN-G06/07/08 的源CS布局、R3/R5固定值在5e522198 原生CTest 176次检查通过；完整L3/正式批准仍缺 |
-| `tests/unit/test_low_order_source_projection.cpp` | 正在审计 | 原源7方向二阶逐项拟合及异常负例在5e522198 原生CTest 76次检查通过；其他场景/通用API尚缺 |
-| `verification/geometry/verify_source_direction_levels.wl` | 已审计 | Wolfram15.0.1独立计算9组有序方向的行数、一次/二次行号加权坐标签名；真实执行并与JS候选相对误差≤1.50e-15，非采样CTest |
-| `verification/geometry/verify_full_source_direction_rows.wl` | 已审计 | Wolfram15.0.1实际执行9组全714行逐元素对照，2142坐标最大绝对差1.11e-16、无超界；原20面及shape守卫通过，非生产CTest |
-| `verification/geometry/full_ordered_row_verification.v1.json` | 已审计 | 实际Wolfram完整逐元素比较数值与候选JSON/脚本的源Git blob及SHA-256归档；未批准DEC-005和采样软件资格 |
-| `verification/adaptive/verify_AN_G12_symmetric_one_step.wl` | 已审计 | 实际Wolfram20方向M1～M4、6×6、MSE与1e-11正则near/C的限定数学复核，非Adaptive生产CTest |
-| `verification/adaptive/AN_G12_symmetric_one_step_evidence.v1.json` | 已审计 | AN-G12独立数值输出/源码及候选blob和近度非严格1的证据边界已核，非正式Golden |
-| `verification/adaptive/verify_asymmetric_signed_near_one_step.wl` | 已审计 | 9方向非对称正/负均值含CS源系数与非零M2/M3、2I恒等式、完整六维解、MSE及条件数的Wolfram数学脚本已真实执行；非生产CTest |
-| `verification/adaptive/asymmetric_signed_near_one_step.v1.json` | 已审计 | 固定9方向N×6及3×5、M1～M4、rhs、z、t/ω、near/C与12/12数学自检；源4个Git blob及两个工件SHA-256有证据，不是正式Golden |
-| `verification/kvd/verify_six_direction_exact_trace.wl` | 已审计 | Wolfram精确执行轴向/斜向六方向各Original/Modified的Franz→6轮trace，共24次数学迭代，14/14定向自检；非生产C++ |
-| `verification/kvd/six_direction_exact_trace.v1.json` | 已审计 | 四条6轮近度/a/b/c/tRaw/omega/MSE/RMS/delta/grenze/停止输出源身份与SHA-256已核；不冒充正式Golden |
-| `verification/kvd/verify_near_sign_flip_exact_trace.wl` | 已审计 | Wolfram精确执行8方向有符号近度第一轮翻号的Original/Modified各6轮；11/11自检；非物理正距离/生产CTest |
-| `verification/kvd/near_sign_flip_exact_trace.v1.json` | 已审计 | 两条6轮首翻号后不翻号、raw t差异、固定点停止轨迹的独立数学数值与源身份、SHA-256已核；未批准DEC-005 |
-| `verification/geometry/source_direction_levels_0_2.v1.json` | 已审计 | 固定全714行/2142坐标与独立Wolfram逐元素核查最大差1.11e-16，来源blob及UTF-8 SHA-256已核；仅数学数据审核，生产采样CTest/正式Golden仍缺 |
-| `verification/harmonics/verify_low_order_basis.wl` | 已审计 | 已执行：九基定义/递推、Gram81、Laplacian和dyadic恒等式 |
-| `verification/harmonics/verify_low_order_rotations.wl` | 已审计 | 已执行：一般四元数SO(3)、两递推各34项对定义精确零差 |
-| `verification/harmonics/verify_low_order_layout.wl` | 已审计 | 已执行：任意系数同场性、往返和旧相位反例 |
-| `verification/harmonics/verify_archived_sh_candidates.wl` | 已审计 | 独立CS多项式的AN-G06九基/AN-G07常数/AN-G08全R3/R5和场作用已实际Wolfram精确验证，allExact=True；不等于新CTest PASS |
-| `verification/harmonics/verify_source_projection_order2.wl` | 已审计 | 受限SH源逐项投影7方向数学公式在Wolfram精确执行，9差为0且分母均正、离散Gram有非零交叉项；不等于C++运行 |
-| `verification/harmonics/verification_results_2026-11-09.json` | 已审计 | 实际Wolfram输出/版本/固定输入/独立25值，native明确未执行 |
-| `verification/harmonics/source_projection_reference.v1.json` | 已审计 | 七方向9个精确根式系数+固定近度与Wolfram版本来源已复核；标注CPP_NOT_RUN、未批准DEC-005 |
-| `docs/reviews/LOW_ORDER_SH_THREE_ROUTE_VERIFICATION_2026-11-09.md` | 已审计 | 三路一般证明、C++逐式对应、纸面错误与实际执行限制 |
+| `.gitignore` | 已审计 | 不绕过输出/构建排除 |
+| `CMakeLists.txt` | 已审计 | 5e522198下原3项SH配置已实测；本轮未修改/执行 |
+| `build.sh` | 已审计 | 5e522198一次verbose运行已实测；本轮未修改/执行 |
+| `scripts/check_docs_traceability.sh` | 已审计 | 既有源码静态范围；本轮未运行 |
+| `docs/reviews/SH_PAPERS_SOURCE_AUDIT_2026-11-09.md` | 已审计 | 三PDF/勘误/相位固定记录 |
+| `docs/golden/SH_PAPER_VERIFICATION_CASES.md` | 已审计 | 25公式/10用例设计，后续实测另记 |
+| `docs/decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md` | 已审计 | 既往仅SH授权；本轮最新指令禁止任何C++实现 |
+| `include/egomotion/harmonics/low_order.hpp` | 正在审计 | 局部API已有构建实证，公共ABI未冻结 |
+| `src/harmonics/low_order_detail.hpp` | 正在审计 | 校验/舍入边界未全面覆盖 |
+| `src/harmonics/low_order_basis.cpp` | 正在审计 | 旧固定SHA实测，完整异常边界未完 |
+| `src/harmonics/low_order_rotation.cpp` | 正在审计 | 一般数学及旧SHA实测，公共接口/边界未完 |
+| `src/harmonics/low_order_choi.cpp` | 正在审计 | 复递推一般证明及旧SHA实测，全面边界未完 |
+| `src/harmonics/low_order_source_projection.cpp` | 正在审计 | 5e522198专项76检查通过，非完整公共Fitter/ABI |
+| `tests/unit/test_low_order_harmonics.cpp` | 正在审计 | 旧SHA 53,532检查/624四元数实测，正式容差/更广输入仍缺 |
+| `tests/unit/test_low_order_archived_golden.cpp` | 正在审计 | 5e522198归档176检查通过，完整L3/批准仍缺 |
+| `tests/unit/test_low_order_source_projection.cpp` | 正在审计 | 5e522198投影76检查通过，公共API/其它场景仍缺 |
+| `verification/geometry/verify_source_direction_levels.wl` | 已审计 | 独立9组行序加权签名历史证据 |
+| `verification/geometry/verify_full_source_direction_rows.wl` | 已审计 | 714行/2142坐标独立逐值核对，最大差1.11e-16 |
+| `verification/geometry/full_ordered_row_verification.v1.json` | 已审计 | 全行结果、Git blob及SHA-256，非正式Golden |
+| `verification/adaptive/verify_AN_G12_symmetric_one_step.wl` | 已审计 | 对称20方向独立数学单步 |
+| `verification/adaptive/AN_G12_symmetric_one_step_evidence.v1.json` | 已审计 | AN-G12数值及正则后近度非严格1 |
+| `verification/adaptive/verify_asymmetric_signed_near_one_step.wl` | 已审计 | 九方向非对称正/负均值独立数学单步，非生产CTest |
+| `verification/adaptive/asymmetric_signed_near_one_step.v1.json` | 已审计 | 12/12数学检查、源身份及2I差异，非正式Golden |
+| `verification/kvd/verify_six_direction_exact_trace.wl` | 已审计 | 精确Wolfram四条六轮轨迹、14/14检查 |
+| `verification/kvd/six_direction_exact_trace.v1.json` | 已审计 | 24轮独立数学数据及源身份 |
+| `verification/kvd/verify_near_sign_flip_exact_trace.wl` | 已审计 | 八方向首次翻号两条六轮轨迹、11/11检查 |
+| `verification/kvd/near_sign_flip_exact_trace.v1.json` | 已审计 | 12轮控制流数学数据，非正距离物理例 |
+| `verification/geometry/source_direction_levels_0_2.v1.json` | 已审计 | 固定714行与独立Wolfram逐元素核对、身份已核 |
+| `verification/harmonics/verify_low_order_basis.wl` | 已审计 | 九基/递推/Gram/Laplacian/dyadic证明 |
+| `verification/harmonics/verify_low_order_rotations.wl` | 已审计 | 一般四元数SO(3)、两递推各34项精确零差 |
+| `verification/harmonics/verify_low_order_layout.wl` | 已审计 | 任意系数同场性、往返和旧相位反例 |
+| `verification/harmonics/verify_archived_sh_candidates.wl` | 已审计 | AN-G06/07/08限定符号证明 |
+| `verification/harmonics/verify_source_projection_order2.wl` | 已审计 | 七方向投影精确九系数和非零交叉Gram |
+| `verification/harmonics/verification_results_2026-11-09.json` | 已审计 | 当时Wolfram输出/固定输入及运行限制 |
+| `verification/harmonics/source_projection_reference.v1.json` | 已审计 | 固定七方向数学参考，原历史状态不回写 |
+| `docs/reviews/LOW_ORDER_SH_THREE_ROUTE_VERIFICATION_2026-11-09.md` | 已审计 | 三路一般证明、论文印刷差异、实际运行边界 |
+| `verification/adaptive/verify_zero_mean_conditioning_families.wl` | 已审计 | 本轮25项精确恒等式/谱及70位SVD检查通过；禁止以此冒充生产测试 |
+| `verification/adaptive/zero_mean_conditioning_evidence.v1.json` | 已审计 | 实际25/25结果、六个SVD样例及定义域/物理与有符号输入范围 |
+| `docs/design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md` | 已审计 | 限定理论专题：raw/翻号身份、s=0、正尺度/抵消/正深度窄锥、纯旋转raw平移零及诊断边界 |
 
-## 4. 现行结论与进度变化（2026-11-09 Adaptive非对称正/负近度数学复核）
+## 4. 本轮结果与仍开放义务
 
-- **新增AF-044/055数学证据**：在固定9个非对称有理方向上用原CS九基构造非恒定正近度并合成切向流，独立Wolfram精确恢复生成运动和MSE=0；两个非零M2/M3的6×6系统均非奇异。负支是**全部原始近度为负、非正距离物理场景**，原算法先翻近度又除旧负均值令normalized mean=−1，严格得`M1-mean(mu*(I-dd^T))=2I`；对应数学输出MSE≈0.21140062258。完整数值与源Git blob/数学脚本SHA-256见 [PROGRESS E-DOC-067](PROGRESS.md) 和 [AUDIT_PROCESS §15](AUDIT_PROCESS.md)。**这不是Adaptive生产C++/CTest，也没有批准DEC-005，不能将源负分支的数学反例扩大为正距离物理恢复的一般断言**。
+- **问题两态：97个唯一AF＝74已整改＋23未整改。** 没有新增易结案AF，也没有减少原复合义务。
+- **文件三态：97个唯一对象＝65已审计＋32正在审计＋0空白。** 本轮起点94/62/32/0；新增三份数学工件限定审阅，不代表生产接口冻结。
+- 本轮证明的四类独立失败/风险：s=0使源均值归一无定义；正近度同比缩小时M可保持条件数1但raw平移变小；有符号抵消时M行列式及全部特征值恒定而条件数发散；正近度四视线窄锥在s=1下仍有kappa2=h^-4；纯旋转可在M良态时给出零raw平移。参阅[均值与条件数专题](design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md)。
+- AF-044/051仍需真实软件负例/逐节点、Session和动态情形；AF-054正式DEC-005阈值、AF-055/060完整参考/AC的L2/L3/L4与批准仍缺。证明参数族不是全输入的浮点正确性证明。
+- 第一轮23项仍开放，因此未启动条件性第二轮全面审计。本轮不要求用户重跑原SH构建，因为相关源/测试/脚本没有修改。
 
+## 5. 固定历史证据
 
-- **本轮KvD新增可复算证据**：固定两组六方向（轴向/斜向）×Original/Modified共24轮精确Wolfram；新增8方向**首轮near总和负而翻号**的Original/Modified共12轮，合计36次数学迭代，均沿源Franz→near→翻号→raw t→旧t算omega→RMS/停止执行。14/14与11/11定向自检通过、四工件及SHA-256见[PROGRESS E-DOC-066](PROGRESS.md)。不写MATLAB/C++运行，仍缺一般正深度/病态/200轮、正式DEC-005与生产软件资格；AF-043/051/054/060继续开放。
-
-
-- **新增AN-G12数学证据**：20个原AN-G03单位方向的理想平移光流，独立 Wolfram计算 M1/M4≈(2/3)I、M2/M3=0、rhs=(2/3,0,0,0,0,0)、t=e_x、ω=0、MSE=0；`near_new` 因源码1e-11正则只约0.999999999921459～0.99999999999，C_new也不精确等于C_old。可重放脚本与实算结果见[PROGRESS E-DOC-065](PROGRESS.md)，未实施/运行Adaptive业务C++，不得标TC/AF-044/055通过。
-
-
-- **新增本轮证据**：AF-047/055/060 的三类源有序采样 `i=0,1,2` 714行候选现已独立存档；原AN-G01/02/03的i=0全部34行逐值最大差1.11e-16；Wolfram独立9组加权行序签名最大相对差1.50e-15。旧源和候选数据不修改，签名仍不能替代全部714行逐元素双实现相等、实际采样C++/CTest、正式L3/DEC-005。详见 [PROGRESS E-DOC-063](PROGRESS.md) 与 [AUDIT_PROCESS §11](AUDIT_PROCESS.md)。
-
-
-- **最新固定结果**：用户在`5e5221988cf093dbfddb88f2f65f06632460f3a1` 上实际编译完整SH叶子（含原二阶逐系数投影），并通过三个独立CTest **3/3，0失败**；程序分别报告53,532、176、76次内部检查，最大残差和环境日志见[PROGRESS E-DOC-062](PROGRESS.md)。这更新了下文旧HEAD的“第二/第三测试未执行”历史快照；用户日志未提供原始文件SHA-256或正式DEC-005批准，不能将SH局部PASS解释为全工程验收。
-
-
-- **文件三态：94个唯一对象＝62已审计＋32正在审计＋0空白。** 从上一轮 74/45/29 新纳入根构建文件2份，均限定为静态审核；6份球谐源/测试仍因公共接口与数值边界/正式验收未完成而在审。历史从62/39/23增加12份工件，再新增根构建文件2份，均已单独记录。分母扩大不表示此前工作倒退。
-- **问题两态：97个唯一AF＝74已整改＋23未整改。** AF-096 已依据用户提供的固定 SHA 球谐构建/CTest 记录、跨文档修订和新提交定向复核结案；原 AF-045/046/051/055 的完整工程、数值、异常和批准义务仍全部开放。增强解析/相位测试在 `445ed151` 通过；后新增的624非零四元数、错误分类和误差报告已经在用户 `601c74de` 实测 1/1 Passed。**再后来修改的build.sh仅完成静态复核，尚无新版本运行结果**。 本轮直接推进AF-045/046/051/055/057的数学/实现子目标，不人为新造小问题并关闭以改变百分比。
-- 九基值定义与递推、一般SO(3)三路线全矩阵和布局同场性已有 Wolfram 精确结果；**GCC 16.2/CMake4.3.4/Eigen3.4 下球谐旧版在用户VM实际构建成功且 1/1 CTest Passed**。增强解析值、dyadic符号、MATLAB相位锚点已在 `445ed151` 实测通过；624四元数/53,532检查/错态/残差在 `601c74de` 实测通过。未解决的卡点是更广浮点边界、正式公共接口、工程集成、DEC-005和新脚本运行证据。
-- 2015 p.30的d1²/d2²展开h4符号错误已按定义证明并记录在AF-045子项；IR98残留减号被全域证明与区分性反例排除。不改原PDF，不开启其他模块代码。
-- 原66REQ/66TC/98P/45.m/50函数/27设计边不变；MAT字典、其他模块参考与正式工程验收不被专项结果替代。
-- 第一轮整体未清零，不启动条件性的第二轮全面审计。
-
-本次原生结果的范围和剩余缺口见 [PROGRESS E-DOC-056](PROGRESS.md) 与 [AUDIT_PROCESS AF-096 结案](AUDIT_PROCESS.md)；上轮 74 文件、96 AF 的事实为旧 HEAD 快照，不能再充当动态统计。
-
-更多当前事实与未来测试的界限见 [PROGRESS E-DOC-057/058](PROGRESS.md) 和 [TEST_PLAN](TEST_PLAN.md)；AF-045/046/051 等完整目标仍为开放状态。
-
-**本轮新增固定证据**：用户 `601c74de` 的详细输出记录 **624个非零四元数输入、53,532次require检查、1/1 CTest Passed**，另有双类最大绝对残差。见 [PROGRESS E-DOC-059](PROGRESS.md)；`build.sh` 后续verbose调整**未运行**，参见 [AUDIT_PROCESS §7](AUDIT_PROCESS.md)。
-
-**最新增量（AN-G06/07/08）**：已接入第二个独立球谐 CTest，并且另存重放 Wolfram 精确核对。20行方向与9基/15系数/R3九项/R5二十五项和归档候选的字面差异都为0；Wolfram返回allExact=True。**当前完整可执行CTest为2项，但最新版本尚未由用户执行，不能写2/2通过**。详见 [PROGRESS E-DOC-060](PROGRESS.md)、[TEST_PLAN 当前状态](TEST_PLAN.md) 与 [AUDIT_PROCESS §8](AUDIT_PROCESS.md)。
-
-**新一期数学与代码分层（AF-045/051/055）**：原`koeff_aus_near.m` 的二阶**逐系数投影**现有单独SH实现、独立7方向Wolfram精确参考及第三个CTest（源代码尚未编译）。归档AN-G06/07/08第二CTest同样尚未原生运行；因此当前是3个已注册 SH CTest、仅历史旧版1/1有用户证据，不能标3/3通过。证明与差异详见 [PROGRESS E-DOC-061](PROGRESS.md)、[AUDIT_PROCESS §9](AUDIT_PROCESS.md)、[TEST_PLAN](TEST_PLAN.md)。
-
-**本轮 3/3 验收核查**：本分支所有 82 个文件路径/97 个AF ID仍按原台账的唯一行计算：82文件（50已审计、32在审、0空白），97个整改目标（74已整改、23未整改）。没有新增/关闭原复合AF；包括AF-045/046/051/055/060的全业务/最终容差、异常广度等义务仍开放。新提交后的 C++ 修改必须重新测试，不继承`5e522198`旧HEAD结果。
-
-**新一期逐坐标核验（AF-047/055/060）**：已通过Wolfram独立对固定候选全部714行、2142个坐标直接相减，最大绝对差1.11e-16，0个坐标超出本次数学诊断阈值1e-12；不再仅依赖加权行序签名。文件SHA-256与逐级误差见 [full-row validation](../verification/geometry/full_ordered_row_verification.v1.json)；产出来自只读源数学递推，不含采样生产CTest、历史MAT或DEC-005批准。参阅 [PROGRESS E-DOC-064](PROGRESS.md) 和 [AUDIT_PROCESS §12](AUDIT_PROCESS.md)。
-
-## 5. 固定证据与历史访问
-
-本轮起点`4fe7be6cc50a2c2b7dec1555edf9859c0497870b`；专项授权`ae8c094`，代码/三符号脚本检查点`7eb04ede3d6f381caad5be2f80bba88b16d21b3c`，结果`0985914`、报告`9a508c6`。具体已执行结果与未执行native分开见PROGRESS及结果JSON。
-
-AF-092～095上轮先登记/修订/复读历史、此前完整AU/文件/目标集合均由Git固定版本及原reviews保留。旧“尚未上传”“全部未实施”仅属当时事实；不得再反向覆盖当前明确授权与新增代码/数学证据。
+为避免旧计数和旧NOT_RUN叙述重复占据现行摘要，较早详细过程保留在不可变Git快照中：[本轮起点完整AUDIT](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/982537556be1ac5a414af368a0082806a9179d32/docs/AUDIT.md)。该文件的全部94条路径/状态及28个AU原则已在本版保留；本轮仅增加三条数学对象并更新当前叙述。更早固定来源、Wolfram与用户运行细节由 [PROGRESS](PROGRESS.md)、[AUDIT_PROCESS](AUDIT_PROCESS.md) 的历史链接追踪，不改写旧审批或Git历史。
