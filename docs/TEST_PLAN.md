@@ -1,12 +1,12 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **测试计划草案 v0.24，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
+> **测试计划草案 v0.25，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
 
 > **候选核对材料**：见 [HAR-2026-11-06-001 材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md)；历史提出的 MAT 类型/安全、Golden/容差仍要逐项执行。当前参考等级为 L2/L3/L4，不要求 MATLAB/Octave/L1；`atol=0.01`/`rtol=0.1` 仅首轮探索筛查。**低阶球谐已在 `8eab5dd`、`445ed151`、含624非零四元数/错误码检查的 `601c74de` 三个固定提交获得用户报告的 1/1 CTest Passed**，其他模块与完整验收未因此批准。
 
 > **长期约束**：[无需运行 MATLAB 政策](golden/NO_MATLAB_EXECUTION_POLICY.md) 取消 MATLAB/Octave/L1 强制前提；该决定不等于所有模块的 C++/CTest/MAT 运行授权，也不批准 DEC-005 最终数值门槛。
 
-> **当前实现现状**：球谐叶子已有已实测的 `tests/unit/test_low_order_harmonics.cpp`→`low_order_harmonics`，现在又新增 `tests/unit/test_low_order_archived_golden.cpp`→`low_order_harmonics_archived_golden`，两者在根 CMake 注册为**两个独立 CTest**；**只有前者在固定 `601c74de` 等旧提交获用户实际运行证据，后者尚未编译/执行**。其余 66 TC 中大部分业务测试实体仍为候选。历史独立 `src/mat_data_dict_probe.cpp` 对 582/582 MAT 的 READ_OK 仅证明数据字典读取，不等于正式 Reader/Writer 业务验收。
+> **当前实现现状**：球谐叶子现有已实测的 `test_low_order_harmonics.cpp`→`low_order_harmonics`，又新增原始候选 `test_low_order_archived_golden.cpp`→`low_order_harmonics_archived_golden` 及源拟合 `test_low_order_source_projection.cpp`→`low_order_harmonics_source_projection`，共三个独立 CTest。**仅第一项在固定601c74de等旧提交获用户实际运行证据；后两项（以及本轮新增源投影.cpp）尚未原生编译/运行。**其余 66 TC 中大部分业务测试实体仍为候选。历史独立 `src/mat_data_dict_probe.cpp` 对 582/582 MAT 的 READ_OK 仅证明数据字典读取，不等于正式 Reader/Writer 业务验收。
 
 **权限与验收分层**：球谐 C++/专项测试已取得用户的局部实现授权，用户本人运行了本次球谐编译/CTest；其他模块代码、代理自行运行项目命令、MAT 写回读、DEC-005/006、基线及发布仍按 [TODO](TODO.md) 的具体限制办理。
 
@@ -54,6 +54,13 @@ regression_tolerance=9.0949470177292824e-13
 - **候选输入原样保留**：以归档 JSON 固定 Git blob `1e6499eff3ce5b55503f8cd913b9f492629da499` 为唯一字段/字面值来源。AN-G06 在 `d=e_x` 的九个 MATLAB CS 基值逐个核对；AN-G07 使用 `AN-G03` 原始 20 个有序单位方向与系数 `C(1,1)=3.5449077018110318`，只测试近度恒为 1，**不声称本模块实现了源采样器或球谐拟合器**；AN-G08 按源 `m=-l,...,+l` 的3×5布局，对 `R_z(π/2)` 的输出系数以及完整 R3 的9项、R5的25项分别由三路线核对。原 JSON 状态仍为 `DRAFT_UNAPPROVED_UNEXECUTED`，不能擅自变更为已批准 Golden。
 - **独立性与验证边界**：C++ 期望值由归档字面数值固定提供，不从被测递推矩阵求 Expected；来源静态核查覆盖方向20行、九基9项、系数15值、R3九元素、R5二十五元素，**全部与 JSON 精确字面一致**；方向的最大双精度平方范数偏差约为 `3.33e-16`。新增可重放 [Wolfram 脚本](../verification/harmonics/verify_archived_sh_candidates.wl) 在独立 CS 球谐多项式上验证：AN-G06 9项差为0，AN-G07 恒值为1，AN-G08 3项R3/5项R5基函数作用差为0、整体场多项式差为0，结果 `allExact=True`。此符号检查已运行，**新 C++ 测试仍是 NOT_RUN**。
 - **下一阶段的真实证据**：用户在最新提交运行 `./build.sh` 后应看到 `low_order_harmonics`、`low_order_harmonics_archived_golden` 两个独立 CTest 的实际结果；新脚本已在单次 CTest 调用中设置 `--verbose`，会保留两者详细输出。必须再获取真实 exit/日志/误差并逐案处理失败，才能标记新测试 PASS。这里不增加 66 TC、不开其它生产 C++，也不冻结 DEC-005/008。
+
+### 2026-11-09 原 koeff_aus_near 的二阶逐系数投影专项（AF-045/051/055，已提交、NOT_RUN）
+
+- **仅限获授权的球谐叶子**：新增 `projectSourceCoefficientsOrderTwo`（`src/harmonics/low_order_source_projection.cpp`，声明在 `low_order.hpp`），映射原 `koeff_aus_near.m` 固定 `ordnung=2`。按原 `(l,m)` CS 顺序对每项独立计算 `a=(sum(near*Y)/N)*4pi`、`b=(sum(Y²)/N)*4pi` 再 `a/b`；**不求九项联立最小二乘**，不新增跨模块 HarmonicFitter、Adaptive/Session、采样或MAT接口。返回源形状 3×5 和无效位置零填充；输入限有限非空 N×K (K≥3)、N近度、单位方向，异常用本叶子明确错误状态。
+- **独立参考**：`verification/harmonics/verify_source_projection_order2.wl` 已用 Wolfram 15.0.1 实际精确运行，按 7 个非对称单位方向与近度 `(2,-1,4,1/2,-3,5/4,11/2)` 导出九项确切有理×根式系数；九个差全精确 0、所有九个分母正，Gram 的非对角项约 -0.2206948544207615 非零，具有与联合LS不等价的判别力。完整值与输入另存 `verification/harmonics/source_projection_reference.v1.json`，状态 **INDEPENDENT_WOLFRAM_EXACT_CPP_NOT_RUN_UNAPPROVED**；来源 `koeff_aus_near.m` 在 `origin/**` 保持只读。
+- **新测试范围及限制**：`tests/unit/test_low_order_source_projection.cpp` 与 CMake 新的第三个 `low_order_harmonics_source_projection` CTest 逐项核九个原CS系数、无效列置零、只读前三列、不合格 shape、非单位方向、NaN/Inf、分母零和极大有限近度溢出拒绝。**新 C++ 源与测试均未在用户 Ubuntu 原生编译/CTest；不记录通过，也不把 Wolfram 数学参考或现有旧测试1/1冒充新3/3**。
+- **仍缺的完整义务**：动态阶数、通用 HarmonicFitter/公共 ABI、真实源输入/独立 MAT L2、全面L3/L4、最终 DEC-005/008 及其它模块测试；AF-045/051/055仍开放。新源码和额外 CTest 是低阶SH小范围实现，不扩展 H-10/H-11 到 MAT/CLI/KvD/Adaptive/Runner。
 
 ## 1. 验证分层和前提
 
@@ -293,7 +300,7 @@ regression_tolerance=9.0949470177292824e-13
 | TC-F-BIAS-002 | REQ-F-BIAS-002 | tests/integration/test_bias.cpp | egomotion.bias.* | AC-F-BIAS-002 | 未编写/未运行 |
 | TC-F-BIAS-003 | REQ-F-BIAS-003 | tests/integration/test_bias.cpp | egomotion.bias.* | AC-F-BIAS-003 | 未编写/未运行 |
 | TC-F-TRAJ-001 | REQ-F-TRAJ-001 | tests/unit/test_trajectory.cpp | egomotion.trajectory.* | AC-F-TRAJ-001 | 未编写/未运行 |
-| TC-F-SH-001 | REQ-F-SH-001 | tests/unit/test_low_order_harmonics.cpp；tests/unit/test_low_order_archived_golden.cpp（仅低阶叶子） | low_order_harmonics（旧版已实测）；low_order_harmonics_archived_golden（新注册、未执行） | AC-F-SH-001 | `601c74de` 原回归已实测 1/1 Passed；新 AN-G06 源相位九项和 AN-G07 20 行常数近度是尚未原生执行的独立固定候选，不等于完整离散拟合/DEC-005 |
+| TC-F-SH-001 | REQ-F-SH-001 | tests/unit/test_low_order_harmonics.cpp；tests/unit/test_low_order_archived_golden.cpp；tests/unit/test_low_order_source_projection.cpp（SH-only） | low_order_harmonics（旧版已实测）；low_order_harmonics_archived_golden、low_order_harmonics_source_projection（新增均未运行） | AC-F-SH-001 | 601c74de原回归已1/1 Passed；AN-G06/07/08归档及原koeff_aus_near二阶逐系数投影新增独立精确参考与负例，尚未原生执行；全业务HarmonicFitter、DEC-005仍缺 |
 | TC-F-SH-002 | REQ-F-SH-002 | tests/unit/test_low_order_harmonics.cpp；tests/unit/test_low_order_archived_golden.cpp（仅低阶叶子） | low_order_harmonics（旧版已实测）；low_order_harmonics_archived_golden（新注册、未执行） | AC-F-SH-002 | `601c74de` 三路线旧回归用户实测 1/1 Passed；新 AN-G08 的源相位完整 R3/R5 及 3×5 系数由独立表提供，尚未原生执行；正式 rotator/ABI/DEC-005未验收 |
 | TC-F-ADAPT-001 | REQ-F-ADAPT-001 | tests/unit/test_adaptive_mfa.cpp | egomotion.adaptive.* | AC-F-ADAPT-001 | 未编写/未运行 |
 | TC-F-ADAPT-002 | REQ-F-ADAPT-002 | tests/unit/test_adaptive_mfa.cpp | egomotion.adaptive.* | AC-F-ADAPT-002 | 未编写/未运行 |
