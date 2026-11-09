@@ -309,6 +309,8 @@ regression_tolerance=9.0949470177292824e-13
 
 独立 [Wolfram完整六轮脚本](../verification/kvd/verify_near_sign_flip_exact_trace.wl) 与 [全部12轮参考](../verification/kvd/near_sign_flip_exact_trace.v1.json) 确认 Original/Modified 均按 `[true,false,false,false,false,false]` 触发 near 翻号，第1轮 `RMS≈7.071421356346968e-12`，第二至第六轮 `delta=0`，第六轮后停止，11/11数学自检通过。**这测试的是混合正负构造近度下的控制流，并非正深度物理场景或生产软件通过**；还缺 200轮/异常/一般输入、C++/CTest和最终DEC-005。仍归原 `TC-F-FILTER-001`、`TC-F-KVD-001/002`、`TC-DC-KVD-001`，无新 TC。
 
+**停止布尔上下界补充（KvD LLD §9.6）**：源码的 `((delta>grenze)&&(x<200)&&(delta>1e-7))||(x<6)` 在正常完成、x从0且每轮加1的前提下严格满足 **`6<=x_return<=200`**。人工 `RMS_k=1`（奇数k）/`RMS_k=2`（偶数k），`RMS_0=0`，可从逻辑上让前支在 `x<200` 时恒成立、于第200轮停止；**不代表这个RMS序列能由某个真实KvD输入产生**，也不是200轮软件/数值测试已经执行。现有六轮36次数学trace验证了最小迭代分支，200轮可达性/数值路径及 C++/CTest 仍是 AF-043/051 的真实卡点。
+
 ## 3. TC → 实体/CTest → AC 规划矩阵
 
 下列表格共 66 项，与 SRS **v0.14 草案**逐项对应；MAT I/O 的拟议数据结构、独立负例及测试文件映射详见 [mat_io.md §2、§5、§8–9](design/mat_io.md)。**独立 matio 探针已编写并执行**，但除球谐低阶叶子外，绝大多数拟议测试源文件、测试函数和 CTest 名称尚未创建；探针不是 CTest 注册项。人工审查项与自动测试区分。原始 45 个 MATLAB 源文件映射请参见 [REQUIREMENTS.md §9.2](REQUIREMENTS.md)。
