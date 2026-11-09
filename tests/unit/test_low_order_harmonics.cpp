@@ -15,7 +15,8 @@ namespace sh = egomotion::harmonics::low_order;
 namespace {
 std::size_t checks = 0;
 std::size_t checkedQuaternionGrid = 0;
-double maximumObservedAbsoluteResidual = 0.0;
+double maximumMatrixVectorResidual = 0.0;
+double maximumScalarResidual = 0.0;
 // 专项回归比较余量，不宣称替代最终DEC-005阈值。
 constexpr double kTolerance = 4096.0 * std::numeric_limits<double>::epsilon();
 constexpr std::array<sh::RotationMethod, 3> kMethods{{
@@ -33,7 +34,15 @@ void requireNear(const Eigen::MatrixBase<Left>& left,
     require(left.rows() == right.rows() && left.cols() == right.cols(), "shape mismatch");
     require(left.allFinite() && right.allFinite(), "non-finite comparison");
     const double residual = (left - right).cwiseAbs().maxCoeff();
-    maximumObservedAbsoluteResidual = std::max(maximumObservedAbsoluteResidual, residual);
+    maximumMatrixVectorResidual = std::max(maximumMatrixVectorResidual, residual);
+    require(residual <= kTolerance, message);
+}
+
+void requireScalarNear(double observed, double expected, const char* message) {
+    require(std::isfinite(observed) && std::isfinite(expected),
+            "non-finite scalar comparison");
+    const double residual = std::abs(observed - expected);
+    maximumScalarResidual = std::max(maximumScalarResidual, residual);
     require(residual <= kTolerance, message);
 }
 
@@ -105,8 +114,8 @@ void testBasisAndAction() {
                     require(moved.hasValue(), "coefficient rotation failed");
                     const auto observed = sh::reconstruct(moved.value(), d);
                     require(observed.hasValue(), "field reconstruction failed");
-                    require(std::abs(observed.value()-expected.value()(component)) <= kTolerance,
-                            "mu_new(d) must equal mu_old(A*d), for every basis coefficient");
+                    requireScalarNear(observed.value(), expected.value()(component),
+                                      "mu_new(d) must equal mu_old(A*d), for every basis coefficient");
                 }
             }
         }
@@ -152,18 +161,14 @@ void testAnalyticBasisAndDyadic() {
         const auto& h = result.value();
         const double isotropic = isotropic_scale*h(0);
         const double zterm = zonal_scale*h(4);
-        require(std::abs(isotropic-zterm+quadrupole_scale*h(7)-direction.x()*direction.x()) <= kTolerance,
-                "2015 dyadic xx h4 sign");
-        require(std::abs(isotropic-zterm-quadrupole_scale*h(7)-direction.y()*direction.y()) <= kTolerance,
-                "2015 dyadic yy h4 sign");
-        require(std::abs(isotropic+2.0*zterm-direction.z()*direction.z()) <= kTolerance,
-                "2015 dyadic zz");
-        require(std::abs(quadrupole_scale*h(5)-direction.x()*direction.z()) <= kTolerance,
-                "2015 dyadic xz");
-        require(std::abs(quadrupole_scale*h(6)-direction.y()*direction.z()) <= kTolerance,
-                "2015 dyadic yz");
-        require(std::abs(quadrupole_scale*h(8)-direction.x()*direction.y()) <= kTolerance,
-                "2015 dyadic xy");
+        requireScalarNear(isotropic-zterm+quadrupole_scale*h(7), direction.x()*direction.x(),
+                          "2015 dyadic xx h4 sign");
+        requireScalarNear(isotropic-zterm-quadrupole_scale*h(7), direction.y()*direction.y(),
+                          "2015 dyadic yy h4 sign");
+        requireScalarNear(isotropic+2.0*zterm, direction.z()*direction.z(), "2015 dyadic zz");
+        requireScalarNear(quadrupole_scale*h(5), direction.x()*direction.z(), "2015 dyadic xz");
+        requireScalarNear(quadrupole_scale*h(6), direction.y()*direction.z(), "2015 dyadic yz");
+        requireScalarNear(quadrupole_scale*h(8), direction.x()*direction.y(), "2015 dyadic xy");
     }
 }
 
@@ -193,8 +198,8 @@ void testMatlabSourcePhase() {
             + d2diff*matlab(2,4)*(d.x()*d.x()-d.y()*d.y());
         const auto result = sh::reconstruct(converted.value(), d);
         require(result.hasValue(), "converted MATLAB polynomial reconstruction failed");
-        require(std::abs(result.value()-legacy)<=kTolerance,
-                "MATLAB CS phase or invalid padding changed the scalar field");
+        requireScalarNear(result.value(), legacy,
+                          "MATLAB CS phase or invalid padding changed the scalar field");
     }
 }
 
@@ -235,8 +240,8 @@ void testDeterministicQuaternionGrid() {
                         require(coefficients.hasValue(), "quaternion-grid coefficient rotation failed");
                         const auto actualField = sh::reconstruct(coefficients.value(), generalDirection);
                         require(actualField.hasValue(), "quaternion-grid actual field failed");
-                        require(std::abs(actualField.value() - expectedField.value()) <= kTolerance,
-                                "quaternion-grid field action");
+                        requireScalarNear(actualField.value(), expectedField.value(),
+                                          "quaternion-grid field action");
                     }
                     ++checkedQuaternionGrid;
                 }
@@ -310,8 +315,8 @@ void testIndependentReference() {
     requireNear(choi.value().quadrupole, expected, "Choi/exact reference mismatch");
     const auto rx45 = sh::rotationIvanic(quaternionRotation(1+std::sqrt(2.0),1,0,0));
     require(rx45.hasValue(), "x45 failed");
-    require(std::abs(rx45.value().quadrupole(2,0)-root_three/2) <= kTolerance,
-            "IR98 printed minus-factor mutation must be rejected");
+    requireScalarNear(rx45.value().quadrupole(2,0), root_three/2,
+                      "IR98 printed minus-factor mutation must be rejected");
 }
 
 void testCompositionAndLayout() {
@@ -379,7 +384,8 @@ int main() {
         testFailureTaxonomyAndFiniteOverflow();
         std::cout << std::setprecision(17) << "PASS spherical-harmonics checks=" << checks
                   << " quaternion_grid=" << checkedQuaternionGrid
-                  << " max_abs_residual=" << maximumObservedAbsoluteResidual
+                  << " max_matrix_vector_abs_residual=" << maximumMatrixVectorResidual
+                  << " max_scalar_abs_residual=" << maximumScalarResidual
                   << " regression_tolerance=" << kTolerance << '\n';
         return 0;
     } catch (const std::exception& error) {
