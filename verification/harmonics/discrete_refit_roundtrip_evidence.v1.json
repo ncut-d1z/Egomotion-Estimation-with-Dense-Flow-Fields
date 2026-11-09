@@ -1,0 +1,130 @@
+{
+  "schema": "egomotion.harmonics.discrete-refit-roundtrip-math.v1",
+  "audit_date": "2026-11-10",
+  "status": "WOLFRAM_EXACT_SOURCE_FORMULA_CHECKED_NO_CPP_NO_MATLAB_NO_APPROVAL",
+  "baseline_commit": "21ad0c34f3c43fd1bbf33c847406dfd302e239ea",
+  "generator": "verification/harmonics/verify_discrete_refit_roundtrip.wl",
+  "generator_git_blob": "41a8d9c034d739702a7e867de1f52b1c1865c38f",
+  "generator_utf8_sha256": "6a212ec37201c741e33550b47a11d28b8381269df6a97d16745b7d69c6641c9e",
+  "kernel": "15.0.1 for Linux x86 (64-bit) (July 2, 2026)",
+  "source_blobs": {
+    "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/koeff_aus_near.m": "5ff91a2210a20e5acf79dec6e59ddd33b55529d3",
+    "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/near_aus_koeff.m": "7373c4376dfd5bbf281136ced39657d411a10ffa",
+    "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/kugelflfunc2.m": "edc0caa1f88bf91d2a189e4d3a283334f809b905",
+    "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/findeDreiecke.m": "8f6abf2cfb5daeca197314a19e382401d11df75f",
+    "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/oneit_adaptiv_matched_filter.m": "48e51bcd52fb8f27cf35b3fce38b28507af36e55"
+  },
+  "notation": {
+    "source_order": [[0,0],[1,-1],[1,0],[1,1],[2,-2],[2,-1],[2,0],[2,1],[2,2]],
+    "polynomials_F_row": ["1","-y","z","-x","x*y","-y*z","3*z^2-1","-x*z","x^2-y^2"],
+    "column_scales_S": ["1/sqrt(4*pi)","sqrt(3/(4*pi))","sqrt(3/(4*pi))","sqrt(3/(4*pi))","sqrt(15/(4*pi))","sqrt(15/(4*pi))","sqrt(5/(16*pi))","sqrt(15/(4*pi))","sqrt(15/(16*pi))"],
+    "basis_matrix": "B=F*S, S diagonal; B is the ORIGINAL normalized real CS basis",
+    "polynomial_coefficients": "beta=S*c; beta values below are not original normalized-source c",
+    "source_refit": "c_hat=D^-1 B^T r with G=B^T B, D=diag(G), assuming all diagonal entries positive",
+    "roundtrip": "c->B*c->D^-1*G*c; sample operator P=B*D^-1*B^T",
+    "generally_not": "joint least squares, a discrete orthogonal projection, or a positivity-preserving inverse"
+  },
+  "results": {
+    "checkCount": 35,
+    "passedCount": 35,
+    "allChecksPassed": true,
+    "checks": {
+      "sourceCommon4PiOverNCancels": true,
+      "nineOriginalCSChannels": true,
+      "base24Directions": true,
+      "baseUnitExact": true,
+      "baseFullRankNine": true,
+      "baseDiscreteGramDiagonal": true,
+      "baseCoefficientRoundtripIdentity": true,
+      "baseSampleOperatorIdempotent": true,
+      "biased36InputRows": true,
+      "biasedAllUnitExact": true,
+      "biasedNoZeroDenominators": true,
+      "biasedFullRankNine": true,
+      "constantFieldRepresentableExactly": true,
+      "sourceNormalizedBasisMatchesPolynomialCalculation": true,
+      "biasedPolynomialCoefficientsExact": true,
+      "positiveConstantProducesNegativeWitness": true,
+      "witnessIsAnObservedDirection": true,
+      "biasedMinimumExact": true,
+      "constantInputMeanInflates": true,
+      "coefficientRoundtripNotIdentity": true,
+      "sampleOperatorNotIdempotent": true,
+      "unitDiagonalNormalizedGram": true,
+      "sampleOperatorTraceNine": true,
+      "strictSpectralSpreadExact": true,
+      "distinct36Directions": true,
+      "distinctUnitExact": true,
+      "distinctContainsFullRankBase": true,
+      "distinctNoZeroDenominators": true,
+      "distinctNegativeWitnessExact": true,
+      "distinctWitnessExactRationalInterval": true,
+      "cubeRankSeven": true,
+      "cubeUndefinedChannels20And22": true,
+      "cubeMotionMatrixWellConditioned": true,
+      "narrowConeUndefinedChannel2Minus2": true,
+      "narrowConeMotionMatrixInvertibleAtQuarter": true
+    }
+  },
+  "balanced_control": {
+    "directions": "all distinct signed permutations of (1,2,2)/3; 24 rows; sign vectors in {-1,+1}^3",
+    "rank": 9,
+    "polynomial_Gram_diagonal": ["24","8","8","8","64/27","64/27","16/3","64/27","16/9"],
+    "coefficient_roundtrip_identity": true,
+    "sample_operator_idempotent": true
+  },
+  "biased_constant_case": {
+    "directions": "balanced control plus 12 additional copies of v=(1,2,2)/3; 36 rows total, base already contains v once",
+    "raw_nearness_every_row": 1,
+    "rank": 9,
+    "all_denominators_positive": true,
+    "polynomial_coefficients_exact": ["1","-3/5","3/5","-3/7","9/10","-9/8","3/5","-9/10","-9/7"],
+    "source_coefficients_approx": [3.5449077018110318,-1.2279920495357863,1.2279920495357863,-0.8771371782398473,0.823762109577392,-1.0297026369717401,1.902397102850885,-0.823762109577392,-2.3536060273639774],
+    "observed_witness_direction_exact": ["2/3","-2/3","-1/3"],
+    "reconstructed_witness_exact": "-9/140",
+    "minimum_over_observed_rows_exact": "-9/140",
+    "mean_over_all_36_rows_exact": "383/210",
+    "trace_of_T_minus_I_squared_exact": "25216/3675"
+  },
+  "all_distinct_constant_case": {
+    "directions": "balanced control plus w_j=stereographic(1/5+j/10^6,2/5), j=1..12",
+    "stereographic": "stereographic(u,v)=(2u,2v,1-u^2-v^2)/(1+u^2+v^2)",
+    "row_count": 36,
+    "distinct_row_count": 36,
+    "all_directions_exactly_unit": true,
+    "raw_nearness_every_row": 1,
+    "rank": 9,
+    "all_denominators_positive": true,
+    "same_observed_witness": ["2/3","-2/3","-1/3"],
+    "reconstructed_witness_approx": -0.06427848307778179,
+    "reconstructed_witness_exact_interval": "-65/1000 < value < -64/1000",
+    "exact_numerator_sign": -1,
+    "exact_denominator_sign": 1,
+    "exact_numerator_decimal_digits": 2853,
+    "exact_denominator_decimal_digits": 2855,
+    "certificate": "exact rational constructed and sign-checked in committed generator; decimal value is presentation only"
+  },
+  "zero_denominator_domains": {
+    "cube_eight_directions": {
+      "directions": "all eight (+-1,+-1,+-1)/sqrt(3)",
+      "rank_of_sampled_nine_basis": 7,
+      "zero_squared_norm_channels": [[2,0],[2,2]],
+      "motion_matrix_for_normalized_near_one": "(2/3)*I6",
+      "motion_condition2": 1
+    },
+    "four_direction_narrow_cone": {
+      "directions": "(+-2h/(1+h^2),0,(1-h^2)/(1+h^2)), (0,+-2h/(1+h^2),(1-h^2)/(1+h^2))",
+      "identically_zero_squared_norm_channel": [2,-2],
+      "motion_matrix_invertible_at_h_quarter": true
+    }
+  },
+  "scope_limits": [
+    "Exact arithmetic only for all counterexample signs, ranks and positive denominators. No C++/MATLAB/Octave or production Adaptive execution.",
+    "The first biased example uses repeated directions deliberately; the second independently certified case has 36 distinct unit directions and the same failure, so repeated rays are not necessary.",
+    "All input nearnesses in both refit counterexamples are exactly positive one and have a globally constant spherical-harmonic representation; this is not a negative-depth input fixture.",
+    "This does not invalidate correct SH definitions, IR/Choi rotation formulas, or historical source-faithful C++ tests. It limits exact-inverse and positivity claims for the source discrete per-channel coefficient estimator.",
+    "Spectral amplification of the isolated reconstruct/refit operator is not a proof that the full Adaptive motion/nearness/normalization iteration diverges.",
+    "Exact zero basis norms may become tiny nonzero quantities in a floating-point implementation. No MATLAB warning, NaN result, C++ error code, or threshold is inferred without runtime evidence.",
+    "No least-squares replacement, clipping, regularizer, new production threshold, TC, or DEC-005 approval is introduced."
+  ]
+}
