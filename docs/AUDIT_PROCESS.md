@@ -4,7 +4,7 @@
 >
 > **当前用户约束**：只做理论推导，允许符号计算，禁止C++代码实现。本轮不修改C++、头文件、CMake、CTest、Bash、MAT、原始`origin/**`，也不运行生产构建或测试。既有SH原生3/3来自用户固定5e522198的历史运行；不能据此扩展本轮权限。MATLAB/Octave/L1仍永久非必需。
 >
-> 原§2～15所有详细发现、纠偏、固定Git blob、SHA-256与结案证据完整保存在[本轮起点9825375的不可变台账](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/982537556be1ac5a414af368a0082806a9179d32/docs/AUDIT_PROCESS.md)及相应PROGRESS/reviews。按AF-074既定压缩原则保留全部AF编号/路径/目标/状态，历史正文以固定版本访问，不改写Git历史或旧审批。
+> 原§2～15详细发现、纠偏、Git blob、SHA-256与结案证据完整保存在[9825375不可变台账](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/982537556be1ac5a414af368a0082806a9179d32/docs/AUDIT_PROCESS.md)及PROGRESS/reviews；E-DOC-068的上轮状态亦见[21ad0c3固定台账](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/21ad0c34f3c43fd1bbf33c847406dfd302e239ea/docs/AUDIT_PROCESS.md)。全部AF编号/路径/目标/状态保留，不改写Git历史或旧审批。本轮E-DOC-069新增记录见§5、计数见§6。
 
 ## 1. 现行唯一问题台账
 
@@ -110,34 +110,30 @@
 
 ## 2. 历史固定证据与压缩边界
 
-本版未新增或删除AF，没有改变任何AF状态或表内完整验收目标。原详细§2～15，包括SH论文/三路线证明、用户SH 1/1→2/2→3/3实测、714行逐坐标核验、Adaptive对称/非对称单步及KvD36轮数学trace，均在[9825375完整台账](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/982537556be1ac5a414af368a0082806a9179d32/docs/AUDIT_PROCESS.md)保留；[同一提交的PROGRESS](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/982537556be1ac5a414af368a0082806a9179d32/docs/PROGRESS.md)保留E-DOC-054～067的来源身份/数值/纠偏。不可把当时NOT_RUN误当当前，也不可改写历史版本成PASS。
+本版未新增或删除AF，没有改变任何AF状态或表内完整验收目标。原详细§2～15，包括SH论文/三路线证明、用户SH原生实测、714行核验、Adaptive单步及KvD36轮数学trace，均在[9825375完整台账](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/982537556be1ac5a414af368a0082806a9179d32/docs/AUDIT_PROCESS.md)保留；[同一提交的PROGRESS](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/982537556be1ac5a414af368a0082806a9179d32/docs/PROGRESS.md)保留E-DOC-054～067。不可把当时NOT_RUN误当当前，也不可改写历史版本成PASS。
 
-## 3. AF-044/051/054/055/060 本轮理论子义务（E-DOC-068）
+## 3. AF-044/051/054/055/060 前轮理论子义务（E-DOC-068，历史）
 
-### 3.1 先登记待补问题
+### 3.1 当时待补问题
 
-本轮从固定9825375继续第一轮，实际待补数学问题是：s=0的完整原CS输入、s趋零的尺度与抵消区别、均值有效但几何退化、M良态但raw平移零时的源定义域。未将这些另造为可快速结案的AF；按既有AF-044/051/054/055/060推进。
+前轮从固定9825375继续第一轮，数学问题是：s=0的原CS输入、s趋零的尺度与抵消区别、均值有效但几何退化、M良态但raw平移零时的定义域。未另造易结案AF。
 
-### 3.2 实际修改与验证
+### 3.2 已取得的限定证据
 
-新增 [ADAPTIVE_MEAN_ZERO_CONDITIONING.md](design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md)、[可重放Wolfram脚本](../verification/adaptive/verify_zero_mean_conditioning_families.wl)和[实际数学结果](../verification/adaptive/zero_mean_conditioning_evidence.v1.json)。源`oneit_adaptiv_matched_filter.m`固定blob为`48e51bcd52fb8f27cf35b3fce38b28507af36e55`，脚本完成版blob为`36eedaf6477d0255b7ab0f12572506970da6847c`。实际执行Wolfram 15.0.1，25/25恒等式/谱/高精度SVD检查通过，6组参数点以70位SVD佐证精确谱表达式；不是原MATLAB或生产C++测试。
+[均值与条件数专题](design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md)、[Wolfram脚本](../verification/adaptive/verify_zero_mean_conditioning_families.wl)、[数学结果](../verification/adaptive/zero_mean_conditioning_evidence.v1.json)记录25/25检查及6组70位SVD样例。源oneit blob为`48e51bcd52fb8f27cf35b3fce38b28507af36e55`，脚本完成版blob为`36eedaf6477d0255b7ab0f12572506970da6847c`。
 
-- **准确变量阶段**：源近度raw r、s=mean(r)、翻号后r_flip及最终mu必须区分。s非零时mu=r/abs(s)，均值sign(s)；将r_flip改除abs(s)才会改变负支。专题澄清旧文档变量歧义，不修改原算法。
-- **s=0**：六轴方向的原CS系数可精确生成raw=(0,0,1,-1,0,0)，均值0但非全零；源除法无定义。全零输入亦无定义；后置near_new的1e-11不能保护此前均值除法或t归一。
-- **正尺度近零**：六轴与raw=a>0给M=(2/3)I6、条件数1，但raw平移=a*e_x，方向对横向绝对扰动角为atan(abs(eta)/a)。不再把所有近零s都称为矩阵近奇异。
-- **有符号抵消**：raw=a+b*y的六轴例使det(M)=64/729、所有特征值2/3恒定，2-范数条件数却约b²/(4a²)发散。a<b是含负近度的数学反例，不扩张到所有正深度场景。
-- **正深度几何退化**：四视线窄锥全部raw=1、s=1，完整矩阵精确谱给kappa2=h^-4；h为0.1/0.01/0.001分别得1e4/1e8/1e12。说明均值判断也不足以保护源求解。
-- **纯旋转后置失败**：六轴、raw=1、M条件数1，纯旋转rhs给raw平移0，源t_raw/norm(t_raw)无定义。旋转可估与无法定义平移方向不能混淆。
+- s非零时mu=raw_r/abs(s)，均值sign(s)；将已经翻号的r_flip改除abs(s)才会改变负支。
+- s=0的非全零与全零原CS输入都使源初始均值除法无定义；后置1e-11不保护此前除法。
+- 正near同比缩小时M可保持条件数1，但raw平移变小、方向对绝对扰动敏感。
+- 有符号抵消例的det(M)与全部特征值恒定，条件数却发散；不扩张为正深度场景。
+- 正深度四方向窄锥在s=1时仍有kappa2=h^-4。
+- 纯旋转在M良态时给raw平移零，后置方向归一无定义；旋转可估与无平移方向不能混淆。
 
-这些参数族的精确结论与数值独立核验已留存，依既有TC-F-ADAPT-001/002/003、TC-DC-ADAPT-001映射。没有在TEST_PLAN登记新的正式测试、没有确定新生产阈值，未授权修改求解器、状态提交或源负均值行为。
+这些数学子证据不代替Session、真实软件负例、正式容差或完整AC。其完整历史叙述及源数据见页首固定21ad0c3链接，参数族与证明没有被本轮更改。
 
-### 3.3 卡点和状态结论
+## 4. E-DOC-068前轮起止计数（历史）
 
-上述定义域/病态数学子问题已获得限定证据，但AF-044仍含一般动态、Session和失败原子提交；AF-051仍含获准真实测试/日志；AF-054仍须真实误差与DEC-005批准；AF-055/060还含其它参考、L2/L3/L4及逐AC完整资格。本轮没有这些生产/审批证据，因此**原23项未整改全部保留**。源代码、CMake/CTest/build脚本未改，不需要以重跑SH来检验本文理论更新。
-
-## 4. 本轮起止计数与阶段
-
-| 指标 | 本轮开始 | 本轮结束 | 净变化 |
+| 指标 | 开始 | 结束 | 净变化 |
 |---|---:|---:|---:|
 | 整改目标总数 | 97 | 97 | 0 |
 | 已整改 | 74 | 74 | 0 |
@@ -147,4 +143,39 @@
 | 正在审计文件 | 32 | 32 | 0 |
 | 未审计文件 | 0 | 0 | 0 |
 
-文件新增3份限数学审阅工件；旧94个路径/状态保留。第一轮没有清零，不启动以前置条件完成为要求的第二轮全面审计。计数必须由本文件97条唯一AF及AUDIT的97条唯一路径复核，不能将“97个文件”和“97个整改目标”误当相同集合。
+## 5. AF-044/045/047/051/055/060 离散SH重新拟合的理论整改（E-DOC-069，2026-11-10）
+
+### 5.1 本轮待核子问题与来源
+
+从固定 `21ad0c34f3c43fd1bbf33c847406dfd302e239ea` 的97AF/97文件继续第一轮。源 `koeff_aus_near.m` 是每系数独立归一，`near_aus_koeff.m` 是基函数线性重建。本轮核对二者能否在任意有限采样上互为逆、是否保持正近度，以及最后系数拟合的零分母能否被前置运动矩阵检查覆盖。以上归既有AF，不改变源算法，不创建生产代码或新TC。
+
+源SH三文件blob：koeff `5ff91a2210a20e5acf79dec6e59ddd33b55529d3`、near `7373c4376dfd5bbf281136ced39657d411a10ffa`、kugelflfunc2 `edc0caa1f88bf91d2a189e4d3a283334f809b905`。新增[理论专题](design/SH_DISCRETE_REFIT_CONSISTENCY.md)、[Wolfram复算脚本](../verification/harmonics/verify_discrete_refit_roundtrip.wl)、[实际结果JSON](../verification/harmonics/discrete_refit_roundtrip_evidence.v1.json)。脚本完成版blob `41a8d9c034d739702a7e867de1f52b1c1865c38f`，UTF-8 SHA-256 `6a212ec37201c741e33550b47a11d28b8381269df6a97d16745b7d69c6641c9e`；已从固定提交重新读取实际执行，35/35检查通过。
+
+### 5.2 已完成的理论子结果
+
+- **精确逆的适用条件**：B为N×9原实基、G=BᵀB、D=diag(G)，在每个Djj正的域内，源c_hat=D⁻¹Bᵀr。系数往返T=D⁻¹G，对所有c精确还原当且仅当G对角；样本算子P=BD⁻¹Bᵀ幂等也当且仅当G对角。一般证明写在专题，有限实例辅助符号核验，不把连续球面积分正交性当成离散正交。
+- **正向对照**：24个不同带符号排列(1,2,2)/3使Gram对角、rank9、全部分母正，源拟合可以精确往返，避免把局部反例泛化为“永远错误”。
+- **正近度精确反例**：在该24行后加12个v=(1,2,2)/3，全部36个near均1、rank9、全部分母正，重新拟合后在原样本d*=(2,-2,-1)/3重建为**−9/140**，全部样本均值变为383/210。原始近度是全正的，非前轮有符号负输入反例。
+- **互异方向交叉核查**：将额外12行改为有理立体投影psi(1/5+j/10^6,2/5)，得到36条互异精确单位方向且保留满秩基集。在d*处所得精确有理数仍负，位于(−65/1000,−64/1000)，近似−0.06427848307778179；精确分子2853位负、分母2855位正。不是舍入、重复行或零分母造成。
+- **末端定义域独立于运动条件**：八立方体角方向的M=(2/3)I6良态，但Y20/Y22全样本为零、最后两个系数比值为数学0/0。四方向窄锥的Y2,-2恒零，h=1/4时运动M仍可逆。前置均值/运动检查不能替代最后各球谐通道分母检查。
+- **不夸大谱结论**：G非对角时孤立T存在放大模态，但完整Adaptive还包含其他更新与归一，因此未证明完整迭代发散。
+
+### 5.3 完成范围与卡点
+
+本轮整改的是数学使用前提、独立参考与错误断言边界。**正确九基/IR/Choi旋转及历史3/3来源忠实性CTest不被推翻**；亦未据此认定当前C++有实现错误。未实现最小二乘替换、裁剪、正则、额外权重或新容差。理论零分母在浮点中可变为极小非零，未取得原MATLAB/C++运行时行为。
+
+AF-044仍含完整C_new/Session/状态提交，AF-045含完整声明/来源/数学及软件资格，AF-047含采样/RNG实际验证，AF-051含真实TC日志，AF-055/060含全部独立参考/AC和正式批准。没有这些生产/批准证据，因此原23个未整改目标全部保留。无需重跑旧SH构建，源/构建/测试文件没有修改。
+
+## 6. 本轮E-DOC-069起止计数与阶段
+
+| 指标 | 本轮开始 | 本轮结束 | 净变化 |
+|---|---:|---:|---:|
+| 整改目标总数 | 97 | 97 | 0 |
+| 已整改 | 74 | 74 | 0 |
+| 未整改 | 23 | 23 | 0 |
+| 审计文件总数 | 97 | 100 | +3 |
+| 已审计文件 | 65 | 68 | +3 |
+| 正在审计文件 | 32 | 32 | 0 |
+| 未审计文件 | 0 | 0 | 0 |
+
+三份新增文件只按其限定数学范围审核通过；旧97条AF完整行以及原97个文件路径/状态保留。第一轮未清零，未启动条件性第二轮全面审计。最终计数由本文件唯一AF和AUDIT唯一路径表复读，不以叙述条数替代。
