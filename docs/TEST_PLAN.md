@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **测试计划草案 v0.28，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
+> **测试计划草案 v0.29，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
 
 > **候选核对材料**：见 [HAR-2026-11-06-001 材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md)；历史提出的 MAT 类型/安全、Golden/容差仍要逐项执行。当前参考等级为 L2/L3/L4，不要求 MATLAB/Octave/L1；`atol=0.01`/`rtol=0.1` 仅首轮探索筛查。**低阶球谐已在 `8eab5dd`、`445ed151`、含624非零四元数/错误码检查的 `601c74de` 三个固定提交获得用户报告的 1/1 CTest Passed**，其他模块与完整验收未因此批准。
 
@@ -120,6 +120,9 @@ regression_tolerance=9.0949470177292824e-13
 
 **AN-G12 对称单步的数学实证增量（AF-044/055，未运行Adaptive CTest）**：原 `AN-G03` 的20个二十面体方向、常数近度1、理想 `p=-e_x+(d_x)d` 已通过 [Wolfram独立单步计算](../verification/adaptive/verify_AN_G12_symmetric_one_step.wl) 和 [固定数值结果](../verification/adaptive/AN_G12_symmetric_one_step_evidence.v1.json) 对照：`M1/M4` 对 `2I/3` 最大差 `1.1102230246251565e-16`，`M2/M3` 零，右端 `(2/3,0,0,0,0,0)`，`t=e_x`、`omega=0`、MSE=0。**由于源 near_new 分母有 `+1e-11`，返回近度范围 `[0.999999999921459,0.99999999999]`、系数相对原恒一近度最大差 `9.216760687991155e-11`，不能用严格等于1/初始C作为真实输出断言。** 该例只补对称理想输入的独立L3数学候选，不覆盖负/零均值、非对称6×6/退化异常、Session/原子提交，也未获Adaptive生产实现与CTest、DEC-005批准。见 [Adaptive LLD §10.2](design/adaptive_mfa.md)。
 
+**非对称九方向 Adaptive 单步：正/负均值近度数学资格（AF-044/055/060）**：在 [Adaptive LLD §10.3](design/adaptive_mfa.md) 与 [独立Wolfram结果](../verification/adaptive/asymmetric_signed_near_one_step.v1.json) 中，以九个有理单位方向、旧源 CS 3×5 系数和固定生成运动构造两个 N×6 切向流场。正均值分支是**非恒一正近度**且 M2/M3 非零、6×6 非奇异：精确有理均值 s=2819/2700，求得 z=(s,0,0,1/5,−1/7,1/11)、归一化 t=e_x、ω=(1/5,−1/7,1/11)、**MSE=0**，条件数约2.46656。负均值分支将源系数及带符号流场一并取反：s=−2819/2700，源流程将 near 先翻正但再除旧负 s，故归一化后的近度均值为 **−1**，并满足严格恒等式 M1−⟨μ(I−ddᵀ)⟩=2I；6×6 可逆（条件数约2.61270），该构造场的源单步返回 MSE≈0.21140062、运动偏离生成值。
+
+本案例完整保存输入、M1～M4、rhs、解、更新 near/C 和原 Condon–Shortley 相位的数值 reference。**负分支只用于原始近度均为负的非物理有符号控制流**，不得因此宣称所有物理正距离场景失败；若未来改变源归一规则，须另行审查并批准，不应在移植时暗改。当前这两例均仅为独立 Wolfram 数学执行，**没有生产 Adaptive C++/CTest/Session、没有 DEC-005 正式阈值**，归现有 TC-F-ADAPT-001/002/003 的待测数学参考，不新增 TC。
 ### 2.4 600 点 Adaptive 轨迹输出（TC-F-EXP-002）
 
 原始 agent_in_sphere_adaptive_matched_filter_test.m 采用 stellen=600、anzahliterationen=4、anzahldurchlaeufe=8、帧循环 i=2:599。当前代码明确 save 五个变量：allemittransfehler、allemitrotfehler、alleohnetransfehler、alleohnerotfehler、rottransratio，均保存为同名 MAT 文件。前四项为八次运行平均得到的 600×1 缓冲；rottransratio 仅保留代码在运行循环中最后赋值的 600×1 缓冲，不能擅自平均。with_errors 历史 `alleadap*` 按 [DEC-004](decisions/DEC-004_HISTORICAL_MAT_FIELDS.md) 标为 `HistoricalOnly`、只读保留；新 C++ 结果严格只生成五项当前有效 save 字段，**不以历史来源未明阻塞开发**。
@@ -200,7 +203,7 @@ regression_tolerance=9.0949470177292824e-13
 | TC-F-GEOM-001 / TC-NF-RNG-001 | `getvektor` 注入两个 uniform `(0.5,0)`，方向严格按 θ/φ 公式算，消耗 2 次；还须覆盖边界输入 0/1、耗尽与非法样本 | 仅静态推导；未运行 |
 | TC-F-FLOW-001～004 | `d=e_z, near=2, t=e_x, ω=e_y` 的生成光流 `(-3,0,0)`；另对 `nonpropfehler` 的 **0/+k/−k** 固定正态注入，记录每行 3 次调用与最终切向投影 | 数值点已手算；独立 L3/CTest 缺 |
 | TC-F-BIAS-001/002 | `iterationnumber=2` 的原 `xwerte=[6,24,96]`，缺损模式 N=6/24/96，完整球面 N=8/32/128；必须记录实际 N 与显示 x 分别来源 | 仅源表达式/形状复核；未运行 |
-| TC-F-SH-001、TC-F-ADAPT-001 | 常数近度 `Y00` 和AN-G12对称20方向的M1～M4/rhs、返回t/ω/MSE及near_new/C_new | 对称理想单步已有独立Wolfram实算参考，但没有Adaptive C++/CTest/Session；非对称/近奇异仍缺，数学候选不作正式TC PASS |
+| TC-F-SH-001、TC-F-ADAPT-001 | 对称AN-G12与非对称九方向两类输入的正近度M1～M4/rhs、t/ω/MSE、新 near/C | 已有独立Wolfram真实数学计算：九方向正均值非对称场M2/M3非零、z精确恢复、MSE=0，另有负均值源归一与M1差2I的反例；仍无Adaptive生产CTest/Session、近奇异/退化覆盖或正式批准 |
 
 所有例子不新增 TC ID，不替代现有 66 TC 的文件创建、测试执行、L2/L3/L4 独立证据及 DEC-005/008 正式审批。负有限噪声的 CLI 接收策略仍须批准；原 `.m` 未显式禁止该数值。
 
