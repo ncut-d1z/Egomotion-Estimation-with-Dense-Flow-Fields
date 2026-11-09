@@ -39,7 +39,7 @@
 | AC/TC 组（共用后缀） | 当前允许的数值参考 | 仍未完成的真实工作 |
 |---|---|---|
 | F-FILTER-001、F-KVD-001/002 | 三组人造固定输入：两组六方向24轮（正mean near），八方向12轮（首轮翻号，后五轮不翻），合计36轮独立Wolfram数学参考及四源Git blob/4工件SHA-256已留档 | 生产C++/CTest未授权且未执行本模块；真实L2 Bias、非退化一般输入、200轮及异常资格、正式DEC-005与所有AC批准仍缺 |
-| F-ADAPT-001/002/003、DC-ADAPT-001 | 对称AN-G12/20方向的一次迭代已独立Wolfram实算 `M1～M4/b/z/t/ω/MSE`、正则近度与更新系数；其余一般/病态输入、Session与L2终值继续候选 | 这只覆盖一个对称理想单步，不替代负/零均值、非对称/病态L3、Adaptive生产C++/CTest、Session原子提交、DEC-005与实际L2/L4 |
+| F-ADAPT-001/002/003、DC-ADAPT-001 | 除AN-G12对称20方向外，新补九个有理非对称方向的正/负均值近度完整源流程：正均值 M2/M3非零且精确恢复z与MSE=0；负均值归一后均值=-1、M1与加权投影差2I，来源矩阵非奇异、差异可复算，见 `verification/adaptive/asymmetric_signed_near_one_step.v1.json` | 两例均为Wolfram数学参考，负例原始近度全部为负不属于严格正距离场景；仍缺零/近零均值、近奇异、Session原子提交、多轮、生产Adaptive C++/CTest、正式DEC-005与其它L2/L4 |
 | F-SH-001/002 | L3 九基/一般R3/R5与系数转换已由独立Wolfram精确证明；原AN-G06/07/08固定参考与受限koeff_aus_near七方向九系数新增数学参考/测试 | 用户旧SH回归在601c74de原生CTest 1/1 Passed；**固定5e522198用户已实际构建SH源投影CPP并通过归档176次、源二阶拟合76次检查，三个SH CTest合计3/3 Passed**，广泛L2/L3/正式DEC-005/公共ABI仍缺，不得整项关闭 |
 | F-GEOM-002/003 | 已保存 i=0/1/2 全714行有序方向参考；独立Wolfram对全部2,142坐标完成逐行比较、最大绝对差1.1102230246251565e-16；候选和复核脚本SHA-256见 `verification/geometry/full_ordered_row_verification.v1.json` | 生产采样C++/CTest未获授权且未执行；本证据限数学参考，仍缺正式DEC-005、非法/退化/资源边界、RNG耗尽及其它采样噪声义务 |
 | F-FLOW-002/003、DC-RNG-001、NF-RNG-001 | L3 固定 RNG 值与调用数；L4 统计 | 固定源替身和真实统计/测试 |
