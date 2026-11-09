@@ -39,7 +39,7 @@
 | AC/TC 组（共用后缀） | 当前允许的数值参考 | 仍未完成的真实工作 |
 |---|---|---|
 | F-FILTER-001、F-KVD-001/002 | L3 Franz/KvD 逐轴逐轮 + L2 Bias 最终 | 完整一般/退化参考、真实 C++ trace/CTest、DEC-005 |
-| F-ADAPT-001/002/003、DC-ADAPT-001 | L3 M1～M4/b/z/MSE/Session + L2 终值 | 多组独立固定输入、状态/失败合同与真实测试 |
+| F-ADAPT-001/002/003、DC-ADAPT-001 | 对称AN-G12/20方向的一次迭代已独立Wolfram实算 `M1～M4/b/z/t/ω/MSE`、正则近度与更新系数；其余一般/病态输入、Session与L2终值继续候选 | 这只覆盖一个对称理想单步，不替代负/零均值、非对称/病态L3、Adaptive生产C++/CTest、Session原子提交、DEC-005与实际L2/L4 |
 | F-SH-001/002 | L3 九基/一般R3/R5与系数转换已由独立Wolfram精确证明；原AN-G06/07/08固定参考与受限koeff_aus_near七方向九系数新增数学参考/测试 | 用户旧SH回归在601c74de原生CTest 1/1 Passed；**固定5e522198用户已实际构建SH源投影CPP并通过归档176次、源二阶拟合76次检查，三个SH CTest合计3/3 Passed**，广泛L2/L3/正式DEC-005/公共ABI仍缺，不得整项关闭 |
 | F-GEOM-002/003 | 已保存 i=0/1/2 全714行有序方向参考；独立Wolfram对全部2,142坐标完成逐行比较、最大绝对差1.1102230246251565e-16；候选和复核脚本SHA-256见 `verification/geometry/full_ordered_row_verification.v1.json` | 生产采样C++/CTest未获授权且未执行；本证据限数学参考，仍缺正式DEC-005、非法/退化/资源边界、RNG耗尽及其它采样噪声义务 |
 | F-FLOW-002/003、DC-RNG-001、NF-RNG-001 | L3 固定 RNG 值与调用数；L4 统计 | 固定源替身和真实统计/测试 |
