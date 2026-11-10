@@ -1,51 +1,73 @@
-# 审计计划与文件进度（AUDIT）
+# 低阶球谐三路线一致性专项审计（AUDIT）
 
-> 现行规则与唯一文件三态表。数学证明、来源复核、源代码审阅、实际编译/CTest及正式批准必须分开；已审计只代表该行限定范围完成。问题两态及完整AF义务见 [AUDIT_PROCESS](AUDIT_PROCESS.md)。
+> **当前唯一有效审计范围，由用户明确指定。** 本文件及 [AUDIT_PROCESS.md](AUDIT_PROCESS.md) 是专项工作计划，不是整个 MATLAB→C++ 移植工程的全面审计计划。本轮只修订这两个文件中的目标、规则与跟踪口径；**不开展任何具体审计、推导、符号计算、代码修改或测试**。
 
-## 1. 规则与本轮边界
+## 1. 唯一审计目的与范围硬边界
 
-- 文件状态只用**空白 / 正在审计 / 已审计**；问题只用未整改/已整改。原复合AF的数学子义务有新证据，不等于整个AF可以关闭。
-- **当前用户明确要求：只做理论推导，允许符号计算，禁止C++实现。** 本轮不修改C++、头文件、CMake、CTest、Bash、MAT或`origin/**`；既往球谐代码授权及用户已有3/3测试不构成本轮新增代码许可。
-- 先锁定分支/提交，再核SRS↔HLD↔LLD、REQ↔AC↔TC↔P和数据/状态合同。来源与实测归PROGRESS；冻结身份归DOCUMENT_BASELINE_REGISTER；历史审批JSON和review不回写。
-- 发现问题先登记路径/义务；在已有AF范围内的子问题不另造易结案小目标。取得实际修改和固定提交复核后方可按完整义务结案。
-- SRS管理REQ/AC；HLD管理27条设计边；对象模型管理生命周期；LLD管理接口/数学；TEST_PLAN管理66TC；PLAN管理98P；新数学参考只映射既有TC，不新增正式TC。
-- MATLAB/Octave/L1永久不列为必需门槛；源文件和MAT只读。符号计算与独立参考不是原MATLAB运行或生产C++/CTest，不能用其替代软件证据。
-- 第一轮所有开放目标清零后，才进入用户条件性的第二轮全面审计。不得以局部SH或数学参考通过冒充全工程通过。
+**唯一目的**：核对论文 *Insect-Inspired Self-Motion Estimation with Dense Flow Fields—An Adaptive Matched Filter Approach* 实际依赖的**低阶实球谐函数**计算公式及其附带 MATLAB 实现，确认三条相互独立的数学路线结果一致；发现差异时定位到准确的公式、相位、下标、旋转约定和 MATLAB 源码位置。
 
-## 2. 历轮评审要点（28项保留）
+**只允许以下三条路线相互核对**：
 
-| 编号 | 审计原则 |
-|---|---|
-| AU-001 | 文档分类、审查结构与正式基线分离 |
-| AU-002 | SRS外部义务与附录REQ-DC分层 |
-| AU-003 | AC冻结引用绑定章节/版本/SHA/批准 |
-| AU-004 | HLD组件、部署、27边DAG、ADR、质量场景 |
-| AU-005 | 对象所有权、生命周期、45个.m映射 |
-| AU-006 | 582 MAT格式/类型/来源与逐值区分 |
-| AU-007 | MatDenseArray自拥有、RAII、边界 |
-| AU-008 | 严格/兼容读取、路径安全、无覆盖 |
-| AU-009 | CLI精确类型及错误码单一来源 |
-| AU-010 | 无自定义output-root，固定output/RunId |
-| AU-011 | Result/Status/ErrorDetail、JSONL显式失败 |
-| AU-012 | 五实验原更新顺序与save忠实 |
-| AU-013 | Bias xwerte与N、RNG消耗公平性 |
-| AU-014 | Franz/KvD逐轮轨迹、阈值及停止 |
-| AU-015 | Adaptive M1～M4、MSE、Session状态提交 |
-| AU-016 | Ivanic 1996/1998、Eigen-only、禁sdla |
-| AU-017 | Sophus物理旋转、Rᵀ、epsilon/反向 |
-| AU-018 | DEC-004当前生成/历史专属/缺字段 |
-| AU-019 | 分析索引、分段/平滑、数值曲线 |
-| AU-020 | 不运行MATLAB/L1；L2/L3/L4分级 |
-| AU-021 | 0.01/0.1仅筛查；最终DEC-005待定 |
-| AU-022 | 66TC实体/CTest证据真实性 |
-| AU-023 | 98P、里程碑、角色与证据归口 |
-| AU-024 | 统一版本/SHA/批准身份登记 |
-| AU-025 | MIT与第三方notice边界 |
-| AU-026 | 历史审批表认知负荷与权限边界 |
-| AU-027 | 人类待办集中TODO，不重复决策 |
-| AU-028 | 历轮回归扫描、风险分级 |
+| 路线 | 核对对象 | 明确的结论目标 |
+|---|---|---|
+| A：直接定义 | 从球谐函数定义与实基转换直接求 `l=0,1,2` 的九个实球谐函数及其旋转作用 | 独立解析基准，非以被测递推结果反推参考 |
+| B：实球谐递推 | Ivanic–Ruedenberg 1996 算法、1998 勘误及原 MATLAB `SHRotate.m` 的 `M/U/P/V/W` | 求得的 `l=0/1/2` 旋转块与 A 的定义结果一致 |
+| C：复球谐递推 | Choi 等 1999 年的复球谐递推，经复基→实基转换后得到实系数旋转 | 转换后与 A、B 的 `l=0/1/2` 结果一致 |
 
-## 3. 审计对象与逐文件三态
+**必须核对的 MATLAB 内容**：`origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/kugelflfunc2.m` 的 `legendre`（含 Condon–Shortley 相位）、归一化、`m` 符号分支；`SHRotate.m` 及文件内部 `M/U/P/V/W` 的递推、系数排列、矩阵转置/方向。只在确定这些关系时引用论文的定义、勘误及三条公式；允许给出明确约定变换，但不得把约定不同直接判作算法错误。
+
+**仅限阶数 `l=0,1,2`**：九个实基、(R_0)（1×1）、(R_1)（3×3）、(R_2)（5×5）；必要时核对一般 (SO(3)) 旋转和明确的独立特例，不能用某个 z 轴90度特例代替一般证明。历史符号验证和原生球谐测试可复用为证据，但其适用范围必须明确。
+
+### 1.1 明确禁止扩大研究与整改范围
+
+**以下内容一律不属于本专项，禁止审计、推导、生成新的参考/测试，禁止借“数学上值得研究”名义重新加入**：
+
+- KvD、Franz 运动估计、Adaptive MFA 的 M1～M4、6×6运动矩阵、near 正/负/零均值、Session、状态提交、收敛性、退化可观测性。
+- 球面采样/噪声/RNG、有序采样点扩展、MAT/CLI/Runner/实验/分析绘图、资源性能和全工程 SRS/HLD/66TC/98P/批准治理。
+- `koeff_aus_near.m` / `near_aus_koeff.m` 的**离散重新拟合、保正、幂等、最小二乘或逆问题**；这些即使使用球谐基也不是三路线基函数/旋转递推一致性的必要证明。
+- 任意高阶球谐数值稳定性、全 IEEE 754 边界、算法替代或工程重构，除非用户随后单独明确授权。
+
+**范围判断规则**：每个新问题必须能直接映射到 A/B/C 中的某个 `l<=2` 基函数或旋转公式，或上述两份 MATLAB 文件的确切行/函数；否则不得登记为专项目标，不得创建审计工件，不得扩大文件清单。用户再次扩大授权之前，本专项的范围变更为**禁止**。
+
+### 1.2 执行规则与本轮限制
+
+- 本轮仅修改 `docs/AUDIT.md` 和 `docs/AUDIT_PROCESS.md`；本轮**不实际进行上述 A/B/C 核验**，不调用 Wolfram 执行新证明，不修改其他文件、不写 C++、不运行 CMake/CTest/MATLAB。
+- 后续如用户允许具体审计，优先**复用已有论文、原 MATLAB、Wolfram与独立参考**；仅在三路线结论存在准确未闭合差异时才补充最少量符号计算。不得为了增加已审计文件数量而创建无关证明或新台账。
+- MATLAB 文件保持只读；MATLAB/Octave 运行不列为必要前提。符号计算、公式审计、数值专项 CTest 是不同证据，不能互相冒充。
+- 文献、论文印刷/勘误问题、实基相位、坐标/旋转约定须明确区分；不得暗改原论文或 MATLAB 算法。
+- 使用 [AUDIT_PROCESS](AUDIT_PROCESS.md) 的**六个专项目标**作为结案唯一依据。每一目标只能在其完整公式/代码对应及结论明确后标“已整改”；未核验的继续“未整改”。不能把原97个跨模块整改目标的任何一项作为本专项阻塞。
+- **第二轮规则**：只有六个专项整改目标全部明确结案，才可对这13个专项文件进行限定范围的第二次复核；不得自动跳转到整个项目的“第二轮全面审计”。
+- 此处的“已审计”标记继承此前限定历史审核记录，**不代表本轮实际开展核验或三路线总目标已通过**。
+
+## 2. 专项唯一审计对象与文件状态
+
+| 仓库根相对路径 | 状态 | 本专项唯一关联 |
+|---|---|---|
+| `docs/AUDIT.md` | 已审计 | 本专项范围、禁止扩张、只读/符号及结案规则；本轮仅修订范围 |
+| `docs/AUDIT_PROCESS.md` | 已审计 | 六项唯一专项整改目标、非专项历史隔离；本轮仅修订目标 |
+| `docs/design/harmonics.md` | 正在审计 | 仅九个实球谐基值、相位/排列和与 MATLAB 一致性的既有论证 |
+| `docs/design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 正在审计 | 仅 Ivanic–Ruedenberg 的 R0/R1/R2、1998 勘误及 M/U/P/V/W 递推公式 |
+| `docs/golden/SH_PAPER_VERIFICATION_CASES.md` | 已审计 | 复用已有的低阶三路线验证候选；不新增外围 Golden |
+| `docs/reviews/SH_PAPERS_SOURCE_AUDIT_2026-11-09.md` | 已审计 | 历史论文、勘误与原 MATLAB 来源核查；复查目标仅限球谐 |
+| `docs/reviews/LOW_ORDER_SH_THREE_ROUTE_VERIFICATION_2026-11-09.md` | 已审计 | 历史三路线证明证据；本轮仅定义结案核对任务 |
+| `verification/harmonics/verify_low_order_basis.wl` | 已审计 | 直接定义九实基和低阶解析恒等式的历史符号输入 |
+| `verification/harmonics/verify_low_order_rotations.wl` | 已审计 | 低阶一般SO(3)三路线旋转块的历史精确符号输入 |
+| `verification/harmonics/verify_low_order_layout.wl` | 已审计 | 复/实与 MATLAB 系数排列、相位及旋转作用约定的历史验证 |
+| `verification/harmonics/verification_results_2026-11-09.json` | 已审计 | 固定历史 Wolfram 检查数据；不冒充本轮重新执行 |
+| `origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/kugelflfunc2.m` | 空白 | 专项待核：MATLAB legendre 相位、归一化与全部九个函数 |
+| `origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/SHRotate.m` | 空白 | 专项待核：degree=0/1/2、M/U/P/V/W、转置方向和实系数作用 |
+
+**专项现行文件口径：13个唯一文件＝9已审计＋2正在审计＋2空白。** 其中两份原 MATLAB 文件标空白，表示下一轮才进行针对三路线的一致性审阅；不据此断言其源码错误。此表仅含范围直接相关文件，不引入全工程登记或新增模块。
+
+## 3. 审计完成标准
+
+最终报告必须清楚给出：九个 `Y_{lm}` 的 A/B/C 对照结果、`R_0/R_1/R_2` 一般旋转一致性、复实基转换/索引和相位映射、`kugelflfunc2.m` 及 `SHRotate.m`（M/U/P/V/W）的逐式核对、论文勘误或源码差异的明确裁定、已证范围及未证边界。**允许明确发现错误或不足，禁止为了宣称一致而忽略反例。** 不要求全工程实现、对其它算法的证明或新平台部署。
+
+本轮的完成标准仅为：**两份范围文件内容一致、仅两文件发生修改、专项与历史计数不混用**；不是三路线审计工作的数学结案。
+
+## 附录 A：原全工程审计表（历史存档，不属于本专项）
+
+以下原100个对象及其原有状态，取自本轮开始前固定提交 [`c38b4b6`](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/c38b4b63307c5f3febf2bee0aac95b565f44a46c/docs/AUDIT.md)。**下表仅供追溯，绝不可与上面的13个专项对象合并计数，也不得据此继续发起全工程审计。**这些历史状态没有被宣布完成或取消；本轮只是将其从现行专项的工作范围移出。
 
 保留本轮起点 `21ad0c34f3c43fd1bbf33c847406dfd302e239ea` 的97个路径和各自状态；新增3份离散SH重新拟合理论工件，均仅在声明的数学复核范围内标为已审计。现有32份在审文件不因新增数学证明而自动关闭。用户已在固定`5e522198`完成SH 3/3原生测试；本轮新数学反例不抹去该来源忠实性运行证据，也不扩大为该版本生产资格。
 
@@ -152,16 +174,6 @@
 | `verification/harmonics/discrete_refit_roundtrip_evidence.v1.json` | 已审计 | 35/35结果及输入构造、精确−9/140、互异方向有理符号证书、源blob与执行脚本SHA-256 |
 | `docs/design/SH_DISCRETE_REFIT_CONSISTENCY.md` | 已审计 | 限定理论专题：离散G对角充要条件、P幂等、正值反例与末端分母；不改变原算法/批准软件资格 |
 
-## 4. 本轮结果与仍开放义务
+## 附录 B：旧统计与证据入口（历史，不作本专项进度）
 
-- **问题两态：97个唯一AF＝74已整改＋23未整改。** 没有新增易结案AF，也没有减少原复合义务。
-- **文件三态：100个唯一对象＝68已审计＋32正在审计＋0空白。** 本轮起点97/65/32/0；新增三份数学工件限定审阅，不代表生产接口冻结。
-- **本轮E-DOC-069**：由原逐项比值推导T=D⁻¹G、P=BD⁻¹Bᵀ；所有系数准确往返和P幂等都以离散G对角为充要条件。输入near全1、rank9、各分母正的36行例在已观测方向重建为−9/140；改为36条互异有理单位方向仍严格为负。八立方体角方向的运动M条件数1，却有Y20/Y22的SH拟合分母0；窄锥有Y2,-2零通道。参阅[离散SH拟合专题](design/SH_DISCRETE_REFIT_CONSISTENCY.md)和[PROGRESS E-DOC-069](PROGRESS.md)。
-- **前轮E-DOC-068仍有效**：原均值为零、正尺度/有符号抵消/正深度窄锥条件数及纯旋转raw平移零的分层定理未改变；本轮进一步补充最后C_new阶段的独立定义域。
-- 原SH基函数、IR/Choi旋转与源码忠实性测试不因拟合缺乏一般保正而被否定。新反例不是完整Adaptive发散证明，也不是现有实验默认采样配置已发生故障的实测。
-- AF-044/045/047/051/055/060仍需各自生产/异常/接口/完整参考及批准；本轮不以联合最小二乘、裁剪、阻尼或放宽阈值替换原方法。第一轮23项开放，未启动条件性第二轮全面审计。
-- 本轮无需用户重跑原SH构建，C++/CMake/CTest/build.sh均未改。
-
-## 5. 固定历史证据
-
-上一轮完整规则/97文件集合及E-DOC-068审阅范围保留于[21ad0c3固定AUDIT](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/21ad0c34f3c43fd1bbf33c847406dfd302e239ea/docs/AUDIT.md)。更早94文件及28AU原则在[9825375固定AUDIT](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/982537556be1ac5a414af368a0082806a9179d32/docs/AUDIT.md)。本轮保留全部原97路径/状态和AU原则，仅新增三条数学对象并更新当前叙述；历史数学/原生运行来源仍由PROGRESS、AUDIT_PROCESS和固定Git追踪，不改写历史审批。
+原全工程审计有100个路径，68已审计、32正在审计、0空白；原全工程整改有97个目标，74已整改、23未整改。以上数字**仅是旧口径冻结快照**，不再作为低阶球谐专项的当前绩效统计。此前Wolfram、数学模型与用户运行证据可在原固定提交及[PROGRESS.md](PROGRESS.md)查阅；本轮没有执行任何数学或软件审计。
