@@ -112,7 +112,7 @@ flowchart LR
 | plotting（可选） | 统计结果的 2D/3D 可视化 | analysis | 绘图数组、单位、图例与区间 | 后端缺失；不得修改原始数值 |
 | cli/composition | 命令、参数检查、状态/退出码和对象装配 | experiments、analysis、mat_io、**contracts**；plotting 可选 | 只读输入路径、独立输出根 | 参数、源/输出冲突、执行失败 |
 
-**组件与接口的唯一来源**：本 HLD §3 只规定能力级组件职责和依赖方向，返回值/错误枚举及资源类型由 [contracts.md](design/contracts.md) 维护，CLI schema 由 [cli.md](design/cli.md) 维护，各算法接口/公式归模块 LLD；**不在 HLD 复制具体签名**。本节内部项目模块依赖集合与 §4 target 表、§4.1 的 27 条直接 DAG 边一一对照；**在需要原 `rodrigues.m` 向量→旋转矩阵能力的实现分支，Sophus `SO3d::exp` 是已选定的外部依赖；仅不使用该能力的 target 无需链接 Sophus**。Don Williamson 仅为代码参考而非生产库依赖；纯 Eigen R5 禁止链接 sdla。上述外部依赖不增设内部 `egomotion_` target DAG 边；本次是**文档合同**，尚不能等同真实 CMake target 的编译/链接。实际 C++ 实现可能需要修改依赖时，须同时维护三处与 ADR-008。
+**组件与接口的唯一来源**：本 HLD §3 只规定能力级组件职责和依赖方向，返回值/错误枚举及资源类型由 [contracts.md](design/contracts.md) 维护，CLI schema 由 [cli.md](design/cli.md) 维护，各算法接口/公式归模块 LLD；**不在 HLD 复制具体签名**。本节内部项目模块依赖集合与 §4 target 表、§4.1 **25条内部依赖箭头**对应；§4.1另有 **2条外部依赖箭头**（`domain→Eigen`、`matio→matio/zlib`），图中合计27条，不把外部库边误称为内部target边；**在需要原 `rodrigues.m` 向量→旋转矩阵能力的实现分支，Sophus `SO3d::exp` 是已选定的外部依赖；仅不使用该能力的 target 无需链接 Sophus**。Don Williamson 仅为代码参考而非生产库依赖；纯 Eigen R5 禁止链接 sdla。上述外部依赖不增设内部 `egomotion_` target DAG 边；本次是**文档合同**，尚不能等同真实 CMake target 的编译/链接。实际 C++ 实现可能需要修改依赖时，须同时维护三处与 ADR-008。
 
 **边界不变量**：求解器不 include matio 或绘图库；I/O 不持有求解器；实验 Runner 不重复数学公式；分析/绘图不修改求解结果。实验参数按 MATLAB 的五个入口分别定义，禁止以一个未经核准的全局默认值覆盖其差异。
 
@@ -177,7 +177,7 @@ flowchart BT
   C --> P
 ~~~
 
-箭头方向为**依赖者指向依赖项**；plotting 只有启用时链接。**egomotion_contracts 是拟议的纯接口 target**：`egomotion_experiments` 和 `egomotion_analysis` 只依赖接口声明与 domain 值类型；`egomotion_matio` 实现这些接口，只有 `egomotion_cli` 的 Composition Root 依赖具体 MAT target 并负责注入。这样消除“文字说抽象、target DAG 却链接具体 MAT”的不一致。图中明确列出 sampling / simulation 对 RNG、采样抽象所在 contracts target 的接口依赖、experiments 对 sampling 的直接依赖，以及 CLI 对 contracts 的直接依赖；这些仍为**拟议 target 链接关系**。使用 `bash scripts/check_docs_traceability.sh` 可做**文档 DAG 无环静态检查**；目前开发分支尚未建立完整 CMake 业务 targets，因此**无法宣称完成真实编译、链接或跨 target 测试替身验证**。需要更细分库或因实际编译发现循环依赖，应出具 ADR 并更新此图，不得用巨大单一库掩盖耦合。
+箭头方向为**依赖者指向依赖项**；plotting 只有启用时链接。**egomotion_contracts 是拟议的纯接口 target**：`egomotion_experiments` 和 `egomotion_analysis` 只依赖接口声明与 domain 值类型；`egomotion_matio` 实现这些接口，只有 `egomotion_cli` 的 Composition Root 依赖具体 MAT target 并负责注入。这样消除“文字说抽象、target DAG 却链接具体 MAT”的不一致。此图**共27条箭头=25条内部模块边＋2条外部库边**，均属设计层候选而非实际链接证据。图中明确列出 sampling / simulation 对 RNG、采样抽象所在 contracts target 的接口依赖、experiments 对 sampling 的直接依赖，以及 CLI 对 contracts 的直接依赖；这些仍为**拟议 target 链接关系**。使用 `bash scripts/check_docs_traceability.sh` 可做**文档 DAG 无环静态检查**；目前开发分支尚未建立完整 CMake 业务 targets，因此**无法宣称完成真实编译、链接或跨 target 测试替身验证**。需要更细分库或因实际编译发现循环依赖，应出具 ADR 并更新此图，不得用巨大单一库掩盖耦合。
 
 ### 4.2 公有/私有边界检查
 
@@ -240,7 +240,7 @@ sequenceDiagram
 | 入口与输出身份 | `cli.md §1–3`：无自定义输出根；OS 独立随机/用户 `--run-id`，Composition Root 在仓库固定 `output/` 下独占建目录 | CLI 解析/随机源/并发目录创建未实测 |
 | Runner 与 Writer | `experiments.md §6–8`：RunContext 持有唯一身份并注入 Writer；`mat_io.md §3`：Writer 在实际写出时再次验证目标路径，拒绝覆盖/`origin/**` | `openat/O_NOFOLLOW` 等 TOCTOU、MAT 回读与异常负例未实施 |
 | 失败提交 | `OBJECT_MODEL.md §4`、`contracts.md §3`：Adaptive 失败不提交，不能恢复则停止连续序列；Manifest 保留真实部分结果 | 原子提交/Session 回归与真实异常测试缺失 |
-| 静态依赖 | §4 / §4.1 **27 条设计边**与 `contracts` / `matio` 分层，MAT 探针证据仅引用 PROGRESS | 真实 CMake target、替身跨模块编译/链接与 DEC-006 绩效没有证据 |
+| 静态依赖 | §4 / §4.1 **27条设计箭头（25内部、2外部）**与`contracts`/`matio`分层，MAT 探针证据仅引用 PROGRESS | 真实 CMake target、替身跨模块编译/链接与 DEC-006 绩效没有证据 |
 
 **当前结果**：限定为文档数据流、职责与已选政策对照；不改变 27 边集合，也不签署 HLD。AF-038 保持「未整改」。
 
