@@ -87,6 +87,51 @@
 | 第0阶段：用户意见录入、实际审计前 | 36 | 0 | 0 | 36 | 6 | 0 | 6 |
 | 第1阶段：源文档限定审查与三项纯文档整改 | 36 | 6 | 14 | 16 | 8 | 3 | 5 |
 
-## 6. 结案纪律
+## 6. 36份文件的同一基准提交身份（DAR-005：只读静态快照）
+
+本表已从 GitHub 固定提交 [`9af189f97071`](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/9af189f97071692f4d96c9a431144485e3b76aa3) 的完整Git tree实际核对全部36份本轮评审文档，并记录对应的**Git blob对象SHA**；树内容未截断。它**不是**MAT数据的独立SHA-256，也不是每份规范的最新HEAD批准身份。已有文档在这一基准之后被修改，修订提交及其新blob与该基准旧blob应分开记录，不能把下面任一旧SHA用作正式冻结依据。
+
+| DOC ID | 基准时docs/下相对路径 | 固定基准Git blob SHA | 证据性质 |
+|---|---|---|---|
+| DOC-001 | `REQUIREMENTS.md` | `51c0cfed22a80340eaadce059e5f579e9c56f3ef` | 仅文件身份；不是已批准基线 |
+| DOC-002 | `ARCHITECTURE.md` | `549a74093bc128fb948e3e98a98f008e42ec585d` | 仅文件身份；不是已批准基线 |
+| DOC-003 | `OBJECT_MODEL.md` | `9bc35d7d8b66c6337b85a9e37e3de530e0278176` | 仅文件身份；不是已批准基线 |
+| DOC-004 | `design/README.md` | `18cbb3c153bf6c1eddae65e225deb2d8cf0b2186` | 仅文件身份；不是已批准基线 |
+| DOC-005 | `design/contracts.md` | `f7369e836820603fdb9237bf685f12c7f5daaed4` | 仅文件身份；不是已批准基线 |
+| DOC-006 | `design/cli.md` | `82c38559d48fb1ad6cc6a76c8c1c6533b6a4977d` | 仅文件身份；不是已批准基线 |
+| DOC-007 | `design/mat_io.md` | `b8742f42a4e28578ad9cd01bfbbae1637ad44035` | 仅文件身份；不是已批准基线 |
+| DOC-008 | `design/sampling_noise.md` | `e47fd2295afe1f3889ce07fa68ab3adda8d05a27` | 仅文件身份；不是已批准基线 |
+| DOC-009 | `design/trajectory.md` | `b749ba78545d561c664acc079e54cbc1beb6083b` | 仅文件身份；不是已批准基线 |
+| DOC-010 | `design/kvd.md` | `ca48de30582168275f470db61e22834f321d9869` | 仅文件身份；不是已批准基线 |
+| DOC-011 | `design/harmonics.md` | `348f664d91932f1493f5ef9cec8bc407ef4648ab` | 仅文件身份；不是已批准基线 |
+| DOC-012 | `design/adaptive_mfa.md` | `97c087e9b42e4e23c7f046f4dbf0632fb16ae063` | 仅文件身份；不是已批准基线 |
+| DOC-013 | `design/experiments.md` | `224b2707be6b0b0df885f727498c70dfe7eb6fb5` | 仅文件身份；不是已批准基线 |
+| DOC-014 | `design/analysis_plotting.md` | `e9bc9250730609393734ad7235a57c08154aed65` | 仅文件身份；不是已批准基线 |
+| DOC-015 | `design/SH_ROTATION_IVANIC_RUEDENBERG.md` | `1f428091894e2899aa9225c7c9f99fe2cf5655da` | 仅文件身份；不是已批准基线 |
+| DOC-016 | `design/SH_DISCRETE_REFIT_CONSISTENCY.md` | `caba819f7fcabebdba84dfcefd0fc312e7215b00` | 仅文件身份；不是已批准基线 |
+| DOC-017 | `design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md` | `a952451caa058e321fc34350de54b50822a83b65` | 仅文件身份；不是已批准基线 |
+| DOC-018 | `TEST_PLAN.md` | `cab2bf5db049619ba14cd29f8b499b79cd178c60` | 仅文件身份；不是已批准基线 |
+| DOC-019 | `PLAN.md` | `74bfba0b94c4a0cb615a6cea1da1f03b567322eb` | 仅文件身份；不是已批准基线 |
+| DOC-020 | `PROGRESS.md` | `46bfabf0d4a8c19f9a65f7585967d93700e05dac` | 仅文件身份；不是已批准基线 |
+| DOC-021 | `AUDIT.md` | `c36cb0a0b8d4f96222687e41c340796527070a13` | 仅文件身份；不是已批准基线 |
+| DOC-022 | `AUDIT_PROCESS.md` | `5ec8a185d662275c0b8e21f5e5f4288b6236f24f` | 仅文件身份；不是已批准基线 |
+| DOC-023 | `DOCUMENT_BASELINE_REGISTER.md` | `2fbf852ae7799f2ddebd352a10177f0a5c79b5f0` | 仅文件身份；不是已批准基线 |
+| DOC-024 | `SOURCE_INVENTORY.md` | `9d72f7517e93f774c4b67338cc6b93f6723e7712` | 仅文件身份；不是已批准基线 |
+| DOC-025 | `MIGRATION_MATRIX.md` | `3d61d69f7962a29c8720528f7fa71628c7008331` | 仅文件身份；不是已批准基线 |
+| DOC-026 | `TODO.md` | `d3a41435ecb9d79997e97e0063decf8acc96bb74` | 仅文件身份；不是已批准基线 |
+| DOC-027 | `decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | `063acaa2dc8e7524546fb85a985a7f8b8e860a88` | 仅文件身份；不是已批准基线 |
+| DOC-028 | `decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md` | `72a7ad3cf72d32603651d5114a66ea0fba3f8552` | 仅文件身份；不是已批准基线 |
+| DOC-029 | `decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md` | `0c708af126d031707e737136c075d29483667877` | 仅文件身份；不是已批准基线 |
+| DOC-030 | `approval/DECISION_IMPLEMENTATION_NOTES.md` | `2dc89dfa563b35c81c747f89c2e0012ddc2ada20` | 仅文件身份；不是已批准基线 |
+| DOC-031 | `approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md` | `8da7c5d30cea2bdeb411d6e817721d53a09302bb` | 仅文件身份；不是已批准基线 |
+| DOC-032 | `golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md` | `df9612759549a9e9820b33a772540a80bbc90c3e` | 仅文件身份；不是已批准基线 |
+| DOC-033 | `golden/GOLDEN_TOLERANCE_PROPOSAL.md` | `fe1ad898090eb2d66ca99149dfeac189cf7c5696` | 仅文件身份；不是已批准基线 |
+| DOC-034 | `golden/NO_MATLAB_EXECUTION_POLICY.md` | `5f2bc13f3fbf0636ac15f5dfe0c38611b80074be` | 仅文件身份；不是已批准基线 |
+| DOC-035 | `golden/SH_PAPER_VERIFICATION_CASES.md` | `1ac44cba46e0d63b9f54f40fe18dbbc4279a627a` | 仅文件身份；不是已批准基线 |
+| DOC-036 | `golden/analytic_golden_candidates.v1.json` | `1e6499eff3ce5b55503f8cd913b9f492629da499` | 仅文件身份；不是已批准基线 |
+
+**当前状态仍以上方DOC三态为准。** 确认全部36份文件在同一提交存在，并不意味着36份都已完成内容审计，更不意味着批准人/范围/时区/例外/真实测试俱全。正式基线应在签署时重新固定最新commit+blob并记录完整批准证据。
+
+## 7. 结案纪律
 
 针对文档措辞/数量错误可以完成纯文档整改；但AC冻结、正式接口ABI、真实C++/CTest/写回读、独立MAT SHA-256、DEC-005/006/008及所有者签字，不得通过编辑Markdown宣布完成。严格保持MATLAB/Octave/L1**永久非必需**。代码/原MAT修改、编译、运行及发布不属于本轮用户指示。
