@@ -1,12 +1,12 @@
 # 对象模型与生命周期合同（Object Model）
 
-> **对象模型草案 v0.6；P0.7/P0.8 待评审，未冻结、未建立对应 C++ 类。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入；各文档当前版本、固定 SHA 和冻结状态统一由 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记，运行结果以 [PROGRESS](PROGRESS.md) 为准。
+> **对象模型草案 v0.7；P0.7/P0.8 待评审，未冻结，拟议业务类与跨模块公共ABI尚未建立。受限低阶球谐叶子C++已独立实现并在固定SHA获得用户原生3/3 CTest证据，不能将其归入下列未创建的公共类。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入；各文档当前版本、固定 SHA 和冻结状态统一由 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记，运行结果以 [PROGRESS](PROGRESS.md) 为准。
 
 ## 1. 对象职责和约定
 
 ### 1.1 类、接口、值对象的职责
 
-以下名称是**拟设计的 C++ 类或值类型**，尚未创建；接口细节需在 P0 调用关系与数据形状审计后固定。类型和方法名称只代表职责，不要求必须逐字采用。
+以下名称是**拟设计的业务/公共 C++ 类或值类型**，这些命名的公共类尚未创建；接口细节需在 P0 调用关系与数据形状审计后固定。唯一已构建的受限球谐叶子为 `egomotion::harmonics::low_order`，不是此表的公共 `RealSphericalHarmonics/HarmonicFitter/HarmonicRotator`；类型和方法名称只代表候选职责，不要求必须逐字采用。
 
 | 类/接口/值对象 | 必须封装的状态或职责 | MATLAB 来源与直接依赖 |
 |---|---|---|
@@ -243,7 +243,7 @@ stateDiagram-v2
 
 - 无状态的点积、叉积、采样递归、误差公式优先使用自由函数，**不要为了“45/45 面向对象”而强行创建 45 个类**。
 - 实验入口统一由 Runner 调度，但必须保留各自独立的参数和存储合同。历史 MAT 结果的分析与绘图不反向依赖求解器。
-- 原 `rodrigues.m`、`SHRotate.m` 保持只读源资料。物理旋转采用 Sophus；球谐旋转以 **Ivanic–Ruedenberg 1996 原文和 1998 勘误**为数学依据，**Eigen-only 独立重写** l≤2 的 R0/R3/R5；Don Williamson 仅作为源代码参考，**不得引入 sdla 的头文件、链接库或间接依赖**。仓库原创部分使用 MIT，引用实际第三方文件时保留其现有来源告知；不以一般版权复核阻塞研发。相关 C++ 头/源文件本轮仅作声明级设计，尚未创建或实现。
+- 原 `rodrigues.m`、`SHRotate.m` 保持只读源资料。物理旋转采用 Sophus；球谐旋转以 **Ivanic–Ruedenberg 1996 原文和 1998 勘误**为数学依据，**Eigen-only 独立重写** l≤2 的 R0/R3/R5；Don Williamson 仅作为源代码参考，**不得引入 sdla 的头文件、链接库或间接依赖**。仓库原创部分使用 MIT，引用实际第三方文件时保留其现有来源告知；不以一般版权复核阻塞研发。相关**规划中的公共类**C++头/源文件目前仅作声明级设计，尚未创建或实现；与固定`5e522198`真实构建和3/3测试的低阶球谐叶子区分，不对其它业务模块宣称实现。
 - 对一份 MATLAB 文件内多个辅助函数或附加可调用模式，P0.2 必须另列到方法级迁移表；本表仅记录每个文件的首要职责，不等于逐函数审计已全部完成。
 
 ### 7.1 名称一致性与职责边界
@@ -285,7 +285,7 @@ stateDiagram-v2
 | `RunContext` / `IResultReader` / `IResultWriter` | [contracts.md](design/contracts.md)、[experiments.md](design/experiments.md) | RunContext 独占 RNG/RunId；业务接口不持有 matio C 句柄 |
 | `MatDenseArray` / `RunMatWriter` | [mat_io.md](design/mat_io.md) | MAT 资源由 I/O 层拥有，跨层自拥有 double 值，不传裸 `mat_t*` |
 | `AdaptiveMfaStepSolver` / `AdaptiveMfaSession` | [adaptive_mfa.md](design/adaptive_mfa.md)、本文 §4 | 单步无 Session 副作用；失败不提交主系数，单 Session 并发不承诺 |
-| `HarmonicRotator::blocks/rotate` / `RealSphericalHarmonics::reconstruct` | [harmonics.md](design/harmonics.md)、[专题声明](design/SH_ROTATION_IVANIC_RUEDENBERG.md) | Ivanic/1998 勘误 + Eigen-only，完整递推与接口尚未实现 |
+| `HarmonicRotator::blocks/rotate` / `RealSphericalHarmonics::reconstruct` | [harmonics.md](design/harmonics.md)、[专题声明](design/SH_ROTATION_IVANIC_RUEDENBERG.md) | Ivanic/1998勘误、Eigen-only 的低阶叶子旋转和基函数已实现并有固定SHA原生测试；该行规划中的公共接口仍未实现、未冻结 |
 | 45 个原 `.m` 的首要职责 | 本文 §7、SRS §9.2 | 仅设计映射，不等于每个辅助函数已验证或实际建立 C++ 类 |
 
 此表不另定 C++ 方法签名，实际头文件、资源/线程回归、P0.7/P0.8 评审与正式批准仍缺；**AF-039 未整改**。
