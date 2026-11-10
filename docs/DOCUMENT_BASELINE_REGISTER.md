@@ -18,8 +18,8 @@
 | **TEST_PLAN** | 66 TC 的候选文件/CTest→AC、参考来源 L2/L3/L4、测法和证据模板 | 实际是否执行、失败数、PASS/FAIL 只从 PROGRESS 与定 SHA reviews 获取 |
 | **PLAN** | 98 P 工作项、前置关系、里程碑、证据类别 | 不复制所有具体测试函数和实际结果；链接 TEST_PLAN/PROGRESS |
 | **PROGRESS/reviews** | 当前工作/DEC/里程碑与真实执行记录；reviews 是历史固定 SHA 快照 | 不作为 SRS/HLD/LLD 正文，不把旧快照 26 条边视为现有 HLD 27 条边的执行证明 |
-| **AUDIT** | 归纳用户历轮详细 Markdown 审查与修改意见，按相对路径和三态维护逐文件审计进度 | 审计状态不是软件测试 PASS、规范冻结或历史审批 JSON 的改写；动态证据仍归 PROGRESS |
-| **AUDIT_PROCESS** | **问题级整改目标与「未整改/已整改」状态**：发现问题即按相对路径登记，修改并固定 SHA 复核后才改变状态 | 不得与 AUDIT 的三态审计进度混用，不能凭登记就关闭未修订问题；真实结果仍归 PROGRESS |
+| **AUDIT（本轮全工程文档）** | 定义通用文档工程评价规则、36份目标/用户输入意见及审计/整改纪律；动态逐文件三态/整改归AUDIT_PROGRESS | 不把球谐SH-01～06旧专项的结案或历史全工程97 AF映射为本轮36份审计结果；不替代源码/测试PASS |
+| **AUDIT_PROGRESS（本轮全工程文档）** | 本轮36份DOC唯一审计三态及DAR问题两态、证据、固定提交与剩余阻塞 | 不与旧AUDIT_PROCESS的SH-01～06专项任务/历史97 AF重复计数；不能凭“已审计”宣布规范冻结 |
 | **政策与决定附件** | 所有者已确定的技术方向、DEC-004、L1 不必需和 L2/L3/L4 参考策略 | 只为规范提供来源，不替代核心规范批准；原审批历史保留原时间点 |
 
 ## 2. 当前规范及核心文件的 blob SHA
@@ -52,7 +52,7 @@
 
 **现行全工程文档规范审计**：[AUDIT.md](AUDIT.md) 管理标准与本轮用户评价输入，[AUDIT_PROGRESS.md](AUDIT_PROGRESS.md) 管理本轮36份文件的动态审计/整改三态；低阶球谐旧专项[固定历史AUDIT](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82/docs/AUDIT.md)及[AUDIT_PROCESS.md](AUDIT_PROCESS.md)管理其SH-01～SH-06理论结案。四者均不替代 SRS/HLD/LLD、TEST_PLAN 或软件实际执行证据。
 
-**人类干预事项的当前唯一清单**：[TODO.md](TODO.md)（延期原因/建议处理时间）。球谐 C++17 仅声明文件清单在 [专题 LLD §3](design/SH_ROTATION_IVANIC_RUEDENBERG.md)，对应的 .hpp/.cpp 文件**尚不存在**，不应登记为源码工件。
+**人类干预事项的当前唯一清单**：[TODO.md](TODO.md)（延期原因/建议处理时间）。规划中的 **公共** `RealSphericalHarmonics/HarmonicFitter/HarmonicRotator` 头文件仍未建立；**受限 `egomotion::harmonics::low_order` 叶子源文件/头文件已建立并在固定`5e522198`用户原生3/3 CTest通过**。不得继续概括成“球谐C++文件尚不存在”，更不得将已实现的低阶叶子等同完整公共ABI。
 
 | 类型 | 文件 | Git blob SHA（同一快照） | 已知效力/限制 |
 |---|---|---|---|
@@ -84,7 +84,7 @@
 
 **无需再反复确认（可推迟的人类事项见 [TODO.md](TODO.md)）**：项目根 MIT、Ivanic–Ruedenberg 1996 原文及 1998 勘误、纯 Eigen 且禁 sdla、固定 `output/<RunId>/` 且无自定义输出根 CLI 参数、封装 Result/Status 和 JSONL、独立 Runner 配置与失败状态策略、首轮 `atol=0.01, rtol=0.1` 筛查、DEC-004 仅保存当前有效 save/历史专属字段只读保留、MATLAB/Octave/L1 不必需。
 
-**仍须实际取得的证据与人类介入时间**（见 [TODO.md](TODO.md)，当前仅文档阶段）：用户上传球谐原文/勘误 PDF 后逐式核验；实现的自包含 C++17 头文件/类型/错误合同、真实 CMake target 和 CTest；L2 原始 MAT 逐元素/独立 SHA-256、L3 一般及退化输入、必要 L4 统计、DEC-004 缺字段/非覆盖测试、最终 DEC-005 分模块数值阈值和性能数据；正式文档/PR 的批准或签署。**缺乏测试并非文档类型不正确，且不会自动因为有版本号/静态核对 0 错误而成为已验收基线。**
+**仍须实际取得的证据与人类介入时间**（见 [TODO.md](TODO.md)，当前仅文档阶段）：球谐1996原文/1998勘误已取得且低阶三路线已有符号核验（历史快照中曾列“PDF待上传”，并非当前未办）；规划中尚未实现的公共自包含 C++17 头文件/类型/错误合同、真实 CMake target 和 CTest；L2 原始 MAT 逐元素/独立 SHA-256、L3 一般及退化输入、必要 L4 统计、DEC-004 缺字段/非覆盖测试、最终 DEC-005 分模块数值阈值和性能数据；正式文档/PR 的批准或签署。**缺乏测试并非文档类型不正确，且不会自动因为有版本号/静态核对 0 错误而成为已验收基线。**
 
 ## 5. 正式冻结的必填身份字段与推荐顺序
 
@@ -97,6 +97,10 @@
 5. 由所有者对固定 Git SHA、范围、证据及开放风险明确签署；**本轮未进行该签署**。
 
 **本表仅登记版本/责任与固定文件身份：SRS/HLD/LLD/TEST_PLAN 仍为未冻结评审草案；PROGRESS/AUDIT 是过程登记，不适用规范基线冻结，均不代表算法或测试已经通过。**
+
+**历史与现行身份的审计说明（DAR-005，未签署）**：§2–3 的36项旧快照不能拿来代替本分支当前的36份全工程文档评价对象，也不能把其中“PDF待上传”“球谐头/源文件尚不存在”按字面当作最新事实。当前文档审计的逐文件Git blob、版本和修订记录由 [AUDIT_PROGRESS](AUDIT_PROGRESS.md) 按审计批次登记，身份仍标记为**审阅用非批准快照**；真正冻结需SRS/LLD章节绑定、批准人/时区/范围/例外和真实测试/DEC证据。**不会将最新HEAD中的文件自带旧blob登记成同一提交的批准身份**。
+
+
 
 
 ## 6. 后续变更
