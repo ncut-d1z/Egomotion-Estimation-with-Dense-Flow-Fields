@@ -4,7 +4,7 @@
 
 ## 1. 文档职责与唯一规范来源
 
-**范围（AF-036）**：本矩阵是所选 **36 项固定版本身份**的管理清单；[AUDIT.md](AUDIT.md) **动态**维护完整审计对象集合与逐文件三态（包括仓库配置、历史 reviews 与候选 Golden JSON）；该集合自旧快照的 50 个路径继续增长，**现行数量以 AUDIT 表为准**，不是本矩阵的固定 36 个身份。审计仅用于静态审查，不代表正式基线。两组数量按用途不同，不可互作验收分母；正式签署需另填批准人与证据。
+**范围（AF-036）**：本矩阵是所选 **36 项固定版本身份**的管理清单；原历史[专项AUDIT快照](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82/docs/AUDIT.md)只管理当时低阶球谐范围；**现行全工程文档规范审计的范围及审计方法见 [AUDIT.md](AUDIT.md)，本轮36份目标的动态三态与整改进度见 [AUDIT_PROGRESS.md](AUDIT_PROGRESS.md)**；它与旧快照的50/100文件或本矩阵36项固定基线身份不是同一集合，不是本矩阵的固定 36 个身份。审计仅用于静态审查，不代表正式基线。两组数量按用途不同，不可互作验收分母；正式签署需另填批准人与证据。
 
 
 | 文档类型 | 唯一维护内容 | 不应重复维护 |
@@ -50,7 +50,7 @@
 
 ## 3. 专题、证据与所有者决策附件
 
-**历轮用户修改意见及逐文件审计进度**：[AUDIT.md](AUDIT.md)，与延期人工干预的 [TODO.md](TODO.md) 分开管理；AUDIT 不替代 SRS/HLD/LLD 或测试执行证据。
+**现行全工程文档规范审计**：[AUDIT.md](AUDIT.md) 管理标准与本轮用户评价输入，[AUDIT_PROGRESS.md](AUDIT_PROGRESS.md) 管理本轮36份文件的动态审计/整改三态；低阶球谐旧专项[固定历史AUDIT](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82/docs/AUDIT.md)及[AUDIT_PROCESS.md](AUDIT_PROCESS.md)管理其SH-01～SH-06理论结案。四者均不替代 SRS/HLD/LLD、TEST_PLAN 或软件实际执行证据。
 
 **人类干预事项的当前唯一清单**：[TODO.md](TODO.md)（延期原因/建议处理时间）。球谐 C++17 仅声明文件清单在 [专题 LLD §3](design/SH_ROTATION_IVANIC_RUEDENBERG.md)，对应的 .hpp/.cpp 文件**尚不存在**，不应登记为源码工件。
 
@@ -101,7 +101,7 @@
 
 ## 6. 后续变更
 
-最新审计和问题状态始终以 [AUDIT.md](AUDIT.md)、[AUDIT_PROCESS.md](AUDIT_PROCESS.md) 为准，实际执行证据以 [PROGRESS.md](PROGRESS.md) 为准；此处保存上方**单个固定提交的文件身份**。后续修订应另登记新固定提交，禁止把旧 SHA 当作 HEAD，亦不得借登记宣称签署或 CTest 通过。
+**当前文档规范审计**的目标状态以 [AUDIT_PROGRESS.md](AUDIT_PROGRESS.md) 为准；[AUDIT.md](AUDIT.md)规定审查方法，[AUDIT_PROCESS.md](AUDIT_PROCESS.md)仅保留此前球谐专项SH-01～06的结案，实际执行证据以 [PROGRESS.md](PROGRESS.md) 为准；此处保存上方**单个固定提交的文件身份**。后续修订应另登记新固定提交，禁止把旧 SHA 当作 HEAD，亦不得借登记宣称签署或 CTest 通过。
 
 
 ### 6.1 本轮新增文件身份（仅记录，不冻结）
@@ -112,7 +112,7 @@
 | [docs/PLAN.md](PLAN.md) | v0.6（仅补静态核对） | `6a1867a4b36ad71b1a523c4b3ed7372e276ece5d` | `cda72332eb32a77a5c353929011dcc47663d31d4` | AF-052 WBS 98 P 静态追踪/退出证据审阅；M0～M5 均未通过 |
 | [docs/design/README.md](design/README.md) | v0.7（仅补检查清单） | `6a1867a4b36ad71b1a523c4b3ed7372e276ece5d` | `021174c363d18d81773acbc8f6b61364a9059faa` | AF-059 10 模块 LLD 冻结前核对；不等于正式冻结、已编译或 CTest PASS |
 
-原 §2～3 的 36 项身份仍是较早固定快照，**不可**以新版本 blob 直接替换旧快照行并继续声称同一提交身份。审计新问题的状态见 [AUDIT](AUDIT.md)、[AUDIT_PROCESS](AUDIT_PROCESS.md)；本矩阵和滚动审计文件本身修改后的最新 blob 身份需在后续正式固定版本时统一登记。所有 SRS/HLD/LLD/TEST_PLAN 仍未冻结。
+原 §2～3 的 36 项身份仍是较早固定快照，**不可**以新版本 blob 直接替换旧快照行并继续声称同一提交身份。本轮全工程文档规范审计新问题的状态见 [AUDIT_PROGRESS](AUDIT_PROGRESS.md)（其规则见[AUDIT](AUDIT.md)）；原球谐理论专项另见 [AUDIT_PROCESS](AUDIT_PROCESS.md)；本矩阵和滚动审计文件本身修改后的最新 blob 身份需在后续正式固定版本时统一登记。所有 SRS/HLD/LLD/TEST_PLAN 仍未冻结。
 
 
 ### 6.2 AF-037～041 第一批文档修订的固定文件身份（仅设计草案）
@@ -147,7 +147,7 @@
 | `docs/golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md` | 未冻结附件 | `9432d537a1aaa169450e873eb4097126b9d35077` | AF-060：L2/L3/L4 证据口径；数值未生成 |
 | `docs/design/README.md` | v0.7（MAT 版本引用更新） | `c437eaba39e7f39e1a378c9df8756a7db6d8c6e4` | 仅引用 mat_io v0.10；不冻结 LLD |
 
-**本表仅作文件身份追踪**：AF-042/047/048/049/050/051/060 仍未整改，未取得实际 C++/CTest、独立 L2/L3/L4、最终 DEC-005/006/008 或正式批准；两台账当前进度见 [AUDIT](AUDIT.md) / [AUDIT_PROCESS](AUDIT_PROCESS.md)。
+**本表仅作文件身份追踪**：AF-042/047/048/049/050/051/060 仍未整改，未取得实际 C++/CTest、独立 L2/L3/L4、最终 DEC-005/006/008 或正式批准；本轮全工程文档审计进度见 [AUDIT_PROGRESS](AUDIT_PROGRESS.md)，球谐旧专项结案见 [AUDIT_PROCESS](AUDIT_PROCESS.md)。
 
 
 ### 6.4 数学文档和 JSON 的本轮固定身份（未冻结）
