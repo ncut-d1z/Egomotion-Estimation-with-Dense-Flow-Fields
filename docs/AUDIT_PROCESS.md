@@ -2,6 +2,8 @@
 
 > 现行任务仍只有SH-01～SH-06。本轮根据用户“继续理论整改、允许Wolfram、禁止C++”从固定 `9af16680a2b73754ad3b09825faf2655ea45a052` 执行限定核对。原两份MATLAB、全部C++、CMake/CTest/build.sh及MAT保持不变。数学裁定已形成；**已整改表示此处规定的理论核对及更正公式完成，不表示原MATLAB已被修改或其原样组合无条件正确**。
 
+> **2026-11-10 文档定位更新**：本文件仍为**历史低阶球谐SH-01～SH-06限定理论整改**，其6/6结案只涉及此前范围；原同范围的 `AUDIT.md` 固定版本见 [`cb3129b1` 历史快照](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82/docs/AUDIT.md)。现行 [AUDIT.md](AUDIT.md) 已根据用户本轮新要求改为**全工程文档规范审计规则**，其36份评审对象、整改目标及进度只由 [AUDIT_PROGRESS.md](AUDIT_PROGRESS.md) 管理；**不把原SH-01～06或更早97项全工程旧AF重复计入新文档审核**。这仅修订交叉引用，不改变本文件任何SH目标的原状态或数学结论。
+
 ## 1. 专项唯一整改目标（当前有效）
 
 唯一目的未改变：核对论文 *Insect-Inspired Self-Motion Estimation with Dense Flow Fields—An Adaptive Matched Filter Approach* 所用l=0,1,2九实基与旋转计算，比较A直接定义、B实递推、C复递推及两份MATLAB的准确对应。以下六项目标文字沿用范围修订版本，只更新状态和证据。
