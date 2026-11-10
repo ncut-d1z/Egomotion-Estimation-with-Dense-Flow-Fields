@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **测试计划草案 v0.29，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
+> **测试计划草案 v0.30，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
 
 > **候选核对材料**：见 [HAR-2026-11-06-001 材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md)；历史提出的 MAT 类型/安全、Golden/容差仍要逐项执行。当前参考等级为 L2/L3/L4，不要求 MATLAB/Octave/L1；`atol=0.01`/`rtol=0.1` 仅首轮探索筛查。**低阶球谐已在 `8eab5dd`、`445ed151`、含624非零四元数/错误码检查的 `601c74de` 三个固定提交获得用户报告的 1/1 CTest Passed**，其他模块与完整验收未因此批准。
 
@@ -9,6 +9,13 @@
 > **当前实现现状（以固定 SHA 为准）**：现有低阶球谐三个独立 CTest：`low_order_harmonics`、`low_order_harmonics_archived_golden`、`low_order_harmonics_source_projection`。用户在固定 HEAD `5e5221988cf093dbfddb88f2f65f06632460f3a1` 的 Ubuntu 24.04/GCC16.2.0/Release 环境下提供了实际 **3/3 Passed**（分别 53,532/176/76 次内部检查）的完整可见日志；其它大多数业务 TC 仍是候选，正式 DEC-005/008、MAT 全量 L2/完整 L3/L4 未批准。
 
 **权限与验收分层**：球谐 C++/专项测试已取得用户的局部实现授权，用户本人运行了本次球谐编译/CTest；其他模块代码、代理自行运行项目命令、MAT 写回读、DEC-005/006、基线及发布仍按 [TODO](TODO.md) 的具体限制办理。
+
+### 2026-11-10 全工程文档审计的静态 TC 清单核查（DAR-004，未批准）
+
+- **确实检查的静态范围**：重新读取本文件§3的66条 `TC-*` → `REQ-*` / `AC-*` 映射表，与 `REQUIREMENTS.md` 中66条唯一 `REQ-*` 登记逐编号比对；均为**66条唯一**，没有重复或编号缺失，且§3每行均有拟议测试实体/CTest列和AC列。这个结果仅是追踪**编号和映射位置**核对，不代表66条条款的完整语义/输入/误差均已深审。
+- **仅有的业务原生验收范围**：根`CMakeLists.txt`已注册三个`low_order_harmonics*` CTest，用户在固定提交`5e5221988cf093dbfddb88f2f65f06632460f3a1`的Ubuntu GCC16.2/Release下提供 **3/3 Passed**；各程序内部检查数53,532／176／76。它们是**三个独立CTest可执行程序**，不能将内部53,784次检查、三个CTest或数学Wolfram证明误写成66个TC正式通过。
+- **未验收范围**：本文件§3绝大多数业务目标仍是尚未实现/尚未运行的候选实体；582 MAT只读字典探针不是正式业务Reader/Writer的TC；AN-G/SH-P等候选Golden不自动属于已批准数值参考。DEC-005/006/008、L2逐值与必要L3/L4、软件负例、人员签署均未完成。
+- **历史时点不可倒置**：下文分段记录的`NOT_RUN`和“新增测试未原生执行”属于彼时提交的事实；其后已有固定5e522198的真实3/3测试，所以当前判断以对应新证据为准。自这次固定SHA以来的纯文档修订不视作重新测试，也不推断以后任何新增C++版本已自动通过。
 
 ### 2026-11-09 首次低阶球谐原生构建及 CTest 证据（AF-096）
 
