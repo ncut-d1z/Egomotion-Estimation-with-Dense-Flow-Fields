@@ -1,6 +1,6 @@
 # 系统概要设计（HLD）— MATLAB 自运动估计 C++ 移植
 
-> **状态：HLD v0.9 评审草案，未冻结。** 当前统一文档版本与冻结状态见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，实际 matio 探针/构建/CTest/数值证据仅见 [PROGRESS.md](PROGRESS.md)；此处只定义稳定架构边界，不以历史探针代替架构验收。 来源是已核对的 MATLAB 源码和原 PLAN §3/4/6。需求依据见 [REQUIREMENTS.md](REQUIREMENTS.md)，类职责附件见 [OBJECT_MODEL.md](OBJECT_MODEL.md)，详细设计待定见 [design/README.md](design/README.md)，执行安排见 [PLAN.md](PLAN.md)。以 [AGENTS.md](../AGENTS.md) 和项目所有者批准为准。
+> **状态：HLD v0.10 评审草案，未冻结。** 当前统一文档版本与冻结状态见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，实际 matio 探针/构建/CTest/数值证据仅见 [PROGRESS.md](PROGRESS.md)；此处只定义稳定架构边界，不以历史探针代替架构验收。 来源是已核对的 MATLAB 源码和原 PLAN §3/4/6。需求依据见 [REQUIREMENTS.md](REQUIREMENTS.md)，类职责附件见 [OBJECT_MODEL.md](OBJECT_MODEL.md)，详细设计待定见 [design/README.md](design/README.md)，执行安排见 [PLAN.md](PLAN.md)。以 [AGENTS.md](../AGENTS.md) 和项目所有者批准为准。
 
 ## 1. 架构目标、质量属性和约束
 
@@ -67,10 +67,22 @@ flowchart LR
 | 目标系统 | 用户 `uname -a`：Ubuntu 24.04.4 VirtualBox、x86_64 | 已作为目标环境快照；不是业务构建通过或 Debian 兼容性证据 |
 | RAM/Swap | 用户 `free`：物理内存总 `8127380` KiB，当时 available `4908696` KiB，Swap 总 `4194300` KiB | **不是**批准的峰值 RSS、并发量、线程数或性能上限 |
 | 磁盘 | 用户 `df`：根分区当时可用 `65347856` KiB | **不是**批准的构建/输出/测试磁盘配额 |
-| 编译工具与依赖 | 历史独立 MAT 探针：GCC 13、matio 1.5.26；该用户快照无新的 Sophus/Eigen/CMake 版本证据 | 生产目标尚未实际构建/链接；支持版本范围仍待核准 |
+| 编译工具与依赖 | 独立 MAT 探针旧记录：GCC 13、matio 1.5.26；**另一固定提交 `5e522198` 下用户已实测GCC16.2/CMake4.3.4/Eigen3.4 Release/C++17的受限低阶球谐库及三个CTest**。两者来自不同时间/源码，Sophus和其余业务模块仍无原生构建证据 | 全项目生产目标未建立/未链接；支持依赖版本范围、性能与业务测试仍待核准 |
 | wall / CPU / RSS / 构建时间 | 本次审批未提供业务程序测量值 | **无已批准性能预算或通过/失败阈值**；DEC-006 仍开放 |
 
 表中 `uname/df/free` 来源为用户审批 JSON；探针版本属于**早前独立记录**，两者不能混成同一次运行证据。完整平台与性能核验仍以 [TEST_PLAN.md §6–7](TEST_PLAN.md) 的未来执行记录为准。
+
+**截至本次文档审计的目标实现/证据分层（DAR-002，审计事实≠架构批准）**：
+
+| 对象 | 已查到的源码事实或执行证据 | 没有证据/仍为设计 |
+|---|---|---|
+| 原 MAT 数据格式 | 独立只读探针曾在固定环境读入582/582个归档，非正式业务Reader/Writer测试 | 生产`egomotion_matio`、路径安全、负例、回读、逐值L2 SHA-256 |
+| 受限低阶球谐叶子 | 根 `CMakeLists.txt` 当前仅有 `egomotion_harmonics` 静态库（4个 `low_order_*.cpp`）与3项 `low_order_harmonics*` CTest；用户在固定 `5e5221988cf093dbfddb578d30f98e19b31e30e2` 的原生输出3/3通过（53,532/176/76次内部检查） | 规划中的公共`HarmonicRotator/HarmonicFitter/RealSphericalHarmonics` ABI、与`egomotion_contracts`的真实依赖及全链路调用 |
+| `§4` 提议的11个 `egomotion_*` 模块target | 27条DAG是文档设计边，数据/所有权方向已经提出 | 除受限球谐叶子外其余规划的10个`egomotion_*`业务/合同target尚未建成；不能称27条边在CMake实际编译验证 |
+| 性能/系统预算 | VM内存、磁盘及MAT旧探针均有历史事实；SH局部CTest有短时运行日志 | 业务Runner的wall/CPU/RSS与批准的DEC-006门槛、Debian完整部署及Sophus真实链接 |
+
+**证据类型**必须写在同一行：`设计候选`、`源树静态存在`、`历史用户原生实测`、`需正式批准`互不替代。此表不修改27条拟议边，也不表示已运行新的CMake/CTest或重新批准ADR。
+
 
 ### 2.2 已实测的 MAT 数据合同
 
@@ -111,7 +123,7 @@ flowchart LR
 - `IResultReader` / `IResultWriter` 在 `egomotion_contracts` 中分别声明，`egomotion_matio` 的具体实现由 Composition Root 注入实验/分析。原始文件只读保障还必须体现在路径校验与不可覆盖测试中。跨层用自拥有值对象，MAT 缓冲区失效后不得持有 Eigen Map。
 - 对 KvD 两条平移更新保留独立入口；Adaptive 的单步求解与多帧 Session 独立。**这些是已选设计方向，并非已验证实现**。
 
-**最新所有者决定**：[2026-11-07 决策记录](decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md) 与 [Ivanic–Ruedenberg 原始文献/Eigen LLD](design/SH_ROTATION_IVANIC_RUEDENBERG.md) 已确定 `egomotion_harmonics→egomotion_contracts` 的显式依赖（DAG 从 26 增至 27 条边）以及**禁用 sdla**。每次运行的输出根固定为 `output/<RunId>/`，不接受 CLI 自定义输出目录；项目新代码使用根 MIT [LICENSE](../LICENSE)。普通版权审查不再作为开发前置门禁，实际引入第三方文件保留其既有许可告知。球谐递推生产实现须等用户上传 1996 原文及 1998 勘误后开始。
+**最新所有者决定**：[2026-11-07 决策记录](decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md) 与 [Ivanic–Ruedenberg 原始文献/Eigen LLD](design/SH_ROTATION_IVANIC_RUEDENBERG.md) 已确定 `egomotion_harmonics→egomotion_contracts` 的显式依赖（DAG 从 26 增至 27 条边）以及**禁用 sdla**。每次运行的输出根固定为 `output/<RunId>/`，不接受 CLI 自定义输出目录；项目新代码使用根 MIT [LICENSE](../LICENSE)。普通版权审查不再作为开发前置门禁，实际引入第三方文件保留其既有许可告知。**该旧论文材料门禁已经解除**：1996原文、1998勘误及1999独立路线已取得；用户在固定`5e522198`实测仅低阶球谐叶子3/3 CTest通过。此事实**不意味着**规划的`egomotion_contracts`、公共球谐类/ABI或其它业务target已创建、集成或批准。
 
 ## 4. CMake target、公共头文件与文件结构（设计候选）
 
@@ -262,7 +274,7 @@ P0.7/P0.8 需校验本 HLD、[OBJECT_MODEL.md](OBJECT_MODEL.md)、MAT schema、L
 | ADR-003 | 值语义/RAII/窄接口/组合优先；纯数学自由函数 | HLD 提议，未冻结 | P0.7 对象设计评审者 + 所有者 |
 | ADR-004 | Adaptive StepSolver 与跨帧 Session 分离；KvD 双入口保真 | HLD 提议，未冻结 | 数值/接口评审者 + 所有者 |
 | ADR-005 | 分析与可选绘图隔离，核心无图形运行 | 方向已定、后端待选 | 分析模块维护者 + 所有者 |
-| ADR-006 | 球谐和物理旋转替代方案 | 物理旋转保留 Sophus；球谐按 Ivanic–Ruedenberg 1996 原文与 1998 勘误**纯 Eigen 重写**，Don Williamson 仅作参考，**sdla 为禁止依赖**。项目代码采用 MIT，第三方既有 notice 保留，普通版权审批不再阻塞研发；等待论文上传后实施 | [最新决定](decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md)、[球谐 LLD](design/SH_ROTATION_IVANIC_RUEDENBERG.md) |
+| ADR-006 | 球谐和物理旋转替代方案 | 物理旋转保留 Sophus；球谐按 Ivanic–Ruedenberg 1996 原文与 1998 勘误**纯 Eigen 重写**，Don Williamson 仅作参考，**sdla 为禁止依赖**。项目代码采用 MIT，第三方既有 notice 保留，普通版权审批不再阻塞研发；**历史等待论文材料条件已完成；受限l≤2叶子已有固定SHA真实构建/3项CTest证据，公共harmonics→contracts与正式ABI/集成仍是候选，项目整体未批准** | [最新决定](decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md)、[球谐 LLD](design/SH_ROTATION_IVANIC_RUEDENBERG.md) |
 | ADR-007 | 固定输入原 MATLAB 行为优先于“改善”数值稳定性 | 方向已定；测试/容差未冻结 | 数值验证负责人 + 所有者 |
 | ADR-008 | target DAG 分层及公共/私有边界以 §4 为候选；明确 contracts 声明 target 与 matio 实现 target 分离 | 可用 scripts/check_docs_traceability.sh 静态检查 DAG 无环；**尚未创建完整 CMake 业务 target，未验证实际编译、链接或跨 target 替身** | P0.8 架构审查者 + 所有者 |
 
