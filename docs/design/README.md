@@ -15,9 +15,9 @@
 - [PLAN.md](../PLAN.md)：98 个 P0–P10 最小工作项、任务依赖、风险与里程碑。
 - [PROGRESS.md](../PROGRESS.md)：阶段及里程碑、DEC 处理、实际执行结果、人员/批准的**唯一动态登记**。历史证据可在 [reviews/](../reviews/) 中查验；固定 Git SHA 后的变更不能被前一份报告覆盖。
 - [TODO.md](../TODO.md)：**仅需人类参与且可推迟**的材料/授权/最终基线事项，逐项记原因与建议处理时间；普通 C++ 私有实现技术细节不作人类待审项。
-- [DOCUMENT_BASELINE_REGISTER.md](../DOCUMENT_BASELINE_REGISTER.md)：**选定规范及证据文件的固定版本、状态和 Git blob SHA 登记**（原快照共 36 项，含附件/历史证据，非全部文件）；全部**实时**审计对象数量与逐文件三态只见 [AUDIT.md](../AUDIT.md)，不在静态索引复制会过期的路径计数。新增审计对象**不自动取得正式基线资格**；不在每个 LLD 重复维护 SHA 表。
+- [DOCUMENT_BASELINE_REGISTER.md](../DOCUMENT_BASELINE_REGISTER.md)：**选定规范及证据文件的固定版本、状态和 Git blob SHA 登记**（原快照共 36 项，含附件/历史证据，非全部文件）；本轮**全工程文档规范审计**的审计对象、三态和整改进度见 [AUDIT_PROGRESS.md](../AUDIT_PROGRESS.md)，审计方法和评价基准见 [AUDIT.md](../AUDIT.md)；原低阶球谐六项目标单列于 [AUDIT_PROCESS.md](../AUDIT_PROCESS.md)。新增审计对象**不自动取得正式基线资格**；不在每个 LLD 重复维护 SHA 表。
 - [contracts.md](contracts.md)：C++17 领域值类型、Result<T,E>、错误分类、资源生命周期与跨模块接口的**统一候选合同**。
-- 本目录每份文档是**对应模块的 LLD 草案**，具体签名、公式、错误处理、数据布局应在 P0.8 以后逐个确认。
+- 本目录含**模块LLD、跨模块LLD、专题LLD、理论专题及本索引**，它们不是同一文档类型；只有模块/跨模块LLD的候选签名、错误、生命周期和数据布局需在P0.8以后逐个冻结，数学理论专题与索引不可代替正式LLD。
 
 ## LLD 模块覆盖矩阵
 
@@ -29,12 +29,12 @@
 | 基础采样与噪声 | [sampling_noise.md](sampling_noise.md) | findeDreiecke、采样/流/噪声函数 | 数量、顺序、噪声方程、RNG 消耗与自拥有 FlowField/结果；**源 fixed_* 返回 near 是末次标量，C++ nearness 向量仅为新增诊断数据** | **egomotion_sampling/simulation 的接口、头文件边界与 TC/CTest 候选** | L3 独立有序方向/固定 RNG 仍待验证 | 未冻结，P0.8/DEC-008 |
 | 几何与轨迹 | [trajectory.md](trajectory.md) | Kreis/Sinus/trajectory、球内近度与旋转 | 已列离散轨迹/求交公式；**Sophus SO(3) 替代 rodrigues.m 已选定**，源脚本只读 | 候选接口 | L3 小角/反向等边界与真实 CTest 未执行 | **设计路线已确定**；实际 Sophus 依赖版本、调用和数值测试尚未验证，不再等待普通版权选型 |
 | Franz / KvD | [kvd.md](kvd.md) | zellendefinieren、franzeigen、两种 KvD、误差 | 已列各平移公式、RMS、终止规则 | 候选接口 | 未测 | 阻塞 DEC-005 |
-| 实球谐 | [harmonics.md](harmonics.md) + [Ivanic–Ruedenberg 论文与纯 Eigen 方案](SH_ROTATION_IVANIC_RUEDENBERG.md) | kugelflfunc2、near/koeff、SHRotate | 九基直接/递推、三路旋转一般SO(3)已精确验证；受限源koeff_aus_near二阶逐系数投影已在5e522198原生编译/CTest通过，且独立Wolfram七方向精确九系数差全0；IR98冲突已定位 | **现有叶子 `egomotion_harmonics` 只依赖 Eigen3，不依赖尚未实现的 `egomotion_contracts`**；未来正式公共 harmonics→contracts 架构边仍是候选，见专题§5 | GCC16.2/CMake4.3.4/Eigen3.4 下固定 HEAD `8eab5dd`、`445ed151` 和624样本版本 `601c74de` 的球谐旧版CTest均由用户报告1/1通过；最新固定5e522198 3项CTest（含二阶源拟合）3/3通过，广义L2/L3/ABI/DEC-005仍待 | 已实现受限低阶基/旋转/重建及源二阶逐项投影；仅旧回归已获用户实测，新SH源码与另外2个CTest仍待验收；完整公共模块合同未冻结 |
+| 实球谐 | [harmonics.md](harmonics.md) + [Ivanic–Ruedenberg 论文与纯 Eigen 方案](SH_ROTATION_IVANIC_RUEDENBERG.md) | kugelflfunc2、near/koeff、SHRotate | 九基直接/递推、三路旋转一般SO(3)已精确验证；受限源koeff_aus_near二阶逐系数投影已在5e522198原生编译/CTest通过，且独立Wolfram七方向精确九系数差全0；IR98冲突已定位 | **现有叶子 `egomotion_harmonics` 只依赖 Eigen3，不依赖尚未实现的 `egomotion_contracts`**；未来正式公共 harmonics→contracts 架构边仍是候选，见专题§5 | GCC16.2/CMake4.3.4/Eigen3.4 下固定 HEAD `8eab5dd`、`445ed151` 和624样本版本 `601c74de` 的球谐旧版CTest均由用户报告1/1通过；最新固定5e522198 3项CTest（含二阶源拟合）3/3通过，广义L2/L3/ABI/DEC-005仍待 | 已实现受限低阶基/旋转/重建及源二阶逐项投影；用户已提供固定5e522198下包括归档和二阶投影在内的**3/3 CTest Passed**，但正式公共ABI、全业务集成和DEC-005仍未冻结 |
 | Adaptive 单步/Session | [adaptive_mfa.md](adaptive_mfa.md) | oneit、3 个 Adaptive 入口 | 已列 M1–M4、RHS、MSE 及会话差异 | 候选接口 | 未测 | 阻塞 DEC-005 |
 | 实验 Runner | [experiments.md](experiments.md) | 2 Bias + 3 Adaptive 生成入口 | 参数/save、8 次聚合、刷新策略及 L2/L3/L4 证据等级 | **RunContext 候选接口、DataMismatch 边界、egomotion_experiments/TC/CTest** | 新 Runner/完整 L3/CTest 均未实现 | 未冻结，P0.8/DEC-008 |
 | 分析与可选绘图 | [analysis_plotting.md](analysis_plotting.md) | 4 分析入口、kurveglaetten、3 插图 | 已列数据/索引/阈值/窗口与 DEC-004 缺字段规则；**历史 Bias xwerte 不变，新增实际 N 对照图不是当前交付项** | 候选接口 | **必需的 L2 原 MAT/L3 独立数值曲线和 CTest 尚未验收** | 可选绘图后端尚未选定，但**不阻塞核心数值分析、设计和验证** |
 
-覆盖范围为**11 份实际 Markdown 文件**：**1 份跨模块合同**（contracts.md）、**9 份模块 LLD**（cli.md、mat_io.md、sampling_noise.md、trajectory.md、kvd.md、harmonics.md、adaptive_mfa.md、experiments.md、analysis_plotting.md），另有**1 份球谐专题 LLD**（SH_ROTATION_IVANIC_RUEDENBERG.md）。矩阵共 **10 个模块/合同条目**，球谐专题与harmonics同属一条；**10 条覆盖项 ≠ 10 份文件**。新建的论文审计报告与SH-PAPER验证候选是证据/测试设计附件，不算新增模块LLD，不改变上述11文件口径。文档存在性不是代码/接口实现比例。
+**本目录当前实际有14份Markdown文件**（经固定分支目录列表核对）：**1份本索引**（README.md）、**1份跨模块LLD**（contracts.md）、**9份模块LLD**（cli.md、mat_io.md、sampling_noise.md、trajectory.md、kvd.md、harmonics.md、adaptive_mfa.md、experiments.md、analysis_plotting.md）、**1份球谐专题LLD**（SH_ROTATION_IVANIC_RUEDENBERG.md）以及**2份纯数学理论专题**（SH_DISCRETE_REFIT_CONSISTENCY.md、ADAPTIVE_MEAN_ZERO_CONDITIONING.md）。上方覆盖矩阵仍为**10个模块/合同行**，harmonics和球谐专题LLD共用一行；**14个目录文件≠11份LLD≠10个覆盖行**。理论专题不能冒充模块LLD的接口/错误/生命周期/测试验收；文档存在也不等于实现/批准。
 
 **术语约定**：此目录仍可能保留历史测试编号中的 Golden 字样；现行数值参考明确为 **L2 作者已存 MAT、L3 独立解析/非被测实现、L4 统计**，不是已取消强制获取的L1。候选值须给来源等级、独立生成器/推导和数据SHA，不可凭名称推断已通过。
 
