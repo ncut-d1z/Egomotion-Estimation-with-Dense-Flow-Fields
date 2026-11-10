@@ -14,9 +14,9 @@
 
 | ID | docs/下相对路径 | 用户初始规范判断 | 首轮实际需核对的问题 | 审计状态 | 本轮证据／整改关联 |
 |---|---|---|---|---|---|
-| DOC-001 | `REQUIREMENTS.md` | 草案级部分符合 | AC→LLD章节身份/正式批准 | 正在审计 | SRS v0.14未冻结；已核§3/§4及AC-F-FILTER/SH导航链接，正式逐AC身份待查 |
-| DOC-002 | `ARCHITECTURE.md` | 草案级部分符合 | 27拟议DAG与真实构建/ADR | 正在审计 | HLD v0.9；已核27边设计DAG/部署候选与真实执行边界，ADR逐项待核 |
-| DOC-003 | `OBJECT_MODEL.md` | 草案级部分符合 | 候选类/生命周期/签署 | 正在审计 | 对象模型v0.6候选；已核职责/生命周期章节与45来源映射声明，签名细项待核 |
+| DOC-001 | `REQUIREMENTS.md` | 草案级部分符合 | AC→LLD章节身份/正式批准 | 已完成限定审计 | SRS v0.14：66个唯一REQ已逐编号对应TEST_PLAN66个TC/AC；AC→LLD导航未冻结，逐AC批准仍缺 |
+| DOC-002 | `ARCHITECTURE.md` | 草案级部分符合 | 27拟议DAG与真实构建/ADR | 已完成限定审计 | HLD v0.10：设计图27箭头=25内部+2外部；根CMake仅低阶SH及3CTest，部署/DEC-006仍待 |
+| DOC-003 | `OBJECT_MODEL.md` | 草案级部分符合 | 候选类/生命周期/签署 | 已完成限定审计 | 对象模型v0.7：所有权、候选公共类与已实现SH叶子区分；正式生命周期/ABI测试未做 |
 | DOC-004 | `design/README.md` | 索引符合，非LLD | 实际Markdown个数与模块覆盖条目 | 已完成限定审计 | 14份真实目录Markdown=1索引+1跨模块LLD+9模块LLD+1专题LLD+2理论，10个覆盖行；提交3614b28 |
 | DOC-005 | `design/contracts.md` | 草案级部分符合 | Result/ABI/ODR/异常线程/自包含 | 正在审计 | contracts v0.5未冻结；ABI/Result/线程/ODR列入后续深审 |
 | DOC-006 | `design/cli.md` | 草案级部分符合 | CLI负例、RunId、JSONL、DEC-008 | 正在审计 | cli v0.6未冻结；固定输出根/失败码候选已识别，负例和DEC需证据 |
@@ -31,20 +31,20 @@
 | DOC-015 | `design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 专题草案级部分符合 | 旧版本CMake描述与最新低阶叶子验收区分 | 已完成限定审计 | 对照旧1/1说明与用户固定5e522198 3/3；仅低阶叶子，公共ABI仍未实现；提交4a62a9d |
 | DOC-016 | `design/SH_DISCRETE_REFIT_CONSISTENCY.md` | 理论专题合格，非LLD | 不能替代模块LLD/测试/批准 | 未审计 | — |
 | DOC-017 | `design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md` | 理论专题合格，非LLD | 不能替代Adaptive真实接口/实现 | 未审计 | — |
-| DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 正在审计 | TEST_PLAN v0.29；3/3仅SH固定5e522198，66TC总体未运行，测试追踪待深审 |
-| DOC-019 | `PLAN.md` | WBS草案符合 | 98P、M0–M5、真实工期/性能 | 正在审计 | PLAN v0.8；98P与里程碑非承诺，证据链待深审 |
+| DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 已完成限定审计 | TEST_PLAN v0.30：§3共66唯一TC与66REQ/AC编号相符；SH3/3实测不代表其它TC通过 |
+| DOC-019 | `PLAN.md` | WBS草案符合 | 98P、M0–M5、真实工期/性能 | 已完成限定审计 | PLAN v0.8：98个唯一P/WBS静态确认，SH-only实测与整工程M0–M5未验收分开 |
 | DOC-020 | `PROGRESS.md` | 符合证据登记 | 固定SHA与历史执行/新状态分离 | 正在审计 | PROGRESS滚动历史；真实用户执行与数学证明按SHA分层，动态信息待审 |
 | DOC-021 | `AUDIT.md` | 原专项→本轮综合审计 | 已在初始提交转换为全工程文档规范 | 已完成限定审计 | 新全工程文档审计规则、36对象、用户评价基线已提交1081f0f；原SH范围保留固定历史 |
 | DOC-022 | `AUDIT_PROCESS.md` | 球谐专项整改，不适用全工程 | 保留SH-01～06，引用原专项快照避免误链 | 已完成限定审计 | 原SH-01～06理论台账保持不变，增加新审计与旧SH历史互不重计的说明；提交569a6e7 |
-| DOC-023 | `DOCUMENT_BASELINE_REGISTER.md` | 部分符合 | 36项固定历史SHA与当期HEAD/批准分开 | 已完成限定审计 | §2–3原36项为固定快照；当前全工程审计应链接AUDIT_PROGRESS；提交5358c3c，正式SHA/批准仍待 |
+| DOC-023 | `DOCUMENT_BASELINE_REGISTER.md` | 部分符合 | 36项固定历史SHA与当期HEAD/批准分开 | 已完成限定审计 | 基线旧36项固定SHA与现行HEAD分离；本表§6已固定全部36份本次审计起点blob；正式批准未有 |
 | DOC-024 | `SOURCE_INVENTORY.md` | 静态来源追踪符合 | 45 .m/50函数、MAT未独立SHA | 正在审计 | SOURCE_INVENTORY原45.m/50函数为静态快照，未查全部字节与MAT SHA |
 | DOC-025 | `MIGRATION_MATRIX.md` | 静态迁移追踪符合 | 45/50候选映射，不是代码实现 | 正在审计 | MIGRATION_MATRIX为45/50候选职责，未映射实际源码全量 |
-| DOC-026 | `TODO.md` | 管理清单符合 | 历史审批与分阶段授权时间线 | 未审计 | — |
-| DOC-027 | `decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | 决策记录符合 | HistoricalOnly与当前save/代码未测试 | 未审计 | — |
-| DOC-028 | `decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md` | 所有者决定符合 | 技术方向≠软件运行/基线签署 | 未审计 | — |
-| DOC-029 | `decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md` | 专项授权记录符合 | 历史SH局部权限不得扩展 | 未审计 | — |
-| DOC-030 | `approval/DECISION_IMPLEMENTATION_NOTES.md` | 审批落实记录符合 | 旧draft/权限不当最新批准 | 未审计 | — |
-| DOC-031 | `approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md` | 审批包符合，非规范 | applicationCommit/scopeIds空 | 未审计 | — |
+| DOC-026 | `TODO.md` | 管理清单符合 | 历史审批与分阶段授权时间线 | 已完成限定审计 | TODO：人类待办/时间线与原SH局部授权、用户3/3已核；全工程文档审计导航已更正 |
+| DOC-027 | `decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | 决策记录符合 | HistoricalOnly与当前save/代码未测试 | 已完成限定审计 | DEC-004：选定当前save/HistoricalOnly/缺失字段失败规则，尚无生产Runner/Analyzer测试 |
+| DOC-028 | `decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md` | 所有者决定符合 | 技术方向≠软件运行/基线签署 | 已完成限定审计 | 2026-11-07所有者决定是历史时间点，MIT/Eigen/CLI等方向已选但不是当前完整软件授权 |
+| DOC-029 | `decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md` | 专项授权记录符合 | 历史SH局部权限不得扩展 | 已完成限定审计 | 2026-11-09球谐专项授权仅l≤2/Eigen并禁sdla，H-11历史状态不影响后来用户自己实测 |
+| DOC-030 | `approval/DECISION_IMPLEMENTATION_NOTES.md` | 审批落实记录符合 | 旧draft/权限不当最新批准 | 正在审计 | 历史审批落实H-01～16的draft/deferred/approved与空申请身份已抽查，逐字段仍待 |
+| DOC-031 | `approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md` | 审批包符合，非规范 | applicationCommit/scopeIds空 | 正在审计 | 历史HAR申请包12章节/AI-DRAFT及applicationCommit/scopeIds空已核，尚需逐H事项审阅 |
 | DOC-032 | `golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md` | 证据等级规划符合 | L2/L3/L4缺；球谐3/3状态需避免旧措辞 | 已完成限定审计 | L3总体AN-G仍候选，已有5e522198 SH归档/投影子集真实3/3；提交5e5a92e |
 | DOC-033 | `golden/GOLDEN_TOLERANCE_PROPOSAL.md` | 容差候选符合 | 0.01/0.1筛查非DEC-005 | 未审计 | — |
 | DOC-034 | `golden/NO_MATLAB_EXECUTION_POLICY.md` | 长期政策符合 | 取消L1，不取消软件验证 | 正在审计 | NO_MATLAB政策已核L1永久非必需；未审全部业务合同映射 |
@@ -53,7 +53,7 @@
 
 **第0阶段真实起点**：36份待审＝0已完成、0正在、36未审计；6个初始DAR目标＝0已整改、6未整改。上述动态状态为本轮实际源文档核对结果，仅标“已完成限定审计”的文件，其检查边界是证据身份、声明定位、链接/版本与明确的文字一致性；**不是逐个AC、接口、算法或批准证据的全面签署**。已完成6项、正在审计14项、未审计16项；软件/批准阻塞并未因此消除。
 
-## 3. 初始整改目标（来自用户的六条主要建议）
+## 3. 整改目标（六项用户输入基线及新增独立事实冲突）
 
 | 目标 | 涉及文件 | 发现/整改方向（待实际验证） | 完整验收条件 | 阻塞性质 | 状态 |
 |---|---|---|---|---|---|
@@ -66,6 +66,7 @@
 
 | DAR-007 | design/README.md；design/SH_ROTATION_IVANIC_RUEDENBERG.md | 同一个现行低阶球谐模块在某处写“3/3原生已测”，另一处仍写“仅旧1/1且新增2项未验收”；专题LLD未列投影源和两个新CTest | 按固定5e522198区分历史1/1与3/3、受限叶子与未建公共ABI，不改变真实授权/批准 | 纯文档 | 已整改 |
 | DAR-008 | golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md | L3概述笼统称AN-G01～12尚无真实C++测试，但AN-G06/07/08子集已有固定SHA用户原生CTest | 明确整份AN-G JSON未批准与固定SH子集已实测同时成立，不误关其它AN-G及AC | 纯文档 | 已整改 |
+| DAR-009 | ARCHITECTURE.md；OBJECT_MODEL.md；PLAN.md；DOCUMENT_BASELINE_REGISTER.md；TEST_PLAN.md；TODO.md | 当前资料与历史表的球谐论文材料、全部代码未创建、1/1专项CTest及全工程审计导航混写 | 区分历史批准与已取得论文/受限SH叶子3/3真实构建，纠正当前HLD/对象/计划/基线/测试/待办文字，不假称其它软件已通过 | 纯文档 | 已整改 |
 ## 4. 已实施审计、具体整改和验证日志
 
 本轮先固定两份**意见基准文件**：AUDIT.md 文档规范提交 `1081f0f9c2de`，AUDIT_PROGRESS.md 初始36文件/6DAR提交 `140ea0e36000`；随后实际读取上表范围内的源Markdown、目录14项清单、固定5e522198球谐用户测试证据及历史/现行台账，做了如下**纯文档整改**：
@@ -78,14 +79,31 @@
 
 **抽样/审计限制**：其余30份文档的用户评价已录入，但没有对每个AC/字段/算法逐字完成深审；其中14份已进行定位/状态/证据抽查，仍列“正在审计”，16份未完成独立核查。不得将文档初审与软件合格混淆。此次修改仅为MD文档，不改C++/CMake/CTest/原MAT/MAT。
 
+### 第2阶段：核心追踪与过时状态核对
+
+| 审计对象/整改 | 实际读到的可复核事实 | 本轮处理与边界 |
+|---|---|---|
+| DAR-001 / SRS | `REQUIREMENTS.md` 66个唯一REQ表行与 `TEST_PLAN.md §3` 66个唯一TC表行一一对应，AC编号无重复；示例AC-F-FILTER-001/SH-001仍是可变LLD导航 | 静态编号映射已核，但**尚无逐AC固定LLD blob/批准**，保持未整改 |
+| DAR-002 / HLD | §4.1 Mermaid图27个箭头，**25个内部模块边＋2个外部库边**；当前根CMake只有`egomotion_harmonics`叶子及3项CTest | 纠正旧论文上传门禁与历史/实际构建（`15d2830`），更正27/25+2口径（`5298e7d`）；完整业务target/DEC-006仍缺，保持未整改 |
+| DAR-003 / 对象模型 | 45源职责/Session候选公开声明与已测`low_order`叶子不是同一公共类ABI | `OBJECT_MODEL.md` 修正声明（`c02f02b`）；跨模块ABI及真实CTest未完成 |
+| DAR-004 / 测试 | §3恰有66个唯一TC及对应REQ/AC；用户固定`5e522198`SH3项CTest 3/3（53,532/176/76内部断言） | `TEST_PLAN.md` 增加当前事实和旧NOT_RUN时点边界（`9fff57a`）；其它大多数业务TC未实际执行 |
+| DAR-005 / 配置 | `DOCUMENT_BASELINE_REGISTER.md §2–3`是早期固定36项；本表§6实际从基准`9af189f`单一Git tree获取本轮36个blob且无缺失 | 修正历史状态/审计导航（`9ea9b56`），本轮起点blob快照提交`d5ab2de`；**并非正式冻结/当前最新批准SHA** |
+| DAR-009 / 当前实施事实 | HLD等旧文仍称论文待上传、全部球谐源码/CTest未实现，PLAN/基线与TODO会误导到旧审计入口 | 修订`ARCHITECTURE`、`OBJECT_MODEL`、`PLAN`、`DOCUMENT_BASELINE_REGISTER`、`TEST_PLAN`、`TODO`（提交`15d2830`、`c02f02b`、`516ea95`、`9ea9b56`、`9fff57a`、`683d082`），**仅文字状态冲突结案**，不宣布其它模块实现/批准 |
+
+**限定文件审阅说明**：DOC-001/002/003/018/019的“已完成”仅限本表写明的编号、依赖、身份、对象边界、WBS静态检查；DOC-026～029仅限短篇管理/决策文档的职责和时间线。DOC-030/031虽已浏览历史审批范围与状态，仍未完成各H项逐字段校核，继续“正在审计”。未实际审查的文件维持未审计。不存在本轮原生构建/CTest或新批准证据。
+
 ## 5. 各轮计数与变化
 
-**起点→终点净变化**：审计对象36→36（0），完成限定审计0→6（+6），正在审计0→14（+14），未审计36→16（−20）；整改目标6→8（+2个实际独立文字冲突），已整改0→3（+3），未整改6→5（−1）。新登记的DAR-007、DAR-008独立于原六类综合阻塞，且均以具体文本矛盾与提交为依据；其余五个复合义务不能因上述局部措辞更正关闭。
+**第2阶段相对上一轮**：36份不变；完成限定审计6→15（+9），正在审计14→11（−3），未审计16→10（−6）；整改目标8→9（+1），已整改3→4（+1），未整改5→5（0）。五项复合阻塞未解除，不能以文本修复宣布正式基线完成。
+
+
+**第1阶段（历史快照）**：审计对象36→36（0），完成限定审计0→6（+6），正在审计0→14（+14），未审计36→16（−20）；整改目标6→8（+2个实际独立文字冲突），已整改0→3（+3），未整改6→5（−1）。新登记的DAR-007、DAR-008独立于原六类综合阻塞，且均以具体文本矛盾与提交为依据；其余五个复合义务不能因上述局部措辞更正关闭。
 
 | 阶段 | 文件总数 | 已完成限定审计 | 正在审计 | 未审计 | 整改目标 | 已整改 | 未整改 |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | 第0阶段：用户意见录入、实际审计前 | 36 | 0 | 0 | 36 | 6 | 0 | 6 |
 | 第1阶段：源文档限定审查与三项纯文档整改 | 36 | 6 | 14 | 16 | 8 | 3 | 5 |
+| 第2阶段：追踪与历史状态核对 | 36 | 15 | 11 | 10 | 9 | 4 | 5 |
 
 ## 6. 36份文件的同一基准提交身份（DAR-005：只读静态快照）
 
