@@ -17,7 +17,7 @@
 - **[docs/REQUIREMENTS.md](REQUIREMENTS.md)** 是独立的软件需求规格说明书（SRS），采用 `REQ-F-*`、`REQ-D-*`、`REQ-I-*`、`REQ-DC-*`、`REQ-NF-*`、`REQ-PROC-*` 编号，逐条定义优先级、依据状态、验收 `AC-*` 与计划测试 `TC-*`，并覆盖 P0–P10 全部 98 项任务。
 - **本 PLAN.md** 只负责源码审计安排、实施分解、任务依赖、进度和验收顺序；P 工作项不能替代系统需求。
 - **[docs/ARCHITECTURE.md](ARCHITECTURE.md)** 是 HLD 草案，**[docs/OBJECT_MODEL.md](OBJECT_MODEL.md)** 是类职责与生命周期草案，**[docs/design/README.md](design/README.md)** 索引各模块 LLD 草案；三者均未冻结。
-- **[docs/TEST_PLAN.md](TEST_PLAN.md)** 规划 TC → 拟议测试实体 → AC，尚未创建 C++ 测试或实际 CTest。
+- **[docs/TEST_PLAN.md](TEST_PLAN.md)** 规划66个TC→拟议测试实体→AC；**例外事实**：受限球谐叶子已有3个独立CTest且在固定`5e522198`用户原生3/3通过，其余绝大多数业务TC尚无实际C++测试/CTest。
 - **[docs/DOCUMENT_BASELINE_REGISTER.md](DOCUMENT_BASELINE_REGISTER.md)** 是规范文档的类型、当前版本、冻结状态和固定 Git SHA 身份的统一索引；**[docs/PROGRESS.md](PROGRESS.md)** 是实施任务、里程碑、角色、实际验证与未决决定的滚动证据登记；初次静态核查见 [2026-11-06 审查记录](reviews/STATIC_TRACEABILITY_2026-11-06.md)，审查意见后的跨文档更正及连接器复核见 [一致性修订记录](reviews/DOC_CONSISTENCY_RECONCILIATION_2026-11-06.md)；二者均不代表 H-11 的 Bash 现场执行。
 - **[AGENTS.md](../AGENTS.md)** 规定 Git 安全、Debian/Ubuntu 支持范围、MAT 原始资料只读保护与 AI Agent 工作要求。
 - SRS 目前是 **v0.14 草案、尚未冻结、尚未验收**；需求项“依据已确认”不等于 C++ 已实现或测试通过。P0 对来源/数据/版权的审计结论与软件需求规格经项目所有者批准后才可冻结。所有未实测性能/内存/构建预算与逐模块容差保持 TBD，不得凭空编造。
@@ -165,7 +165,7 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 **WBS 证据列的性质**：本表的 98 个 P 工作项在「证据要求」中使用类别描述，**不表示**候选测试文件/CTest 已创建或分配了完成时间；每个 TC→唯一拟议测试实体/CTest→AC 的对照以 [TEST_PLAN.md §3](TEST_PLAN.md) 为唯一登记来源。关于 LLD 的具体候选路径：P2/P3 参照 [sampling_noise.md §8](design/sampling_noise.md) 的 `test_sampling.cpp`、`test_flow_simulation.cpp`；P5/P8 参照 [experiments.md §8.1](design/experiments.md) 的 `test_bias.cpp`、`test_adaptive_experiments.cpp`；P7 球谐参照 [harmonics.md §4.1](design/harmonics.md) 的 `test_harmonics.cpp`；P1 MAT/RAII 参照 [mat_io.md §5/§8](design/mat_io.md) 的 `test_mat_archive.cpp` 和候选 `test_mat_raii.cpp`。相关实体、CTest 名与调用/环境仍**未批准或运行**，本段不改变任何 P 的 REQ/TC/AC、依赖或状态。
 
 
-**本节是 WBS，不代表 C++ 工作已经开始。** 每个 P 任务显式关联 REQ→TC→AC，证据列只描述应收集的证据类别；初始状态均未验收。设计草案/源码可读取并不等价于完成 P 任务。所有完整测试数据与执行记录统一按 [TEST_PLAN.md](TEST_PLAN.md) 管理。
+**本节是 WBS，不代表全业务C++工作已经开始。** 仅受限低阶球谐叶子曾获实施/测试授权并有固定SHA实测；其余业务模块的代码/测试仍未实施，不可将此模块局部证据扩大到P0–P10的整体验收。 每个 P 任务显式关联 REQ→TC→AC，证据列只描述应收集的证据类别；初始状态均未验收。设计草案/源码可读取并不等价于完成 P 任务。所有完整测试数据与执行记录统一按 [TEST_PLAN.md](TEST_PLAN.md) 管理。
 
 ### P0 — 基线冻结与来源审计（原始资料/设计准备）
 
