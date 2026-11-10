@@ -2,7 +2,7 @@
 
 > **专题 LLD v0.6，公共接口与全工程未冻结、未实现。** IR96、IR98、Choi99 论文已经审阅，低阶叶子 `egomotion::harmonics::low_order` 的 C++/Eigen 独立实现现已提交，且项目所有者提供固定 SHA `8eab5dd`、含增强回归的 `445ed151` 与624四元数压力的 `601c74de` 的 GCC16.2/Release **各1/1 CTest Passed**。本文件§5 中未来的公共类/头文件方案仍属未创建、未编译的候选，不能与已经构建的叶子混淆。新增的解析/相位断言在固定 `445ed151` 的 CTest 执行并通过；之后624非零四元数、错误分类、有限系数溢出在 `601c74de` 的 CTest执行并通过；完整 ABI/集成、最终 DEC-005 和广义异常测试未完成。详见 [PROGRESS E-DOC-056](../PROGRESS.md)。
 
-**原生证据适用范围**：根 `CMakeLists.txt` 只生成 `egomotion_harmonics` 静态库，编译 `src/harmonics/low_order_basis.cpp`、`low_order_rotation.cpp`、`low_order_choi.cpp`，并执行 `tests/unit/test_low_order_harmonics.cpp`。用户观察到构建成功及 CTest 1/1 Passed，这并不表示下文规划的 `real_spherical_harmonics.hpp`、`harmonic_fitter.hpp`、`harmonic_rotator.hpp` 等公共/拟合器已实现，更不表示其它模块获准编码。每次新回归或源码变更需新 HEAD 的真实测试记录。
+**原生证据按固定SHA分层**：早期 `8eab5dd`/`445ed151`/`601c74de` 均仅执行原 `low_order_harmonics` 单项CTest；随后用户在固定 `5e5221988cf093dbfddb578d30f98e19b31e30e2` 的低阶球谐版本报告 **3/3 CTest Passed**，包括 `low_order_harmonics`、`low_order_harmonics_archived_golden` 和 `low_order_harmonics_source_projection`（分别53,532/176/76次内部检查）。此固定版本的 `egomotion_harmonics` 还包含 `src/harmonics/low_order_source_projection.cpp`。这仅说明受限叶子和专项测试获得用户原生证据，**不等于**下文规划的 `real_spherical_harmonics.hpp`、`harmonic_fitter.hpp`、`harmonic_rotator.hpp` 等公共类/ABI已创建、编译、集成或正式批准，也不授权其它模块。以后源代码变化必须在对应新SHA重新验收。
 
 ## 1. 原始依据及本轮已确认范围
 
@@ -155,8 +155,8 @@ public:
 | 三篇PDF取得、身份登记、关键公式/表格图像阅读 | 已完成材料与静态审阅，不再等待上传 |
 | 原式/勘误/源M/U/P/V/W对应及Table2冲突反例 | 已形成候选；不是作者额外勘误或数值PASS |
 | R3转置与源基相位风险 | 已明确，仍需一般SO(3)和物理语义闭合 |
-| R5全25项非递归公式、1999独立路线 | 见 [验证候选](../golden/SH_PAPER_VERIFICATION_CASES.md)，未执行 |
-| Eigen生产实现、头自包含/ABI、构建/CTest | 未实施，H-10/H-11仍适用 |
+| R5全25项非递归公式、1999独立路线 | IR/Choi/直接张量的低阶一般SO(3)符号核对已执行，固定5e522198的局部C++三项CTest已通过；[SH-PAPER](../golden/SH_PAPER_VERIFICATION_CASES.md)本身仍是**独立的未批准、未执行候选文件**，不能把它的候选用例记为已执行 |
+| Eigen叶子实现与公共接口分层 | 低阶 `egomotion_harmonics` 叶子源码及专项CTest已有固定SHA原生实测；规划中的公共RealSphericalHarmonics/HarmonicFitter/HarmonicRotator头文件、跨模块ABI、真实集成及审批仍未实现/完成 |
 | 独立L3文件/逐元素差异、DEC-005/008、正式签署 | 未完成；AF-045/046/051/055仍开放 |
 
 当前检验路线为源忠实性 → 论文映射/相位语义 → 非递归Table3/1999独立参考 → 获授权的实际C++/CTest。文献高阶性能数字不替代本项目实测。MATLAB/Octave/L1始终非必需，首轮0.01/0.1不自动成为最终PASS标准。
