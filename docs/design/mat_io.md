@@ -119,7 +119,7 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 1. **H-12 已确定仓库根 `output/` 是唯一新数据目录**，用户最新决定删除 CLI 的输出根选项。Composition Root/RunContext/Writer 共享同一受验证的内部输出根，RunId 可由用户提供或 OS 随机源生成，新建 `output/<RunId>/` 时必须独占且拒绝目录/文件复用。Writer 不自行更改隔离根、不使用用户任意路径。任何 `origin/**`、路径逃逸、符号链接覆盖都拒绝；真实 TOCTOU 实现仍待授权后测试。
 2. 对路径绝对化并解析已存在父目录及符号链接；拒绝 canonical 祖先关系下覆盖原始输入。需要考虑 ../、符号链接、同一路径多种表示、UTF-8/空格及软链接中途改变问题；
 3. 对最终文件使用**不覆盖**的独占创建/安全发布策略；不能仅靠“先 exists 再 open”保证无竞态。实际 matio 写出/临时文件/原子发布的组合在 Debian/Ubuntu 上需验证；
-4. **发布前**必须对完整关闭后的受控暂存 MAT 独立回读，按严格规则比较变量名、rank/dims、class/dtype、列主序每项数值及目标文件 SHA-256。只有验证成功才可尝试原子非覆盖发布；**发布后**再确认最终文件身份和可读性、记录 manifest。两次检查的失败时点必须分开：**发布前失败不得出现最终名称**，发布后失败必须标记 `Incomplete/Failed`，不能把已发布但有疑问的文件当作 `Complete`，也不能覆盖/静默删除产物。真实实现/测试仍未发生；
+4. **发布前**必须对完整关闭后的受控暂存 MAT 独立回读，按严格规则比较变量名、rank/dims、class/dtype、列主序每项数值及目标文件 SHA-256。只有验证成功才可尝试原子非覆盖发布；**发布后**再确认最终文件身份和可读性，Writer仅对**该单个文件**返回`Status<MatErrorCode>`；由持有运行全局状态的**RunContext/Runner**记录已验证文件的身份、哈希及Manifest，并且**只有所有预期输出均成功时才可将RunOutcome标Complete**。两次检查的失败时点必须分开：**发布前失败不得出现最终名称**，发布后失败必须标记 `Incomplete/Failed`，不能把已发布但有疑问的文件当作 `Complete`，也不能覆盖/静默删除产物。真实实现/测试仍未发生；
 5. 输出目录和原始目录隔离为设计及测试合同，具体软链接与竞态防护实现需要 P1.9 通过后才可声称安全。
 
 ### 3.1 输入/输出错误与回滚
@@ -234,8 +234,9 @@ Writer::saveNewVariable(RunId,name,data): // 拟议阶段顺序，尚非代码
     5 read staging via independent Reader and STRICTLY compare name/class/type/dims/values
     6 compute staging SHA-256; failure before publish => final path MUST remain absent
     7 publish using atomic NO-REPLACE semantics under protected directory identity
-    8 reread/check final published file identity; persist hash & Manifest only if verified
-    9 post-publish failure => Incomplete/Failed, keep auditable artifact; no overwrite
+    8 reread/check final file identity; Writer returns single-file Status only
+    9 RunContext independently records verified file identity/hash in Manifest
+   10 post-publish failure => RunContext Incomplete/Failed, preserve artifact; no overwrite
 ~~~
 
 以上为 API 调用责任示意，具体 matio 函数的错误返回、压缩 flag、版本宏及 read-next-info 的所有权需对**选定的真实 matio 版本**核验，不能按未经核实的头文件约定实现。第一个变量的确定顺序也不能仅假设为字母序。
@@ -245,7 +246,7 @@ Writer::saveNewVariable(RunId,name,data): // 拟议阶段顺序，尚非代码
 1. 先记录 origin 根目录的 canonical 路径、设备/目录身份，拒绝在其中写出；并将所有期望输出路径限定在独立的新 RunId 目录内。
 2. 检查路径组件是否包含符号链接、父目录逃逸、绝对路径形式的 RunId 或异常文件名。Linux 上只用 lexical_normal/canonical **并不能防御并发替换符号链接**。
 3. 若安全目标要求抵御并发目录替换，实施者必须评估并使用受信任根/RunId `dirfd`、`openat`/`O_NOFOLLOW`、`O_EXCL` 或等价的 Linux 文件描述符约束，且不能把可变绝对字符串路径当作安全凭证。应评估同目录受控暂存、`renameat2(RENAME_NOREPLACE)` 或具有同等原子“不覆盖”语义的发布方式，并核对 matio 的 **path-based** `Mat_CreateVer` 实际会打开哪个对象。若无法保证暂存身份与最终发布使用同一受控目录、同一文件系统及防竞态机制，**必须返回安全失败，禁止生产发布**；此前的 `canonical()/exists()` 检查不构成安全证明。**在实现与竞态测试通过之前不得宣称抗TOCTOU。**
-4. **先关流/回读暂存、严格逐值+哈希验证，再尝试非覆盖发布，再核最终身份并将Manifest置为完成**。部分写入或发布前校验失败不得生成最终 `<variable>.mat`；若在成功发布后遇到复读/Manifest失败，该RunOutcome必须是`Incomplete/Failed`，并保留已发布文件的哈希与审计线索，不允许自动删除或覆盖。依 AGENTS.md 仅能处理可证明本次创建且权限已核的临时产物，绝不清理未知用户文件。
+4. **先关流/回读暂存、严格逐值+哈希验证，再尝试非覆盖发布，最后核最终身份**。Writer 的 `Status` 仅代表单文件写入核验，**不负责决定整个运行的 Complete**；RunContext/Runner 收齐所有期望文件及其来源/hash 后才可完成 Manifest。部分写入或发布前校验失败不得生成最终 `<variable>.mat`；若在成功发布后遇到复读/Manifest失败，该RunOutcome必须是`Incomplete/Failed`，并保留已发布文件的哈希与审计线索，不允许自动删除或覆盖。依 AGENTS.md 仅能处理可证明本次创建且权限已核的临时产物，绝不清理未知用户文件。
 5. 对用户传入的中文/空格路径使用 C++17 std::filesystem 在 Debian/Ubuntu 上进行实际测试；对输入编码、非法路径、只读用户身份及不可信软链接分别建负例。
 
 ### 7.2.1 变量名与非覆盖发布的独立安全义务（2026-11-11 文档整改）
@@ -258,7 +259,7 @@ Writer::saveNewVariable(RunId,name,data): // 拟议阶段顺序，尚非代码
 |---|---|
 | 两个Writer同时争用相同 `RunId/variable.mat`，或最终名称已有文件 | 原子非覆盖发布最多有一个成功；旧文件原字节/SHA保持不变，失败方 `OutputExists` |
 | 暂存 `Mat_VarWrite/Mat_Close` 失败或暂存回读值与预期不同 | **不会出现最终MAT名称**；以 `WriteFailed/ReadbackMismatch` 及暂存身份记录失败，不把暂存当成有效结果 |
-| 原子发布后最终检查/Manifest写入故障 | 即使最终文件存在也不得标记 `Complete`；记录已发布身份与失败来源，不删除已发布文件 |
+| 原子发布后最终检查，或由RunContext管理的Manifest写入故障 | 即使最终文件存在也不得标记整个RunOutcome `Complete`；记录已发布身份与失败来源，不删除已发布文件 |
 | 原 `output/` 父组件/RunId 在写出中被软链接替换；或 `name='../origin/...'` | 拒绝逃逸或竞态；原 `origin/**`、已有结果保持未修改；不接受“先canonical后Mat_CreateVer”作为通过证据 |
 
 此处**不替代引入真实C++之后的安全实现与TOCTOU竞态测试**。严格读取/写回读的原始值不适用0.01/0.1宽松筛查，不能以失败产物被保留就认定该数据有效。
