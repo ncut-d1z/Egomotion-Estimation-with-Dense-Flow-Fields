@@ -1,6 +1,6 @@
 # CLI 参数、退出码与诊断协议：详细设计草案
 
-> **候选 v0.6，未冻结、未编码、未执行 CTest。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
+> **候选 v0.7，未冻结、未编码、未执行 CTest。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
 
 ## 1. 语法与基本约束
 
@@ -14,7 +14,7 @@
 
 | 命令 | 必需选项 | 可选选项 | 已知输出、选择与来源边界 |
 |---|---|---|---|
-| `inspect-mat` | `--file PATH` | `--variable NAME`、`--mode strict/compat`（默认 strict） | 未指定变量时仅列举元数据；strict+NAME 指定变量；compat 且不带 NAME 时模拟原 getflowfield 读首变量。compat+NAME 视为参数错误；**单变量文件**按现有归档合同读唯一变量，**多变量且没有获批准的独立顺序依据**返回 `MatErrorCode::AmbiguousVariable`，不采用字母序猜测；完整边界见 [mat_io.md §7.4](mat_io.md)，无需 MATLAB 运行 |
+| `inspect-mat` | `--file PATH` | `--variable NAME`、`--mode strict/compat`（默认 strict） | **strict 且不带 NAME**：仅 inspect 列举变量元数据；**strict+NAME**：调用 readNamed 按精确名称读取自拥有值并展示其 metadata（数值载荷输出格式待批）；**compat 且不带 NAME**：调用 readFirstCompatible，单变量读取唯一值、多变量无独立顺序证据时返回 AmbiguousVariable；**compat+NAME**：解析阶段错误 exit 2。不能将所有无 NAME 请求统一降成 inspect；完整边界见 [mat_io.md §7.4](mat_io.md)，无需 MATLAB 运行 |
 | `run-bias-occluded` | `--seed UINT32 --level NONNEG_INT` | `--run-id ID` | 使用缺损八面体、平均光流模长噪声；level 为包含端点的最大递归级别；写 xwerte 和 ywerte1…6 |
 | `run-bias-proportional` | 同上 | `--run-id ID` | 使用完整八面体和逐分量噪声；保留原作者 xwerte 与真实 N 不同的行为 |
 | `run-adaptive-init` | 无 | `--run-id ID` | 35 点、level=2；四类初始化误差 MAT |
@@ -22,6 +22,20 @@
 | `run-adaptive-update-rates` | 无 | `--run-id ID` | 600 点、level=2，周期固定 1/5/11/21；当前脚本只写三个 MAT，不伪造历史额外数据 |
 | `analyze` | `--experiment bias/adaptive-init/adaptive-comparison/adaptive-update-rates --input-root DIR` | 无 | 四种分析路径；只读取 MAT，不调用求解器；缺少字段显式失败 |
 | `plot`（S） | 同 analyze | `--run-id ID`（仅当生成持久图像文件时适用） | 绘图后端可缺席（exit=7），不得影响数值与分析命令 |
+
+### 2.0.1 `inspect-mat` 的模式×变量选择真值表（2026-11-11 文档纠偏）
+
+旧§2的命令行一行合同同时断言“未指定变量时仅列举元数据”与“compat 未指定变量时模拟 `getflowfield` 读取首变量”，使实现者可能误将兼容模式也做成只列头信息。严格遵守三个相互不同的 Reader API：`inspect` **只取元数据**，`readNamed` **精确按名称读取**，`readFirstCompatible` **有界首变量兼容读取**，后者绝不能按字母序猜多变量顺序。候选可观察分支如下：
+
+| `--mode` | `--variable` | 选择的唯一候选动作 | 成功/失败辨别 |
+|---|---|---|---|
+| 缺省或 `strict` | 缺省 | `MatResultReader::inspect(file)` | 返回该文件全部真实变量元数据；不要求将变量数值解码为业务 MatDenseArray |
+| 缺省或 `strict` | 指定非空 NAME | `MatResultReader::readNamed(file,NAME)` | 必须实际读取唯一命名变量的受支持数据；NAME 不存在 → `MissingVariable/read(3)`；不回退首变量 |
+| `compat` | 缺省 | `MatResultReader::readFirstCompatible(file)` | 当前归档单变量文件读取唯一变量；无可靠顺序证据的多变量文件 → `AmbiguousVariable/read(3)`；不能静默退化成 inspect 成功 |
+| `compat` | 指定任何 NAME | **参数组合非法**，不打开文件 | `Parse/exit(2)`，先于输入文件存在性/权限检查 |
+| 未识别 mode 或重复 mode/variable | 任意 | **参数解析失败** | `Parse/exit(2)`，不读 MAT、不生成 RunId |
+
+**状态与输出限制**：此表明确的是**调用/读取的行为**，不是已经批准的 stdout 数值转储格式、JSONL 文件内容或是否显示全量 double。`readNamed/readFirstCompatible` 成功应能证明完整自拥有数值读取，不能把只读取文件头当成完整解码；将数据摘要/逐值展示到 stdout 的具体策略仍由 P0.8/DEC-008 批准。对所有合法路径，本命令只读，不写 MAT、不生成结果 RunId。候选 `TC-F-CLI-001` 应至少采用单变量有效、已知坏变量名、多变量合成输入和不存在文件来验证上述不同动作；**合成/损坏文件只在后续获授权的隔离测试目录中创建**。目前没有实际业务 CLI/CTest PASS。
 
 ### 2.1 参数类型与不变量（待 P0.8 签署）
 
@@ -82,7 +96,7 @@
 
 | TC | 必要测试 | 证据状态 |
 |---|---|---|
-| TC-F-CLI-001 | 有效/无效 MAT、变量、strict/compat、源哈希不变 | 只有独立 matio 探针 582/582 读取的子项证据 |
+| TC-F-CLI-001 | **strict/compat×有无NAME四分支**，unknown/duplicate解析优先，精确按名/有界首变量/元数据只读、Bad NAME、多变量歧义、源哈希不变；见§2.0.1 | 只有独立 matio 探针 582/582 读取的子项证据；CLI与合成多变量负例未编写/未运行 |
 | TC-F-CLI-002 | 两类 Bias、seed/level、输出安全与变量形状 | 未编写/未运行 |
 | TC-F-CLI-003 | 三种 Adaptive、noise-scale、原更新间隔与当前写出的 MAT | 未编写/未运行 |
 | TC-F-CLI-004 | analyze 四条路径独立运行、不触发估计器、缺字段失败 | 未编写/未运行 |
