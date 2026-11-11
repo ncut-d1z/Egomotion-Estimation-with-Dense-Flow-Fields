@@ -2,7 +2,7 @@
 
 > **长期参考边界**：本 Runner **不要求 MATLAB/Octave 运行或采集 L1**；原 .m 仅作只读源码依据，结果验收使用 L2 已存 MAT、L3 独立逐帧/逐轮参考与 L4 统计，参见 [长期政策](../golden/NO_MATLAB_EXECUTION_POLICY.md)。
 
-> **LLD v0.5 草案，未冻结、未创建 C++ Runner。** 来源：bias_test/data_generation 中 2 个入口；adaptive_matched_filter_test/data_generation 中 3 个入口。对应 P5、P8、REQ-F-BIAS、REQ-F-EXP、REQ-F-CLI 与 REQ-I-RESULT。
+> **LLD v0.6 草案，未冻结、未创建 C++ Runner。** 来源：bias_test/data_generation 中 2 个入口；adaptive_matched_filter_test/data_generation 中 3 个入口。对应 P5、P8、REQ-F-BIAS、REQ-F-EXP、REQ-F-CLI 与 REQ-I-RESULT。
 
 ## 1. 实验入口及源代码实际参数
 
@@ -31,6 +31,7 @@ Output: Result<RunOutcome, ExperimentErrorCode>（成功时为 RunOutcome 及记
 ~~~
 
 - 每个 RunId 拥有 RNG；**H-12 选定将来新输出目录为仓库根 `output/<RunId>/`**，由 `.gitignore` 忽略生成数据。失败/重试不自动覆盖旧输出，原始 MAT 永远只读；**H-10 暂缓代码实施，当前没有可运行的 MAT Writer 或生成结果。**
+- **Bias 原始合成流接口的三种数值不可混淆**：两种 `fixed_*_randomnear.m` 的 `durchlaenge` 是**合成**理想光流的逐点模长平均 `mean(||transfluss+rotfluss||)`，它不能替换为 `mean(||transfluss||)+mean(||rotfluss||)`；后者两项均值只属于独立分量诊断（类似 `erzeugeflussausnear.m` 的两个分量输出）。原 `near` 输出形参在循环中为**每次覆盖、最后一条近度的标量**；`FlowSynthesisResult.nearness` 是新增的全部逐点内部值，`near_last` 才对应源返回标量。新版候选布局及精确抵消反例见 [sampling_noise.md §6/§7.1.5](sampling_noise.md)。Runner/噪声模型不得误以两个分量均值的和作为缺损视场的噪声尺度；标量 `near_last` 不能冒充 N×1 的 MAT 原作者保存数据（原 Bias save 不包括 near）。
 - Bias 的 40 个历史子目录是 40 份结果来源，不能错误解释为一个源运行的 40 个内循环。
 - AdaptiveComparisonRunner 的前四种结果累计后除以 **8**；rottransratio 按原脚本在循环中的覆盖次序保留。UpdateRateRunner 的输出系数状态分别保存，不和当前主 akkoeff 共享可写对象。
 - RunContext 跨实验不可共享可变状态；**单步 Adaptive 求解失败不得提交无效主系数**；如果依赖状态无法安全延续，就停止本条连续序列。独立样本或独立实验可记失败后继续其他样本，前提是记录真实有效分母；不得将失败静默改成正常结果。
@@ -231,6 +232,8 @@ private:
 历史 **MAT 类型/shape 字典已实测**；但算法的**独立 L3 逐节点参考**、完整 L2 逐值及 SHA-256、L4 统计、批准容差、CLI schema、生产写入/回读与 CTest 仍未建立，不能以最终结果文件能够被读取替代算法真实性测试。
 
 **状态**：五类入口参数、独立 Config、RunContext/Manifest 失败策略与当前 save 契约已文档化，**历史输出 dtype/shape 已由 582/582 matio 数据字典确认**；C++ Runner、新输出、独立 L3 逐节点参考、误差容差及接口冻结仍未完成。
+
+**2026-11-11 Bias源结果边界的静态数学夹具**：在 `d=e_z, mu=1, t=e_x, omega=-e_y` 的独立单方向流场中，`p_trans=-e_x`、`p_rot=+e_x`，故合成流的源式 `durchlaenge=0`，两个单分量平均模长各为1。检查在这个输入下不可使用`1+1=2`替代原合成模长：MeanMagnitudeGaussianNoise即便噪声系数非零也产生0扰动，`nonpropfehler` 路径仍要消耗3个normal。此为**求解器前流场合成/噪声数学边界**而非原Bias的6/8面集合实际运行结果；复用 `TC-F-FLOW-002/003`、`TC-DC-NOISE-001`，正式软件测试与独立L3尚未实施。
 
 ### 8.1 具体错误触发、CTest 候选与依赖边界
 
