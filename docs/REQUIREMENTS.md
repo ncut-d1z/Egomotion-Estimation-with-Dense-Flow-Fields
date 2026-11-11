@@ -496,7 +496,7 @@
 | `REQ-F-CLI-003` | `AC-F-CLI-003` / `TC-F-CLI-003` | [`design/cli.md`](design/cli.md)（§2、§3、§4） | `82c38559d48fb1ad6cc6a76c8c1c6533b6a4977d` | 仅候选章节/身份，未批准 |
 | `REQ-F-CLI-004` | `AC-F-CLI-004` / `TC-F-CLI-004` | [`design/cli.md`](design/cli.md)（§2、§3、§4） | `82c38559d48fb1ad6cc6a76c8c1c6533b6a4977d` | 仅候选章节/身份，未批准 |
 | `REQ-F-CLI-005` | `AC-F-CLI-005` / `TC-F-CLI-005` | [`design/cli.md`](design/cli.md)（§2、§3、§4） | `82c38559d48fb1ad6cc6a76c8c1c6533b6a4977d` | 仅候选章节/身份，未批准 |
-| `REQ-F-ERROR-001` | `AC-F-ERROR-001` / `TC-F-ERROR-001` | [`design/analysis_plotting.md`](design/analysis_plotting.md)（§5） | `e9bc9250730609393734ad7235a57c08154aed65` | 仅候选章节/身份，未批准 |
+| `REQ-F-ERROR-001` | `AC-F-ERROR-001` / `TC-F-ERROR-001` | [`design/experiments.md`](design/experiments.md)（§4、§5），原误差的生成/使用职责；[`design/analysis_plotting.md`](design/analysis_plotting.md)（§5）为仅消费/展示 | `224b2707be6b0b0df885f727498c70dfe7eb6fb5`（主合同） | 仅候选章节/身份，未批准 |
 | `REQ-F-EXP-001` | `AC-F-EXP-001` / `TC-F-EXP-001` | [`design/experiments.md`](design/experiments.md)（§5、§8） | `224b2707be6b0b0df885f727498c70dfe7eb6fb5` | 仅候选章节/身份，未批准 |
 | `REQ-F-EXP-002` | `AC-F-EXP-002` / `TC-F-EXP-002` | [`design/experiments.md`](design/experiments.md)（§5、§8） | `224b2707be6b0b0df885f727498c70dfe7eb6fb5` | 仅候选章节/身份，未批准 |
 | `REQ-F-EXP-003` | `AC-F-EXP-003` / `TC-F-EXP-003` | [`design/experiments.md`](design/experiments.md)（§5、§8） | `224b2707be6b0b0df885f727498c70dfe7eb6fb5` | 仅候选章节/身份，未批准 |
@@ -504,7 +504,7 @@
 | `REQ-F-FLOW-001` | `AC-F-FLOW-001` / `TC-F-FLOW-001` | [`design/sampling_noise.md`](design/sampling_noise.md)（§2、§5） | `e47fd2295afe1f3889ce07fa68ab3adda8d05a27` | 仅候选章节/身份，未批准 |
 | `REQ-F-FLOW-002` | `AC-F-FLOW-002` / `TC-F-FLOW-002` | [`design/sampling_noise.md`](design/sampling_noise.md)（§2、§5） | `e47fd2295afe1f3889ce07fa68ab3adda8d05a27` | 仅候选章节/身份，未批准 |
 | `REQ-F-FLOW-003` | `AC-F-FLOW-003` / `TC-F-FLOW-003` | [`design/sampling_noise.md`](design/sampling_noise.md)（§2、§5） | `e47fd2295afe1f3889ce07fa68ab3adda8d05a27` | 仅候选章节/身份，未批准 |
-| `REQ-F-FLOW-004` | `AC-F-FLOW-004` / `TC-F-FLOW-004` | [`design/sampling_noise.md`](design/sampling_noise.md)（§2、§5） | `e47fd2295afe1f3889ce07fa68ab3adda8d05a27` | 仅候选章节/身份，未批准 |
+| `REQ-F-FLOW-004` | `AC-F-FLOW-004` / `TC-F-FLOW-004` | [`design/trajectory.md`](design/trajectory.md)（§3、§6），单位球内射线近度/正根 | `b749ba78545d561c664acc079e54cbc1beb6083b` | 仅候选章节/身份，未批准 |
 | `REQ-F-GEOM-001` | `AC-F-GEOM-001` / `TC-F-GEOM-001` | [`design/sampling_noise.md`](design/sampling_noise.md)（§2、§7） | `e47fd2295afe1f3889ce07fa68ab3adda8d05a27` | 仅候选章节/身份，未批准 |
 | `REQ-F-GEOM-002` | `AC-F-GEOM-002` / `TC-F-GEOM-002` | [`design/sampling_noise.md`](design/sampling_noise.md)（§2、§7） | `e47fd2295afe1f3889ce07fa68ab3adda8d05a27` | 仅候选章节/身份，未批准 |
 | `REQ-F-GEOM-003` | `AC-F-GEOM-003` / `TC-F-GEOM-003` | [`design/sampling_noise.md`](design/sampling_noise.md)（§2、§7） | `e47fd2295afe1f3889ce07fa68ab3adda8d05a27` | 仅候选章节/身份，未批准 |
@@ -549,6 +549,8 @@
 | `REQ-DC-KVD-001` | `AC-DC-KVD-001` / `TC-DC-KVD-001` | [`design/kvd.md`](design/kvd.md)（§3） | `ca48de30582168275f470db61e22834f321d9869` | 仅候选章节/身份，未批准 |
 | `REQ-DC-NOISE-001` | `AC-DC-NOISE-001` / `TC-DC-NOISE-001` | [`design/sampling_noise.md`](design/sampling_noise.md)（§3、§5） | `e47fd2295afe1f3889ce07fa68ab3adda8d05a27` | 仅候选章节/身份，未批准 |
 | `REQ-DC-RNG-001` | `AC-DC-RNG-001` / `TC-DC-RNG-001` | [`design/sampling_noise.md`](design/sampling_noise.md)（§3、§5） | `e47fd2295afe1f3889ce07fa68ab3adda8d05a27` | 仅候选章节/身份，未批准 |
+
+**进一步语义核对**：`AC-F-FLOW-004` 属于球内射线正向交点、正根与近度，主要合同在 `trajectory.md §3/§6`；`AC-F-ERROR-001` 是估计误差的生成与两种度量，主要合同在 `experiments.md`，分析模块只消费误差数组，不能把消费层误当生成算法的唯一来源。上述两项已在表内按原职责修正，其余表项仍为**未批准的主要责任导航**，不可据此宣布66项AC全部完成语义审核。
 
 **实际静态核查结果**：本表66条、66个不同的REQ/AC/TC编号，原66项TC在`TEST_PLAN.md §3`均有对应编号；主要设计文件全部在上述固定提交存在，引用的每个`§`编号在目标文档存在。**本项只完成追踪表和候选源身份，不代表对66个AC语义、边界、输入、审批或测试逐一验收。**
 
