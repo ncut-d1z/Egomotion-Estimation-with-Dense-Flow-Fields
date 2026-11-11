@@ -1,6 +1,6 @@
 # Franz / Original KvD / Modified KvD 详细设计草案
 
-> **LLD v0.8（未冻结、无生产实现）**。原 MATLAB 的Franz/Original/Modified KvD公式和赋值次序已核对；§9.4/§9.5的固定方向夹具已用Wolfram精确算术分别验证**两组六方向4条×6轮、一次8方向翻号2条×6轮，共36次数学迭代**。其中精确轨迹覆盖near正均值、Original/Modified近度加权差异、首轮near翻号、RMS/delta/动态门限及最低六次停止；但不覆盖全部一般运动、200轮极端、生产C++/CTest与最终DEC-005。
+> **LLD v0.9（未冻结、无生产实现）**。原 MATLAB 的Franz/Original/Modified KvD公式和赋值次序已核对；§9.4/§9.5的固定方向夹具已用Wolfram精确算术分别验证**两组六方向4条×6轮、一次8方向翻号2条×6轮，共36次数学迭代**。其中精确轨迹覆盖near正均值、Original/Modified近度加权差异、首轮near翻号、RMS/delta/动态门限及最低六次停止；但不覆盖全部一般运动、200轮极端、生产C++/CTest与最终DEC-005。
 
 ## 1. 精确来源与函数合同
 
@@ -127,10 +127,12 @@ while ((delta > threshold && k < 200 && delta > absolute) || k < 6):
     k += 1
     near = estimate_nearness(flow, t, omega, epsilon=1e-13)
     if sum(near) < 0: near = -near; t = -t
-    t_next = translation_rule_original_or_modified(flow, near, t, omega)
-    omega_next = mean_cross_p_d + cross(t_old, mean_near_d) + mean_rot_dot_d_d
-    omega = omega_next
-    t = normalize(t_next)
+    t_for_rotation = t                   # 翻号之后、候选平移更新之前的旧 t
+    raw_t_next = translation_rule_raw_original_or_modified(flow, near, t_for_rotation, omega)
+    t_next = normalize_once(raw_t_next)  # 源 transneu 只做一次范数归一化
+    omega_next = mean_cross_p_d + cross(t_for_rotation, mean_near_d) + mean_rot_dot_d_d
+    omega = omega_next                   # 更新旋转；源码此时尚未提交新平移
+    t = t_next                           # 直接提交已归一化向量，不再次 normalize
     current_rms = rms(flow - predict_flow(near, t, omega))
     delta = abs(previous_rms - current_rms)
     previous_rms = current_rms
@@ -138,7 +140,11 @@ while ((delta > threshold && k < 200 && delta > absolute) || k < 6):
 return (mean(near) * t, omega, near, k)
 ~~~
 
-此伪代码用于实现步骤核对；和原 MATLAB 精确的变量覆盖顺序应在 P4 Golden 中核验，如发现不同，以原始源码为准并修订本草案。
+**2026-11-11 伪代码实际纠正**：旧草案没有定义 `t_old` 是负 near 翻号**前**还是**后**的平移，并且 `translation_rule...` 可能已按§3.1/§3.2返回归一化 `t_next`，接下来的 `normalize(t_next)` 又造成第二次归一化，改变源代码的浮点运算次序。新伪代码分离 `t_for_rotation`（由`if sum(near)<0`翻号之后捕获）、`raw_t_next` 与**只归一化一次**的 `t_next`，旋转更新必须用 `t_for_rotation`，提交`t=t_next`时不得重复归一。对应两份原只读 `norm_koenderink_iteration.m` / `mue_norm_koenderink_iteration.m` 中的 `transneu=-(a+cross(rot,b)-c)`、`transneu=transneu/norm(transneu)`、`rot=a+cross(trans,b)+c`、`trans=transneu` 四步。这个修订是**实现前顺序合同纠偏**，没有改 MATLAB/C++ 代码或运行新CTest。
+
+**可判别固定条件**：用原§9.5的负均值 near 夹具，必须同时保存 `t_before_sign`、`t_for_rotation`、`raw_t_next`、`norm_raw_t_next`、`t_next`、`omega_next` 和 `t_after_commit`；旋转项 `cross(t_for_rotation, mean(near*d))` 的结果不得错用尚未翻号的 `t_before_sign`。用一般非退化夹具确认 `raw_t_next` 的归一仅发生一次、`omega_next` 使用的是归一前**旧 t**，最后用最终 `near` 均值缩放新 t 而不是回算最新近度。这些仅是既有 `TC-F-KVD-001/002`、`KVD-G02/G05` 的新增静态检查义务，不是已执行 L3/原生软件验证。
+
+此伪代码用于实现步骤核对；与原 MATLAB 精确的变量覆盖顺序还需在 P4 独立 L3/CTest 中实测；如发现其它差异，以原只读源码为基准继续修订本草案。
 
 ## 4. 候选 C++17 接口合同（尚未批准）
 
