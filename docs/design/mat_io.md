@@ -1,6 +1,6 @@
 # MAT I/O、路径安全与原始数据合同——详细设计草案
 
-> **LLD v0.10 候选草案，未冻结。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 L2 逐值/L3 独立参考验证仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
+> **LLD v0.11 候选草案，未冻结。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 L2 逐值/L3 独立参考验证仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
 
 ## 1. 原始行为、文件身份和支持版本
 
@@ -119,7 +119,7 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 1. **H-12 已确定仓库根 `output/` 是唯一新数据目录**，用户最新决定删除 CLI 的输出根选项。Composition Root/RunContext/Writer 共享同一受验证的内部输出根，RunId 可由用户提供或 OS 随机源生成，新建 `output/<RunId>/` 时必须独占且拒绝目录/文件复用。Writer 不自行更改隔离根、不使用用户任意路径。任何 `origin/**`、路径逃逸、符号链接覆盖都拒绝；真实 TOCTOU 实现仍待授权后测试。
 2. 对路径绝对化并解析已存在父目录及符号链接；拒绝 canonical 祖先关系下覆盖原始输入。需要考虑 ../、符号链接、同一路径多种表示、UTF-8/空格及软链接中途改变问题；
 3. 对最终文件使用**不覆盖**的独占创建/安全发布策略；不能仅靠“先 exists 再 open”保证无竞态。实际 matio 写出/临时文件/原子发布的组合在 Debian/Ubuntu 上需验证；
-4. 写后独立回读比对变量名、rank/dims、类型、数值，记录结果 SHA；失败时保留日志与不完整输出状态，但不得覆盖任何已有结果；
+4. **发布前**必须对完整关闭后的受控暂存 MAT 独立回读，按严格规则比较变量名、rank/dims、class/dtype、列主序每项数值及目标文件 SHA-256。只有验证成功才可尝试原子非覆盖发布；**发布后**再确认最终文件身份和可读性、记录 manifest。两次检查的失败时点必须分开：**发布前失败不得出现最终名称**，发布后失败必须标记 `Incomplete/Failed`，不能把已发布但有疑问的文件当作 `Complete`，也不能覆盖/静默删除产物。真实实现/测试仍未发生；
 5. 输出目录和原始目录隔离为设计及测试合同，具体软链接与竞态防护实现需要 P1.9 通过后才可声称安全。
 
 ### 3.1 输入/输出错误与回滚
@@ -226,13 +226,16 @@ Reader::readFirstCompatible:
     1 variable -> readNamed using the one and only true variable name
     >1 variables without approved independent ordering proof -> AmbiguousVariable
     never choose first by alphabetic name sorting
-Writer::saveNewVariable(RunId,name,data):
-    validate fixed internal output root and isolated RunId directory
-    build matvar_t via Mat_VarCreate (type/shape checked)
-    create temporary MAT path through Mat_CreateVer
-    Mat_VarWrite; Mat_Close; verify write result
-    publish to previously absent final filename without overwriting
-    reopen through Reader and compare data + record SHA
+Writer::saveNewVariable(RunId,name,data): // 拟议阶段顺序，尚非代码
+    1 validate fixed output root/owned RunId dir (stable directory identity)
+    2 revalidate RunId and approved domain variable name; disallow separators
+    3 create a UNIQUE staging path strictly inside owned RunId dir (no clobber)
+    4 Mat_VarCreate; Mat_CreateVer only on staging path; Mat_VarWrite; Mat_Close
+    5 read staging via independent Reader and STRICTLY compare name/class/type/dims/values
+    6 compute staging SHA-256; failure before publish => final path MUST remain absent
+    7 publish using atomic NO-REPLACE semantics under protected directory identity
+    8 reread/check final published file identity; persist hash & Manifest only if verified
+    9 post-publish failure => Incomplete/Failed, keep auditable artifact; no overwrite
 ~~~
 
 以上为 API 调用责任示意，具体 matio 函数的错误返回、压缩 flag、版本宏及 read-next-info 的所有权需对**选定的真实 matio 版本**核验，不能按未经核实的头文件约定实现。第一个变量的确定顺序也不能仅假设为字母序。
@@ -241,9 +244,24 @@ Writer::saveNewVariable(RunId,name,data):
 
 1. 先记录 origin 根目录的 canonical 路径、设备/目录身份，拒绝在其中写出；并将所有期望输出路径限定在独立的新 RunId 目录内。
 2. 检查路径组件是否包含符号链接、父目录逃逸、绝对路径形式的 RunId 或异常文件名。Linux 上只用 lexical_normal/canonical **并不能防御并发替换符号链接**。
-3. 若安全目标要求抵御并发目录替换，实施者必须评估并使用 dirfd、openat/O_NOFOLLOW、O_EXCL 或等价的 Linux 文件描述符约束；matio 创建临时文件的路径式 API 与最终不可覆盖发布（例如受控制的原子 link/rename-no-replace）须组合审查。**在此验证之前不得宣称写出流程抗竞态。**
-4. 写入临时文件后校验新 MAT 再发布到最终名称。发生部分写入、崩溃或验证失败时记录临时文件身份；按 AGENTS.md 保护失败证据，不清理未知用户文件。
+3. 若安全目标要求抵御并发目录替换，实施者必须评估并使用受信任根/RunId `dirfd`、`openat`/`O_NOFOLLOW`、`O_EXCL` 或等价的 Linux 文件描述符约束，且不能把可变绝对字符串路径当作安全凭证。应评估同目录受控暂存、`renameat2(RENAME_NOREPLACE)` 或具有同等原子“不覆盖”语义的发布方式，并核对 matio 的 **path-based** `Mat_CreateVer` 实际会打开哪个对象。若无法保证暂存身份与最终发布使用同一受控目录、同一文件系统及防竞态机制，**必须返回安全失败，禁止生产发布**；此前的 `canonical()/exists()` 检查不构成安全证明。**在实现与竞态测试通过之前不得宣称抗TOCTOU。**
+4. **先关流/回读暂存、严格逐值+哈希验证，再尝试非覆盖发布，再核最终身份并将Manifest置为完成**。部分写入或发布前校验失败不得生成最终 `<variable>.mat`；若在成功发布后遇到复读/Manifest失败，该RunOutcome必须是`Incomplete/Failed`，并保留已发布文件的哈希与审计线索，不允许自动删除或覆盖。依 AGENTS.md 仅能处理可证明本次创建且权限已核的临时产物，绝不清理未知用户文件。
 5. 对用户传入的中文/空格路径使用 C++17 std::filesystem 在 Debian/Ubuntu 上进行实际测试；对输入编码、非法路径、只读用户身份及不可信软链接分别建负例。
+
+### 7.2.1 变量名与非覆盖发布的独立安全义务（2026-11-11 文档整改）
+
+此前 `saveNewVariable(RunId,name,data)` 接收一般 `string_view`，但“变量名合法”没有规定最小可验证条件；此处明确**不是 CLI 可任意指定 MAT 名称**。Writer 必须在**文件系统层再次**验证 RunId 与目标MAT变量标识，变量名只来自对应已知 Runner 的当前有效 `save` 字段白名单（见[实验LLD §9](experiments.md)与[DEC-004](../decisions/DEC-004_HISTORICAL_MAT_FIELDS.md)），不得接受路径分隔符、`.`/`..`、绝对路径、NUL、空字符串或任何用户直接拼接的任意路径。MAT变量名和磁盘文件名的基名须一一对应；不允许在Writer里替某个未写出的 `HistoricalOnly` 字段补造文件。若未来允许新命名，须经P0.8/DEC-008审查对应规则及TC，不能先在代码里任意放宽。
+
+**阶段级独立负例（现仅为静态设计，未来只用隔离副本）**：
+
+| 注入的确定条件 | 期望保证与可审计证据 |
+|---|---|
+| 两个Writer同时争用相同 `RunId/variable.mat`，或最终名称已有文件 | 原子非覆盖发布最多有一个成功；旧文件原字节/SHA保持不变，失败方 `OutputExists` |
+| 暂存 `Mat_VarWrite/Mat_Close` 失败或暂存回读值与预期不同 | **不会出现最终MAT名称**；以 `WriteFailed/ReadbackMismatch` 及暂存身份记录失败，不把暂存当成有效结果 |
+| 原子发布后最终检查/Manifest写入故障 | 即使最终文件存在也不得标记 `Complete`；记录已发布身份与失败来源，不删除已发布文件 |
+| 原 `output/` 父组件/RunId 在写出中被软链接替换；或 `name='../origin/...'` | 拒绝逃逸或竞态；原 `origin/**`、已有结果保持未修改；不接受“先canonical后Mat_CreateVer”作为通过证据 |
+
+此处**不替代引入真实C++之后的安全实现与TOCTOU竞态测试**。严格读取/写回读的原始值不适用0.01/0.1宽松筛查，不能以失败产物被保留就认定该数据有效。
 
 ### 7.3 形状与 MAT 类型扩展策略
 
@@ -288,7 +306,7 @@ MAT 类支持范围的**最终**记录应由 docs/MAT_DATA_SCHEMA.md 单一维�
 | L3 输出目标为 origin、路径穿越、符号链接指回原源 | Writer 不允许任意输出路径；不得更改 45 .m/582 MAT | OutputPathForbidden | TC-NF-SAFETY-001；`tests/contracts/test_output_safety.cpp` |
 | L3 已有 RunId、目标 MAT 已存在或并发冲突 | RunContext 新建目录失败或 Writer 拒绝覆盖已存在变量 | OutputExists | TC-F-MAT-004、TC-NF-SAFETY-001；`test_output_safety.cpp` |
 | L3 单独的新 RunId + 有效值写回读 | 创建 `output/<RunId>/<variable>.mat`，比对变量名/type/rank/dims/列主序值与 SHA，不覆盖已有文件 | WriteFailed / ReadbackMismatch（失败时） | TC-F-MAT-004、TC-I-RESULT-001；`test_mat_archive.cpp` / `test_adaptive_experiments.cpp` |
-| L3 临时文件失败、空间/权限异常、读回不一致 | 返回可识别错误与 RunId/临时文件身份，不擅自清除未知用户产物 | WriteFailed / ReadbackMismatch | TC-NF-SAFETY-001、TC-F-MAT-004；`test_output_safety.cpp` |
+| L3 暂存写/关闭失败、**发布前**逐值回读不一致、原子发布冲突、**发布后**最终身份不一致 | 分别验证：发布前失败时最终名不存在；发布冲突不覆盖旧文件；发布后失败时不把产物/Manifest标Complete，保留RunId与源/暂存/最终SHA证据；禁止擅自清除未知用户产物 | WriteFailed / ReadbackMismatch / OutputExists（对应具体阶段） | TC-NF-SAFETY-001、TC-F-MAT-004；`test_output_safety.cpp` |
 
 **测试执行边界**：所有合成坏文件、写入、并发冲突与文件系统安全测试仅可在后续明确授权的隔离测试目录进行；`origin/**` 作为只读输入，绝不在真实原文件上制造损坏负例。上述表格是 **L3 可独立构造预期** 与 **真实 C++/CTest 尚未执行** 的分离说明，不能以表格存在冒称 TC 通过。也不以历史探针的 582/582 成功推断全部业务值/异常合同已完成。
 
