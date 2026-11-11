@@ -350,7 +350,28 @@ regression_tolerance=9.0949470177292824e-13
 
 ### 2.19.2 八方向 near 首次负总和/翻号的完整理论 trace（AF-043/051，非真实软件）
 
-§9.5 [KvD LLD](design/kvd.md) 另外构造 **N=8** 切向光流，前四方向近轴且源有符号近度为 (-10)，后四方向为 (+1)。Franz 初始 (oldsymbol t=(90/101)e_x)、(omega=0)，第一次 `sum(near_raw)<0`，**near 与 t 在平移规则执行前同时翻号**。定义 (alpha=1/(1+100epsilon))、(eta=1/(1+epsilon)) （源 (epsilon=10^{-13})），第一轮之后 (armu=(5alpha-eta)/2)、(widetilde t_O=-(alpha+eta+99alpha^2)e_x/2)、(widetilde t_M=-(99alpha-9)e_x/20)，两个归一化方向同为 (-e_x)，最后输出 (-[(5alpha-eta)/2]e_x)。
+§9.5 [KvD LLD](design/kvd.md) 构造 **\(N=8\)** 的有序切向光流：前四个近轴方向的**有符号**近度为 \(-10\)，后四个方向的近度为 \(+1\)。这是用于检验源码符号分支的**非物理数学输入**，不能假称所有点均有正深度。Franz 的初始平移、旋转分别为
+
+\[
+\boldsymbol t_{\mathrm{Franz}}=\frac{90}{101}\boldsymbol e_x,\qquad
+\boldsymbol\omega_{\mathrm{Franz}}=\boldsymbol 0.
+\]
+
+第一次计算 \(\sum_i\mu_i^{\mathrm{raw}}<0\)，源码必须在平移与旋转更新前**同时翻转 near 和旧平移方向**。令 \(\epsilon=10^{-13}\)，\(\alpha=(1+100\epsilon)^{-1}\)，\(\beta=(1+\epsilon)^{-1}\)；首轮翻号后的近度均值及两种平移候选是
+
+\[
+\overline\mu=\frac{5\alpha-\beta}{2},\qquad
+\widetilde{\boldsymbol t}_O=-\frac{\alpha+\beta+99\alpha^2}{2}\boldsymbol e_x,\qquad
+\widetilde{\boldsymbol t}_M=-\frac{99\alpha-9}{20}\boldsymbol e_x.
+\]
+
+两种候选归一后均为 \(-\boldsymbol e_x\)，旋转仍为 \(\boldsymbol 0\)，最终平移为
+
+\[
+\boldsymbol t_{\mathrm{out}}=-\frac{5\alpha-\beta}{2}\boldsymbol e_x.
+\]
+
+**文本损坏整改**：此前这一段将 LaTeX 的反斜杠错误地写成了 ASCII 控制字符（如退格字符后接 oldsymbol、eta、armu），导致有关变量不能准确阅读、复制和自动核对。本次按照 KvD LLD §9.5 的**实际公式**恢复，未改变原始数值、计算轮次、参考 JSON、测试编号或运行状态；这不是新增数值测试。
 
 独立 [Wolfram完整六轮脚本](../verification/kvd/verify_near_sign_flip_exact_trace.wl) 与 [全部12轮参考](../verification/kvd/near_sign_flip_exact_trace.v1.json) 确认 Original/Modified 均按 `[true,false,false,false,false,false]` 触发 near 翻号，第1轮 `RMS≈7.071421356346968e-12`，第二至第六轮 `delta=0`，第六轮后停止，11/11数学自检通过。**这测试的是混合正负构造近度下的控制流，并非正深度物理场景或生产软件通过**；还缺 200轮/异常/一般输入、C++/CTest和最终DEC-005。仍归原 `TC-F-FILTER-001`、`TC-F-KVD-001/002`、`TC-DC-KVD-001`，无新 TC。
 
