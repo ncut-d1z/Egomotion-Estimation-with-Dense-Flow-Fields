@@ -1,6 +1,6 @@
 # 视线采样、光流合成与噪声——详细设计草案
 
-> **LLD v0.9 草案，未冻结；采样/噪声仍无生产实现或 CTest。i=0/1/2 全714行方向已通过独立 Wolfram 逐坐标双实现对照（2,142个坐标、最大绝对差1.1102230246251565e-16）；正式 Golden/DEC-005、异常和 RNG 等软件验收尚未批准。** 对应 P2/P3、REQ-F-GEOM-*、REQ-F-FLOW-*、REQ-DC-RNG-001、REQ-DC-NOISE-001。
+> **LLD v0.10 草案，未冻结；采样/噪声仍无生产实现或 CTest。i=0/1/2 全714行方向已通过独立 Wolfram 逐坐标双实现对照（2,142个坐标、最大绝对差1.1102230246251565e-16）；正式 Golden/DEC-005、异常和 RNG 等软件验收尚未批准。** 对应 P2/P3、REQ-F-GEOM-*、REQ-F-FLOW-*、REQ-DC-RNG-001、REQ-DC-NOISE-001。
 
 ## 1. 来源与输入输出
 
@@ -22,7 +22,7 @@
 \boldsymbol p_i = -\mu_i\big(\boldsymbol t-(\boldsymbol t^\top\boldsymbol d_i)\boldsymbol d_i\big)-\boldsymbol\omega\times\boldsymbol d_i.
 \]
 
-先独立计算平移/旋转分量及其**模长的平均值**（不是平均向量的模长），最后得到合成光流。加噪后的向量都经 \( \boldsymbol p\gets\boldsymbol p-(\boldsymbol p^\top\boldsymbol d)\boldsymbol d \) 投影到球面切平面。
+先独立计算平移/旋转分量及其**模长的平均值**（不是平均向量的模长），最后得到合成光流。**Bias两种 fixed_* 的源返回 `durchlaenge` 和 `nonpropfehler` 噪声使用的是合成后理想光流的平均模长** `mean_i(||p_trans_i+p_rot_i||)`，一般不等于 `mean_i(||p_trans_i||)+mean_i(||p_rot_i||)`；不得用两项均值之和替代。加噪后的向量都经 \( \boldsymbol p\gets\boldsymbol p-(\boldsymbol p^\top\boldsymbol d)\boldsymbol d \) 投影到球面切平面。
 
 ~~~text
 sample_triangles(level, geometry):
@@ -181,8 +181,10 @@ struct FlowSynthesisResult {
     FlowField noisy;
     FlowField noiseless;
     Eigen::VectorXd nearness; // C++ 新增的逐点内部记录，不等同原 fixed_* 返回的 near 标量
-    Scalar mean_translational_magnitude;
-    Scalar mean_rotational_magnitude;
+    Scalar near_last;       // 原 fixed_* 返回的标量 near：最后一次抽样的值；N>0 才有定义
+    Scalar mean_total_flow_magnitude; // 原 fixed_* 的 durchlaenge = mean(||p_trans+p_rot||)
+    Scalar mean_translational_magnitude; // 理想分量均值，非 durchlaenge
+    Scalar mean_rotational_magnitude;    // 理想分量均值，非 durchlaenge
 };
 // 对应 getvektor.m：无状态函数，不制造多余的可变对象。
 namespace sampling {
@@ -210,13 +212,13 @@ public:
 // 与 FlowSynthesizer，按 §5 的原始 RNG 顺序生成 FlowSynthesisResult。
 ~~~
 
-**原 `fixed_*_randomnear.m` 的输出契约与 C++ 内部记录必须区分**：在只读源 `fixed_kugel_symmetric_perfectpoints_randomnear.m` 的逐点循环（第 47–55 行）和 `fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m` 的逐点循环（第 45–53 行）中，`near=1/entf` 每次**覆盖单个标量**，而没有写 `near(i)`；因此这两个源函数的返回形参 `near` 实际代表**末次抽样近度标量**（仅在 N 大于 0 且调用完成时有定义），**不是一个 N×1 近度数组**。本 LLD 的 `FlowSynthesisResult.nearness` 是为了便于忠实模拟/独立诊断而计划提供的 **C++ N 维逐点内部值对象**：允许保留全部 N 次原抽样值，但其数学/输入行为与源码返回值**不能混同**；若单独核验旧 MATLAB 返回 `near`，必须明确使用最后一个采样值作为 `near_last` 标量并独立标记来源。不得以新增内部向量修改 RNG 的 N 次 uniform/3N 次 normal 调用时序、当前生成脚本的 MAT `save` 字段集合，亦不得把该向量宣称为作者 MAT 已有的变量。
+**原 `fixed_*_randomnear.m` 的输出契约与 C++ 内部记录必须区分**：在只读源 `fixed_kugel_symmetric_perfectpoints_randomnear.m` 的逐点循环（第 47–55 行）和 `fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m` 的逐点循环（第 45–53 行）中，`near=1/entf` 每次**覆盖单个标量**，而没有写 `near(i)`；因此这两个源函数的返回形参 `near` 实际代表**末次抽样近度标量**（仅在 N 大于 0 且调用完成时有定义），**不是一个 N×1 近度数组**。本 LLD 的 `FlowSynthesisResult.nearness` 是为了便于忠实模拟/独立诊断而计划提供的 **C++ N 维逐点内部值对象**：允许保留全部 N 次原抽样值，但其数学/输入行为与源码返回值**不能混同**；若单独核验旧 MATLAB 返回 `near`，候选 `FlowSynthesisResult.near_last` 必须严格等于本次最后一个抽样近度（`nearness[N-1]`，仅 N>0）；`mean_total_flow_magnitude` 对应原 `durchlaenge`，**不是平移平均模长与旋转平均模长之和**。二者是明确独立的源函数返回义务，不能用内部逐点近度向量/分量均值代替。不得以新增内部向量修改 RNG 的 N 次 uniform/3N 次 normal 调用时序、当前生成脚本的 MAT `save` 字段集合，亦不得把该向量宣称为作者 MAT 已有的变量。
 
 **与对象模型的一致性**：上述 `sampling::randomUnitDirection(IRandomSource&)` 与 [OBJECT_MODEL.md §7.1](../OBJECT_MODEL.md) 保持一致；不再另设 `SphericalRandomDirection` 或 `BiasSceneGenerator`。前者不拥有 RNG；后两项场景生成的唯一编排者是 `BiasExperimentRunner`，其类的完整入口/返回合同在 [experiments.md](experiments.md)。`IdealFlowResult` 为本模块的中间值对象，最终保存结果仍用 `FlowSynthesisResult`；两者不可混淆。
 
 **前置条件**：细分级别非负、N=base·4^level 在 size_t 范围内且实际分配受资源限制；真值有限；所需方向可归一；生成的 near 有定义。对于 N=0、非有限方向、距离无效、数值溢出应返回可识别失败类别。原脚本即便在数值边界产生 NaN/Inf，也不能偷偷替换为看似成功的零值。
 
-**值对象的具体拥有关系（候选）**：`DirectionSet`/ `FlowField` 按 [contracts.md §2/§4](contracts.md) 自拥有 Eigen 列主序存储，`IdealFlowResult` 按值持有理想 `FlowField` 与两个 double 均值，`FlowSynthesisResult` 按值持有含噪/无噪 `FlowField`、自拥有 `Eigen::VectorXd nearness` 与对应均值；**不保存指向 matio 数据、函数局部矩阵或 RNG 内部缓存的 Eigen::Map/裸引用**。构造完成的值对象允许明确深拷贝/移动，计算中临时只读 Map 只在被映射对象生命周期内使用；是否限制大拷贝属于性能策略而非数学行为变更。FlowSynthesizer/三种方向采样器没有跨调用可变状态；`IRandomSource` 唯一可变源由 RunContext 独占，`uniform/normal` 返回的 Result 在失败时按 [contracts.md §3.0](contracts.md) 保留 code、stage（simulation）、observation_index 与已分配 RunId；不得靠 0、重新抽样或失败后复用上一次值掩盖错误。
+**值对象的具体拥有关系（候选）**：`DirectionSet`/ `FlowField` 按 [contracts.md §2/§4](contracts.md) 自拥有 Eigen 列主序存储，`IdealFlowResult` 按值持有理想 `FlowField` 与两个 double 均值，`FlowSynthesisResult` 按值持有含噪/无噪 `FlowField`、自拥有 `Eigen::VectorXd nearness`、源 `near_last` 标量、合成理想流 `durchlaenge` 及两个分量均值；**不保存指向 matio 数据、函数局部矩阵或 RNG 内部缓存的 Eigen::Map/裸引用**。构造完成的值对象允许明确深拷贝/移动，计算中临时只读 Map 只在被映射对象生命周期内使用；是否限制大拷贝属于性能策略而非数学行为变更。FlowSynthesizer/三种方向采样器没有跨调用可变状态；`IRandomSource` 唯一可变源由 RunContext 独占，`uniform/normal` 返回的 Result 在失败时按 [contracts.md §3.0](contracts.md) 保留 code、stage（simulation）、observation_index 与已分配 RunId；不得靠 0、重新抽样或失败后复用上一次值掩盖错误。
 
 公共 DirectionSet、FlowField 的生命周期与 const 规则由 [contracts.md](contracts.md) 管理。采样器无跨调用状态，RNG 由一次 RunContext 独占；`BiasFlowParameters` 只承载**单层级流场合成参数**，`experiments.md` 的 `BiasExperimentConfig` 独立负责实验 seed、最大细分级别、三个噪声乘数及输出。这两者是不同层次的类型，不能再重复声明同名 Config。 `IdealFlowResult` 是 FlowSynthesizer 的理想结果；`FlowSynthesisResult` 是包含近度与含噪/无噪数据的场景输出，实际组合由 BiasExperimentRunner 完成。不得把全局 rand/randn 复用到多个实验。
 
@@ -289,6 +291,22 @@ public:
 **审计中发现的临时验证错误与修复**：首次临时输入曾遗漏原二十面体 `F` 表的 `{11,3,7}` 一行，产生19面/76及304行的维度错误，未形成有效比较。核对只读 `richtungsvektoren_icosahedron.m` 后恢复20面并加入 `Length[faces]==20` 和逐级 shape 守卫，再次执行获得上述全部714行结果；**仓库原有候选 JSON 从未存在19面错误**。
 
 这证明的是两份独立实现对**固定 source-derived 数学候选**的逐坐标一致性，前一阶段“只比对加权行序签名”的限制已解除；但尚未运行**获授权的生产采样器 C++/CTest**，也不等于原MATLAB运行输出、正式批准的Golden或含噪观测。原 `origin/**`、旧AN-G01/02/03和582 MAT仍只读；负级别/退化、内存溢出及RNG/噪声的异常测试与最终DEC-005仍缺，故AF-047/055/060继续开放。
+
+### 7.1.5 `durchlaenge` 与分量均值不能混同的可手算反例（2026-11-11，新增源合同）
+
+在原只读 `fixed_kugel_symmetric_perfectpoints_randomnear.m` 与 `fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m` 中，先逐行生成理想的 `p_i = transfluss_i + rotfluss_i` 并存入 `realsetofpoints`，然后累加 **`sqrt(dot(p_i,p_i))`** 得 `durchlaenge`，而不是累加两个分量的独立模长；`nonpropfehler.m` 同样对传入的整条原始光流直接计算平均模长。对确定性固定输入，取一条单位视线 `d=e_z`、近度 `mu=1`、平移 `t=e_x`、旋转 `omega=-e_y`，有
+
+\[
+p_{trans}=-\mu\,\bigl(t-(t\cdot d)d\bigr)=-e_x,\quad
+p_{rot}=-\omega\times d=+e_x,\quad
+p=p_{trans}+p_{rot}=0.
+\]
+
+所以 `mean_total_flow_magnitude=0`，但 `mean_translational_magnitude=1`、`mean_rotational_magnitude=1`，两者之和为2。这是一个**严格的源公式反例**，足以发现“用分量模长之和替代合成流模长”的错误。只用于**合成器单点固定输入数学合同**，不伪称原Bias的6·4^i/8·4^i视线集合真会出现完全相同的整体抵消。
+
+将这个理想流输入到 `nonpropfehler(...,coefficient)`，即使 `coefficient\ne0`，噪声数值贡献也严格为零（总平均模长为0）；**源码仍对每行的三个分量各调用一次 randn**，即这里消耗3次正常样本。它与 `coefficient=0` 导致抽样仍发生的另一种条件必须分开；不能以“输出0噪声”就跳过 RNG。对源 `fixed_*_randomnear` 还须保留 `near_last` 是末次抽样**标量**而非整个近度数组的合同。
+
+以上是静态数学推导及只读源码核查，未执行生产 C++/CTest/原MATLAB；沿用 `SN-G05/06/07`、`TC-F-FLOW-001/002/003/004`、`TC-DC-NOISE-001` 与 `TC-NF-RNG-001`。公共返回布局仍是设计候选，最终 ABI/正式容差需 P0.8/DEC-005/008 审定。
 
 ### 7.2 原始噪声系数正负与 RNG 抽样数（AF-047，静态合同）
 
