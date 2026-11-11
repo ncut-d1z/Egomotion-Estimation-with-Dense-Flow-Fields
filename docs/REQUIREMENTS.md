@@ -604,6 +604,7 @@
 | v0.12 | AF-022：将已选 MAT v5/zlib 首版二维密集实数非 logical double 范围与尚缺的正式 Reader/安全负例/基线批准分开表述，不新增 REQ、AC、TC，也不改变 HDF5/原 MAT 的事实边界 | 历史评审草案 |
 | v0.13 | AF-032：§5 明确 DEC-004 的 CurrentGenerated/HistoricalOnly/Unknown、缺字段显式失败与无需历史归因；保留原 REQ/AC/TC | 评审草案，未冻结/未执行 CTest |
 | v0.14 | AF-037：新增 AC→LLD 固定身份/证据冻结前检查点，保留原 REQ/AC/TC 编号与未冻结状态 | 评审草案，非批准基线 |
+| v0.15 | DAR-001：首次将58正文+8附录的全部66个REQ/AC/TC映射到固定审查提交的实际存在的主要HLD/LLD文件/章节和Git blob；纠正FLOW-004、ERROR-001的责任归属，并清理低阶SH已实现范围的过时描述。此为审查用身份**非冻结包**，完整依赖/审批/运行仍缺 | 评审草案，非批准基线 |
 
 
 ## 附录 A：内部设计约束清单（REQ-DC）
