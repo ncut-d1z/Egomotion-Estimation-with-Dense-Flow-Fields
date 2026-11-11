@@ -1,6 +1,6 @@
 # Egomotion Estimation with Dense Flow Fields：软件需求规格说明书（SRS）
 
-> **状态：草案 v0.15，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
+> **状态：草案 v0.16，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
 
 ## 1. 目的、范围与约束
 
@@ -196,7 +196,7 @@
 | 并发 | 每个 RunContext 独立 RNG/系数/结果路径 | 同一 Session 多线程安全非本期承诺 |
 | 无界面运行 | 不要求 Python 或绘图环境便能 MAT 检查、实验与数据分析 | 图像像素级复刻不是本期强制要求 |
 
-**新决策的优先级**：详见 [2026-11-07 所有者决定](decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md)。历史审批材料保留原日期的事实，涉及 MIT/球谐 Eigen/输出根/错误格式时以新决定为现行设计依据，**不因普通版权复查延迟生产代码开发**；实际复制上游文件仍保留既有 license notices。球谐递推实现前等待用户上传 1996 原论文及 1998 勘误。
+**新决策的优先级**：详见 [2026-11-07 所有者决定](decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md)。历史审批材料保留原日期的事实，涉及 MIT/球谐 Eigen/输出根/错误格式时以新决定为现行设计依据，**不因普通版权复查延迟生产代码开发**；实际复制上游文件仍保留既有 license notices。**1996 原论文及 1998 勘误已取得并用于低阶球谐的三路线符号验证；低阶叶子在固定 `5e522198` 有用户提供的 3/3 CTest 通过证据**（见 [harmonics.md §1、§5–6](design/harmonics.md) 与 [PROGRESS.md](PROGRESS.md)）。因此不得再以“等待上传论文”阻塞后续数学/设计审查；**公共球谐 ABI、全模块集成、独立扩展测试与正式 DEC-005/008 批准仍未完成**。
 
 ## 8. 假设、依赖、阻塞与决策人
 
@@ -227,7 +227,7 @@
 
 | MATLAB/规则来源 | REQ | PLAN 工作项 | 计划 TC | 对应 AC | 当前状态 |
 |---|---|---|---|---|---|
-| MATLAB five generation entries | REQ-F-CLI-001 | P1.2, P1.4, P1.6 | TC-F-CLI-001 | AC-F-CLI-001 | 未实现/未运行 |
+| help_functions/getflowfield.m；原始 MAT 文件只读检查及变量元数据（非五个生成入口） | REQ-F-CLI-001 | P1.2, P1.4, P1.6 | TC-F-CLI-001 | AC-F-CLI-001 | 未实现/未运行 |
 | 582 MAT files | REQ-F-MAT-001 | P1.3, P1.4, P1.8, P1.9 | TC-F-MAT-001 | AC-F-MAT-001 | matio 探针已验证历史归档读取；其他合同待验收 |
 | MAT archive | REQ-F-MAT-002 | P0.5, P1.5 | TC-F-MAT-002 | AC-F-MAT-002 | matio 探针已验证历史归档读取；其他合同待验收 |
 | help_functions/getflowfield.m | REQ-F-MAT-003 | P1.6 | TC-F-MAT-003 | AC-F-MAT-003 | 未实现/未运行 |
@@ -293,6 +293,8 @@
 | getflowfield.m; MAT archive | REQ-I-MAT-001 | P1.3, P1.6, P1.7 | TC-I-MAT-001 | AC-I-MAT-001 | 未实现/未运行 |
 | data_generation/*; produced_data/* | REQ-I-RESULT-001 | P1.7, P5.4, P8.4, P8.7 | TC-I-RESULT-001 | AC-I-RESULT-001 | 未实现/未运行 |
 | data_analysis/*.m | REQ-I-ANALYSIS-001 | P9.1, P9.2, P9.3, P9.4 | TC-I-ANALYSIS-001 | AC-I-ANALYSIS-001 | 未实现/未运行 |
+
+**2026-11-12 静态追踪纠偏（仍是未批准草案）**：本节第一行此前将 `REQ-F-CLI-001/TC-F-CLI-001/AC-F-CLI-001` 的来源误填为“MATLAB five generation entries”。该 REQ 实际是只读 `inspect-mat`，用于读取/检查存档 MAT 的变量名、类型、形状和错误状态；原五个生成入口分别由 `REQ-F-CLI-002/003` 及 `REQ-F-BIAS/EXP` 负责，**不应把 MAT 检查的来源与生成实验混用**。第一行现更正为 `getflowfield.m` 的 MAT 加载语义、已有 MAT 文件的元数据/读取行为；源 `getflowfield.m` **不是** inspect-mat 程序本身，严格/兼容模式的差别由 [CLI LLD §2.0.1](design/cli.md) 和 [MAT LLD §7.4](design/mat_io.md) 提供设计合同。保持原 REQ/AC/TC/P ID 和全部 66 项追踪数不变；正式证据仍需实际 CLI、Reader/CTest/批复，不能因修正来源标签就宣布 AC 通过。
 
 ### 9.1 反向追踪：98 个 P 子任务 → REQ
 
@@ -605,6 +607,7 @@
 | v0.13 | AF-032：§5 明确 DEC-004 的 CurrentGenerated/HistoricalOnly/Unknown、缺字段显式失败与无需历史归因；保留原 REQ/AC/TC | 评审草案，未冻结/未执行 CTest |
 | v0.14 | AF-037：新增 AC→LLD 固定身份/证据冻结前检查点，保留原 REQ/AC/TC 编号与未冻结状态 | 评审草案，非批准基线 |
 | v0.15 | DAR-001：首次将58正文+8附录的全部66个REQ/AC/TC映射到固定审查提交的实际存在的主要HLD/LLD文件/章节和Git blob；纠正FLOW-004、ERROR-001的责任归属，并清理低阶SH已实现范围的过时描述。此为审查用身份**非冻结包**，完整依赖/审批/运行仍缺 | 评审草案，非批准基线 |
+| v0.16 | 2026-11-12：修正§9双向矩阵中`REQ-F-CLI-001`错误的“五生成入口”来源，恢复MAT只读检查/`getflowfield.m`来源；§7清除已过期“论文未上传所以不能实现球谐”的阻塞说明，明确既有低阶叶子实测和仍未完成的公共ABI/DEC条件；不改动66个REQ/AC/TC | 评审草案，非批准基线 |
 
 
 ## 附录 A：内部设计约束清单（REQ-DC）
