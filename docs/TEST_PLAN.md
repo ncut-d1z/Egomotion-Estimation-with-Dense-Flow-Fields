@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **测试计划草案 v0.30，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
+> **测试计划草案 v0.31，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
 
 > **候选核对材料**：见 [HAR-2026-11-06-001 材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md)；历史提出的 MAT 类型/安全、Golden/容差仍要逐项执行。当前参考等级为 L2/L3/L4，不要求 MATLAB/Octave/L1；`atol=0.01`/`rtol=0.1` 仅首轮探索筛查。**低阶球谐已在 `8eab5dd`、`445ed151`、含624非零四元数/错误码检查的 `601c74de` 三个固定提交获得用户报告的 1/1 CTest Passed**，其他模块与完整验收未因此批准。
 
@@ -323,9 +323,9 @@ regression_tolerance=9.0949470177292824e-13
 
 ## 3. TC → 实体/CTest → AC 规划矩阵
 
-下列表格共 66 项，与 SRS **v0.14 草案**逐项对应；MAT I/O 的拟议数据结构、独立负例及测试文件映射详见 [mat_io.md §2、§5、§8–9](design/mat_io.md)。**独立 matio 探针已编写并执行**，但除球谐低阶叶子外，绝大多数拟议测试源文件、测试函数和 CTest 名称尚未创建；探针不是 CTest 注册项。人工审查项与自动测试区分。原始 45 个 MATLAB 源文件映射请参见 [REQUIREMENTS.md §9.2](REQUIREMENTS.md)。
+下列表格共66项，与当前 SRS **v0.15 草案**的66条REQ/AC逐项按编号对应；具体AC→主要设计责任章节及冻结前Git blob身份见 [REQUIREMENTS.md §9.7](REQUIREMENTS.md)，其内容只是**主要责任导航与固定审查快照，不是已批准或执行通过的AC**；MAT I/O 的拟议数据结构、独立负例及测试文件映射详见 [mat_io.md §2、§5、§8–9](design/mat_io.md)。**独立 matio 探针已编写并执行**，但除球谐低阶叶子外，绝大多数拟议测试源文件、测试函数和 CTest 名称尚未创建；探针不是 CTest 注册项。人工审查项与自动测试区分。原始 45 个 MATLAB 源文件映射请参见 [REQUIREMENTS.md §9.2](REQUIREMENTS.md)。
 
-**L2/L3/L4 来源及测试文件唯一索引**：`contracts.md §3/§3.0`、`experiments.md §8.1`、`harmonics.md §4.1`、`sampling_noise.md §8`、`mat_io.md §5/§8` 仅补充对应模块的候选测试细节。本表仍是 66 项 TC 的单一归档，不产生新编号；**除已有球谐低阶叶子外**，其余多数 test 文件和 CTest 名称仍是候选；完整来源/批准尚未完成，H-10/H-11 实际执行权限保持暂缓。
+**L2/L3/L4 来源及测试文件唯一索引（2026-11-11核对已修正过时章节）**：`contracts.md §3/§3.0`、`experiments.md §8.1`、`harmonics.md §6`、`sampling_noise.md §8`、`mat_io.md §5/§8` 仅补充对应模块的候选测试细节。本表仍是 66 项 TC 的单一归档，不产生新编号；**除已有球谐低阶叶子外**，其余多数 test 文件和 CTest 名称仍是候选；完整来源/批准尚未完成，H-10/H-11 实际执行权限保持暂缓。
 
 | TC ID | REQ | 候选测试文件或审核文档 | CTest/审核 | AC | 状态 |
 |---|---|---|---|---|---|
