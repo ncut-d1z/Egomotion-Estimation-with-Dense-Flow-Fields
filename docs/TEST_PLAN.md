@@ -212,6 +212,8 @@ regression_tolerance=9.0949470177292824e-13
 | TC-F-BIAS-001/002 | `iterationnumber=2` 的原 `xwerte=[6,24,96]`，缺损模式 N=6/24/96，完整球面 N=8/32/128；必须记录实际 N 与显示 x 分别来源 | 仅源表达式/形状复核；未运行 |
 | TC-F-SH-001、TC-F-ADAPT-001 | 对称AN-G12与非对称九方向两类输入的正近度M1～M4/rhs、t/ω/MSE、新 near/C | 已有独立Wolfram真实数学计算：九方向正均值非对称场M2/M3非零、z精确恢复、MSE=0，另有负均值源归一与M1差2I的反例；仍无Adaptive生产CTest/Session、近奇异/退化覆盖或正式批准 |
 
+**负均值近度的代数资格补充**：`near_raw=[-1,-3]`，`s=-2`，原源先翻成`[1,3]`再除旧`s`，得 `near_normalized=[-1/2,-3/2]`；这**等价于** `near_raw/abs(s)`，**不等价于** `near_after_sign/abs(s)`。对`s=0`另设明确非成功，保持主系数未提交。该手算仅为分支数值真值，尚不能当作完整 N×6/3×5 单步L3；见[Adaptive LLD §2.1/§10.1](design/adaptive_mfa.md)和[均值理论](design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md)。沿用 `TC-F-ADAPT-001`、`TC-DC-ADAPT-001`。
+
 所有例子不新增 TC ID，不替代现有 66 TC 的文件创建、测试执行、L2/L3/L4 独立证据及 DEC-005/008 正式审批。负有限噪声的 CLI 接收策略仍须批准；原 `.m` 未显式禁止该数值。
 
 ### 2.11 分析分段与平滑数据域的区分性测试（AF-075/076，规划）
@@ -219,9 +221,11 @@ regression_tolerance=9.0949470177292824e-13
 同一组有 **4 个有效旋转区间**的合成 ratio 与非恒定误差输入，应建立两类独立 L3：
 
 1. 多更新率**旋转图**：分段时读取每个区间切片（列 2/3/4），每段分别调用窗口半宽 2/5/10 的平滑；保存完整的局部零边界和裁剪后 x/y，不允许将源逻辑写成全局预处理。若全局平滑后按 **同样有效内部区间**裁剪，内部均值应**一致**，故不得将差异作为正确性断言。要查的是窗口调用域、完整临时数组、段边界与异常/日志身份。
-2. 多更新率**平移图**：四列各以全部 600 行构造数据（前三列平滑半宽 2/5/10，第一列原样），统一绘制 **50:550 共 501 点**、无分段掩码；comparison 实验平移 mit/ohne 亦全区间不分段，旋转图另按阈值分段。必须选有阈值穿越和间隙的 ratio，确保平移线**不会丢掉中间 x**。
+2. 多更新率**平移图**：四列各以全部 600 行构造数据（**第一列原样，第二/第三/第四列**分别平滑半宽 2/5/10），统一绘制 **50:550 共 501 点**、无分段掩码；comparison 实验平移 mit/ohne 亦全区间不分段，旋转图另按阈值分段。必须选有阈值穿越和间隙的 ratio，确保平移线**不会丢掉中间 x**。
 
-沿用 `TC-F-AN-001`、`TC-I-ANALYSIS-001`、`APL-G04/05`，不新增 TC ID/测试 PASS；完整独立参考、Analyzer 和 CTest 尚未建立。旧扫描报告中关于“正确裁剪后的旋转内部值必然不同”的说法已在 [纠偏说明](reviews/AUDIT_ANALYSIS_SEGMENT_SMOOTHING_CORRECTION_2026-11-08.md) 限定，旧扫描仍保留历史原文。
+**2026-11-11补充的可复核固定输入（静态推导，尚未执行）**：沿用原 [analysis_plotting.md §5.1.1](design/analysis_plotting.md) 源分支，令 `t=0.02`（comparison改`0.01`）、`δ=t/2`，600行 `rottransratio(i)=t+δ`，仅 `i=120..179,260..319,400..459` 为 `t−δ`，预期 `begin=[50,180,320,460]`、`ende=[120,260,400,550]`；四段长度71/81/81/91。改 `i=121` 为严格 `t` 时分段不变；全高于阈值时 `begin(2..4)` 和 `ende(1..3)` 为0，应在C++解引用前以 `InvalidSegment` 显式失败；多于三次区间切换时不得偷偷改成自动绘制五段，须记录原始 `j/zone` 与第四段覆盖行为，安全拒绝还是兼容显示仍待P0.8确定。此处的数组/状态为**手工源控制流推演**，不是MATLAB实测、独立L3生成或CTest通过。平滑短段的空绘图区间不是可无证断言为原MATLAB异常。
+
+沿用 `TC-F-AN-001`、`TC-I-ANALYSIS-001`、`APL-G03/04/05`，不新增 TC ID/测试 PASS；完整独立参考、Analyzer 和 CTest 尚未建立。旧扫描报告中关于“正确裁剪后的旋转内部值必然不同”的说法已在 [纠偏说明](reviews/AUDIT_ANALYSIS_SEGMENT_SMOOTHING_CORRECTION_2026-11-08.md) 限定，旧扫描仍保留历史原文。
 
 ### 2.12 分析错误枚举到 CLI 退出码的合同负例（AF-077，未测试）
 
@@ -235,6 +239,20 @@ regression_tolerance=9.0949470177292824e-13
 | TC-I-CLI-001、TC-I-ANALYSIS-001 | 非法 CLI `--experiment`；与合法命令内部传给 Analyzer 的 unsupported mode 分开 | CLI 无效枚举 `parse` / exit 2；运行期 `AnalysisErrorCode::UnsupportedExperiment` 为 `analyze` / exit 5 | 仅计划 |
 
 本表不重新定义 enum、增删 66 个 TC 或签署 DEC-008；真实接口、JSONL 转义/底层原因传播与 CTest 待后续授权和证据。
+
+### 2.12.1 跨模块 Result/Status 左右值生存期负例（2026-11-11，设计候选）
+
+现行 [contracts.md §3](design/contracts.md) 已修正旧 `Result::value() && -> T&&` 的临时宿主悬垂风险，候选合同为左值只借用、右值取出自拥有值；`Result/Status::error()` 同样如此。沿用既有 `TC-DC-DOMAIN-001`、`TC-DC-IO-001` 和 `TC-NF-OOP-001`，建议未来在 `tests/contracts/test_result_lifetimes.cpp` 设计以下独立失败/成功断言（**文件未创建、未编译**）：
+
+| 输入/操作 | 必须验证 |
+|---|---|
+| 局部左值 `Result<MatDenseArray,E>` 的 `value() const &` | 所借引用只在Result存活且没有被移动时有效，源MAT句柄释放后数组自己拥有元素 |
+| 临时成功Result的 `value() &&` | 取出**值对象**而非 `T&&`；持有到原Result临时对象析构后仍有效；move-only类型的移动构造可用 |
+| 临时失败Result、Status的 `error() &&` | `Failure<E>` 按值拥有 `Code + ErrorDetail`，源 RunId/阶段/路径不在临时析构后悬垂 |
+| const临时对象访问及非法成功/失败反向访问 | 不得通过const右值借用获得短命引用，错误访问必须符合最终P0.8异常/断言决议；不能返回伪成功/默认值 |
+| variant构造/赋值发生异常或进入 `valueless_by_exception` | `hasValue()==false` 不得冒充变体内存在有效 `Failure<E>`；需真实故障注入和不丢失错误来源的安全处理策略后才能判通过 |
+
+**状态**：仅消除设计中的高风险引用返回形式，并补上覆盖责任；ABI/模板ODR、异常策略、真实代码/CTest与P0.8批准均未完成，不能关闭DAR-003或宣称TC-PASS。
 
 ### 2.13 轨迹与近度的符号级候选（AF-048/080，未运行）
 
