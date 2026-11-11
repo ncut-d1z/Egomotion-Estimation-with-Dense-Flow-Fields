@@ -194,8 +194,8 @@ regression_tolerance=9.0949470177292824e-13
 | TC 组 | 应准备的独立夹具/重要断言 | 预期证据 |
 |---|---|---|
 | `TC-F-MAT-003/004`、`TC-NF-SAFETY-001`、`TC-DC-IO-001` | 多变量歧义、固定 `double[2×3]` 列主序、变量名白名单与路径拒绝、符号链接父目录/并发 RunId/原子非覆盖；**关闭暂存→发布前严格回读→非覆盖发布→发布后身份验证→RunContext记录Manifest**，分别注入前/后失败 | 隔离测试目录、源文件不变、具体 MatErrorCode、manifest/log 与逐元素比较；详见 `mat_io.md §8.1` |
-| `TC-F-GEOM-002/003`、`TC-NF-RNG-001`、`TC-DC-RNG-001` | 完整/缺损八面体 levels 0/1/2，有序行；固定注入时先 N 次 uniform 后 3N 次 normal；0 噪声仍抽样 | 原源码 SHA、独立方向 L3/固定 RNG 输入、调用数/顺序、非有限与耗尽负例；详见 `sampling_noise.md §7.1` |
-| `TC-F-TRAJ-001`、`TC-F-FLOW-004` | 35/600 轨迹、N 分母、端点无有效运动、`R^\top`、小角 epsilon/反向/近 π、球内正根 | 全矩阵独立 L3、状态/维度、球外失败分类；详见 `trajectory.md §6.2` |
+| `TC-F-GEOM-002/003`、`TC-NF-RNG-001`、`TC-DC-RNG-001` | 完整/缺损八面体 levels 0/1/2，有序行；固定注入时先 N 次 uniform 后 3N 次 normal；原Bias的`near_last`只取最后一次uniform近度标量；0 噪声仍抽样 | 原源码 SHA、独立方向 L3/固定 RNG 输入、调用数/顺序、非有限与耗尽负例；详见 `sampling_noise.md §7.1` |
+| `TC-F-TRAJ-001`、`TC-F-FLOW-004` | 35/600 轨迹、N 分母、端点无有效运动、`R^\top`、小角 epsilon/反向/近 π、**同角度不同向量长度跨绝对叉积阈值**、球内正根 | 全矩阵独立 L3、状态/维度、球外失败分类；详见 `trajectory.md §6.2` |
 | `TC-F-EXP-002/003`、`TC-I-RESULT-001`、`TC-NF-RECOVERY-001` | 8 次四误差平均；加噪前理想流均值比 ratio 只留第 8 次；更新率 `akrot` 由原相对 rotvec 由 rad 换算为 deg；单轮失败/Manifest、周期刷新和当前三个 save | 独立固定八轮和帧号、RunId、保存字段/源只读确认；详见 `experiments.md §8.2` |
 | `TC-F-AN-001/002`、`TC-I-ANALYSIS-001` | 50:550 的 501 点、阈值等值不触发；多更新率**旋转逐段平滑且裁剪**、**平移先全长平滑且不分段**；comparison 平移不分段；缺 ratio 明确报错 | 独立 L3 对比段级完整中间数组、绘制 x/y、连续平移 501 点和原值来源；不能以“正确裁剪后的旋转内部值不同于全局平滑”作假断言。详见 `analysis_plotting.md §5.2.1/§8.1` |
 
@@ -213,6 +213,8 @@ regression_tolerance=9.0949470177292824e-13
 | TC-F-FLOW-001～004 | `d=e_z, near=2, t=e_x, ω=e_y` 的生成光流 `(-3,0,0)`；另对 `nonpropfehler` 的 **0/+k/−k** 固定正态注入，记录每行 3 次调用与最终切向投影 | 数值点已手算；独立 L3/CTest 缺 |
 | TC-F-BIAS-001/002 | `iterationnumber=2` 的原 `xwerte=[6,24,96]`，缺损模式 N=6/24/96，完整球面 N=8/32/128；必须记录实际 N 与显示 x 分别来源 | 仅源表达式/形状复核；未运行 |
 | TC-F-SH-001、TC-F-ADAPT-001 | 对称AN-G12与非对称九方向两类输入的正近度M1～M4/rhs、t/ω/MSE、新 near/C | 已有独立Wolfram真实数学计算：九方向正均值非对称场M2/M3非零、z精确恢复、MSE=0，另有负均值源归一与M1差2I的反例；仍无Adaptive生产CTest/Session、近奇异/退化覆盖或正式批准 |
+
+**Bias近度返回及合成流模长的真实源码分层（2026-11-11静态合同）**：来自 `fixed_kugel_symmetric_perfectpoints_randomnear.m` 与 `fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m`，源`near=1/entf`在N次循环中覆盖标量，**仅最后一个值**作为原返回的`near`；C++候选 `FlowSynthesisResult.nearness` 全数组是新增独立诊断，`near_last` 需与其最后一项相等。以缺损八面体 `level=0,N=6` 的注入uniform `[0,0,0,0,0,1/2]`，按源 `entf=(3u+1)/2.5`，应得到内部 `nearness=[5/2,5/2,5/2,5/2,5/2,1]`、原返回`near_last=1`，**不新增任何作者MAT字段**。同时取一条固定 `d=e_z, mu=1, t=e_x, omega=-e_y`，分别有`p_trans=-e_x`、`p_rot=e_x`、合成`p=0`；原`durchlaenge=mean(||p||)=0`，但两个分量模长平均值各为1。若`nonpropfehler`采用该理想流，**噪声系数非零但平均合成光流模长为零时仍调用3次normal**，输出噪声为零。此用例验证`durchlaenge`不能错用两均值之和，不承诺该单方向反例等于原Bias六/八面集合。对应 `TC-F-BIAS-001/002`、`TC-F-FLOW-002/003`、`TC-DC-NOISE-001`、`TC-NF-RNG-001`；见 [采样LLD §6/§7.1.5](design/sampling_noise.md)，均**未生成正式L3或实际CTest**。
 
 **负均值近度的代数资格补充**：`near_raw=[-1,-3]`，`s=-2`，原源先翻成`[1,3]`再除旧`s`，得 `near_normalized=[-1/2,-3/2]`；这**等价于** `near_raw/abs(s)`，**不等价于** `near_after_sign/abs(s)`。对`s=0`另设明确非成功，保持主系数未提交。该手算仅为分支数值真值，尚不能当作完整 N×6/3×5 单步L3；见[Adaptive LLD §2.1/§10.1](design/adaptive_mfa.md)和[均值理论](design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md)。沿用 `TC-F-ADAPT-001`、`TC-DC-ADAPT-001`。
 
@@ -258,7 +260,7 @@ regression_tolerance=9.0949470177292824e-13
 
 ### 2.13 轨迹与近度的符号级候选（AF-048/080，未运行）
 
-参见 [trajectory.md §6.3](design/trajectory.md) 的 TR-C01～04：三点局部轨迹 `Rᵀ` 的正负号、严格反向输入 `(e_x,-e_x)` 的原函数**确定**输出零旋转向量（非有效折返），以及球内旋转视线的 `near=4/3` 与反向射线 `near=4/5`。将四组固定输入关联现有 `TC-F-TRAJ-001` 与 `TC-F-FLOW-004`；要求实际 L3/CTest 分别报告源返回/候选安全失败、端点有效性、坐标单位和真实误差。本文只给出静态可手算输入资格，**未生成独立 L3、未测试，也不批准 DEC-005/008**。
+参见 [trajectory.md §6.3](design/trajectory.md) 的 TR-C01～05：三点局部轨迹 `Rᵀ` 的正负号、严格反向输入 `(e_x,-e_x)` 的原函数**确定**输出零旋转向量（非有效折返），以及球内旋转视线的 `near=4/3` 与反向射线 `near=4/5`。新增的TR-C05必须以两个**夹角都为90°**的输入 `v1=e_x, v2=(0,5e-12,0)` 和 `v2=(0,2e-11,0)`，静态预测原旋转向量模长分别为 `(π/2)*5e-12` 与 `π/2`，验证原 `norm(cross(v1,v2))>1e-11` 属**绝对交叉幅度**而非旋转角阈值；恰等 `1e-11` 浮点条件单独记录舍入，不作稳健跨编译器黄金值。源保真与几何安全模式的失败决议必须分开。将五组固定输入关联现有 `TC-F-TRAJ-001` 与 `TC-F-FLOW-004`；要求实际 L3/CTest 分别报告源返回/候选安全失败、端点有效性、坐标单位和真实误差。本文只给出静态可手算输入资格，**未生成独立 L3、未测试，也不批准 DEC-005/008**。
 
 ### 2.14 AN-G01～03 初始面表行序的静态资格（AF-047/055）
 
