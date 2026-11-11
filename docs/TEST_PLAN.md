@@ -113,6 +113,8 @@ regression_tolerance=9.0949470177292824e-13
 
 **2026-11-11 `inspect-mat` 的四分支确定性候选测试（真实CLI尚未建立）**：选同一份单变量的原始只读MAT `one.mat`、一个存在多个变量且顺序未获证明的隔离合成MAT `multi.mat`、缺少NAME的反例以及不存在的路径。将 `strict/no NAME` 绑定 `Reader::inspect`，它只需遍历变量metadata；`strict/NAME` 绑定 `readNamed` 必须完整读取指定数值（不能只读文件头后宣布成功）；`compat/no NAME` 绑定 `readFirstCompatible`，单变量成功而多变量`AmbiguousVariable/read(3)`；`compat+NAME` 无论路径是否存在均应在参数解析时直接拒绝 `Parse/exit(2)`（不打开文件）。错误NAME不得回退首变量；未知/重复`--mode`和`--variable`须Parse(2)。要求记录原始文件读取前后SHA-256不变、每分支真实调用层、变量class/dtype/rank/dims与成功时的自拥有值读取状态。**这四个分支不是一项“未带NAME统一只列元数据”的逻辑**；真正stdout输出全部数值还是仅摘要仍由DEC-008/P0.8决定。只更新既有`TC-F-CLI-001`测试条件，不增测试编号或冒称执行过MAT写入。原判断来自[CLI LLD §2.0.1](design/cli.md)和[MAT LLD §7.4](design/mat_io.md)。
 
+**2026-11-11 兼容首变量的同一输入身份/TOCTOU负例**：在已有 `TC-F-CLI-001`、`TC-F-MAT-003`、`TC-I-MAT-001`、`TC-NF-SAFETY-001` 下，准备仅含 `alpha` 的合法单变量 MAT A 和仅含 `beta` 的合法单变量 MAT B，在兼容读取的**元数据枚举后、完整数值解码前**将同一可变路径从A切换到B。要求同一成功结果的变量选择、真实解码数据与源文件身份来自**同一次 Mat_Open 句柄**；不允许旧伪代码 `inspect(path)`（句柄A）后 `readNamed(path,name)`（新句柄B）混合构造虚假成功。若发生同一 inode 原地写入或身份不一致而无法证明一致性，必须明确非成功或记录尚未解决的稳定快照边界，不得以 canonical 字符串相同作通过证据。来源见 [MAT LLD §7.4.1](design/mat_io.md) 与原 `getflowfield.m` 一次 `load` 再 `fieldnames/getfield` 的流程。此为隔离文件竞态的测试**设计**，不创建/改写真实 `origin/**`，尚未执行真实 Reader/CTest，具体公共错误码留待 DEC-008 冻结。
+
 **统一 CLI 输出约定（项目所有者已决定）**：用户配置输出根的 CLI 选项已删除；新结果固定写入仓库根 `output/<RunId>/`。`--run-id ID` 可选，缺省独立 OS 随机生成，不消费实验 RNG；每个目录与文件均独占创建，重复 RunId/路径逃逸/指向 `origin/**` 均拒绝。纯读取/分析命令保持只读；`plot` 只有保存结果时才分配 RunId。真实 C++/CTest/安全负例仍待后续获准实施。
 
 建议退出码类别（尚未批准）：0 成功、2 参数错误、3 MAT/输入 I/O 错误、4 格式/类型/形状错误、5 数值无效、6 输出目录保护、7 可选功能不可用。实施前冻结状态优先级与错误含义。
@@ -195,7 +197,7 @@ regression_tolerance=9.0949470177292824e-13
 
 | TC 组 | 应准备的独立夹具/重要断言 | 预期证据 |
 |---|---|---|
-| `TC-F-MAT-003/004`、`TC-NF-SAFETY-001`、`TC-DC-IO-001` | 多变量歧义、固定 `double[2×3]` 列主序、变量名白名单与路径拒绝、符号链接父目录/并发 RunId/原子非覆盖；**关闭暂存→发布前严格回读→非覆盖发布→发布后身份验证→RunContext记录Manifest**，分别注入前/后失败 | 隔离测试目录、源文件不变、具体 MatErrorCode、manifest/log 与逐元素比较；详见 `mat_io.md §8.1` |
+| `TC-F-MAT-003/004`、`TC-NF-SAFETY-001`、`TC-DC-IO-001` | 多变量歧义、兼容元数据与解码**同一 Mat_Open 身份**且路径置换不能混合两个文件、固定 `double[2×3]` 列主序、变量名白名单与路径拒绝、符号链接父目录/并发 RunId/原子非覆盖；**关闭暂存→发布前严格回读→非覆盖发布→发布后身份验证→RunContext记录Manifest**，分别注入前/后失败 | 隔离测试目录、源文件不变、具体 MatErrorCode、manifest/log 与逐元素比较；详见 `mat_io.md §8.1` |
 | `TC-F-GEOM-002/003`、`TC-NF-RNG-001`、`TC-DC-RNG-001` | 完整/缺损八面体 levels 0/1/2，有序行；固定注入时先 N 次 uniform 后 3N 次 normal；原Bias的`near_last`只取最后一次uniform近度标量；0 噪声仍抽样 | 原源码 SHA、独立方向 L3/固定 RNG 输入、调用数/顺序、非有限与耗尽负例；详见 `sampling_noise.md §7.1` |
 | `TC-F-KVD-001/002`、`TC-F-FILTER-001` | KvD负近度总和翻号后立即缓存`translation_after_sign`供旋转更新；平移分支先计算`raw_t_next`，仅归一化一次，再以旧t计算rot并提交新t；终端near保持本轮早期值、不得重算 | 原只读`norm_koenderink_iteration.m`/`mue_norm_koenderink_iteration.m`变量覆盖顺序、`raw_t_next`与唯一归一事件、旧t/新t及rms trace；见`kvd.md §3.4`，未做原生CTest |
 | `TC-F-TRAJ-001`、`TC-F-FLOW-004` | 35/600 轨迹、N 分母、端点无有效运动、`R^\top`、小角 epsilon/反向/近 π、**同角度不同向量长度跨绝对叉积阈值**、球内正根 | 全矩阵独立 L3、状态/维度、球外失败分类；详见 `trajectory.md §6.2` |
