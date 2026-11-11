@@ -22,7 +22,7 @@
 | **AUDIT_PROGRESS（本轮全工程文档）** | 本轮36份DOC唯一审计三态及DAR问题两态、证据、固定提交与剩余阻塞 | 不与旧AUDIT_PROCESS的SH-01～06专项任务/历史97 AF重复计数；不能凭“已审计”宣布规范冻结 |
 | **政策与决定附件** | 所有者已确定的技术方向、DEC-004、L1 不必需和 L2/L3/L4 参考策略 | 只为规范提供来源，不替代核心规范批准；原审批历史保留原时间点 |
 
-## 2. 当前规范及核心文件的 blob SHA
+## 2. 固定提交3e3ad2a的历史规范及核心文件blob SHA（非当前HEAD）
 
 **记录快照：** `3e3ad2aba75d6ec8d16d2875ad3c846cee7d671d`。以下 SHA 是该提交的文件身份；真实业务实现、独立 L2/L3、CTest 和批准尚未发生。表中 PROGRESS 等过程件的正式基线列不适用。
 
@@ -48,7 +48,7 @@
 
 **全部适用的规范基线签署字段目前未提供**：正式批准人、批准日期与时区、批准 commit SHA、冻结生效范围、例外 DEC 与批准证据。已有所有者**技术方案选择**和根 MIT 许可授权，不等于批准整份 SRS/HLD/LLD 或测试 PASS。对版本表的任何变更必须引用新 Git commit/对应 blob SHA。
 
-## 3. 专题、证据与所有者决策附件
+## 3. 同一历史快照的专题、证据与所有者决定附件
 
 **现行全工程文档规范审计**：[AUDIT.md](AUDIT.md) 管理标准与本轮用户评价输入，[AUDIT_PROGRESS.md](AUDIT_PROGRESS.md) 管理本轮36份文件的动态审计/整改三态；低阶球谐旧专项[固定历史AUDIT](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82/docs/AUDIT.md)及[AUDIT_PROCESS.md](AUDIT_PROCESS.md)管理其SH-01～SH-06理论结案。四者均不替代 SRS/HLD/LLD、TEST_PLAN 或软件实际执行证据。
 
