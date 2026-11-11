@@ -1,6 +1,8 @@
 # HAR-2026-11-06-001：审批后的设计修订与待审材料包
 
-> **状态：[AI-DRAFT + HUMAN-APPROVE]；未冻结、非执行许可、非测试验收。** 根据用户上传的 `HUMAN_APPROVAL_REQUEST.json` 整理，适用于 `ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields` 的 `dev-plan-P0-P1-mat-dictionary-probe` 分支。申请内 `applicationCommit` 与 `scopeIds` 为空，故不能推定任何完整 Git SHA 已签字批准。**不得将未勾选确认的预填参考文字等同于人类已确认意见，也不在仓库上传原始审批 JSON。**
+> **状态：[AI-DRAFT + HUMAN-APPROVE]；这是2026-11-06审批事项的历史审查包，未冻结、非执行许可、非测试验收。** 根据用户上传的 `HUMAN_APPROVAL_REQUEST.json` 整理，适用于 `ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields` 的 `dev-plan-P0-P1-mat-dictionary-probe` 分支。申请内 `applicationCommit` 与 `scopeIds` 为空，故不能推定任何完整 Git SHA 已签字批准。**不得将未勾选确认的预填参考文字等同于人类已确认意见，也不在仓库上传原始审批 JSON。**
+
+**2026-11-11文档审计适用性说明**：H-01～H-16的JSON决议、当时权限和观察不能追溯改写；下文的“本轮”“当前允许”均指2026-11-06材料形成时点。后续已生效的[永久不运行MATLAB/L1政策](../golden/NO_MATLAB_EXECUTION_POLICY.md)优先于本文件H-09历史采集提案；后续受限SH叶子用户原生3/3证据见[PROGRESS.md](../PROGRESS.md)，不等于整工程代码/TC获批。现行全工程文档整改与未解除的软件/批准阻塞由[AUDIT_PROGRESS.md](../AUDIT_PROGRESS.md)登记。
 
 本材料只补充 **P0/P1 的下一轮审查输入**，不另立或修改 REQ、AC、TC、P 的规范性义务；如未来确需改变任何 SRS/AC/TC/P，则需先另行审批。原实施主计划见 [PLAN.md](../PLAN.md)，项目实际进度见 [PROGRESS.md](../PROGRESS.md)，已有决定与上游替代路径见 [DECISION_IMPLEMENTATION_NOTES.md](DECISION_IMPLEMENTATION_NOTES.md)。
 
@@ -29,7 +31,7 @@
 | 轨迹 / `trajectory` | 相同位置序列、转轴及角度、Sophus 前向 `R` 与源 Rodrigues、`R^T` 局部运动 | `omega=0`、微小角、主轴、接近 π，逐元素矩阵误差、符号与坐标系 | **待实测，DEC-005 未批准** |
 | MAT/分析 / `matAnalysis` | 原 MAT 类型、尺寸、列主序值、MATLAB 1-based 分段与四类分析曲线 | 精确字段身份、逐值差、有效样本、分段边界与统计指标 | **待实测，DEC-005 未批准** |
 
-比较样本必须共用固定输入与同一索引/状态；按量纲、数值尺度、临界条件分别汇总，不以改变结果值、排除难例或随意放宽阈值达到通过。批准者需要看到原 MATLAB Goldens、C++ 结果、差异分布、来源哈希和选择阈值的理由。数值阈值、人类批准人、批准 SHA 与日期保持空缺，不得自动填入。
+比较样本必须共用固定输入与同一索引/状态；按量纲、数值尺度、临界条件分别汇总，不以改变结果值、排除难例或随意放宽阈值达到通过。批准者需要看到独立L2历史MAT、L3逐节点参考与必要的L4统计证据、待测C++结果、差异分布、来源哈希和选择阈值的理由；**不要求运行原MATLAB/Octave或取得L1 Golden**。数值阈值、人类批准人、批准 SHA 与日期保持空缺，不得自动填入。
 
 ## 3. H-03：CLI/错误协议及 TC→测试→Golden 待审清单（DEC-008 仍开放）
 
@@ -104,18 +106,20 @@
 
 拟定 Reader **拒绝或显式不支持**的样例（正式码按 contracts.md/DEC-008 批准）：损坏或错误 MAT 头、损坏 zlib 压缩、缺失变量、歧义的多变量兼容选择、MAT v7.3/HDF5（当前无必要支持）、MAT class/dtype 非实数 double 的 single/int/uint/logical/char/cell/struct/sparse/object/complex、未知 flags、rank/dims 非合同形状、维度乘积/字节数溢出、与预期变量名不符、数据长度不符。不要将这些类型静默转换为 double；若将来确需支持，另行立需求和测试。负例必须基于隔离副本，且需要 H-10 解除暂缓及相应运行/写入权限，不能直接改坏 `origin/**`。
 
-## 8. H-09：合法 MATLAB Golden 采集计划（本轮不运行）
+## 8. H-09：历史 MATLAB 采集提案与现行 L2/L3/L4 参考替代（无需 MATLAB）
 
-| Golden 组（候选 ID） | 固定输入 / 来源 | 必须留存的 MATLAB 参考输出 | 关联 TC |
+此节原是2026-11-06的H-09材料收集方案，现按已生效的[长期政策](../golden/NO_MATLAB_EXECUTION_POLICY.md)明确：**不得将采集脚本、MATLAB运行环境、原脚本逐节点输出或L1当作设计冻结/验收门禁**。下表保留当年的候选ID和测试追踪，仅将必需证据解释为可独立复核的L2归档最终数值、L3解析/符号或非被测实现以及L4统计；**表中的预期输出并非已经取得的参考值**。
+
+| 参考组（历史候选 ID） | 固定输入 / 来源 | 现行独立参考目标（未生成时仅为候选） | 关联 TC |
 |---|---|---|---|
 | `G-MAT-01` | 原始 MAT 中选定文件、文件路径/变量名/版本 | dtype/rank/dims、列主序逐值、异常类型 | TC-F-MAT-001～004 |
 | `G-KVD-01` | 固定 N×6 球面流场、Franz 初始化、Original/Modified 各自参数 | 每轮 `near,t,omega,error,x`、收敛/失败及原顺序 | TC-F-KVD-001/002 |
-| `G-SH-01` | `r=I`、x/y/z 轴旋转、复合/逆旋转；九项固定系数 | MATLAB `SHRotate(r,2)` 的 R0/R3/R5 和 `transfor_koeff` 输出 | TC-F-SH-001/002、TC-F-TRAJ-001 |
+| `G-SH-01` | `r=I`、x/y/z 轴旋转、复合/逆旋转；九项固定系数 | 由只读`SHRotate(r,2)`/`transfor_koeff`公式与论文约定独立推导的R0/R3/R5和系数输出 | TC-F-SH-001/002、TC-F-TRAJ-001 |
 | `G-AD-01` | `oneit_adaptiv_matched_filter.m` 固定 `altkoeff` 和 N×6 `setofpoints` | near、mean、M1…M4、右端、解、error、更新系数；异常提交时序 | TC-F-ADAPT-001～003 |
-| `G-SAMPLE-01` | 固定级别/固定随机源；原 MATLAB `rand/randn` 顺序单独登记 | 有序方向表、流场、噪声逐项与 RNG 调用次数 | TC-F-GEOM-002/003、TC-NF-RNG-001 |
+| `G-SAMPLE-01` | 固定级别/独立固定随机源；从只读`.m`静态登记`rand/randn`调用顺序 | 有序方向表、流场、噪声逐项与 RNG 调用次数 | TC-F-GEOM-002/003、TC-NF-RNG-001 |
 | `G-AN-01` | 历史 MAT，四个原 MATLAB 分析入口，原脚本固定索引 | 数值曲线数组、x 范围、分段、平滑、有效样本数 | TC-F-AN-001/002 |
 
-每个候选 Golden 要附 `golden_id`、输入来源相对路径、原 MAT SHA-256、原 `.m` **blob SHA**、采集脚本 blob SHA、MATLAB 版本/合法来源、执行机器/日期/命令、随机种子及随机调用顺序、输入 dtype/rank/dims/单位、输出数据 SHA-256、是否可公开分发和存储位置、对应 TC/AC、异常/无定义样本及审核签名。小型可合法再分发的定值可建议存放 `tests/golden/fixtures/`；其他数据仅保存授权外部存储位置与 SHA-256 引用，不在 GitHub 仓库直接复制。**尚未有 Golden 采集脚本、合法运行授权或真实参考值；不运行 MATLAB，不以 C++ 自算输出充当 Golden。**
+每组独立参考应按L2/L3/L4实际类型登记`golden_id`、固定输入路径/身份、原`.m` **Git blob SHA**、L2原MAT的SHA-256或L3参考生成器/数学证明与参考文件SHA-256、L4统计定义及样本分母（适用时）、执行者/日期/环境/命令、随机种子和调用顺序、dtype/rank/dims/单位、对应TC/AC、异常/无定义样本、来源版权/分发限制和审签状态；**不要求MATLAB采集脚本、MATLAB版本、L1逐轮数据或MATLAB运行许可**。小型可合法再分发的定值可建议存放 `tests/golden/fixtures/`；其他数据仅保存授权外部存储位置与 SHA-256 引用，不在 GitHub 仓库直接复制。**表内完整参考组尚未取得正式批准的L2/L3/L4验收证据；不要求MATLAB采集脚本或运行，不以被测C++自算输出充当独立参考。** 已独立记录的受限球谐符号检查和用户3/3 CTest只在各自范围有效，不能让其它候选组自动通过。
 
 ## 9. H-13：原 MATLAB 失败/状态提交行为的静态证据与待审决策
 
@@ -123,11 +127,11 @@
 |---|---|---|---|
 | KvD 零向量 | `norm_koenderink_iteration.m` 第 31 行及第 85 行附近直接归一化 `trans/transneu`；`mue_norm_koenderink_iteration.m` 对应直接归一化 | 零范数时具体警告、非有限传播及 MATLAB 版本差异 | `ZeroNorm`/显式失败并留存输入，不能擅自把向量置零当成原结果 |
 | KvD 迭代失败 | 原 while 条件同时包含 `x<200` 和最少 `x<6`，循环中按先旧平移求旋转、再提交新平移 | 非有限误差导致比较分支的结果、上限返回了什么、保留哪些近度 | 提案把“达到上限”和“非有限”分开记录，**不更改原停止顺序** |
-| Adaptive 近度均值 | `oneit_adaptiv_matched_filter.m` 第 25～28 行先检查 `sum<0` 再 `near=near/sum` | `sum=0`、NaN/Inf 时 MATLAB 输出与后续步行为 | 候选 `ZeroNorm`/`NonFiniteInput`，但必须有 Golden 后决定继续/失败语义 |
+| Adaptive 近度均值 | `oneit_adaptiv_matched_filter.m` 第 25～28 行先检查 `sum<0` 再 `near=near/sum` | `sum=0`、NaN/Inf 时 MATLAB 输出与后续步行为 | 候选 `ZeroNorm`/`NonFiniteInput`，但必须有独立L3负例和人类审定后才能冻结继续/失败语义 |
 | Adaptive 6×6 | 同文件第 90～101 行 `invmgesamt=real(inv(mgesamt))`，随后乘右端并直接归一化 `transneu` | 奇异/病态矩阵是否警告、返回非有限、是否丢弃虚部以及对下游 Session 的影响 | 候选 `SingularSystem`/`IllConditionedSystem`/`NonFiniteResult`，不能未经批准换线性求解规则或报“等价” |
 | Adaptive Session | 当前比较入口先进行两类初始化迭代、再以 `oneit` 更新主系数；源 MATLAB 直接赋值 | 一轮出错后是否停、继续沿用无效值、部分提交哪些数组 | 保持独立 StepSolver/Session 的候选分层，**继续/回滚/拒绝写状态必须另行人审** |
 
-要确认的证据：MATLAB 版本与固定输入、stdout/warnings、每次赋值前后的 near/系数/运动与 error、下一帧是否访问同一状态；不能仅据 C++ 稳健性偏好更改作者原始算法。此节是**源码行为静态观察 + 执行候选**，非真实 NaN/Inf/奇异测试结果。
+现行必须确认的证据：固定输入/源文件身份、从原静态控制流得到的状态更新顺序、独立L3定值与异常/非有限判别、未来真实C++的失败传播与Session前后状态。原MATLAB版本、stdout/warnings和真实运行的非有限传播**在没有原运行时只可写未知，且永久不作必需门禁**；不能仅据C++稳健性偏好宣称与作者原运行无条件等价。此节是**源码行为静态观察 + 执行候选**，非真实 NaN/Inf/奇异测试结果。
 
 ## 10. H-15：M0–M5 退出证据与资源清单（不承诺负责人/工期/性能）
 
@@ -153,6 +157,6 @@
 
 ## 12. 下一轮人类审批需要给出的具体答复
 
-优先顺序建议：**(1)** H-05/H-06 的需求影响与接口边界审查 → **(2)** H-07/H-08 的 MAT 来源/身份与拒绝范围 → **(3)** H-09 的合法 Golden 采集环境及存储权限 → **(4)** H-01/DEC-005 的实测误差与容差签署 → **(5)** H-03/DEC-008 的 CLI、错误码、CTest identity 冻结 → **(6)** 另行明确 H-10/H-11、MAT 写入和构建/测试的逐项执行权限。此顺序是**候选工作安排**，不能替代实际批准或重新写入已上传 JSON 的决议。
+优先顺序建议：**(1)** H-05/H-06 的需求影响与接口边界审查 → **(2)** H-07/H-08 的 MAT 来源/身份与拒绝范围 → **(3)** H-09 的独立L2/L3/L4参考身份、生成/存储及批准规则 → **(4)** H-01/DEC-005 的实测误差与容差签署 → **(5)** H-03/DEC-008 的 CLI、错误码、CTest identity 冻结 → **(6)** 另行明确 H-10/H-11、MAT 写入和构建/测试的逐项执行权限。此顺序是**候选工作安排**，不能替代实际批准或重新写入已上传 JSON 的决议。
 
 **停止条件**：若相应权限位仍为 false、源许可/Golden/作用 SHA 不确定，保持「未批准/未执行/未知」，继续文档审查，不将任何 P、TC、AC 或 DEC 直接关闭。
