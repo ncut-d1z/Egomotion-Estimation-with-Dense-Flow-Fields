@@ -1,6 +1,6 @@
 # 实施进度与证据登记（PROGRESS）
 
-> 滚动证据登记 v0.6，非正式基线批准。本轮用户明确限定**只做理论推导，允许符号计算，禁止C++实现**。因此当前修改仅为理论专题、Wolfram脚本、独立数学结果和审计登记；旧SH实现授权不扩大到本轮。原生运行与数学运算的执行者、固定源码及证据类型必须区分。
+> 滚动证据登记 v0.6（截至E-DOC-069，2026-11-10），非正式基线批准。**这里的“本轮”是E-DOC-069历史数学批次，不是2026-11-11正在开展的全工程文档规范审计。** 该历史批次仅作理论推导和Wolfram验证，未实施生产C++；历史原生SH测试与数学运算的执行者、源码SHA及证据类型必须分开。本次文档审计最新状态见[AUDIT_PROGRESS.md](AUDIT_PROGRESS.md)，不得用本页旧97AF计数替代新36文件/9DAR口径。
 >
 > 为消除旧NOT_RUN、旧授权与动态计数反复堆叠，既有E-DOC-054～067详细记录完整保存在[9825375固定PROGRESS](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/982537556be1ac5a414af368a0082806a9179d32/docs/PROGRESS.md)。更早E-DATA-001、E-DOC-001～053保存在[98e95e2固定历史](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/98e95e2f867dc7142fa0d5ac0f1c79f5d6429ed1/docs/PROGRESS.md)。未改写任何Git历史或历史审批；下表保留定位和关键事实，E-DOC-068为上一轮、最新证据为§5的E-DOC-069。
 
@@ -79,7 +79,7 @@
 | 正在审计文件 | 32 | 32 | 0 |
 | 未审计文件 | 0 | 0 | 0 |
 
-## 5. E-DOC-069：低阶SH离散重新拟合的往返与正值性（2026-11-10，本轮）
+## 5. E-DOC-069：低阶SH离散重新拟合的往返与正值性（2026-11-10，历史数学批次）
 
 ### 5.1 核查起点、数学依据及新工件
 
