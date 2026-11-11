@@ -102,7 +102,7 @@ regression_tolerance=9.0949470177292824e-13
 
 | 子命令 | 候选必填参数 | 输出/验收 |
 |---|---|---|
-| inspect-mat | --file PATH | MAT 变量名、rank、dims、type、压缩/错误诊断 |
+| inspect-mat | --file PATH；可选 --mode strict/compat、--variable NAME（仅strict） | strict/no NAME只枚举元数据；strict/NAME精确读取数值；compat/no NAME有界首变量读取；compat+NAME解析失败；详见design/cli.md §2.0.1 |
 | run-bias-occluded | --seed UINT32 --level NONNEG_INT | xwerte、ywerte1…6 的 MAT 结果 |
 | run-bias-proportional | --seed UINT32 --level NONNEG_INT | 独立完整球面/逐分量噪声结果 |
 | run-adaptive-init | 无 | 原始初始化四类误差结果 |
@@ -110,6 +110,8 @@ regression_tolerance=9.0949470177292824e-13
 | run-adaptive-update-rates | 无 | 1/5/11/21 帧更新频率结果 |
 | analyze | --experiment NAME --input-root DIR | 独立读取历史 MAT，计算统计序列 |
 | plot（可选） | --experiment NAME --input-root DIR | 图表结果；无图形后端不影响 analyze |
+
+**2026-11-11 `inspect-mat` 的四分支确定性候选测试（真实CLI尚未建立）**：选同一份单变量的原始只读MAT `one.mat`、一个存在多个变量且顺序未获证明的隔离合成MAT `multi.mat`、缺少NAME的反例以及不存在的路径。将 `strict/no NAME` 绑定 `Reader::inspect`，它只需遍历变量metadata；`strict/NAME` 绑定 `readNamed` 必须完整读取指定数值（不能只读文件头后宣布成功）；`compat/no NAME` 绑定 `readFirstCompatible`，单变量成功而多变量`AmbiguousVariable/read(3)`；`compat+NAME` 无论路径是否存在均应在参数解析时直接拒绝 `Parse/exit(2)`（不打开文件）。错误NAME不得回退首变量；未知/重复`--mode`和`--variable`须Parse(2)。要求记录原始文件读取前后SHA-256不变、每分支真实调用层、变量class/dtype/rank/dims与成功时的自拥有值读取状态。**这四个分支不是一项“未带NAME统一只列元数据”的逻辑**；真正stdout输出全部数值还是仅摘要仍由DEC-008/P0.8决定。只更新既有`TC-F-CLI-001`测试条件，不增测试编号或冒称执行过MAT写入。原判断来自[CLI LLD §2.0.1](design/cli.md)和[MAT LLD §7.4](design/mat_io.md)。
 
 **统一 CLI 输出约定（项目所有者已决定）**：用户配置输出根的 CLI 选项已删除；新结果固定写入仓库根 `output/<RunId>/`。`--run-id ID` 可选，缺省独立 OS 随机生成，不消费实验 RNG；每个目录与文件均独占创建，重复 RunId/路径逃逸/指向 `origin/**` 均拒绝。纯读取/分析命令保持只读；`plot` 只有保存结果时才分配 RunId。真实 C++/CTest/安全负例仍待后续获准实施。
 
