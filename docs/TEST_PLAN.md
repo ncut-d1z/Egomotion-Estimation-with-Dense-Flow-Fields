@@ -193,11 +193,13 @@ regression_tolerance=9.0949470177292824e-13
 
 | TC 组 | 应准备的独立夹具/重要断言 | 预期证据 |
 |---|---|---|
-| `TC-F-MAT-003/004`、`TC-NF-SAFETY-001`、`TC-DC-IO-001` | 多变量歧义、固定 `double[2×3]` 列主序、符号链接父目录/并发 RunId/非覆盖、写入失败及独立回读 | 隔离测试目录、源文件不变、具体 MatErrorCode、manifest/log 与逐元素比较；详见 `mat_io.md §8.1` |
+| `TC-F-MAT-003/004`、`TC-NF-SAFETY-001`、`TC-DC-IO-001` | 多变量歧义、固定 `double[2×3]` 列主序、变量名白名单与路径拒绝、符号链接父目录/并发 RunId/原子非覆盖；**关闭暂存→发布前严格回读→非覆盖发布→发布后身份验证→RunContext记录Manifest**，分别注入前/后失败 | 隔离测试目录、源文件不变、具体 MatErrorCode、manifest/log 与逐元素比较；详见 `mat_io.md §8.1` |
 | `TC-F-GEOM-002/003`、`TC-NF-RNG-001`、`TC-DC-RNG-001` | 完整/缺损八面体 levels 0/1/2，有序行；固定注入时先 N 次 uniform 后 3N 次 normal；0 噪声仍抽样 | 原源码 SHA、独立方向 L3/固定 RNG 输入、调用数/顺序、非有限与耗尽负例；详见 `sampling_noise.md §7.1` |
 | `TC-F-TRAJ-001`、`TC-F-FLOW-004` | 35/600 轨迹、N 分母、端点无有效运动、`R^\top`、小角 epsilon/反向/近 π、球内正根 | 全矩阵独立 L3、状态/维度、球外失败分类；详见 `trajectory.md §6.2` |
 | `TC-F-EXP-002/003`、`TC-I-RESULT-001`、`TC-NF-RECOVERY-001` | 8 次四误差平均；加噪前理想流均值比 ratio 只留第 8 次；更新率 `akrot` 由原相对 rotvec 由 rad 换算为 deg；单轮失败/Manifest、周期刷新和当前三个 save | 独立固定八轮和帧号、RunId、保存字段/源只读确认；详见 `experiments.md §8.2` |
 | `TC-F-AN-001/002`、`TC-I-ANALYSIS-001` | 50:550 的 501 点、阈值等值不触发；多更新率**旋转逐段平滑且裁剪**、**平移先全长平滑且不分段**；comparison 平移不分段；缺 ratio 明确报错 | 独立 L3 对比段级完整中间数组、绘制 x/y、连续平移 501 点和原值来源；不能以“正确裁剪后的旋转内部值不同于全局平滑”作假断言。详见 `analysis_plotting.md §5.2.1/§8.1` |
+
+**2026-11-11 MAT Writer 失败时点的具体门槛（仅文档设计）**：`TC-F-MAT-004/TC-NF-SAFETY-001/TC-I-RESULT-001` 须分别注入：（a）暂存写出/关闭失败，最终文件名**不存在**；（b）暂存回读逐值不一致时返回 `ReadbackMismatch` 且**不得发布**；（c）两个Writer竞争同一文件的非覆盖发布，一成功一 `OutputExists`，原有内容和SHA不变；（d）**发布后**最终检验或RunContext写Manifest失败，RunOutcome仍为`Incomplete/Failed`，记录已发布文件并不得把全部运行标`Complete`；（e）恶意 `name='../origin/...'` 或输出父组件在检查/创建间变为symlink时失败且原始文件未改变。Writer的 `Status` 只证明单文件操作，整个运行的完整性只由Runner/RunContext在全部期望产物验证后确定。上述均为**将来需执行的隔离负例**，不得把文字或已有582/582只读探针当成安全通过。详见 [mat_io.md §7.2–7.2.1](design/mat_io.md)。
 
 **执行范围限界**：`8eab5dd` 与 `445ed151` 的同一球谐 CTest 均已由用户现场运行并报告通过，后者包括独立基函数、dyadic 符号及 MATLAB 相位回归；并不代表全部 66 TC 或 MAT L2/更广 L3/DEC-005 验收完成。其它模块的实际测试、负例和日志仍缺；凡在 `445ed151` 以后修改的测试必须重新实测。AF-051 保持「未整改」。
 
