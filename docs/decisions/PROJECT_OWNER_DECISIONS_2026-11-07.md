@@ -1,6 +1,12 @@
 # 项目所有者的最新设计决定：MIT / Eigen / CLI / 数值与实验策略（2026-11-07）
 
-> **效力**：本文件登记项目所有者在当前对话中作出的**明确技术方向决定**，对历史 `HUMAN_APPROVAL_REQUEST.json` 及先前仅供起草的方案中发生冲突的**设计口径**具有后续优先效力；不修改原审批记录。**选择技术方案不等于生产代码已实施、构建/CTest/MAT 写入已获执行权限或 AC 已通过。** 球谐正式实现须等待用户上传指定论文后才能开展。原 `origin/**` 只读，不运行 MATLAB/Octave、不要求 L1。
+> **效力**：本文件登记项目所有者在当前对话中作出的**明确技术方向决定**，对历史 `HUMAN_APPROVAL_REQUEST.json` 及先前仅供起草的方案中发生冲突的**设计口径**具有后续优先效力；不修改原审批记录。**选择技术方案不等于生产代码已实施、构建/CTest/MAT 写入已获执行权限或 AC 已通过。** **历史前置条件（截至2026-11-07）**：球谐正式实现原要求先取得指定论文；该条件于后续轮次已满足，见下方状态附记，不可继续把它当作当前缺论文阻塞。原 `origin/**` 只读，不运行 MATLAB/Octave、不要求 L1。
+
+## 后续状态附记（2026-11-12；不追溯改变2026-11-07的批准内容）
+
+- **论文材料**：Ivanic–Ruedenberg 1996、1998勘误、Choi等1999与2015 Adaptive MFA 已供项目审阅，相关页图/原文事实及低阶九基三路线的Wolfram精确结果在[专项报告](../reviews/LOW_ORDER_SH_THREE_ROUTE_VERIFICATION_2026-11-09.md)登记；`TODO.md` 中 PAPER-SH 标为 EvidenceAccepted。不得在当前PLAN/SRS/LLD继续要求人类重复上传1996/1998论文。
+- **局部可复核实现**：受限的`egomotion::harmonics::low_order` Eigen叶子已经提交，用户在固定提交`5e5221988cf093dbfddb88f2f65f06632460f3a1`提供了Ubuntu GCC16.2 Release、3/3 CTest通过的专项证据，分工见[Harmonics LLD](../design/harmonics.md)及[PROGRESS E-DOC-062](../PROGRESS.md)。这不是代理本次运行、也不是全项目通过。
+- **未解除的边界**：完整公开的`RealSphericalHarmonics/HarmonicFitter/HarmonicRotator`、统一Result/ABI、业务Runner/Session集成、DEC-005/006/008、真实其他模块CTest及正式规范签署仍在审查。**后续的局部授权与实际状态以日期和范围为准**，不能因本历史决策中“先上传后实施”已满足就推定整个工程实施或运行已获许可。
 
 ## 已确认：无需继续逐项请求选择的工程方案
 
@@ -9,7 +15,7 @@
 | 决策 | 当前工程方案 |
 |---|---|
 | 项目许可证 | 本仓库**自行编写的项目代码与文档采用 MIT License**，仓库根 [LICENSE](../../LICENSE) 已建立。MIT 不把第三方独立作品、原作者归档 MAT/.m 或论文自动重新许可；在实际引入第三方文件时保留其现有来源/许可告知即可，**不再因一般版权审查待办阻塞开发任务或反复要求所有者作版权选择**。 |
-| 球谐公式与代码 | 保留 H-14 选择的 Ivanic–Ruedenberg 路线，以 **Ivanic & Ruedenberg (1996) 原文 + (1998) 勘误**为必须阅读的数学依据；Don Williamson `IvanicSHRotate.cpp/.h` 仅作为已选代码参考。**必须以 Eigen 重写，实现中完全禁止 `sdla` include、link、vendoring 和作为间接运行依赖**。只实现 l=0/1/2，核 m 顺序、相位、R3(9)/R5(25)、系数前后。论文尚待用户下载/上传，**在此之前不编写球谐递推生产实现**。详见 [球谐文献与 Eigen 实现设计](../design/SH_ROTATION_IVANIC_RUEDENBERG.md)。 |
+| 球谐公式与代码 | 保留 H-14 选择的 Ivanic–Ruedenberg 路线，以 **Ivanic & Ruedenberg (1996) 原文 + (1998) 勘误**为必须阅读的数学依据；Don Williamson `IvanicSHRotate.cpp/.h` 仅作为已选代码参考。**必须以 Eigen 重写，实现中完全禁止 `sdla` include、link、vendoring 和作为间接运行依赖**。只实现 l=0/1/2，核 m 顺序、相位、R3(9)/R5(25)、系数前后。**2026-11-07 当时**论文尚待用户下载/上传，故当时不编写递推生产实现；**此材料前置条件后来已满足，局部叶子有实际提交与固定源码的用户原生CTest证据，绝不等于公共ABI/其他模块实现已获准**。详见 [球谐文献与 Eigen 实现设计](../design/SH_ROTATION_IVANIC_RUEDENBERG.md)。 |
 | 错误返回 | `Result<T,E>`、`Status<E>` 采用**轻量封装类**，内部 C++17 `std::variant`；唯一 `Failure<E>` 含 `ErrorDetail`；`ErrorStage` 用稳定 `enum class`；`message` 为自由文本；**JSONL 为统一结构化诊断格式**，实现时要正确转义、处理非有限值与 UTF-8，不引入无必要的大型 JSON 依赖。 |
 | 实验配置 | 每个 Runner 使用各自**独立的配置类型**；CLI 可以仅在统一分发层使用 `std::variant`，不得改变五入口原始默认值/顺序。 |
 | 运行与失败 | 每次 RunContext **独占** RNG、RunId、计数和 Manifest，Writer 以接口注入；独立样本失败可记录后继续，**依赖状态的 Adaptive 单步失败不得提交无效主系数**，不能恢复时停止当前连续序列；8 次聚合少一次就标为 `Incomplete`，**不改成 7 次平均、不伪装为原八次输出**；保存完整日志与可追溯部分产物，但不得覆盖/自动清理已有文件。Manifest 至少区分 `Complete`、`Incomplete`、`Failed` 并标明实际有效分母。 |
@@ -24,7 +30,7 @@
 1. Joseph Ivanic, Klaus Ruedenberg. **Rotation Matrices for Real Spherical Harmonics. Direct Determination by Recursion**. *The Journal of Physical Chemistry*, **100**(15), 6342–6347 (1996). DOI: [10.1021/jp953350u](https://doi.org/10.1021/jp953350u). [ACS PDF 入口](https://pubs.acs.org/doi/pdf/10.1021/jp953350u)（ACS 当前标为付费访问；可能需要机构权限）。
 2. 同作者。**Rotation Matrices for Real Spherical Harmonics. Direct Determination by Recursion** (Addition/Correction). *The Journal of Physical Chemistry A*, **102**(45), 9099–9100 (1998). DOI: [10.1021/jp9833350](https://doi.org/10.1021/jp9833350). [ACS PDF 入口](https://pubs.acs.org/doi/pdf/10.1021/jp9833350)（ACS 网页标为 Free to Read；工具直接取 PDF 可能返回 403）。
 
-**1998 年勘误为必读且优先于 1996 原文中的错误公式**：作者说明原文的 eqs. 6.7、7.9b、7.9c 中有负号应为正号，eq. 7.9a 的某下标从 1 更正为 -1，并更新了表 1/2。实现时不得仅依据未更正的 1996 打印版或单一第三方 C++ 译本确定符号。论文上传前此处只做来源记录和接口/测试规划，不臆造完整递推公式。
+**1998 年勘误为必读且优先于 1996 原文中的错误公式**：作者说明原文的 eqs. 6.7、7.9b、7.9c 中有负号应为正号，eq. 7.9a 的某下标从 1 更正为 -1，并更新了表 1/2。实现时不得仅依据未更正的 1996 打印版或单一第三方 C++ 译本确定符号。**历史2026-11-07资料未齐阶段**只做来源记录与接口/测试规划；本句不再代表2026-11-12当前材料状态。后续精确三路线、印刷/相位差异及低阶实现结果以[球谐LLD](../design/harmonics.md)与[专项验证](../reviews/LOW_ORDER_SH_THREE_ROUTE_VERIFICATION_2026-11-09.md)为当前进度证据。
 
 ## 仍需实际证据，不属于再次讨论的技术选择
 
