@@ -1,6 +1,6 @@
 # Adaptive 均值归一、几何条件数与平移归一的分层理论审计
 
-> 数学专题 v0.1，未冻结、非生产实现。关联 AF-044/051/054/055/060；既有 TC-F-ADAPT-001/002/003、TC-DC-ADAPT-001 的数学输入与诊断义务，不新增 TC。以下是**根据原源码开展的本轮推导**，不声称原论文已经给出这些定理，也不授权改写原算法或新增 C++。
+> 数学专题 v0.2，未冻结、非生产实现。关联 AF-044/051/054/055/060；既有 TC-F-ADAPT-001/002/003、TC-DC-ADAPT-001 的数学输入与诊断义务，不新增 TC。以下是**根据原源码开展的本轮推导**，不声称原论文已经给出这些定理，也不授权改写原算法或新增 C++。
 >
 > 原始依据：只读 `origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/oneit_adaptiv_matched_filter.m`，Git blob `48e51bcd52fb8f27cf35b3fce38b28507af36e55`。旧源球谐相位沿用 [adaptive_mfa.md](adaptive_mfa.md) 与 [harmonics.md](harmonics.md)。实际验证脚本为 [verify_zero_mean_conditioning_families.wl](../../verification/adaptive/verify_zero_mean_conditioning_families.wl)，完整实际结果为 [zero_mean_conditioning_evidence.v1.json](../../verification/adaptive/zero_mean_conditioning_evidence.v1.json)。Wolfram 精确等式及70位数 SVD 合计25/25检查通过，**不是 C++/CTest 或 MATLAB 运行**。
 
@@ -122,6 +122,19 @@ M=\begin{bmatrix}
 
 这里 \(0<a<b\) 时有一个或多个负 raw near，属于**有符号/非正深度的数学输入**，不得把这条发散结论直接外推为所有物点正深度的场景。此区间 \(\chi=3a/(2a+b)\) 可明确辨别均值抵消；其值不是额外批准门槛。
 
+### 3.1 一般矩阵不是对称阵：LDLT 不具有无条件求解资格（2026-11-11）
+
+原源码的两块对角矩阵 \(M_1,M_4\) 本身对称，两个非对角块则为 \(M_2=[-\langle d\rangle]_\times\)、\(M_3=[\langle\mu d\rangle]_\times\)。使用叉积矩阵恒等式 \([v]_\times^T=-[v]_\times\)，严格得到
+
+\[
+M=M^T\quad\Longleftrightarrow\quad M_3=M_2^T
+\quad\Longleftrightarrow\quad\langle\mu d\rangle=\langle d\rangle
+\quad\Longleftrightarrow\quad\boxed{\langle(\mu-1)d\rangle=0}.
+\]
+
+由 \(s=\langle r\rangle>0\) 归一只可保证 \(\langle\mu\rangle=1\)，**不能推出** \(\langle(\mu-1)d\rangle=0\)；因此“均值=1/正近度”并不保证 M 对称。本文§4的全常数 \(\mu=1\) 四向量样例满足该额外条件，属于特例，不能把其中的对称性推广到任意场。
+
+完整的正近度反例见[Adaptive LLD §2.2.1](adaptive_mfa.md)：六条 \(\pm e_x,\pm e_y,\pm e_z\)，raw near \(r(d)=1+x/2\)，得到 \(s=1\)、\(M_2=0\)、\(M_3=[e_x]_\times/6\ne0\)，但 \(\det M=64/729\) 且原线性解有定义。通用 C++ 求解器须支持**一般非对称**线性系统，不能将自伴矩阵的 LDLT 作为默认替换，也不能简单对 M 对称化。若要将某个子集单独使用 LDLT，至少先证明这一附加块条件并审查分解性质/条件数/失败语义；不由此认定现有 Adaptive 公共接口或 CTest 已实现。
 ## 4. 真正正深度的视场退化：s=1也不能保护M
 
 取四个方向，\(0<h\le1/2\)，设 \(q=2h/(1+h^2)\)、\(c=(1-h^2)/(1+h^2)\)：
