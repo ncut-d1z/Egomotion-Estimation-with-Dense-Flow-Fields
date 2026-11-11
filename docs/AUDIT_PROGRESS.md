@@ -1,6 +1,6 @@
 # 全工程文档规范审计进度与整改台账（AUDIT_PROGRESS）
 
-> **状态：审计进度 v0.6，第五批实改Adaptive数学、Result接口生存期、MAT Writer安全发布、分析分段和测试计划；继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
+> **状态：审计进度 v0.7，第六批实改轨迹旋转向量尺度退化、Bias合成流均值/near返回合同、KvD迭代提交次序，并同步Runner与测试计划；继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
 
 ## 1. 口径、状态和可复核方式
 
@@ -21,17 +21,17 @@
 | DOC-005 | `design/contracts.md` | 草案级部分符合 | Result/ABI/ODR/异常线程/自包含 | 正在审计 | contracts v0.6：旧右值T&&引发的临时宿主悬垂风险改为按值移动；补valueless风险与TC；真实ABI/ODR仍待，提交95cdc62/a5f8d1b |
 | DOC-006 | `design/cli.md` | 草案级部分符合 | CLI负例、RunId、JSONL、DEC-008 | 正在审计 | cli v0.6未冻结；固定输出根/失败码候选已识别，负例和DEC需证据 |
 | DOC-007 | `design/mat_io.md` | 草案级部分符合 | Reader/Writer、TOCTOU、写回读、L2 | 正在审计 | mat_io v0.11：实际更正发布前回读/原子非覆盖/发布后复核、变量名安全及Writer与RunContext权责；TOCTOU/业务Reader/Writer待测，提交ccc89cc/94b6f31 |
-| DOC-008 | `design/sampling_noise.md` | 草案级部分符合 | 生产几何/RNG负例/CTest | 未审计 | — |
-| DOC-009 | `design/trajectory.md` | 草案级部分符合 | Sophus真实依赖及几何L3 | 未审计 | — |
-| DOC-010 | `design/kvd.md` | 草案级部分符合 | 36轮数学非真实CTest/200轮 | 未审计 | — |
+| DOC-008 | `design/sampling_noise.md` | 草案级部分符合 | 生产几何/RNG负例/CTest | 正在审计 | sampling_noise v0.10：原fixed_*、nonpropfehler、erzeugeflussausnear、getvektor已逐源核对；修复durchlaenge/near_last合同并增抵消反例，提交09ae652；原三类面表与生产RNG/CTest尚待深审 |
+| DOC-009 | `design/trajectory.md` | 草案级部分符合 | Sophus真实依赖及几何L3 | 已完成限定审计 | trajectory v0.5：原6份MATLAB轨迹/旋转/近度来源逐函数对照；纠正绝对叉积1e-11导致同夹角尺度断层，提交befced3/458b544；仅限源码合同审计，Sophus/几何L3/CTest未验收 |
+| DOC-010 | `design/kvd.md` | 草案级部分符合 | 36轮数学非真实CTest/200轮 | 正在审计 | kvd v0.9：原Franz、Original、Modified三函数与LLD伪代码对照，修正符号翻转旧t及重复归一歧义，提交d7e4378；完整逐轮一般/200轮、代码测试尚待审 |
 | DOC-011 | `design/harmonics.md` | 草案级部分符合 | 低阶叶子有实测，公共ABI未冻结 | 正在审计 | harmonics v0.15；固定SH 3/3与公共ABI未建分层核对，逐式LLD待核 |
 | DOC-012 | `design/adaptive_mfa.md` | 草案级部分符合 | Session原子提交、病态输入和真实软件 | 正在审计 | adaptive v0.6：澄清负均值时near_raw/abs(s)等价、near_after_sign/abs(s)不等价及零分支；需完整L3和Session实测，提交159ef22 |
-| DOC-013 | `design/experiments.md` | 草案级部分符合 | Runner/Writer/Manifest/Ctest | 正在审计 | 已读取Runner v0.5入口/Manifest/失败合同，待逐入口细核 |
+| DOC-013 | `design/experiments.md` | 草案级部分符合 | Runner/Writer/Manifest/Ctest | 正在审计 | experiments v0.6：核Bias源码两个fixed_*的near_last标量、合成流平均模长不能用分量模长相加；同步Runner合同提交1d89bf3；完整五入口仍审查中 |
 | DOC-014 | `design/analysis_plotting.md` | 草案级部分符合 | 分析L2/L3曲线、CTest/绘图隔离 | 正在审计 | analysis v0.11：对原MATLAB双if与固定四段逐行核对；明确阈值相等、穿越不足/额外、短段；静态夹具控制流模拟一致，尚无L2/L3/CTest，提交5b52808 |
 | DOC-015 | `design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 专题草案级部分符合 | 旧版本CMake描述与最新低阶叶子验收区分 | 已完成限定审计 | 对照旧1/1说明与用户固定5e522198 3/3；仅低阶叶子，公共ABI仍未实现；提交4a62a9d |
 | DOC-016 | `design/SH_DISCRETE_REFIT_CONSISTENCY.md` | 理论专题合格，非LLD | 不能替代模块LLD/测试/批准 | 正在审计 | 已核专题定位与35项数学辅助检查，待独立逐式复算 |
 | DOC-017 | `design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md` | 理论专题合格，非LLD | 不能替代Adaptive真实接口/实现 | 正在审计 | 已核专题定位与25项Wolfram辅助检查，待独立逐式复算 |
-| DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 已完成限定审计 | TEST_PLAN §2.10～2.12.1及§2.9：补负均值、四段静态预期、Result生命周期、Writer发布前后故障；同时修正平移平滑“前三列”笔误；无新TC/PASS，提交2c37ad6/f801669 |
+| DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 已完成限定审计 | TEST_PLAN持续实改：本轮新增TR-C05尺度阈值、均值抵消/near_last、KvD翻号旧t/只归一一次的固定源码回归资格，提交604c62e/af2b1ef；TC仍未执行 |
 | DOC-019 | `PLAN.md` | WBS草案符合 | 98P、M0–M5、真实工期/性能 | 已完成限定审计 | PLAN v0.8：98个唯一P/WBS静态确认，SH-only实测与整工程M0–M5未验收分开 |
 | DOC-020 | `PROGRESS.md` | 符合证据登记 | 固定SHA与历史执行/新状态分离 | 已完成限定审计 | 本轮已核历史E-DOC/SH真实证据与旧97AF；正文修订b69e17c |
 | DOC-021 | `AUDIT.md` | 原专项→本轮综合审计 | 已在初始提交转换为全工程文档规范 | 已完成限定审计 | 新全工程文档审计规则、36对象、用户评价基线已提交1081f0f；原SH范围保留固定历史 |
@@ -51,7 +51,7 @@
 | DOC-035 | `golden/SH_PAPER_VERIFICATION_CASES.md` | 验证候选符合 | SH-P候选未执行，区别原生已测案例 | 已完成限定审计 | 核对SH-P候选未批准未执行与SH真实叶子测试区分 |
 | DOC-036 | `golden/analytic_golden_candidates.v1.json` | JSON状态正确，非Markdown | DRAFT_UNAPPROVED_UNEXECUTED不是Golden批准 | 已完成限定审计 | 核对JSON头部DRAFT状态、AN-G01～12候选ID；未重算数值 |
 
-**历史初始与当前口径**：第0阶段原36份均尚未审计、6个初始DAR均未整改；第1阶段是6份已完成限定审计、14份正在、16份未审及8项DAR中的3项已整改。**第2/3阶段历史状态为36份中15份已完成限定审计、11份正在审计、10份未审；9个DAR中4已整改、5未整改。第四阶段按下方真实审计复核为24份完成限定、9份正在、3份未审；10个DAR中5已整改、5未整改。** 限定审计仅核对该行明确说明的定位/证据/追踪范围，不等于每个AC、API、算法、签署与软件测试完成。
+**历史初始与当前口径**：第0阶段原36份均尚未审计、6个初始DAR均未整改；第1阶段是6份已完成限定审计、14份正在、16份未审及8项DAR中的3项已整改。**第2/3阶段历史状态为36份中15份已完成限定审计、11份正在审计、10份未审；9个DAR中4已整改、5未整改。第四阶段按下方真实审计复核为24份完成限定、9份正在、3份未审；10个DAR中5已整改、5未整改。第六阶段完成限定25份、正在11份、未审0份；14个DAR中9项文档整改完成、5项综合外部/软件条件未完成。** 限定审计仅核对该行明确说明的定位/证据/追踪范围，不等于每个AC、API、算法、签署与软件测试完成。
 
 ## 3. 整改目标（六项用户输入基线及新增独立事实冲突）
 
@@ -70,6 +70,10 @@
 | DAR-010 | approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md；PROGRESS.md | 历史HAR将MATLAB原生Golden采集写成现行必要条件，E-DOC-069又被旧首页称为当期“本轮”，与L1永久不必需及新审计口径矛盾 | 在原文纠正现行L2/L3/L4验收来源并明确历史批次；保留原始审批事实、固定提交和阻塞范围 | 纯文档 | 已整改 |
 
 | DAR-011 | design/adaptive_mfa.md；design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md；TEST_PLAN.md | Adaptive LLD 将s<0时的原始分子/翻号后分子都简称near，笼统声称“与先取绝对值归一化不等价”，与数学专题的严格式near_raw/abs(s)相冲突 | 统一near_raw、near_after_sign、s及near_normalized，在s≠0域写出逐式精确等价与不等价对象，用固定负值手算回归并映射原TC；不更改原MATLAB和已选失败状态 | 纯文档数学冲突 | 已整改 |
+
+| DAR-012 | design/trajectory.md；TEST_PLAN.md | 原 `drehvektor_aus_zwei_vektoren.m` 对**未归一化**叉积范数施以绝对阈值1e−11；旧LLD仅把近零叉积与共线/反向联系，遗漏同夹角不同向量长度可能产生巨大旋转输出断层 | 与原只读源码blob `e41084d65cfc8605a8d377203e933a834c3098b3` 对照，明确阈值量纲、近垂直小长度反例、源保真/安全策略边界、固定TC输入；保留浮点恰等阈值限定，不更改算法源码 | 纯文档数学/源合同 | 已整改 |
+| DAR-013 | design/sampling_noise.md；design/experiments.md；TEST_PLAN.md | 原两个fixed_*返回的`near`仅末次标量，但候选内部结果为全近度向量；原`durchlaenge=mean(norm(p_trans+p_rot))`易与两个平均模长之和混淆，导致错误噪声尺度与返回字段 | 对照原fixed_*与`nonpropfehler.m`，在候选结果中明确`near_last`和合成总平均模长；补单方向平移/旋转完全抵消反例及固定uniform返回值；调整Runner与TC责任，不增加原MAT字段 | 纯文档数学/返回合同 | 已整改 |
+| DAR-014 | design/kvd.md；TEST_PLAN.md | 原KvD LLD伪代码使用未定义时点的`t_old`且`translation_rule`归一语义不清，随后再次`normalize(t_next)`，可能违背原MATLAB“符号翻转后旧t更新旋转、只归一化一次”的执行次序 | 对照原`norm_koenderink_iteration.m`与`mue_norm_koenderink_iteration.m`，分离`t_for_rotation/raw_t_next/t_next`，限制只归一一次、旋转使用翻号后旧t，补原TC的逐轮跟踪断言 | 纯文档伪代码/次序 | 已整改 |
 
 ## 4. 已实施审计、具体整改和验证日志
 
@@ -130,7 +134,26 @@
 
 **七项起止口径（本阶段）**：整改目标总数10→11（+1，只有独立数学冲突新立目标）；已整改5→6（+1），未整改5→5（0）。审计文件总数36→36、已审计24→24、正在审计9→9、未审3→3（均0）：**这不是没干活，而是5份技术正文已真实整改，但限制性审阅/软件证据并未达到扩大“已审计”范围或关闭五项综合DAR的条件**。所有新增/旧TC的执行状态仍为未运行；没有虚造软件通过/批准证据。
 
+### 第6阶段：逐源整改三类数学/算法/返回合同（2026-11-11）
+
+**本轮起始HEAD** `79be039f6ab832691245eb7f5bec9f95d14b8ba3`。先读取本分支既有AUDIT/AUDIT_PROGRESS及其36份、11目标口径，再实际读取原轨迹/旋转/近度六份`.m`、采样/加噪五份`.m`、两套Bias入口、Franz+Original+Modified KvD三份源文件；不凭旧审计计数直接关单。所有源文件只读。
+
+| 编号/实质缺口 | 实际改动、固定证据与提交 | 不能据此认定的结果 |
+|---|---|---|
+| **DAR-012（文档数学错误已修正）** | [trajectory v0.5](design/trajectory.md)：原`drehvektor_aus_zwei_vektoren.m` 的 `normfaktor3=||v1×v2||` 是**带尺度的原始叉积**，不是方向角阈值；在`v1=e_x,v2=5e−12e_y`与`v2=2e−11e_y`时夹角都90°，源结果分别为`(π/2)·5e−12e_z`和`(π/2)e_z`。已补TR-C05/源保真与安全模式区别及浮点恰等限制；提交 [befced3](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/befced3045a5f230f5e1fadd8b83c72c859f59f1)、[458b544](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/458b5443abeac1a6a5cd84429c8e9ac4264905cc) | 不是实际Sophus C++/轨迹测试通过；未批准自动“纠正”源算法 |
+| **DAR-013（返回与噪声数学义务已修正）** | [sampling_noise v0.10](design/sampling_noise.md)：原fixed_* 的`near`覆盖式只留下**最后一次标量**，候选`nearness`为新内部N维诊断，增加`near_last`；原`durchlaenge`取合成流的平均模长，不得用两个分量平均模长之和。对于`d=e_z,mu=1,t=e_x,omega=−e_y`两分量相消，源总模长为0而分量模长和为2；非零噪声比例下仍调用3个normal。另以缺损level0的6个固定uniform`[0,0,0,0,0,1/2]`确认标量末值1（这是注入边界值，**不代表观察到MATLAB随机流输出0**）。改动同步 [experiments v0.6](design/experiments.md) 与 [TEST_PLAN](TEST_PLAN.md)；提交 [09ae652](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/09ae65235918cacaebae96c59b5052991c95680d)、[1d89bf3](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/1d89bf3a3bad106aee3672b8d0c56cc8a87dc7b5) | 这是源数学/候选ABI及测试计划修订，非真实随机样本/生产数值、MAT生成/CTest |
+| **DAR-014（KvD伪代码顺序已修正）** | [kvd v0.9](design/kvd.md) 的步骤改为负near符号翻转后缓存`t_for_rotation`，算`raw_t_next`，**仅一次**归一化成`t_next`，旋转用**旧的翻号后t**再提交新t，终局近度不重算。与两份原KvD源的`transneu=...; transneu=transneu/norm; rot=...trans...; trans=transneu`次序一致；提交 [d7e4378](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/d7e43789cc752f03028e9bef1f26df9c0145231e) | 不声称已测试200轮、一般数值、生产C++/CTest |
+| **关联TEST_PLAN实际修订** | 固定角度/长度边界、`near_last`/总流模长、KvD旧t与只归一一次的复核输入，全部映射现有TC而不增66TC；提交 [604c62e](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/604c62e32a0457d3f745ae5ea79e9e05945864a7)、[af2b1ef](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/af2b1ef11837dafdf93eee5ae89353ec30a8897c) | 没有创建新正式TC/运行代码、没有签DEC-005/008 |
+
+**限定独立算术复查**：使用纯JavaScript按原算式重算3个几何/噪声条件，得两个同90°转动输出模长约`7.853981633974482e-12`和`1.5707963267948963`；流的总模长0、分量模长和2；六次uniform夹具对应近度`[2.5,2.5,2.5,2.5,2.5,1]`，所有静态断言通过。**该JavaScript核算不是MATLAB、Wolfram证书、生产C++或CTest**。本次未修改原`origin/**`、MAT、CMake/CTest/build.sh，不运行MATLAB/Octave，不进行正式批准。
+
+**审计范围统计变动**：DOC-008采样、DOC-010 KvD由“未审计”进入“正在审计”，因完整面表/全部迭代及真实证据尚需进一步核对；DOC-009轨迹按源级公式、职责与明确留存缺口完成**限定审计**，不是正式软件通过。DOC-013实验、DOC-018测试已有整改证据更新，其审计状态按原规则保持。原历史SH 6/6独立结案及全工程旧97 AF不重新计入本台账。
+
+**本阶段起止统计**：目标总数11→14（+3个独立且已有实际正文更正的真实缺口），已整改6→9（+3），未整改5→5（0）；审计文件总数36→36（0）、已审计24→25（+1）、正在9→11（+2）、未审3→0（−3）。综合DAR-001～005的真实软件/批准条件仍全部开放，不把这3个文档级闭环冒充软件级闭环。
+
 ## 5. 各轮计数与变化
+
+**第6阶段相对上一轮**：文件36→36（0）、已审计24→25（+1）、正在9→11（+2）、未审3→0（−3）；整改目标11→14（+3）、已整改6→9（+3）、未整改5→5（0）。以上变化有原始MATLAB对照与五份非台账技术文档实改，而不是通过文件计数代替整改。
 
 **第5阶段相对上一轮**：文档36→36、已审计24→24、正在审计9→9、未审3→3，全部0；整改目标10→11（+1），已整改5→6（+1），未整改5→5（0）。本阶段真实改5份技术正文，并非审计进度统计操作。
 
@@ -151,6 +174,7 @@
 | 第3阶段：66项责任链与实际正文修复 | 36 | 15 | 11 | 10 | 9 | 4 | 5 |
 | 第4阶段：现行政策纠偏与限定审计 | 36 | 24 | 9 | 3 | 10 | 5 | 5 |
 | 第5阶段：数学/接口/分析/MAT安全正文整改 | 36 | 24 | 9 | 3 | 11 | 6 | 5 |
+| 第6阶段：轨迹/采样/Bias/KvD源码合同整改 | 36 | 25 | 11 | 0 | 14 | 9 | 5 |
 
 ## 6. 36份文件的同一基准提交身份（DAR-005：只读静态快照）
 
