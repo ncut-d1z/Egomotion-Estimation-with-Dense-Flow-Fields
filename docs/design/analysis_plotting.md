@@ -1,6 +1,6 @@
 # MAT 结果分析与可选绘图——详细设计草案
 
-> **LLD v0.10 草案，未冻结、未运行任何可视化程序。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
+> **LLD v0.11 草案，未冻结、未运行任何可视化程序。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
 
 ## 1. 只读分析合同
 
@@ -96,6 +96,19 @@ public:
 - **等于阈值不会触发任一分支**，不能自行改成 ≤/≥。
 
 该脚本假设预期的阈值穿越次数和有效段数；当历史数据不满足条件时，部分 begin/end 可能为零，导致 MATLAB 索引无效。忠实模式需首先记录真实分段和失败行为，不能悄悄使用“自动发现所有片段”的新算法替代作者的四区域逻辑；改进策略属于单独需求。
+
+#### 5.1.1 四段固定数组的精确分支与反例输入（2026-11-11 文档整改；非已执行L3）
+
+对原只读 `graph_agent_in_sphere_adaptive_matched_filter_test.m:17–36` 和 `graph_agent_in_sphere_adaptive_matched_filter_many_parameter.m:15–34` 逐句核对：`anzahlzonen=3`，因此 MATLAB **先**创建长度4的 `begin/ende`，扫描区间严格为 `i=50:550`（**501个下标**），`j=1`、`zone=0`、`begin(1)=50`。`r_i<threshold && zone==0` 时写 `ende(j)=i`，`j=j+1`、`zone=1`；`r_i>threshold && zone==1` 时写 `begin(j)=i`、`zone=0`。两个条件为**两个独立的 if**，而不是一个可擅改阈值关系的统一分段器。扫描结束后**无条件**覆盖 `ende(4)=550`，绘图只枚举 `z=1:4`；多出的穿越不会让绘图自动扩展为第五段。MATLAB 数组在超出预分配长度后可能动态增长，所以“第五次穿越就必然发生数组越界异常”也**不是**源码能够支持的结论。
+
+| 固定手工输入（均定义在600×1的 `rottransratio` 上） | 精确静态推导 | C++候选校验义务 |
+|---|---|---|
+| `r_i=t+δ`，仅 `120..179`、`260..319`、`400..459` 为 `t-δ`，其中 `t=0.01` 或 `0.02`、`δ>0` 且 `δ<t` | `begin=[50,180,320,460]`、`ende=[120,260,400,550]`；四段长度71/81/81/91，旋转 f=2/5/10 的窗口都有内部点；平移仍绘制完整501点 | 逐节点检查 `j/zone/begin/ende`、四段/三个窗口及右轴值 |
+| 在上一组的 `i=121` 令 `r_i=t`，其他不变 | `i=121` 两个原 `if` 均不触发，`zone` 沿用1；四段边界**不变** | 不得改成 `<=`、`>=` 或四舍五入决定分支 |
+| 对所有 `50..550` 均设 `r_i=t+δ` | `begin(1)=50`，`begin(2..4)=0`、`ende(1..3)=0`、`ende(4)=550`；原绘图最终将遇到含0索引的路径，不能将其描述成有效四段 | 在引用 `begin/ende` 对源数组取段**之前**明确失败 `AnalysisErrorCode::InvalidSegment`（候选安全行为，不是已测MATLAB错误码） |
+| 增加第四个由 `t-δ` 构成的独立低值区间，随后再次高于阈值 | 源 `j` 可能超过4，MATLAB数组可扩展，但 `ende(4)` 仍被覆写为550且绘图仅选前四段；不能声称会自动绘制第五段或必然数组异常 | 记录源计算出的额外穿越；安全拒绝或保留原前四段须在P0.8审核时明确选择，不能默默发明自适应区域数 |
+
+**范围/错误边界**：`rottransratio` 必须首先具有覆盖 550 的正确shape与**有限值**；数据形状错误归 `ShapeMismatch → decode(4)`，非有限归 `NonFiniteInput → analyze(5)`，结构不合法的段界（零下标、反序、超出数据长度）归 `InvalidSegment → analyze(5)`（候选单一映射见[contracts §3.1](contracts.md)）。短段的平滑 `f\ge L/2` 在 `kurveglaetten.m` 中没有可更新的内部值，原 `zeros` 边缘与随后可能为空的 `plot` 区间应作为**空曲线/候选失败策略**分别记录，不能写成“MATLAB必然抛异常”。这些输入是已按原源**静态推导的测试夹具**，不是已运行的 MATLAB、Analyzer、独立L3文件或CTest。沿用 `APL-G03/04/05` 和已有 `TC-F-AN-001/TC-I-ANALYSIS-001`；不新增TC或擅改DEC-008。
 
 **AF-089 来源边界（分析模块只消费存档变量）**：`rottransratio` 原由 Comparison Runner 使用**注入噪声前**的理想平移/旋转分量平均模长求比（虽然源码在 `nonpropfehler` 之后赋值），保留该轮缓冲，**不是从含噪光流重新计算得到的比值**，参见 [实验 LLD §5.1](experiments.md)。本 Analyzer 对历史已有的 `rottransratio` 按 MAT 变量原值做阈值比较与绘图，不在本模块重新估计、不用含噪流代替、不为新 Update rates 生成缺少的历史专属字段。比值变量含 NaN/Inf 或缺失时遵守现有 `AnalysisErrorCode` / `contracts §3.1` 非成功候选合同；真实 MAT 逐值/独立 L3/CTest 仍为 AF-050/051 的开放项。
 
@@ -208,7 +221,7 @@ PlotExporter 仅消费 AnalysisDataset，输出图形位置必须在独立 RunId
 | APL-G02 | init 的 1..13 与 1..35 原样索引，两个不等长度序列 | TC-F-AN-001 |
 | APL-G03 | comparison x=50..550、阈值 0.01、旋转/平移曲线、右轴 ratio 和各分段 | TC-F-AN-001 |
 | APL-G04 | many_parameter：**旋转**四段各自局部平滑/裁剪＋**平移**完整 600 行全局平滑后绘制 50:550；保留局部临时零边界和连续平移 x | TC-F-AN-001 |
-| APL-G05 | rottransratio 缺失、NaN/Inf、穿越区域不足、**旋转局部段短于窗口**、平移全域窗长不足、MAT 形状错误 | TC-I-ANALYSIS-001、TC-NF-HEADLESS-001 |
+| APL-G05 | rottransratio 缺失、NaN/Inf、阈值恰好相等、四段缺项/多次额外穿越、**旋转局部段短于窗口及可能空绘图区间**、平移全域窗长不足、MAT 形状错误；固定手工输入与预期见§5.1.1 | TC-I-ANALYSIS-001、TC-NF-HEADLESS-001 |
 | APL-G06 | 单位球圆/正弦轨迹、l≤2 实球谐三种插图数据 | TC-F-AN-002 |
 
 所有参考数据须来自原只读 .m 源公式/历史 MAT L2 及独立 L3 曲线实现，带原源码 SHA、输入 MAT SHA、参考生成过程与明确 Golden 版本；**不要求运行原 MATLAB 分析脚本**。图像像素一致性不要求，但**数据值、MATLAB 索引、绘图分段、单位和有效数量必须可审查**。
