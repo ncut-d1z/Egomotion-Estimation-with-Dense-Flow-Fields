@@ -113,7 +113,7 @@ private:
 }
 ~~~
 
-**已修正的候选API生命周期缺陷（2026-11-11，仍待 P0.8 ABI 批准）**：旧版本把 `Result::value() &&` 定义成 `T&&`，调用方若保留返回的引用而销毁临时 `Result`，即出现悬垂引用；对临时成功/失败 `Result` 或 `Status` 取 `error() const &` 亦有同类风险。现统一要求**左值返回有明确宿主生命周期的 const 引用，右值返回自拥有的移动值**（`T value() &&` / `Failure<Code> error() &&`），并禁用从 const 右值借用。此处是**更安全的设计候选修订**，没有创建或编译公共头，不能声称已通过 C++17 重载解析、move-only T、异常安全、ABI 或 ODR 测试。今后写入真实接口时，需使用固定实例检查 `auto value = std::move(result).value()` 与 `auto failure = std::move(result).error()` 的生存期，并禁止 `auto&& dangling = makeResult().value()` 类型的借用模式；移动失败不得被当作成功。调用 `value`/ `error` 仍须先检查状态，非法访问的最终异常/断言合同由 P0.8 确定。
+**已修正的候选API生命周期缺陷（2026-11-11，仍待 P0.8 ABI 批准）**：旧版本把 `Result::value() &&` 定义成 `T&&`，调用方若保留返回的引用而销毁临时 `Result`，即出现悬垂引用；对临时成功/失败 `Result` 或 `Status` 取 `error() const &` 亦有同类风险。现统一要求**左值返回有明确宿主生命周期的 const 引用，右值返回自拥有的移动值**（`T value() &&` / `Failure<Code> error() &&`），并禁用从 const 右值借用。此处是**更安全的设计候选修订**，没有创建或编译公共头，不能声称已通过 C++17 重载解析、move-only T、异常安全、ABI 或 ODR 测试。今后写入真实接口时，需使用固定实例检查 `auto value = std::move(result).value()` 与 `auto failure = std::move(result).error()` 的生存期，并禁止把**左值 `value() const &` 返回的借用引用**保存到宿主 Result 已销毁/移动之后。旧 `T&& value() &&` 下的 `auto&& dangling = makeResult().value()` 是悬垂风险；**新按值 `T value() &&` 会生成独立值对象，直接绑定的局部右值引用可按C++生存期扩展规则安全存活**，不应把这个修正后的场景继续误报为悬垂。跨函数返回引用、引用成员或延迟使用仍须做单独生命周期分析；移动失败不得被当作成功。调用 `value`/ `error` 仍须先检查状态，非法访问的最终异常/断言合同由 P0.8 确定。
 
 - **Mat 错误**与**数值错误**分别归属 IO 与 solver，Runner 可以附带上下文，但不得吞掉原始错误。
 - **源算法与安全行为区别**：只记录原 .m 只读源码能证明的奇异、除零、NaN 分支；原 MATLAB 实际警告、非有限传播并无 L1，**无需运行 MATLAB**。C++ 可以候选地返回明确非成功状态，但“遇错继续/停止/回滚”须按入口专属合同评审，不能误标为已验证的原版运行行为。
