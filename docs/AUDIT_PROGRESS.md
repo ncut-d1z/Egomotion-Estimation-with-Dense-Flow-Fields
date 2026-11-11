@@ -1,6 +1,6 @@
 # 全工程文档规范审计进度与整改台账（AUDIT_PROGRESS）
 
-> **状态：审计进度 v0.8，第七批实改inspect-mat CLI命令分支冲突、Result/Status二进制ABI声明和球外内向正根误接受风险，同步TEST_PLAN并逐份复读；继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
+> **状态：审计进度 v0.9，第八批实际修正Adaptive非对称6×6系统误用LDLT和MAT兼容Reader的双次打开来源竞态，含公式证明、输入反例、测试合同及远端逐次提交；继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
 
 ## 1. 口径、状态和可复核方式
 
@@ -19,19 +19,19 @@
 | DOC-003 | `OBJECT_MODEL.md` | 草案级部分符合 | 候选类/生命周期/签署 | 已完成限定审计 | 对象模型v0.7：所有权、候选公共类与已实现SH叶子区分；正式生命周期/ABI测试未做 |
 | DOC-004 | `design/README.md` | 索引符合，非LLD | 实际Markdown个数与模块覆盖条目 | 已完成限定审计 | 14份真实目录Markdown=1索引+1跨模块LLD+9模块LLD+1专题LLD+2理论，10个覆盖行；提交3614b28 |
 | DOC-005 | `design/contracts.md` | 草案级部分符合 | Result/ABI/ODR/异常线程/自包含 | 正在审计 | contracts v0.7：补正private std::variant的布局/动态库ABI后果（此前v0.6已修右值生存期）；本轮提交a3db9b5，真实头/链接/异常/ABI仍待 |
-| DOC-006 | `design/cli.md` | 草案级部分符合 | CLI负例、RunId、JSONL、DEC-008 | 已完成限定审计 | cli v0.7：已读全部CLI草案及contracts错误映射、mat_io首变量策略；修正strict/compat×变量指定四分支矛盾并关联TC-F-CLI-001，提交4629edf/2291b16；仍无CLI实现或DEC-008批准 |
-| DOC-007 | `design/mat_io.md` | 草案级部分符合 | Reader/Writer、TOCTOU、写回读、L2 | 正在审计 | mat_io v0.11：实际更正发布前回读/原子非覆盖/发布后复核、变量名安全及Writer与RunContext权责；TOCTOU/业务Reader/Writer待测，提交ccc89cc/94b6f31 |
+| DOC-006 | `design/cli.md` | 草案级部分符合 | CLI负例、RunId、JSONL、DEC-008 | 已完成限定审计 | cli v0.8：在已闭环的strict/compat四分支合同上，明确compat单次调用Reader且不能inspect+readNamed二次打开；提交3e9d9aa；真实CLI和DEC-008未批准 |
+| DOC-007 | `design/mat_io.md` | 草案级部分符合 | Reader/Writer、TOCTOU、写回读、L2 | 正在审计 | mat_io v0.12：纠正readFirstCompatible先inspect后另开readNamed可能混淆A/B输入身份；改同一mat_t*的枚举+解码候选并限定原地改写风险；修复§7表对Manifest权责旧句；提交796d1ce，真实TOCTOU/Reader测试未执行 |
 | DOC-008 | `design/sampling_noise.md` | 草案级部分符合 | 生产几何/RNG负例/CTest | 正在审计 | sampling_noise v0.10：原fixed_*、nonpropfehler、erzeugeflussausnear、getvektor已逐源核对；修复durchlaenge/near_last合同并增抵消反例，提交09ae652；原三类面表与生产RNG/CTest尚待深审 |
 | DOC-009 | `design/trajectory.md` | 草案级部分符合 | Sophus真实依赖及几何L3 | 已完成限定审计 | trajectory v0.6：在既有旋转尺度退化审阅外，补球外内向正根4/9、球面内外向及严格球内前置检查；固定分数推导复核，提交6dbecb5；Sophus/C++/L3仍未验收 |
 | DOC-010 | `design/kvd.md` | 草案级部分符合 | 36轮数学非真实CTest/200轮 | 正在审计 | kvd v0.9：原Franz、Original、Modified三函数与LLD伪代码对照，修正符号翻转旧t及重复归一歧义，提交d7e4378；完整逐轮一般/200轮、代码测试尚待审 |
 | DOC-011 | `design/harmonics.md` | 草案级部分符合 | 低阶叶子有实测，公共ABI未冻结 | 正在审计 | harmonics v0.15；固定SH 3/3与公共ABI未建分层核对，逐式LLD待核 |
-| DOC-012 | `design/adaptive_mfa.md` | 草案级部分符合 | Session原子提交、病态输入和真实软件 | 正在审计 | adaptive v0.6：澄清负均值时near_raw/abs(s)等价、near_after_sign/abs(s)不等价及零分支；需完整L3和Session实测，提交159ef22 |
+| DOC-012 | `design/adaptive_mfa.md` | 草案级部分符合 | Session原子提交、病态输入和真实软件 | 正在审计 | adaptive v0.7：删除一般6×6候选LDLT，固定六轴全正近度可逆而非对称M及rhs,z完整有理参考；提交17c2b52/4ea7e57；Session、C++/CTest、DEC-005未验收 |
 | DOC-013 | `design/experiments.md` | 草案级部分符合 | Runner/Writer/Manifest/Ctest | 正在审计 | experiments v0.6：核Bias源码两个fixed_*的near_last标量、合成流平均模长不能用分量模长相加；同步Runner合同提交1d89bf3；完整五入口仍审查中 |
 | DOC-014 | `design/analysis_plotting.md` | 草案级部分符合 | 分析L2/L3曲线、CTest/绘图隔离 | 正在审计 | analysis v0.11：对原MATLAB双if与固定四段逐行核对；明确阈值相等、穿越不足/额外、短段；静态夹具控制流模拟一致，尚无L2/L3/CTest，提交5b52808 |
 | DOC-015 | `design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 专题草案级部分符合 | 旧版本CMake描述与最新低阶叶子验收区分 | 已完成限定审计 | 对照旧1/1说明与用户固定5e522198 3/3；仅低阶叶子，公共ABI仍未实现；提交4a62a9d |
 | DOC-016 | `design/SH_DISCRETE_REFIT_CONSISTENCY.md` | 理论专题合格，非LLD | 不能替代模块LLD/测试/批准 | 正在审计 | 已核专题定位与35项数学辅助检查，待独立逐式复算 |
-| DOC-017 | `design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md` | 理论专题合格，非LLD | 不能替代Adaptive真实接口/实现 | 正在审计 | 已核专题定位与25项Wolfram辅助检查，待独立逐式复算 |
-| DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 已完成限定审计 | TEST_PLAN本轮实际补strict/compat四分支、跨TU与private variant ABI条件、TR-C06球外内向正根；提交2291b16/c97c9ef；全部新TC条件仍未执行 |
+| DOC-017 | `design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md` | 理论专题合格，非LLD | 不能替代Adaptive真实接口/实现 | 正在审计 | 理论专题v0.2：从M2/M3的叉积矩阵推导M对称充要条件mean((mu-1)d)=0，证明均值1不保证对称；提交28c20f6/555eeea，尚未逐式独立重算本专题其它全部25项 |
+| DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 已完成限定审计 | TEST_PLAN新增全正近度非对称M/正确z的完整6×6对照、MAT A/B在枚举解码之间路径替换负例；提交d5d7385/6d0e212；均为计划、未执行 |
 | DOC-019 | `PLAN.md` | WBS草案符合 | 98P、M0–M5、真实工期/性能 | 已完成限定审计 | PLAN v0.8：98个唯一P/WBS静态确认，SH-only实测与整工程M0–M5未验收分开 |
 | DOC-020 | `PROGRESS.md` | 符合证据登记 | 固定SHA与历史执行/新状态分离 | 已完成限定审计 | 本轮已核历史E-DOC/SH真实证据与旧97AF；正文修订b69e17c |
 | DOC-021 | `AUDIT.md` | 原专项→本轮综合审计 | 已在初始提交转换为全工程文档规范 | 已完成限定审计 | 新全工程文档审计规则、36对象、用户评价基线已提交1081f0f；原SH范围保留固定历史 |
@@ -51,7 +51,7 @@
 | DOC-035 | `golden/SH_PAPER_VERIFICATION_CASES.md` | 验证候选符合 | SH-P候选未执行，区别原生已测案例 | 已完成限定审计 | 核对SH-P候选未批准未执行与SH真实叶子测试区分 |
 | DOC-036 | `golden/analytic_golden_candidates.v1.json` | JSON状态正确，非Markdown | DRAFT_UNAPPROVED_UNEXECUTED不是Golden批准 | 已完成限定审计 | 核对JSON头部DRAFT状态、AN-G01～12候选ID；未重算数值 |
 
-**历史初始与当前口径**：第0阶段原36份均尚未审计、6个初始DAR均未整改；第1阶段是6份已完成限定审计、14份正在、16份未审及8项DAR中的3项已整改。**第2/3阶段历史状态为36份中15份已完成限定审计、11份正在审计、10份未审；9个DAR中4已整改、5未整改。第四阶段按下方真实审计复核为24份完成限定、9份正在、3份未审；10个DAR中5已整改、5未整改。第六阶段完成限定25份、正在11份、未审0份；14个DAR中9项文档整改完成、5项综合外部/软件条件未完成。第七阶段完成限定26份、正在10份、未审0份；17个DAR中12项文档问题已整改、5项软件/审批复合目标仍未整改。** 限定审计仅核对该行明确说明的定位/证据/追踪范围，不等于每个AC、API、算法、签署与软件测试完成。
+**历史初始与当前口径**：第0阶段原36份均尚未审计、6个初始DAR均未整改；第1阶段是6份已完成限定审计、14份正在、16份未审及8项DAR中的3项已整改。**第2/3阶段历史状态为36份中15份已完成限定审计、11份正在审计、10份未审；9个DAR中4已整改、5未整改。第四阶段按下方真实审计复核为24份完成限定、9份正在、3份未审；10个DAR中5已整改、5未整改。第六阶段完成限定25份、正在11份、未审0份；14个DAR中9项文档整改完成、5项综合外部/软件条件未完成。第七阶段完成限定26份、正在10份、未审0份；17个DAR中12项文档问题已整改、5项软件/审批复合目标仍未整改。第八阶段仍有26份完成限定/10份正在/0份未审；19个DAR中14项纯文档缺陷已修复、5项综合软件及外部批准条件仍开放。** 限定审计仅核对该行明确说明的定位/证据/追踪范围，不等于每个AC、API、算法、签署与软件测试完成。
 
 ## 3. 整改目标（六项用户输入基线及新增独立事实冲突）
 
@@ -78,6 +78,9 @@
 | DAR-015 | design/cli.md；TEST_PLAN.md；design/mat_io.md | `inspect-mat` 同一命令表同时声称“未指定变量只列元数据”及“compat未指定变量读取首变量”，造成严格/兼容模式调用不确定 | 给出strict/compat×指定/未指定NAME的精确分支矩阵：inspect/readNamed/readFirstCompatible/Parse(2)，多变量无证据时AmbiguousVariable(3)，不把head-only当完整解码；同步现有TC并提交固定SHA | 纯文档CLI行为冲突 | 已整改 |
 | DAR-016 | design/contracts.md；TEST_PLAN.md | `Result/Status` 虽使用private std::variant作为公开类的成员，却被写成“不把内部容器作为对外ABI”；该表述错误忽略完整类型布局、调用约定及动态库边界 | 明确访问器不公开内部操作≠二进制布局不外露；保留项目已选轻量variant方向，列出跨TU、编译器/stdlib/共享库版本与异常/ODR的审核条件；不冒称ABI已稳定 | 纯文档ABI事实错误 | 已整改 |
 | DAR-017 | design/trajectory.md；TEST_PLAN.md；原getnear_in_kugel_Drehung.m | 球内近度LLD只笼统要求正根与球外失败，未明确证明正判别式、正交点距离仍可能在球外内向输入下成立 | 以o=(5/4,0,0)、n=-ex推导Delta=1、rho=9/4、near=4/9，明确严格球内位置必须先独立检查；补球面内外向和球外外向的静态对照、TC范围与源保真区别 | 纯文档几何定义域缺口 | 已整改 |
+
+| DAR-018 | design/adaptive_mfa.md；design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md；TEST_PLAN.md | Adaptive 6×6 M的四块中M2与M3一般不是互为转置，原LLD却把Eigen LDLT无条件与QR/SVD并列为可替代原inverse的通用求解器 | 从原oneit.m构造完整正近度、s=1、detM=64/729而M非对称的六轴有理反例，推导M对称充要条件mean((mu−1)d)=0；删除通用LDLT，要求非对称求解/全M、b、z/残差和既有TC映射；保留原算法和软件待验证 | 纯文档数学与错误求解器前提 | 已整改 |
+| DAR-019 | design/mat_io.md；design/cli.md；TEST_PLAN.md | readFirstCompatible旧§7.1先inspect(path)再调用重新Mat_Open的readNamed(path,name)，同一路径在两次open间可被替换，导致字段选择与值解码混用不同输入文件身份 | 修正为单次有效MatFileHandle枚举/选择/Mat_VarRead/深拷贝，说明仍不能抵御原地并发修改及需真实matio 1.5.26校验；补A/B双文件竞态负例、CLI同一调用约束和Writer单文件Status/RunContext Manifest责任 | 纯文档数据来源一致性/安全合同 | 已整改 |
 
 ## 4. 已实施审计、具体整改和验证日志
 
@@ -169,7 +172,20 @@
 
 **第7阶段七项起止值**：整改目标总数14→17（+3）；已整改9→12（+3）；未整改5→5（0）；审计文件总数36→36（0）；已完成限定审计25→26（+1）；正在审计11→10（−1）；未审计0→0（0）。新增3项均有真正的技术正文更正与固定提交证据；不是调整文件计数代替实改。
 
+### 第8阶段：Adaptive 非对称求解与 MAT Reader 同一来源身份的真实整改（2026-11-11）
+
+**起点**：固定 `d1383997d199e715dbfad6d96c3245c18909cd17`；第7阶段36文件、26已审计/10正在/0未审，17目标、12已整改/5未整改。当前全工程AUDIT规范与历史SH专项不混计。本阶段只修原有技术正文和测试合同，未经新增生产源码、MAT/原MATLAB或真实CTest授权，不扩张到正式基线冻结。
+
+| 具体错误与实改对象 | 原始来源/真正证据 | 已提交与未声称的范围 |
+|---|---|---|
+| **DAR-018：错误的通用LDLT求解器资格** | 只读`oneit_adaptiv_matched_filter.m` blob `48e51bcd52fb8f27cf35b3fce38b28507af36e55`。原四块的`M2=[-mean(d)]×`、`M3=[mean(mu d)]×`，一般不互为转置；完整矩阵对称当且仅当`mean((mu-1)d)=0`。固定六轴`±ex,±ey,±ez`及正近度`(3/2,1/2,1,1,1,1)`可由原CS系数构造，s=1，得到`M1=M4=2/3 I3,M2=0,M3=[ex]×/6`，`det M=64/729`但`M≠M^T`。切向流`p=-mu(I-dd^T)ey`的`rhs=(2/3 ey,1/6 ez)`，精确解`z=(ey,0)`。本轮曾用独立Python/SymPy有理运算实际复核M、rhs、rank、det、z及零残差；此运算未提交为批准Golden、不是Eigen/CTest。 | 实改[Adaptive LLD v0.7](design/adaptive_mfa.md)删除LDLT通用候选并要求一般非对称QR/SVD或等效求解；[理论专题v0.2](design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md)补严格对称判据和特例范围；[TEST_PLAN](TEST_PLAN.md)补已有ADAPT/NUM TC完整6×6验证。提交：[17c2b52](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/17c2b520b213efef13cfbe6e416a82f115bf3c2d)、[28c20f6](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/28c20f6ebe8aa79437b81f604ca40eb126f63ef1)、[d5d7385](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/d5d7385aa5e21a5284065aab487d580f359c9cc9)；保留H-10/DEC-005、生产Adaptive/CTest缺口，DAR-003/004不关。 |
+| **DAR-019：同一MAT路径两次打开的元数据/载荷竞态** | 原`getflowfield.m` blob `fafcfeaa357a55572058fa5c6e92d58f934c65a5`一次load到x后fieldnames/getfield；原LLD的`readFirstCompatible`先`inspect(path)`再公共`readNamed(path,name)`分别Mat_Open，可能A/B身份混用。单个mat_t*也不能保证防止同一inode原地并发写入。 | 实改[MAT LLD v0.12](design/mat_io.md)枚举/解码同一句柄、保留matio 1.5.26实测门槛，修正Writer只返回单文件Status而RunContext持有Manifest的旧表格冲突；[CLI LLD v0.8](design/cli.md)禁止兼容模式二次打开；[TEST_PLAN](TEST_PLAN.md)补A含alpha/B含beta路径置换与同inode修改的隔离负例。提交：[796d1ce](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/796d1ce2266361ec58e1916acd3aac7529e4b4ce)、[6d0e212](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/6d0e212c35ea4ed37fb32a66208d78724574e0ff)、[3e9d9aa](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/3e9d9aae684f639dd460e125caf9960e905156da)；尚无真实Reader/TOCTOU/CTest，DAR-003/004不关。 |
+
+**本阶段进度与分母**：整改总数17→19（+2，均为有具体缺陷及实际源码位置的独立整改）；已整改12→14（+2，**仅文档问题**）；未整改5→5（0，均仍需软件和/或正式人类批准）。36审计文件不增不减；已审计26→26（0），正在10→10（0），未审0→0（0）。本阶段实际修订五份非台账技术文件，无原始MATLAB/MAT/生产C++/CMake/CTest运行或批准。未把文档修订当成正式TC或ABI通过。
+
 ## 5. 各轮计数与变化
+
+**第8阶段相对上一轮**：目标17→19（+2）、已整改12→14（+2）、未整改5→5（0）；文档36→36（0）、已完成限定26→26（0）、正在10→10（0）、未审0→0（0）。实改五份技术正文，并非只修改计数。
 
 **第7阶段相对上一轮**：审计文件36→36（0），已完成限定25→26（+1），正在11→10（−1），未审0→0（0）；目标14→17（+3），已整改9→12（+3），未整改5→5（0）。本阶段实改4份技术文件，未凭历史3/3或文档修订声称真实软件通过。
 
@@ -196,6 +212,7 @@
 | 第5阶段：数学/接口/分析/MAT安全正文整改 | 36 | 24 | 9 | 3 | 11 | 6 | 5 |
 | 第6阶段：轨迹/采样/Bias/KvD源码合同整改 | 36 | 25 | 11 | 0 | 14 | 9 | 5 |
 | 第7阶段：CLI/ABI/球内定义域合同整改 | 36 | 26 | 10 | 0 | 17 | 12 | 5 |
+| 第8阶段：非对称求解器/Reader源身份整改 | 36 | 26 | 10 | 0 | 19 | 14 | 5 |
 
 ## 6. 36份文件的同一基准提交身份（DAR-005：只读静态快照）
 
