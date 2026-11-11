@@ -1,6 +1,6 @@
 # 全工程文档规范审计进度与整改台账（AUDIT_PROGRESS）
 
-> **状态：审计进度 v0.7，第六批实改轨迹旋转向量尺度退化、Bias合成流均值/near返回合同、KvD迭代提交次序，并同步Runner与测试计划；继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
+> **状态：审计进度 v0.8，第七批实改inspect-mat CLI命令分支冲突、Result/Status二进制ABI声明和球外内向正根误接受风险，同步TEST_PLAN并逐份复读；继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
 
 ## 1. 口径、状态和可复核方式
 
@@ -18,11 +18,11 @@
 | DOC-002 | `ARCHITECTURE.md` | 草案级部分符合 | 27拟议DAG与真实构建/ADR | 已完成限定审计 | HLD v0.10：设计图27箭头=25内部+2外部；根CMake仅低阶SH及3CTest，部署/DEC-006仍待 |
 | DOC-003 | `OBJECT_MODEL.md` | 草案级部分符合 | 候选类/生命周期/签署 | 已完成限定审计 | 对象模型v0.7：所有权、候选公共类与已实现SH叶子区分；正式生命周期/ABI测试未做 |
 | DOC-004 | `design/README.md` | 索引符合，非LLD | 实际Markdown个数与模块覆盖条目 | 已完成限定审计 | 14份真实目录Markdown=1索引+1跨模块LLD+9模块LLD+1专题LLD+2理论，10个覆盖行；提交3614b28 |
-| DOC-005 | `design/contracts.md` | 草案级部分符合 | Result/ABI/ODR/异常线程/自包含 | 正在审计 | contracts v0.6：旧右值T&&引发的临时宿主悬垂风险改为按值移动；补valueless风险与TC；真实ABI/ODR仍待，提交95cdc62/a5f8d1b |
-| DOC-006 | `design/cli.md` | 草案级部分符合 | CLI负例、RunId、JSONL、DEC-008 | 正在审计 | cli v0.6未冻结；固定输出根/失败码候选已识别，负例和DEC需证据 |
+| DOC-005 | `design/contracts.md` | 草案级部分符合 | Result/ABI/ODR/异常线程/自包含 | 正在审计 | contracts v0.7：补正private std::variant的布局/动态库ABI后果（此前v0.6已修右值生存期）；本轮提交a3db9b5，真实头/链接/异常/ABI仍待 |
+| DOC-006 | `design/cli.md` | 草案级部分符合 | CLI负例、RunId、JSONL、DEC-008 | 已完成限定审计 | cli v0.7：已读全部CLI草案及contracts错误映射、mat_io首变量策略；修正strict/compat×变量指定四分支矛盾并关联TC-F-CLI-001，提交4629edf/2291b16；仍无CLI实现或DEC-008批准 |
 | DOC-007 | `design/mat_io.md` | 草案级部分符合 | Reader/Writer、TOCTOU、写回读、L2 | 正在审计 | mat_io v0.11：实际更正发布前回读/原子非覆盖/发布后复核、变量名安全及Writer与RunContext权责；TOCTOU/业务Reader/Writer待测，提交ccc89cc/94b6f31 |
 | DOC-008 | `design/sampling_noise.md` | 草案级部分符合 | 生产几何/RNG负例/CTest | 正在审计 | sampling_noise v0.10：原fixed_*、nonpropfehler、erzeugeflussausnear、getvektor已逐源核对；修复durchlaenge/near_last合同并增抵消反例，提交09ae652；原三类面表与生产RNG/CTest尚待深审 |
-| DOC-009 | `design/trajectory.md` | 草案级部分符合 | Sophus真实依赖及几何L3 | 已完成限定审计 | trajectory v0.5：原6份MATLAB轨迹/旋转/近度来源逐函数对照；纠正绝对叉积1e-11导致同夹角尺度断层，提交befced3/458b544；仅限源码合同审计，Sophus/几何L3/CTest未验收 |
+| DOC-009 | `design/trajectory.md` | 草案级部分符合 | Sophus真实依赖及几何L3 | 已完成限定审计 | trajectory v0.6：在既有旋转尺度退化审阅外，补球外内向正根4/9、球面内外向及严格球内前置检查；固定分数推导复核，提交6dbecb5；Sophus/C++/L3仍未验收 |
 | DOC-010 | `design/kvd.md` | 草案级部分符合 | 36轮数学非真实CTest/200轮 | 正在审计 | kvd v0.9：原Franz、Original、Modified三函数与LLD伪代码对照，修正符号翻转旧t及重复归一歧义，提交d7e4378；完整逐轮一般/200轮、代码测试尚待审 |
 | DOC-011 | `design/harmonics.md` | 草案级部分符合 | 低阶叶子有实测，公共ABI未冻结 | 正在审计 | harmonics v0.15；固定SH 3/3与公共ABI未建分层核对，逐式LLD待核 |
 | DOC-012 | `design/adaptive_mfa.md` | 草案级部分符合 | Session原子提交、病态输入和真实软件 | 正在审计 | adaptive v0.6：澄清负均值时near_raw/abs(s)等价、near_after_sign/abs(s)不等价及零分支；需完整L3和Session实测，提交159ef22 |
@@ -31,7 +31,7 @@
 | DOC-015 | `design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 专题草案级部分符合 | 旧版本CMake描述与最新低阶叶子验收区分 | 已完成限定审计 | 对照旧1/1说明与用户固定5e522198 3/3；仅低阶叶子，公共ABI仍未实现；提交4a62a9d |
 | DOC-016 | `design/SH_DISCRETE_REFIT_CONSISTENCY.md` | 理论专题合格，非LLD | 不能替代模块LLD/测试/批准 | 正在审计 | 已核专题定位与35项数学辅助检查，待独立逐式复算 |
 | DOC-017 | `design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md` | 理论专题合格，非LLD | 不能替代Adaptive真实接口/实现 | 正在审计 | 已核专题定位与25项Wolfram辅助检查，待独立逐式复算 |
-| DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 已完成限定审计 | TEST_PLAN持续实改：本轮新增TR-C05尺度阈值、均值抵消/near_last、KvD翻号旧t/只归一一次的固定源码回归资格，提交604c62e/af2b1ef；TC仍未执行 |
+| DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 已完成限定审计 | TEST_PLAN本轮实际补strict/compat四分支、跨TU与private variant ABI条件、TR-C06球外内向正根；提交2291b16/c97c9ef；全部新TC条件仍未执行 |
 | DOC-019 | `PLAN.md` | WBS草案符合 | 98P、M0–M5、真实工期/性能 | 已完成限定审计 | PLAN v0.8：98个唯一P/WBS静态确认，SH-only实测与整工程M0–M5未验收分开 |
 | DOC-020 | `PROGRESS.md` | 符合证据登记 | 固定SHA与历史执行/新状态分离 | 已完成限定审计 | 本轮已核历史E-DOC/SH真实证据与旧97AF；正文修订b69e17c |
 | DOC-021 | `AUDIT.md` | 原专项→本轮综合审计 | 已在初始提交转换为全工程文档规范 | 已完成限定审计 | 新全工程文档审计规则、36对象、用户评价基线已提交1081f0f；原SH范围保留固定历史 |
@@ -51,7 +51,7 @@
 | DOC-035 | `golden/SH_PAPER_VERIFICATION_CASES.md` | 验证候选符合 | SH-P候选未执行，区别原生已测案例 | 已完成限定审计 | 核对SH-P候选未批准未执行与SH真实叶子测试区分 |
 | DOC-036 | `golden/analytic_golden_candidates.v1.json` | JSON状态正确，非Markdown | DRAFT_UNAPPROVED_UNEXECUTED不是Golden批准 | 已完成限定审计 | 核对JSON头部DRAFT状态、AN-G01～12候选ID；未重算数值 |
 
-**历史初始与当前口径**：第0阶段原36份均尚未审计、6个初始DAR均未整改；第1阶段是6份已完成限定审计、14份正在、16份未审及8项DAR中的3项已整改。**第2/3阶段历史状态为36份中15份已完成限定审计、11份正在审计、10份未审；9个DAR中4已整改、5未整改。第四阶段按下方真实审计复核为24份完成限定、9份正在、3份未审；10个DAR中5已整改、5未整改。第六阶段完成限定25份、正在11份、未审0份；14个DAR中9项文档整改完成、5项综合外部/软件条件未完成。** 限定审计仅核对该行明确说明的定位/证据/追踪范围，不等于每个AC、API、算法、签署与软件测试完成。
+**历史初始与当前口径**：第0阶段原36份均尚未审计、6个初始DAR均未整改；第1阶段是6份已完成限定审计、14份正在、16份未审及8项DAR中的3项已整改。**第2/3阶段历史状态为36份中15份已完成限定审计、11份正在审计、10份未审；9个DAR中4已整改、5未整改。第四阶段按下方真实审计复核为24份完成限定、9份正在、3份未审；10个DAR中5已整改、5未整改。第六阶段完成限定25份、正在11份、未审0份；14个DAR中9项文档整改完成、5项综合外部/软件条件未完成。第七阶段完成限定26份、正在10份、未审0份；17个DAR中12项文档问题已整改、5项软件/审批复合目标仍未整改。** 限定审计仅核对该行明确说明的定位/证据/追踪范围，不等于每个AC、API、算法、签署与软件测试完成。
 
 ## 3. 整改目标（六项用户输入基线及新增独立事实冲突）
 
@@ -74,6 +74,10 @@
 | DAR-012 | design/trajectory.md；TEST_PLAN.md | 原 `drehvektor_aus_zwei_vektoren.m` 对**未归一化**叉积范数施以绝对阈值1e−11；旧LLD仅把近零叉积与共线/反向联系，遗漏同夹角不同向量长度可能产生巨大旋转输出断层 | 与原只读源码blob `e41084d65cfc8605a8d377203e933a834c3098b3` 对照，明确阈值量纲、近垂直小长度反例、源保真/安全策略边界、固定TC输入；保留浮点恰等阈值限定，不更改算法源码 | 纯文档数学/源合同 | 已整改 |
 | DAR-013 | design/sampling_noise.md；design/experiments.md；TEST_PLAN.md | 原两个fixed_*返回的`near`仅末次标量，但候选内部结果为全近度向量；原`durchlaenge=mean(norm(p_trans+p_rot))`易与两个平均模长之和混淆，导致错误噪声尺度与返回字段 | 对照原fixed_*与`nonpropfehler.m`，在候选结果中明确`near_last`和合成总平均模长；补单方向平移/旋转完全抵消反例及固定uniform返回值；调整Runner与TC责任，不增加原MAT字段 | 纯文档数学/返回合同 | 已整改 |
 | DAR-014 | design/kvd.md；TEST_PLAN.md | 原KvD LLD伪代码使用未定义时点的`t_old`且`translation_rule`归一语义不清，随后再次`normalize(t_next)`，可能违背原MATLAB“符号翻转后旧t更新旋转、只归一化一次”的执行次序 | 对照原`norm_koenderink_iteration.m`与`mue_norm_koenderink_iteration.m`，分离`t_for_rotation/raw_t_next/t_next`，限制只归一一次、旋转使用翻号后旧t，补原TC的逐轮跟踪断言 | 纯文档伪代码/次序 | 已整改 |
+
+| DAR-015 | design/cli.md；TEST_PLAN.md；design/mat_io.md | `inspect-mat` 同一命令表同时声称“未指定变量只列元数据”及“compat未指定变量读取首变量”，造成严格/兼容模式调用不确定 | 给出strict/compat×指定/未指定NAME的精确分支矩阵：inspect/readNamed/readFirstCompatible/Parse(2)，多变量无证据时AmbiguousVariable(3)，不把head-only当完整解码；同步现有TC并提交固定SHA | 纯文档CLI行为冲突 | 已整改 |
+| DAR-016 | design/contracts.md；TEST_PLAN.md | `Result/Status` 虽使用private std::variant作为公开类的成员，却被写成“不把内部容器作为对外ABI”；该表述错误忽略完整类型布局、调用约定及动态库边界 | 明确访问器不公开内部操作≠二进制布局不外露；保留项目已选轻量variant方向，列出跨TU、编译器/stdlib/共享库版本与异常/ODR的审核条件；不冒称ABI已稳定 | 纯文档ABI事实错误 | 已整改 |
+| DAR-017 | design/trajectory.md；TEST_PLAN.md；原getnear_in_kugel_Drehung.m | 球内近度LLD只笼统要求正根与球外失败，未明确证明正判别式、正交点距离仍可能在球外内向输入下成立 | 以o=(5/4,0,0)、n=-ex推导Delta=1、rho=9/4、near=4/9，明确严格球内位置必须先独立检查；补球面内外向和球外外向的静态对照、TC范围与源保真区别 | 纯文档几何定义域缺口 | 已整改 |
 
 ## 4. 已实施审计、具体整改和验证日志
 
@@ -151,7 +155,23 @@
 
 **本阶段起止统计**：目标总数11→14（+3个独立且已有实际正文更正的真实缺口），已整改6→9（+3），未整改5→5（0）；审计文件总数36→36（0）、已审计24→25（+1）、正在9→11（+2）、未审3→0（−3）。综合DAR-001～005的真实软件/批准条件仍全部开放，不把这3个文档级闭环冒充软件级闭环。
 
+### 第7阶段：三个独立技术合同缺陷的实际修订（2026-11-11）
+
+本轮起始提交 `a6bc8c970c6b409d9fb90687f05a798df1bbe7ab`；首先重读全工程`AUDIT_PROGRESS.md`（14 DAR：9已整改/5未整改；36 DOC：25完成限定、11正在、0未审），核对历史SH专项与当前全工程文档口径分离。所有整改只写现行`docs/`，原`origin/**`只读。
+
+| 具体缺陷/真实修订 | 证据、提交与验证的边界 | 不会据此关闭的事项 |
+|---|---|---|
+| **DAR-015 inspect-mat执行分支矛盾** | [`design/cli.md`](design/cli.md) v0.6→v0.7 将“无NAME只inspect”与“compat无NAME读取首变量”拆为**strict无NAME=inspect metadata；strict有NAME=readNamed实际读值；compat无NAME=readFirstCompatible；compat有NAME=parse(2)**。多变量无顺序证据必须`AmbiguousVariable/read(3)`，错误变量不能回退，重复未知mode走Parse(2)。实改提交 [4629edf](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/4629edf5adccb7d4bcab2ee96e7976dac11f55df)，与[MAT Reader LLD](design/mat_io.md) §7.4核对；[TEST_PLAN](TEST_PLAN.md) 对应既有`TC-F-CLI-001`补四分支/解析优先级，提交 [2291b16](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/2291b16e02d48797f5e372f28ed60ea49bd94e31)。 | 并无真实CLI、合成多变量文件/Reader业务测试、DEC-008或ABI批准；DAR-003/004保留 |
+| **DAR-016 private variant ABI误述** | [`design/contracts.md`](design/contracts.md) v0.6→v0.7 明确private成员仍参与公开完整值类型的size/align/move/destructor与二进制调用约定；不得把源码隐藏误当ABI稳定。修订提交 [a3db9b5](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/a3db9b5d5be3e8b536f4510638e2877fa16140df)，[TEST_PLAN](TEST_PLAN.md)加入跨TU/如有动态库边界的工具链/版本/ODR验证（[c97c9ef](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/c97c9ef19d6e6db23ba2a87e1a3122fe1c0030dd)）。 | 没有重选std::variant设计或创建头文件；实际ABI/link/CTest未执行，DAR-003不关 |
+| **DAR-017 球外内向射线的正根陷阱** | [`design/trajectory.md`](design/trajectory.md) v0.5→v0.6 用原`getnear_in_kugel_Drehung.m` blob `ea807d35ae70f4a2cd2533160dc501ad3a154b8b` 的`b*b-c+1,-b+sqrt`公式核出：**球外o=5/4ex、内向n=-ex**仍有`Delta=1,rho=9/4,near=4/9`；因此正根不等于位置满足`||o||<1`。补TR-C06、球面边界内向/外向与外部拒绝合同，提交 [6dbecb5](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/6dbecb5d35c86b6e95027a70c78e38c5612f415e)，测试文档同步提交 [c97c9ef](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/c97c9ef19d6e6db23ba2a87e1a3122fe1c0030dd)。使用纯JavaScript按原算式验证5种球内/边界/球外分数组合；**不是MATLAB/原生CTest**。 | 原MATLAB在球外仍算出公式值；候选C++拒绝属于显式安全策略。真实Sophus、数值范围、近边界容差及生产CTest未通过，不关DAR-003/004 |
+
+**审核范围与状态**：DOC-006完整阅读CLI的模式/参数/错误/权限分支并与Reader、TEST_PLAN交叉核对，完成限定的**文档行为审计**；其后续软件证据/批准仍显式登记。DOC-005合同对ABI与Result的静态复核已实改，但公共头、异常、ODR缺原生实证，保留正在审计。DOC-009和DOC-018维持已有完成限定审计身份、仅更新已审核的具体数学/测试要求；不扩展到其它未核算法。**没有新C++/CMake/CTest/原MATLAB/MAT写入，没有证据批准或正式基线冻结。**
+
+**第7阶段七项起止值**：整改目标总数14→17（+3）；已整改9→12（+3）；未整改5→5（0）；审计文件总数36→36（0）；已完成限定审计25→26（+1）；正在审计11→10（−1）；未审计0→0（0）。新增3项均有真正的技术正文更正与固定提交证据；不是调整文件计数代替实改。
+
 ## 5. 各轮计数与变化
+
+**第7阶段相对上一轮**：审计文件36→36（0），已完成限定25→26（+1），正在11→10（−1），未审0→0（0）；目标14→17（+3），已整改9→12（+3），未整改5→5（0）。本阶段实改4份技术文件，未凭历史3/3或文档修订声称真实软件通过。
 
 **第6阶段相对上一轮**：文件36→36（0）、已审计24→25（+1）、正在9→11（+2）、未审3→0（−3）；整改目标11→14（+3）、已整改6→9（+3）、未整改5→5（0）。以上变化有原始MATLAB对照与五份非台账技术文档实改，而不是通过文件计数代替整改。
 
@@ -175,6 +195,7 @@
 | 第4阶段：现行政策纠偏与限定审计 | 36 | 24 | 9 | 3 | 10 | 5 | 5 |
 | 第5阶段：数学/接口/分析/MAT安全正文整改 | 36 | 24 | 9 | 3 | 11 | 6 | 5 |
 | 第6阶段：轨迹/采样/Bias/KvD源码合同整改 | 36 | 25 | 11 | 0 | 14 | 9 | 5 |
+| 第7阶段：CLI/ABI/球内定义域合同整改 | 36 | 26 | 10 | 0 | 17 | 12 | 5 |
 
 ## 6. 36份文件的同一基准提交身份（DAR-005：只读静态快照）
 
