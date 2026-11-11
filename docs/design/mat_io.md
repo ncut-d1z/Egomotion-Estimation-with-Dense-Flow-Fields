@@ -1,6 +1,6 @@
 # MAT I/O、路径安全与原始数据合同——详细设计草案
 
-> **LLD v0.11 候选草案，未冻结。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 L2 逐值/L3 独立参考验证仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
+> **LLD v0.12 候选草案，未冻结。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 L2 逐值/L3 独立参考验证仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
 
 ## 1. 原始行为、文件身份和支持版本
 
@@ -110,9 +110,9 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 ## 3. 输入路径与输出路径的强制安全流程
 
 **输入阶段**：
-1. 验证输入路径存在、可读、常规文件，记录可审查的规范化路径与 SHA；
-2. 以只读方式打开 matio 句柄，读取头/变量元数据并校验;
-3. 对压缩块做出明确的解码结果；不能把“仅能读取头”当作“全部变量读取成功”；
+1. 验证输入路径存在、可读、常规文件，记录可审查的来源身份；**字符串规范路径及事先计算的 SHA 不代替打开后的实际文件身份**；
+2. 以只读方式打开 matio 句柄并核元数据；**同一次兼容Reader请求的变量枚举、选择与数值解码必须绑定同一有效文件身份**，不可先inspect(A)后另开readNamed(B)并假设A=B；
+3. 对被选中的压缩变量做出明确的完整解码结果；不能把“仅能读取头”当作“全部变量读取成功”；若同一源被检测到原地修改/无法证明一致，则记录来源冲突并显式非成功；
 4. 返回自拥有的领域数据或具体错误码；输入文件及 origin 目录保持不变。
 
 **输出阶段（拟议保护合同）**：
@@ -199,8 +199,8 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 |---|---|---|---|---|
 | inspect(path) | 输入为存在的普通文件，且 Reader 不持有写权限 | 按 MAT 文件真实变量记录返回 name/class/dtype/rank/dims/complex，绝不变更输入 | MissingFile、InvalidMatHeader、CorruptCompressedData | TC-F-MAT-002 |
 | readNamed(path,name) | name 非空；所需 class 已受支持 | 对**唯一指定变量**读取完整自拥有数据，源文件句柄销毁后结果仍有效 | MissingVariable、UnsupportedClassOrType、InvalidShape | TC-F-MAT-001/003 |
-| readFirstCompatible(path) | 路径合法；可明确补齐省略的 `.mat`；不要求 MATLAB 运行 | **单变量文件**读取该变量；**多变量**在没有已获核准的独立顺序依据时拒绝 `AmbiguousVariable`，不擅自按字母序选取；仅承诺现有 582 份单变量归档的兼容范围 | AmbiguousVariable、MissingVariable、UnsupportedClassOrType、InvalidShape | TC-F-MAT-003 |
-| saveNewVariable(RunId,name,data) | **构造时根路径已固定为仓库 `output/`，且写入时再次检验根/RunId/文件名**；不存在输出根 CLI 参数。RunId、变量名合法且文件不存在 | 在 `output/<RunId>/` 下独占发布新 MAT，写后回读 dtype/rank/dims/数据并保存 manifest | OutputPathForbidden、OutputExists、WriteFailed、ReadbackMismatch | TC-F-MAT-004 |
+| readFirstCompatible(path) | 路径合法；可明确补齐省略的 `.mat`；不要求 MATLAB 运行 | **同一只读句柄**内完成枚举、单变量选择和完整解码；多变量无顺序证据拒绝 `AmbiguousVariable`，不得跨两次open混用元数据/数值；仅承诺582份单变量归档 | AmbiguousVariable、MissingVariable、UnsupportedClassOrType、InvalidShape | TC-F-MAT-003 |
+| saveNewVariable(RunId,name,data) | **构造时根路径已固定为仓库 `output/`，且写入时再次检验根/RunId/文件名**；不存在输出根 CLI 参数。RunId、变量名合法且文件不存在 | 独占发布新 MAT 并严格回读；Writer只提供单文件Status/错误，整个Manifest及Complete由RunContext/Runner负责 | OutputPathForbidden、OutputExists、WriteFailed、ReadbackMismatch | TC-F-MAT-004 |
 | 句柄析构/移动 | 只允许单一所有者持有 mat_t*/matvar_t* | 释放恰好一次；move 后源句柄变为无所有权状态；MatDenseArray 深拷贝/移动后的存活性另测 | 不通过异常伪装成功；记录资源失败 | TC-DC-IO-001 |
 
 **完整错误枚举以 [contracts.md §3](contracts.md) 为唯一候选规范**；上表只是主要示例，不能视为完整 enum 列表。此模块涉及的 `MatErrorCode` 包括：`MissingFile`、`PermissionDenied`、`InvalidMatHeader`、`CorruptCompressedData`、`MissingVariable`、`AmbiguousVariable`、`UnsupportedClassOrType`、`InvalidShape`、`SizeOverflow`、`OutputPathForbidden`、`OutputExists`、`WriteFailed`、`ReadbackMismatch`。从 `Result/Status` 的失败分支传播原 `MatErrorCode` 与 `ErrorDetail`，CLI 退出码继续只引用 `contracts.md §3.1`，不在此处复制映射。无新增错误码得到批准。
@@ -221,11 +221,14 @@ Reader::readNamed:
     Mat_VarFree(v); Mat_Close(f)
 Reader::readFirstCompatible:
     resolve filename under candidate extension rule (see §7.4)
-    inspect variable count and order from metadata
-    0 variables -> MissingVariable
-    1 variable -> readNamed using the one and only true variable name
-    >1 variables without approved independent ordering proof -> AmbiguousVariable
-    never choose first by alphabetic name sorting
+    f = Mat_Open(path, MAT_ACC_RDONLY)          # ONE source object per operation
+    enumerate metadata from f (Mat_VarReadNextInfo; release each info)
+    0 variables -> MissingVariable; close f
+    >1 variables without approved order -> AmbiguousVariable; close f
+    1 variable -> Mat_VarRead(f, selected_name)  # SAME mat_t*, no public readNamed(path)
+    validate full type/rank/dims/data; copy owned values, free v, close f
+    source identity/change detection follows §7.4.1
+    never silently reopen path or choose alphabetic first
 Writer::saveNewVariable(RunId,name,data): // 拟议阶段顺序，尚非代码
     1 validate fixed output root/owned RunId dir (stable directory identity)
     2 revalidate RunId and approved domain variable name; disallow separators
@@ -293,6 +296,13 @@ MAT 类支持范围的**最终**记录应由 docs/MAT_DATA_SCHEMA.md 单一维�
 这些规则旨在保证**单变量归档可复现、未知多变量行为不伪造成功**。若未来需要完整多变量 `fieldnames` 语义，应先补齐 L3 独立例证及 CLI/错误合同，再评审扩展；**不能恢复 MATLAB/Octave 运行作为必需条件**。
 
 
+### 7.4.1 首变量枚举与数值解码的同一文件身份（2026-11-11 文档整改）
+
+原 `getflowfield.m` 的执行顺序是 `x=load(filename)`、`s=fieldnames(x)`、`str=char(s(1))`、`field=getfield(x,str)`。字段枚举与提取来自**同一个已加载的 x**。旧§7.1伪代码则先调用独立`inspect(path)`，再调用会重新`Mat_Open(path)`的公共`readNamed(path,name)`。若这两次打开之间文件路径、软链接或目标被替换，可能把A的变量选择/身份与B的数值解码合并成一个假成功；文字路径一致和一次`canonical()`无法排除该竞态。
+
+**候选整改约束**：在 `readFirstCompatible` 的同一个 `MatFileHandle` 内枚举、选择唯一变量、调用 `Mat_VarRead(mat_t*,name)`、完成类型/元素验证并拷贝自拥有数据后关闭。可用内部`readNamedOnOpenFile`复用逻辑，但**不改变对外三种Reader API**。必须按项目采用的 matio 1.5.26 实际核准“遍历`Mat_VarReadNextInfo`后按名读取”的句柄状态/所有权。复用已打开句柄只抵御路径替换令前后指向不同inode；**不保证同一inode在读期间被原地并发写入时的稳定字节快照**。需要核验前后身份、SHA-256、不可变副本或明确失败策略；不能宣称仅靠一个fd就消除了所有来源一致性风险。
+
+**独立输入负例（待授权，复用`TC-F-MAT-003`、`TC-I-MAT-001`与`TC-NF-SAFETY-001`）**：准备两个内容不同的合法单变量MAT，A含`alpha`、B含`beta`；在枚举结束后替换同一路径目标，验证解码值与变量名/文件身份来自同一次打开的A，或明确非成功，绝不能出现“选A、解B”。另针对同一个inode原地修改，要求能识别或公开记录尚无可靠快照保证。所有合成/并发输入只允许在经批准的隔离目录，`origin/**`不改。本段是安全设计合同，尚未运行 Reader、编译或 CTest，错误码细节应在P0.8/DEC-008冻结，不擅自创造公共enum。
 ## 8. 可复现正/负例与计划测试实体（均未建立/未执行）
 
 | 用例类别及 L2/L3 来源 | 输入与预期行为 | 非成功分类（如适用） | TC / 未来测试文件 |
