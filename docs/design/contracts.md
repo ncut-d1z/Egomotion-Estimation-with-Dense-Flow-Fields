@@ -1,6 +1,6 @@
 # C++17 公共详细设计合同（跨模块 LLD）
 
-> **跨模块合同草案 v0.5（未冻结、未建公共头文件、未编译）。** 此处集中定义候选值类型、状态、错误与 ABI 风格，以免 MAT I/O、KvD、Adaptive、实验和分析各自使用不同的 Result、形状和退出码。最终签名必须经 P0.7/P0.8 与项目所有者审批后才能成为编码基线。
+> **跨模块合同草案 v0.6（未冻结、未建公共头文件、未编译）。** 此处集中定义候选值类型、状态、错误与 ABI 风格，以免 MAT I/O、KvD、Adaptive、实验和分析各自使用不同的 Result、形状和退出码。最终签名必须经 P0.7/P0.8 与项目所有者审批后才能成为编码基线。
 
 ## 1. 适用范围与版本边界
 
@@ -88,9 +88,12 @@ public:
     static Result success(T value);
     static Result failure(Failure<Code> why);
     bool hasValue() const noexcept;
-    const T& value() const &;
-    T&& value() &&;
-    const Failure<Code>& error() const &;
+    const T& value() const &;                // 借用，仅限具有稳定生存期的左值
+    T value() &&;                            // 右值按值移动取出，不返回内部引用
+    const T& value() const && = delete;      // 禁止从 const 临时对象借用
+    const Failure<Code>& error() const &;     // 借用，仅限左值
+    Failure<Code> error() &&;                 // 右值按值移动取出
+    const Failure<Code>& error() const && = delete;
 private:
     std::variant<T, Failure<Code>> payload_;
 };
@@ -101,12 +104,16 @@ public:
     static Status success();
     static Status failure(Failure<Code> why);
     bool hasValue() const noexcept;
-    const Failure<Code>& error() const &;
+    const Failure<Code>& error() const &;     // 左值借用
+    Failure<Code> error() &&;                 // 右值拥有
+    const Failure<Code>& error() const && = delete;
 private:
     std::variant<std::monostate, Failure<Code>> payload_;
 };
 }
 ~~~
+
+**已修正的候选API生命周期缺陷（2026-11-11，仍待 P0.8 ABI 批准）**：旧版本把 `Result::value() &&` 定义成 `T&&`，调用方若保留返回的引用而销毁临时 `Result`，即出现悬垂引用；对临时成功/失败 `Result` 或 `Status` 取 `error() const &` 亦有同类风险。现统一要求**左值返回有明确宿主生命周期的 const 引用，右值返回自拥有的移动值**（`T value() &&` / `Failure<Code> error() &&`），并禁用从 const 右值借用。此处是**更安全的设计候选修订**，没有创建或编译公共头，不能声称已通过 C++17 重载解析、move-only T、异常安全、ABI 或 ODR 测试。今后写入真实接口时，需使用固定实例检查 `auto value = std::move(result).value()` 与 `auto failure = std::move(result).error()` 的生存期，并禁止 `auto&& dangling = makeResult().value()` 类型的借用模式；移动失败不得被当作成功。调用 `value`/ `error` 仍须先检查状态，非法访问的最终异常/断言合同由 P0.8 确定。
 
 - **Mat 错误**与**数值错误**分别归属 IO 与 solver，Runner 可以附带上下文，但不得吞掉原始错误。
 - **源算法与安全行为区别**：只记录原 .m 只读源码能证明的奇异、除零、NaN 分支；原 MATLAB 实际警告、非有限传播并无 L1，**无需运行 MATLAB**。C++ 可以候选地返回明确非成功状态，但“遇错继续/停止/回滚”须按入口专属合同评审，不能误标为已验证的原版运行行为。
@@ -117,7 +124,7 @@ private:
 
 ### 3.0 失败分支、稳定阶段与 JSONL（项目所有者已选设计）
 
-**统一容器**：上方 §3 的 `Failure<Code>`、`Result<T,Code>`、`Status<Code>` 使用**单一轻量封装**，内部 `std::variant` 不向调用方泄漏。成功只返回 T（或无值 Status），失败必须保留 `Code` 和 `ErrorDetail`；失败绝不能返回默认值、零向量、NaN/Inf 并假装成功。实现模板需保证单一定义与正确 include；对 `valueless_by_exception` 应有明确非成功处理。最终 ABI/头文件仍需真实编译与 P0.8 审查。
+**统一容器**：上方 §3 的 `Failure<Code>`、`Result<T,Code>`、`Status<Code>` 使用**单一轻量封装**，内部 `std::variant` 不向调用方泄漏。成功只返回 T（或无值 Status），失败必须保留 `Code` 和 `ErrorDetail`；失败绝不能返回默认值、零向量、NaN/Inf 并假装成功。实现模板需保证单一定义与正确 include；对 `valueless_by_exception` 应有明确非成功处理。**特别注意**：在此状态下 `hasValue()==false` 并不意味着变体里必有 `Failure<Code>`；不得直接调用 `std::get<Failure<Code>>` 或凭空编造来源错误。正式实现必须证明构造/赋值不会进入无值态，或有能真实保存源错误的外部异常边界，且写出单独故障注入测试；不能在当前候选示意中假称已解决。最终 ABI/头文件仍需真实编译与 P0.8 审查。
 
 | ErrorDetail 字段 | 当前设计决定 | 责任 |
 |---|---|---|
@@ -134,7 +141,7 @@ private:
 
 | 分支 | 当前合同检查点 | 真正未定/待验证 |
 |---|---|---|
-| `Result/Status` 正常与失败态 | 只有成功值或 `Failure<Code>{code,detail}`；`hasValue()` 不可将失败伪装为成功；接口模板只定义一处 | 真实 `<variant>/<optional>` include、模板 ODR、复制/移动、ABI 以及无异常构建兼容性待编译 |
+| `Result/Status` 正常与失败态 | 只有成功值或 `Failure<Code>{code,detail}`；`hasValue()` 不可将失败伪装为成功；左右值按引用/自拥有值区分，不得从临时对象返回借用引用；接口模板只定义一处 | 真实 `<variant>/<optional>` include、右值重载、move-only T、模板 ODR、ABI 以及异常构建兼容性待编译 |
 | `std::variant::valueless_by_exception()` | **不能**将无值内部状态当成功或返回默认 `T`；实现前必须给出能保留失败原因的稳定处理路径 | 使用哪一个公共错误码/异常边界仍待 P0.8 批准与故障注入，不凭文档编造映射 |
 | 对错误调用 `value()` / 成功调用 `error()` | 均属违反访问前置条件；不得泄漏无效引用或转换成默认值 | 选择抛异常/断言/显式返回等精确 ABI 行为待决定与测试 |
 | `ErrorDetail` 与 CLI JSONL | `run_id`、`observation_index` 可空；保持底层 code/stage；JSONL 对字符串/非有限值合法编码 | 实际跨 Mat→Experiment→CLI 嵌套错误、JSONL 转义/失败负例及多线程所有权未测 |
