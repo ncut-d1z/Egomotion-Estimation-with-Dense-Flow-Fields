@@ -1,6 +1,6 @@
 # Egomotion Estimation with Dense Flow Fields：软件需求规格说明书（SRS）
 
-> **状态：草案 v0.14，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
+> **状态：草案 v0.15，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
 
 ## 1. 目的、范围与约束
 
@@ -219,7 +219,7 @@
 
 - **解除的门禁**：AC-F-FILTER-001、AC-F-KVD-001、AC-F-GEOM-002/003、AC-F-ADAPT-001、AC-F-SH-001/002 等不再依赖 MATLAB 运行或原脚本 L1，按 §4 最新 AC 对 L3 逐节点、全部有序样本与全 R3/R5 元素进行验证。其它 AC 继续使用适用的 L2/L3/L4/严格状态检查。
 - **不能扩大结论**：L2 最终结果不能逆推出 RNG/每轮 Session；L3 的数学公式和独立实现也不能证明原 MATLAB 特定版本警告、异常传播、随机流或逐位浮点一致。报告只说明被覆盖的可验证合同。
-- **仍然未验收**：当前无生产 C++、完整 CTest、全部独立 L3 参考或已批准 DEC-005/DEC-008；没有 L1 **不是**未验收原因，以上实质性缺项才是阻塞依据。本政策本身不冻结 SRS、LLD 或签署验收。
+- **仍然未验收**：除固定`5e522198`已有用户原生3/3测试的受限低阶球谐叶子外，其余规划业务生产C++、完整66项TC/CTest、全部独立L3参考和已批准DEC-005/DEC-008均未完成；没有 L1 **不是**未验收原因，以上实质性缺项才是阻塞依据。本政策本身不冻结 SRS、LLD 或签署验收。
 
 ## 9. 双向追踪矩阵：来源 → REQ → PLAN → TC/AC
 
@@ -476,6 +476,83 @@
 | 正式基线 | [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 与 [TODO](TODO.md) | 项目所有者批准人、日期及时区、固定 Git 身份、开放 DEC-005/006/008 的处置/例外及实际证据 |
 
 **当前结果**：现有 REQ/AC/TC/LLD 导航关系可用于评审；尚未为全部 AC 建立签署后的逐行精确引用清单，更未完成独立测试、数值阈值批准或正式冻结。AF-037 保持「未整改」。
+
+### 9.7 全66项 AC→候选设计章节的同一提交静态身份矩阵（DAR-001，非冻结）
+
+为消除“将来冻结时再逐行补路径”的审查缺口，**本轮逐项读取了本文件§4及附录A的58+8个正式/内部REQ行**，把其对应66个唯一AC/TC编号映射到当前确实存在的主要设计文件/章节。下表各设计文件的**完整Git blob SHA**来自同一个审查起点提交 [`acb6753bbc58`](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/acb6753bbc5827595cac08b33ce32efdeb613fb5)，不是从动态HEAD猜测的版本；`source_commit_sha=acb6753bbc5827595cac08b33ce32efdeb613fb5`。章节只标**主要负责的候选合同**，不表示每个AC全部条件只依赖这一个LLD；多模块要求依赖还须在最终冻结包中登记完整集合。
+
+| 原REQ | 对应AC / TC | 主要设计/责任文件（候选章节） | 该提交文件Git blob SHA | 正式基线状态 |
+|---|---|---|---|---|
+| `REQ-F-ADAPT-001` | `AC-F-ADAPT-001` / `TC-F-ADAPT-001` | [`design/adaptive_mfa.md`](design/adaptive_mfa.md)（§2、§5、§8） | `97c087e9b42e4e23c7f046f4dbf0632fb16ae063` | 仅候选章节/身份，未批准 |
+| `REQ-F-ADAPT-002` | `AC-F-ADAPT-002` / `TC-F-ADAPT-002` | [`design/adaptive_mfa.md`](design/adaptive_mfa.md)（§2、§5、§8） | `97c087e9b42e4e23c7f046f4dbf0632fb16ae063` | 仅候选章节/身份，未批准 |
+| `REQ-F-ADAPT-003` | `AC-F-ADAPT-003` / `TC-F-ADAPT-003` | [`design/adaptive_mfa.md`](design/adaptive_mfa.md)（§2、§5、§8） | `97c087e9b42e4e23c7f046f4dbf0632fb16ae063` | 仅候选章节/身份，未批准 |
+| `REQ-F-AN-001` | `AC-F-AN-001` / `TC-F-AN-001` | [`design/analysis_plotting.md`](design/analysis_plotting.md)（§5、§6） | `e9bc9250730609393734ad7235a57c08154aed65` | 仅候选章节/身份，未批准 |
+| `REQ-F-AN-002` | `AC-F-AN-002` / `TC-F-AN-002` | [`design/analysis_plotting.md`](design/analysis_plotting.md)（§5、§6） | `e9bc9250730609393734ad7235a57c08154aed65` | 仅候选章节/身份，未批准 |
+| `REQ-F-BIAS-001` | `AC-F-BIAS-001` / `TC-F-BIAS-001` | [`design/experiments.md`](design/experiments.md)（§1、§5） | `224b2707be6b0b0df885f727498c70dfe7eb6fb5` | 仅候选章节/身份，未批准 |
+| `REQ-F-BIAS-002` | `AC-F-BIAS-002` / `TC-F-BIAS-002` | [`design/experiments.md`](design/experiments.md)（§1、§5） | `224b2707be6b0b0df885f727498c70dfe7eb6fb5` | 仅候选章节/身份，未批准 |
+| `REQ-F-BIAS-003` | `AC-F-BIAS-003` / `TC-F-BIAS-003` | [`design/experiments.md`](design/experiments.md)（§1、§5） | `224b2707be6b0b0df885f727498c70dfe7eb6fb5` | 仅候选章节/身份，未批准 |
+| `REQ-F-CLI-001` | `AC-F-CLI-001` / `TC-F-CLI-001` | [`design/cli.md`](design/cli.md)（§2、§3、§4） | `82c38559d48fb1ad6cc6a76c8c1c6533b6a4977d` | 仅候选章节/身份，未批准 |
+| `REQ-F-CLI-002` | `AC-F-CLI-002` / `TC-F-CLI-002` | [`design/cli.md`](design/cli.md)（§2、§3、§4） | `82c38559d48fb1ad6cc6a76c8c1c6533b6a4977d` | 仅候选章节/身份，未批准 |
+| `REQ-F-CLI-003` | `AC-F-CLI-003` / `TC-F-CLI-003` | [`design/cli.md`](design/cli.md)（§2、§3、§4） | `82c38559d48fb1ad6cc6a76c8c1c6533b6a4977d` | 仅候选章节/身份，未批准 |
+| `REQ-F-CLI-004` | `AC-F-CLI-004` / `TC-F-CLI-004` | [`design/cli.md`](design/cli.md)（§2、§3、§4） | `82c38559d48fb1ad6cc6a76c8c1c6533b6a4977d` | 仅候选章节/身份，未批准 |
+| `REQ-F-CLI-005` | `AC-F-CLI-005` / `TC-F-CLI-005` | [`design/cli.md`](design/cli.md)（§2、§3、§4） | `82c38559d48fb1ad6cc6a76c8c1c6533b6a4977d` | 仅候选章节/身份，未批准 |
+| `REQ-F-ERROR-001` | `AC-F-ERROR-001` / `TC-F-ERROR-001` | [`design/analysis_plotting.md`](design/analysis_plotting.md)（§5） | `e9bc9250730609393734ad7235a57c08154aed65` | 仅候选章节/身份，未批准 |
+| `REQ-F-EXP-001` | `AC-F-EXP-001` / `TC-F-EXP-001` | [`design/experiments.md`](design/experiments.md)（§5、§8） | `224b2707be6b0b0df885f727498c70dfe7eb6fb5` | 仅候选章节/身份，未批准 |
+| `REQ-F-EXP-002` | `AC-F-EXP-002` / `TC-F-EXP-002` | [`design/experiments.md`](design/experiments.md)（§5、§8） | `224b2707be6b0b0df885f727498c70dfe7eb6fb5` | 仅候选章节/身份，未批准 |
+| `REQ-F-EXP-003` | `AC-F-EXP-003` / `TC-F-EXP-003` | [`design/experiments.md`](design/experiments.md)（§5、§8） | `224b2707be6b0b0df885f727498c70dfe7eb6fb5` | 仅候选章节/身份，未批准 |
+| `REQ-F-FILTER-001` | `AC-F-FILTER-001` / `TC-F-FILTER-001` | [`design/kvd.md`](design/kvd.md)（§2） | `ca48de30582168275f470db61e22834f321d9869` | 仅候选章节/身份，未批准 |
+| `REQ-F-FLOW-001` | `AC-F-FLOW-001` / `TC-F-FLOW-001` | [`design/sampling_noise.md`](design/sampling_noise.md)（§2、§5） | `e47fd2295afe1f3889ce07fa68ab3adda8d05a27` | 仅候选章节/身份，未批准 |
+| `REQ-F-FLOW-002` | `AC-F-FLOW-002` / `TC-F-FLOW-002` | [`design/sampling_noise.md`](design/sampling_noise.md)（§2、§5） | `e47fd2295afe1f3889ce07fa68ab3adda8d05a27` | 仅候选章节/身份，未批准 |
+| `REQ-F-FLOW-003` | `AC-F-FLOW-003` / `TC-F-FLOW-003` | [`design/sampling_noise.md`](design/sampling_noise.md)（§2、§5） | `e47fd2295afe1f3889ce07fa68ab3adda8d05a27` | 仅候选章节/身份，未批准 |
+| `REQ-F-FLOW-004` | `AC-F-FLOW-004` / `TC-F-FLOW-004` | [`design/sampling_noise.md`](design/sampling_noise.md)（§2、§5） | `e47fd2295afe1f3889ce07fa68ab3adda8d05a27` | 仅候选章节/身份，未批准 |
+| `REQ-F-GEOM-001` | `AC-F-GEOM-001` / `TC-F-GEOM-001` | [`design/sampling_noise.md`](design/sampling_noise.md)（§2、§7） | `e47fd2295afe1f3889ce07fa68ab3adda8d05a27` | 仅候选章节/身份，未批准 |
+| `REQ-F-GEOM-002` | `AC-F-GEOM-002` / `TC-F-GEOM-002` | [`design/sampling_noise.md`](design/sampling_noise.md)（§2、§7） | `e47fd2295afe1f3889ce07fa68ab3adda8d05a27` | 仅候选章节/身份，未批准 |
+| `REQ-F-GEOM-003` | `AC-F-GEOM-003` / `TC-F-GEOM-003` | [`design/sampling_noise.md`](design/sampling_noise.md)（§2、§7） | `e47fd2295afe1f3889ce07fa68ab3adda8d05a27` | 仅候选章节/身份，未批准 |
+| `REQ-F-KVD-001` | `AC-F-KVD-001` / `TC-F-KVD-001` | [`design/kvd.md`](design/kvd.md)（§3、§8） | `ca48de30582168275f470db61e22834f321d9869` | 仅候选章节/身份，未批准 |
+| `REQ-F-KVD-002` | `AC-F-KVD-002` / `TC-F-KVD-002` | [`design/kvd.md`](design/kvd.md)（§3、§8） | `ca48de30582168275f470db61e22834f321d9869` | 仅候选章节/身份，未批准 |
+| `REQ-F-MAT-001` | `AC-F-MAT-001` / `TC-F-MAT-001` | [`design/mat_io.md`](design/mat_io.md)（§2、§7） | `b8742f42a4e28578ad9cd01bfbbae1637ad44035` | 仅候选章节/身份，未批准 |
+| `REQ-F-MAT-002` | `AC-F-MAT-002` / `TC-F-MAT-002` | [`design/mat_io.md`](design/mat_io.md)（§2、§7） | `b8742f42a4e28578ad9cd01bfbbae1637ad44035` | 仅候选章节/身份，未批准 |
+| `REQ-F-MAT-003` | `AC-F-MAT-003` / `TC-F-MAT-003` | [`design/mat_io.md`](design/mat_io.md)（§2、§7） | `b8742f42a4e28578ad9cd01bfbbae1637ad44035` | 仅候选章节/身份，未批准 |
+| `REQ-F-MAT-004` | `AC-F-MAT-004` / `TC-F-MAT-004` | [`design/mat_io.md`](design/mat_io.md)（§2、§7） | `b8742f42a4e28578ad9cd01bfbbae1637ad44035` | 仅候选章节/身份，未批准 |
+| `REQ-F-SH-001` | `AC-F-SH-001` / `TC-F-SH-001` | [`design/harmonics.md`](design/harmonics.md)（§1、§2、§3） | `348f664d91932f1493f5ef9cec8bc407ef4648ab` | 仅候选章节/身份，未批准 |
+| `REQ-F-SH-002` | `AC-F-SH-002` / `TC-F-SH-002` | [`design/harmonics.md`](design/harmonics.md)（§1、§2、§3） | `348f664d91932f1493f5ef9cec8bc407ef4648ab` | 仅候选章节/身份，未批准 |
+| `REQ-F-TRAJ-001` | `AC-F-TRAJ-001` / `TC-F-TRAJ-001` | [`design/trajectory.md`](design/trajectory.md)（§1、§2、§6） | `b749ba78545d561c664acc079e54cbc1beb6083b` | 仅候选章节/身份，未批准 |
+| `REQ-D-MAT-001` | `AC-D-MAT-001` / `TC-D-MAT-001` | [`design/mat_io.md`](design/mat_io.md)（§4） | `b8742f42a4e28578ad9cd01bfbbae1637ad44035` | 仅候选章节/身份，未批准 |
+| `REQ-D-MAT-002` | `AC-D-MAT-002` / `TC-D-MAT-002` | [`design/mat_io.md`](design/mat_io.md)（§4） | `b8742f42a4e28578ad9cd01bfbbae1637ad44035` | 仅候选章节/身份，未批准 |
+| `REQ-D-MAT-003` | `AC-D-MAT-003` / `TC-D-MAT-003` | [`design/mat_io.md`](design/mat_io.md)（§4） | `b8742f42a4e28578ad9cd01bfbbae1637ad44035` | 仅候选章节/身份，未批准 |
+| `REQ-D-SOURCE-001` | `AC-D-SOURCE-001` / `TC-D-SOURCE-001` | [`SOURCE_INVENTORY.md`](SOURCE_INVENTORY.md)（§全文） | `9d72f7517e93f774c4b67338cc6b93f6723e7712` | 仅候选章节/身份，未批准 |
+| `REQ-D-SOURCE-002` | `AC-D-SOURCE-002` / `TC-D-SOURCE-002` | [`SOURCE_INVENTORY.md`](SOURCE_INVENTORY.md)（§全文） | `9d72f7517e93f774c4b67338cc6b93f6723e7712` | 仅候选章节/身份，未批准 |
+| `REQ-I-ANALYSIS-001` | `AC-I-ANALYSIS-001` / `TC-I-ANALYSIS-001` | [`design/analysis_plotting.md`](design/analysis_plotting.md)（§1、§5、§6） | `e9bc9250730609393734ad7235a57c08154aed65` | 仅候选章节/身份，未批准 |
+| `REQ-I-CLI-001` | `AC-I-CLI-001` / `TC-I-CLI-001` | [`design/cli.md`](design/cli.md)（§2、§3） | `82c38559d48fb1ad6cc6a76c8c1c6533b6a4977d` | 仅候选章节/身份，未批准 |
+| `REQ-I-MAT-001` | `AC-I-MAT-001` / `TC-I-MAT-001` | [`design/mat_io.md`](design/mat_io.md)（§2、§7） | `b8742f42a4e28578ad9cd01bfbbae1637ad44035` | 仅候选章节/身份，未批准 |
+| `REQ-I-RESULT-001` | `AC-I-RESULT-001` / `TC-I-RESULT-001` | [`design/experiments.md`](design/experiments.md)（§6、§7） | `224b2707be6b0b0df885f727498c70dfe7eb6fb5` | 仅候选章节/身份，未批准 |
+| `REQ-NF-COPYRIGHT-001` | `AC-NF-COPYRIGHT-001` / `TC-NF-COPYRIGHT-001` | [`SOURCE_INVENTORY.md`](SOURCE_INVENTORY.md)（§全文） | `9d72f7517e93f774c4b67338cc6b93f6723e7712` | 仅候选章节/身份，未批准 |
+| `REQ-NF-DEPS-001` | `AC-NF-DEPS-001` / `TC-NF-DEPS-001` | [`ARCHITECTURE.md`](ARCHITECTURE.md)（§4） | `3e2c749cf83122ca811a4dbb2255e2ec5cac61c2` | 仅候选章节/身份，未批准 |
+| `REQ-NF-HEADLESS-001` | `AC-NF-HEADLESS-001` / `TC-NF-HEADLESS-001` | [`design/analysis_plotting.md`](design/analysis_plotting.md)（§2、§4） | `e9bc9250730609393734ad7235a57c08154aed65` | 仅候选章节/身份，未批准 |
+| `REQ-NF-LOG-001` | `AC-NF-LOG-001` / `TC-NF-LOG-001` | [`design/contracts.md`](design/contracts.md)（§3） | `f7369e836820603fdb9237bf685f12c7f5daaed4` | 仅候选章节/身份，未批准 |
+| `REQ-NF-NUM-001` | `AC-NF-NUM-001` / `TC-NF-NUM-001` | [`design/contracts.md`](design/contracts.md)（§3、§5） | `f7369e836820603fdb9237bf685f12c7f5daaed4` | 仅候选章节/身份，未批准 |
+| `REQ-NF-NUM-002` | `AC-NF-NUM-002` / `TC-NF-NUM-002` | [`design/contracts.md`](design/contracts.md)（§3、§5） | `f7369e836820603fdb9237bf685f12c7f5daaed4` | 仅候选章节/身份，未批准 |
+| `REQ-NF-OOP-001` | `AC-NF-OOP-001` / `TC-NF-OOP-001` | [`OBJECT_MODEL.md`](OBJECT_MODEL.md)（§1、§4） | `36e148f9820a4d5d8051735b23f9c97014688b1d` | 仅候选章节/身份，未批准 |
+| `REQ-NF-PLATFORM-001` | `AC-NF-PLATFORM-001` / `TC-NF-PLATFORM-001` | [`ARCHITECTURE.md`](ARCHITECTURE.md)（§2） | `3e2c749cf83122ca811a4dbb2255e2ec5cac61c2` | 仅候选章节/身份，未批准 |
+| `REQ-NF-PORTABLE-001` | `AC-NF-PORTABLE-001` / `TC-NF-PORTABLE-001` | [`design/cli.md`](design/cli.md)（§1） | `82c38559d48fb1ad6cc6a76c8c1c6533b6a4977d` | 仅候选章节/身份，未批准 |
+| `REQ-NF-RECOVERY-001` | `AC-NF-RECOVERY-001` / `TC-NF-RECOVERY-001` | [`design/experiments.md`](design/experiments.md)（§7） | `224b2707be6b0b0df885f727498c70dfe7eb6fb5` | 仅候选章节/身份，未批准 |
+| `REQ-NF-RNG-001` | `AC-NF-RNG-001` / `TC-NF-RNG-001` | [`design/sampling_noise.md`](design/sampling_noise.md)（§5） | `e47fd2295afe1f3889ce07fa68ab3adda8d05a27` | 仅候选章节/身份，未批准 |
+| `REQ-NF-RUNTIME-001` | `AC-NF-RUNTIME-001` / `TC-NF-RUNTIME-001` | [`ARCHITECTURE.md`](ARCHITECTURE.md)（§7） | `3e2c749cf83122ca811a4dbb2255e2ec5cac61c2` | 仅候选章节/身份，未批准 |
+| `REQ-NF-SAFETY-001` | `AC-NF-SAFETY-001` / `TC-NF-SAFETY-001` | [`design/mat_io.md`](design/mat_io.md)（§3） | `b8742f42a4e28578ad9cd01bfbbae1637ad44035` | 仅候选章节/身份，未批准 |
+| `REQ-NF-SESSION-001` | `AC-NF-SESSION-001` / `TC-NF-SESSION-001` | [`design/adaptive_mfa.md`](design/adaptive_mfa.md)（§5、§8） | `97c087e9b42e4e23c7f046f4dbf0632fb16ae063` | 仅候选章节/身份，未批准 |
+| `REQ-PROC-TRACE-001` | `AC-PROC-TRACE-001` / `TC-PROC-TRACE-001` | [`TEST_PLAN.md`](TEST_PLAN.md)（§3） | `d65d9c870f90cadbb4204a901851a9f2be04c0bd` | 仅候选章节/身份，未批准 |
+| `REQ-DC-ADAPT-001` | `AC-DC-ADAPT-001` / `TC-DC-ADAPT-001` | [`design/adaptive_mfa.md`](design/adaptive_mfa.md)（§5、§8） | `97c087e9b42e4e23c7f046f4dbf0632fb16ae063` | 仅候选章节/身份，未批准 |
+| `REQ-DC-ANALYSIS-001` | `AC-DC-ANALYSIS-001` / `TC-DC-ANALYSIS-001` | [`design/analysis_plotting.md`](design/analysis_plotting.md)（§2、§4） | `e9bc9250730609393734ad7235a57c08154aed65` | 仅候选章节/身份，未批准 |
+| `REQ-DC-DOMAIN-001` | `AC-DC-DOMAIN-001` / `TC-DC-DOMAIN-001` | [`design/contracts.md`](design/contracts.md)（§2、§3） | `f7369e836820603fdb9237bf685f12c7f5daaed4` | 仅候选章节/身份，未批准 |
+| `REQ-DC-EXPERIMENT-001` | `AC-DC-EXPERIMENT-001` / `TC-DC-EXPERIMENT-001` | [`design/experiments.md`](design/experiments.md)（§2、§6） | `224b2707be6b0b0df885f727498c70dfe7eb6fb5` | 仅候选章节/身份，未批准 |
+| `REQ-DC-IO-001` | `AC-DC-IO-001` / `TC-DC-IO-001` | [`design/mat_io.md`](design/mat_io.md)（§2、§3） | `b8742f42a4e28578ad9cd01bfbbae1637ad44035` | 仅候选章节/身份，未批准 |
+| `REQ-DC-KVD-001` | `AC-DC-KVD-001` / `TC-DC-KVD-001` | [`design/kvd.md`](design/kvd.md)（§3） | `ca48de30582168275f470db61e22834f321d9869` | 仅候选章节/身份，未批准 |
+| `REQ-DC-NOISE-001` | `AC-DC-NOISE-001` / `TC-DC-NOISE-001` | [`design/sampling_noise.md`](design/sampling_noise.md)（§3、§5） | `e47fd2295afe1f3889ce07fa68ab3adda8d05a27` | 仅候选章节/身份，未批准 |
+| `REQ-DC-RNG-001` | `AC-DC-RNG-001` / `TC-DC-RNG-001` | [`design/sampling_noise.md`](design/sampling_noise.md)（§3、§5） | `e47fd2295afe1f3889ce07fa68ab3adda8d05a27` | 仅候选章节/身份，未批准 |
+
+**实际静态核查结果**：本表66条、66个不同的REQ/AC/TC编号，原66项TC在`TEST_PLAN.md §3`均有对应编号；主要设计文件全部在上述固定提交存在，引用的每个`§`编号在目标文档存在。**本项只完成追踪表和候选源身份，不代表对66个AC语义、边界、输入、审批或测试逐一验收。**
+
+**冻结仍需补齐的不可省字段**：每个AC关联的**全部**LLD/HLD/数据约定与章节，而非只看上表主要章节；所选最终`document_version`、`git_blob_sha`、`source_commit_sha`、审批人、批准时间与时区、有效范围、特许例外（DEC-005/006/008）、实测TC实体与输入/输出证据、正式签署。任何设计文件在上述审查起点之后被修改时，本表只能作**历史审查快照**，必须重核其新blob/章节才可用于批准。当前`DAR-001`仍属于“部分文档整改已实做、正式身份与所有者签署仍未完成”。
 
 ## 10. 需求变更与基线管理
 
