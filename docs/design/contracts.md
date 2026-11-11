@@ -1,6 +1,6 @@
 # C++17 公共详细设计合同（跨模块 LLD）
 
-> **跨模块合同草案 v0.6（未冻结、未建公共头文件、未编译）。** 此处集中定义候选值类型、状态、错误与 ABI 风格，以免 MAT I/O、KvD、Adaptive、实验和分析各自使用不同的 Result、形状和退出码。最终签名必须经 P0.7/P0.8 与项目所有者审批后才能成为编码基线。
+> **跨模块合同草案 v0.7（未冻结、未建公共头文件、未编译）。** 此处集中定义候选值类型、状态、错误与 ABI 风格，以免 MAT I/O、KvD、Adaptive、实验和分析各自使用不同的 Result、形状和退出码。最终签名必须经 P0.7/P0.8 与项目所有者审批后才能成为编码基线。
 
 ## 1. 适用范围与版本边界
 
@@ -43,7 +43,7 @@ struct RunId { std::string text; };
 
 ## 3. 统一结果/错误语义
 
-本项目**不使用 C++23 std::expected**。项目所有者已选定：**自定义轻量 Result/Status 封装类，内部使用 C++17 `std::variant`，外部只访问 `hasValue()/value()/error()` 等明确接口**；不把内部容器作为对外 ABI。以下是候选精确签名示意，尚未创建真实公共头或编译。不得将原 MATLAB 非有限输出压成伪造的正常零值。
+本项目**不使用 C++23 std::expected**。项目所有者已选定：**自定义轻量 Result/Status 封装类，内部使用 C++17 `std::variant`，外部只访问 `hasValue()/value()/error()` 等明确接口**；不在调用方访问器接口直接暴露内部容器；**但私有 `std::variant` 成员仍参与 Result/Status 的对象布局、大小/对齐、移动/析构及二进制 ABI**。目前不能宣称“隐藏了 `variant` 就取得了稳定 ABI”。以下是候选精确签名示意，尚未创建真实公共头或编译。不得将原 MATLAB 非有限输出压成伪造的正常零值。
 
 ~~~cpp
 namespace egomotion {
@@ -113,6 +113,14 @@ private:
 }
 ~~~
 
+### 3.A C++17 私有实现不是稳定二进制 ABI（2026-11-11 静态合同更正）
+
+候选声明中的 `std::variant<T, Failure<Code>> payload_` 与 `std::variant<std::monostate, Failure<Code>> payload_` 虽为 **private**，但只要 `Result<T,E>` 或 `Status<E>` 作为完整值类型出现在公开头/接口中，其私有成员仍影响 `sizeof`、`alignof`、编译器生成的移动/析构、模板实例和调用约定。访问器仅隐藏了**源代码层的容器操作**，**没有隐藏二进制对象布局**；跨共享库或混合编译器/标准库/编译选项时不能凭“private”保证稳定 ABI。这与本仓库目前“C++17/Eigen-only 当前无完整公共ABI”的事实一致。
+
+**不改变所有者已选定的轻量 `std::variant` 方案**，但为 P0.8/DEC-008 列出必须显式选择的部署边界：若公共 Result/Status 按值跨 target/共享库使用，应记录所有消费 target 的 C++ 标准库/编译器/构建选项兼容边界，以及同一发行版编译/安装/升级时是否要求消费者一同重新构建；如用户未来要求独立、长期稳定的插件/动态库 ABI，应另行评审不暴露 C++ 实体布局的边界（例如不透明句柄/稳定 C 桥接），**不能擅自将已选设计改成 pImpl 并称已获批准**。模板定义若放公共头须自包含、ODR 唯一、所需 include 明确；头文件自包含编译**不等于**跨版本 ABI 合格。
+
+**未来验证用例（复用 TC-DC-DOMAIN-001/TC-NF-OOP-001，不新增正式 TC）**：在两个独立翻译单元分别构造/取出 `Result<move-only T,E>`、`Status<E>`，验证成功/失败/异常生存期及 ODR；若实际设计有跨动态库边界，再用同一批准工具链/stdlib/配置构建生产者与消费者，核对接口调用、对象生存期与版本策略。不能使用历史SH叶子3/3 CTest证明通用合同已 ABI 验收。当前此项仅为**合同设计错误纠正**，实际公共头/链接/ABI/批准仍全部未完成，DAR-003保持未整改。
+
 **已修正的候选API生命周期缺陷（2026-11-11，仍待 P0.8 ABI 批准）**：旧版本把 `Result::value() &&` 定义成 `T&&`，调用方若保留返回的引用而销毁临时 `Result`，即出现悬垂引用；对临时成功/失败 `Result` 或 `Status` 取 `error() const &` 亦有同类风险。现统一要求**左值返回有明确宿主生命周期的 const 引用，右值返回自拥有的移动值**（`T value() &&` / `Failure<Code> error() &&`），并禁用从 const 右值借用。此处是**更安全的设计候选修订**，没有创建或编译公共头，不能声称已通过 C++17 重载解析、move-only T、异常安全、ABI 或 ODR 测试。今后写入真实接口时，需使用固定实例检查 `auto value = std::move(result).value()` 与 `auto failure = std::move(result).error()` 的生存期，并禁止把**左值 `value() const &` 返回的借用引用**保存到宿主 Result 已销毁/移动之后。旧 `T&& value() &&` 下的 `auto&& dangling = makeResult().value()` 是悬垂风险；**新按值 `T value() &&` 会生成独立值对象，直接绑定的局部右值引用可按C++生存期扩展规则安全存活**，不应把这个修正后的场景继续误报为悬垂。跨函数返回引用、引用成员或延迟使用仍须做单独生命周期分析；移动失败不得被当作成功。调用 `value`/ `error` 仍须先检查状态，非法访问的最终异常/断言合同由 P0.8 确定。
 
 - **Mat 错误**与**数值错误**分别归属 IO 与 solver，Runner 可以附带上下文，但不得吞掉原始错误。
@@ -141,7 +149,7 @@ private:
 
 | 分支 | 当前合同检查点 | 真正未定/待验证 |
 |---|---|---|
-| `Result/Status` 正常与失败态 | 只有成功值或 `Failure<Code>{code,detail}`；`hasValue()` 不可将失败伪装为成功；左右值按引用/自拥有值区分，不得从临时对象返回借用引用；接口模板只定义一处 | 真实 `<variant>/<optional>` include、右值重载、move-only T、模板 ODR、ABI 以及异常构建兼容性待编译 |
+| `Result/Status` 正常与失败态 | 只有成功值或 `Failure<Code>{code,detail}`；`hasValue()` 不可将失败伪装为成功；左右值按引用/自拥有值区分，不得从临时对象返回借用引用；**private variant 仍决定完整对象的 ABI 布局** | 真实 `<variant>/<optional>` include、右值重载、move-only T、模板 ODR、自包含头、跨target/跨共享库ABI策略及异常构建兼容性待编译 |
 | `std::variant::valueless_by_exception()` | **不能**将无值内部状态当成功或返回默认 `T`；实现前必须给出能保留失败原因的稳定处理路径 | 使用哪一个公共错误码/异常边界仍待 P0.8 批准与故障注入，不凭文档编造映射 |
 | 对错误调用 `value()` / 成功调用 `error()` | 均属违反访问前置条件；不得泄漏无效引用或转换成默认值 | 选择抛异常/断言/显式返回等精确 ABI 行为待决定与测试 |
 | `ErrorDetail` 与 CLI JSONL | `run_id`、`observation_index` 可空；保持底层 code/stage；JSONL 对字符串/非有限值合法编码 | 实际跨 Mat→Experiment→CLI 嵌套错误、JSONL 转义/失败负例及多线程所有权未测 |
