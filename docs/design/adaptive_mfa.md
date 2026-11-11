@@ -1,6 +1,6 @@
 # Adaptive MFA 单步计算与轨迹状态——详细设计草案
 
-> **LLD v0.5：未冻结、没有生产Adaptive C++/CTest。** 已逐段核对原 MATLAB 公式；除 AN-G12 理想对称案例外，新增九方向非对称正/负均值近度的独立 Wolfram 逐节点数学参考，并发现 s<0 归一化与 M1 矩阵模型之间存在确定的 2I 差异。一般状态、Session、正式接口及 DEC-005 仍未完成。
+> **LLD v0.6：未冻结、没有生产Adaptive C++/CTest。** 已逐段核对原 MATLAB 公式；除 AN-G12 理想对称案例外，新增九方向非对称正/负均值近度的独立 Wolfram 逐节点数学参考，并发现 s<0 归一化与 M1 矩阵模型之间存在确定的 2I 差异。一般状态、Session、正式接口及 DEC-005 仍未完成。
 
 ## 1. 单步输入/输出与接口候选
 
@@ -35,7 +35,13 @@ if s < 0: near = -near
 near = near / s
 ~~~
 
-**特别审计点**：s 在符号翻转之前求得，符号翻转后没有重新求 s；负均值时这与先取绝对值归一化不等价。不得无说明地把它“纠正”为 abs(s) 或修改代码顺序。需要为 s>0、s<0、s≈0 分别建立原版对照与异常状态。
+**已核对的精确等价（只限有限 \(s\ne0\)）**：把源代码刚从 `near_aus_koeff` 取得的值记为 \(r_i\)，\(s=N^{-1}\sum_i r_i\)。源码的次序是**先**保存这个原始 \(s\)，\(s<0\) 时**翻转分子**，再除以**未更新的** \(s\)。因此实际得到
+\[
+r_i^{\mathrm{after\ sign}}=\operatorname{sgn}(s)r_i,\qquad
+\mu_i=\frac{r_i^{\mathrm{after\ sign}}}{s}=\frac{r_i}{|s|},\qquad
+\langle\mu\rangle=\operatorname{sgn}(s).
+\]
+这与**原始** \(r_i/|s|\) 在数值数学上等价，但与**翻转之后**的 \(r_i^{\mathrm{after\ sign}}/|s|\)、\(|r_i|/|s|\) 或把均值重新算为正值后再除**不等价**。此前笼统的“与先取绝对值归一化不等价”忽略了分子是原始还是翻转后，现以三个不同名称消除歧义。若编写源码忠实性/浮点顺序测试，仍应按原代码逐节点检查，而非因代数等价就宣称逐位浮点相同。\(s=0\)、NaN/Inf 则不属于上述等价定义域，必须走明确非成功分支；原 MATLAB 的运行传播未实测。参见[均值归一理论专题](ADAPTIVE_MEAN_ZERO_CONDITIONING.md)。
 
 ### 2.2 6×6 块线性系统
 
@@ -288,7 +294,7 @@ C++ 从 0 开始存帧时必须显式转换为源 MATLAB 的 1-based i，周期�
 | Golden ID（计划） | 固定输入及必须保留的值 | 检查点 |
 |---|---|---|
 | AD-G01 | N×6、旧 3×5、near_raw/s/near_after、M1–M4、b、z、t/ω、error_mse、新 near/coeff | 单步的每个数值节点 |
-| AD-G02 | near 平均 s<0 的符号/归一化 | **先翻 near，后除原 s**，不得自动改成 abs(s) |
+| AD-G02 | near 平均 s<0 的符号/归一化 | **先翻 near，后除原 s**；核对 `near_raw/abs(s)` 等价、`near_after_sign/abs(s)` 不等价，以及 s=0 非成功 |
 | AD-G03 | near 平均≈0、奇异或病态 M | 原版失败/非有限值与 C++ 显式状态分别记录 |
 | AD-G04 | init 帧 i=2、3 | 入口没有球谐系数旋转，比较状态每帧处理 |
 | AD-G05 | comparison 的 i=2、3，addederror=0/非零 | 先上一帧旋转、再比较、再主更新；rottransratio 不取八次平均 |
@@ -300,10 +306,10 @@ C++ 从 0 开始存帧时必须显式转换为源 MATLAB 的 1-based i，周期�
 
 ### 10.1 负均值近度的可手算分支不变量（AF-044 第一轮）
 
-**源依据**：只读 `oneit_adaptiv_matched_filter.m:19–29` 先取 `s=mean(near_raw)`，`s<0` 时翻转 near，**然后仍用翻转前的 s 除近度**。这不是 `near/abs(s)`：
+**源依据**：只读 `oneit_adaptiv_matched_filter.m:19–29` 先取 `s=mean(near_raw)`，`s<0` 时翻转 near，**然后仍用翻转前的 s 除近度**。精确写法是 `near_normalized=near_raw/abs(s)`（有限非零域）；**不是** `near_after_sign/abs(s)` 或 `abs(near_raw)/abs(s)`：
 
 - 对 `s>0` 且有限：`mean(near_normalized)=1`。
-- 对 `s<0` 且有限：`mean(near_normalized)=-1`。例如手算 `near_raw=[-1,-3]`，`s=-2`，翻转为 `[1,3]` 后再除以原 `-2`，结果为 `[-0.5,-1.5]`，均值 **−1**。若改成除 `abs(s)` 或“先求新的 s”，就改变原分支。
+- 对 `s<0` 且有限：`mean(near_normalized)=-1`。例如手算 `near_raw=[-1,-3]`，`s=-2`，翻转为 `[1,3]` 后再除以原 `-2`，结果为 `[-0.5,-1.5]`，均值 **−1**。若在**源代码已翻转的分子**上改用除 `abs(s)`，或“先求新的 s”，就改变原分支；直接对未翻转的原始 `near_raw` 除 `abs(s)` 数学上却与源码等价（浮点运算路径不保证逐位一致）。
 - 对 `s=0`：原源码仍执行除法，不能将它悄然描述为正常归一；C++ 的 `InvalidNearness` 显式失败是另行选定的安全合同，**不能声称已经实测原 MATLAB 的 NaN/Inf 传播**。
 
 **需要保存的区分性中间量**：`near_raw, s, near_after_sign, near_normalized, M1–M4, rhs, z, raw_t, normalized_t, ω, error_mse, near_new, C_new`。由于 `M1=I-⟨μ_i d_i d_iᵀ⟩`，负均值分支的 `μ` 符号还会改变 M1；只比较返回 t/ω 会掩盖这种差异。原 `oneit_adaptiv_matched_filter.m:91–117` 使用 `real(inv(M))` 并返回 **MSE**；`:120–129` 才以 `1e-11` 重估 near/系数，不能用先前求 M1 的近度冒充输出近度。
