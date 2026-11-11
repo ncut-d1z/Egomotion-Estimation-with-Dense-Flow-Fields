@@ -313,3 +313,27 @@ AF-041/047/055/058 与其它开放目标仍须独立数据/真实软件及审批
 | `docs/design/README.md` | `1d1a3941bee1719fa37ee4493f1bff703888892a` | v0.9；错误归属与文档索引 |
 
 这是本轮静态文件身份和文档合同结案，并不表示生产 `IPlotExporter` 已实现、四类错误实际发生、DEC-008/CTest 或整个 SRS/HLD/LLD 已批准。
+
+### 6.18 DAR-001/005：66项 AC 主要责任章节的现行审查用身份（非批准）
+
+**证据时间线**：`REQUIREMENTS.md` v0.15已在固定 [`9820c5d91596`](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/9820c5d915968abbb8be3430f755b95c1bf260b9) 保存`§9.7`，其中从58个正文+8个附录REQ实际生成66条`AC/TC→主要设计文件/章节→Git blob`候选映射；已核每个目标文件及对应章节存在，纠正`AC-F-FLOW-004`（球内射线近度→`trajectory.md`）及`AC-F-ERROR-001`（误差计算→`experiments.md`）两项初始归属。此处再从**同一个完整Git tree且未截断**的固定提交提取15个文件Git blob SHA，便于核对表内设计文件仍处于该审查提交；与本矩阵§2–3的旧固定36项身份不同。
+
+| 审查输入文件 | 此审查提交的Git blob SHA | 身份范围 |
+|---|---|---|
+| `docs/REQUIREMENTS.md` | `1620e26b342ff05e9d2820fc4665000f2924730f` | 新增66项 AC→主要责任章节索引；v0.15草案 |
+| `docs/design/adaptive_mfa.md` | `97c087e9b42e4e23c7f046f4dbf0632fb16ae063` | 作为AC主责任候选的审查用输入，尚未签正式基线 |
+| `docs/design/analysis_plotting.md` | `e9bc9250730609393734ad7235a57c08154aed65` | 作为AC主责任候选的审查用输入，尚未签正式基线 |
+| `docs/design/sampling_noise.md` | `e47fd2295afe1f3889ce07fa68ab3adda8d05a27` | 作为AC主责任候选的审查用输入，尚未签正式基线 |
+| `docs/design/experiments.md` | `224b2707be6b0b0df885f727498c70dfe7eb6fb5` | 作为AC主责任候选的审查用输入，尚未签正式基线 |
+| `docs/design/cli.md` | `82c38559d48fb1ad6cc6a76c8c1c6533b6a4977d` | 作为AC主责任候选的审查用输入，尚未签正式基线 |
+| `docs/design/contracts.md` | `f7369e836820603fdb9237bf685f12c7f5daaed4` | 作为AC主责任候选的审查用输入，尚未签正式基线 |
+| `docs/design/kvd.md` | `ca48de30582168275f470db61e22834f321d9869` | 作为AC主责任候选的审查用输入，尚未签正式基线 |
+| `docs/design/mat_io.md` | `b8742f42a4e28578ad9cd01bfbbae1637ad44035` | 作为AC主责任候选的审查用输入，尚未签正式基线 |
+| `docs/design/harmonics.md` | `348f664d91932f1493f5ef9cec8bc407ef4648ab` | 作为AC主责任候选的审查用输入，尚未签正式基线 |
+| `docs/design/trajectory.md` | `b749ba78545d561c664acc079e54cbc1beb6083b` | 作为AC主责任候选的审查用输入，尚未签正式基线 |
+| `docs/SOURCE_INVENTORY.md` | `9d72f7517e93f774c4b67338cc6b93f6723e7712` | 作为AC主责任候选的审查用输入，尚未签正式基线 |
+| `docs/ARCHITECTURE.md` | `3e2c749cf83122ca811a4dbb2255e2ec5cac61c2` | 作为AC主责任候选的审查用输入，尚未签正式基线 |
+| `docs/OBJECT_MODEL.md` | `36e148f9820a4d5d8051735b23f9c97014688b1d` | 作为AC主责任候选的审查用输入，尚未签正式基线 |
+| `docs/TEST_PLAN.md` | `d65d9c870f90cadbb4204a901851a9f2be04c0bd` | 作为AC主责任候选的审查用输入，尚未签正式基线 |
+
+**DAR-001 已做的文档整改**：66条AC具有候选主要设计章节及正确的固定Git对象身份，不能再笼统写“完全没有AC→LLD映射”。**DAR-001/005仍未全结案**：主要章节不等于全部依赖，也不意味着每个AC实际测试已执行；正式冻结需要把最新最终版本的全部HLD/LLD相关章节、`source_commit_sha/git_blob_sha`、批准人及日期/时区、适用范围、例外和DEC-005/006/008、以及真正的软件测试/数值证据按AC逐项签署。本表不伪造签署，也不把旧审查快照宣布为滚动HEAD或新编译版本通过。
