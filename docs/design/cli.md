@@ -1,6 +1,6 @@
 # CLI 参数、退出码与诊断协议：详细设计草案
 
-> **候选 v0.7，未冻结、未编码、未执行 CTest。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
+> **候选 v0.8，未冻结、未编码、未执行 CTest。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
 
 ## 1. 语法与基本约束
 
@@ -34,6 +34,8 @@
 | `compat` | 缺省 | `MatResultReader::readFirstCompatible(file)` | 当前归档单变量文件读取唯一变量；无可靠顺序证据的多变量文件 → `AmbiguousVariable/read(3)`；不能静默退化成 inspect 成功 |
 | `compat` | 指定任何 NAME | **参数组合非法**，不打开文件 | `Parse/exit(2)`，先于输入文件存在性/权限检查 |
 | 未识别 mode 或重复 mode/variable | 任意 | **参数解析失败** | `Parse/exit(2)`，不读 MAT、不生成 RunId |
+
+**单次来源身份不变量（2026-11-11）**：CLI `compat/no NAME` 必须**一次调用** `MatResultReader::readFirstCompatible(file)`；不可自行先 `inspect(file)` 再 `readNamed(file,name)`，因为后两者可能分别打开被替换的不同源文件。读取层必须在同一个 MAT 句柄内选唯一变量并完整解码，且对原地并发变化的稳定来源另行核实；参见 [mat_io.md §7.4.1](mat_io.md)。这不赋予 CLI 新增写入权限、不意味着已实现抗竞态读取或新错误码已批准。
 
 **状态与输出限制**：此表明确的是**调用/读取的行为**，不是已经批准的 stdout 数值转储格式、JSONL 文件内容或是否显示全量 double。`readNamed/readFirstCompatible` 成功应能证明完整自拥有数值读取，不能把只读取文件头当成完整解码；将数据摘要/逐值展示到 stdout 的具体策略仍由 P0.8/DEC-008 批准。对所有合法路径，本命令只读，不写 MAT、不生成结果 RunId。候选 `TC-F-CLI-001` 应至少采用单变量有效、已知坏变量名、多变量合成输入和不存在文件来验证上述不同动作；**合成/损坏文件只在后续获授权的隔离测试目录中创建**。目前没有实际业务 CLI/CTest PASS。
 
