@@ -48,6 +48,38 @@
 
 **本轮需要立刻回复的人类决策：无。** 在继续当前**只读源检查＋真实文档整改**范围内，不要求用户重复上传论文、不要求重新决定已选的球谐Eigen路线、也不要求立刻签署数值容差/性能/基线；只有要扩大为生产编码、原生运行/文件写入或正式验收时才需要相应明确动作。所有既有H-10/H-11原始历史批准状态仍保留、不做追溯改写。
 
+## 2.2 DEC-008 详细决策说明（2026-11-12：仅供审阅，`DecisionPending`）
+
+**DEC-008 是什么**：它是C++公共接口及失败/诊断协议的**最后可执行语义选择**，不是DEC-005的数值容差、DEC-006的性能阈值，也不是H-10/H-11的代码/运行许可。它规定模块之间交换`Result/Status`、`ErrorDetail`、MAT数据、CLI错误及会话状态时，**什么叫成功、什么叫失败、什么时候允许返回、二进制调用是否要求跨版本兼容**。代码尚未授权完成，故这里是**待所有者审阅的建议决策书**，不代表已通过，也不阻止其它文档/数学整改。
+
+### A. 已经选定，DEC-008 不必重新选择的部分
+
+- Debian/Ubuntu、C++17、Eigen、matio；不使用C++23 `std::expected`。
+- 自定义轻量 `Result<T,Code>` / `Status<Code>`，内部用 `std::variant`，失败携带 `Failure<Code>{code, ErrorDetail}`；`ErrorStage` 是强类型枚举。
+- JSONL是机器诊断格式，字符串正确转义；`message`仅供人阅读，不能当作机器错误类别。
+- 已选固定 `output/<RunId>/`，只允许新的独立RunId且不得覆盖`origin/**`。失效数值、失败的Session状态不得当作成功结果提交，八次聚合不改分母。
+- `MatErrorCode`、`NumericalErrorCode`、`ExperimentErrorCode` 和分析/绘图错误**各归一个原LLD定义**，对外`exit/stage`映射仅由[contracts.md `3.1](design/contracts.md)维护；不复制第二份enum或每个Runner自行决定不一致的退出码。
+- 前轮实际文档修订已定下**左值引用只借用存活宿主、右值按值转移、const右值禁止借用**；本轮又发现默认构造`Result/Status`可能伪造成功，已在[contracts `3.B](design/contracts.md)修正为工厂专用、默认构造`=delete`。这两处是从内部一致性得出的**候选最低安全要求**，不是声称公共头文件已存在或DEC-008签署。
+
+### B. 仍需所有者最终决策的关键问题与建议默认方案
+
+| 决策子项 | 为什么必须明确 | 候选选择；**推荐仅为建议，非批准** | 不批准时保留的边界/测试 |
+|---|---|---|---|
+| **DEC-008-01：部署与二进制ABI** | `Result<T,E>`的private variant、Eigen矩阵和std::string**仍参与对象布局**；仅靠private/头文件不能保证不同编译器或不同stdlib的稳定二进制ABI | **推荐A：同一版本仓库/发行构建中，所有C++消费者同一工具链、stdlib与关键编译选项同步重编，只承诺**源码级接口及同构建链ABI；**不承诺**未来版本/异构编译器的稳定插件ABI。选项B：额外要求长期稳定跨版本/跨语言插件ABI，则须另设计不透明句柄/稳定C桥，不得把现有variant按值直接穿越该边界 | 未定之前不可声明“ABI稳定”；有跨.so边界必须实际跨TU、producer/consumer及版本兼容性测试；B会构成额外架构范围，不能偷偷实施 |
+| **DEC-008-02：错误访问`value()/error()`** | `value()`在失败、`error()`在成功时没有符合返回类型的可用数据；返回默认T/空Failure会产生假成功/错误丢失 | **推荐A：允许异常的构建中将这种调用视为程序员违反前置条件，抛明确的`std::logic_error`或专用`std::bad_variant_access`，由最终审批选择**；正常输入/算法失败**仍只用Result::failure**。选项B：不允许异常时，应额外设计`tryValue/tryError`之类不会返回无效引用的访问器及明确定义的终止策略，不可直接将无异常与`value()`的引用返回合同拼接 | 没有决定异常策略之前不得编译为“跨所有构建模式均安全”；测试必须区分业务失败与错误调用API；Debug assert不得代替Release行为定义 |
+| **DEC-008-03：构造、移动与`valueless_by_exception`** | 旧候选可默认构造伪成功；改变variant alternative时抛异常可产生`valueless_by_exception`，它不是已保存的`Failure`；而move后原`T`可能处于有效但无数值意义的搬空状态 | **推荐A**：已修`Result()=delete/Status()=delete`，private带标签in-place成功/失败工厂；结果一经创建不切换variant分支、优先删除公共assignment/`emplace`；记录`T`移动/异常约束。不用`hasValue()==false`假定`error()`可用。选项B：保留可变assignment/任意可能抛移动，则必须增加第三种失效状态的明确对外合同并审查故障注入 | 即使A在文档上能避免多条危险路径，也**不能未实测就宣称变体永不valueless**；工厂构造失败可能抛异常而没有一个新Result可返回，不准凭空造Failure |
+| **DEC-008-04：错误跨层保真与CLI退出码** | MAT解码、数值求解、实验聚合和绘图出错属于不同来源；Runner不能把底层`InvalidShape`转换成无来源的`DataMismatch` | **推荐保留现有映射草案**：[contracts `3.1](design/contracts.md)，Parse=2、Read=3、Decode=4、Solve/Simulation/Analyze=5、Output=6、缺可选Plot后端=7。最底层真实code+stage和已知path/variable/observation_index/RunId须保留；跨层加`source_error_code`而不是覆盖根因；入口语法错误在接触MAT文件前报告 | 仍需最终审定组合故障的优先级、由哪个层设置原始stage、命名及枚举扩展的版本策略；原MATLAB并没有这些C++错误码 |
+| **DEC-008-05：JSONL输出及`inspect-mat`成功结果** | JSONL用于诊断，但`inspect-mat`究竟输出元信息还是所有double，以及stderr和持久日志失败时如何处理，当前尚未冻结 | **推荐**：`stage/error_code/exit_code/message`稳定必需，`run_id/path/variable/observation_index/source_error_code`仅已知时输出；数值NaN/Inf不可生成非法JSON token。`inspect-mat`在strict/无NAME仅元数据；strict+NAME/compat无NAME**必须真正读完值**，但是成功的stdout默认给**有界摘要（变量名/class/dims/元素个数/来源信息）**而不是毫无限制地转储所有double；若需逐值输出，视为另外明确授权的可选接口，而非自动从“读完”推导“全量打印” | 必须最终批准`path/run_id`在缺失时采用省略还是显式null、成功/错误消息是1条或多条、日志自身失败后RunOutcome如何反映、隐私路径脱敏/UTF-8等；不能靠当前文档当已执行JSONL测试 |
+| **DEC-008-06：Result/Status跨层失败后的运行状态** | `Result<RunOutcome,Error>` 失败只含Failure，但Manifest仍需保存`Incomplete/Failed`及已完成/无定义计数；错误与部分结果不能混合成伪Complete | **推荐**：单调用失败经`Failure<ExperimentErrorCode>`传播，运行级已落盘/内存的审计计数由独立`RunContext`管理；只有全部必要步骤成功才写`Complete`。异常时不提交Adaptive主/比较系数，已存在的独立产物不覆盖/不自动删除 | 需审核既有原子性与回滚对Writer/Session不同边界，不能在失败`Result`中偷偷塞“半成功值”，也不把未验证的部分MAT当作有效完整结果 |
+
+### C. 可复用的最小审阅材料和决策顺序
+
+建议先确认 **01 ABI范围**、**02 非法访问/异常政策**、**03 工厂/valueless与移动约束**，才能让公共`Result/Status`合同语义自洽；再核 **04 ErrorStage/exit 映射**、**05 JSONL/inspect-mat显示**、**06 运行级失败状态**。这并不是要求立刻批准代码和测试。
+
+**测试证据要怎样形成**（在H-10/H-11解除无限期延期**之后**）：复用`TC-DC-DOMAIN-001`、`TC-NF-OOP-001`、`TC-F-ERROR-001`、`TC-F-CLI-001`、`TC-I-RESULT-001`、`TC-NF-LOG-001`、`TC-NF-SESSION-001`。分别对不可默认构造、成功与失败工厂、move-only T、const右值、`valueless`异常注入、跨两个翻译单元/可选共享库、所有exit/stage、JSONL控制字符、无RunId、文件读写冲突及Session失败不提交进行真实编译/CTest核对。**现阶段只允许把这些写成待测条件，不执行原生工程命令。**
+
+**当前需要人类立即选择吗？** 你要求的是“DEC-008详细说明”，不是授权实施或批准某个子项。本记录只给出A/B候选和推荐默认，**不替你做选择，DEC-008整体保留`DecisionPending / NotApproved`**。你可在其它文档整改更充分时再一次性审阅；六项无限期延期独立保留，不被DEC-008讨论解除。若以后需要你逐项决定，真正要选择的是**01跨版本二进制兼容与否、02错误访问异常政策、03是否采用不可变工厂Result、05成功输出/日志细节**；04/06的大方向已有合同，主要审核边界即可。
+
 ## 3. 回填与关闭
 
 材料/决定记录包括来源、范围、日期、固定文件身份、适用AF/REQ/TC及是否允许执行。实际Wolfram结果与用户已执行的球谐C++/CTest按固定SHA分开登记，尚未运行的新脚本不得继承旧通过结果。AF-045/046/051/055/057包含的更广义原生数值、公共接口、业务集成、Golden或批准目标仍保持开放，不能用局部证明替代整个项目验收。
