@@ -183,7 +183,7 @@ Result<T,E>、FlowField、FrameMotionContext、状态枚举及构造注入方式
 |---|---|---|---|
 | `agent_in_sphere_initialization_test.m:97–118`（行号以只读源为准） | 每帧 `ohnekoeff` 从恒一重置、`mitkoeff` 取主旧状态；内层迭代k | `[ohnekoeff,...]` 与 `[mitkoeff,...]` | **同一帧内的下一次 k** 可以读取更新后的两组系数；下一帧重新初始化比较系数；跨帧只保留主 `akkoeff` |
 | `agent_in_sphere_adaptive_matched_filter_test.m:139–162` | 每帧 `ohnekoeff` 重置、`mitkoeff` 从已旋转主状态复制；比较内层k | `[ohnekoeff,...]` 与 `[mitkoeff,...]` | 在同一帧迭代k时**写回**对照系数；下一帧仍重新创建，不将比较系数错当长期主状态 |
-| **`agent_in_sphere_adaptive_matched_filter_many_parameter.m:134–182`** | 先分别旋转当前主系数和四组历史对照系数；每个k在 `mod(i,zeitkonstanten(k))==0` 时从**尚未执行本帧主求解**的 `akkoeff` 刷新 | **`[dumi,mittrans,mitrot,error]`**，其中`dumi`被丢弃、后续代码不使用 | **不提交这次对照求解得到的系数**，四组 `mitkoeff` 仅受下一帧旋转和周期刷新影响；本帧只有主 `[akkoeff,aktuelltrans,aktuellrot,error]` 写回主系数 |
+| **`agent_in_sphere_adaptive_matched_filter_many_parameter.m:134–182`** | 先分别旋转当前主系数和四组历史对照系数；每个k在 `mod(i,zeitkonstanten(k))==0` 时从**尚未执行本帧主求解**的 `akkoeff` 刷新 | **`[dumi,mittrans,mitrot,error]`**，其中`dumi`被丢弃、后续代码不使用 | **不提交这次对照求解得到的系数**；对照的`error`返回量仅在循环中被赋值覆盖，存档的`mittransfehler/mitrotfehler`实际由`normrelfehler(besttrans,mittrans)`与`normrelfehler(bestrot,mitrot)`计算；四组 `mitkoeff` 仅受下一帧旋转和周期刷新影响；本帧只有主 `[akkoeff,aktuelltrans,aktuellrot,error]` 写回主系数 |
 
 针对更新率原脚本，精确的候选状态次序是：
 
@@ -201,7 +201,7 @@ primary = oneit(akkoeff, flow)
 akkoeff = primary.coefficients_next              // 唯一每帧正式自适应提交
 ~~~
 
-**判别性固定替身（不要求求解器实际实现）**：令每帧旋转为单位阵，源主系数和四组比较初始均为常数项哨兵 `A=B_k=1`；替身 `oneit(C)` 总返回 `coefficients_next=C+100`、运动值另记录。测试第2、3、5、6帧，**period=1比较输入**应分别为 `[1,101,301,401]`，**period=5比较输入**应为 `[1,1,301,301]`，各帧主求解提交后的状态为 `[101,201,401,501]`（第4帧仍执行一次主求解，所以第5帧前主为301）。若错误地提交比较返回值，第3帧period5将变为101而不是1；若先更新主系数再周期刷新，第5帧period5会变为401而非301。替身仅是系数状态的可追踪值，不假设3×5实矩阵本身为一个标量或存在真实L3结果。这里的标量A/B只是**可注入系数状态替身**，不是声称3×5球谐矩阵只存一个标量或有真实L3数值。
+**判别性固定替身（不要求求解器实际实现）**：令每帧旋转为单位阵，源主系数和四组比较初始均为常数项哨兵 `A=B_k=1`；替身 `oneit(C)` 总返回 `coefficients_next=C+100`、运动值另记录。测试第2、3、5、6帧，**period=1比较输入**应分别为 `[1,101,301,401]`，**period=5比较输入**应为 `[1,1,301,301]`，各帧主求解提交后的状态为 `[101,201,401,501]`（第4帧仍执行一次主求解，所以第5帧前主为301）。若错误地提交比较返回值，第3帧period5将变为101而不是1；若先更新主系数再周期刷新，第5帧period5会变为401而非301。替身仅是系数状态的可追踪值，不假设3×5实矩阵本身为一个标量或存在真实L3结果。
 
 **事务边界**：C++ 已选的单步失败不提交/连续序列中断纪律仍有效。执行这些比较前的旋转/周期复制应在本帧暂存状态中进行：**任何必需比较或主单步失败时不得局部提交已旋转/刷新后的主或四组比较系数**，否则与§5.1的主/基线原子性合同矛盾；仅成功才提交本帧完整状态。该原子性是安全候选，不是源MATLAB原生事务行为。复用 `TC-F-ADAPT-003 / TC-F-EXP-003 / TC-NF-SESSION-001`，不添加新TC，也不声称生产 Session、CTest 已通过。
 
