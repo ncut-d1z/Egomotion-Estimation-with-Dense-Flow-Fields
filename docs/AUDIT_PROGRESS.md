@@ -1,6 +1,6 @@
 # 全工程文档规范审计进度与整改台账（AUDIT_PROGRESS）
 
-> **状态：审计进度 v0.9，第八批实际修正Adaptive非对称6×6系统误用LDLT和MAT兼容Reader的双次打开来源竞态，含公式证明、输入反例、测试合同及远端逐次提交；继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
+> **状态：审计进度 v1.0，第九批实际修订SRS错误来源追踪、KvD测试公式控制字符、PLAN/历史决策过时论文阻塞，并补录36份同提交文件SHA到文档控制矩阵；继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
 
 ## 1. 口径、状态和可复核方式
 
@@ -14,7 +14,7 @@
 
 | ID | docs/下相对路径 | 用户初始规范判断 | 首轮实际需核对的问题 | 审计状态 | 本轮证据／整改关联 |
 |---|---|---|---|---|---|
-| DOC-001 | `REQUIREMENTS.md` | 草案级部分符合 | AC→LLD章节身份/正式批准 | 已完成限定审计 | 本轮v0.15实改：§9.7新增66项REQ/AC/TC→14种主要责任文件与章节及完整Git blob快照，纠正FLOW-004、ERROR-001误归属；正式完整依赖/批准仍缺 |
+| DOC-001 | `REQUIREMENTS.md` | 草案级部分符合 | AC→LLD章节身份/正式批准 | 已完成限定审计 | SRS v0.16：改正REQ-F-CLI-001原错误五个生成入口来源为MAT只读检查/getflowfield；§7清除过时论文等待门槛；复核58正文+8附录REQ=66、TC/AC配对无错；提交99535c3；正式追踪/签署未闭合 |
 | DOC-002 | `ARCHITECTURE.md` | 草案级部分符合 | 27拟议DAG与真实构建/ADR | 已完成限定审计 | HLD v0.10：设计图27箭头=25内部+2外部；根CMake仅低阶SH及3CTest，部署/DEC-006仍待 |
 | DOC-003 | `OBJECT_MODEL.md` | 草案级部分符合 | 候选类/生命周期/签署 | 已完成限定审计 | 对象模型v0.7：所有权、候选公共类与已实现SH叶子区分；正式生命周期/ABI测试未做 |
 | DOC-004 | `design/README.md` | 索引符合，非LLD | 实际Markdown个数与模块覆盖条目 | 已完成限定审计 | 14份真实目录Markdown=1索引+1跨模块LLD+9模块LLD+1专题LLD+2理论，10个覆盖行；提交3614b28 |
@@ -31,17 +31,17 @@
 | DOC-015 | `design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 专题草案级部分符合 | 旧版本CMake描述与最新低阶叶子验收区分 | 已完成限定审计 | 对照旧1/1说明与用户固定5e522198 3/3；仅低阶叶子，公共ABI仍未实现；提交4a62a9d |
 | DOC-016 | `design/SH_DISCRETE_REFIT_CONSISTENCY.md` | 理论专题合格，非LLD | 不能替代模块LLD/测试/批准 | 正在审计 | 已核专题定位与35项数学辅助检查，待独立逐式复算 |
 | DOC-017 | `design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md` | 理论专题合格，非LLD | 不能替代Adaptive真实接口/实现 | 正在审计 | 理论专题v0.2：从M2/M3的叉积矩阵推导M对称充要条件mean((mu-1)d)=0，证明均值1不保证对称；提交28c20f6/555eeea，尚未逐式独立重算本专题其它全部25项 |
-| DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 已完成限定审计 | TEST_PLAN新增全正近度非对称M/正确z的完整6×6对照、MAT A/B在枚举解码之间路径替换负例；提交d5d7385/6d0e212；均为计划、未执行 |
-| DOC-019 | `PLAN.md` | WBS草案符合 | 98P、M0–M5、真实工期/性能 | 已完成限定审计 | PLAN v0.8：98个唯一P/WBS静态确认，SH-only实测与整工程M0–M5未验收分开 |
+| DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 已完成限定审计 | TEST_PLAN §2.19.2实际修复6个ASCII退格控制字符破坏的KvD负near轨迹数学公式，按kvd §9.5恢复alpha/beta/mu、两种raw t和最终t；0退格残留且66 TC/REQ/AC静态对应一致；提交71b4358，仍未真实CTest |
+| DOC-019 | `PLAN.md` | WBS草案符合 | 98P、M0–M5、真实工期/性能 | 已完成限定审计 | PLAN R-02实改：论文缺失风险改为已取得IR96/IR98/Choi、三路线低阶SH固定证据与未完成公共接口/集成风险分列；提交6f2a426；不冒称27DAG/预算/新CTest已验收 |
 | DOC-020 | `PROGRESS.md` | 符合证据登记 | 固定SHA与历史执行/新状态分离 | 已完成限定审计 | 本轮已核历史E-DOC/SH真实证据与旧97AF；正文修订b69e17c |
 | DOC-021 | `AUDIT.md` | 原专项→本轮综合审计 | 已在初始提交转换为全工程文档规范 | 已完成限定审计 | 新全工程文档审计规则、36对象、用户评价基线已提交1081f0f；原SH范围保留固定历史 |
 | DOC-022 | `AUDIT_PROCESS.md` | 球谐专项整改，不适用全工程 | 保留SH-01～06，引用原专项快照避免误链 | 已完成限定审计 | 原SH-01～06理论台账保持不变，增加新审计与旧SH历史互不重计的说明；提交569a6e7 |
-| DOC-023 | `DOCUMENT_BASELINE_REGISTER.md` | 部分符合 | 36项固定历史SHA与当期HEAD/批准分开 | 已完成限定审计 | 本轮实改：§2–3标题改为3e3ad2a历史固定快照；§6.18登记本轮SRS v0.15加14个主要候选设计文件的审查提交Git blob身份，非批准 |
+| DOC-023 | `DOCUMENT_BASELINE_REGISTER.md` | 部分符合 | 36项固定历史SHA与当期HEAD/批准分开 | 已完成限定审计 | DOCUMENT_BASELINE_REGISTER §6.4新增2026-11-12同一固定提交5de2e9d的36文件全Git blob和审计三态；原历史快照保留，新注册blob7cb2c627；签署/依赖/真实数值仍缺，DAR-005仅实质推进未结案 |
 | DOC-024 | `SOURCE_INVENTORY.md` | 静态来源追踪符合 | 45 .m/50函数、MAT未独立SHA | 已完成限定审计 | 核对45 .m/50函数声明的固定源清单及blob身份；未重算MAT SHA256 |
 | DOC-025 | `MIGRATION_MATRIX.md` | 静态迁移追踪符合 | 45/50候选映射，不是代码实现 | 已完成限定审计 | 核对45/50静态候选迁移映射；不等于真实移植 |
 | DOC-026 | `TODO.md` | 管理清单符合 | 历史审批与分阶段授权时间线 | 已完成限定审计 | TODO：人类待办/时间线与原SH局部授权、用户3/3已核；全工程文档审计导航已更正 |
 | DOC-027 | `decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | 决策记录符合 | HistoricalOnly与当前save/代码未测试 | 已完成限定审计 | DEC-004：选定当前save/HistoricalOnly/缺失字段失败规则，尚无生产Runner/Analyzer测试 |
-| DOC-028 | `decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md` | 所有者决定符合 | 技术方向≠软件运行/基线签署 | 已完成限定审计 | 2026-11-07所有者决定是历史时间点，MIT/Eigen/CLI等方向已选但不是当前完整软件授权 |
+| DOC-028 | `decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md` | 所有者决定符合 | 技术方向≠软件运行/基线签署 | 已完成限定审计 | 历史所有者决策文件增加2026-11-12后续完成附记，保留2026-11-07审批原意并注明论文已交付、5e522198局部SH3/3、其余授权/ABI/DEC仍开；提交5de2e9d |
 | DOC-029 | `decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md` | 专项授权记录符合 | 历史SH局部权限不得扩展 | 已完成限定审计 | 2026-11-09球谐专项授权仅l≤2/Eigen并禁sdla，H-11历史状态不影响后来用户自己实测 |
 | DOC-030 | `approval/DECISION_IMPLEMENTATION_NOTES.md` | 审批落实记录符合 | 旧draft/权限不当最新批准 | 已完成限定审计 | 核对H-01～16历史权限与批准状态；不代表当前新授权 |
 | DOC-031 | `approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md` | 审批包符合，非规范 | applicationCommit/scopeIds空 | 已完成限定审计 | 核对历史HAR与L1政策冲突，真实修订35c9536 |
@@ -51,7 +51,7 @@
 | DOC-035 | `golden/SH_PAPER_VERIFICATION_CASES.md` | 验证候选符合 | SH-P候选未执行，区别原生已测案例 | 已完成限定审计 | 核对SH-P候选未批准未执行与SH真实叶子测试区分 |
 | DOC-036 | `golden/analytic_golden_candidates.v1.json` | JSON状态正确，非Markdown | DRAFT_UNAPPROVED_UNEXECUTED不是Golden批准 | 已完成限定审计 | 核对JSON头部DRAFT状态、AN-G01～12候选ID；未重算数值 |
 
-**历史初始与当前口径**：第0阶段原36份均尚未审计、6个初始DAR均未整改；第1阶段是6份已完成限定审计、14份正在、16份未审及8项DAR中的3项已整改。**第2/3阶段历史状态为36份中15份已完成限定审计、11份正在审计、10份未审；9个DAR中4已整改、5未整改。第四阶段按下方真实审计复核为24份完成限定、9份正在、3份未审；10个DAR中5已整改、5未整改。第六阶段完成限定25份、正在11份、未审0份；14个DAR中9项文档整改完成、5项综合外部/软件条件未完成。第七阶段完成限定26份、正在10份、未审0份；17个DAR中12项文档问题已整改、5项软件/审批复合目标仍未整改。第八阶段仍有26份完成限定/10份正在/0份未审；19个DAR中14项纯文档缺陷已修复、5项综合软件及外部批准条件仍开放。** 限定审计仅核对该行明确说明的定位/证据/追踪范围，不等于每个AC、API、算法、签署与软件测试完成。
+**历史初始与当前口径**：第0阶段原36份均尚未审计、6个初始DAR均未整改；第1阶段是6份已完成限定审计、14份正在、16份未审及8项DAR中的3项已整改。**第2/3阶段历史状态为36份中15份已完成限定审计、11份正在审计、10份未审；9个DAR中4已整改、5未整改。第四阶段按下方真实审计复核为24份完成限定、9份正在、3份未审；10个DAR中5已整改、5未整改。第六阶段完成限定25份、正在11份、未审0份；14个DAR中9项文档整改完成、5项综合外部/软件条件未完成。第七阶段完成限定26份、正在10份、未审0份；17个DAR中12项文档问题已整改、5项软件/审批复合目标仍未整改。第八阶段仍有26份完成限定/10份正在/0份未审；19个DAR中14项纯文档缺陷已修复、5项综合软件及外部批准条件仍开放。第九阶段本轮实改SRS/TEST_PLAN/PLAN/历史决策/基线矩阵五份正文；36DOC三态不变，21个DAR中16项已修复、5项外部或软件条件仍开放。** 限定审计仅核对该行明确说明的定位/证据/追踪范围，不等于每个AC、API、算法、签署与软件测试完成。
 
 ## 3. 整改目标（六项用户输入基线及新增独立事实冲突）
 
@@ -81,6 +81,9 @@
 
 | DAR-018 | design/adaptive_mfa.md；design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md；TEST_PLAN.md | Adaptive 6×6 M的四块中M2与M3一般不是互为转置，原LLD却把Eigen LDLT无条件与QR/SVD并列为可替代原inverse的通用求解器 | 从原oneit.m构造完整正近度、s=1、detM=64/729而M非对称的六轴有理反例，推导M对称充要条件mean((mu−1)d)=0；删除通用LDLT，要求非对称求解/全M、b、z/残差和既有TC映射；保留原算法和软件待验证 | 纯文档数学与错误求解器前提 | 已整改 |
 | DAR-019 | design/mat_io.md；design/cli.md；TEST_PLAN.md | readFirstCompatible旧§7.1先inspect(path)再调用重新Mat_Open的readNamed(path,name)，同一路径在两次open间可被替换，导致字段选择与值解码混用不同输入文件身份 | 修正为单次有效MatFileHandle枚举/选择/Mat_VarRead/深拷贝，说明仍不能抵御原地并发修改及需真实matio 1.5.26校验；补A/B双文件竞态负例、CLI同一调用约束和Writer单文件Status/RunContext Manifest责任 | 纯文档数据来源一致性/安全合同 | 已整改 |
+
+| DAR-020 | REQUIREMENTS.md；PLAN.md；decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md；TODO.md | SRS§9把MAT只读inspect-mat REQ-F-CLI-001错误映射为五个MATLAB生成入口；SRS§7、PLAN R-02和历史技术决定的“1996/1998论文仍待上传”描述与已取得PDF和SH局部CTest证据冲突 | 改正来源矩阵但不改变66个REQ/AC/TC；现行SRS/PLAN按真实材料和低阶局部证据更新，保留2026-11-07历史决定原时点并增加后续状态与待办边界；固定提交及66项一致性核验 | 纯文档来源/时间线一致性 | 已整改 |
+| DAR-021 | TEST_PLAN.md；design/kvd.md；verification/kvd/near_sign_flip_exact_trace.v1.json | TEST_PLAN§2.19.2八方向负near翻号的关键数学符号因反斜杠转义错误变为6个ASCII退格控制字符，使beta、boldsymbol、bar mu等公式无法准确阅读/复核 | 对照既有kvd.md§9.5公式和固定理论输入，重新按LaTeX逐式写出Franz初态、alpha/beta、near均值、Original/Modified raw t及输出；确认退格字符0，保持现有数学证据与TC状态不变 | 纯文档数学公式文本损坏 | 已整改 |
 
 ## 4. 已实施审计、具体整改和验证日志
 
@@ -183,7 +186,23 @@
 
 **本阶段进度与分母**：整改总数17→19（+2，均为有具体缺陷及实际源码位置的独立整改）；已整改12→14（+2，**仅文档问题**）；未整改5→5（0，均仍需软件和/或正式人类批准）。36审计文件不增不减；已审计26→26（0），正在10→10（0），未审0→0（0）。本阶段实际修订五份非台账技术文件，无原始MATLAB/MAT/生产C++/CMake/CTest运行或批准。未把文档修订当成正式TC或ABI通过。
 
+### 第9阶段：需求源追踪、数学公式修复与近期配置身份（2026-11-12）
+
+**起始HEAD**：`298b8398471106948b567af425e3ff76d847120b`；起始台账36份文档（已审计26/正在10/未审0）、19个目标（已整改14/未整改5）。遵守[AUDIT.md](AUDIT.md)规定的**仅文档审核与真实文本修复**，不擅自执行生产C++、CMake/CTest、MAT读写测试、MATLAB或正式基线批准。所有原MATLAB/MAT文件只读且未改写。
+
+**一、本轮实改不是调整台账**：
+
+- **DAR-020 来源追踪与现行阻塞错误**：实际修改[REQUIREMENTS.md](REQUIREMENTS.md) v0.15→v0.16，将 `REQ-F-CLI-001/TC-F-CLI-001/AC-F-CLI-001` 的源从错误的“五生成入口”修为只读 `getflowfield.m`/MAT检查，并改正§7旧论文待上传描述；提交[99535c3](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/99535c3cdf0c4c2f62e15b9b62fc84ceef26780a)。实际修改[PLAN.md](PLAN.md) R-02，把过时“等论文才能做数学/递推”改成真实公共ABI/旧新场作用/全业务集成/容差风险；提交[6f2a426](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/6f2a426d0e010f82d6896868d19b67a6bcfd1ba3)。历史[项目所有者2026-11-07决定](decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md)保留当时条件并补实际后续已取得PDF、低阶局部SHA下3/3及未解除授权边界；提交[5de2e9d](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/5de2e9d521efd36ca9f2add3d0c76f9090f9949a)。`TODO.md`已明确PAPER-SH材料完结，未修改用户历史批准JSON。
+- **DAR-021 数学公式本体损坏**：[TEST_PLAN.md §2.19.2](TEST_PLAN.md)原八方向近度翻号trace中有**6个ASCII退格字符**，来自 `\\boldsymbol/\\beta/\\bar` 等文本转义造成显示及机器核查失效。已按[原 KvD LLD §9.5](design/kvd.md)恢复Franz向量、\(\epsilon,\alpha,\beta,\bar\mu\)、两类未归一平移和终端缩放的完整LaTeX；字符扫描 **6→0**，不改固定Wolfram证据文件、66TC或代码；提交[71b4358](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/71b43588369b98ab7bbc89e7991337144ca294d4)。这不是新增数学运算或原生CTest。
+- **DAR-005真实推进但未关**：[DOCUMENT_BASELINE_REGISTER.md §6.4](DOCUMENT_BASELINE_REGISTER.md)已实写**全部36份**审计目标在单一固定提交[5de2e9d](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/5de2e9d521efd36ca9f2add3d0c76f9090f9949a)上的**36个完整Git blob SHA**及其对应26/10/0审计身份，提交[715af6e](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/715af6e8488f3f2cb3679a183c7ef14b5fd305f4)，新增登记文件blob `7cb2c627e92674afb0307ac1396fe6d51365bc89`。严格保留旧3e3ad2a历史快照；特别注明自身修改后的新blob不能反写到旧提交、也不自动跟随HEAD。**已取得当前阶段可复核配置身份，但正式签署人/日期时区、LLD全依赖集合、DEC处置与实际TC仍缺，所以DAR-005保持未整改**。
+
+**二、静态一致性核对**：以GitHub远端最新版读取`REQUIREMENTS.md`和`TEST_PLAN.md`，实际按表行解析 SRS正文58条+附录DC8条=**66个不重复REQ**；TEST_PLAN §3共**66条 TC→REQ→AC**，逐编号匹配不一致**0**；恢复后的测试文档退格字符数**0**。新版本矩阵§6.4精确36个不重复文件路径和SHA，不把候选、数学研究和真实软件通过混用。这些是**连接器内容静态检查**，未实际执行`scripts/check_docs_traceability.sh`或CTest，不能冒称软件测试通过。
+
+**本阶段计数**：整改目标19→21（+2个独立真实文档缺陷），已整改14→16（+2），未整改5→5（0）；审计文件36→36（0）、已完成限定26→26（0）、正在10→10（0）、未审0→0（0）。五项DAR-001～005为含正式软件/审批的综合义务，本轮已推进DAR-001来源身份与DAR-005当前固定快照，但未满足完整关闭条件；无新增批准/原生运行，不能宣布完成最终第二轮审计。
+
 ## 5. 各轮计数与变化
+
+**第9阶段相对上一轮**：21个整改目标，已整改16、未整改5；相对第8阶段目标19→21（+2）、已整改14→16（+2）、未整改5→5（0）。审计36文件、完成26、正在10、未审0，四项与第8阶段均无变化；五份非台账正文已实际修复。
 
 **第8阶段相对上一轮**：目标17→19（+2）、已整改12→14（+2）、未整改5→5（0）；文档36→36（0）、已完成限定26→26（0）、正在10→10（0）、未审0→0（0）。实改五份技术正文，并非只修改计数。
 
@@ -213,6 +232,7 @@
 | 第6阶段：轨迹/采样/Bias/KvD源码合同整改 | 36 | 25 | 11 | 0 | 14 | 9 | 5 |
 | 第7阶段：CLI/ABI/球内定义域合同整改 | 36 | 26 | 10 | 0 | 17 | 12 | 5 |
 | 第8阶段：非对称求解器/Reader源身份整改 | 36 | 26 | 10 | 0 | 19 | 14 | 5 |
+| 第9阶段：SRS追踪/公式修复/同提交基线身份 | 36 | 26 | 10 | 0 | 21 | 16 | 5 |
 
 ## 6. 36份文件的同一基准提交身份（DAR-005：只读静态快照）
 
