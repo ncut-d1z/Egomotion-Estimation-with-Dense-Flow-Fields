@@ -205,6 +205,24 @@ regression_tolerance=9.0949470177292824e-13
 
 **DEC-004 已选的历史字段兼容验收**（参见 [决定原文](decisions/DEC-004_HISTORICAL_MAT_FIELDS.md)）：以 L2 的 `with_errors` 七份文件与 `many_parameter` 六份文件证明历史字段只读存在；以独立 L3 小规模生成案例和未来 C++ 运行验证**新 comparison 仅五类 save、新 update-rates 仅三类 save**，两类历史 `alleadap*` 以及新 update-rates 不保存的 `rottransratio` 必须标 `HistoricalOnly`，不得写入新的 MAT。对新 update-rates 结果运行需要 `rottransratio` 的分析必须**确定性失败并报告 MissingVariable/来源类别**，旧历史目录仍能读取。关联 TC-F-EXP-002/003、TC-D-MAT-003、TC-F-AN-001/002、TC-I-ANALYSIS-001；**没有新增 TC ID，且所有新测试均未执行**。这套处理规则已经确定，不再等待历史额外字段归因。
 
+### 2.7.1 Update rates 对照单步新系数必须丢弃的固定时序回归（2026-11-12）
+
+**源级合同**：原只读 `agent_in_sphere_adaptive_matched_filter_many_parameter.m:134–182` 在帧首旋转`akkoeff`及四组`mitkoeff(:,:,k)`，并在 `mod(i,[1,5,11,21])==0` 时把**本帧主单步前**的`akkoeff`复制给对应组；在比较处调用`[dumi,mittrans,mitrot,error]=oneit(...)`，其中`dumi`并不写回`mitkoeff`，即**比较只消费t、omega、error；新的系数被有意丢弃**。随后`[akkoeff,aktuelltrans,aktuellrot,error]=oneit(...)`才写回主状态。与初始化和普通Comparison中的`[mitkoeff,...]=oneit(...)`不同，不能共用“所有比较都写回新coeff”的代码路径；精确对照见 [Adaptive `5.0.1](design/adaptive_mfa.md)、[Runner `8.0.1](design/experiments.md)。
+
+**原参数哨兵替身**：四组和主系数都从源常数项`A=B_k=1`开始，帧旋转设置为I，`oneit(C)` 返回候选`C+100`，并提供可识别的运动值但不干扰主/比较状态。按 i=2..6 顺序逐帧调用（包含第4帧），未来独立替身测试必须按下表得到：
+
+| MATLAB 帧 i | 比较 period=1 的求解输入 | 比较 period=5 的求解输入 | 本帧主单步写回后 A |
+|---:|---:|---:|---:|
+| 2 | 1 | 1 | 101 |
+| 3 | 101 | 1 | 201 |
+| 4 | 201 | 1 | 301 |
+| 5 | 301 | **301（周期刷新于主单步之前）** | 401 |
+| 6 | 401 | **301（上一周期快照保持）** | 501 |
+
+对照求解每次返回的`C+100`都不得变成下一帧的比较状态。两个必杀错误变体分别是：①错误提交`dumi`，将 period5 在i=3的输入从1变成101；②主单步先提交再作周期刷新，将period5在i=5的输入从301变成401。period11/21也要用`mod(i,period)`的实际 MATLAB 1-based i 测试刷新点和前/后邻帧，不能把C++的0-based行号直接取模。上述`C`仅代表可注入系数状态，不是将3×5球谐系数约简成物理标量。
+
+**失败事务负例**：在有旋转且i=5刷新的帧分别注入period5比较失败、主单步失败，保留`akkoeff/mitkoeff[1..4]`帧前快照；任何必需节点失败时不得**仅提交部分旋转/刷新/主系数**，应按现行Session既定策略停止不可恢复连续序列，Runner标`Incomplete/Failed`，保留错误来源和有效样本数。这是新增C++安全保障，非声称原MATLAB具有事务语义。绑定现有`TC-F-ADAPT-003`、`TC-F-EXP-003`、`TC-NF-SESSION-001`、`TC-NF-RECOVERY-001`，**未编写/执行真实测试、未生成 L3/CTest PASS、不新增第67项TC**。
+
 ### 2.8 用户审批 JSON 的数值与执行验证边界（仅规划）
 
 **已补充具体 Golden/容差候选，但仍未测试或批准**：查看 [Golden 参考样例与宽松容差建议](golden/GOLDEN_TOLERANCE_PROPOSAL.md) 和 [12 组解析候选 JSON](golden/analytic_golden_candidates.v1.json)。其中给出 12 组根据原 MATLAB 公式静态推导的固定输入/输出（含有序采样、光流、球谐、90° 转动、误差计算、Adaptive 单步）和第一轮探索性建议 `atol=0.01, rtol=0.1`。**这些是未执行的独立 L3 候选，不代表最终 DEC-005 PASS 阈值**；离散结构、错误状态、球面/旋转不变量另有严格条件。一般 KVD/Adaptive 逐轮及 RNG 测试须补齐 L3 独立固定输入、逐节点与调用次数参考，最终结果/统计使用 L2/L4；不要求 MATLAB 采集，H-10/H-11 暂缓状态不变。
