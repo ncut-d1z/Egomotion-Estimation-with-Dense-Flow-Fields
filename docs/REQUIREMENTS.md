@@ -1,6 +1,6 @@
 # Egomotion Estimation with Dense Flow Fields：软件需求规格说明书（SRS）
 
-> **状态：草案 v0.18，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
+> **状态：草案 v0.19，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
 
 ## 1. 目的、范围与约束
 
@@ -49,7 +49,7 @@
 |---|---|---|---|---|
 | REQ-F-ADAPT-001 | M | 确定 | 系统应实现 Adaptive MFA 单步 6×6 系统及其平移、旋转、平均平方残差（MSE）、近度和新球谐系数。 | AC-F-ADAPT-001：以原 MATLAB 静态公式与 L3 独立固定输入参考逐项核验近度归一化、六维右端、M1–M4 四块、6×6 系统、z、归一化 t、ω、返回 error=MSE、重算 near 和新 3×5 系数；内部 oneit_error=sqrt(error) 未返回。应记录各节点中间量与真实 C++ 测试、源 SHA、参考 SHA 和 DEC-005 容差；**不要求运行原 MATLAB 或提供 L1 Golden**，也不宣称未测试的原版异常行为已等价。 |
 | REQ-F-ADAPT-002 | M | 确定 | 系统应在连续轨迹中按原顺序旋转系数、计算并提交主状态，同时支持独立对比状态。 | AC-F-ADAPT-002：固定逐帧输入检验更新顺序、运行间隔离。 |
-| REQ-F-ADAPT-003 | M | 确定 | 系统应支持每帧重置、继承、1/5/11/21 帧周期刷新策略。 | AC-F-ADAPT-003：固定帧号验证正确触发且不污染主系数。 |
+| REQ-F-ADAPT-003 | M | 确定 | 系统应支持每帧重置、继承、1/5/11/21 帧周期刷新策略。 | AC-F-ADAPT-003：固定 MATLAB 1-based 帧号验证 period=1/5/11/21 的刷新时刻与主/比较状态隔离：多更新率源码在旋转和按周期复制主旧系数后，比较单步第一返回量赋给 `dumi` 并**弃置，不得写回对应 `mitkoeff(:,:,k)`**；只有帧末主单步返回的新系数写回 `akkoeff`。与初始化/普通对比入口可在同帧迭代中覆盖 `mitkoeff` 的行为区别核验，错误状态不得局部提交；详见 [Adaptive LLD §5.0.1](design/adaptive_mfa.md)、[TC-F-ADAPT-003](TEST_PLAN.md)。真实Session/C++/CTest仍待实施。 |
 | REQ-F-AN-001 | M | 确定 | 系统应复现原 Adaptive 初始化与两种轨迹分析的曲线数值、分段阈值和窗口平滑。 | AC-F-AN-001：输出结构至少包含原 MAT 变量名、横轴帧索引、纵轴指标和单位、曲线数组、分段起止索引、平滑窗口及未定义值标记；初始化核验 mittrans 第 1–13 项与 mitrot 全序列；600 点比较图核验 50–550 帧、阈值 0.01、rottransratio 双纵轴；更新率图核验阈值 0.02 和半窗 2/5/10，逐元素对照而非仅比较图像；对历史已存在字段正常读取，对新结果不产生而分析必须使用的字段，按 DEC-004 显式报告缺失和数据来源，不得默默补零或替代。 |
 | REQ-F-AN-002 | S | 确定 | 系统应将绘图与数值分析隔离，并支持原三份 illustration 的可比较展示。 | AC-F-AN-002：无绘图依赖下数值命令可运行；图示所据数据一致。 |
 | REQ-F-BIAS-001 | M | 确定 | 系统应复现非球形视场的 Bias 实验及三组噪声乘数 [0.6,2.4,9.6]。 | AC-F-BIAS-001：以固定 Gaussian 序列含 0、1、−1 分量，对 [0.6,2.4,9.6] 每项验证原脚本的 randn × 系数 × 平均光流模长（**不能开平方**）及切平面投影；另核对 xwerte 和 ywerte1…6 变量名、维度。 |
@@ -63,7 +63,7 @@
 | REQ-F-ERROR-001 | M | 确定 | 系统应分别实现尺度对齐向量误差与方向角度误差，不能用单一误差代替。 | AC-F-ERROR-001：按原只读 `transfehler_div.m` 返回**估计向量按真值模长缩放后的欧氏距离**（`sqrt(dot(diff,diff))`，不是平方误差、不是角度），而 `normrelfehler.m` 返回**单位化后方向夹角的度数**；固定输入 `(e_x,2e_y)` 的两输出分别为 `sqrt(2)`、`90°`，反向 `(e_x,-2e_x)` 为 `2`、`180°`。对零真值 `u=0`、非零估计 `v=2e_x`，原距离表达式虽算出零、方向角无定义，正式 C++ 不得将其当有效零误差样本；任一向量零模长须报告明确非成功并区别源表达式和候选安全策略，保持真实有效/无定义分母。依据 [KvD LLD §1.1](design/kvd.md) 和既有 `TC-F-ERROR-001`，须实际 L3/CTest、最终 DEC-005/008 批准后才可验收。 |
 | REQ-F-EXP-001 | M | 确定 | 系统应复现 35 点圆形初始化实验，保存四类方向误差结果。 | AC-F-EXP-001：参数、数组形状、索引与历史 MAT 比较。 |
 | REQ-F-EXP-002 | M | 确定 | 系统应复现带/不带噪声 600 点正弦轨迹对比，保留八次运行与原输出。 | AC-F-EXP-002：分别使用 addederror=0 与批准的非零值，核验 600 点、二十面体等级 4、循环 i=2…599、8 次运行；按当前代码输出 allemittransfehler、allemitrotfehler、alleohnetransfehler、alleohnerotfehler、rottransratio 五个 600×1 MAT；前四项求八次平均，rottransratio 保留最后一次运行值，不伪造历史 alleadap*。 |
-| REQ-F-EXP-003 | M | DEC-004 处理原则已选；软件未验收 | 系统应复现多更新频率实验，并显式登记历史 MAT 与当前脚本输出不一致项。 | AC-F-EXP-003：在 600 点正弦轨迹、二十面体等级 2 和刷新周期 [1,5,11,21] 下核验当前源码实际输出仅 `allemittransfehler`、`allemitrotfehler`（600×4）和 `akrot`（600×1），**新 C++ 结果不得增写历史专属字段**；历史 `alleadaprotfehler`、`alleadaptransfehler`、`rottransratio` 只读保留并在字段级差异记录中标为 `HistoricalOnly`。新输出如被要求提供未保存的 `rottransratio`，分析必须明确报告缺失，不生成假值。见 [DEC-004](decisions/DEC-004_HISTORICAL_MAT_FIELDS.md)。 |
+| REQ-F-EXP-003 | M | DEC-004 处理原则已选；软件未验收 | 系统应复现多更新频率实验，并显式登记历史 MAT 与当前脚本输出不一致项。 | AC-F-EXP-003：在 600 点正弦轨迹、二十面体等级 2 和刷新周期 [1,5,11,21] 下，核验比较系数**仅按前一帧旋转和本帧主求解前的周期刷新变化、对照求解的新系数被弃置**，主系数按源每帧求解写回；核验当前源码实际输出仅 `allemittransfehler`、`allemitrotfehler`（600×4）和 `akrot`（600×1），**新 C++ 结果不得增写历史专属字段**；历史 `alleadaprotfehler`、`alleadaptransfehler`、`rottransratio` 只读保留并在字段级差异记录中标为 `HistoricalOnly`。新输出如被要求提供未保存的 `rottransratio`，分析必须明确报告缺失，不生成假值。见 [DEC-004](decisions/DEC-004_HISTORICAL_MAT_FIELDS.md)。 |
 | REQ-F-FILTER-001 | M | 确定 | 系统应忠实实现 Franz 三轴匹配滤波的平移、旋转模板响应与归一化。 | AC-F-FILTER-001：依据 [design/kvd.md §2](design/kvd.md) 核对固定 N×6 输入下三轴平移/旋转模板向量、每轴响应、平方范数累积、归一化系数及最终 t/ω；零范数退化须有明确非成功状态。使用可追溯的 **L3 独立逐节点参考**、实际 C++ 测试与批准的 DEC-005 容差判定，**不要求原 MATLAB 运行 Golden**。 |
 | REQ-F-FLOW-001 | M | 确定 | 系统应按原符号约定计算平移/旋转及其合成切向光流与平均模长。 | AC-F-FLOW-001：固定输入的三维流场、切向残差、统计量一致。 |
 | REQ-F-FLOW-002 | M | 确定 | 系统应使用原距离范围 [1,4]、归一化和随机近度方式生成 Bias 场景。 | AC-F-FLOW-002：固定随机序列下各步距离与近度可比较。 |
@@ -610,6 +610,7 @@
 | v0.16 | 2026-11-12：修正§9双向矩阵中`REQ-F-CLI-001`错误的“五生成入口”来源，恢复MAT只读检查/`getflowfield.m`来源；§7清除已过期“论文未上传所以不能实现球谐”的阻塞说明，明确既有低阶叶子实测和仍未完成的公共ABI/DEC条件；不改动66个REQ/AC/TC | 评审草案，非批准基线 |
 | v0.17 | 修复 AC-F-BIAS-003 的 N 歧义：原作者参考线按末次保存的 xwerte，而非完整球面实际8·4^i；同时纠正Bias loglog单坐标轴、显示与数值数据的关系；保留66 REQ/AC/TC | 评审草案，未批准/未执行CTest |
 | v0.18 | 2026-11-12：修复 AC-F-ERROR-001 的原指标定义域：欧氏尺度对齐残差非平方，方向角以度表示，零真值时原误差可能假0但正式数值域必须拒绝并记录；补已有 TC 的固定反例，不改变66条 REQ/AC/TC | 评审草案，非批准、未运行新增CTest |
+| v0.19 | 2026-11-12：修正 AC-F-ADAPT-003/AC-F-EXP-003 的周期比较返回所有权：原 Update rates 第一返回量绑定`dumi`弃置，不能当四条持续自适应Session；明确主系数刷新前后顺序与原TC固定哨兵条件，原66项编号保持不变 | 评审草案，非批准、未运行真实Session/CTest |
 
 
 ## 附录 A：内部设计约束清单（REQ-DC）
