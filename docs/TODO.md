@@ -25,7 +25,7 @@
 
 ## 2.1 本次第12阶段的真正人类干预和批准边界（2026-11-12，未提出新的授权）
 
-**继续审计与修正现有文档，不需要本轮新增人类批准**。本次已直接查到 `many_parameter.m` 的 `dumi` 弃置、主`akkoeff`每帧提交与周期比较旋转/刷新规则，并在 [Adaptive `5.0.1](design/adaptive_mfa.md)、[Runner `8.0.1](design/experiments.md)、[TEST_PLAN `2.7.1](TEST_PLAN.md)、SRS及对象模型中实际纠偏；该源代码事实**不属于待人类猜选的算法行为**。下面列出的仅是**仍缺真实人类授权或证据签署**的事项，任何未签字的候选状态都保持`NotApproved/Deferred`。
+**继续审计与修正现有文档，不需要本轮新增人类批准**。本次已直接查到 `many_parameter.m` 的 `dumi` 弃置、主`akkoeff`每帧提交与周期比较旋转/刷新规则，并在 [Adaptive §5.0.1](design/adaptive_mfa.md)、[Runner §8.0.1](design/experiments.md)、[TEST_PLAN §2.7.1](TEST_PLAN.md)、SRS及对象模型中实际纠偏；该源代码事实**不属于待人类猜选的算法行为**。下面列出的仅是**仍缺真实人类授权或证据签署**的事项，任何未签字的候选状态都保持`NotApproved/Deferred`。
 
 | 编号及当前事实 | 何时必须由人类动作或明确批准 | 无需重复讨论或当前可先做的工作 |
 |---|---|---|
