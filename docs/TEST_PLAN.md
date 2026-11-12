@@ -316,6 +316,20 @@ regression_tolerance=9.0949470177292824e-13
 
 **状态**：仅消除设计中的高风险引用返回形式，并补上覆盖责任；ABI/模板ODR、异常策略、真实代码/CTest与P0.8批准均未完成，不能关闭DAR-003或宣称TC-PASS。
 
+### 2.12.1A 默认构造 Result/Status 会制造伪成功的负例（2026-11-12）
+
+[公共合同 `3.B](design/contracts.md) 已修正 `Result<T,E>` 在T可默认构造时会默认构造variant的成功分支，以及 `Status<E>` 的默认`monostate`会无条件成功这一**真实C++17 API设计缺陷**。无论未来`hasValue()`如何实现，都不能把“没有真实调用求解器/Writer”当成成功。复用现有`TC-DC-DOMAIN-001`、`TC-NF-OOP-001`、`TC-F-ERROR-001`，作为**未来编译+运行**时的定点断言，当前未执行：
+
+| 定点条件 | 待核对的编译/运行结果 |
+|---|---|
+| `std::is_default_constructible_v<Result<double,E>>`、`Result<FlowField,E>`、`Status<E>` | 三者必须为`false`；`Result<Scalar,E> r;`和`Status<E> st;`应产生确定编译错误，不是默认`hasValue()==true` |
+| `Result<T,E>::success(valid T)`与`::failure(Failure<E>)` | 必须分别直接建立有效成功alternative与完整失败alternative，包含`code`、`ErrorDetail.stage`、`run_id`若存在；不得通过旧默认Success再赋值/改`variant`类型 |
+| `Result<move-only T,E>`、右值`value()/error()`与const右值禁借用 | 右值返回自拥有值、调用后源对象禁止再次当数值有效的业务对象；无悬垂引用 |
+| `std::variant`异常时构造失败、原结果仍存在/转移 | 不允许`valueless_by_exception`伪装成带`Failure<E>`的完整失败；是否能在所有异常路径排除无值态需要受限实现与故障注入，`DEC-008`未批准 |
+| 默认`MotionEstimate`的Eigen未初始化值、业务`success(T)`误用 | 即使工厂创建成功，仍须由求解器先保证T的数学/有限性；禁默认Result不等于自动验证任意T |
+
+**特别限制**：建议初版不可变结果封装、private带标签构造和禁止默认构造只是在设计上缩小伪成功和`valueless`路径；无真实头文件和编译前**不能声称`std::is_default_constructible_v`已测通过或绝无异常**。DEC-008详细候选见[TODO `2.2](TODO.md)，除已选择的variant/JSONL方向外其它选项未批准；H-10/H-11等六项仍无限期延期，不在本轮新增生产C++、CTest或MAT写入。
+
 ### 2.12.2 `Result/Status` 私有variant不等于稳定ABI（2026-11-11，设计更正）
 
 [contracts.md §3.A](design/contracts.md) 已明确：即使 `payload_` 是 private，值类型 `Result<T,E>` / `Status<E>` 的 `std::variant` 仍决定公开类型的大小/对齐、移动/析构、标准库及二进制ABI。**只在源码调用者隐藏容器成员 ≠ 对编译器或动态库消费方隐藏对象布局**。沿用既有 `TC-DC-DOMAIN-001`、`TC-NF-OOP-001`，按批准的部署模式至少需检查：公共头独立编译与必要 include；两个翻译单元跨TU传递合法值/错误/移动；有实际共享库边界时生产者与消费者的编译器、标准库、编译选项、版本重编策略；异常/valueless状态与资源析构。在未定义稳定二进制升级契约前不得声称跨编译器版本ABI兼容，亦不得擅自把轻量`std::variant`技术选择换成另一个未经批准的设计。这是**代码实施前设计义务**，没有创建公共头/真实ABI测试，不关闭DAR-003。
