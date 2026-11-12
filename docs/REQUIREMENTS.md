@@ -99,7 +99,7 @@
 | REQ-I-ANALYSIS-001 | M | 待数据字典冻结 | 系统分析接口应接收已有 MAT 结果目录并返回数值曲线/统计结构，而不调用求解器或修改输入。 | AC-I-ANALYSIS-001：使用全部四类分析原入口的结果数据验证输入/输出字段，原始 MAT SHA 无变化。 |
 | REQ-I-CLI-001 | M | 待合同冻结 | 系统命令行的命令名、必填/可选参数、类型、合法范围和错误退出行为应具有可读取的确定规格。 | AC-I-CLI-001：以 [design/cli.md §2–4](design/cli.md) 的逐命令参数/类型/范围及 [design/contracts.md §3.1](design/contracts.md) 的错误码→CLI 退出码映射候选为检查依据，逐命令核验必要字段、默认行为、优先级和诊断字段；SRS §6.1 仅是外部接口摘要，详细合同仍须 P0.8/P1.2 批准后冻结。 |
 | REQ-I-MAT-001 | M | 历史数据格式已确认；严格/兼容读取及写入接口未验收 | 系统的 MAT 外部接口应区分只读严格/兼容读取和独立输出写入，并保留变量类型/维度等元数据。 | AC-I-MAT-001：使用单/多变量和压缩 MAT 验证路径、变量选择、类型/尺寸、只读/输出保护，不依赖求解器。 |
-| REQ-I-RESULT-001 | M | 原作者结果 dtype/shape 已确认；C++ 新结果尚未生成 | 系统实验结果的变量名、尺寸、数据类型、实验标识和输出目录命名应与对应原 MATLAB 结果合同一致。 | AC-I-RESULT-001：对五个生成入口分别核验新 MAT 的变量名、shape、dtype、RunId 及固定 `output/<RunId>/`，默认拒绝已有目录/文件；历史 MAT 与当前源码 save 差异必须分开报告，原始 `origin/**` 始终只读。 | AC-I-RESULT-001：对五个生成入口分别核验新MAT的变量名、shape、dtype、RunId与固定`output/<RunId>/`，默认拒绝覆盖历史目录/文件且`origin/**`只读。**DEC-008-06已决定**：单文件Writer成功不等于RunOutcome Complete；只有所有必需运算、发布后回读及Manifest可靠持久化完成才可标Complete；部分已核产物属RunContext审计，失败Result仍仅携Failure，不能把Incomplete当成功结果。见[Runner §6.1.1](design/experiments.md)，实际C++/CTest仍未执行。 
+| REQ-I-RESULT-001 | M | 原作者结果 dtype/shape 已确认；C++ 新结果尚未生成 | 系统实验结果的变量名、尺寸、数据类型、实验标识和输出目录命名应与对应原 MATLAB 结果合同一致。 | AC-I-RESULT-001：对五个生成入口分别核验新MAT的变量名、shape、dtype、RunId与固定`output/<RunId>/`，默认拒绝覆盖历史目录/文件且`origin/**`只读。**DEC-008-06已决定**：单文件Writer成功不等于RunOutcome Complete；只有所有必需运算、发布后回读及Manifest可靠持久化完成才可标Complete；部分已核产物属RunContext审计，失败Result仍仅携Failure，不能把Incomplete当成功结果。见[Runner §6.1.1](design/experiments.md)，实际C++/CTest仍未执行。 |
 
 ### 内部设计约束的归属说明
 
@@ -112,13 +112,13 @@
 | REQ-NF-COPYRIGHT-001 | M | 项目 MIT 已确定；来源标注仍须可核对 | 本仓库自有软件与文档须具有明确的 MIT 许可声明，并保留原始论文、数据和实际采用的第三方材料的必要来源及许可告知；不得无依据地更改第三方作品的授权范围。 | AC-NF-COPYRIGHT-001：根 [LICENSE](../LICENSE) 是 MIT，README 中的作者论文 DOI、原始数据 DOI、实际引入文件的来源与原有 notice 可核对；具体实现选型见 HLD/ADR/LLD，普通版权复核不作为研发前置门禁，不能将本仓库 MIT 误称为原始 MATLAB/.mat/论文的重新许可。 |
 | REQ-NF-DEPS-001 | M | 确定 | 系统核心运行不得依赖 Python、MATLAB Runtime、NumPy、ROS、OpenCV、Windows 或 NPZ 转换。 | AC-NF-DEPS-001：检查依赖和链接，源代码无禁用路径。 |
 | REQ-NF-HEADLESS-001 | M | 确定 | 系统应支持无图形环境的检查、运行和分析，绘图模块不得阻断数值。 | AC-NF-HEADLESS-001：禁用绘图时主要数据路径仍可执行。 |
-| REQ-NF-LOG-001 | M | 确定 | 系统应记录 RunId、SHA、环境、命令、参数、随机种子、输入身份、退出码及日志位置。 | AC-NF-LOG-001：每次正式运行记录字段完整，不覆盖失败证据。 | AC-NF-LOG-001：每次正式运行真实记录RunId、来源SHA、参数、seed、阶段/底层根因、有效/失败/无定义样本和日志位置；未分配RunId时不得伪造；对于MAT/数值模块同名错误（如InvalidShape），内部根因必须带枚举家族以防跨层混淆。Manifest/日志写出失败须如实报告，不能宣称已经持久化；仍待DEC-008-04诊断协议细节与原生测试。 
+| REQ-NF-LOG-001 | M | 确定 | 系统应记录 RunId、SHA、环境、命令、参数、随机种子、输入身份、退出码及日志位置。 | AC-NF-LOG-001：每次正式运行真实记录RunId、来源SHA、参数、seed、阶段/底层根因、有效/失败/无定义样本和日志位置；未分配RunId时不得伪造；对于MAT/数值模块同名错误（如InvalidShape），内部根因必须带枚举家族以防跨层混淆。Manifest/日志写出失败须如实报告，不能宣称已经持久化；仍待DEC-008-04诊断协议细节与原生测试。 |
 | REQ-NF-NUM-001 | M | M（受 DEC-005 阻塞） | 系统应保持从原 MATLAB 只读源码可静态确认的数学公式、变量覆盖与更新顺序，并基于 L2/L3/L4 可获得来源进行固定输入数值对照与分模块容差审查；不要求运行 MATLAB 或取得 L1。 | AC-NF-NUM-001：必须使用 double，按源可静态确认的计算/分支/更新次序核对 L2/L3/L4；项目所有者确认 `atol=0.01, rtol=0.1` 作为**首轮探索性筛查**，不作为最终 AC PASS 阈值。MAT 变量/类型/形状/原 double 值、RNG 次数/循环次数、样本状态严格匹配；几何不变量和理想零残差有单独严格门槛；各模块最终阈值仍须 DEC-005 根据真实测试证据审定，缺失 L1 不是阻塞。 |
 | REQ-NF-NUM-002 | M | 确定 | 系统应显式报告零范数、奇异、非有限、文件损坏、未定义角度；不可误记成功。 | AC-NF-NUM-002：每类失败有非成功状态及对应日志。 |
 | REQ-NF-OOP-001 | M | 确定 | 系统应明确所有权，隔离算法公式与实验编排，不创建巨型类或错误的通用求解器。 | AC-NF-OOP-001：对象模型和独立测试核实状态、资源与依赖方向。 |
 | REQ-NF-PLATFORM-001 | M | 确定 | 系统应在 Debian/Ubuntu 上以 C++17/CMake 源外构建。 | AC-NF-PLATFORM-001：实际支持的平台/编译器构建并留命令与日志。 |
 | REQ-NF-PORTABLE-001 | S | 确定 | 系统应在 Debian/Ubuntu 支持含空格和中文的输入输出路径。 | AC-NF-PORTABLE-001：实际 Unicode/空格路径可读写。 |
-| REQ-NF-RECOVERY-001 | M | 确定 | 系统应保留错误与失败 RunId 原始记录，不覆盖已有结果并可说明原因。 | AC-NF-RECOVERY-001：错误退出日志可追溯，历史未受影响。 | AC-NF-RECOVERY-001：错误退出时保留真正底层code/stage/已知RunId/源路径和不覆盖的历史结果，`RunContext`记录`valid/failed/undefined`及已核部分产物；**所有者已选DEC-008-06**：依真实持久化与核验情况区分Incomplete/Failed，Manifest自身写失败不得报告Complete或虚称日志已保存；完整运行失败返回Failure，不通过默认RunOutcome假成功。需未来真实故障注入/CTest。 
+| REQ-NF-RECOVERY-001 | M | 确定 | 系统应保留错误与失败 RunId 原始记录，不覆盖已有结果并可说明原因。 | AC-NF-RECOVERY-001：错误退出时保留真正底层code/stage/已知RunId/源路径和不覆盖的历史结果，`RunContext`记录`valid/failed/undefined`及已核部分产物；**所有者已选DEC-008-06**：依真实持久化与核验情况区分Incomplete/Failed，Manifest自身写失败不得报告Complete或虚称日志已保存；完整运行失败返回Failure，不通过默认RunOutcome假成功。需未来真实故障注入/CTest。 |
 | REQ-NF-RNG-001 | M | 确定 | 系统应将固定样本等价验证与随机统计复现分离，并独立记录各 RunId 种子。 | AC-NF-RNG-001：固定序列可重复，统计含有效/失败数量。 |
 | REQ-NF-RUNTIME-001 | S | S／TBD（受 DEC-006 阻塞） | 系统应采集完整实验的墙钟、CPU、峰值内存和输入规模，正式运行上限需实测后批准。 | AC-NF-RUNTIME-001：可先记录完整实验 wall/CPU 时间、峰值 RSS、输入大小、编译用时和环境；加速倍数/上限等要求未冻结前不得宣称性能验收通过。 |
 | REQ-NF-SAFETY-001 | M | 确定 | 系统应保证 origin/** 所有原文件只读且拒绝覆盖历史 RunId。 | AC-NF-SAFETY-001：前后哈希一致、重复输出默认拒绝。 |
