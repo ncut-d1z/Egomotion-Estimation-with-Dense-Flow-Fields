@@ -1,6 +1,6 @@
 # Egomotion Estimation with Dense Flow Fields：软件需求规格说明书（SRS）
 
-> **状态：草案 v0.17，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
+> **状态：草案 v0.18，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
 
 ## 1. 目的、范围与约束
 
@@ -60,7 +60,7 @@
 | REQ-F-CLI-003 | M | 接口草案 | 系统应分别提供 Adaptive 初始化、带/不带噪声比较和更新间隔三种实验入口。 | AC-F-CLI-003：依据 [design/cli.md §2–4](design/cli.md) 逐命令核查三种 Adaptive 入口的原 MATLAB 参数、固定默认值、当前脚本输出合同与 1/5/11/21 刷新时刻；非法参数或数值失败不得报告成功。 |
 | REQ-F-CLI-004 | M | 接口草案 | 系统应提供独立 analyze 命令，只读取已有 MAT 结果并计算曲线数据而不运行求解器。 | AC-F-CLI-004：依据 [design/cli.md §2–4](design/cli.md) 用历史归档执行四种 analyze 路径，核验不调用求解器、原结果哈希不变及缺失字段的明确错误和非零退出。 |
 | REQ-F-CLI-005 | S | 接口草案 | 系统应提供可选 plot 命令，绘图后端缺失时不影响其他数值命令。 | AC-F-CLI-005：依据 [design/cli.md §2–4](design/cli.md) 对同一分析数据核验可选绘图输出与后端缺失状态（候选退出码 7）；禁用绘图不影响 inspect/run/analyze。 |
-| REQ-F-ERROR-001 | M | 确定 | 系统应分别实现尺度对齐向量误差与方向角度误差，不能用单一误差代替。 | AC-F-ERROR-001：给定相同真值和估计，两个指标与原脚本各自一致。 |
+| REQ-F-ERROR-001 | M | 确定 | 系统应分别实现尺度对齐向量误差与方向角度误差，不能用单一误差代替。 | AC-F-ERROR-001：按原只读 `transfehler_div.m` 返回**估计向量按真值模长缩放后的欧氏距离**（`sqrt(dot(diff,diff))`，不是平方误差、不是角度），而 `normrelfehler.m` 返回**单位化后方向夹角的度数**；固定输入 `(e_x,2e_y)` 的两输出分别为 `sqrt(2)`、`90°`，反向 `(e_x,-2e_x)` 为 `2`、`180°`。对零真值 `u=0`、非零估计 `v=2e_x`，原距离表达式虽算出零、方向角无定义，正式 C++ 不得将其当有效零误差样本；任一向量零模长须报告明确非成功并区别源表达式和候选安全策略，保持真实有效/无定义分母。依据 [KvD LLD §1.1](design/kvd.md) 和既有 `TC-F-ERROR-001`，须实际 L3/CTest、最终 DEC-005/008 批准后才可验收。 |
 | REQ-F-EXP-001 | M | 确定 | 系统应复现 35 点圆形初始化实验，保存四类方向误差结果。 | AC-F-EXP-001：参数、数组形状、索引与历史 MAT 比较。 |
 | REQ-F-EXP-002 | M | 确定 | 系统应复现带/不带噪声 600 点正弦轨迹对比，保留八次运行与原输出。 | AC-F-EXP-002：分别使用 addederror=0 与批准的非零值，核验 600 点、二十面体等级 4、循环 i=2…599、8 次运行；按当前代码输出 allemittransfehler、allemitrotfehler、alleohnetransfehler、alleohnerotfehler、rottransratio 五个 600×1 MAT；前四项求八次平均，rottransratio 保留最后一次运行值，不伪造历史 alleadap*。 |
 | REQ-F-EXP-003 | M | DEC-004 处理原则已选；软件未验收 | 系统应复现多更新频率实验，并显式登记历史 MAT 与当前脚本输出不一致项。 | AC-F-EXP-003：在 600 点正弦轨迹、二十面体等级 2 和刷新周期 [1,5,11,21] 下核验当前源码实际输出仅 `allemittransfehler`、`allemitrotfehler`（600×4）和 `akrot`（600×1），**新 C++ 结果不得增写历史专属字段**；历史 `alleadaprotfehler`、`alleadaptransfehler`、`rottransratio` 只读保留并在字段级差异记录中标为 `HistoricalOnly`。新输出如被要求提供未保存的 `rottransratio`，分析必须明确报告缺失，不生成假值。见 [DEC-004](decisions/DEC-004_HISTORICAL_MAT_FIELDS.md)。 |
@@ -609,6 +609,7 @@
 | v0.15 | DAR-001：首次将58正文+8附录的全部66个REQ/AC/TC映射到固定审查提交的实际存在的主要HLD/LLD文件/章节和Git blob；纠正FLOW-004、ERROR-001的责任归属，并清理低阶SH已实现范围的过时描述。此为审查用身份**非冻结包**，完整依赖/审批/运行仍缺 | 评审草案，非批准基线 |
 | v0.16 | 2026-11-12：修正§9双向矩阵中`REQ-F-CLI-001`错误的“五生成入口”来源，恢复MAT只读检查/`getflowfield.m`来源；§7清除已过期“论文未上传所以不能实现球谐”的阻塞说明，明确既有低阶叶子实测和仍未完成的公共ABI/DEC条件；不改动66个REQ/AC/TC | 评审草案，非批准基线 |
 | v0.17 | 修复 AC-F-BIAS-003 的 N 歧义：原作者参考线按末次保存的 xwerte，而非完整球面实际8·4^i；同时纠正Bias loglog单坐标轴、显示与数值数据的关系；保留66 REQ/AC/TC | 评审草案，未批准/未执行CTest |
+| v0.18 | 2026-11-12：修复 AC-F-ERROR-001 的原指标定义域：欧氏尺度对齐残差非平方，方向角以度表示，零真值时原误差可能假0但正式数值域必须拒绝并记录；补已有 TC 的固定反例，不改变66条 REQ/AC/TC | 评审草案，非批准、未运行新增CTest |
 
 
 ## 附录 A：内部设计约束清单（REQ-DC）
