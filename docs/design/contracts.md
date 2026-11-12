@@ -86,6 +86,10 @@ template<class T, class Code>
 class Result {
 public:
     Result() = delete;                        // 禁止默认构造伪成功；详见§3.B
+    Result(const Result&) = default;          // 若T不可复制，本重载自然被删除
+    Result(Result&&) = default;               // 移动后源值不得再次作为有效数学量复用
+    Result& operator=(const Result&) = delete; // 候选：不允许切换variant alternative
+    Result& operator=(Result&&) = delete;
     static Result success(T value);
     static Result failure(Failure<Code> why);
     bool hasValue() const noexcept;
@@ -96,6 +100,8 @@ public:
     Failure<Code> error() &&;                 // 右值按值移动取出
     const Failure<Code>& error() const && = delete;
 private:
+    explicit Result(std::in_place_index_t<0>, T valid_value);           // 直接建成功分支
+    explicit Result(std::in_place_index_t<1>, Failure<Code> reason);    // 直接建失败分支
     std::variant<T, Failure<Code>> payload_;
 };
 // 仅候选接口：实现包含 std::variant<std::monostate, Failure<Code>>。
@@ -103,6 +109,10 @@ template<class Code>
 class Status {
 public:
     Status() = delete;                        // 禁止默认 monostate 伪成功
+    Status(const Status&) = default;
+    Status(Status&&) = default;
+    Status& operator=(const Status&) = delete;
+    Status& operator=(Status&&) = delete;
     static Status success();
     static Status failure(Failure<Code> why);
     bool hasValue() const noexcept;
@@ -110,6 +120,8 @@ public:
     Failure<Code> error() &&;                 // 右值拥有
     const Failure<Code>& error() const && = delete;
 private:
+    explicit Status(std::in_place_index_t<0>);                     // 只用于success()
+    explicit Status(std::in_place_index_t<1>, Failure<Code> why);   // 只用于failure()
     std::variant<std::monostate, Failure<Code>> payload_;
 };
 }
