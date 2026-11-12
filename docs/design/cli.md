@@ -1,6 +1,6 @@
 # CLI 参数、退出码与诊断协议：详细设计草案
 
-> **候选 v0.9，未冻结、未编码、未执行 CTest。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
+> **候选 v0.10（DEC-008-01/06已获所有者决定，inspect-mat显示仍为候选；未编码、未执行CTest）。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
 
 ## 1. 语法与基本约束
 
@@ -38,6 +38,14 @@
 **单次来源身份不变量（2026-11-11）**：CLI `compat/no NAME` 必须**一次调用** `MatResultReader::readFirstCompatible(file)`；不可自行先 `inspect(file)` 再 `readNamed(file,name)`，因为后两者可能分别打开被替换的不同源文件。读取层必须在同一个 MAT 句柄内选唯一变量并完整解码，且对原地并发变化的稳定来源另行核实；参见 [mat_io.md §7.4.1](mat_io.md)。这不赋予 CLI 新增写入权限、不意味着已实现抗竞态读取或新错误码已批准。
 
 **状态与输出限制**：此表明确的是**调用/读取的行为**，不是已经批准的 stdout 数值转储格式、JSONL 文件内容或是否显示全量 double。`readNamed/readFirstCompatible` 成功应能证明完整自拥有数值读取，不能把只读取文件头当成完整解码；将数据摘要/逐值展示到 stdout 的具体策略仍由 P0.8/DEC-008 批准。对所有合法路径，本命令只读，不写 MAT、不生成结果 RunId。候选 `TC-F-CLI-001` 应至少采用单变量有效、已知坏变量名、多变量合成输入和不存在文件来验证上述不同动作；**合成/损坏文件只在后续获授权的隔离测试目录中创建**。目前没有实际业务 CLI/CTest PASS。
+
+### 2.0.2 什么是`inspect-mat`及NumPy/pandas式预览（DEC-008-05候选，非新增已批准选项）
+
+`inspect-mat` 是本项目**计划的MAT v5只读检查命令**，不是原MATLAB函数或已经存在的二进制工具。它接受`--file PATH`并检查文件中真实变量的名称、MAT class/`dtype`、rank、dims及元素个数；strict+NAME按名称完整读取，compat无NAME只在单变量或首变量顺序有可靠证据时读取，不能推断缺失值。**Reader是否完整解码数据与CLI向终端打印多少数据是两项独立合同**；不能因为选择preview就缩短真实数值读取或修改MAT。
+
+**推荐（待选）**：默认`summary`显示元数据；用户选择变量后允许`numpy`式`threshold/edgeitems/linewidth/precision`预览，或`table`式`max_rows/max_cols`、行列索引、总尺寸预览。全部格式在C++17中独立实现，**不依赖Python/NumPy/pandas运行时**；参考[NumPy array2string](https://numpy.org/doc/stable/reference/generated/numpy.array2string.html)与[pandas DataFrame.to_string](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_string.html)。候选扩展参数：`--format summary|numpy|table`、`--rows N`、`--cols N`、`--precision N`、`--all`（明确全量输出）。**以上均非现行已批准CLI语法**，不允许未经DEC-008-05选择就写进命令默认实现。
+
+例如对实际shape为600×4的MAT，打印器可以显示`row 0/1 ... row 599`及`[600 rows x 4 columns]`，同时记录列主序数据身份；**展示行索引0-based**必须与MATLAB原始1-based帧号区分。`...`代表只省略展示，不代表原MAT缺值。打印显示精度不能影响内存中的原始double；人类文本中可用`nan/inf`，但**错误JSONL必须是有效JSON**，不能写未加引号的NaN/Infinity。`--all`明确请求后不能静默截断；允许流式输出但stdout写失败要记录，原MAT不被修改。更详细选择见[TODO `2.2 G](../TODO.md)。
 
 ### 2.1 参数类型与不变量（待 P0.8 签署）
 
