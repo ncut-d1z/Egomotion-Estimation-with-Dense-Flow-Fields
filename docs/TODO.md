@@ -74,6 +74,14 @@
 | **DEC-008-05：JSONL输出及`inspect-mat`成功结果** | inspect-mat是新项目只读MAT检查命令，不是MATLAB原脚本；数据是否已解码与终端如何打印是两个独立问题 | 建议参考NumPy array2string预览及pandas DataFrame.to_string表格；不引入Python依赖，默认有界显示；`--format numpy|table`、`--all`、行列与精度参数均为未批准候选；见§G | 具体默认精度/省略/JSONL异常字段/日志失败行为仍需选择，绝不能截断原MAT数据本身 |
 | **DEC-008-06：Result/Status跨层失败后的运行状态** | 单次失败的Failure与整个运行已有部分产物/计数是两种责任，不应在失败Result中返回伪成功RunOutcome | **所有者已决定：采用原建议（DecisionRecorded）**。失败Result只携`Failure<ExperimentErrorCode>`并保留原因；RunContext独占`attempted/valid/failed/undefined`、验证过的文件/Manifest；所有必要输出与回读/Manifest成功才Complete；详见§H | 仍未授权真实Runner/Writer/CTest；Manifest写失败不得声称已经持久化或Complete |
 
+### C. 可复用的最小审阅材料和决策顺序
+
+**01不承诺跨版本稳定ABI、06运行结果/Manifest责任已由所有者决定，不再提请选择。** 02已准许使用C++标准库异常，尚需选择`std::bad_variant_access`/`std::logic_error`和可选`try*`；然后评审03不可变工厂与异常注入，以及04根因协议、05 NumPy/pandas式显示细节。讨论选择**不等于开放H-10/H-11或DEC-005/006及正式发布**。
+
+**测试证据要怎样形成**（在H-10/H-11解除无限期延期**之后**）：复用`TC-DC-DOMAIN-001`、`TC-NF-OOP-001`、`TC-F-ERROR-001`、`TC-F-CLI-001`、`TC-I-RESULT-001`、`TC-NF-LOG-001`、`TC-NF-SESSION-001`。分别对不可默认构造、成功与失败工厂、move-only T、const右值、`valueless`异常注入、跨两个翻译单元/可选共享库、所有exit/stage、JSONL控制字符、无RunId、文件读写冲突及Session失败不提交进行真实编译/CTest核对。**现阶段只允许把这些写成待测条件，不执行原生工程命令。**
+
+**当前需要人类立即选择吗？** 你要求的是“DEC-008详细说明”，不是授权实施或批准某个子项。本记录已执行所有者对01/06的明确决定，并解释02标准异常的许可范围；02具体方式、03/04/05细节仍不代替用户选择，DEC-008整体保持`PartiallyDecided / NotFullyApproved`。你可在其它文档整改更充分时再一次性审阅；六项无限期延期独立保留，不被DEC-008讨论解除。若以后需要你逐项决定，真正待选的是**02 `bad_variant_access`/`logic_error`及是否增加`try*`、03不可变工厂与异常安全、04多层根因协议、05 NumPy/pandas式打印与JSONL细节**；01/06不再请示；04的ErrorStage/JSONL方向已选，具体来源协议仍待决。
+
 ### D. DEC-008-02 标准异常许可下的三种具体访问器方案（候选，待用户选择）
 
 **标准库异常的概念**：`std::exception` 是标准异常的基类，建议抛它的**具体派生类型**，例如 `std::bad_variant_access`（`<variant>`）和 `std::logic_error`（`<stdexcept>`）；两者都能由 `catch(const std::exception& e)` 接住。不要把`std::exception`误当成有上下文的通用错误报告。正常数学失败如ZeroNorm、MAT缺变量仍以`Result::failure(Failure<Code>{...})`返回，不把普通输入错误变成抛异常的热路径。
@@ -213,14 +221,6 @@ row 599   0.00    0.00    0.00    0.00
 6. **写入故障和异常**：如果Manifest自身写入失败，Runner返回`OutputFailed`/底层错误，尽量经独立stderr通道发出诊断，**但不能伪称错误日志一定已持久化**、不能擅自清除已发表产物。`RunContext`与Manifest的可见状态必须与真实落盘证据对应。
 
 此内容后续将在[Runner LLD](design/experiments.md)、[contracts LLD](design/contracts.md)、[TEST_PLAN](TEST_PLAN.md)逐文档同步；只执行**已批准的文档修订**，未创建生产代码、MAT文件或运行CTest。
-
-### C. 可复用的最小审阅材料和决策顺序
-
-建议先确认 **01 ABI范围**、**02 非法访问/异常政策**、**03 工厂/valueless与移动约束**，才能让公共`Result/Status`合同语义自洽；再核 **04 ErrorStage/exit 映射**、**05 JSONL/inspect-mat显示**、**06 运行级失败状态**。这并不是要求立刻批准代码和测试。
-
-**测试证据要怎样形成**（在H-10/H-11解除无限期延期**之后**）：复用`TC-DC-DOMAIN-001`、`TC-NF-OOP-001`、`TC-F-ERROR-001`、`TC-F-CLI-001`、`TC-I-RESULT-001`、`TC-NF-LOG-001`、`TC-NF-SESSION-001`。分别对不可默认构造、成功与失败工厂、move-only T、const右值、`valueless`异常注入、跨两个翻译单元/可选共享库、所有exit/stage、JSONL控制字符、无RunId、文件读写冲突及Session失败不提交进行真实编译/CTest核对。**现阶段只允许把这些写成待测条件，不执行原生工程命令。**
-
-**当前需要人类立即选择吗？** 你要求的是“DEC-008详细说明”，不是授权实施或批准某个子项。本记录已执行所有者对01/06的明确决定，并解释02标准异常的许可范围；02具体方式、03/04/05细节仍不代替用户选择，DEC-008整体保持`PartiallyDecided / NotFullyApproved`。你可在其它文档整改更充分时再一次性审阅；六项无限期延期独立保留，不被DEC-008讨论解除。若以后需要你逐项决定，真正待选的是**02 `bad_variant_access`/`logic_error`及是否增加`try*`、03不可变工厂与异常安全、04多层根因协议、05 NumPy/pandas式打印与JSONL细节**；01、06不再请示；04/06的大方向已有合同，主要审核边界即可。
 
 ## 3. 回填与关闭
 
