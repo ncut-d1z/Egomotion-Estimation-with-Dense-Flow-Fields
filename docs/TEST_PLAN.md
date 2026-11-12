@@ -334,6 +334,20 @@ regression_tolerance=9.0949470177292824e-13
 
 [contracts.md §3.A](design/contracts.md) 已明确：即使 `payload_` 是 private，值类型 `Result<T,E>` / `Status<E>` 的 `std::variant` 仍决定公开类型的大小/对齐、移动/析构、标准库及二进制ABI。**只在源码调用者隐藏容器成员 ≠ 对编译器或动态库消费方隐藏对象布局**。沿用既有 `TC-DC-DOMAIN-001`、`TC-NF-OOP-001`，按批准的部署模式至少需检查：公共头独立编译与必要 include；两个翻译单元跨TU传递合法值/错误/移动；有实际共享库边界时生产者与消费者的编译器、标准库、编译选项、版本重编策略；异常/valueless状态与资源析构。在未定义稳定二进制升级契约前不得声称跨编译器版本ABI兼容，亦不得擅自把轻量`std::variant`技术选择换成另一个未经批准的设计。这是**代码实施前设计义务**，没有创建公共头/真实ABI测试，不关闭DAR-003。
 
+### 2.12.3 DEC-008明确/未明确协议的隔离测试设计（2026-11-12，均未实际执行）
+
+本轮所有者已作出`DEC-008-01`不承诺跨版本稳定ABI、`DEC-008-06`由RunContext独占计数/部分结果/Manifest且失败Result仅带Failure的决定，**不是**同时批准代码/CTest。`DEC-008-02`允许标准库派生自`std::exception`的异常，但具体A/B/C访问器策略待选；`DEC-008-03/04/05`也未获最终协议批准。下面仅复用已存在的TC，不新增第67个：
+
+| 既有TC映射 | 具体固定输入/故障 | 需要区分的正确/错误结果 |
+|---|---|---|
+| `TC-DC-DOMAIN-001`、`TC-NF-OOP-001` | 以`Result::success/Result::failure`建立值，错误调用`value()/error()`；准备`std::bad_variant_access`方案与`std::logic_error`方案 | 只在批准的访问器方案下验证相应**标准库异常类型**，不得返回默认T/伪造Failure，也不得让一般数学`failure`走异常；方案C若获批需额外测`tryValue/tryError`借用寿命 |
+| `TC-DC-DOMAIN-001`、`TC-NF-OOP-001` | 让`ThrowOnCtor/ThrowOnMove/ThrowOnCopy`在固定第N次抛`std::runtime_error`或`std::bad_alloc`；再测move-only T、已移动源与跨TU | 禁止默认构造伪成功、工厂只能建立成功/失败有效alternative；异常时不得访问不存在的Failure；不可变Result方案的代价、移动后使用规则与valueless路径须记录 |
+| `TC-F-CLI-001`、`TC-I-CLI-001`、`TC-NF-LOG-001` | `MatErrorCode::InvalidShape` 与 `NumericalErrorCode::InvalidShape`分别从Decode/Solve起源，再包装为Experiment层Failure | 根因字符串必须区分**枚举家族**，源stage、path/variable/RunId/observation_index保持原样；exit=4与5分别正确，多层包装后不能只剩`InvalidShape`，是否新增cause链由DEC-008-04决定 |
+| `TC-F-CLI-001`、`TC-I-CLI-001` | 单/多变量MAT以及N×6、600×4样本，以`strict/no NAME`、`strict+NAME`、`compat/no NAME`和非法`compat+NAME`调用；日后可能的`numpy/table`预览 | 解码完整性与显示截断两种验证分开；表格行列、shape/dtype、精度及`...`不改变真实double；JSONL必须有效，NaN/Inf不作为裸JSON数字；参数未批准不得当已实现 |
+| `TC-I-RESULT-001`、`TC-NF-RECOVERY-001`、`TC-NF-SESSION-001` | Comparison计划八次，分别在第5次失败、Writer发布后回读失败、Manifest写失败、Adaptive本帧比较失败处注入 | 对外Result为Failure且根因可查；RunContext记录expected=8/completed=4、valid/failed/undefined与已核产物；可持久化的有身份部分结果为Incomplete，否则Failed；**不能按4次重算成原8次、不能发布Complete、不能只提交半帧主/比较系数**；Manifest写失败不得声称持久化成功 |
+
+**明确不能以测试计划文字代替CTest/签字**；真实原生编译/测试/MAT写回读仍属H-10/H-11无限期延期范围。DEC-008-01/06已决定的职责可继续用于文档对照；02/03/04/05的最终行为仍要等对应选项确认。
+
 ### 2.13 轨迹与近度的符号级候选（AF-048/080，未运行）
 
 参见 [trajectory.md §6.3](design/trajectory.md) 的 TR-C01～06：三点局部轨迹 `Rᵀ` 的正负号、严格反向输入 `(e_x,-e_x)` 的原函数**确定**输出零旋转向量（非有效折返），以及球内旋转视线的 `near=4/3` 与反向射线 `near=4/5`。新增的TR-C05必须以两个**夹角都为90°**的输入 `v1=e_x, v2=(0,5e-12,0)` 和 `v2=(0,2e-11,0)`，静态预测原旋转向量模长分别为 `(π/2)*5e-12` 与 `π/2`，验证原 `norm(cross(v1,v2))>1e-11` 属**绝对交叉幅度**而非旋转角阈值；恰等 `1e-11` 浮点条件单独记录舍入，不作稳健跨编译器黄金值。源保真与几何安全模式的失败决议必须分开。另用**TR-C06球外内向正根反例**确认：o=(5/4,0,0), n=-e_x 时，原式 Delta=1、rho=9/4、near=4/9 虽均有限、根为正，但相机**不在球内**，生产 SphereEnvironment 必须先按定义域拒绝；对球面边界 o=e_x，外向 rho=0、内向 rho=2，后者虽正也不是严格球内。不能将“Delta>=0 且 rho>0”当作球内资格。将六组固定输入关联现有 `TC-F-TRAJ-001` 与 `TC-F-FLOW-004`；要求实际 L3/CTest 分别报告源表达式数值、候选安全失败、端点有效性、坐标单位和真实误差。本文只给出静态可手算输入资格，**未生成独立 L3、未测试，也不批准 DEC-005/008**。
