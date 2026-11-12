@@ -144,13 +144,83 @@ static Result failure(Failure<Code> why) {
 
 **待用户挑选**：A=采用以上不可默认构造/带tag工厂、默认禁止公开赋值和emplace（建议）；B=公开受控赋值/状态切换，但必须额外设计强异常保证、独立失效态与测试。用户本轮只要求解释实现机制，没有批准A/B。H-10/H-11仍无限期延期。
 
+### F. DEC-008-04 错误概念与跨层保真，逐层实例（仍待输出协议审议）
+
+**Code/枚举家族、ErrorStage、exit_code、ErrorDetail和root cause是五种不同概念**。它们分别回答“谁检测到哪类失败”“在哪一步发现”“shell应按哪类失败处理”“与哪次输入/哪个文件关联”“最初的错误原因是什么”。例如`MatErrorCode::InvalidShape`是MAT读出的rank/dims不符；`NumericalErrorCode::InvalidShape`是求解器收到已解码但是不符合自身方程输入的N×6形状，两个枚举同名却不是同一层的错误。
+
+| 字段/概念 | 示例 | 必须遵守的合同 |
+|---|---|---|
+| `Code`加**所属enum家族** | `MatErrorCode::InvalidShape`、`NumericalErrorCode::InvalidShape` | 不能只留不带家族的字符串`InvalidShape`，否则跨层混淆 |
+| `ErrorStage` | `Parse/Read/Decode/Solve/Simulation/Analyze/Output/Plot` | 表示**真正发生错误**的阶段，包装层不应把根因随意重写为自己所在阶段 |
+| `exit_code` | 2、3、4、5、6、7 | 仅供shell按大类判断；不是错误唯一ID。`Plot::BackendUnavailable`才走7，其它Plot失败不一定走7 |
+| `ErrorDetail` | `source_path`、`variable`、`observation_index`、可选`run_id` | 必须来源真实；未分配RunId时不许编造；字符串是人可读信息而非失败类型 |
+| 外层错误与`source_error_code` | `ExperimentErrorCode::SolverFailed` + `NumericalErrorCode::ZeroNorm` | 外层说明“本次实验的求解失败”，底层说明“原始零范数”，必须同时可溯源 |
+
+**实例一——MAT schema不对**：输入文件`run.mat`已打开，选中`flow`变量，但rank/dims不符，Reader构造`Failure<MatErrorCode>`，其中`code=MatErrorCode::InvalidShape`、`stage=Decode`、`variable=flow`，对外CLI映射`exit=4`。若Analyzer/Runner包装它，不能把原来rank错误无根据地变成`ExperimentErrorCode::DataMismatch`并丢掉`Decode`和源变量名。
+
+**实例二——求解器零范数**：`AdaptiveMfaStepSolver`检测`NumericalErrorCode::ZeroNorm`，真正阶段`Solve`，常规出口`exit=5`。Runner可加`ExperimentErrorCode::SolverFailed`作为**新的外层失败**，但`source_error_code`必须保留`NumericalErrorCode::ZeroNorm`，而`stage`应仍指向源`Solve`。这类异常是正常业务数值失败，**走Result::failure，而不抛`std::logic_error`**；后者只针对调用者访问错误alternative的程序员失误。
+
+**同名编码的具体漏洞**：当前`ErrorDetail::source_error_code`是可选字符串。如果直接记录`"InvalidShape"`，无法知道它来自`MatErrorCode`还是`NumericalErrorCode`。故本轮修正文档要求**内部规范的来源限定稳定标识**，至少表示为`"MatErrorCode::InvalidShape"`或`"NumericalErrorCode::InvalidShape"`；包装两次以上时应**保留已获得的root code和源stage**，不能每一层用自己的code盖掉。这个规则能靠既有`std::optional<std::string> source_error_code`表达，并不暗中新增第二套enum。
+
+**目前尚需决定**：只保留一个根因字符串，还是额外增加`cause[]`记录每一跳；错误诊断JSONL是逐层多行还是一次性单行；`source_error_code`对外稳定的拼写/版本策略；当外层自身又产生新的错误（例如同时写日志失败）如何表达并列失败。不批准前本轮**不新增公共struct字段/CLI命令或修改已选退出码表**。单一来源映射仍见[contracts `3.1](design/contracts.md)，只有真实测试可证明所有异常路径不丢根因。
+
+### G. DEC-008-05：`inspect-mat` 的定位及 NumPy/pandas 显示候选
+
+**`inspect-mat`不是原作者MATLAB命令，也不是NumPy/pandas程序**，而是本仓库拟开发的**只读MAT v5检查器**。输入`--file PATH`，查看MAT文件真实变量的名称、class/dtype、rank、尺寸、元素数；按可选变量名完整读取某一个double数组用于检查。不会产生实验结果、不会修改`origin/**`，不需要RunId。既有[CLI `2.0.1](design/cli.md)明确：
+
+~~~text
+egomotion inspect-mat --file result.mat
+egomotion inspect-mat --file result.mat --variable allemittransfehler
+egomotion inspect-mat --file result.mat --mode compat
+~~~
+- `strict`不指定NAME：只列全部变量的元数据，不需要解码业务数组。
+- `strict`加NAME：按名称完整读到自拥有结果；不存在变量则报`MissingVariable`。
+- `compat`不加NAME：若MAT只有一个变量，完整读取它；无独立顺序证据的多变量MAT报`AmbiguousVariable`，不能按字母序猜首变量。
+- `compat+NAME`：参数组合非法，优先`Parse/exit 2`。
+
+**重要区别**：内部Reader读到全部`double`，不代表应把所有数值一次性倾倒到stdout。建议借鉴**NumPy `numpy.array2string`** 的`threshold/edgeitems/linewidth/precision/floatmode`与**pandas `DataFrame.to_string`** 的`max_rows/max_cols/index/show_dimensions/float_format`来制作独立的C++17文本格式器，**不引入Python解释器、NumPy/pandas运行依赖**。官方参考：[NumPy array2string](https://numpy.org/doc/stable/reference/generated/numpy.array2string.html)、[pandas DataFrame.to_string](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_string.html)。
+
+| 方案 | 人类看到的内容 | 适用性/风险 |
+|---|---|---|
+| 元信息摘要`summary` | 变量名、MAT class、dtype、dims、元素数量、来源路径；不显示值 | 适合单文件包含多个变量、首轮排障，默认strict/no NAME |
+| `numpy`式数组预览 | 对N×6、3×5等数组显示前后若干行/列、`...`、原shape/dtype、格式精度 | **推荐默认数值预览**，特别适合矩阵；`...`只表示终端省略，原数据不丢 |
+| `table`式pandas表格 | 显示行号/列号、固定列宽、前后若干行、总行列数量 | 600×4实验误差更易读；须标清显示索引0-based，避免与MATLAB原1-based帧号混淆 |
+| `--all` 明确全量显示 | 所有元素逐项输出，不默默截断 | 仅用户显式请求时使用；按stream写出，发生stdout错误如实提示，不影响已读取的MAT源数据 |
+
+**候选命令行参数（尚未批准）**：`--format summary|numpy|table`、`--precision N`、`--rows N`、`--cols N`、`--all`。不应擅定原实验规模的上限，显示截断也不等于限制求解工作量；`--all`要求全量时不可悄悄省略数据。**显示精度不影响原始内存中MAT`double`值**，列主序源数组必须以正确行列坐标排版；屏幕输出四舍五入不可用作科学数值Golden。`nan/inf`允许在**人类文本**中作为标签，但**机器JSONL**不得出现未引号包裹的NaN/Infinity，可采用字符串分类或明确的null+原因字段（仍待协议决定）。
+
+**示意（数值为虚构排版样例，不是实际MAT）**：
+~~~text
+name=allemittransfehler, shape=(600,4), dtype=float64, storage=column-major
+          col0    col1    col2    col3
+row 0     0.00    0.00    0.00    0.00
+row 1     0.08    0.10    0.11    0.12
+  ...
+row 599   0.00    0.00    0.00    0.00
+[600 rows x 4 columns]  [preview only]
+~~~
+**仍待用户选择**：是否新增这套格式参数、默认摘要/矩阵预览、精度和预览行列数、输出完整数据策略、JSONL与人类stdout/stderr的具体边界。不会仅因本轮说明便新增/实现CLI行为。建议将数值**显示**与不可变的`MatDenseArray`原始数据存储彻底分开。
+
+### H. DEC-008-06 已获所有者同意的失败与部分运行状态
+
+**决议`DecisionRecorded`**：采用已有建议，**单次调用失败由`Result::failure(Failure<Code>)`传播，而一次实验的部分结果、计数、Manifest由`RunContext`独立拥有**。Runner不能在失败`Result<RunOutcome,E>`里放一个`hasValue()==true`的“不完整成功”；只能在达到完成门槛后返回成功的`RunOutcome`。此决议已获所有者明确采纳，**不是H-10/H-11编码/测试授权**。
+
+1. **`RunContext`记录**：`expected_repetitions`、`attempted/completed`、`valid/failed/undefined`，已核输出的MAT变量及SHA、失败发生阶段/底层cause、运行身份。独立的部分产物允许**保留供审计**，但不可当完整算法结果发布。
+2. **`Complete`条件**：全部必需计算、输出变量及shape/value核验完成，MAT非覆盖发布及发布后校验完成，Manifest写入成功，才可声明`Complete`。**Manifest写失败即使MAT存在也不得宣布Complete**。
+3. **`Incomplete`**：已有能独立证明身份的部分产物，但整体未完成全部预期计算/八次聚合。`Failed`：前置失败、完全没有可靠产物、或产物本身无法确认正确身份。二者都不能产生“完整实验成功值”。
+4. **例子**：Comparison需要8次完整聚合，若第5次失败，`RunContext`记录expected=8/completed=4及底层故障；不按4个结果除以4生成“原八次”平均。若可持久化Manifest则标`Incomplete`，对外Runner返回带原因的`Failure<ExperimentErrorCode>`。
+5. **Session原子性**：Adaptive失败帧不得部分提交已旋转主系数、周期对照、下一帧状态；终止依赖轨迹时保留上一有效帧及失败信息。Writer只负责**单个文件**，不拥有整个RunOutcome的Complete决定。
+6. **写入故障和异常**：如果Manifest自身写入失败，Runner返回`OutputFailed`/底层错误，尽量经独立stderr通道发出诊断，**但不能伪称错误日志一定已持久化**、不能擅自清除已发表产物。`RunContext`与Manifest的可见状态必须与真实落盘证据对应。
+
+此内容后续将在[Runner LLD](design/experiments.md)、[contracts LLD](design/contracts.md)、[TEST_PLAN](TEST_PLAN.md)逐文档同步；只执行**已批准的文档修订**，未创建生产代码、MAT文件或运行CTest。
+
 ### C. 可复用的最小审阅材料和决策顺序
 
 建议先确认 **01 ABI范围**、**02 非法访问/异常政策**、**03 工厂/valueless与移动约束**，才能让公共`Result/Status`合同语义自洽；再核 **04 ErrorStage/exit 映射**、**05 JSONL/inspect-mat显示**、**06 运行级失败状态**。这并不是要求立刻批准代码和测试。
 
 **测试证据要怎样形成**（在H-10/H-11解除无限期延期**之后**）：复用`TC-DC-DOMAIN-001`、`TC-NF-OOP-001`、`TC-F-ERROR-001`、`TC-F-CLI-001`、`TC-I-RESULT-001`、`TC-NF-LOG-001`、`TC-NF-SESSION-001`。分别对不可默认构造、成功与失败工厂、move-only T、const右值、`valueless`异常注入、跨两个翻译单元/可选共享库、所有exit/stage、JSONL控制字符、无RunId、文件读写冲突及Session失败不提交进行真实编译/CTest核对。**现阶段只允许把这些写成待测条件，不执行原生工程命令。**
 
-**当前需要人类立即选择吗？** 你要求的是“DEC-008详细说明”，不是授权实施或批准某个子项。本记录只给出A/B候选和推荐默认，**不替你做选择，DEC-008整体保留`DecisionPending / NotApproved`**。你可在其它文档整改更充分时再一次性审阅；六项无限期延期独立保留，不被DEC-008讨论解除。若以后需要你逐项决定，真正要选择的是**01跨版本二进制兼容与否、02错误访问异常政策、03是否采用不可变工厂Result、05成功输出/日志细节**；04/06的大方向已有合同，主要审核边界即可。
+**当前需要人类立即选择吗？** 你要求的是“DEC-008详细说明”，不是授权实施或批准某个子项。本记录已执行所有者对01/06的明确决定，并解释02标准异常的许可范围；02具体方式、03/04/05细节仍不代替用户选择，DEC-008整体保持`PartiallyDecided / NotFullyApproved`。你可在其它文档整改更充分时再一次性审阅；六项无限期延期独立保留，不被DEC-008讨论解除。若以后需要你逐项决定，真正待选的是**02 `bad_variant_access`/`logic_error`及是否增加`try*`、03不可变工厂与异常安全、04多层根因协议、05 NumPy/pandas式打印与JSONL细节**；01、06不再请示；04/06的大方向已有合同，主要审核边界即可。
 
 ## 3. 回填与关闭
 
