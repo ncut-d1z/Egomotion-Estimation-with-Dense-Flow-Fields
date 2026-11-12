@@ -74,6 +74,76 @@
 | **DEC-008-05：JSONL输出及`inspect-mat`成功结果** | inspect-mat是新项目只读MAT检查命令，不是MATLAB原脚本；数据是否已解码与终端如何打印是两个独立问题 | 建议参考NumPy array2string预览及pandas DataFrame.to_string表格；不引入Python依赖，默认有界显示；`--format numpy|table`、`--all`、行列与精度参数均为未批准候选；见§G | 具体默认精度/省略/JSONL异常字段/日志失败行为仍需选择，绝不能截断原MAT数据本身 |
 | **DEC-008-06：Result/Status跨层失败后的运行状态** | 单次失败的Failure与整个运行已有部分产物/计数是两种责任，不应在失败Result中返回伪成功RunOutcome | **所有者已决定：采用原建议（DecisionRecorded）**。失败Result只携`Failure<ExperimentErrorCode>`并保留原因；RunContext独占`attempted/valid/failed/undefined`、验证过的文件/Manifest；所有必要输出与回读/Manifest成功才Complete；详见§H | 仍未授权真实Runner/Writer/CTest；Manifest写失败不得声称已经持久化或Complete |
 
+### D. DEC-008-02 标准异常许可下的三种具体访问器方案（候选，待用户选择）
+
+**标准库异常的概念**：`std::exception` 是标准异常的基类，建议抛它的**具体派生类型**，例如 `std::bad_variant_access`（`<variant>`）和 `std::logic_error`（`<stdexcept>`）；两者都能由 `catch(const std::exception& e)` 接住。不要把`std::exception`误当成有上下文的通用错误报告。正常数学失败如ZeroNorm、MAT缺变量仍以`Result::failure(Failure<Code>{...})`返回，不把普通输入错误变成抛异常的热路径。
+
+**方案A：直接使用C++17 `std::get` 的标准行为（推荐简单默认，未批准）**。
+~~~cpp
+const T& value() const & { return std::get<0>(payload_); }
+T value() && { return std::get<0>(std::move(payload_)); }
+const Failure<Code>& error() const & { return std::get<1>(payload_); }
+Failure<Code> error() && { return std::get<1>(std::move(payload_)); }
+// 错误alternative或valueless：std::get抛std::bad_variant_access。
+~~~
+优势：只依赖标准 `std::variant`，没有重复的手工条件分支。不足：`std::bad_variant_access::what()` 的文本由标准库实现决定，不宜用作机器可解析错误码；错用accessor和内部valueless可能都表现为相同异常类型。**不允许为了“捕获方便”把它吞掉后返回0或默认T。**
+
+**方案B：先判断，再抛有明确含义的 `std::logic_error`（未批准）**。
+~~~cpp
+const T& value() const & {
+    if (!std::holds_alternative<T>(payload_))
+        throw std::logic_error("Result::value called without success");
+    return std::get<0>(payload_);
+}
+const Failure<Code>& error() const & {
+    if (!std::holds_alternative<Failure<Code>>(payload_))
+        throw std::logic_error("Result::error called without failure");
+    return std::get<1>(payload_);
+}
+~~~
+对应右值访问器也应先检查，再按值移动。优势：错误文本指明具体违规API、可以明确区分valueless内部缺陷。不足：多一次分支，异常文本仍非协议；需要保证所有重载执行相同检查。在C++17标准库中`std::logic_error`同样派生自`std::exception`，不需要自定义异常类。
+
+**方案C：添加无异常的探测访问器（可与A或B并行，不单独替代）**。
+~~~cpp
+const T* tryValue() const noexcept {
+    return std::get_if<0>(&payload_);
+}
+const Failure<Code>* tryError() const noexcept {
+    return std::get_if<1>(&payload_);
+}
+~~~
+返回的指针为**借用**：Result销毁、移动、内部值不再稳定后不能持有使用；调用方仍需检查nullptr。它能让程序在有意分支检查时避免抛异常，但对`value()/error()`调用错误仍需选择A或B；如果批准C，需正式更新公共头并补跨TU与指针寿命测试。
+
+**重要设计边界**：三方案都没有许可从失败Result返回T、从成功Result制造Failure。`std::bad_variant_access`和`std::logic_error`是**程序员错用接口或内部状态违约**的异常，不应取代已确定的`Failure<Code>`业务路径。用户本轮仅许可标准库异常，**尚未选择A、B或C组合**。
+
+### E. DEC-008-03 构造工厂、尽量不可变、故障注入的实现机制
+
+**(1) 禁止默认构造**：`Result() = delete; Status() = delete;`，因此 `Result<double,E> r;`、`Result<FlowField,E> r;`、`Status<E> st;` 应在未来编译期被拒绝。缘由是std::variant默认激活第0 alternative，原布局第0个T或monostate恰是成功态；默认成功会让未计算的矩阵/值误报有效。**注意：禁止默认构造不自动保证`success(T)`传入的T有限、符合shape，数学有效性仍归业务模块校验。**
+
+**(2) 私有带标签工厂直接构造有效alternative**：
+~~~cpp
+// 仅解释机制；T/Code/Failure及头文件定义尚待冻结
+Result(std::in_place_index_t<0>, T v)
+    : payload_(std::in_place_index<0>, std::move(v)) {}
+Result(std::in_place_index_t<1>, Failure<Code> why)
+    : payload_(std::in_place_index<1>, std::move(why)) {}
+static Result success(T v) {
+    return Result(std::in_place_index<0>, std::move(v));
+}
+static Result failure(Failure<Code> why) {
+    return Result(std::in_place_index<1>, std::move(why));
+}
+~~~
+即成功/失败都在新对象诞生时建立，不走“先默认成功再赋值成失败”。`Status<Code>::success()`应显式创建第0个monostate；`failure`显式创建第1个Failure，不能靠默认`Status`表示“任务已经做成”。
+
+**(3) 尽量不可变**：公开读取`value() const & / error() const &`只能借用对应只读结果，`Result& operator=(...) = delete`及不提供公开`emplace`避免已存在Result从成功改失败或反向切换。仍可按T能力复制/移动**构造另一个Result**；右值`value() &&`按值转移，源Result虽然可能仍在成功alternative，但其T已被移动，**禁止再次把它当数值有效数据**。若后续容器必须要求Result可赋值，应由所有者审查兼容方案，不暗改。
+
+**(4) `valueless_by_exception`机制**：`std::variant`如果在替换alternative的过程中构造抛异常，有可能无有效alternative。此时`hasValue()==false`但`error()`也未必存在！默认禁用assignment/emplace能减少风险，但不能仅凭文档证明所有内部构造/移动/复制异常已被封闭。**正在构造的Result抛异常时根本不存在一个已构造好的“失败Result”可以返回**，禁止伪造Failure或将异常当作科学数值错误。
+
+**(5) 故障注入的真实验证方法（未来测试，当前不执行）**：定义具有计数器的`ThrowOnCtor`、`ThrowOnCopy`、`ThrowOnMove`值对象，分别在第1/N次构造/拷贝/移动时抛`std::runtime_error`；另准备`std::bad_alloc`路径。检查测试运行后（a）没有未经验证的成功Result，（b）已存在的Result仍可安全析构且不丢已存原因，（c）不能在valueless状态访问`Failure`，（d）move-only T可通过右值按值转移，（e）实际内存/析构次数正确，（f）模板头自包含及跨翻译单元不触发ODR冲突。**不允许把模拟成功的`is_default_constructible_v`静态断言当成已实际执行的CTest。**
+
+**待用户挑选**：A=采用以上不可默认构造/带tag工厂、默认禁止公开赋值和emplace（建议）；B=公开受控赋值/状态切换，但必须额外设计强异常保证、独立失效态与测试。用户本轮只要求解释实现机制，没有批准A/B。H-10/H-11仍无限期延期。
+
 ### C. 可复用的最小审阅材料和决策顺序
 
 建议先确认 **01 ABI范围**、**02 非法访问/异常政策**、**03 工厂/valueless与移动约束**，才能让公共`Result/Status`合同语义自洽；再核 **04 ErrorStage/exit 映射**、**05 JSONL/inspect-mat显示**、**06 运行级失败状态**。这并不是要求立刻批准代码和测试。
