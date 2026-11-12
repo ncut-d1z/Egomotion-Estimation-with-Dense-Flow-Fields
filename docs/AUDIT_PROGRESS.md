@@ -1,6 +1,6 @@
 # 全工程文档规范审计进度与整改台账（AUDIT_PROGRESS）
 
-> **状态：审计进度 v1.1，第十批实际修复Bias参考线误用真实样本N与loglog误称双纵轴两项源级缺陷，同步SRS、Analyzer、Runner与测试计划；仍按36文档/既有五项综合阻塞继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
+> **状态：审计进度 v1.2，第十一批实际修正原误差指标的非平方数学定义、零真值假零误差及KvD非法错误枚举，同时修复已生成36次数学trace却仍记未生成的状态；更新SRS/Runner/TC；仍按36文档/既有五项综合阻塞继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
 
 ## 1. 口径、状态和可复核方式
 
@@ -14,7 +14,7 @@
 
 | ID | docs/下相对路径 | 用户初始规范判断 | 首轮实际需核对的问题 | 审计状态 | 本轮证据／整改关联 |
 |---|---|---|---|---|---|
-| DOC-001 | `REQUIREMENTS.md` | 草案级部分符合 | AC→LLD章节身份/正式批准 | 已完成限定审计 | SRS v0.17：本轮实修AC-F-BIAS-003把100/sqrt(N)错当真实采样数的歧义，明确原参考用末次保存xwerte及绘图单loglog轴；提交281a7c3；66 REQ/AC/TC不变，正式签署未完成 |
+| DOC-001 | `REQUIREMENTS.md` | 草案级部分符合 | AC→LLD章节身份/正式批准 | 已完成限定审计 | SRS v0.18：AC-F-ERROR-001明确transfehler_div返回尺度对齐欧氏范数（非平方），normrelfehler返回度；补反向/零真值定义域资格、既有TC映射；提交58ab90f，非已批准SRS |
 | DOC-002 | `ARCHITECTURE.md` | 草案级部分符合 | 27拟议DAG与真实构建/ADR | 已完成限定审计 | HLD v0.10：设计图27箭头=25内部+2外部；根CMake仅低阶SH及3CTest，部署/DEC-006仍待 |
 | DOC-003 | `OBJECT_MODEL.md` | 草案级部分符合 | 候选类/生命周期/签署 | 已完成限定审计 | 对象模型v0.7：所有权、候选公共类与已实现SH叶子区分；正式生命周期/ABI测试未做 |
 | DOC-004 | `design/README.md` | 索引符合，非LLD | 实际Markdown个数与模块覆盖条目 | 已完成限定审计 | 14份真实目录Markdown=1索引+1跨模块LLD+9模块LLD+1专题LLD+2理论，10个覆盖行；提交3614b28 |
@@ -23,15 +23,15 @@
 | DOC-007 | `design/mat_io.md` | 草案级部分符合 | Reader/Writer、TOCTOU、写回读、L2 | 正在审计 | mat_io v0.12：纠正readFirstCompatible先inspect后另开readNamed可能混淆A/B输入身份；改同一mat_t*的枚举+解码候选并限定原地改写风险；修复§7表对Manifest权责旧句；提交796d1ce，真实TOCTOU/Reader测试未执行 |
 | DOC-008 | `design/sampling_noise.md` | 草案级部分符合 | 生产几何/RNG负例/CTest | 正在审计 | sampling_noise v0.10：原fixed_*、nonpropfehler、erzeugeflussausnear、getvektor已逐源核对；修复durchlaenge/near_last合同并增抵消反例，提交09ae652；原三类面表与生产RNG/CTest尚待深审 |
 | DOC-009 | `design/trajectory.md` | 草案级部分符合 | Sophus真实依赖及几何L3 | 已完成限定审计 | trajectory v0.6：在既有旋转尺度退化审阅外，补球外内向正根4/9、球面内外向及严格球内前置检查；固定分数推导复核，提交6dbecb5；Sophus/C++/L3仍未验收 |
-| DOC-010 | `design/kvd.md` | 草案级部分符合 | 36轮数学非真实CTest/200轮 | 正在审计 | kvd v0.9：原Franz、Original、Modified三函数与LLD伪代码对照，修正符号翻转旧t及重复归一歧义，提交d7e4378；完整逐轮一般/200轮、代码测试尚待审 |
+| DOC-010 | `design/kvd.md` | 草案级部分符合 | 36轮数学非真实CTest/200轮 | 正在审计 | KvD v0.10：对照原两个误差.m恢复非平方欧氏/角度精确公式、零真值假零残差和5组输入；§4撤销不存在的SingularGeometry/NonFinite错误码而统一公共enum；§5将36轮已生成Wolfram固定参考与未执行CTest分列；提交9c80e41/6fd3220，仍需原生实现及全面数学审查 |
 | DOC-011 | `design/harmonics.md` | 草案级部分符合 | 低阶叶子有实测，公共ABI未冻结 | 正在审计 | harmonics v0.15；固定SH 3/3与公共ABI未建分层核对，逐式LLD待核 |
 | DOC-012 | `design/adaptive_mfa.md` | 草案级部分符合 | Session原子提交、病态输入和真实软件 | 正在审计 | adaptive v0.7：删除一般6×6候选LDLT，固定六轴全正近度可逆而非对称M及rhs,z完整有理参考；提交17c2b52/4ea7e57；Session、C++/CTest、DEC-005未验收 |
-| DOC-013 | `design/experiments.md` | 草案级部分符合 | Runner/Writer/Manifest/Ctest | 正在审计 | experiments v0.7：补完全球Bias实际N=8·4^i与保存xwerte=6·4^i在原理论参考的数值区别，Runner不改save；提交9d5b26e，实际C++/CTest仍待 |
+| DOC-013 | `design/experiments.md` | 草案级部分符合 | Runner/Writer/Manifest/Ctest | 正在审计 | Experiments v0.8：按Bias两源生成器72–77行落实六组ywerte均为尺度对齐欧氏距离、非角度/平方，零参考负例不可填0冒充完整；提交8f876c8，Runner/Session/CTest尚未实施 |
 | DOC-014 | `design/analysis_plotting.md` | 草案级部分符合 | 分析L2/L3曲线、CTest/绘图隔离 | 正在审计 | analysis v0.12：按原graphs_bias_test.m比对单loglog轴/固定xlim/ylim/一条参考+12条误差/仅五legend文本；补末次xwerte与真实N的15.47%差异反例、显示裁剪不能删除数值；提交8ae3344，完整Analyzer与L2/L3/CTest仍未执行 |
 | DOC-015 | `design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 专题草案级部分符合 | 旧版本CMake描述与最新低阶叶子验收区分 | 已完成限定审计 | 对照旧1/1说明与用户固定5e522198 3/3；仅低阶叶子，公共ABI仍未实现；提交4a62a9d |
 | DOC-016 | `design/SH_DISCRETE_REFIT_CONSISTENCY.md` | 理论专题合格，非LLD | 不能替代模块LLD/测试/批准 | 正在审计 | 已核专题定位与35项数学辅助检查，待独立逐式复算 |
 | DOC-017 | `design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md` | 理论专题合格，非LLD | 不能替代Adaptive真实接口/实现 | 正在审计 | 理论专题v0.2：从M2/M3的叉积矩阵推导M对称充要条件mean((mu-1)d)=0，证明均值1不保证对称；提交28c20f6/555eeea，尚未逐式独立重算本专题其它全部25项 |
-| DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 已完成限定审计 | TEST_PLAN §2.16新增全球level=2参考10.206207 vs错用N为8.838835、13条曲线/五图例、原单loglog坐标与x=96被显示裁剪但数据保留的可判别输入；提交a51aa9d，无新TC/CTest |
+| DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 已完成限定审计 | TEST_PLAN新增§2.1.1/2.1.2：同向/垂直/反向/零真值/零估计指标和Franz共线方向SingularSystem等判别性输入；同时纠正非法enum原错并保留已有66TC；提交9f0b744/f349498，未运行新CTest |
 | DOC-019 | `PLAN.md` | WBS草案符合 | 98P、M0–M5、真实工期/性能 | 已完成限定审计 | PLAN R-02实改：论文缺失风险改为已取得IR96/IR98/Choi、三路线低阶SH固定证据与未完成公共接口/集成风险分列；提交6f2a426；不冒称27DAG/预算/新CTest已验收 |
 | DOC-020 | `PROGRESS.md` | 符合证据登记 | 固定SHA与历史执行/新状态分离 | 已完成限定审计 | 本轮已核历史E-DOC/SH真实证据与旧97AF；正文修订b69e17c |
 | DOC-021 | `AUDIT.md` | 原专项→本轮综合审计 | 已在初始提交转换为全工程文档规范 | 已完成限定审计 | 新全工程文档审计规则、36对象、用户评价基线已提交1081f0f；原SH范围保留固定历史 |
@@ -87,6 +87,9 @@
 
 | DAR-022 | REQUIREMENTS.md；design/analysis_plotting.md；design/experiments.md；TEST_PLAN.md；原graphs_bias_test.m、两个Bias生成入口 | AC-F-BIAS-003把原理论参考简写100/sqrt(N)，容易把完整球面实际方向数量8·4^i当作原作者保存xwerte=6·4^i，生成不同的参考值 | 实际将SRS验收表改为使用最后一运行xwerte、四组y平均并保留真实N为单独元信息；LLD与TC给出level2 x=96,N=128,10.206207对8.838835及sqrt(4/3)比值，禁止悄改存档；对应远端正文提交 | 纯文档核心数值引用错误 | 已整改 |
 | DAR-023 | design/analysis_plotting.md；TEST_PLAN.md；原graphs_bias_test.m | Bias图被误称“log-log双轴”，但原源只有loglog单坐标轴；源1条参考+三噪声列各四条误差总13条，仅给5个图例文本，且显示窗口与数值索引应分离 | 修正图形类型与准确线数、图例源限制、固定xlim/ylim及源绘图j=3行x=96在xlim外仍是合法分析数值；写入原TC的显示/数值分离判据，不冒充图例自动映射或Plot/CTest已执行 | 纯文档图形/数值合同错误 | 已整改 |
+
+| DAR-024 | design/kvd.md；REQUIREMENTS.md；design/experiments.md；TEST_PLAN.md；原transfehler_div.m与normrelfehler.m | 原transfehler_div注释声称squared error，但源码返回尺度对齐后的sqrt(dot(diff,diff))欧氏距离；更重要是truth=0、estimate非零时原距离表达式返回0而方向误差无定义，可能被移植误判为有效零误差/统计样本 | 逐源码写出两个指标精确公式和正/零定义域；用(e_x,2e_y)→(√2,90°)、(e_x,-2e_x)→(2,180°)、(0,2e_x)→源距离0但方向无定义等固定反例；修正SRS AC-F-ERROR-001、Bias ywerte含义/无定义分母、原TC资格；保留原传播与候选C++显式失败差别 | 纯文档数学与实验统计合同 | 已整改 |
+| DAR-025 | design/kvd.md；TEST_PLAN.md；design/contracts.md | KvD LLD§4建议的SingularGeometry及泛用NonFinite不属于唯一NumericalErrorCode，未来照写会出现不存在的枚举或第二套错误映射；同一LLD§5还将已生成的36轮Wolfram参考误写“未生成” | 只引用contracts.md既有ZeroNorm/UndefinedAngle/SingularSystem/IllConditionedSystem/NonFiniteInput/NonFiniteResult等，新增固定同方向Franz分母为0等对应TC；§5真实区分24+12次数学trace已生成与200轮/生产CTest未执行，不增加公共枚举/伪造软件证据 | 纯文档错误码/已验数学证据错配 | 已整改 |
 
 ## 4. 已实施审计、具体整改和验证日志
 
@@ -213,7 +216,20 @@
 
 **七项统计与净变化**：整改目标21→23（+2），已整改16→18（+2），未整改5→5（0）；审计文件总数36→36（0），已完成限定审计26→26（0），正在审计10→10（0），未审计0→0（0）。**4份非台账技术正文已实改**，审计文件数不增加，不靠文件状态膨胀表现进度。
 
+### 第11阶段：原误差指标数学与公共枚举合同的真实整改（2026-11-12）
+
+**起始固定HEAD**：`b462c286f661ff1d6f9b11b240112e5e81a4f82a`；起始36文档（26已完成限定/10正在/0未审），23个整改目标（18已整改/5未整改）。本轮遵守`AUDIT.md`只授权文档审查与真实文本修改的范围，读取原只读`transfehler_div.m`、`normrelfehler.m`、`franzeigen.m`、Bias两数据生成脚本和现行`contracts.md`错误枚举，不修改原算法/原MAT或生产代码。
+
+| 本轮确实修复的缺陷 | 数学/代码前置证据与实际正文提交 | 不据此宣称 |
+|---|---|---|
+| **DAR-024：误差指标公式/定义域与Bias统计错误** | `transfehler_div.m` 注释的squared与实际`abs(sqrt(dot(diff,diff)))`矛盾。非零输入应为`E_scale=norm(u-norm(u)/norm(v)*v)`，角度是`normrelfehler=abs(acos(dot(u,v)/(norm(u)*norm(v))))*180/pi`，二者单位和含义不同。**u=0、v=2e_x时，源尺度对齐误差=0但方向角无定义**，这不是算法正确，更不能作为C++有效统计样本；u=e_x,v=2e_y得到sqrt2/90°，u=e_x,v=-2e_x得到2/180°。采用纯JavaScript沿源运算符独立重算五组，正常值及两类零范数边界均如表；**不是MATLAB或生产C++实测**。已真实改[`design/kvd.md`](design/kvd.md) `1.1、[`TEST_PLAN.md`](TEST_PLAN.md) `2.1.1、[`REQUIREMENTS.md`](REQUIREMENTS.md) AC-F-ERROR-001、[`design/experiments.md`](design/experiments.md) 的Bias六y值及非法样本/Manifest纪律。提交 [9c80e41](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/9c80e41667a072304c76fa7a4c3b5a1577cd3a3b)、[9f0b744](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/9f0b744fc6d77adad284f5c6aac2e28eedf5f233)、[58ab90f](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/58ab90f2bb7d8ba3f5dffa05f8413a5b4abb94ea)、[8f876c8](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/8f876c8d9384107c06d7fbec3a97d4517dc0216b)。 | 未执行源MATLAB、生产Cpp、TC-F-ERROR-001原生编译/CTest或签DEC-005/008；不能把新C++拒绝说成源MATLAB返回错误码。 |
+| **DAR-025：KvD非法枚举及旧数学参考状态错报** | `design/kvd.md` `4旧建议`SingularGeometry、NonFinite`在唯一[`contracts.md `3`](design/contracts.md)的`NumericalErrorCode`中不存在；现用已有`SingularSystem/IllConditionedSystem/NonFiniteInput/NonFiniteResult/ZeroNorm/UndefinedAngle`并区分Franz零模板分母与初始平移零模。`TEST_PLAN.md` `2.1.2补`d_i=e_z`时Franz z模板分母零的静态负例及现有错误阶段映射。另外`kvd.md` `5之前连续五行误写参考数值“未生成”，实际`verification/kvd/six_direction_exact_trace.v1.json`的24轮与`near_sign_flip_exact_trace.v1.json`的12轮数学trace均已登记；修正为**36次真实Wolfram数学参考已存在、其它迭代/真实C++/CTest尚缺**，避免伪称从未计算或相反把36数学轮当36CTest。提交 [6fd3220](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/6fd32200409068a28a7e6a62e9325996888c34b9)、[f349498](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/f349498e25e8c40bafc05623a21e8bc603e20be6)。 | 不扩展公共enum/未在生产源码实现任何安全失败分支；H-10/H-11及DEC批准仍受限。 |
+
+**统计**：目标23→25（+2个有具体源码及正文位置的独立修复），已整改18→20（+2），未整改5→5（0）；审计文件36→36（0）、已完成限定26→26（0）、正在10→10（0）、未审0→0（0）。实际修改四份非台账技术文档、按原源码作数学/类型审查；不将文档修复当作生产软件测试通过，也不为增长已审计数而提前结案仍缺全面证据的DOC-010/013。
+
 ## 5. 各轮计数与变化
+
+**第11阶段相对上一轮**：整改目标23→25（+2），已整改18→20（+2），未整改5→5（0）；审计文件36→36、已审计26→26、正在10→10、未审0→0，审计分母和状态全不变。四份技术正文有真实数学/枚举修订，未夸大测试。
 
 **第10阶段相对上一轮**：本批实改4份核心技术文档并定向复读，目标21→23（+2）、已整改16→18（+2）、未整改5→5（0）；审计文件36→36、已完成限定26→26、正在10→10、未审0→0，全部不变。仅文档合同闭环，不是软件测试通过。
 
@@ -249,6 +265,7 @@
 | 第8阶段：非对称求解器/Reader源身份整改 | 36 | 26 | 10 | 0 | 19 | 14 | 5 |
 | 第9阶段：SRS追踪/公式修复/同提交基线身份 | 36 | 26 | 10 | 0 | 21 | 16 | 5 |
 | 第10阶段：Bias理论参考/单轴绘图合同整改 | 36 | 26 | 10 | 0 | 23 | 18 | 5 |
+| 第11阶段：误差指标与KvD错误码/参考状态修复 | 36 | 26 | 10 | 0 | 25 | 20 | 5 |
 
 ## 6. 36份文件的同一基准提交身份（DAR-005：只读静态快照）
 
