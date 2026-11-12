@@ -1,6 +1,6 @@
 # 对象模型与生命周期合同（Object Model）
 
-> **对象模型草案 v0.7；P0.7/P0.8 待评审，未冻结，拟议业务类与跨模块公共ABI尚未建立。受限低阶球谐叶子C++已独立实现并在固定SHA获得用户原生3/3 CTest证据，不能将其归入下列未创建的公共类。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入；各文档当前版本、固定 SHA 和冻结状态统一由 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记，运行结果以 [PROGRESS](PROGRESS.md) 为准。
+> **对象模型草案 v0.8；P0.7/P0.8 待评审，未冻结，拟议业务类与跨模块公共ABI尚未建立。受限低阶球谐叶子C++已独立实现并在固定SHA获得用户原生3/3 CTest证据，不能将其归入下列未创建的公共类。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入；各文档当前版本、固定 SHA 和冻结状态统一由 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记，运行结果以 [PROGRESS](PROGRESS.md) 为准。
 
 ## 1. 对象职责和约定
 
@@ -27,7 +27,7 @@
 | **RealSphericalHarmonics**、**HarmonicFitter**、**HarmonicRotator** | 分别负责基函数/近度重建、逐项拟合、l≤2 旋转；不持有实验历史状态 | kugelflfunc2、near_aus_koeff、koeff_aus_near、SHRotate、transfor_koeff |
 | **AdaptiveMfaStepSolver** | **无状态单轮计算**：从旧系数和 N×6 流场构造 6×6 系统并返回运动、残差、新系数；不继承 KvD | oneit_adaptiv_matched_filter |
 | **AdaptiveMfaSession** | 拥有一次轨迹运行中的当前 akkoeff；执行“上一帧旋转→本帧求解→提交后验系数”的确定时序 | adaptive 三种 data_generation 入口 |
-| **ICoefficientUpdatePolicy**（接口） | 维护只与基线对比相关的更新规则：每帧重置、每帧继承、按 1/5/11/21 帧刷新；不能偷改真正的 akkoeff 主状态 | ohnekoeff、mitkoeff、zeitkonstanten |
+| **ICoefficientUpdatePolicy**（接口） | 维护只与基线对比相关的更新规则：初始化/Comparison对照单步可在同一帧迭代中接受coefficients_next；**UpdateRate四组基线仅旋转/按1/5/11/21从主状态刷新，原单步第一输出绑定dumi并丢弃，绝不作为下一帧比较基线写回**；不能偷改真正的akkoeff主状态 | ohnekoeff、mitkoeff、zeitkonstanten；[Adaptive LLD §5.0.1](design/adaptive_mfa.md) |
 | **TrajectoryGenerator**、**TrajectoryKinematics** | 分别生成圆/正弦点序列，以及绝对/相对旋转和局部平移；不用加载 MAT | kreis_trajektorie、sinuskurve_trajektorie、trajektorie_aus_punkten |
 | **BiasExperimentRunner**、**InitializationRunner**、**AdaptiveComparisonRunner**、**UpdateRateRunner** | **每个入口一个编排对象**；只组合模拟、估计、误差、保存服务，不重复具体算法方程 | 五个 MATLAB data_generation 入口；Bias 的两种模式共享 Runner + 明确配置 |
 | **BiasResultAnalyzer**、**AdaptiveResultAnalyzer** | 读取结果、统计 40 个偏差运行和三类自适应轨迹结果；输出可绘制的数值序列 | 四个 data_analysis 脚本 |
@@ -53,8 +53,10 @@
 - **结果类型**：业务错误按类别明确返回（MAT 格式不符、找不到变量、维度错误、零范数、近度归一化失败、病态系统、非有限值、无效角度）；可用兼容 C++17 的显式结果值/错误对象，不把数值失败当作正常 0。保留 MATLAB 原版原始行为的证据，安全边界处理单独标注，不暗改基准结果。
 - **不制造通用求解器假象**：Franz 基线、KvD 完整迭代、Adaptive 单步的输入与输出不完全相同；可以共享 FlowField、MotionEstimate 等值对象，但不强制通过一个会丢失 near、coeff 或迭代状态的统一基类。
 - **构造时注入**：BiasExperimentRunner 由采样器、NoiseModel、Franz/KvD 求解器、随机源和结果写入器组成；Adaptive Runner 由轨迹、SphereEnvironment、采样器、StepSolver、状态会话、噪声策略和结果写入器组成。运行器不根据字符串自行 new 具体类型，具体选择集中在 ApplicationCompositionRoot。
-- **迭代和状态更新的顺序**：KvDIterationEngine 的每步残差/停止检查遵循 MATLAB 的原始顺序；AdaptiveMfaSession 在 i 帧首先旋转上一帧系数，再为各个基线按策略更新，然后分别调用无状态单步求解，最后更新主 akkoeff。策略不得越权修改主状态。
+- **迭代和状态更新的顺序**：KvDIterationEngine 的每步残差/停止检查遵循 MATLAB 的原始顺序；AdaptiveMfaSession 在 i 帧先按入口策略旋转主/对照系数，按周期基线刷新规则从**本帧主更新前**状态复制，再运行比较与主求解。**特别禁止对UpdateRate的比较解newcoeff写回mitkoeff**（MATLAB返回绑定dumi并弃置）；初始化/Comparison的帧内迭代比较返回值则应按源本帧覆盖。策略不得越权修改主状态；只有必需节点全部成功才提交本帧主和比较完整状态，否则事务性丢弃本帧所有暂存更改。
 - **测试替身**：纯算法和模拟器测试可以注入 FixedSequenceRandomSource、固定采样器、内存结果读写器；不依赖真实 MAT 文件；MAT 读写集成测试则必须使用原始归档或专门的测试 MAT 并明确测试范围。
+
+**2026-11-12 状态拥有者审计补充**：`ICoefficientUpdatePolicy` 应操作本帧临时的四组比较状态，独立持久拥有者仍是 `AdaptiveMfaSession`；“比较求解器返回新的候选系数”**不是**“策略应提交新系数”。这在 `UpdateRateRunner` 与 `InitializationRunner/AdaptiveComparisonRunner` 中有确定性的不同源代码写回目标（见 [Adaptive LLD §5.0.1](design/adaptive_mfa.md) 与 [Runner §8.0.1](design/experiments.md)）。单一状态机图未画出 `dumi`，不能让图覆盖MATLAB的变量赋值事实。对应既有 `TC-F-ADAPT-003`、`TC-F-EXP-003` 和 `TC-NF-SESSION-001` 的隔离替身资格仍未执行，公共类/签名和ABI没有获得冻结或实现授权。
 
 ## 2. 组件对象关系（设计草案）
 
