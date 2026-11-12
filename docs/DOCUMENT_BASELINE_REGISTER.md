@@ -337,3 +337,50 @@ AF-041/047/055/058 与其它开放目标仍须独立数据/真实软件及审批
 | `docs/TEST_PLAN.md` | `d65d9c870f90cadbb4204a901851a9f2be04c0bd` | 作为AC主责任候选的审查用输入，尚未签正式基线 |
 
 **DAR-001 已做的文档整改**：66条AC具有候选主要设计章节及正确的固定Git对象身份，不能再笼统写“完全没有AC→LLD映射”。**DAR-001/005仍未全结案**：主要章节不等于全部依赖，也不意味着每个AC实际测试已执行；正式冻结需要把最新最终版本的全部HLD/LLD相关章节、`source_commit_sha/git_blob_sha`、批准人及日期/时区、适用范围、例外和DEC-005/006/008、以及真正的软件测试/数值证据按AC逐项签署。本表不伪造签署，也不把旧审查快照宣布为滚动HEAD或新编译版本通过。
+
+### 6.4 2026-11-12 全工程36文件的近期同一提交审阅快照（非批准基线）
+
+**固定源提交**：[5de2e9d521ef](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/5de2e9d521efd36ca9f2add3d0c76f9090f9949a)。36条Git blob SHA均从**同一不可变提交**的真实文件路径逐项读取核对，不把§2–3历史3e3ad2a快照、其它日期动态HEAD或历史批准状态混在一起。此表补齐近期审阅阶段的同提交配置身份，但**不代表已批准、已测试或正式冻结的基线**。
+
+| 审计ID | 源提交实际相对路径 | 同一源提交中的完整 Git blob SHA | 限定审计状态 |
+|---|---|---|---|
+| DOC-001 | `docs/REQUIREMENTS.md` | `512db724fb15d5ef43ff6c2cbe51dc3864e50943` | 已完成限定审计 |
+| DOC-002 | `docs/ARCHITECTURE.md` | `3e2c749cf83122ca811a4dbb2255e2ec5cac61c2` | 已完成限定审计 |
+| DOC-003 | `docs/OBJECT_MODEL.md` | `36e148f9820a4d5d8051735b23f9c97014688b1d` | 已完成限定审计 |
+| DOC-004 | `docs/design/README.md` | `18cbb3c153bf6c1eddae65e225deb2d8cf0b2186` | 已完成限定审计 |
+| DOC-005 | `docs/design/contracts.md` | `a40ea65aaf47a6d4376d1b0b205b651b050418ce` | 正在审计 |
+| DOC-006 | `docs/design/cli.md` | `33a19854b9e52905de07005bd4619c2718ee2d50` | 已完成限定审计 |
+| DOC-007 | `docs/design/mat_io.md` | `a509e9540cf94aa6726d61d23f1fecf5f9dcde92` | 正在审计 |
+| DOC-008 | `docs/design/sampling_noise.md` | `92a190ddfa2807a52eca64170120be3fbe67bfb6` | 正在审计 |
+| DOC-009 | `docs/design/trajectory.md` | `2f207fbdb0595b3419a4efcb02c382d70187cb81` | 已完成限定审计 |
+| DOC-010 | `docs/design/kvd.md` | `faf53f0de286134afea5c7e16530cebf976c4eec` | 正在审计 |
+| DOC-011 | `docs/design/harmonics.md` | `348f664d91932f1493f5ef9cec8bc407ef4648ab` | 正在审计 |
+| DOC-012 | `docs/design/adaptive_mfa.md` | `273451099293148b002f173822f67a6408b76171` | 正在审计 |
+| DOC-013 | `docs/design/experiments.md` | `228f7f67c50039aeec35b575addb8fc80332e292` | 正在审计 |
+| DOC-014 | `docs/design/analysis_plotting.md` | `ae3fea1328e43f73bbc424cf43cdb94ed35029a4` | 正在审计 |
+| DOC-015 | `docs/design/SH_ROTATION_IVANIC_RUEDENBERG.md` | `1f428091894e2899aa9225c7c9f99fe2cf5655da` | 已完成限定审计 |
+| DOC-016 | `docs/design/SH_DISCRETE_REFIT_CONSISTENCY.md` | `caba819f7fcabebdba84dfcefd0fc312e7215b00` | 正在审计 |
+| DOC-017 | `docs/design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md` | `8a21282d3b8730556992fac8cc1a15b31b7dacdc` | 正在审计 |
+| DOC-018 | `docs/TEST_PLAN.md` | `1a218c2369ac7a46e7573698d205ff18b9663efe` | 已完成限定审计 |
+| DOC-019 | `docs/PLAN.md` | `9e9e821241c3e1b6fe055726d1c303a56ccf01fb` | 已完成限定审计 |
+| DOC-020 | `docs/PROGRESS.md` | `00aa3aa77f47081f1fd304adf3c7d1089d275fd7` | 已完成限定审计 |
+| DOC-021 | `docs/AUDIT.md` | `c36cb0a0b8d4f96222687e41c340796527070a13` | 已完成限定审计 |
+| DOC-022 | `docs/AUDIT_PROCESS.md` | `5ec8a185d662275c0b8e21f5e5f4288b6236f24f` | 已完成限定审计 |
+| DOC-023 | `docs/DOCUMENT_BASELINE_REGISTER.md` | `6477c8e2f733f70cdf2300677b2f1d5676160888` | 已完成限定审计 |
+| DOC-024 | `docs/SOURCE_INVENTORY.md` | `9d72f7517e93f774c4b67338cc6b93f6723e7712` | 已完成限定审计 |
+| DOC-025 | `docs/MIGRATION_MATRIX.md` | `3d61d69f7962a29c8720528f7fa71628c7008331` | 已完成限定审计 |
+| DOC-026 | `docs/TODO.md` | `bbd9910d353e5d51aaa953c45be040fefda70acc` | 已完成限定审计 |
+| DOC-027 | `docs/decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | `063acaa2dc8e7524546fb85a985a7f8b8e860a88` | 已完成限定审计 |
+| DOC-028 | `docs/decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md` | `461db8f0ffdc4d11696607fbd2dfb34335a3c042` | 已完成限定审计 |
+| DOC-029 | `docs/decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md` | `0c708af126d031707e737136c075d29483667877` | 已完成限定审计 |
+| DOC-030 | `docs/approval/DECISION_IMPLEMENTATION_NOTES.md` | `2dc89dfa563b35c81c747f89c2e0012ddc2ada20` | 已完成限定审计 |
+| DOC-031 | `docs/approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md` | `f2ece1cdd82641e9978513d06ff47f43c5a6ee9c` | 已完成限定审计 |
+| DOC-032 | `docs/golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md` | `df9612759549a9e9820b33a772540a80bbc90c3e` | 已完成限定审计 |
+| DOC-033 | `docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md` | `fe1ad898090eb2d66ca99149dfeac189cf7c5696` | 已完成限定审计 |
+| DOC-034 | `docs/golden/NO_MATLAB_EXECUTION_POLICY.md` | `5f2bc13f3fbf0636ac15f5dfe0c38611b80074be` | 已完成限定审计 |
+| DOC-035 | `docs/golden/SH_PAPER_VERIFICATION_CASES.md` | `1ac44cba46e0d63b9f54f40fe18dbbc4279a627a` | 已完成限定审计 |
+| DOC-036 | `docs/golden/analytic_golden_candidates.v1.json` | `1e6499eff3ce5b55503f8cd913b9f492629da499` | 已完成限定审计 |
+
+**数量**：36个唯一DOC、36个唯一路径、26份已完成限定审计、10份正在审计、0份未审计；三态来自固定提交的[AUDIT_PROGRESS.md](AUDIT_PROGRESS.md)，并不表示内容验收或软件TC通过。正式审核/批准人、日期时区、范围、全部LLD依赖SHA、DEC-005/006/008处理/例外、真实软件证据仍未获得签署；approval_status=NotApproved、baseline_status=ReviewDraft，不能关闭综合DAR-001/DAR-005。
+
+**自身身份限制**：DOC-023的blob属于**添加本节之前**固定提交`5de2e9d521efd36ca9f2add3d0c76f9090f9949a`中的原文件。本次编辑将产生新blob/commit，不能把新blob反写为旧提交SHA或声称此表自动跟随未来HEAD。新blob在后续[AUDIT_PROGRESS.md](AUDIT_PROGRESS.md)登记；正式冻结须在新的固定提交上重新核全部依赖、验证和签署。
