@@ -247,7 +247,7 @@ private:
 
 ### 8.0.1 四种更新周期不是四套每帧自适应系数状态（2026-11-12 原源码合同）
 
-只读原 `agent_in_sphere_adaptive_matched_filter_many_parameter.m:134–182` 定义更新率算法。若未来使用 `AdaptiveMfaSession` 共用封装，必须保持返回值弃置语义：第134–138行先旋转主`akkoeff`与四组`mitkoeff(:,:,k)`，第147–150行按`mod(i,zeitkonstanten(k))==0`从**已旋转但本帧主求解尚未提交**的主系数复制给周期组；第164行`[dumi mittrans mitrot error]=oneit_adaptiv_matched_filter(mitkoeff(:,:,k),setofpoints)`只消费求解运动结果计算误差，不将`dumi`写入周期基线；第182行`[akkoeff aktuelltrans aktuellrot error]=oneit_adaptiv_matched_filter(akkoeff,setofpoints)`才唯一更新主系数。这些精确行为要在[Adaptive LLD `5.0.1](adaptive_mfa.md)中维护，Runner不应维护第二套自相矛盾的更新规则。
+只读原 `agent_in_sphere_adaptive_matched_filter_many_parameter.m:134–182` 定义更新率算法。若未来使用 `AdaptiveMfaSession` 共用封装，必须保持返回值弃置语义：第134–138行先旋转主`akkoeff`与四组`mitkoeff(:,:,k)`，第147–150行按`mod(i,zeitkonstanten(k))==0`从**已旋转但本帧主求解尚未提交**的主系数复制给周期组；第164行`[dumi mittrans mitrot error]=oneit_adaptiv_matched_filter(mitkoeff(:,:,k),setofpoints)`只使用`mittrans/mitrot`分别与真值计算`normrelfehler`，`dumi`不写回周期基线，而返回的`error`也被下一求解调用覆盖、并非保存误差数组的来源；第182行`[akkoeff aktuelltrans aktuellrot error]=oneit_adaptiv_matched_filter(akkoeff,setofpoints)`才唯一更新主系数。这些精确行为要在[Adaptive LLD §5.0.1](adaptive_mfa.md)中维护，Runner不应维护第二套自相矛盾的更新规则。
 
 **可区分正确和错误实现的状态替身**：旋转始终I；主状态和四组对照的源初始常数项均为`A=B_k=1`；模拟每次求解返回系数`C_next=C+100`，运动值不影响状态。帧`i=2/3/5/6`的比较输入必须分别为`period1:[1,101,301,401]`、`period5:[1,1,301,301]`；本帧主求解后的主状态分别为`[101,201,401,501]`（i=4仍执行主更新，故i=5前主为301）。如果错误地把`dumi`写回period5，对照在i=3的输入会变成101；如果先更新主系数再周期复制，则i=5的period5输入会变成401，均能在不调用真实MATLAB或随机源的条件下由**计划中的隔离替身测试**判别。上述标量仅是系数对象的哨兵值，不冒充3×5真实球谐矩阵或原始轨迹L3。
 
