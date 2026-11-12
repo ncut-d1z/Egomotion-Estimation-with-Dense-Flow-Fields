@@ -121,7 +121,7 @@ regression_tolerance=9.0949470177292824e-13
 
 ### 2.1.1 错误指标的有效域与“零真值零误差”假成功负例（2026-11-12，尚未执行）
 
-沿用 `TC-F-ERROR-001 / AC-F-ERROR-001`，依据原 `transfehler_div.m:8–16`、`normrelfehler.m:5–8` 与 [KvD LLD `1.1](design/kvd.md)，要求未来真实 `test_estimators.cpp` 独立校验**两个不同指标及非成功分类**，并记录其输入/输出维度和分母来源。`transfehler_div` 的源注释虽提 `squared error`，**返回语句是 `sqrt(dot(div,div))`，不是残差平方**；此处不能因为名为 error 就把距离平方后作为作者记录的 Bias ywerte。
+沿用 `TC-F-ERROR-001 / AC-F-ERROR-001`，依据原 `transfehler_div.m:8–16`、`normrelfehler.m:5–8` 与 [KvD LLD §1.1](design/kvd.md)，要求未来真实 `test_estimators.cpp` 独立校验**两个不同指标及非成功分类**，并记录其输入/输出维度和分母来源。`transfehler_div` 的源注释虽提 `squared error`，**返回语句是 `sqrt(dot(div,div))`，不是残差平方**；此处不能因为名为 error 就把距离平方后作为作者记录的 Bias ywerte。
 
 | 真值 u、估计 v | 按源静态公式的尺度对齐距离 | 按源静态公式的方向角（deg） | 正式 C++ 候选资格 |
 |---|---:|---:|---|
@@ -137,7 +137,7 @@ regression_tolerance=9.0949470177292824e-13
 
 ### 2.1.2 KvD 候选错误枚举必须来自同一公共合同（2026-11-12）
 
-本次核对[ KvD LLD `4](design/kvd.md) 时发现其旧失败建议写了 `SingularGeometry` 与泛化 `NonFinite`，但唯一候选 [contracts.md `3](design/contracts.md) 的 `NumericalErrorCode` **不存在这两个枚举值**。原 LLD 已纠正为只引用现有类型，禁止 C++ 开发者照旧 LLD 新建重复的本地枚举、使用不存在的标识导致编译失败或丢失 JSONL/CLI 错误含义。
+本次核对[KvD LLD §4](design/kvd.md) 时发现其旧失败建议写了 `SingularGeometry` 与泛化 `NonFinite`，但唯一候选 [contracts.md §3](design/contracts.md) 的 `NumericalErrorCode` **不存在这两个枚举值**。原 LLD 已纠正为只引用现有类型，禁止 C++ 开发者照旧 LLD 新建重复的本地枚举、使用不存在的标识导致编译失败或丢失 JSONL/CLI 错误含义。
 
 | 固定数值或输入异常 | 现有唯一候选 `NumericalErrorCode` | 需要验证的差异 |
 |---|---|---|
