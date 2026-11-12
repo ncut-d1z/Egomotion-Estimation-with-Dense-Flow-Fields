@@ -1,6 +1,6 @@
 # Egomotion Estimation with Dense Flow Fields：软件需求规格说明书（SRS）
 
-> **状态：草案 v0.19，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
+> **状态：草案 v0.20，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
 
 ## 1. 目的、范围与约束
 
@@ -611,6 +611,7 @@
 | v0.17 | 修复 AC-F-BIAS-003 的 N 歧义：原作者参考线按末次保存的 xwerte，而非完整球面实际8·4^i；同时纠正Bias loglog单坐标轴、显示与数值数据的关系；保留66 REQ/AC/TC | 评审草案，未批准/未执行CTest |
 | v0.18 | 2026-11-12：修复 AC-F-ERROR-001 的原指标定义域：欧氏尺度对齐残差非平方，方向角以度表示，零真值时原误差可能假0但正式数值域必须拒绝并记录；补已有 TC 的固定反例，不改变66条 REQ/AC/TC | 评审草案，非批准、未运行新增CTest |
 | v0.19 | 2026-11-12：修正 AC-F-ADAPT-003/AC-F-EXP-003 的周期比较返回所有权：原 Update rates 第一返回量绑定`dumi`弃置，不能当四条持续自适应Session；明确主系数刷新前后顺序与原TC固定哨兵条件，原66项编号保持不变 | 评审草案，非批准、未运行真实Session/CTest |
+| v0.20 | 2026-11-12：补强AC-DC-DOMAIN-001的未初始化Result/Status伪成功防线，显式禁止默认构造并用工厂唯一建立成功/失败，增加既有TC的编译负例与move-only/异常边界；DEC-008仅候选不批准 | 评审草案，未冻结、未编译/CTest |
 
 
 ## 附录 A：内部设计约束清单（REQ-DC）
@@ -623,7 +624,7 @@
 |---|---|---|---|---|
 | REQ-DC-ADAPT-001 | M | 设计待冻结 | 系统应将无状态单步求解与有状态 Session/更新策略分离。 | AC-DC-ADAPT-001：单步无 Session 可测，两个 Session 无状态串扰。 |
 | REQ-DC-ANALYSIS-001 | S | 设计待冻结 | 系统应将 MAT 读取、分析、可选绘图分离，禁止图表后端改变数据。 | AC-DC-ANALYSIS-001：禁用绘图时分析值相同。 |
-| REQ-DC-DOMAIN-001 | M | 设计待冻结 | 系统领域合同应表达流场、运动、球谐系数的语义、维度和显式失败状态。 | AC-DC-DOMAIN-001：P0 冻结输入/输出合同，非法形状报错。 |
+| REQ-DC-DOMAIN-001 | M | 设计待冻结 | 系统领域合同应表达流场、运动、球谐系数的语义、维度和显式失败状态。 | AC-DC-DOMAIN-001：在正式P0冻结前须核流场/运动/系数的形状与有限性、非法形状失败及Result/Status状态构造：禁止默认构造带来虚假成功，只有显式`success(validT)`/`failure({code,detail})`工厂可创建结果；覆盖`T=double`、可默认构造Eigen值类型、Status<Code>的默认构造编译负例、move-only返回及错误来源保存。见[公共合同 §3.B](design/contracts.md)、[TEST_PLAN §2.12.1A](TEST_PLAN.md)；现行签名仅是候选，DEC-008及真实编译/CTest未批准。 |
 | REQ-DC-EXPERIMENT-001 | M | 设计待冻结 | 系统实验运行器应通过组合注入求解、RNG、采样和写入器，彼此独立。 | AC-DC-EXPERIMENT-001：固定替身运行两种 Bias 模式无交叉状态。 |
 | REQ-DC-IO-001 | M | 设计待冻结 | 系统应使用资源安全的 MAT 读取及独立写入接口，领域计算不直接依赖 matio 指针。 | AC-DC-IO-001：RAII/内存寿命、只读/写入权限、替身可验证。 |
 | REQ-DC-KVD-001 | M | 设计待冻结 | 系统应保持两个 KvD 入口和差异化更新规则，不让公共引擎覆盖原始计算顺序。 | AC-DC-KVD-001：策略替换对照两条原 MATLAB 路径。 |
