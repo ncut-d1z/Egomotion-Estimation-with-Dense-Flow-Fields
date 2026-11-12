@@ -1,6 +1,6 @@
 # CLI 参数、退出码与诊断协议：详细设计草案
 
-> **候选 v0.8，未冻结、未编码、未执行 CTest。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
+> **候选 v0.9，未冻结、未编码、未执行 CTest。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
 
 ## 1. 语法与基本约束
 
@@ -93,6 +93,12 @@
 - `--noise-scale 0` 的数值噪声贡献为零，但 **3N 次正态随机抽样仍发生**；负有限系数以负号乘相同的随机抽样，会改变**固定注入序列**的具体噪声符号，不能为了统计分布相似而默默转成绝对值。
 - **候选忠实行为**：`FINITE_DOUBLE` 校验有限性，不额外对负号作非负拒绝；如将来选择“非负业务限制”，必须作为经 DEC-008 明确批准的外部语义变更，记录相应 TC 差异，不能声称来自原 `.m`。
 - 必须用零/正/负尺度、固定 3N 抽样、精确切向投影及被拒绝的 NaN/Inf 负例验证 CLI/噪声层；当前没有获得正式接口批准，也没有代码/CTest/独立 L3 执行。参见 [采样 LLD §7.2](sampling_noise.md) 与 [静态证明记录](../reviews/AN_G_STATIC_FORMULA_REVIEW_2026-11-08.md)。
+
+### 3.3 DEC-008 对 CLI 仍须审批的精确边界（2026-11-12）
+
+**已定行为而不是本次决策**：JSONL是统一错误诊断方案；`ErrorStage`来自[contracts §3.1](contracts.md)的单一候选映射；输出根固定为`output/<RunId>/`，不提供自定义输出根；`inspect-mat`的strict/compat和变量选择有§2.0.1的四分支策略。`readNamed/readFirstCompatible`的“实际读取整个数值”是**内部Reader行为**，并不自动授权 CLI 把文件的所有double打印到stdout。
+
+**DEC-008-05 仍需明确的对外细节**：成功的inspect-mat是只打印有界元数据摘要，还是允许显式的全量数值转储？诊断字段缺失时是省略或显式null？一项命令多层故障时每条JSONL如何保留底层code/stage/path/RunId与消息？stderr及持久日志写出失败是否改变本次RunOutcome？推荐初版成功默认摘要而非全量打印，错误JSONL字段固定且UTF-8/JSON转义严格；**均只作为建议，不是已批准协议**。详细决策问题/备选项已集中在[TODO §2.2](../TODO.md)。DEC-008未确认前，禁止本文件继续把“候选命令”和“对外ABI已冻结”混用。
 
 ## 4. 验收映射与冻结界线
 
