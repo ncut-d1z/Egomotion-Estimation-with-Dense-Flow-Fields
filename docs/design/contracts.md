@@ -1,6 +1,6 @@
 # C++17 公共详细设计合同（跨模块 LLD）
 
-> **跨模块合同草案 v0.7（未冻结、未建公共头文件、未编译）。** 此处集中定义候选值类型、状态、错误与 ABI 风格，以免 MAT I/O、KvD、Adaptive、实验和分析各自使用不同的 Result、形状和退出码。最终签名必须经 P0.7/P0.8 与项目所有者审批后才能成为编码基线。
+> **跨模块合同草案 v0.8（未冻结、未建公共头文件、未编译）。** 此处集中定义候选值类型、状态、错误与 ABI 风格，以免 MAT I/O、KvD、Adaptive、实验和分析各自使用不同的 Result、形状和退出码。最终签名必须经 P0.7/P0.8 与项目所有者审批后才能成为编码基线。
 
 ## 1. 适用范围与版本边界
 
@@ -85,6 +85,7 @@ struct Failure {
 template<class T, class Code>
 class Result {
 public:
+    Result() = delete;                        // 禁止默认构造伪成功；详见§3.B
     static Result success(T value);
     static Result failure(Failure<Code> why);
     bool hasValue() const noexcept;
@@ -101,6 +102,7 @@ private:
 template<class Code>
 class Status {
 public:
+    Status() = delete;                        // 禁止默认 monostate 伪成功
     static Status success();
     static Status failure(Failure<Code> why);
     bool hasValue() const noexcept;
@@ -112,6 +114,20 @@ private:
 };
 }
 ~~~
+
+### 3.B 默认构造会产生伪成功，必须采用工厂限定的有效状态（2026-11-12 真实API设计缺陷）
+
+此前候选示意只写出 `static Result success/failure` 与 `std::variant<T,Failure<Code>> payload_`，**没有显式删除Result默认构造函数**；`Status` 的第一个variant alternative是 `std::monostate`，默认构造必定是成功分支。当 `T` 可默认构造（例如 `double`、默认构造的容器/矩阵等）时，`Result<T,E> r;` 会把没有经过任何检查或算法运算的 `T` 放进variant的**成功 alternative**；如果 `hasValue()` 按 `holds_alternative<T>` 实现，它会报告true。对Eigen默认矩阵尤其危险，因为其中的数值可能尚未初始化。`Status<E> st;` 更是会默认构造成功。**它们与“未运行/未赋有效值不得伪成功”的公共状态合同直接冲突。**
+
+**已修订的候选可编码约束**：
+
+- 两种类型的`默认构造函数都显式`=delete`；仅通过已明确建立成功值的 `success(T)` / `success()` 或包含 `Code+ErrorDetail` 的 `failure(Failure<E>)` 静态工厂创建；不得隐式从 `T`、`bool` 或默认值转换。
+- 真实工厂必须经**private tagged in-place构造**直接建立 `variant` 的选定alternative：成功构造第0个；失败构造第1个。`Result::success(T)` 的调用方仍负责验证T的数学不变量；**工厂限制不能使任意默认T自动数值有效**。
+- **禁止改变已存在对象的variant alternative的`emplace/assignment`作为普通“由失败改成功”操作**；优先采用构造新的不可变结果对象并返回。候选类型的公共copy/move assignment可删除以约束这一点，但是否保留copy construction、move-only T、异常或内存分配失败行为仍须DEC-008评审。这样可减少`valueless_by_exception`的触发路径，但不能无源码/编译/故障注入证据宣布已从类型系统完全消除。
+- `Result::value() &&` / `error() &&` 必须依前述生存期修订返回**自拥有的值**；调用前必须验证 alternative。移动后源对象不得继续作为包含有效数学数据的成功结果复用；不能凭源 `hasValue()` 仍为true使用已搬离的Eigen缓冲区。
+- **正确失败语义**：已构造的成功/失败对象有明确类别；创建某个variant alternative时构造本身发生异常，通常**没有新的Result对象可返回**，不能伪造 `Failure<Code>`。真正的`valueless_by_exception`若可发生，`hasValue()==false`也不代表已持有Failure。如何覆盖抛异常/无异常编译、强异常保证与意外失效，列入[TODO DEC-008 `2.2](../TODO.md)供最终接口审批。
+
+**判别性静态负例**：`Result<double,E> r;`、`Result<FlowField,E> r;`、`Status<E> st;` 都必须在C++接口层**不可编译**；`success(validValue)` 才能得到成功，`failure({code,detail})` 才能得到失败。将来仍须编译核验模板自包含、const右值、move-only值与异常、跨TU，并使用真实数值不变量核查业务成功分支；文档修改不构成原生测试。
 
 ### 3.A C++17 私有实现不是稳定二进制 ABI（2026-11-11 静态合同更正）
 
@@ -149,7 +165,7 @@ private:
 
 | 分支 | 当前合同检查点 | 真正未定/待验证 |
 |---|---|---|
-| `Result/Status` 正常与失败态 | 只有成功值或 `Failure<Code>{code,detail}`；`hasValue()` 不可将失败伪装为成功；左右值按引用/自拥有值区分，不得从临时对象返回借用引用；**private variant 仍决定完整对象的 ABI 布局** | 真实 `<variant>/<optional>` include、右值重载、move-only T、模板 ODR、自包含头、跨target/跨共享库ABI策略及异常构建兼容性待编译 |
+| `Result/Status` 正常与失败态 | **默认构造已禁止，须由带标签的成功/失败工厂直接构造选定variant分支**；只有成功值或 `Failure<Code>{code,detail}`；`hasValue()` 不可将失败伪装为成功；左右值按引用/自拥有值区分；private variant仍参与 ABI 布局 | 真实 `<variant>/<optional>` include、右值重载、move-only T、模板 ODR、自包含头、跨target/跨共享库ABI策略及异常构建兼容性待编译 |
 | `std::variant::valueless_by_exception()` | **不能**将无值内部状态当成功或返回默认 `T`；实现前必须给出能保留失败原因的稳定处理路径 | 使用哪一个公共错误码/异常边界仍待 P0.8 批准与故障注入，不凭文档编造映射 |
 | 对错误调用 `value()` / 成功调用 `error()` | 均属违反访问前置条件；不得泄漏无效引用或转换成默认值 | 选择抛异常/断言/显式返回等精确 ABI 行为待决定与测试 |
 | `ErrorDetail` 与 CLI JSONL | `run_id`、`observation_index` 可空；保持底层 code/stage；JSONL 对字符串/非有限值合法编码 | 实际跨 Mat→Experiment→CLI 嵌套错误、JSONL 转义/失败负例及多线程所有权未测 |
