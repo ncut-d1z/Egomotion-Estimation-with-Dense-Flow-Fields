@@ -1,6 +1,6 @@
 # Egomotion Estimation with Dense Flow Fields：软件需求规格说明书（SRS）
 
-> **状态：草案 v0.16，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
+> **状态：草案 v0.17，未冻结、未验收。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
 
 ## 1. 目的、范围与约束
 
@@ -54,7 +54,7 @@
 | REQ-F-AN-002 | S | 确定 | 系统应将绘图与数值分析隔离，并支持原三份 illustration 的可比较展示。 | AC-F-AN-002：无绘图依赖下数值命令可运行；图示所据数据一致。 |
 | REQ-F-BIAS-001 | M | 确定 | 系统应复现非球形视场的 Bias 实验及三组噪声乘数 [0.6,2.4,9.6]。 | AC-F-BIAS-001：以固定 Gaussian 序列含 0、1、−1 分量，对 [0.6,2.4,9.6] 每项验证原脚本的 randn × 系数 × 平均光流模长（**不能开平方**）及切平面投影；另核对 xwerte 和 ywerte1…6 变量名、维度。 |
 | REQ-F-BIAS-002 | M | 确定 | 系统应复现完整球面、逐分量比例噪声的 Bias 实验。 | AC-F-BIAS-002：同一固定流场及 Gaussian 序列下，逐分量按 randn × 系数 × p_component 扰动并重新投影；其输出与平均模长噪声模型有可计算差别，保存文件名和维度一致。 |
-| REQ-F-BIAS-003 | M | 确定 | 系统应支持汇总两种 Bias 实验各 40 份独立运行结果及理论参考曲线。 | AC-F-BIAS-003：跨运行均值及 100/sqrt(N) 曲线与原分析脚本一致。 |
+| REQ-F-BIAS-003 | M | 确定 | 系统应支持汇总两种 Bias 实验各 40 份独立运行结果及理论参考曲线。 | AC-F-BIAS-003：根据原 `graphs_bias_test.m`，四组 `ywerte3…6` 各自跨 K 次运行求平均，绘图横轴使用最后一次运行保存的 `xwerte`（不计算均值）；参考线逐点为 `100/sqrt(xwerte_last(i))`，绘图行 i=3…iterationnumber+1，**不是** `100/sqrt(N_actual(i))`。完整球面实际视线 N=8·4^level，但原保存 xwerte=6·4^level，必须保留二者区别；原 Bias 仅使用 loglog 单坐标轴，显示窗口裁剪不改变原分析数值。映射既有 TC-F-BIAS-003；正式数值和软件测试仍待执行。 |
 | REQ-F-CLI-001 | M | 确定 | 系统应提供 inspect-mat 命令，对指定 MAT 文件进行只读检查，不调用任何估计器。 | AC-F-CLI-001：依据 [design/cli.md §2–4](design/cli.md) 的 `inspect-mat` 候选合同，使用一个有效压缩 MAT、一个不存在的文件及一个变量名错误样本，核验帮助、strict/compat、变量名/类型/形状、退出码与原文件哈希不变；具体 CLI 参数/错误映射仍待 P0.8/P1.2 批准。 |
 | REQ-F-CLI-002 | M | 接口草案 | 系统应分别提供两种 Bias 数据生成命令，支持随机种子、细分等级与可选的 `--run-id`；新结果仅写入固定的仓库 `output/<RunId>/`，不得提供自定义输出根参数。 | AC-F-CLI-002：依据 [design/cli.md §2–4](design/cli.md) 核查两种 Bias 命令的合法/非法等级、seed、可选 `--run-id` 与固定 `output/<RunId>/` 非覆盖；**不存在用户配置输出根选项**，生成 xwerte 与 ywerte1…6，失败按候选错误码返回非成功。 |
 | REQ-F-CLI-003 | M | 接口草案 | 系统应分别提供 Adaptive 初始化、带/不带噪声比较和更新间隔三种实验入口。 | AC-F-CLI-003：依据 [design/cli.md §2–4](design/cli.md) 逐命令核查三种 Adaptive 入口的原 MATLAB 参数、固定默认值、当前脚本输出合同与 1/5/11/21 刷新时刻；非法参数或数值失败不得报告成功。 |
@@ -608,6 +608,7 @@
 | v0.14 | AF-037：新增 AC→LLD 固定身份/证据冻结前检查点，保留原 REQ/AC/TC 编号与未冻结状态 | 评审草案，非批准基线 |
 | v0.15 | DAR-001：首次将58正文+8附录的全部66个REQ/AC/TC映射到固定审查提交的实际存在的主要HLD/LLD文件/章节和Git blob；纠正FLOW-004、ERROR-001的责任归属，并清理低阶SH已实现范围的过时描述。此为审查用身份**非冻结包**，完整依赖/审批/运行仍缺 | 评审草案，非批准基线 |
 | v0.16 | 2026-11-12：修正§9双向矩阵中`REQ-F-CLI-001`错误的“五生成入口”来源，恢复MAT只读检查/`getflowfield.m`来源；§7清除已过期“论文未上传所以不能实现球谐”的阻塞说明，明确既有低阶叶子实测和仍未完成的公共ABI/DEC条件；不改动66个REQ/AC/TC | 评审草案，非批准基线 |
+| v0.17 | 修复 AC-F-BIAS-003 的 N 歧义：原作者参考线按末次保存的 xwerte，而非完整球面实际8·4^i；同时纠正Bias loglog单坐标轴、显示与数值数据的关系；保留66 REQ/AC/TC | 评审草案，未批准/未执行CTest |
 
 
 ## 附录 A：内部设计约束清单（REQ-DC）
