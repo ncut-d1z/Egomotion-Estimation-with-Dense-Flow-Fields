@@ -1,6 +1,6 @@
 # 全工程文档规范审计进度与整改台账（AUDIT_PROGRESS）
 
-> **状态：审计进度 v1.3，第十二批按原三个Adaptive入口逐行实改UpdateRate对照系数返回弃置/主状态提交与刷新时序，补完整帧哨兵测试并更正比较MSE与保存角误差的来源，更新SRS/对象模型/Runner/TC及人类决策清单；仍按36文档/既有五项综合阻塞继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
+> **状态：审计进度 v1.4，第十三批发现并实修Result/Status默认构造可能产生伪成功的公共合同缺陷；H-10/H-11/DEC-005/DEC-006/BASELINE-SIGN/RELEASE-PR按所有者新决定无限期延期，DEC-008已详细说明但仍DecisionPending；同步SRS/CLI/TC/审计规则；仍按36文档/既有五项综合阻塞继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
 
 ## 1. 口径、状态和可复核方式
 
@@ -14,12 +14,12 @@
 
 | ID | docs/下相对路径 | 用户初始规范判断 | 首轮实际需核对的问题 | 审计状态 | 本轮证据／整改关联 |
 |---|---|---|---|---|---|
-| DOC-001 | `REQUIREMENTS.md` | 草案级部分符合 | AC→LLD章节身份/正式批准 | 已完成限定审计 | SRS v0.19：AC-F-ADAPT-003/EXP-003明确周期对照只旋转/按帧号刷新、丢弃dumi第一返回系数，主系数更新在比较之后；提交e7d1ae4；仍为未批准SRS |
+| DOC-001 | `REQUIREMENTS.md` | 草案级部分符合 | AC→LLD章节身份/正式批准 | 已完成限定审计 | SRS v0.20：AC-DC-DOMAIN-001补明默认Result/Status可产生假成功，禁止默认构造、工厂创建正确分支并沿用原66REQ/TC编号；提交08089a3，仍非正式冻结 |
 | DOC-002 | `ARCHITECTURE.md` | 草案级部分符合 | 27拟议DAG与真实构建/ADR | 已完成限定审计 | HLD v0.10：设计图27箭头=25内部+2外部；根CMake仅低阶SH及3CTest，部署/DEC-006仍待 |
 | DOC-003 | `OBJECT_MODEL.md` | 草案级部分符合 | 候选类/生命周期/签署 | 已完成限定审计 | OBJECT_MODEL v0.8：ICoefficientUpdatePolicy和Session正式区分初始化/普通对比同帧迭代写回与UpdateRate比较系数返回丢弃；修正事务性暂存和对象生命周期，提交959ac8e，尚无公共类实现 |
 | DOC-004 | `design/README.md` | 索引符合，非LLD | 实际Markdown个数与模块覆盖条目 | 已完成限定审计 | 14份真实目录Markdown=1索引+1跨模块LLD+9模块LLD+1专题LLD+2理论，10个覆盖行；提交3614b28 |
-| DOC-005 | `design/contracts.md` | 草案级部分符合 | Result/ABI/ODR/异常线程/自包含 | 正在审计 | contracts v0.7：补正private std::variant的布局/动态库ABI后果（此前v0.6已修右值生存期）；本轮提交a3db9b5，真实头/链接/异常/ABI仍待 |
-| DOC-006 | `design/cli.md` | 草案级部分符合 | CLI负例、RunId、JSONL、DEC-008 | 已完成限定审计 | cli v0.8：在已闭环的strict/compat四分支合同上，明确compat单次调用Reader且不能inspect+readNamed二次打开；提交3e9d9aa；真实CLI和DEC-008未批准 |
+| DOC-005 | `design/contracts.md` | 草案级部分符合 | Result/ABI/ODR/异常线程/自包含 | 正在审计 | contracts v0.8：从实际C++17 variant首alternative默认构造语义发现Result<T,E>/Status<E>伪成功漏洞；新增默认构造=delete、private in_place成功/失败构造、删除公共assign，实际修改6e29211/7fbf03d/4531476；DEC-008仍需审异常/二进制范围，真实公共头/CTest未建立 |
+| DOC-006 | `design/cli.md` | 草案级部分符合 | CLI负例、RunId、JSONL、DEC-008 | 已完成限定审计 | cli v0.9：DEC-008候选把Reader确实完整读取与CLI是否默认打印全量double分离，stdout/JSONL仍待批准；提交42ce608，未建真实CLI |
 | DOC-007 | `design/mat_io.md` | 草案级部分符合 | Reader/Writer、TOCTOU、写回读、L2 | 正在审计 | mat_io v0.12：纠正readFirstCompatible先inspect后另开readNamed可能混淆A/B输入身份；改同一mat_t*的枚举+解码候选并限定原地改写风险；修复§7表对Manifest权责旧句；提交796d1ce，真实TOCTOU/Reader测试未执行 |
 | DOC-008 | `design/sampling_noise.md` | 草案级部分符合 | 生产几何/RNG负例/CTest | 正在审计 | sampling_noise v0.10：原fixed_*、nonpropfehler、erzeugeflussausnear、getvektor已逐源核对；修复durchlaenge/near_last合同并增抵消反例，提交09ae652；原三类面表与生产RNG/CTest尚待深审 |
 | DOC-009 | `design/trajectory.md` | 草案级部分符合 | Sophus真实依赖及几何L3 | 已完成限定审计 | trajectory v0.6：在既有旋转尺度退化审阅外，补球外内向正根4/9、球面内外向及严格球内前置检查；固定分数推导复核，提交6dbecb5；Sophus/C++/L3仍未验收 |
@@ -31,15 +31,15 @@
 | DOC-015 | `design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 专题草案级部分符合 | 旧版本CMake描述与最新低阶叶子验收区分 | 已完成限定审计 | 对照旧1/1说明与用户固定5e522198 3/3；仅低阶叶子，公共ABI仍未实现；提交4a62a9d |
 | DOC-016 | `design/SH_DISCRETE_REFIT_CONSISTENCY.md` | 理论专题合格，非LLD | 不能替代模块LLD/测试/批准 | 正在审计 | 已核专题定位与35项数学辅助检查，待独立逐式复算 |
 | DOC-017 | `design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md` | 理论专题合格，非LLD | 不能替代Adaptive真实接口/实现 | 正在审计 | 理论专题v0.2：从M2/M3的叉积矩阵推导M对称充要条件mean((mu-1)d)=0，证明均值1不保证对称；提交28c20f6/555eeea，尚未逐式独立重算本专题其它全部25项 |
-| DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 已完成限定审计 | TEST_PLAN §2.7.1补源本帧1-based索引对照与状态替身：period1输入1/101/301/401，period5输入1/1/301/301；错误写回/刷新先后两负例及事务失败不提交，提交cccd2f4/ac3185a，原66TC编号不变且均NOT_RUN |
+| DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 已完成限定审计 | TEST_PLAN §2.12.1A增加Result<double/FlowField>/Status默认构造不可编译、显式成功/失败alternative及move-only/valueless负例；提交a24bf08，没有新正式TC或CTest |
 | DOC-019 | `PLAN.md` | WBS草案符合 | 98P、M0–M5、真实工期/性能 | 已完成限定审计 | PLAN R-02实改：论文缺失风险改为已取得IR96/IR98/Choi、三路线低阶SH固定证据与未完成公共接口/集成风险分列；提交6f2a426；不冒称27DAG/预算/新CTest已验收 |
 | DOC-020 | `PROGRESS.md` | 符合证据登记 | 固定SHA与历史执行/新状态分离 | 已完成限定审计 | 本轮已核历史E-DOC/SH真实证据与旧97AF；正文修订b69e17c |
-| DOC-021 | `AUDIT.md` | 原专项→本轮综合审计 | 已在初始提交转换为全工程文档规范 | 已完成限定审计 | 新全工程文档审计规则、36对象、用户评价基线已提交1081f0f；原SH范围保留固定历史 |
+| DOC-021 | `AUDIT.md` | 原专项→本轮综合审计 | 已在初始提交转换为全工程文档规范 | 已完成限定审计 | AUDIT新增§5.1执行所有者新延期优先级：六项无限期推迟而非已批准或自动结案；DEC-008只详细解释待审，提交7cf5b34；保持36DOC审计原范围 |
 | DOC-022 | `AUDIT_PROCESS.md` | 球谐专项整改，不适用全工程 | 保留SH-01～06，引用原专项快照避免误链 | 已完成限定审计 | 原SH-01～06理论台账保持不变，增加新审计与旧SH历史互不重计的说明；提交569a6e7 |
 | DOC-023 | `DOCUMENT_BASELINE_REGISTER.md` | 部分符合 | 36项固定历史SHA与当期HEAD/批准分开 | 已完成限定审计 | DOCUMENT_BASELINE_REGISTER §6.4新增2026-11-12同一固定提交5de2e9d的36文件全Git blob和审计三态；原历史快照保留，新注册blob7cb2c627；签署/依赖/真实数值仍缺，DAR-005仅实质推进未结案 |
 | DOC-024 | `SOURCE_INVENTORY.md` | 静态来源追踪符合 | 45 .m/50函数、MAT未独立SHA | 已完成限定审计 | 核对45 .m/50函数声明的固定源清单及blob身份；未重算MAT SHA256 |
 | DOC-025 | `MIGRATION_MATRIX.md` | 静态迁移追踪符合 | 45/50候选映射，不是代码实现 | 已完成限定审计 | 核对45/50静态候选迁移映射；不等于真实移植 |
-| DOC-026 | `TODO.md` | 管理清单符合 | 历史审批与分阶段授权时间线 | 已完成限定审计 | TODO §2.1明列需要人类干预的H-10、H-11、DEC-008/005/006、基线/发布的条件和适用时间；特别注明当前纯文档审计无立即人类决策、既有SH材料/Eigen/MATLAB L1无需再确认；提交e1b4826，未改变任何既有权限 |
+| DOC-026 | `TODO.md` | 管理清单符合 | 历史审批与分阶段授权时间线 | 已完成限定审计 | TODO §0将六项权限/数值/性能/冻结/发布统一标记DeferredIndefinitelyByOwner，§2.2详细提供DEC-008的六大决策问题、已定选项/建议/测试分层，提交a3550cf/150f098；保留DecisionPending且不重新申请MATLAB/L1 |
 | DOC-027 | `decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | 决策记录符合 | HistoricalOnly与当前save/代码未测试 | 已完成限定审计 | DEC-004：选定当前save/HistoricalOnly/缺失字段失败规则，尚无生产Runner/Analyzer测试 |
 | DOC-028 | `decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md` | 所有者决定符合 | 技术方向≠软件运行/基线签署 | 已完成限定审计 | 历史所有者决策文件增加2026-11-12后续完成附记，保留2026-11-07审批原意并注明论文已交付、5e522198局部SH3/3、其余授权/ABI/DEC仍开；提交5de2e9d |
 | DOC-029 | `decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md` | 专项授权记录符合 | 历史SH局部权限不得扩展 | 已完成限定审计 | 2026-11-09球谐专项授权仅l≤2/Eigen并禁sdla，H-11历史状态不影响后来用户自己实测 |
@@ -92,6 +92,8 @@
 | DAR-025 | design/kvd.md；TEST_PLAN.md；design/contracts.md | KvD LLD§4建议的SingularGeometry及泛用NonFinite不属于唯一NumericalErrorCode，未来照写会出现不存在的枚举或第二套错误映射；同一LLD§5还将已生成的36轮Wolfram参考误写“未生成” | 只引用contracts.md既有ZeroNorm/UndefinedAngle/SingularSystem/IllConditionedSystem/NonFiniteInput/NonFiniteResult等，新增固定同方向Franz分母为0等对应TC；§5真实区分24+12次数学trace已生成与200轮/生产CTest未执行，不增加公共枚举/伪造软件证据 | 纯文档错误码/已验数学证据错配 | 已整改 |
 
 | DAR-026 | design/adaptive_mfa.md；design/experiments.md；OBJECT_MODEL.md；REQUIREMENTS.md；TEST_PLAN.md；原Adaptive三入口 | 原多更新率脚本 `[dumi mittrans mitrot error]=oneit(mitkoeff(:,:,k),...)` 的第一输出未写回比较系数，但原LLD和对象模型只笼统说“调用单步/周期刷新”，易误写成四条每帧持续自适应基线；对照返回error(MSE)也未用于保存的两列方向误差 | 按原源134–182逐步明确四组比较只旋转+按1/5/11/21从本帧主更新前刷新，`dumi`丢弃、`error`未进入存档角误差，唯主akkoeff每帧提交；同时区分Initialization/Comparison的帧内返回覆盖；SRS/Runner/对象/TC一并实改；固定主初始=比较初始1及替身C→C+100，逐帧验证period1与period5错误变体和失败暂存纪律 | 纯文档状态时序/返回所有权 | 已整改 |
+
+| DAR-027 | design/contracts.md；TEST_PLAN.md；REQUIREMENTS.md | 原候选Result<T,E>未声明禁用默认构造，T可默认构造时variant首alternative即成功状态；Status<E>默认monostate必然成功，导致即使没有求解/操作也可能hasValue()==true并传播空Eigen/非法数值 | 实改公共LLD：Result/Status默认构造=delete，仅private带tag in-place构造，success/failure工厂明确选分支；删除公共copy/move assignment抑制变体alternative变更；SRS AC-DC-DOMAIN-001与TEST_PLAN §2.12.1A加入三种默认构造编译负例、move-only/异常分支；不伪称现有公共头/CTest已执行或DEC-008批准 | 纯文档公共接口伪成功缺陷 | 已整改 |
 
 ## 4. 已实施审计、具体整改和验证日志
 
@@ -243,7 +245,21 @@
 
 **七项计数**：整改目标25→26（+1独立源级时序缺陷），已整改20→21（+1），未整改5→5（0）；36审计文档与26已完成限定/10正在/0未审均不变。六份非台账正文有实际技术/管理修订；综合DAR-001～005仍需真实生产代码、原生验证或批准，不能靠本次文档完成而关闭。代码/原MAT/项目构建从未在本轮执行。
 
+### 第13阶段：Result/Status 构造伪成功修复、六项无限期延期、DEC-008决策说明（2026-11-12）
+
+**起始HEAD**：`9aa02fd5c5a3ae55a4aa9d5d0a143d9010ff8742`；起始36文档26已完成限定、10正在、0未审；26DAR中21已整改、5未整改。本轮仍遵守[AUDIT.md](AUDIT.md)仅源代码只读审查与**文档真实修改**的权限，不修改生产C++/MATLAB/MAT、CMake/CTest，亦不使用未批准软件/性能测试。
+
+**DAR-027 已解决的独立实质API缺陷**：旧[contracts.md `3](design/contracts.md)只给`std::variant<T,Failure<Code>>`和`Status`的`std::variant<monostate,Failure>`，**未禁止默认构造**；当T有默认构造时，`Result<T,E> r;`可令首`T`分支成功而未经历任何算法检查；`Status<E> st;`默认`monostate`成功更加确定。这与“错误不得伪成功”和可能未初始化Eigen数值的安全义务直接矛盾。现已实改[contracts.md](design/contracts.md) v0.8，`Result()/Status()=delete`、private`in_place_index`构造器、成功/失败显式工厂、删除公开assignment；同时明确工厂仍须验证值的数学不变量、异常构造/valueless不能凭文本保证完全消除。提交 [6e29211](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/6e2921167514dae2365db190fc82d77862e9d40f)、[7fbf03d](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/7fbf03d8a57a89845b8f68d672561467ff4a54ac)、[4531476](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/453147634085889330e8d13f00722845d7c59799)。[TEST_PLAN `2.12.1A](TEST_PLAN.md)补`Result<double,E>/Result<FlowField,E>/Status<E>`默认构造不可编译及正/负alternative、move-only、跨TU/异常等未来真实用例，提交[a24bf08](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/a24bf0864c92dfb85212f06d9d2c07de11e9b11a)；[SRS `附录AC-DC-DOMAIN-001](REQUIREMENTS.md)明确同一资格，提交[08089a3](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/08089a3ccb462686a350d1400e5db154553e3e1f)。**这只是设计缺陷已修，不是Result实现/编译/ABI、异常故障注入或CTest通过**。综合DAR-003/004仍未完成。
+
+**用户新增六项无限期延期——只改变优先级，不假关目标**：[TODO `0](TODO.md)实际把**H-10、H-11、DEC-005、DEC-006、BASELINE-SIGN、RELEASE-PR**改为`DeferredIndefinitelyByOwner`，禁止在其他整改完成前催办或拿它们阻止文档修复，提交[a3550cf](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/a3550cf267ea6e948f88a3def9cc654e6f2211aa)。[AUDIT `5.1](AUDIT.md)也同步这条优先级规则，提交[7cf5b34](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/7cf5b348afdb43eb51a3fd4203233b6f2e0d8561)。延期**没有**扩大以前局部SH的代码授权、没有允许本轮生产构建/写MAT/合并；DAR-001～005仍为未整改、后续条件明列，不可将无限期延期当批准或彻底豁免。
+
+**DEC-008 只解释、不代替用户决定**：[TODO `2.2](TODO.md)实际增加六子项：①跨版本二进制ABI与源码级API的边界；②失败`value()/error()`的异常政策；③Factory/variant valueless/move-only；④错误码与stage/exit根因；⑤JSONL字段/`inspect-mat`输出范围；⑥Session/RunContext/Manifest的失败状态。每项区分已选方向、A/B建议、未批准和需真实测试的义务，提交[150f098](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/150f098380c6d8345b14c48b637a7cd17e0aec5f)；[CLI LLD v0.9](design/cli.md)把“Reader真的完整读值”和“CLI是否应把所有double打印”分开，提交[42ce608](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/42ce6083067f9fab8f06882dd69b5b77ba364b45)。**DEC-008状态DecisionPending/NotApproved**，不能将文本中的推荐A当所有者已批准；现行详细说明不要求当即执行H-10/H-11/DEC-005/006。
+
+**本阶段起止统计**：整改目标26→27（+1），已整改21→22（+1），未整改5→5（0）；审计文件36→36、已审26→26、正在10→10、未审0→0（均0）。真正的非台账正文变更集中在公共ABI/状态设计、TC/SRS与延期管理/DEC-008候选。66 TC原编号、36审计范围保持不变。无真实C++/CTest/完整L2-L4/数值容差/签署证据。
+
 ## 5. 各轮计数与变化
+
+**第13阶段相对上一轮**：目标26→27（+1）、已整改21→22（+1）、未整改5→5（0）；36DOC/完成限定26/在审10/未审0均不变。实改公共合同及相应SRS/TEST_PLAN，并更新用户延期与DEC-008候选；仍没有软件测试或新批准。
 
 **第12阶段相对上一轮**：整改目标25→26（+1），已整改20→21（+1），未整改5→5（0）；审计文件36、已审26、在审10、未审0全部保持。实际技术正文含Adaptive/Runner/SRS/OBJECT/TEST_PLAN，附独立静态状态回放且没有新的生产软件运行。
 
@@ -285,6 +301,7 @@
 | 第10阶段：Bias理论参考/单轴绘图合同整改 | 36 | 26 | 10 | 0 | 23 | 18 | 5 |
 | 第11阶段：误差指标与KvD错误码/参考状态修复 | 36 | 26 | 10 | 0 | 25 | 20 | 5 |
 | 第12阶段：UpdateRate丢弃返回值/时序与人类批准边界 | 36 | 26 | 10 | 0 | 26 | 21 | 5 |
+| 第13阶段：Result默认伪成功/无限期延期/DEC-008候选 | 36 | 26 | 10 | 0 | 27 | 22 | 5 |
 
 ## 6. 36份文件的同一基准提交身份（DAR-005：只读静态快照）
 
