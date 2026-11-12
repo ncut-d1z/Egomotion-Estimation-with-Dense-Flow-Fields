@@ -89,7 +89,7 @@ Bias 六组 ywerte 对应顺序依次是：Franz 平移、Franz 旋转、Origina
 
 ### 5.0.1 Bias 六类 ywerte 对零真值与原误差函数的定义域（2026-11-12）
 
-两份原 Bias 生成入口 `bias_test_nonspherical.m:72–77` 和 `bias_test_spherical_prop_error.m:72–77` 对六个平移/旋转估计**全部调用** `transfehler_div(theotrans/theorot, estimate)`，而**没有**调用 `normrelfehler`。所以六个 `ywerte1..6` 均是**按真值模长缩放估计后的欧氏向量差**，不是差的平方、方向角（deg）、相对百分误差或测地角；源函数注释的 *pointwise squared error* 与实际执行的 `sqrt` 返回值不同。由 [KvD LLD `1.1](kvd.md) 与 [SRS 的 AC-F-ERROR-001](../REQUIREMENTS.md) 确定其准确数学/单位归属。
+两份原 Bias 生成入口 `bias_test_nonspherical.m:72–77` 和 `bias_test_spherical_prop_error.m:72–77` 对六个平移/旋转估计**全部调用** `transfehler_div(theotrans/theorot, estimate)`，而**没有**调用 `normrelfehler`。所以六个 `ywerte1..6` 均是**按真值模长缩放估计后的欧氏向量差**，不是差的平方、方向角（deg）、相对百分误差或测地角；源函数注释的 *pointwise squared error* 与实际执行的 `sqrt` 返回值不同。由 [KvD LLD §1.1](kvd.md) 与 [SRS 的 AC-F-ERROR-001](../REQUIREMENTS.md) 确定其准确数学/单位归属。
 
 **候选安全失败与原版数值须分开**：在原 `transfehler_div(0,2e_x)` 的代数路径中，真值范数为0且估计范数非零，函数会得到**数值0**；这并不说明估计方向正确。C++ 对零真值/零估计应依既有 `ZeroNorm/UndefinedAngle` 合同显式拒绝和记录 undefined/failed，而不能把这种“源零结果”写入已完成的有效样本均值。原 Bias 正常入口用 `getvektor` 产生随机单位真值方向，此零真值是**注入的负例**，不宣称原标准40组归档一定含这类样本。输出 `ywerte` 均值的有效分母/预期重复次数不应因拒绝而偷偷改变；独立样本失败按现行 `RunOutcome Incomplete/Failed` 与底层失败原因处理，并保存可审计部分记录，不能将空白 y 值填0伪装完整结果。该规则属于已选失败纪律的具体边界，非原 MATLAB 异常输出实测。
 
