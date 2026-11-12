@@ -1,6 +1,6 @@
 # Franz / Original KvD / Modified KvD 详细设计草案
 
-> **LLD v0.9（未冻结、无生产实现）**。原 MATLAB 的Franz/Original/Modified KvD公式和赋值次序已核对；§9.4/§9.5的固定方向夹具已用Wolfram精确算术分别验证**两组六方向4条×6轮、一次8方向翻号2条×6轮，共36次数学迭代**。其中精确轨迹覆盖near正均值、Original/Modified近度加权差异、首轮near翻号、RMS/delta/动态门限及最低六次停止；但不覆盖全部一般运动、200轮极端、生产C++/CTest与最终DEC-005。
+> **LLD v0.10（未冻结、无生产实现）**。原 MATLAB 的Franz/Original/Modified KvD公式和赋值次序已核对；§9.4/§9.5的固定方向夹具已用Wolfram精确算术分别验证**两组六方向4条×6轮、一次8方向翻号2条×6轮，共36次数学迭代**。其中精确轨迹覆盖near正均值、Original/Modified近度加权差异、首轮near翻号、RMS/delta/动态门限及最低六次停止；但不覆盖全部一般运动、200轮极端、生产C++/CTest与最终DEC-005。
 
 ## 1. 精确来源与函数合同
 
@@ -14,6 +14,41 @@
 | help_functions/normrelfehler.m | truth、estimated 3D 向量 | 方向夹角（度） | 先归一化再 acos；零向量/越界需单独报告 |
 
 定义：第 i 个样本的单位视线为 \(\boldsymbol d_i\)，切向光流为 \(\boldsymbol p_i\)，近度为 \(\mu_i\)，平移为 \(\boldsymbol t\)，旋转向量为 \(\boldsymbol\omega\)；\(\langle x\rangle=N^{-1}\sum_i x_i\)。
+
+### 1.1 两种原始误差指标的定义域与零值陷阱（2026-11-12 源码合同整改）
+
+直接对照只读原 `transfehler_div.m:8–16` 与 `normrelfehler.m:5–8`，前者注释中的英文 *pointwise squared error* **不符合它真正执行的末行** `abs(sqrt(dot(div,div)))`。其返回量是把估计向量模长调整为真值模长之后的**欧氏距离（不是距离的平方、不是归一化相对误差、不是角度）**。令参考向量 \(\boldsymbol u\)、估计向量 \(\boldsymbol v\)：
+
+\[
+E_{\mathrm{scale}}=
+\left\|\boldsymbol u-
+\frac{\|\boldsymbol u\|}{\|\boldsymbol v\|}\boldsymbol v\right\|_2,
+\qquad
+E_{\mathrm{angle}}=
+\left|\arccos\!\left(
+\frac{\boldsymbol u^\top\boldsymbol v}
+{\|\boldsymbol u\|\|\boldsymbol v\|}
+\right)\right|\frac{180}{\pi}.
+\]
+
+**仅在 \(\|\boldsymbol u\|>0,\|\boldsymbol v\|>0\) 且 `acos` 的输入属于 \([-1,1]\) 的定义域上**，二者满足精确等式
+\[
+E_{\mathrm{scale}}=2\|\boldsymbol u\|
+\sin\!\left(\frac{\pi E_{\mathrm{angle}}}{360}\right).
+\]
+这也说明 `transfehler_div` 的值不可能与 `normrelfehler` 的度数直接互换。原 `normrelfehler` 没有对 `acos` 自变量钳位、没有单位向量为零的失败处理；**不得把候选 C++ 的输入拒绝写成原 MATLAB 已经拒绝**。若浮点余量令内积比率超出 \([-1,1]\)，如何安全分类、是否只允许有证据的极小量裁剪，仍须按 P0.8/DEC-005 审定，不能擅自让 `acos` 的 NaN/复值/钳位路径冒充等价。
+
+**零真值的危险反例**：\(\boldsymbol u=(0,0,0)\)、\(\boldsymbol v=(2,0,0)\) 时，源 \(\|\boldsymbol u\|/\|\boldsymbol v\|=0\)，`berechtrans` 缩放成零，**`transfehler_div` 返回 0**；然而没有任何真实运动方向可据此比较，`normrelfehler` 要对零向量单位化，计算无定义。若 \(\boldsymbol u=e_x,\boldsymbol v=0\)，前一函数的标量比例为 \(1/0\)，后续 `0*Inf` 使表达式不能得到有限欧氏误差。**不要把零真值非零估计时“源距离指标恰为0”解释为“算法正确”或“原方向指标也为0”**。新C++数值合同应对零模长/非有限向量作明确非成功、提供 `NumericalErrorCode::ZeroNorm/UndefinedAngle` 候选失败并说明与源传播不同，不得在统计分母中记作有效0；安全失败具体映射还需批准。
+
+| 固定输入 \((\boldsymbol u,\boldsymbol v)\) | 源 `transfehler_div` 数值 | 源 `normrelfehler` 数值或定义域 | 判别错误的要点 |
+|---|---:|---:|---|
+| \((e_x,2e_x)\) | \(0\) | \(0^\circ\) | 忽略幅值差但方向同向 |
+| \((e_x,2e_y)\) | \(\sqrt2\) | \(90^\circ\) | 区分欧氏残差与残差平方2 |
+| \((e_x,-2e_x)\) | \(2\) | \(180^\circ\) | **不能**对方向取绝对值或把平移轴当无符号轴 |
+| \((0,2e_x)\) | **0（仅源数学表达式）** | **未定义** | 不能当有效零误差样本 |
+| \((e_x,0)\) | 非有限/无定义计算 | 未定义 | 不得用默认0或静默跳过伪成功 |
+
+这五组是**按原静态公式可独立复算的具体判别向量**，不声称已在 MATLAB 上运行，亦不宣称已生成获批准的 L3/生产 C++/CTest。既有 [AN-G09](../golden/analytic_golden_candidates.v1.json) \((e_x,2e_y)\mapsto(\sqrt2,90^\circ)\) 仍是有效**候选**；这里只补齐正交、反向、零真值、零估计的定义域与失败资格，不新增正式 TC。复用 `REQ-F-ERROR-001`、`AC-F-ERROR-001` 和 `TC-F-ERROR-001`，并在 Bias Runner 中分开记录误差样本的有效/无定义计数，不能把源零真值陷阱纳入有效统计分母。
 
 ## 2. Franz 基线的三轴模板
 
@@ -161,7 +196,7 @@ return (mean(near) * t, omega, near, k)
 | KvD 平移 | 原始/修正 a、b、c、t_next、归一化范数 | 两种平移规则；参考数值未生成 |
 | KvD 旋转 | a_ω、b_ω、c_ω、ω_new、使用旧 t 的时刻 | 两种 KvD；参考数值未生成 |
 | 退出判定 | k、RMS、previous_RMS、delta、动态 grenze、absgrenze、最终 t 尺度 | 原 while 表达式；参考数值未生成 |
-| 指标 | transfehler_div 的尺度对齐结果、normrelfehler 的角度（度） | 独立计算，不可互换 |
+| 指标 | transfehler_div 的**尺度对齐欧氏距离（非平方）**、normrelfehler 的角度（度）及零真值/零估计无定义计数；固定反例见§1.1 | 源注释与实际公式不同，两个指标不可互换；C++显式拒绝零模向量是安全候选、尚未实测 |
 
 每个 TC 必须记录源码 SHA、固定输入来源、绝对/相对最大误差、被测矩阵/向量维度及异常状态。**历史 `rtol=1e-10` 不再是现行候选；项目所有者已确定 `atol=0.01`、`rtol=0.1` 仅用于首轮宽松探索性筛查，不能作为最终 TC/AC PASS 门槛。DEC-005 的最终逐模块阈值及严格几何/状态/迭代次数判据仍须以真实 L3/CTest 证据确认。** 不能仅凭整体论文图形相似就声称逐轮算法等价。
 
