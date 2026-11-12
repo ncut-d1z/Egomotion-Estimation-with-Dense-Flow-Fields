@@ -207,7 +207,7 @@ regression_tolerance=9.0949470177292824e-13
 
 ### 2.7.1 Update rates 对照单步新系数必须丢弃的固定时序回归（2026-11-12）
 
-**源级合同**：原只读 `agent_in_sphere_adaptive_matched_filter_many_parameter.m:134–182` 在帧首旋转`akkoeff`及四组`mitkoeff(:,:,k)`，并在 `mod(i,[1,5,11,21])==0` 时把**本帧主单步前**的`akkoeff`复制给对应组；在比较处调用`[dumi,mittrans,mitrot,error]=oneit(...)`，其中`dumi`并不写回`mitkoeff`，即**比较只消费t、omega、error；新的系数被有意丢弃**。随后`[akkoeff,aktuelltrans,aktuellrot,error]=oneit(...)`才写回主状态。与初始化和普通Comparison中的`[mitkoeff,...]=oneit(...)`不同，不能共用“所有比较都写回新coeff”的代码路径；精确对照见 [Adaptive `5.0.1](design/adaptive_mfa.md)、[Runner `8.0.1](design/experiments.md)。
+**源级合同**：原只读 `agent_in_sphere_adaptive_matched_filter_many_parameter.m:134–182` 在帧首旋转`akkoeff`及四组`mitkoeff(:,:,k)`，并在 `mod(i,[1,5,11,21])==0` 时把**本帧主单步前**的`akkoeff`复制给对应组；在比较处调用`[dumi,mittrans,mitrot,error]=oneit(...)`，其中`dumi`并不写回`mitkoeff`，即**比较仅用t/omega计算`normrelfehler`，`error`返回量被覆盖而不进入保存的对照误差列；新的系数被有意丢弃**。随后`[akkoeff,aktuelltrans,aktuellrot,error]=oneit(...)`才写回主状态。与初始化和普通Comparison中的`[mitkoeff,...]=oneit(...)`不同，不能共用“所有比较都写回新coeff”的代码路径；精确对照见 [Adaptive §5.0.1](design/adaptive_mfa.md)、[Runner §8.0.1](design/experiments.md)。
 
 **原参数哨兵替身**：四组和主系数都从源常数项`A=B_k=1`开始，帧旋转设置为I，`oneit(C)` 返回候选`C+100`，并提供可识别的运动值但不干扰主/比较状态。按 i=2..6 顺序逐帧调用（包含第4帧），未来独立替身测试必须按下表得到：
 
