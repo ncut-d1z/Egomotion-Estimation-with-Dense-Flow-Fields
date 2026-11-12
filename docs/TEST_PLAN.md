@@ -135,6 +135,21 @@ regression_tolerance=9.0949470177292824e-13
 
 此节只对原 `TC-F-ERROR-001` 添加区分性输入，不创建第67个 TC、不改 AN-G09 JSON 的既有候选数值，不执行 C++、MATLAB 或 CTest。
 
+### 2.1.2 KvD 候选错误枚举必须来自同一公共合同（2026-11-12）
+
+本次核对[ KvD LLD `4](design/kvd.md) 时发现其旧失败建议写了 `SingularGeometry` 与泛化 `NonFinite`，但唯一候选 [contracts.md `3](design/contracts.md) 的 `NumericalErrorCode` **不存在这两个枚举值**。原 LLD 已纠正为只引用现有类型，禁止 C++ 开发者照旧 LLD 新建重复的本地枚举、使用不存在的标识导致编译失败或丢失 JSONL/CLI 错误含义。
+
+| 固定数值或输入异常 | 现有唯一候选 `NumericalErrorCode` | 需要验证的差异 |
+|---|---|---|
+| `setofpoints` 非 N×6 | `InvalidShape` | Solver来源 `solve(5)`，不得错当 MAT Decoder 的 `decode(4)` |
+| 所有 `d_i=e_z`（N>0、p可取0） | `SingularSystem` | 原 `franzeigen.m` 中轴z的平移、旋转模板均为零，两个平方范数分母为0；新C++不返回伪零运动 |
+| Franz给出纯旋转、初始平移范数为0 | `ZeroNorm` | KvD旧t归一无定义，不能因omega仍可算就宣称完整KvD状态成功 |
+| 原始输入含 NaN/Inf | `NonFiniteInput` | 原值必须保持来源，不能随意转成一般 `NonFinite` |
+| 计算中形成无穷/NaN | `NonFiniteResult` | 与输入错误区分，保留发生的迭代和对应样本 |
+| 满秩但病态的系统 | `IllConditionedSystem`（候选） | 不凭空设置阈值；真实数值证据及 DEC-005 批准后方可判定 |
+
+此处所有映射只复用已有 `TC-F-FILTER-001`、`TC-F-KVD-001/002`、`TC-DC-KVD-001` 与 `TC-F-ERROR-001`。原 MATLAB 的奇异/NaN 警告传播没有实测 L1，不写成“原 MATLAB 返回以上枚举”；上述是**待实现的 C++ 安全行为**，没有真实 CTest/编译或已批准 DEC-008 错误码输出。
+
 ### 2.2 Bias 噪声（TC-F-BIAS-001、TC-F-BIAS-002）
 
 原脚本三项系数是 [0.6, 2.4, 9.6]。非球面情形按 randn × 系数 × 全场平均光流模长逐分量扰动；完整球面情形按 randn × 系数 × 对应光流分量扰动；两者都要将流重新投影到切向。**不得将系数开平方**。用固定 Gaussian 序列（含零、正负非零值）对每个分量验证，核对六组误差和 xwerte MAT 变量尺寸。
