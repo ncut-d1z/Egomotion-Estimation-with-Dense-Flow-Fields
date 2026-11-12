@@ -127,20 +127,6 @@ private:
 }
 ~~~
 
-### 3.B 默认构造会产生伪成功，必须采用工厂限定的有效状态（2026-11-12 真实API设计缺陷）
-
-此前候选示意只写出 `static Result success/failure` 与 `std::variant<T,Failure<Code>> payload_`，**没有显式删除Result默认构造函数**；`Status` 的第一个variant alternative是 `std::monostate`，默认构造必定是成功分支。当 `T` 可默认构造（例如 `double`、默认构造的容器/矩阵等）时，`Result<T,E> r;` 会把没有经过任何检查或算法运算的 `T` 放进variant的**成功 alternative**；如果 `hasValue()` 按 `holds_alternative<T>` 实现，它会报告true。对Eigen默认矩阵尤其危险，因为其中的数值可能尚未初始化。`Status<E> st;` 更是会默认构造成功。**它们与“未运行/未赋有效值不得伪成功”的公共状态合同直接冲突。**
-
-**已修订的候选可编码约束**：
-
-- 两种类型的`默认构造函数都显式`=delete`；仅通过已明确建立成功值的 `success(T)` / `success()` 或包含 `Code+ErrorDetail` 的 `failure(Failure<E>)` 静态工厂创建；不得隐式从 `T`、`bool` 或默认值转换。
-- 真实工厂必须经**private tagged in-place构造**直接建立 `variant` 的选定alternative：成功构造第0个；失败构造第1个。`Result::success(T)` 的调用方仍负责验证T的数学不变量；**工厂限制不能使任意默认T自动数值有效**。
-- **禁止改变已存在对象的variant alternative的`emplace/assignment`作为普通“由失败改成功”操作**；优先采用构造新的不可变结果对象并返回。候选类型的公共copy/move assignment可删除以约束这一点，但是否保留copy construction、move-only T、异常或内存分配失败行为仍须DEC-008评审。这样可减少`valueless_by_exception`的触发路径，但不能无源码/编译/故障注入证据宣布已从类型系统完全消除。
-- `Result::value() &&` / `error() &&` 必须依前述生存期修订返回**自拥有的值**；调用前必须验证 alternative。移动后源对象不得继续作为包含有效数学数据的成功结果复用；不能凭源 `hasValue()` 仍为true使用已搬离的Eigen缓冲区。
-- **正确失败语义**：已构造的成功/失败对象有明确类别；创建某个variant alternative时构造本身发生异常，通常**没有新的Result对象可返回**，不能伪造 `Failure<Code>`。真正的`valueless_by_exception`若可发生，`hasValue()==false`也不代表已持有Failure。如何覆盖抛异常/无异常编译、强异常保证与意外失效，列入[TODO DEC-008 `2.2](../TODO.md)供最终接口审批。
-
-**判别性静态负例**：`Result<double,E> r;`、`Result<FlowField,E> r;`、`Status<E> st;` 都必须在C++接口层**不可编译**；`success(validValue)` 才能得到成功，`failure({code,detail})` 才能得到失败。将来仍须编译核验模板自包含、const右值、move-only值与异常、跨TU，并使用真实数值不变量核查业务成功分支；文档修改不构成原生测试。
-
 ### 3.A C++17 私有实现不是稳定二进制 ABI（2026-11-11 静态合同更正）
 
 候选声明中的 `std::variant<T, Failure<Code>> payload_` 与 `std::variant<std::monostate, Failure<Code>> payload_` 虽为 **private**，但只要 `Result<T,E>` 或 `Status<E>` 作为完整值类型出现在公开头/接口中，其私有成员仍影响 `sizeof`、`alignof`、编译器生成的移动/析构、模板实例和调用约定。访问器仅隐藏了**源代码层的容器操作**，**没有隐藏二进制对象布局**；跨共享库或混合编译器/标准库/编译选项时不能凭“private”保证稳定 ABI。这与本仓库目前“C++17/Eigen-only 当前无完整公共ABI”的事实一致。
@@ -157,6 +143,20 @@ private:
 - **已选定错误结构方向**：自定义轻量 Result/Status，内部 `std::variant`，统一 `Failure<Code>{code,detail}`；ABI/头文件/Exception 边界仍待实施验证。不得依赖丢失 RunId 的全局 `last_error`。
 - **日志**：区分 RunId、探针 `source_sha` 参数、**原只读 .m Git blob SHA**、L2 MAT SHA-256、**独立 L3 参考生成器/数据 SHA-256**及 L4 统计来源；另记输入变量、维度、参数、seed、失败阶段、退出码、stdout/stderr。无需 MATLAB 运行或脚本捕获，原源文件读取不应改变其哈希。
 - **CLI 退出码候选**：错误枚举到 CLI 退出码的**唯一候选映射**见 §3.1；命令参数、阶段与诊断输出由 [cli.md §2–3](cli.md) 维护，SRS §6.1 仅作外部接口概览。项目所有者已选定 Result/ErrorStage/JSONL 的方案，真实 API/CTest 与其它错误级别仍需 P0.8/P1.2 验收。
+
+### 3.B 默认构造会产生伪成功，必须采用工厂限定的有效状态（2026-11-12 真实API设计缺陷）
+
+此前候选示意只写出 `static Result success/failure` 与 `std::variant<T,Failure<Code>> payload_`，**没有显式删除Result默认构造函数**；`Status` 的第一个variant alternative是 `std::monostate`，默认构造必定是成功分支。当 `T` 可默认构造（例如 `double`、默认构造的容器/矩阵等）时，`Result<T,E> r;` 会把没有经过任何检查或算法运算的 `T` 放进variant的**成功 alternative**；如果 `hasValue()` 按 `holds_alternative<T>` 实现，它会报告true。对Eigen默认矩阵尤其危险，因为其中的数值可能尚未初始化。`Status<E> st;` 更是会默认构造成功。**它们与“未运行/未赋有效值不得伪成功”的公共状态合同直接冲突。**
+
+**已修订的候选可编码约束**：
+
+- 两种类型的**默认构造函数都显式`=delete`**；仅通过已明确建立成功值的 `success(T)` / `success()` 或包含 `Code+ErrorDetail` 的 `failure(Failure<E>)` 静态工厂创建；不得隐式从 `T`、`bool` 或默认值转换。
+- 真实工厂必须经**private tagged in-place构造**直接建立 `variant` 的选定alternative：成功构造第0个；失败构造第1个。`Result::success(T)` 的调用方仍负责验证T的数学不变量；**工厂限制不能使任意默认T自动数值有效**。
+- **禁止改变已存在对象的variant alternative的`emplace/assignment`作为普通“由失败改成功”操作**；优先采用构造新的不可变结果对象并返回。候选类型的公共copy/move assignment可删除以约束这一点，但是否保留copy construction、move-only T、异常或内存分配失败行为仍须DEC-008评审。这样可减少`valueless_by_exception`的触发路径，但不能无源码/编译/故障注入证据宣布已从类型系统完全消除。
+- `Result::value() &&` / `error() &&` 必须依前述生存期修订返回**自拥有的值**；调用前必须验证 alternative。移动后源对象不得继续作为包含有效数学数据的成功结果复用；不能凭源 `hasValue()` 仍为true使用已搬离的Eigen缓冲区。
+- **正确失败语义**：已构造的成功/失败对象有明确类别；创建某个variant alternative时构造本身发生异常，通常**没有新的Result对象可返回**，不能伪造 `Failure<Code>`。真正的`valueless_by_exception`若可发生，`hasValue()==false`也不代表已持有Failure。如何覆盖抛异常/无异常编译、强异常保证与意外失效，列入[TODO DEC-008 §2.2](../TODO.md)供最终接口审批。
+
+**判别性静态负例**：`Result<double,E> r;`、`Result<FlowField,E> r;`、`Status<E> st;` 都必须在C++接口层**不可编译**；`success(validValue)` 才能得到成功，`failure({code,detail})` 才能得到失败。将来仍须编译核验模板自包含、const右值、move-only值与异常、跨TU，并使用真实数值不变量核查业务成功分支；文档修改不构成原生测试。
 
 ### 3.0 失败分支、稳定阶段与 JSONL（项目所有者已选设计）
 
