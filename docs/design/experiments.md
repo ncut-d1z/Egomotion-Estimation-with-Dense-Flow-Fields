@@ -2,7 +2,7 @@
 
 > **长期参考边界**：本 Runner **不要求 MATLAB/Octave 运行或采集 L1**；原 .m 仅作只读源码依据，结果验收使用 L2 已存 MAT、L3 独立逐帧/逐轮参考与 L4 统计，参见 [长期政策](../golden/NO_MATLAB_EXECUTION_POLICY.md)。
 
-> **LLD v0.9 草案，未冻结、未创建 C++ Runner。** 来源：bias_test/data_generation 中 2 个入口；adaptive_matched_filter_test/data_generation 中 3 个入口。对应 P5、P8、REQ-F-BIAS、REQ-F-EXP、REQ-F-CLI 与 REQ-I-RESULT。
+> **LLD v0.10 草案（DEC-008-06失败职责已有所有者决议；未冻结、未创建C++ Runner）。** 来源：bias_test/data_generation 中 2 个入口；adaptive_matched_filter_test/data_generation 中 3 个入口。对应 P5、P8、REQ-F-BIAS、REQ-F-EXP、REQ-F-CLI 与 REQ-I-RESULT。
 
 ## 1. 实验入口及源代码实际参数
 
@@ -201,17 +201,33 @@ private:
 ~~~
 
 - **谁拥有谁**：Composition Root 保证 `IResultWriter&` 的有效期长于本次 Runner 调用；RunContext **独占 RNG**、RunId/结果计数/Manifest，Session 只持有其自身系数状态且不能跨 RunContext 共享。**固定 `output/` 根由 Composition Root 从已确认的仓库位置确定并验证**，CLI 只接受可选 `--run-id`；RunMatWriter 仍须二次校验固定根、RunId 和最终文件路径，Runner 不按任意用户字符串拼接文件路径。
-- **失败与释放**：固定 RNG 耗尽、子求解器失败、MAT 写失败必须在 `Result<RunOutcome, ExperimentErrorCode>` 的失败分支保留原底层错误及 `ErrorDetail.run_id`；不再以一个空 `RunOutcome` 表示失败。**Manifest 必须区分 `Complete`、`Incomplete`、`Failed`**，记录每次尝试/成功/失败/无定义样本和有效分母；允许保存可审查的部分产物，但不得将其伪装为完整实验，亦不自动删除/覆盖已有结果。独立样本失败可继续后续独立样本；依赖状态错误不提交，不能安全恢复则停止当前轨迹。
+- **失败与释放（DEC-008-06已决定）**：固定 RNG 耗尽、子求解器失败、MAT 写失败必须在 `Result<RunOutcome, ExperimentErrorCode>` 的**失败alternative只保留`Failure<ExperimentErrorCode>`及可追踪底层根因**；不能用半成功或默认RunOutcome冒充成功。`RunContext`独占持久化所需的attempted/completed/valid/failed/undefined、文件SHA及`Complete/Incomplete/Failed` Manifest。部分真实已验证产物允许保留供审计但不得作为完整实验结果，亦不自动删除或覆盖已有结果。Manifest落盘失败时不得报告Complete或谎称日志已持久化。独立样本失败可继续后续独立样本；依赖状态错误不提交，不能安全恢复则停止当前轨迹。
 - **边界**：`BiasExperimentConfig` 负责原入口 seed/最大 level/三个噪声乘数，`BiasFlowParameters`（采样 LLD）负责**单个流场**，不能彼此覆盖默认值。配置采用**每入口独立类型**，CLI 层可选择 variant 分发；RunContext 默认不可复制、单次会话不可并发，Writer 在 Composition Root 装配；构建期的类移动能力/线程合同尚需真实验证。
 
 **RunId 自动命名（所有者已选择）**：不再有输出根 CLI 选项，固定 `output/<RunId>/`。由 Composition Root 使用**独立于算法随机源的 Linux OS 随机源**生成 128 位随机标识，推荐 `run_<32位十六进制>`，以独占目录创建确认唯一性；用户传入 `--run-id` 则严格校验 ASCII 字符 `[A-Za-z0-9_-]`（1–64）并拒绝重复。不能使用 RunContext 的 uniform/normal 来生成 RunId，避免改变科学实验 RNG 调用顺序；无法获取随机源/创建目录时直接返回错误。Writer 仍需做文件系统层二次验证。
+
+### 6.1.1 DEC-008-06 所有者已决定：单次失败与RunContext部分结果分离（2026-11-12）
+
+此节是**已决定设计**（`DecisionRecorded`），不是只供讨论的候选失败策略。`Result<RunOutcome,ExperimentErrorCode>`仅在整次实验的必要条件全部满足时返回`success(RunOutcome{Complete,...})`；任一必要阶段失败则返回`failure(Failure<ExperimentErrorCode>{code,detail})`，不允许在失败alternative里暗藏“部分成功结果”，也不能`success`返回一个语义上不完整的RunOutcome伪称成功。`Failure`记录SolverFailed/OutputFailed/IncompleteRun等现有代码及实际底层原因；Runner不改变原`ErrorStage`或丢失RunId。
+
+| 情形 | 单次Result / RunContext责任 | 可对外宣称的持久状态 |
+|---|---|---|
+| 全部必需计算/统计与MAT结果已独立回读核实，Manifest可靠写入 | Runner返回成功的`RunOutcome{Complete}`；RunContext保存已核字段数、hash、完整分母 | `Complete` |
+| 已完成一部分**可核实身份**的MAT/帧，但缺剩余计算/某次聚合失败 | Runner返回`Failure<ExperimentErrorCode>`；RunContext保持已完成/失败/无定义计数及已核部分文件；不改变8轮聚合分母 | Manifest如能可靠写入则`Incomplete`，不产生完整结果 |
+| 参数或输入先失败、无任何可靠产物；或输出身份/一致性不可证明 | 返回具体Failure，记录可知的错误上下文；不能填0伪造成功值 | 若有合法的运行上下文且Manifest可写则`Failed`；CLI解析前尚无RunId时仅报parse错误，不制造Manifest |
+| 已发布数据但最终回读/Manifest写入故障 | Writer仅负责每个文件的Status；RunContext不得把完整运算宣布成功，Runner返回`OutputFailed`并附原因；不能删除/覆盖旧产物 | 只有实际写出并可核实的状态可在Manifest中声称；Manifest写失败时须报告**持久化未确认**，不能虚称`Complete/Incomplete`已落盘 |
+| Adaptive主/比较状态在本帧任一必需步骤失败 | 本帧改动先存于暂存，主系数/周期baseline均不局部提交；依赖轨迹中断，保留先前有效状态 | 记录`Incomplete/Failed`及真实完成帧数、失败原因 |
+
+**实务约束**：`RunContext`负责计数和Manifest事务状态，`RunMatWriter`只负责**单文件**非覆盖发布/回读的成功或失败，`AdaptiveMfaSession`只负责自身系数暂存/后验提交。不能在Writer成功后自动把整个Runner标`Complete`，也不能依靠Result对象来保存部分MAT。对于Comparison原8次循环，第5次失败时expected=8、completed=4；拒绝“改除以4并将原8次结果标成功”。任何异常导致Manifest不能持久化，应尽可能向独立stderr发送诊断并如实说明日志/Manifest是否成功，不保证诊断渠道也永远可用。
+
+**状态**：所有者决议已记录，但`IResultWriter`/RunContext/Manifest/Result的真实C++接口、异常/TOCTOU/CTest并未获得实施许可；H-10/H-11等六项保持无限期延期。此条决议不解除它们。
 
 ### 6.2 输出 Manifest 推荐字段
 
 | 字段 | 语义/约束 |
 |---|---|
 | run_id / experiment_kind / source_entry | 唯一运行身份与原 MATLAB 函数名称 |
-| completeness / expected_repetitions / completed_repetitions | `Complete`/`Incomplete`/`Failed`；8 次聚合必须完整，不因失败改变平均分母 |
+| completeness / expected_repetitions / completed_repetitions | **DEC-008-06已决定**：Complete仅在全计算、输出回读和Manifest可靠发布成功时可声明；部分有身份的已完成输出可标Incomplete，没有可靠结果或前置失败可标Failed；8次聚合必须完整，不因失败改变平均分母 |
 | repo_sha / source_blob_sha / original_mat_root | 可追溯版本，原数据只读 |
 | original_parameters / default_origin | 每个数值来自入口形参还是源文件固定常量 |
 | subdivision_level / actual_flow_count / original_xwerte | 区分物理 N 与作者横轴存储值 |
@@ -280,7 +296,7 @@ private:
 | 两个 Bias 独立运行或两个 `RunContext` 交错 | seed/reset、随机流、输出 RunId、Manifest 和结果不可交叉污染；`origin/**` 始终只读 | 固定 RNG trace、独立 RunId/目录和来源 SHA；`TC-NF-SESSION-001` |
 | Writer 已存在/失败，或中断后仅有部分 MAT | 使用固定 output 根，非覆盖；失败不能宣称 `Complete`，不得删除旧 RunId 或复制历史额外字段 | `OutputExists/OutputFailed` 底层 cause、剩余产物/日志、只读源不变；`TC-I-RESULT-001`、`TC-NF-SAFETY-001` |
 
-**边界**：严格区分“原源码的更新次序/当前 save”、“独立 L3 固定输入参考”、“历史 MAT 实际已有字段”与“已执行 C++/CTest”四类证据。只有最后一类实测并取得相应数值/安全批准时才能关闭相关 AC。**AF-049 仍「未整改」**。
+**DEC-008-06边界**：还必须区分整次运行的`RunContext`审计状态与单个`Result<RunOutcome,E>`成功/失败，`Incomplete/Failed`Manifest不意味着Runner返回成功。严格区分“原源码的更新次序/当前 save”、“独立 L3 固定输入参考”、“历史 MAT 实际已有字段”与“已执行 C++/CTest”四类证据。只有最后一类实测并取得相应数值/安全批准时才能关闭相关 AC。**AF-049 仍「未整改」**。
 
 ## 9. 原作者归档字段的实测数据合同
 
