@@ -297,6 +297,12 @@ regression_tolerance=9.0949470177292824e-13
 
 需保留实际 `k` 顺序、末轮 x 的 L2 MAT 路径/变量与四组 y 的每轮身份；参考线和输出横轴均不得替换成物理实际视线数量。此处不新增 TC、真实测试实体或通过记录；须在 AF-050/051 后续独立 L3 与 Analyzer/CTest 中真正验证。
 
+**Bias 原理论线与图像数值的区分性回归（2026-11-12，仅源码静态输入）**：沿用 `APL-G01 / TC-F-BIAS-003 / TC-I-ANALYSIS-001 / TC-F-CLI-005`。原 `bias_test/data_analysis/graphs_bias_test.m:20–79` 用每次后覆盖的 **最后一个** `xwerte` 生成绘图横轴与 `100/sqrt(xwerte(j))`，不是根据完整球面真实点数 `N_actual`。取完整球面Bias细分 `i=2`（MATLAB绘图行 `j=3`），`xwerte=6*4^2=96`，`N_actual=8*4^2=128`；正确参考 `100/sqrt(96)≈10.206207`，错误的实际N替代为 `100/sqrt(128)≈8.838835`，比值固定 `sqrt(4/3)≈1.1547`。两个 Bias 实验都保留**原存**xwerte，真实方向数量只允许在元数据另列；K>1情况下必须先按源 `x^(K)` 做参考。
+
+**可视化结构固定合同**：原 `graphs_bias_test.m` 使用 `loglog` 的**单个x对数轴＋单个y对数轴**（不是两条y轴）；`i=1:3` 三种噪声列各画四组 `ywerte3..6`，另外一条理论参考线，一共 **1+3×4=13条绘图曲线**，但源只提供 `legend('a','b','c','d','e')` 五个文本标签。不能从这五个字母推导出13条曲线的数值字段、误差方法与噪声列，源数值身份须靠 MAT 源变量及索引保存。源显示窗口 `xlim=[100,3000000]`、`ylim=[0.06,200]`；上面 `x=96` 虽已形成数值/曲线，却位于窗口之外，**禁止因画布不可见而删除数据、修改 `xwerte` 或将该样本判为输入错误**。当误差0或不满足对数可显示条件时，保留有定义的数值并将显示过滤与真正NaN/Inf、shape及无定义统计分开；原MATLAB具体图像/legend绑定没有本轮运行证据。
+
+**验收范围**：用固定 `K=1/K=2` 的两组不同 x、四组3列 y，分别保存原值与可视范围，断言最后一次x覆盖、四组y均值、13条序列归属和理论线，且默认不会把作者五标签解释成完整13字段映射。修正的是源数值/显示合同，尚未创建 Analyzer/PlotExporter、独立L3 Golden或CTest；不新建TC或改DEC-005/008。
+
 ### 2.17 PlotErrorCode 四种失败的分层负例（AF-084，尚未执行）
 
 `IPlotExporter::exportPlot` 的四值只在 [分析 LLD §2](design/analysis_plotting.md) 定义；**唯一候选 `exit/stage` 映射见 [contracts §3.1](design/contracts.md)**。复用现有 `TC-F-CLI-005`、`TC-NF-HEADLESS-001`、`TC-I-RESULT-001`、`TC-NF-SAFETY-001`、`TC-I-ANALYSIS-001`，不产生新 TC：
