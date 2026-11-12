@@ -2,7 +2,7 @@
 
 > **长期参考边界**：本 Runner **不要求 MATLAB/Octave 运行或采集 L1**；原 .m 仅作只读源码依据，结果验收使用 L2 已存 MAT、L3 独立逐帧/逐轮参考与 L4 统计，参见 [长期政策](../golden/NO_MATLAB_EXECUTION_POLICY.md)。
 
-> **LLD v0.7 草案，未冻结、未创建 C++ Runner。** 来源：bias_test/data_generation 中 2 个入口；adaptive_matched_filter_test/data_generation 中 3 个入口。对应 P5、P8、REQ-F-BIAS、REQ-F-EXP、REQ-F-CLI 与 REQ-I-RESULT。
+> **LLD v0.8 草案，未冻结、未创建 C++ Runner。** 来源：bias_test/data_generation 中 2 个入口；adaptive_matched_filter_test/data_generation 中 3 个入口。对应 P5、P8、REQ-F-BIAS、REQ-F-EXP、REQ-F-CLI 与 REQ-I-RESULT。
 
 ## 1. 实验入口及源代码实际参数
 
@@ -86,6 +86,14 @@ class UpdateRateRunner;
 **2026-11-12 AC-F-BIAS-003 源数据契约纠偏**：原分析图的参考线是 `100/sqrt(xwerte_last(j))`，不是 `100/sqrt(N_actual(j))`，其中 `xwerte_last` 来自**最后一个独立运行目录**而不是多个 RunId 的均值。以完整球面 level=2 为例，`N_actual=128`、`xwerte=96`；原理论参考值 `100/sqrt(96)≈10.206207`，按实际N替换得到 `100/sqrt(128)≈8.838835`，相差比值 `sqrt(4/3)`。由[分析LLD §5.3](analysis_plotting.md)维护准确的单坐标轴 `loglog`、显示窗口与13条曲线/仅5个图例文本的约束；Runner 只保存原七个 `save` 字段，`actual_flow_count` 为内部诊断元信息，**不添加新的历史 MAT 变量，也不在生成阶段重算或修补原图**。这项合同修复未建立真实 Runner/Analyzer或通过CTest。
 
 Bias 六组 ywerte 对应顺序依次是：Franz 平移、Franz 旋转、Original KvD 平移、Original KvD 旋转、Modified KvD 平移、Modified KvD 旋转，六者都调用原 transfehler_div 的**尺度对齐向量差**，不能将名称含 rot 的列改为测地角。实验分析脚本在现有代码中主要读取 ywerte3…6。
+
+### 5.0.1 Bias 六类 ywerte 对零真值与原误差函数的定义域（2026-11-12）
+
+两份原 Bias 生成入口 `bias_test_nonspherical.m:72–77` 和 `bias_test_spherical_prop_error.m:72–77` 对六个平移/旋转估计**全部调用** `transfehler_div(theotrans/theorot, estimate)`，而**没有**调用 `normrelfehler`。所以六个 `ywerte1..6` 均是**按真值模长缩放估计后的欧氏向量差**，不是差的平方、方向角（deg）、相对百分误差或测地角；源函数注释的 *pointwise squared error* 与实际执行的 `sqrt` 返回值不同。由 [KvD LLD `1.1](kvd.md) 与 [SRS 的 AC-F-ERROR-001](../REQUIREMENTS.md) 确定其准确数学/单位归属。
+
+**候选安全失败与原版数值须分开**：在原 `transfehler_div(0,2e_x)` 的代数路径中，真值范数为0且估计范数非零，函数会得到**数值0**；这并不说明估计方向正确。C++ 对零真值/零估计应依既有 `ZeroNorm/UndefinedAngle` 合同显式拒绝和记录 undefined/failed，而不能把这种“源零结果”写入已完成的有效样本均值。原 Bias 正常入口用 `getvektor` 产生随机单位真值方向，此零真值是**注入的负例**，不宣称原标准40组归档一定含这类样本。输出 `ywerte` 均值的有效分母/预期重复次数不应因拒绝而偷偷改变；独立样本失败按现行 `RunOutcome Incomplete/Failed` 与底层失败原因处理，并保存可审计部分记录，不能将空白 y 值填0伪装完整结果。该规则属于已选失败纪律的具体边界，非原 MATLAB 异常输出实测。
+
+维持 `TC-F-ERROR-001`、`TC-F-BIAS-001/002/003` 与 `TC-NF-RECOVERY-001` 原编号，不引入新的MAT字段，也不把候选显式拒绝当成原程序实际行为或已经完成的生产C++/CTest。
 
 ### 5.1 Adaptive 两个输出字段的物理单位与加噪前来源（AF-088/089，静态审阅）
 
