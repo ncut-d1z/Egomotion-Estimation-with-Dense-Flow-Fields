@@ -1,12 +1,12 @@
 # MAT 结果分析与可选绘图——详细设计草案
 
-> **LLD v0.11 草案，未冻结、未运行任何可视化程序。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
+> **LLD v0.12 草案，未冻结、未运行任何可视化程序。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
 
 ## 1. 只读分析合同
 
 | 原分析 | 输入 MAT 字段 | 数值操作与期望数据 |
 |---|---|---|
-| graphs_bias_test | 目录 `k=1…number_of_cores` 的 xwerte、ywerte3…6（ywerte1/2 在源脚本中注释） | **仅四个 ywerte 累加后除运行数**；xwerte 在每轮直接覆写，最后使用 **k=number_of_cores 的 xwerte**，并据其计算 `100/sqrt(xwerte)`；绘图行 3…(iterationnumber+1)，log-log 双轴 |
+| graphs_bias_test | 目录 `k=1…number_of_cores` 的 xwerte、ywerte3…6（ywerte1/2 在源脚本中注释） | **仅四个 ywerte 累加后除运行数**；xwerte 在每轮直接覆写，最后使用 **k=number_of_cores 的 xwerte**，并据其计算 `100/sqrt(xwerte)`；绘图行 3…(iterationnumber+1)，**一个横轴和一个纵轴都取对数的 `loglog` 单坐标轴**（不是 `plotyy` 双纵轴） |
 | graph_agent_in_sphere_initialization_test | allemittransfehler、allemitrotfehler；也读取 ohne* | mittrans 第 1–13 项与 mitrot 全序列（semilogy）；其他读取字段不意味着都参与该图 |
 | graph_agent_in_sphere_adaptive_matched_filter_test | allemittransfehler、allemitrotfehler、alleohnetransfehler、alleohnerotfehler、rottransratio | x=50:550；按 rottransratio <0.01 分段；旋转/平移角度误差与右侧比值双纵轴、对数刻度 |
 | graph_agent_in_sphere_adaptive_matched_filter_many_parameter | allemittransfehler、allemitrotfehler、rottransratio | x=50:550；阈值 0.02 分段，四个更新率曲线；平滑窗口半宽 2/5/10 |
@@ -161,6 +161,16 @@ for col in 1..4:
 - 如另行输出物理实际样本数，应使用 separate actual_flow_count 元信息及新的、明确标注的图表，不能把新图伪装成原论文结果；
 - **原版 Bias xwerte 与理论参考线是当前复现的既定要求**，不再因“是否提供另一种对照图”请求当前人工选择。若另行提供物理实际方向数，必须作为明确标注的 `actual_flow_count` 元信息，与原存 `xwerte` 并列且不得覆写；**额外使用实际 N 的对照图属于当前必要交付/验收范围之外的新增功能**，只有收到明确新需求才另行规划、验收，不能阻塞既定分析功能。
 
+### 5.3.0 Bias 原理论线和实际点数的精确分离（2026-11-12 源合同整改）
+
+原 `bias_test/data_analysis/graphs_bias_test.m:20–51` 在每个 k 读取并**覆盖** `xwerte`，最后在 MATLAB 1-based 行 `j=3..iterationnumber+1` 生成参考 `100/sqrt(xwerte(j))`。它不是以真实 N、不是以四组 y 的统计量、更不是对跨 k 的 x 均值生成参考。对于细分层级 i，两个原生成脚本都**写** `xwerte(i+1)=6·4^i`；但是完整球面 Bias 的真实样本数 `N_actual(i)=8·4^i`。因此两个候选参考量的比为
+
+\[
+\frac{100/\sqrt{6\cdot4^i}}{100/\sqrt{8\cdot4^i}}
+=\sqrt{\frac43}\approx1.154700538.
+\]
+
+固定判别输入 `i=2`（源绘图行 j=3）：**保存横轴** `xwerte=96`，**完整球面真实数量** `N_actual=128`；原源码理论值 `100/√96≈10.206207`，错用实际 N 得 `100/√128≈8.838835`，约差15.47%（以错用N时参考为基准）。此外脚本的固定 `xlim([100,3000000])` 会把该行 **x=96 的可视位置裁剪掉**，但 j=3 的数值数据与线对象仍被构造，**不得把“不可见”当作“该帧不属于分析数据”**。任意其它 i 的比值相同；K>1 的普通聚合还应引用**最后一运行**的 xwerte，见下节。该反例可以在没有作者实际MAT数值时按原静态生成公式手算；不是正式独立L3或C++/CTest PASS。
 #### 5.3.1 Bias 跨 RunId 聚合的非对称覆盖顺序（AF-083）
 
 原只读 `bias_test/data_analysis/graphs_bias_test.m` 的 MATLAB 结构是：先将四组 `allywerte3…6` 初始化为 `zeros(iterationnumber+1,3)`，然后执行 `k=1:number_of_cores`。**循环每次直接赋值** `xwerte=getflowfield([str 'xwerte'])`，但四组 y 值分别执行累加；循环结束之后才令 `anzahl=(number_of_cores-1)+1`，并且**只对四个 y 数组**做除法。结果是：
@@ -173,6 +183,13 @@ for col in 1..4:
 
 **辨别用的独立输入资格（未执行）**：构造 K=2 的两个相同 shape 的人工 MAT 组，故意让 `x^(1)≠x^(2)`（只作区分性负例，**不是作者实际 Bias 生成器的正常输出**），同时令两组 `Y_j` 不相同。期待源算法的 `x_plot=x^(2)`、`Ybar_j=(Y_j^(1)+Y_j^(2))/2`、参考线取 `x^(2)`；以 K=1 确认单轮自反；K=0 以及读取缺失/shape 不匹配的情况下，C++ 候选应显式非成功，不能宣称 MATLAB 本身提供对应安全分类。关联 `APL-G01`、`TC-F-BIAS-003` 及 `TC-I-ANALYSIS-001`。完整 L2/独立 L3/Analyzer/CTest 仍未执行，AF-050/051 仍开放。
 
+#### 5.3.2 Bias `loglog` 单坐标轴、线数和图例的实际源行为（2026-11-12 显示合同纠偏）
+
+只读 `graphs_bias_test.m:44–79` **仅调用 `loglog`**，没有 `plotyy`、`yyaxis` 或第二纵轴。因此 Bias 图是同一张图的 **x轴与y轴分别对数化**，与 Adaptive Comparison 图实际使用 `plotyy` 的双纵轴严格不同。源先画 `100/sqrt(xwerte)` **1条黑色参考线**，再以三组噪声列 `i=1:3` 为每组画 `ywerte3、4、5、6` **4条线**，合计 **13个绘图调用/线对象**；但末尾的 `legend('a','b','c','d','e')` 只给出 **5个文本标签**。**不得把五个图例文字误作为全部13条线的唯一数值/列身份**；哪五个对象如何由具体后端默认绑定不在未运行条件下臆断，必须从源字段编号、噪声列、线型顺序恢复可靠series identity。
+
+原脚本设置 `xlim=[100,3000000]` 与 `ylim=[0.06,200]`，横纵轴均为对数。**合法数值与可视范围要分开**：可见性受上述窗口和log的正值条件限制；原始参考值/误差为0、低于0.06或高于200时，不能把原数据静默改为0.06、删去输入样本、甚至报告整个Analyzer数值必然失败。正确的设计是让 `AnalysisDataset` 保存未经显示裁剪的原值和源索引，再由可选Exporter按正值/窗口和原坐标轴条件选择显示；真正 NaN/Inf、错误MAT形状及源无定义指标则遵循原 `AnalysisErrorCode` 合同。**显示修正图例、范围或零值替代属于标明的增强模式，不冒充源原图。**
+
+关联原 `TC-F-BIAS-003`、`TC-I-ANALYSIS-001`、`TC-F-CLI-005`；必须分别核对数值13条序列的来源、单轴loglog显示、数据和视窗裁剪的区分。本段是源静态复核与未来测试合同，**未生成正式Plot/Analyzer、未运行MATLAB或CTest，也不批准新ABI字段**。
 ## 6. 候选 CurveSeries 输出 schema 与 C++17 错误合同
 
 ~~~cpp
