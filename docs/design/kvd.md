@@ -185,18 +185,20 @@ return (mean(near) * t, omega, near, k)
 
 **唯一接口候选定义在本文件 §7**，公共 Result<T,E> / NumericalErrorCode 以 [contracts.md](contracts.md) 为准。此处不重复声明 KvDParameters、KvDResult 和估计器类型，以避免签名矛盾。
 
-**前置条件候选**：N>0；每个 d 可归一化且流场列数为 6；数据有限；合法源精度。**后置条件**：所有返回的 t、ω、near、残差及迭代次数有明确状态；无效输入及零范数/NaN/Inf 不返回伪造的成功值。错误类别建议 InvalidShape、ZeroNorm、SingularGeometry、NonFinite，需与 MatError 分离并由 P0.8 正式定义。
+**前置条件候选**：N>0；每个 d 可归一化且流场列数为 6；数据有限；合法源精度。**后置条件**：所有返回的 t、ω、near、残差及迭代次数有明确状态；无效输入及零范数/NaN/Inf 不返回伪造的成功值。**错误枚举只能使用 [contracts.md §3](contracts.md) 已存在的候选 `NumericalErrorCode`**：输入shape错用 `InvalidShape`；向量零模长用 `ZeroNorm`（涉及角度指标可用 `UndefinedAngle`）；Franz模板零分母或线性矩阵不可求解用 `SingularSystem`，病态但尚可计算的门禁候选 `IllConditionedSystem`；原始输入非有限用 `NonFiniteInput`，计算溢出/非有限输出用 `NonFiniteResult`。旧文档建议的 `SingularGeometry` 与笼统的 `NonFinite` **不在唯一候选enum中，禁止实现者据此擅增第二套类型**。这些是设计层枚举归属，真实触发/阈值/错误阶段及 P0.8/DEC-008 均需批准与测试。
 
 ## 5. 逐轮 Golden 与验收字段
 
 | 层级 | 必须保存的字段 | 来源/冻结状态 |
 |---|---|---|
-| Franz | 每轴平移/旋转模板响应、norm 分母、初始 t 和 ω | zellendefinieren / franzeigen；参考数值未生成 |
-| near | t_old、ω_old、原始 near、符号翻转、分母 | 两种 KvD 原函数；参考数值未生成 |
-| KvD 平移 | 原始/修正 a、b、c、t_next、归一化范数 | 两种平移规则；参考数值未生成 |
-| KvD 旋转 | a_ω、b_ω、c_ω、ω_new、使用旧 t 的时刻 | 两种 KvD；参考数值未生成 |
-| 退出判定 | k、RMS、previous_RMS、delta、动态 grenze、absgrenze、最终 t 尺度 | 原 while 表达式；参考数值未生成 |
+| Franz | 每轴平移/旋转模板响应、norm 分母、初始 t 和 ω | 已保存两组六方向及八方向翻号夹具的Franz数学参考（§9.4–9.5、两个 verification/kvd JSON）；一般/零分母、生产CTest仍未验收 |
+| near | t_old、ω_old、原始 near、符号翻转、分母 | 36轮（24轮六方向+12轮负符号）精确数学trace已存，近零/非有限一般路径和真实C++未测 |
+| KvD 平移 | 原始/修正 a、b、c、t_next、归一化范数 | 36轮固定数学trace有各自a/b/c及raw/normalized t；尚无生产实现或一般数值覆盖 |
+| KvD 旋转 | a_ω、b_ω、c_ω、ω_new、使用旧 t 的时刻 | 36轮固定数学trace有aω/bω/cω与旧t时序；未编译/CTest或批准 |
+| 退出判定 | k、RMS、previous_RMS、delta、动态 grenze、absgrenze、最终 t 尺度 | 36轮固定trace实际验证六轮最低分支；§9.6纯布尔证明最多200，**不是**运行200轮KvD；真实软件和其它停止路径待测 |
 | 指标 | transfehler_div 的**尺度对齐欧氏距离（非平方）**、normrelfehler 的角度（度）及零真值/零估计无定义计数；固定反例见§1.1 | 源注释与实际公式不同，两个指标不可互换；C++显式拒绝零模向量是安全候选、尚未实测 |
+
+**证据时间线更正（2026-11-12）**：§5早期各行的“参考数值未生成”属于历史计划时点，已和§9.4/9.5、[six_direction_exact_trace.v1.json](../../verification/kvd/six_direction_exact_trace.v1.json)、[near_sign_flip_exact_trace.v1.json](../../verification/kvd/near_sign_flip_exact_trace.v1.json)中的**36次数学迭代固定参考**不一致。本轮现已按原数学参考明确更新字段状态，**不将36次数学计算写成36项CTest、200轮真实执行、一般病态场景覆盖或DEC-005/008批准**。额外的两种误差指标退化输入仅为静态固定计算，还没有执行真正误差模块的 C++/CTest。
 
 每个 TC 必须记录源码 SHA、固定输入来源、绝对/相对最大误差、被测矩阵/向量维度及异常状态。**历史 `rtol=1e-10` 不再是现行候选；项目所有者已确定 `atol=0.01`、`rtol=0.1` 仅用于首轮宽松探索性筛查，不能作为最终 TC/AC PASS 门槛。DEC-005 的最终逐模块阈值及严格几何/状态/迭代次数判据仍须以真实 L3/CTest 证据确认。** 不能仅凭整体论文图形相似就声称逐轮算法等价。
 
