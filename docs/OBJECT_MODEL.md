@@ -1,6 +1,6 @@
 # 对象模型与生命周期合同（Object Model）
 
-> **对象模型草案 v0.8；P0.7/P0.8 待评审，未冻结，拟议业务类与跨模块公共ABI尚未建立。受限低阶球谐叶子C++已独立实现并在固定SHA获得用户原生3/3 CTest证据，不能将其归入下列未创建的公共类。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入；各文档当前版本、固定 SHA 和冻结状态统一由 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记，运行结果以 [PROGRESS](PROGRESS.md) 为准。
+> **对象模型草案 v0.9（DEC-008-06已决定）；P0.7/P0.8 待评审，未冻结，拟议业务类与跨模块公共ABI尚未建立。受限低阶球谐叶子C++已独立实现并在固定SHA获得用户原生3/3 CTest证据，不能将其归入下列未创建的公共类。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入；各文档当前版本、固定 SHA 和冻结状态统一由 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记，运行结果以 [PROGRESS](PROGRESS.md) 为准。
 
 ## 1. 对象职责和约定
 
@@ -46,7 +46,7 @@
 | IRandomSource 具体对象 | 每个实验运行的 RunContext | 只在本 RunId 内被消费；严格保留原版 rand/randn 调用先后次序；多运行/多线程不能共享隐式可变 RNG |
 | Estimator / StepSolver | 实验编排对象通过构造注入或组合持有 | 数学求解器尽量无状态；共享只读参数；不保存上一帧会话状态 |
 | AdaptiveMfaSession / 更新策略 | 一个轨迹实例一个会话 | 负责前一帧旋转、主系数状态、对比基线的独立系数、刷新时刻和当前帧结果提交 |
-| RunMatWriter / 结果目录 | 每个 RunContext 独占 | 输出位置在写入前确认不属于 origin/**；默认拒绝覆盖已有实验结果；失败日志独立保存 |
+| RunMatWriter / 结果目录 | **Composition Root拥有Writer并保证其寿命长于本次Runner；RunContext只借用IResultWriter&、独占RunId/计数/Manifest** | 单文件Writer仅回报写入/回读Status；不能将单个文件成功自动升级整个RunOutcome为Complete；固定`output/<RunId>/`非覆盖且origin/**只读 |
 | Analyzer / PlotExporter | 由相应分析命令创建 | 只消费数值结果；生成图表失败不得导致已经计算的结果丢失 |
 
 - **依赖方向**：CLI/实验运行器 → 领域值对象 + 窄接口 → 数学/求解器；MAT、绘图等第三方组件只在基础设施实现层出现；领域层与求解器不得 import/include matio。
@@ -57,6 +57,8 @@
 - **测试替身**：纯算法和模拟器测试可以注入 FixedSequenceRandomSource、固定采样器、内存结果读写器；不依赖真实 MAT 文件；MAT 读写集成测试则必须使用原始归档或专门的测试 MAT 并明确测试范围。
 
 **2026-11-12 状态拥有者审计补充**：`ICoefficientUpdatePolicy` 应操作本帧临时的四组比较状态，独立持久拥有者仍是 `AdaptiveMfaSession`；“比较求解器返回新的候选系数”**不是**“策略应提交新系数”。这在 `UpdateRateRunner` 与 `InitializationRunner/AdaptiveComparisonRunner` 中有确定性的不同源代码写回目标（见 [Adaptive LLD §5.0.1](design/adaptive_mfa.md) 与 [Runner §8.0.1](design/experiments.md)）。单一状态机图未画出 `dumi`，不能让图覆盖MATLAB的变量赋值事实。对应既有 `TC-F-ADAPT-003`、`TC-F-EXP-003` 和 `TC-NF-SESSION-001` 的隔离替身资格仍未执行，公共类/签名和ABI没有获得冻结或实现授权。
+
+**DEC-008-06 已决定的跨模块所有权补正（2026-11-12）**：旧表将“RunMatWriter/结果目录”整体描述为“每个RunContext独占”，与[Runner LLD §6.1](design/experiments.md)写明的`IResultWriter&`**非自拥有**矛盾。现已区分：Composition Root负责真实Writer对象及生命周期；RunContext独占本次RunId、已验证产物目录身份、有效/失败/无定义计数及Manifest；单文件Writer只对一个输出返回Status，不决定整个Complete。整次Runner只有全部必要MAT写出/回读、统计和Manifest成功才返回`Result<RunOutcome,E>::success`；中途失败必须返回Failure并保留RunContext中可核实的部分证据。主/比较系数的暂存事务同样不因Writer成功而自动提交。此为所有者已确认的设计决议而非已实现C++、CTest、正式冻结。具体测试分层见[TEST_PLAN §2.12.3](TEST_PLAN.md)。
 
 ## 2. 组件对象关系（设计草案）
 
