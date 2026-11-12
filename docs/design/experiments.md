@@ -2,7 +2,7 @@
 
 > **长期参考边界**：本 Runner **不要求 MATLAB/Octave 运行或采集 L1**；原 .m 仅作只读源码依据，结果验收使用 L2 已存 MAT、L3 独立逐帧/逐轮参考与 L4 统计，参见 [长期政策](../golden/NO_MATLAB_EXECUTION_POLICY.md)。
 
-> **LLD v0.8 草案，未冻结、未创建 C++ Runner。** 来源：bias_test/data_generation 中 2 个入口；adaptive_matched_filter_test/data_generation 中 3 个入口。对应 P5、P8、REQ-F-BIAS、REQ-F-EXP、REQ-F-CLI 与 REQ-I-RESULT。
+> **LLD v0.9 草案，未冻结、未创建 C++ Runner。** 来源：bias_test/data_generation 中 2 个入口；adaptive_matched_filter_test/data_generation 中 3 个入口。对应 P5、P8、REQ-F-BIAS、REQ-F-EXP、REQ-F-CLI 与 REQ-I-RESULT。
 
 ## 1. 实验入口及源代码实际参数
 
@@ -224,7 +224,7 @@ private:
 
 - **Bias**：每个 corenumber 的结果相互独立，写入相应新 RunId 子目录；原始已有编号目录 1..40 是历史参考，不是 C++ 自动覆盖位置。
 - **Comparison**：四种方向误差数组仅在**八次有效完成**时按原算法先累计后除以 8；rottransratio 仅保留**第八次**（最后一次预定运行）的数组。若某次失败，整次聚合标记 `Incomplete`，不改为除以 7 或替代缺失的最后一次；部分结果可留证，但不作为原算法完整输出发布。
-- **Update rates**：比较的 mitkoeff 四组在源周期触发时更新；主 akkoeff 单独每帧更新。当前源 save **只有三个 MAT**；历史附加文件标 `HistoricalOnly` 并保留字段级差异报告，**不得在新结果补造这些文件**。
+- **Update rates**：四组 `mitkoeff` 只允许先旋转、按 `mod(i,[1,5,11,21])==0` 从**本帧主求解前**的主 `akkoeff` 周期复制；对照的 `oneit` 第一输出在原脚本绑定给**废弃变量 `dumi`**，绝不可写回 `mitkoeff`。只有主 `oneit` 返回值每帧提交 `akkoeff`。这不同于初始化/Comparison入口对照 `ohnekoeff/mitkoeff` 的同帧迭代返回覆盖语义。当前源 save **只有三个 MAT**；历史附加文件标 `HistoricalOnly` 并保留字段级差异报告，**不得在新结果补造这些文件**。
 - **初始化**：每次创建独立系数起点，不能重用此前 600 帧轨迹的状态；首尾行按原 zeros 预分配语义。
 - **原始数据保护**：任何路径重叠、文件已存在、变量写入失败应返回带 RunId 的明确错误，不允许把部分成功伪装为完整。
 - **失败策略已由所有者确认**：独立采样/运行失败记录并可继续其他独立单位；Adaptive 连续状态不提交失败步，无法保证状态可用则停止该轨迹；损坏输入或输出写失败导致依赖任务失败；保留失败日志与可追踪产物，不自动删除旧文件/重试覆盖。需在未来真实 C++/CTest 下验证该策略，不声称原 MATLAB 的异常传播已实测。
@@ -236,7 +236,7 @@ private:
 | EX-G01 | **L3** 采样/固定注入 RNG；**L2** 作者归档 xwerte/ywerte；**L4** 跨 40 runs 统计 | 两类 Bias i=0/1/2 的 N、原存储 xwerte、六项 ywerte 的 shape/指标；固定 RNG 序列的消费次序与独立统计分母 | TC-F-BIAS-001/002/003 |
 | EX-G02 | **L2** 历史四类 35×1；**L3** 独立帧/状态 | 初始化 35 点、四类误差 shape、首尾数组与主/比较系数更新的独立参考 | TC-F-EXP-001 |
 | EX-G03 | **L3** 固定 8 次聚合；**L2** 历史五字段；**L4** 汇总 | 600 点、四误差先累加再除以 8，rottransratio 来自**加噪前两种理想流分量的平均模长之比（无量纲）**且只保留**最后一次运行**值；另核分母为零/非有限状态，不假设 MATLAB RNG 同 seed 输出相同 | TC-F-EXP-002 |
-| EX-G04 | **L3** 固定帧号状态机；**L2** 历史结果 | 更新率 1/5/11/21、600×4/600×1、三个当前源 save 字段；`akrot=(180/π)·norm(bestrot)` 单位 **deg**，第一/末行源预分配为 0；主 akkoeff 和周期基线状态不串扰 | TC-F-EXP-003 |
+| EX-G04 | **L3** 固定帧号状态机；**L2** 历史结果 | 更新率 1/5/11/21、600×4/600×1、三个当前源 save 字段；`akrot=(180/π)·norm(bestrot)` 单位 **deg**，第一/末行源预分配为 0；period比较的`coefficients_next`绑定原`dumi`并**弃置**，周期刷新用主求解前系数；比较状态只可旋转/刷新，主akkoeff每帧提交；固定哨兵预期见§8.0.1 | TC-F-EXP-003 |
 | EX-G05 | **L3** 独立构造错误/安全合同 | 输出路径冲突、MAT 写失败、近度/solver 非有限；日志含 RunId、原错误码和独立失败数，不能把异常计为有效 | TC-NF-SAFETY-001、TC-NF-RECOVERY-001 |
 
 历史 **MAT 类型/shape 字典已实测**；但算法的**独立 L3 逐节点参考**、完整 L2 逐值及 SHA-256、L4 统计、批准容差、CLI schema、生产写入/回读与 CTest 仍未建立，不能以最终结果文件能够被读取替代算法真实性测试。
@@ -244,6 +244,14 @@ private:
 **状态**：五类入口参数、独立 Config、RunContext/Manifest 失败策略与当前 save 契约已文档化，**历史输出 dtype/shape 已由 582/582 matio 数据字典确认**；C++ Runner、新输出、独立 L3 逐节点参考、误差容差及接口冻结仍未完成。
 
 **2026-11-11 Bias源结果边界的静态数学夹具**：在 `d=e_z, mu=1, t=e_x, omega=-e_y` 的独立单方向流场中，`p_trans=-e_x`、`p_rot=+e_x`，故合成流的源式 `durchlaenge=0`，两个单分量平均模长各为1。检查在这个输入下不可使用`1+1=2`替代原合成模长：MeanMagnitudeGaussianNoise即便噪声系数非零也产生0扰动，`nonpropfehler` 路径仍要消耗3个normal。此为**求解器前流场合成/噪声数学边界**而非原Bias的6/8面集合实际运行结果；复用 `TC-F-FLOW-002/003`、`TC-DC-NOISE-001`，正式软件测试与独立L3尚未实施。
+
+### 8.0.1 四种更新周期不是四套每帧自适应系数状态（2026-11-12 原源码合同）
+
+只读原 `agent_in_sphere_adaptive_matched_filter_many_parameter.m:134–182` 定义更新率算法。若未来使用 `AdaptiveMfaSession` 共用封装，必须保持返回值弃置语义：第134–138行先旋转主`akkoeff`与四组`mitkoeff(:,:,k)`，第147–150行按`mod(i,zeitkonstanten(k))==0`从**已旋转但本帧主求解尚未提交**的主系数复制给周期组；第164行`[dumi mittrans mitrot error]=oneit_adaptiv_matched_filter(mitkoeff(:,:,k),setofpoints)`只消费求解运动结果计算误差，不将`dumi`写入周期基线；第182行`[akkoeff aktuelltrans aktuellrot error]=oneit_adaptiv_matched_filter(akkoeff,setofpoints)`才唯一更新主系数。这些精确行为要在[Adaptive LLD `5.0.1](adaptive_mfa.md)中维护，Runner不应维护第二套自相矛盾的更新规则。
+
+**可区分正确和错误实现的状态替身**：旋转始终I；主初始单一系数标量`A=1`、period=5对照初始`B_5=12`（其余比较状态可取`B_k=10+k`）；模拟每次求解返回系数`C_next=C+100`，运动值不影响状态。帧`i=2/3/5/6`的比较输入必须分别为`period1:[1,101,301,401]`、`period5:[12,12,301,301]`；本帧主求解后的主状态分别为`[101,201,401,501]`（i=4仍执行主更新，故i=5前主为301）。如果错误地把`dumi`写回period5，对照在i=3的输入会变成112；如果先更新主系数再周期复制，则i=5的period5输入会变成401，均能在不调用真实MATLAB或随机源的条件下由**计划中的隔离替身测试**判别。上述标量仅是系数对象的哨兵值，不冒充3×5真实球谐矩阵或原始轨迹L3。
+
+**失败原子性**：保持既定已选Session纪律，在本帧临时状态旋转/复制/比较之后若有必需节点失败，则**主系数和四组对照均不能局部提交旋转/刷新**；否则下一帧可能消费半更新状态。连续序列不可恢复则停止本轨迹，明确`Incomplete/Failed`，不改变统计分母。这个事务保护是**额外的C++安全合同**，不应反向描述为MATLAB已实现原子事务。对应既有`TC-F-ADAPT-003`、`TC-F-EXP-003`、`TC-NF-SESSION-001`，候选测试文件仍为计划，未执行。
 
 ### 8.1 具体错误触发、CTest 候选与依赖边界
 
