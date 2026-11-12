@@ -1,6 +1,6 @@
 # Adaptive MFA 单步计算与轨迹状态——详细设计草案
 
-> **LLD v0.7：未冻结、没有生产Adaptive C++/CTest。** 已逐段核对原 MATLAB 公式；除 AN-G12 理想对称案例外，新增九方向非对称正/负均值近度的独立 Wolfram 逐节点数学参考，并发现 s<0 归一化与 M1 矩阵模型之间存在确定的 2I 差异。一般状态、Session、正式接口及 DEC-005 仍未完成。
+> **LLD v0.8：未冻结、没有生产Adaptive C++/CTest。** 已逐段核对原 MATLAB 公式；除 AN-G12 理想对称案例外，新增九方向非对称正/负均值近度的独立 Wolfram 逐节点数学参考，并发现 s<0 归一化与 M1 矩阵模型之间存在确定的 2I 差异。一般状态、Session、正式接口及 DEC-005 仍未完成。
 
 ## 1. 单步输入/输出与接口候选
 
@@ -172,8 +172,38 @@ Result<T,E>、FlowField、FrameMotionContext、状态枚举及构造注入方式
 - 四个误差 MAT 为逐运行求和后除以 8；rottransratio 是循环内赋值的**最后一次运行值**，不在同样位置求八次平均。
 
 **更新频率入口** agent_in_sphere_adaptive_matched_filter_many_parameter.m（600 位置、等级 2、单次运行）：
-- 每帧旋转主 akkoeff 和四组 mitkoeff；在 mod(i, [1,5,11,21])==0 时把对应 mitkoeff 刷新为主 akkoeff，然后分别调用单步，再更新主 akkoeff。
+- 每帧先旋转主 `akkoeff` 与四组 `mitkoeff`；在 `mod(i,[1,5,11,21])==0` 时，用**此帧主 `akkoeff` 更新前的当前值**替换对应 `mitkoeff(:,:,k)`，再调用四组对照单步求解。**原调用第一输出写入废弃变量 `dumi`，不能把对照的 `coefficients_next` 写回 `mitkoeff`。** 只有随后主求解返回值提交到 `akkoeff`。详见§5.0.1的原始赋值代码、测试矩阵；不能把四组对照当四条独立每帧自适应Session。
 - 当前源脚本实际保存 allemittransfehler、allemitrotfehler、akrot 三类 MAT；历史目录还含 alleadaprotfehler、alleadaptransfehler、rottransratio，**历史额外文件不得伪造为当前运行输出**。
+
+### 5.0.1 三入口对照系数的返回值归属矩阵（2026-11-12，实质性控制流纠偏）
+
+原三份只读生成脚本对 `oneit_adaptiv_matched_filter` 返回的**第一个量**采用不同赋值方式，这关系到是否将新近度系数提交到下个求解步骤的输入，不能只看调用的算法类型和最终 `trans/rot` 两个结果：
+
+| 入口与源代码行 | 对照求解前的系数 | 调用第一个返回量绑定 | 当前帧/跨帧是否保存对照输出 |
+|---|---|---|---|
+| `agent_in_sphere_initialization_test.m:94–116`（行号以只读源为准） | 每帧 `ohnekoeff` 从恒一重置、`mitkoeff` 取主旧状态；内层迭代k | `[ohnekoeff,...]` 与 `[mitkoeff,...]` | **同一帧内的下一次 k** 可以读取更新后的两组系数；下一帧重新初始化比较系数；跨帧只保留主 `akkoeff` |
+| `agent_in_sphere_adaptive_matched_filter_test.m:139–162` | 每帧 `ohnekoeff` 重置、`mitkoeff` 从已旋转主状态复制；比较内层k | `[ohnekoeff,...]` 与 `[mitkoeff,...]` | 在同一帧迭代k时**写回**对照系数；下一帧仍重新创建，不将比较系数错当长期主状态 |
+| **`agent_in_sphere_adaptive_matched_filter_many_parameter.m:134–182`** | 先分别旋转当前主系数和四组历史对照系数；每个k在 `mod(i,zeitkonstanten(k))==0` 时从**尚未执行本帧主求解**的 `akkoeff` 刷新 | **`[dumi,mittrans,mitrot,error]`**，其中`dumi`被丢弃、后续代码不使用 | **不提交这次对照求解得到的系数**，四组 `mitkoeff` 仅受下一帧旋转和周期刷新影响；本帧只有主 `[akkoeff,aktuelltrans,aktuellrot,error]` 写回主系数 |
+
+针对更新率原脚本，精确的候选状态次序是：
+
+~~~text
+rotate(akkoeff, previous_relative_rotation)      // 主状态
+for k=1..4: rotate(mitkoeff[k], previous_relative_rotation)
+for k=1..4:
+    if matlab_frame_i % period[k] == 0:
+        mitkoeff[k] = akkoeff                    // 已旋转、尚未本帧主更新
+for k=1..4:
+    comparison = oneit(mitkoeff[k], flow)
+    record comparison.trans, comparison.rot
+    DISCARD comparison.coefficients_next         // 源返回变量 dumi
+primary = oneit(akkoeff, flow)
+akkoeff = primary.coefficients_next              // 唯一每帧正式自适应提交
+~~~
+
+**判别性固定替身（不要求求解器实际实现）**：令每帧旋转为单位阵，主状态的初始哨兵 `A=1`，四组比较初始哨兵 `B_k=10+k`；替身 `oneit(C)` 总是返回 `coefficients_next=C+100`、误差运动值另行记录。测试第2、3、5、6帧：period=5 组在`i=2/3`比较后**保持原B5**，在`i=5`周期触发前先复制**本帧主步之前的A**，但比较返回的`A+100`仍须丢弃；在`i=6`仍保持`i=5`的那一份刷新状态（旋转为I）。period=1 在每一帧比较前必须重置为该帧**主更新前A**；在`i=5`先主更新再重置比较的错误变体必然与正确路径不同。这里的标量A/B只是**可注入系数状态替身**，不是声称3×5球谐矩阵只存一个标量或有真实L3数值。
+
+**事务边界**：C++ 已选的单步失败不提交/连续序列中断纪律仍有效。执行这些比较前的旋转/周期复制应在本帧暂存状态中进行：**任何必需比较或主单步失败时不得局部提交已旋转/刷新后的主或四组比较系数**，否则与`5.1“主/基线原子性”自相矛盾；仅成功才提交本帧完整状态。该原子性是安全候选，不是源MATLAB原生事务行为。复用 `TC-F-ADAPT-003 / TC-F-EXP-003 / TC-NF-SESSION-001`，不添加新TC，也不声称生产 Session、CTest 已通过。
 
 ### 5.1 会话状态/异常提交合同
 
