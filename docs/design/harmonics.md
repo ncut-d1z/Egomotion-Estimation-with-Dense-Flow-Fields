@@ -1,6 +1,6 @@
 # 实球谐、近度重建及系数旋转——详细设计
 
-> **LLD v0.15，未冻结、完整业务数值未验收。** 2026-11-09 用户仅开放低阶球谐 C++ 实现与 Wolfram 符号验证，`egomotion::harmonics::low_order` 叶子代码及专项测试已提交；九基直接/递推与 IR96/IR98、Choi1999 的**一般 SO(3) 精确符号验证已执行**。项目所有者又提供了固定 SHA `8eab5dd`、增强回归 `445ed151` 和624四元数/错态压力 `601c74de` 的 Ubuntu/GCC16.2/Eigen3.4 Release **各1/1 CTest Passed** 原生结果；真实最大绝对残差分别为8.8817841970012523e-16（矩阵/向量）、1.0658141036401503e-14（标量），回归比较阈值9.0949470177292824e-13。正式三类公共接口、离散拟合、全业务集成、独立全部边界和最终容差尚未完成。权限见[专项授权](../decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md)，证据见[三路报告](../reviews/LOW_ORDER_SH_THREE_ROUTE_VERIFICATION_2026-11-09.md)、[PROGRESS E-DOC-056/057/059](../PROGRESS.md)。
+> **LLD v0.16，未冻结、完整业务数值未验收。** 2026-11-09 用户仅开放低阶球谐 C++ 实现与 Wolfram 符号验证，`egomotion::harmonics::low_order` 叶子代码及专项测试已提交；九基直接/递推与 IR96/IR98、Choi1999 的**一般 SO(3) 精确符号验证已执行**。项目所有者又提供了固定 SHA `8eab5dd`、增强回归 `445ed151` 和624四元数/错态压力 `601c74de` 的 Ubuntu/GCC16.2/Eigen3.4 Release **各1/1 CTest Passed** 原生结果；真实最大绝对残差分别为8.8817841970012523e-16（矩阵/向量）、1.0658141036401503e-14（标量），回归比较阈值9.0949470177292824e-13。正式三类公共接口、离散拟合、全业务集成、独立全部边界和最终容差尚未完成。权限见[专项授权](../decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md)，证据见[三路报告](../reviews/LOW_ORDER_SH_THREE_ROUTE_VERIFICATION_2026-11-09.md)、[PROGRESS E-DOC-056/057/059](../PROGRESS.md)。
 
 关联REQ-F-SH-001/002、REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001及P7.1–P7.6/P7.10。原`winkelausvektor`、`kugelflfunc2`、`near_aus_koeff`、`koeff_aus_near`、`transfor_koeff`、`SHRotate`仍只读；四篇论文材料齐备，不再以缺PDF阻塞。纯Eigen、C++17、double，禁止sdla；Don Williamson仅辅助参考，无直接代码移入。
 
@@ -56,11 +56,26 @@ a^{num}_{lm}=\frac{4\pi}{N}\sum_i\mu_iY_{lm}(d_i),\quad
  a^{den}_{lm}=\frac{4\pi}{N}\sum_iY_{lm}(d_i)^2,\quad a_{lm}=a^{num}_{lm}/a^{den}_{lm}.
 \]
 
-**当前新增的球谐叶子功能**：`projectSourceCoefficientsOrderTwo(nearness,setofpoints)` 专门复现 `koeff_aus_near.m` 的固定 `ordnung=2` 分支。接受 N>0 的有限近度和 N×K (K≥3) 样本，仅解释前三列的有限单位方向；按原 m 排列的九个源 CS 基函数**分别**求和，先算 `a=(sum(near*Y)/N)*4pi` 与 `b=(sum(Y²)/N)*4pi` 再相除，不将其替换为九元联合 LS；返回 3×5 源布局且无效位置填零。错误返回：空/维度错 `InvalidSampleShape`，近度/方向非有限 `NonFiniteInput`，非单位方向 `NotUnitDirection`，零平方范数 `ZeroProjectionNorm`，累加/比值溢出 `NonFiniteResult`；原 MATLAB 在这些病态数据上的警告/NaN 传播未取证，因此不能主张等价。**一般化跨模块 HarmonicFitter、动态阶数、Adaptive/Session 接口仍未实现，且这一新 C++ 代码尚未原生编译/CTest。**
+**当前新增的球谐叶子功能**：`projectSourceCoefficientsOrderTwo(nearness,setofpoints)` 专门复现 `koeff_aus_near.m` 的固定 `ordnung=2` 分支。接受 N>0 的有限近度和 N×K (K≥3) 样本，仅解释前三列的有限单位方向；按原 m 排列的九个源 CS 基函数**分别**求和，先算 `a=(sum(near*Y)/N)*4pi` 与 `b=(sum(Y²)/N)*4pi` 再相除，不将其替换为九元联合 LS；返回 3×5 源布局且无效位置填零。错误返回：空/维度错 `InvalidSampleShape`，近度/方向非有限 `NonFiniteInput`，非单位方向 `NotUnitDirection`，零平方范数 `ZeroProjectionNorm`，累加/比值溢出 `NonFiniteResult`；原 MATLAB 在这些病态数据上的警告/NaN 传播未取证，因此不能主张等价。**一般化跨模块HarmonicFitter、动态阶数、Adaptive/Session接口仍未实现；但这个已存在的受限叶子本身，在固定提交`5e5221988cf093dbfddb88f2f65f06632460f3a1`下，已有用户原生编译及对应专项CTest通过证据。** 该证据不属于公共HarmonicFitter/DEC-005或后续动态HEAD的测试。
 
 **独立精确参考（不是被测实现生成）**：取七个单位方向 `e_x,e_y,e_z,(3/5,4/5,0),(0,3/5,4/5),(4/5,0,3/5),(1/3,2/3,2/3)` 与近度 `(2,-1,4,1/2,-3,5/4,11/2)`。已实际执行 [Wolfram 精确计算](../../verification/harmonics/verify_source_projection_order2.wl)，九项系数差全部为0，所有平方范数分母严格为正；离散 Gram 的非对角项 `G[2,3]≈-0.2206948544` 非零，所以**此固定场能够区分源逐项比值与联合最小二乘**。精确有理/根式值单独保存于 [source_projection_reference.v1.json](../../verification/harmonics/source_projection_reference.v1.json)，其状态是独立数学参考、**非已运行的 C++/批准 Golden**；本模块专有测试 `test_low_order_source_projection.cpp` 覆盖所有九项、六处无效填充、额外流列忽略、零/维度/非有限/非单位/溢出等负例；**现已在5e522198用户原生CTest通过**。
 
 AF-090仍适用：`spherical_harmonic_illustration`的rho=5+3yy/max(abs(yy))是独立图示，不作为核心九基或旋转验证依据，见[分析LLD](analysis_plotting.md)。
+
+### 2.1 已存在的低阶叶子错误类型与未来公共错误链的适配边界（2026-11-14，真实接口交叉整改）
+
+**静态读码事实**：已实际读取固定分支上的`include/egomotion/harmonics/low_order.hpp`（Git blob `8b2a8723d22fec0c7e544cab57952173c8daacfb`）、`low_order_source_projection.cpp`（blob `7d3c7aadc90841c5c66d41ccebcfdfdca11306e5`）及其专项测试文件。受限叶子已有**局部**`egomotion::harmonics::low_order::ErrorCode`和`Result<T>`，不是公共`NumericalErrorCode`及`Result<T,NumericalErrorCode>`。叶子`Result::error() const`自拥有返回局部`Error{code,const char* message}`；访问错误alternative时由`std::get`抛`std::bad_variant_access`。这只是**历史已实现叶子的局部事实**，不能将用户对未来跨模块Result所决定的`std::logic_error`、`ErrorDetail.causes`错误链**追溯声明为叶子已有行为**；未来业务桥接必须正面处理这道类型边界，不能偷偷把局部类型当公共API强转。
+
+| 实际`low_order::ErrorCode`成员（源码有定义） | 错误源事实及适配注意事项 |
+|---|---|
+| `NonFiniteInput`、`NonFiniteResult` | 公共`NumericalErrorCode`有同名候选，但必须保留局部枚举家族`low_order::ErrorCode`作为根因帧，不能只通过字符串同名假设枚举ABI相同 |
+| `InvalidSampleShape`、`NotUnitDirection` | 公共候选分别为`InvalidShape`、`InvalidDirection`，仅语义相近，不能使用`static_cast`按枚举整数映射；由桥接函数逐项检查后转成业务层错误 |
+| `ZeroProjectionNorm` | 原离散投影某通道平方范数为零；公共有`ZeroNorm`/`SingularSystem`，但需明确业务失败资格，不能未经定义就选其一并删除局部Code |
+| `NotProperRotation`、`ComplexResidue`、`InvalidMethod` | 公共`NumericalErrorCode`没有明确一一对应的同义项；特别是**有限复数虚部残余不等于`NonFiniteResult`**，非法旋转矩阵也不自动等于非法单位视线。不可压成模糊`InvalidShape`或自动改成`Result::success` |
+
+**确定的集成边界**（不增加新枚举、不替用户授权实施）：低阶叶子出错时，适配器必须先`if (!leaf_result.hasValue())`再读取`leaf_result.error()`（自拥有局部Error），严禁让局部`std::bad_variant_access`替代正常业务失败；新业务层需要包装Failure时，创建`ErrorFrame{domain="egomotion::harmonics::low_order::ErrorCode",code=local_code,...,stage=Solve,message=leaf_message}`，按已决定的`std::forward_list`规则保留这一真实原始故障层。对于**Runner层**可以将外层类型定为既有`ExperimentErrorCode::SolverFailed`并保留叶子Frame；如未来`HarmonicFitter`直接承诺返回`NumericalErrorCode`，须在接口LLD明确合法一一映射和无法无损映射项的处理，**此处不擅自新建公共ErrorCode或由外层静默硬转**。正常业务失败走Failure，程序员错用叶子Result的`bad_variant_access`也不应被掩盖为科学数值失败。
+
+**已有证据不可混用**：固定`5e522198`用户专项3/3 CTest支持已有叶子的原错误码等局部行为，但**没有**当前公共Result工厂/`std::logic_error`/`std::forward_list<ErrorFrame>`桥接、RunContext、MAT集成的原生测试。建议复用既有`TC-F-SH-001/002`、`TC-NF-OOP-001`、`TC-I-RESULT-001`做未来跨层故障注入；要求对八个局部ErrorCode逐个验证来源家族、Code、stage、message及根因不丢，并对`ComplexResidue/InvalidMethod/NotProperRotation`禁止猜测式公共枚举转换。不会新增正式第67个TC或实施C++，H-10/H-11仍无限期延期。
 
 ## 3. 新叶子的唯一旋转合同
 
@@ -126,6 +141,6 @@ l=2的w对全部m精确为0，不求W；u=0先跳过辅助项再访问前阶数�
 
 ## 7. 后续进入条件
 
-H-10球谐实现与本次Wolfram已授权；**不再等待论文或笼统等待全部代码许可**。球谐叶子三次原生编译/CTest已由用户实际执行并报告通过；代理自行执行全部项目/其它模块仍须独立授权，不因此开放其他模块。正式DEC-005/008、ABI冻结、项目集成仍需独立证据。
+H-10球谐实现与本次Wolfram已授权；**不再等待论文或笼统等待全部代码许可**。球谐叶子三次原生编译/CTest已由用户实际执行并报告通过；代理自行执行全部项目/其它模块仍须独立授权，不因此开放其他模块。正式DEC-005数值验收、跨模块错误适配/ABI与项目集成仍需独立证据；**DEC-008-01～06的设计决定已作出，但未在低阶叶子与公共Result之间实施或验证桥接**。
 
 按[长期政策](../golden/NO_MATLAB_EXECUTION_POLICY.md)，永久不要求MATLAB/Octave/L1。原论文、源码、MAT及旧审查记录保持不变；仅在本文件及PROGRESS/AUDIT维护当前的局部进展与真实限制。
