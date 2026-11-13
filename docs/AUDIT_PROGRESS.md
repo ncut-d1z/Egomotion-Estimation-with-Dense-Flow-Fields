@@ -1,6 +1,6 @@
 # 全工程文档规范审计进度与整改台账（AUDIT_PROGRESS）
 
-> **状态：审计进度 v1.8，第十七批逐码核对已实现低阶SH叶子ErrorCode/Result与拟议公共NumericalErrorCode/Result的非同构边界，实修错误无损桥接职责，并纠正受限source_projection已有固定SHA原生3/3而旧LLD/TEST_PLAN误称未编译的证据矛盾；六项延期及DEC-008已决定范围不变；仍按36文档/既有五项综合阻塞继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
+> **状态：审计进度 v1.9，第十八批逐原MATLAB核对并修复Bias噪声伪代码允许两种模型同时生效/6N抽样的合同错误，明确按场景单选且3N次normal、先加三维噪声再切向投影及相关协方差，落实到LLD/Runner/SRS/TC；第十七批已完成的SH本地接口追踪继续保留；六项延期及DEC-008已决定范围不变；仍按36文档/既有五项综合阻塞继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
 
 ## 1. 口径、状态和可复核方式
 
@@ -14,24 +14,24 @@
 
 | ID | docs/下相对路径 | 用户初始规范判断 | 首轮实际需核对的问题 | 审计状态 | 本轮证据／整改关联 |
 |---|---|---|---|---|---|
-| DOC-001 | `REQUIREMENTS.md` | 草案级部分符合 | AC→LLD章节身份/正式批准 | 已完成限定审计 | SRS v0.23：AC-NF-OOP-001实补已测试局部low_order::ErrorCode/Result与尚未实现公共Result/NumericalErrorCode的类型隔离与完整ErrorFrame来源；提交ded6fcf，不增加66REQ/TC或假报桥接已测 |
+| DOC-001 | `REQUIREMENTS.md` | 草案级部分符合 | AC→LLD章节身份/正式批准 | 已完成限定审计 | SRS v0.24：AC-F-FLOW-003将两噪声策略互斥/3N抽样及P=I-ddT切向投影写成可判定需求，给出Mean与Component固定g反例及投影后相关性；提交b3d4b748；66REQ/TC未变、未原生执行 |
 | DOC-002 | `ARCHITECTURE.md` | 草案级部分符合 | 27拟议DAG与真实构建/ADR | 已完成限定审计 | HLD v0.10：设计图27箭头=25内部+2外部；根CMake仅低阶SH及3CTest，部署/DEC-006仍待 |
 | DOC-003 | `OBJECT_MODEL.md` | 草案级部分符合 | 候选类/生命周期/签署 | 已完成限定审计 | 对象模型v1.1区分已实现球谐低阶叶子与未来公共HarmonicFitter/Result适配器；纠正历史行错误‘未核对上传论文、未运行CTest’为局部叶子有5e522198专项实测/公共HarmonicRotator未建；提交0bdaf0b |
 | DOC-004 | `design/README.md` | 索引符合，非LLD | 实际Markdown个数与模块覆盖条目 | 已完成限定审计 | 14份真实目录Markdown=1索引+1跨模块LLD+9模块LLD+1专题LLD+2理论，10个覆盖行；提交3614b28 |
 | DOC-005 | `design/contracts.md` | 草案级部分符合 | Result/ABI/ODR/异常线程/自包含 | 正在审计 | contracts v1.3明确leaf Error{局部ErrorCode,const char*静态消息}/Result与公共NumericalErrorCode/Result不等价，禁止enum整数static_cast与局部bad_variant_access假冒科学Failure；未来跨层用完整ErrorFrame复制源code/message保真；提交a8d7b90，公共适配器未实施 |
 | DOC-006 | `design/cli.md` | 草案级部分符合 | CLI负例、RunId、JSONL、DEC-008 | 已完成限定审计 | cli v0.12：JSONL顶层error_domain在causes=[]也必须存在，Mat/Numerical InvalidShape直接报错不会碰撞，不从message或exit推断家族；提交ad52013，真实CLI未编写 |
 | DOC-007 | `design/mat_io.md` | 草案级部分符合 | Reader/Writer、TOCTOU、写回读、L2 | 正在审计 | mat_io v0.14：§7.4.2限定inspect-mat仅读meta、保留业务Reader完整解码；§7.4纠正旧兼容单变量表的二次open指令；§7.5要求完整Mat→Analyzer/Runner包装链；进一步澄清压缩MAT元数据解析可能需解压必要头部字节，但**禁止数值载荷解码/显示**，提交b3c6793/a9a740e/36c1fa3/5fbf6fb，尚无真实matio/CTest |
-| DOC-008 | `design/sampling_noise.md` | 草案级部分符合 | 生产几何/RNG负例/CTest | 正在审计 | sampling_noise v0.10：原fixed_*、nonpropfehler、erzeugeflussausnear、getvektor已逐源核对；修复durchlaenge/near_last合同并增抵消反例，提交09ae652；原三类面表与生产RNG/CTest尚待深审 |
+| DOC-008 | `design/sampling_noise.md` | 草案级部分符合 | 生产几何/RNG负例/CTest | 正在审计 | sampling_noise v0.11：原双if允许同时加两类噪声+6N高斯调用，真实fixed_*和nonpropfehler每场仅一种模型并3N抽样；改候选伪代码为场景单选与非法模式在全部RNG前拒绝，增协方差公式/固定点向量反例；提交142d322e/4c169996/fa6e43a2；生产采样器/CTest仍未开展 |
 | DOC-009 | `design/trajectory.md` | 草案级部分符合 | Sophus真实依赖及几何L3 | 已完成限定审计 | trajectory v0.6：在既有旋转尺度退化审阅外，补球外内向正根4/9、球面内外向及严格球内前置检查；固定分数推导复核，提交6dbecb5；Sophus/C++/L3仍未验收 |
 | DOC-010 | `design/kvd.md` | 草案级部分符合 | 36轮数学非真实CTest/200轮 | 正在审计 | KvD v0.10：对照原两个误差.m恢复非平方欧氏/角度精确公式、零真值假零残差和5组输入；§4撤销不存在的SingularGeometry/NonFinite错误码而统一公共enum；§5将36轮已生成Wolfram固定参考与未执行CTest分列；提交9c80e41/6fd3220，仍需原生实现及全面数学审查 |
 | DOC-011 | `design/harmonics.md` | 草案级部分符合 | 低阶叶子有实测，公共ABI未冻结 | 正在审计 | harmonics v0.16：实际读当前low_order.hpp/low_order_source_projection.cpp/test头与实现blob，对照8个局部ErrorCode、Result错态bad_variant_access，补适配责任及3项无一一公共同义项；纠正本节source_projection‘未编译’与固定5e522198下3/3 CTest证据矛盾；提交bc30242，公开接口与Bridge未实现 |
 | DOC-012 | `design/adaptive_mfa.md` | 草案级部分符合 | Session原子提交、病态输入和真实软件 | 正在审计 | Adaptive v0.8：与三原始入口源blob逐行核对，Update rates在i=134–182先旋转、按周期刷新本帧主旧系数，比较第一返回写入dumi弃置，仅主返回提交；原比较error不用于保存角误差；固定替身5帧静态重放，提交ba06bea/8dd5dd2/ba3d8c4，Session/CTest仍待 |
-| DOC-013 | `design/experiments.md` | 草案级部分符合 | Runner/Writer/Manifest/Ctest | 正在审计 | experiments v0.12：DEC-008-04包装失败时先emplace节点再splice旧链，RunContext/Manifest及JSONL顶层也必须保存error_domain即使无causes；提交4d468b9/009fe1f，真实Runner/CTest未执行 |
+| DOC-013 | `design/experiments.md` | 草案级部分符合 | Runner/Writer/Manifest/Ctest | 正在审计 | experiments v0.13：Runner按BiasOccluded/Proportional入口选择且只注入一种IFlowNoiseModel，保留零倍数仍抽3N、切向投影引入相关性及非法双模式先拒绝；提交7b476c2b/33276d19，未运行Runner |
 | DOC-014 | `design/analysis_plotting.md` | 草案级部分符合 | 分析L2/L3曲线、CTest/绘图隔离 | 正在审计 | analysis v0.13：Mat MissingVariable包装成Analysis错误时保留Mat原Frame并允许Runner继续push_front，无source_error_code单根因捷径；提交d2418c8，测试尚未运行 |
 | DOC-015 | `design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 专题草案级部分符合 | 旧版本CMake描述与最新低阶叶子验收区分 | 已完成限定审计 | 对照旧1/1说明与用户固定5e522198 3/3；仅低阶叶子，公共ABI仍未实现；提交4a62a9d |
 | DOC-016 | `design/SH_DISCRETE_REFIT_CONSISTENCY.md` | 理论专题合格，非LLD | 不能替代模块LLD/测试/批准 | 正在审计 | 已核专题定位与35项数学辅助检查，待独立逐式复算 |
 | DOC-017 | `design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md` | 理论专题合格，非LLD | 不能替代Adaptive真实接口/实现 | 正在审计 | 理论专题v0.2：从M2/M3的叉积矩阵推导M对称充要条件mean((mu-1)d)=0，证明均值1不保证对称；提交28c20f6/555eeea，尚未逐式独立重算本专题其它全部25项 |
-| DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 已完成限定审计 | TEST_PLAN更正新源投影未编译的过时结论为固定5e522198用户3/3通过；补8种局部ErrorCode、局部/公共Result异常区分与ErrorFrame错误桥接负例，且清除DEC-008仍未批准的旧句；提交51c5483/9c89b65，正式TC仍66且公共适配测试未执行 |
+| DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 已完成限定审计 | TEST_PLAN §2.2.1：源固定g=(1,0,0)、d=(1,1,0)/√2、p=(1,-1,0)两模型切向增量不同，反证非法双选6N/相加；加入理论协方差非对角项-1/-1/2及非法模型不消耗样本，沿用现有TC；提交8e94d4e9/d4486c56，CTest未执行 |
 | DOC-019 | `PLAN.md` | WBS草案符合 | 98P、M0–M5、真实工期/性能 | 已完成限定审计 | PLAN R-02实改：论文缺失风险改为已取得IR96/IR98/Choi、三路线低阶SH固定证据与未完成公共接口/集成风险分列；提交6f2a426；不冒称27DAG/预算/新CTest已验收 |
 | DOC-020 | `PROGRESS.md` | 符合证据登记 | 固定SHA与历史执行/新状态分离 | 已完成限定审计 | 本轮已核历史E-DOC/SH真实证据与旧97AF；正文修订b69e17c |
 | DOC-021 | `AUDIT.md` | 原专项→本轮综合审计 | 已在初始提交转换为全工程文档规范 | 已完成限定审计 | AUDIT §5.1记录DEC-008六项设计均已决定、05数值打印属之前未经授权扩展必须撤回；仍不解除H-10/H-11等六项无限期延期；提交43eaf2e |
@@ -105,6 +105,8 @@
 | DAR-033 | design/contracts.md；design/cli.md；design/experiments.md；REQUIREMENTS.md；TEST_PLAN.md；TODO.md | 完整causes只保存内层包装，直接Mat/Numerical失败时causes=[]；原JSONL顶层只有error_code，MatErrorCode与NumericalErrorCode同名InvalidShape仍会混淆当前错误家族 | 实改顶层必需error_domain与error_code，由当前Failure<Code>的枚举家族生成，即使causes=[]仍标Mat/Numerical；causes有包装时保留全部原帧，不能凭消息/exit推断家族；SRS/TC补两同名且零包装的区别负例 | 纯文档JSONL顶层错误枚举家族遗漏 | 已整改 |
 
 | DAR-034 | design/harmonics.md；design/contracts.md；OBJECT_MODEL.md；REQUIREMENTS.md；TEST_PLAN.md；真实include/egomotion/harmonics/low_order.hpp与source_projection.cpp | 低阶SH叶子已独立实现自有low_order::ErrorCode/Result，其错态访问std::bad_variant_access且包含NotProperRotation/ComplexResidue/InvalidMethod等公共NumericalErrorCode无无损对应值；旧文档未明确未来桥接责任，容易整数强转丢原始错误来源或把叶子局部行为冒充DEC-008已定公共Result；另SH LLD/TEST_PLAN局部source_projection段误写未编译而固定5e522198用户3/3实测已通过 | 实际核真实C++头与投影实现8个本地ErrorCode，增原局部family/code/message复制及std::forward_list<ErrorFrame>无损包装、分层bad_variant_access与公共logic_error边界；修LLD/TEST_PLAN真实固定SHA CTest范围和OBJECT_MODEL过时源/测试状态，SRS/既有TC映射并明确未实现桥接；不擅改C++或新建enum | 纯文档局部叶子到公共错误接口的无损适配缺口 | 已整改 |
+
+| DAR-035 | design/sampling_noise.md；design/experiments.md；REQUIREMENTS.md；TEST_PLAN.md；原fixed_kugel_symmetric_perfectpoints_randomnear.m、fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m、nonpropfehler.m | 采样LLD旧伪代码对mean_length_noise与component_noise使用两个独立if，若双开会每分量计算两种噪声并消耗6N个normal，然而原任一MATLAB噪声路径仅一种模型、每点xyz共3次；同时未明确原三维独立高斯经球面切向投影后的分量相关性 | 真正改为由已有ExperimentKind派生的单选内部模型，不额外发明公共enum，非法选择在uniform/normal任何抽样之前拒绝；保留任意零噪/零分量仍3N normal；推导mean模型c² mean_norm²P及component模型c²Pdiag(p²)P，对d=(1,1,0)/√2,p=(1,-1,0),g=(1,0,0),c=1静态手算两种不同增量与xy协方差-1/-1/2；SRS与原TC添明确验证输入，不宣称实际C++通过 | 纯文档双噪声执行错误与切向协方差定义缺口 | 已整改 |
 
 ## 4. 已实施审计、具体整改和验证日志
 
@@ -315,7 +317,23 @@
 
 **七项计数**：整改目标33→34（+1独立技术接口错误），已整改28→29（+1纯文档合同），未整改5→5（0）；审计文件36→36（0）、已完成限定26→26（0）、正在10→10（0）、未审0→0（0）。本轮具体实改五份非台账技术/需求文档，**审计文件数量不变**；仍没有实际公共接口/桥接代码及其CTest，通过实证仅限历史固定低阶叶子SHA。
 
+### 第18阶段：Bias两噪声模型互斥与三维高斯切向投影的实际修复（2026-11-14）
+
+**起始HEAD**：`dc2f260be3aa2c245b033f60fd32efbca0328063`；起始34个整改目标（29已整改、5未整改），36份文档（26已完成限定审计、10在审、0未审）。本轮只读原MATLAB源并对照现行LLD，直接修改技术正文/SRS/测试计划而非调整审计文件数；H-10/H-11/DEC-005/DEC-006/BASELINE-SIGN/RELEASE-PR继续无限期延期，DEC-008六项设计决定不变。
+
+**DAR-035源代码可证的真正缺陷**：旧[采样LLD `2](design/sampling_noise.md)`generate_bias_flow`伪代码以两个独立`if mean_length_noise`、`if component_noise`计算两种随机扰动，两个标志同时生效时将每个方向的高斯抽样从3次变成6次，且叠加两个原MATLAB**从未在同一场景同时调用**的误差模型。只读原`fixed_kugel_symmetric_perfectpoints_randomnear.m` blob `8829ceca395bba3d371db690471ec2c1f086d11b`、`fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m` blob `e3e01b4fdc0a68b6a14262c417b5dea69eb1e8c1`、`nonpropfehler.m` blob `c25d4743f5dc99b4825b738d822457d541813350`逐函数确认**每轮恰一种模型，按每点x/y/z顺序消耗3N次randn**，包括零噪声倍数、零尺度、单分量0时也不省略。
+
+**实际整改**：已在[sampling_noise v0.11](design/sampling_noise.md)将独立双if改成由已有`ExperimentKind`派生的**单选内部`noise_kind`**，非法配置在距离uniform及Gaussian normal**之前**以既有`ExperimentErrorCode::InvalidParameters`拒绝，而非先取随机数再查参数；按点逐分量固定抽样顺序，先加完整三维Gaussian再`P_d=I-dd^T`投影，不能偷改为两维独立高斯。对应[Runner v0.13](design/experiments.md)明确BiasOccluded只用MeanMagnitude、BiasProportional只用ComponentProportional，一次场景不得两者叠加；[SRS v0.24](REQUIREMENTS.md)将互斥、精确3N消耗及投影公式写入原`AC-F-FLOW-003`；[TEST_PLAN `2.2.1](TEST_PLAN.md)增加真实区分性固定输入，**不新建任何TC/公共enum**。本轮提交：[142d322e](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/142d322ecaa4324972d72aa92d73713d3b8e5bad)、[8e94d4e9](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/8e94d4e9dceb1141b630040e39f40b40f6c3fd2c)、[b3d4b748](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/b3d4b7481ac269d70a9653fb63ddefaa9158a31a)、[7b476c2b](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/7b476c2b784e445c9eaa8899ef1fe9b8ffe6e99c)、[fa6e43a2](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/fa6e43a29991e5cfc0b079db06c0abf9637ba21c)。
+
+**独立数学验证**：固定`N=1,d=(1,1,0)/√2,p=(1,-1,0),c=1,g=(1,0,0)`，`mean_norm=√2`。按原源逐分量扰动并投影，MeanMagnitude结果`(1/√2,-1/√2,0)`、ComponentProportional`(1/2,-1/2,0)`；两者互斥且任一模型**只抽三次normal**。令`g~N(0,I3)`，理论`Cov(mean)=c² mean_norm²P`、`Cov(component)=c²P diag(p_x²,p_y²,p_z²)P`，此方向`xy`非对角项分别严格为`-1`和`-1/2`，因此“投影后三维坐标依然独立”不成立。已用不接触仓库C++、MATLAB或MAT的JavaScript独立向量/矩阵算术复核`P`、两个投影增量及协方差；**这是数学/合同证据，不是原生Cpp/CTest、RNG统计实测或DEC-005正式容差批准**。不能因用单个固定方向反例就说真实6/8面Bias全部服从一模一样的协方差。
+
+**人类干预**：本轮**没有新增需立即批准的选项**，两原脚本早已把实验入口/噪声模型唯一确定，不需用户选择新噪声类型。无权限扩大；将来真实C++/CTest属于明确无限期延期的H-10/H-11范围，未恢复前只继续文档/源码/数学审查。其它六项延期及已选DEC-008均保持。
+
+**七项净变化**：整改目标34→35（+1可证实的实际技术合同修复），已整改29→30（+1），未整改5→5（0）；审计文件36→36（0），已完成限定26→26（0），正在10→10（0），未审0→0（0）。本轮四份非台账技术/需求文档均有真实diff、数学固定输入与源依据；**没有通过更改DOC状态或新增审计文件假造工作量**，综合DAR-001～005仍受未来真实软件/批准证据限制。
+
 ## 5. 各轮计数与变化
+
+**第18阶段相对上一轮**：整改目标34→35（+1）、已整改29→30（+1）、未整改5→5（0）；文档36、完成限定26、在审10、未审0全部不变。实际修订采样噪声算法/Runner/SRS/TEST_PLAN并用源数学值交叉检验，未执行生产软件。
 
 **第17阶段相对上一轮**：整改目标33→34（+1）、已整改28→29（+1）、未整改5→5（0）；文件36、已完成限定26、正在10、未审0均未变。实改球谐LLD/公共合同/对象模型/SRS/测试计划，基于真实已实现低阶叶子源码而非仅增加审计数。
 
@@ -372,6 +390,7 @@
 | 第15阶段：结构检查纠偏/完整forward_list调用链 | 36 | 26 | 10 | 0 | 31 | 26 | 5 |
 | 第16阶段：完整错误链异常安全/顶层error_domain | 36 | 26 | 10 | 0 | 33 | 28 | 5 |
 | 第17阶段：SH叶子局部Result与公共错误链适配/证据状态纠偏 | 36 | 26 | 10 | 0 | 34 | 29 | 5 |
+| 第18阶段：Bias噪声模型互斥/RNG及切向协方差整改 | 36 | 26 | 10 | 0 | 35 | 30 | 5 |
 
 ## 6. 36份文件的同一基准提交身份（DAR-005：只读静态快照）
 
