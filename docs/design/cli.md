@@ -36,7 +36,7 @@
 
 **Reader与CLI职责必须分开**：`MatResultReader::readNamed(path,name)`和`readFirstCompatible(path)`仍是其它**业务流程/历史getflowfield兼容与数值验证**所需API；它们保持完整数值解码和单次打开来源身份/TOCTOU合同，**但inspect-mat不调用它们**。业务Reader的`strict/compat`含义不能反向推导成结构检查命令的`--mode`参数。结构检查可以报告未获业务解码支持的MAT变量类型，只要头部元数据真实可读；不因此猜想数值是可解码的。
 
-**只读与输出**：仅将结构元数据作为成功stdout文本，错误事件仍使用项目已选JSONL诊断，不生成实验RunId、不变更MAT哈希、不打印元素、也不持久化虚构数据。见[MAT LLD `7.4.2](mat_io.md)和[TEST_PLAN](../TEST_PLAN.md)原`TC-F-CLI-001`。此为设计已决定，不代表命令已经实现/CTest通过。
+**只读与输出**：仅将结构元数据作为成功stdout文本，错误事件仍使用项目已选JSONL诊断，不生成实验RunId、不变更MAT哈希、不打印元素、也不持久化虚构数据。见[MAT LLD §7.4.2](mat_io.md)和[TEST_PLAN](../TEST_PLAN.md)原`TC-F-CLI-001`。此为设计已决定，不代表命令已经实现/CTest通过。
 
 ### 2.1 参数类型与不变量（待 P0.8 签署）
 
