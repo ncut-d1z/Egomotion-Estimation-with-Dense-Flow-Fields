@@ -1,6 +1,6 @@
 # 对象模型与生命周期合同（Object Model）
 
-> **对象模型草案 v1.0（DEC-008-04/06完整错误链及失败职责已决定）；P0.7/P0.8 待评审，未冻结，拟议业务类与跨模块公共ABI尚未建立。受限低阶球谐叶子C++已独立实现并在固定SHA获得用户原生3/3 CTest证据，不能将其归入下列未创建的公共类。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入；各文档当前版本、固定 SHA 和冻结状态统一由 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记，运行结果以 [PROGRESS](PROGRESS.md) 为准。
+> **对象模型草案 v1.1（补SH低阶叶子局部Error/Result的跨模块适配与正确历史证据）；P0.7/P0.8 待评审，未冻结，拟议业务类与跨模块公共ABI尚未建立。受限低阶球谐叶子C++已独立实现并在固定SHA获得用户原生3/3 CTest证据，不能将其归入下列未创建的公共类。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入；各文档当前版本、固定 SHA 和冻结状态统一由 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记，运行结果以 [PROGRESS](PROGRESS.md) 为准。
 
 ## 1. 对象职责和约定
 
@@ -59,6 +59,8 @@
 **2026-11-12 状态拥有者审计补充**：`ICoefficientUpdatePolicy` 应操作本帧临时的四组比较状态，独立持久拥有者仍是 `AdaptiveMfaSession`；“比较求解器返回新的候选系数”**不是**“策略应提交新系数”。这在 `UpdateRateRunner` 与 `InitializationRunner/AdaptiveComparisonRunner` 中有确定性的不同源代码写回目标（见 [Adaptive LLD §5.0.1](design/adaptive_mfa.md) 与 [Runner §8.0.1](design/experiments.md)）。单一状态机图未画出 `dumi`，不能让图覆盖MATLAB的变量赋值事实。对应既有 `TC-F-ADAPT-003`、`TC-F-EXP-003` 和 `TC-NF-SESSION-001` 的隔离替身资格仍未执行，公共类/签名和ABI没有获得冻结或实现授权。
 
 **DEC-008-06 已决定的跨模块所有权补正（2026-11-12）**：旧表将“RunMatWriter/结果目录”整体描述为“每个RunContext独占”，与[Runner LLD §6.1](design/experiments.md)写明的`IResultWriter&`**非自拥有**矛盾。现已区分：Composition Root负责真实Writer对象及生命周期；RunContext独占本次RunId、已验证产物目录身份、有效/失败/无定义计数及Manifest；单文件Writer只对一个输出返回Status，不决定整个Complete。整次Runner只有全部必要MAT写出/回读、统计和Manifest成功才返回`Result<RunOutcome,E>::success`；中途失败必须返回带有**完整`std::forward_list<ErrorFrame>`包装历史**的Failure，并保留RunContext中可核实的部分证据。每一层真实包装按`push_front`记录，被包装的既有链不得截断；RunContext的每个独立错误事件持有自己的完整链，Manifest若实际落盘按外→内顺序序列化。Manifest写入失败不能伪称这份链已持久化。主/比较系数的暂存事务同样不因Writer成功而自动提交。此为所有者已确认的设计决议而非已实现C++、CTest、正式冻结。具体测试分层见[TEST_PLAN §2.12.3](TEST_PLAN.md)。
+
+**2026-11-14 受限球谐叶子到未来公共接口的实际类型隔离**：已实施的`egomotion::harmonics::low_order`含独立的`ErrorCode`、`Error{code,const char* message}`和`Result<T>`，访问错误alternative时抛`std::bad_variant_access`；全工程候选`NumericalErrorCode`、`Result<T,Code>`及`std::forward_list<ErrorFrame>`尚不存在生产实现，不应在对象图中把二者当同一个类。需要真正用到叶子时，由经批准的**明确Adapter**在业务层接入：先判`hasValue()`，不成功则复制本地Error消息及八个枚举成员原貌到`ErrorFrame`，由调用该适配器的Runner依DEC-008-04进行真实包装；`NotProperRotation/ComplexResidue/InvalidMethod`不能无损映射到现行`NumericalErrorCode`，禁止整数`static_cast`和丢失局部家族。原叶子错误使用`bad_variant_access`不意味着已选的公共Result `logic_error`例外改变，两个边界应分层处理。具体源及异常/矩阵适用范围见[球谐LLD `2.1](design/harmonics.md)和[公共合同 `3.0.3](design/contracts.md)；本段只补对象职责/未来测试映射，不创建新的公共Adapter接口或已执行软件验证。
 
 ## 2. 组件对象关系（设计草案）
 
@@ -208,7 +210,7 @@ stateDiagram-v2
 | `bias_test/data_analysis/graphs_bias_test.m` | BiasResultAnalyzer::aggregate | 已定位 / 合同待 P0 核验 |
 | `bias_test/data_generation/bias_test_nonspherical.m` | BiasExperimentRunner::runOccluded | 已定位 / 合同待 P0 核验 |
 | `bias_test/data_generation/bias_test_spherical_prop_error.m` | BiasExperimentRunner::runProportional | 已定位 / 合同待 P0 核验 |
-| `help_functions/SHRotate.m` | `egomotion::harmonics::HarmonicRotator::blocks(const Eigen::Matrix3d&) const`；通过 [球谐专题 LLD §3](design/SH_ROTATION_IVANIC_RUEDENBERG.md) 的唯一声明生成 R3/R5（R0=1 不存可变成员）；按 Ivanic–Ruedenberg 1996 原文及 1998 勘误 **纯 Eigen 重写**，Don Williamson 仅供参考、禁止 sdla | 实现数学路线已选；此处仅**预定方法声明及源码映射**，未创建 `.hpp/.cpp`、未核对上传的论文全文、未运行 CTest |
+| `help_functions/SHRotate.m` | `egomotion::harmonics::HarmonicRotator::blocks(const Eigen::Matrix3d&) const`；通过 [球谐专题 LLD §3](design/SH_ROTATION_IVANIC_RUEDENBERG.md) 的唯一声明生成 R3/R5（R0=1 不存可变成员）；按 Ivanic–Ruedenberg 1996 原文及 1998 勘误 **纯 Eigen 重写**，Don Williamson 仅供参考、禁止 sdla | 实现数学路线已选；此处仅**预定方法声明及源码映射**，未创建 `.hpp/.cpp`、对应低阶球谐叶子论文/勘误数学依据已核、固定`5e522198`下局部3/3 CTest已实际通过；**本行规划的公共HarmonicRotator方法仍未创建/未测试** |
 | `help_functions/drehvektor_aus_zwei_vektoren.m` | math::rotationVectorBetween (自由函数) | 已定位 / 合同待 P0 核验 |
 | `help_functions/erzeugeflussausnear.m` | FlowSynthesizer::synthesize | 已定位 / 合同待 P0 核验 |
 | `help_functions/erzeugekreuzproduktmatrix.m` | math::crossMatrix (自由函数) | 已定位 / 合同待 P0 核验 |
