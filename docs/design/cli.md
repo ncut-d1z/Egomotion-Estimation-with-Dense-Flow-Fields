@@ -1,6 +1,6 @@
 # CLI 参数、退出码与诊断协议：详细设计草案
 
-> **候选 v0.10（DEC-008-01/06已获所有者决定，inspect-mat显示仍为候选；未编码、未执行CTest）。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
+> **CLI LLD v0.11（DEC-008-05已纠正为MAT元数据检查；DEC-008-02/04/06已决定，仍未创建CLI或运行CTest）。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
 
 ## 1. 语法与基本约束
 
@@ -14,7 +14,7 @@
 
 | 命令 | 必需选项 | 可选选项 | 已知输出、选择与来源边界 |
 |---|---|---|---|
-| `inspect-mat` | `--file PATH` | `--variable NAME`、`--mode strict/compat`（默认 strict） | **strict 且不带 NAME**：仅 inspect 列举变量元数据；**strict+NAME**：调用 readNamed 按精确名称读取自拥有值并展示其 metadata（数值载荷输出格式待批）；**compat 且不带 NAME**：调用 readFirstCompatible，单变量读取唯一值、多变量无独立顺序证据时返回 AmbiguousVariable；**compat+NAME**：解析阶段错误 exit 2。不能将所有无 NAME 请求统一降成 inspect；完整边界见 [mat_io.md §7.4](mat_io.md)，无需 MATLAB 运行 |
+| `inspect-mat` | `--file PATH` | `--variable NAME`（可选，仅筛选结构元数据） | **只调用`MatResultReader::inspect(file)`取得结构元数据**：变量名、class/type、rank/dims、元素数等；有NAME只筛选该名称的元数据，不解码、不显示数值元素。未知变量返回MissingVariable。`--mode strict/compat`、`--format`、`--rows/cols/precision`、`--all`不属于该命令参数；无RunId、只读且绝不修改MAT。 |
 | `run-bias-occluded` | `--seed UINT32 --level NONNEG_INT` | `--run-id ID` | 使用缺损八面体、平均光流模长噪声；level 为包含端点的最大递归级别；写 xwerte 和 ywerte1…6 |
 | `run-bias-proportional` | 同上 | `--run-id ID` | 使用完整八面体和逐分量噪声；保留原作者 xwerte 与真实 N 不同的行为 |
 | `run-adaptive-init` | 无 | `--run-id ID` | 35 点、level=2；四类初始化误差 MAT |
@@ -23,29 +23,20 @@
 | `analyze` | `--experiment bias/adaptive-init/adaptive-comparison/adaptive-update-rates --input-root DIR` | 无 | 四种分析路径；只读取 MAT，不调用求解器；缺少字段显式失败 |
 | `plot`（S） | 同 analyze | `--run-id ID`（仅当生成持久图像文件时适用） | 绘图后端可缺席（exit=7），不得影响数值与分析命令 |
 
-### 2.0.1 `inspect-mat` 的模式×变量选择真值表（2026-11-11 文档纠偏）
+### 2.0.1 DEC-008-05 已决定：MAT数据结构检查，不显示数值内容（2026-11-13）
 
-旧§2的命令行一行合同同时断言“未指定变量时仅列举元数据”与“compat 未指定变量时模拟 `getflowfield` 读取首变量”，使实现者可能误将兼容模式也做成只列头信息。严格遵守三个相互不同的 Reader API：`inspect` **只取元数据**，`readNamed` **精确按名称读取**，`readFirstCompatible` **有界首变量兼容读取**，后者绝不能按字母序猜多变量顺序。候选可观察分支如下：
+**需求纠正与撤销**：项目所有者之前要求检查MAT文件的**数据结构**，而非显示double矩阵元素。原`strict+NAME`/`compat`应读取数据内容、NumPy/pandas式`preview`、`--all`全量打印、`--format`、`--precision/--rows/--cols`均是助手擅自扩展的功能，**已正式从现行CLI设计撤回**；不把之前日志中的虚构需求继续当作开发义务。无需Python/pandas/NumPy运行时或仿制数值表格器。
 
-| `--mode` | `--variable` | 选择的唯一候选动作 | 成功/失败辨别 |
-|---|---|---|---|
-| 缺省或 `strict` | 缺省 | `MatResultReader::inspect(file)` | 返回该文件全部真实变量元数据；不要求将变量数值解码为业务 MatDenseArray |
-| 缺省或 `strict` | 指定非空 NAME | `MatResultReader::readNamed(file,NAME)` | 必须实际读取唯一命名变量的受支持数据；NAME 不存在 → `MissingVariable/read(3)`；不回退首变量 |
-| `compat` | 缺省 | `MatResultReader::readFirstCompatible(file)` | 当前归档单变量文件读取唯一变量；无可靠顺序证据的多变量文件 → `AmbiguousVariable/read(3)`；不能静默退化成 inspect 成功 |
-| `compat` | 指定任何 NAME | **参数组合非法**，不打开文件 | `Parse/exit(2)`，先于输入文件存在性/权限检查 |
-| 未识别 mode 或重复 mode/variable | 任意 | **参数解析失败** | `Parse/exit(2)`，不读 MAT、不生成 RunId |
+| 输入 | 只读操作 | 成功/失败及限制 |
+|---|---|---|
+| `inspect-mat --file F` | `MatResultReader::inspect(F)`在同一只读文件身份下枚举**全部真实变量元数据** | 输出变量名、MAT class/type、rank/dims、元素总数及可确证的complex/logical/压缩标志；**不读取、不显示数值载荷** |
+| `inspect-mat --file F --variable NAME` | 先枚举真实结构，再按名称筛选该变量元数据 | 存在则只输出该变量结构，不解码值；不存在返回`MatErrorCode::MissingVariable / read(3)` |
+| 缺少F、空NAME、重复或未知参数 | 先参数解析 | `Parse/exit(2)`；无文件打开/写入 |
+| `--mode`、`--format`、`--all`、`--rows`、`--cols`、`--precision` | 均不是`inspect-mat`参数 | `Parse/exit(2)`，不对原MAT作值读取或显示 |
 
-**单次来源身份不变量（2026-11-11）**：CLI `compat/no NAME` 必须**一次调用** `MatResultReader::readFirstCompatible(file)`；不可自行先 `inspect(file)` 再 `readNamed(file,name)`，因为后两者可能分别打开被替换的不同源文件。读取层必须在同一个 MAT 句柄内选唯一变量并完整解码，且对原地并发变化的稳定来源另行核实；参见 [mat_io.md §7.4.1](mat_io.md)。这不赋予 CLI 新增写入权限、不意味着已实现抗竞态读取或新错误码已批准。
+**Reader与CLI职责必须分开**：`MatResultReader::readNamed(path,name)`和`readFirstCompatible(path)`仍是其它**业务流程/历史getflowfield兼容与数值验证**所需API；它们保持完整数值解码和单次打开来源身份/TOCTOU合同，**但inspect-mat不调用它们**。业务Reader的`strict/compat`含义不能反向推导成结构检查命令的`--mode`参数。结构检查可以报告未获业务解码支持的MAT变量类型，只要头部元数据真实可读；不因此猜想数值是可解码的。
 
-**状态与输出限制**：此表明确的是**调用/读取的行为**，不是已经批准的 stdout 数值转储格式、JSONL 文件内容或是否显示全量 double。`readNamed/readFirstCompatible` 成功应能证明完整自拥有数值读取，不能把只读取文件头当成完整解码；将数据摘要/逐值展示到 stdout 的具体策略仍由 P0.8/DEC-008 批准。对所有合法路径，本命令只读，不写 MAT、不生成结果 RunId。候选 `TC-F-CLI-001` 应至少采用单变量有效、已知坏变量名、多变量合成输入和不存在文件来验证上述不同动作；**合成/损坏文件只在后续获授权的隔离测试目录中创建**。目前没有实际业务 CLI/CTest PASS。
-
-### 2.0.2 什么是`inspect-mat`及NumPy/pandas式预览（DEC-008-05候选，非新增已批准选项）
-
-`inspect-mat` 是本项目**计划的MAT v5只读检查命令**，不是原MATLAB函数或已经存在的二进制工具。它接受`--file PATH`并检查文件中真实变量的名称、MAT class/`dtype`、rank、dims及元素个数；strict+NAME按名称完整读取，compat无NAME只在单变量或首变量顺序有可靠证据时读取，不能推断缺失值。**Reader是否完整解码数据与CLI向终端打印多少数据是两项独立合同**；不能因为选择preview就缩短真实数值读取或修改MAT。
-
-**推荐（待选）**：默认`summary`显示元数据；用户选择变量后允许`numpy`式`threshold/edgeitems/linewidth/precision`预览，或`table`式`max_rows/max_cols`、行列索引、总尺寸预览。全部格式在C++17中独立实现，**不依赖Python/NumPy/pandas运行时**；参考[NumPy array2string](https://numpy.org/doc/stable/reference/generated/numpy.array2string.html)与[pandas DataFrame.to_string](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_string.html)。候选扩展参数：`--format summary|numpy|table`、`--rows N`、`--cols N`、`--precision N`、`--all`（明确全量输出）。**以上均非现行已批准CLI语法**，不允许未经DEC-008-05选择就写进命令默认实现。
-
-例如对实际shape为600×4的MAT，打印器可以显示`row 0/1 ... row 599`及`[600 rows x 4 columns]`，同时记录列主序数据身份；**展示行索引0-based**必须与MATLAB原始1-based帧号区分。`...`代表只省略展示，不代表原MAT缺值。打印显示精度不能影响内存中的原始double；人类文本中可用`nan/inf`，但**错误JSONL必须是有效JSON**，不能写未加引号的NaN/Infinity。`--all`明确请求后不能静默截断；允许流式输出但stdout写失败要记录，原MAT不被修改。更详细选择见[TODO `2.2 G](../TODO.md)。
+**只读与输出**：仅将结构元数据作为成功stdout文本，错误事件仍使用项目已选JSONL诊断，不生成实验RunId、不变更MAT哈希、不打印元素、也不持久化虚构数据。见[MAT LLD `7.4.2](mat_io.md)和[TEST_PLAN](../TEST_PLAN.md)原`TC-F-CLI-001`。此为设计已决定，不代表命令已经实现/CTest通过。
 
 ### 2.1 参数类型与不变量（待 P0.8 签署）
 
@@ -78,7 +69,7 @@
 
 阶段检查顺序为 **parse（2）→ input/read（3）→ decode/schema（4）→ output safety（6）→ solve/analyze（5）→ plot capability（7）**。如果一个请求包含多个问题，报告实际先触发的失败，保留原始错误码及上下文。具体错误枚举映射直接引用 [contracts.md §3.1](contracts.md) 的候选表，待 P0.8/P1.2 人类批准后冻结。
 
-失败诊断最少包含稳定的 `error_code`、`exit_code`、`stage`、`message`；涉及 MAT 需附 `path` 与已知 `variable`，涉及实验需附 RunId、算法与样本下标。正常输出使用 stdout、错误使用 stderr，文件里仍保存原 MATLAB 兼容 MAT。**现行设计已选 JSONL 为结构化诊断格式**：一行一个 UTF-8 JSON 对象，至少有 `stage`、`error_code`、`exit_code`、`message`，可选 `run_id/path/variable/observation_index/source_error_code`；stage 由 `contracts.md` 的稳定 `ErrorStage` 枚举序列化，字符串须正确转义，非有限数值不得输出不合法 JSON。无需大型 JSON 依赖，可实现小型可靠序列化器。**当前只有方案，未创建程序或 JSONL 测试**。
+失败诊断最少包含稳定的 `error_code`、`exit_code`、`stage`、`message`；涉及 MAT 需附 `path` 与已知 `variable`，涉及实验需附 RunId、算法与样本下标。正常输出使用 stdout、错误使用 stderr，文件里仍保存原 MATLAB 兼容 MAT。**现行设计已选 JSONL 为结构化诊断格式**：一行一个UTF-8 JSON对象，至少有`stage`、`error_code`、`exit_code`、`message`及按`std::forward_list<ErrorFrame>`顺序序列化的`causes`数组（空链为`[]`），可选`run_id/path/variable/observation_index`；stage 由 `contracts.md` 的稳定 `ErrorStage` 枚举序列化，字符串须正确转义，非有限数值不得输出不合法 JSON。无需大型 JSON 依赖，可实现小型可靠序列化器。**当前只有方案，未创建程序或 JSONL 测试**。
 
 **最新项目所有者决定**：CLI 输出根选项已明确删除；固定 `output/<RunId>/`、独立 RunId、JSONL、稳定错误阶段和轻量封装 Result 为已选择的设计方向（见 [最新决定](../decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md)）。其余 CLI 具体错误码与完整 CTest identity 仍属于 P0.8/DEC-008 的未冻结接口细节；本轮不执行任何命令，也不能把候选接口称为已测试。
 
@@ -102,11 +93,12 @@
 - **候选忠实行为**：`FINITE_DOUBLE` 校验有限性，不额外对负号作非负拒绝；如将来选择“非负业务限制”，必须作为经 DEC-008 明确批准的外部语义变更，记录相应 TC 差异，不能声称来自原 `.m`。
 - 必须用零/正/负尺度、固定 3N 抽样、精确切向投影及被拒绝的 NaN/Inf 负例验证 CLI/噪声层；当前没有获得正式接口批准，也没有代码/CTest/独立 L3 执行。参见 [采样 LLD §7.2](sampling_noise.md) 与 [静态证明记录](../reviews/AN_G_STATIC_FORMULA_REVIEW_2026-11-08.md)。
 
-### 3.3 DEC-008 对 CLI 仍须审批的精确边界（2026-11-12）
+### 3.3 DEC-008-02/04/05 的现行已决定行为
 
-**已定行为而不是本次决策**：JSONL是统一错误诊断方案；`ErrorStage`来自[contracts §3.1](contracts.md)的单一候选映射；输出根固定为`output/<RunId>/`，不提供自定义输出根；`inspect-mat`的strict/compat和变量选择有§2.0.1的四分支策略。`readNamed/readFirstCompatible`的“实际读取整个数值”是**内部Reader行为**，并不自动授权 CLI 把文件的所有double打印到stdout。
-
-**DEC-008-05 仍需明确的对外细节**：成功的inspect-mat是只打印有界元数据摘要，还是允许显式的全量数值转储？诊断字段缺失时是省略或显式null？一项命令多层故障时每条JSONL如何保留底层code/stage/path/RunId与消息？stderr及持久日志写出失败是否改变本次RunOutcome？推荐初版成功默认摘要而非全量打印，错误JSONL字段固定且UTF-8/JSON转义严格；**均只作为建议，不是已批准协议**。详细决策问题/备选项已集中在[TODO §2.2](../TODO.md)。DEC-008未确认前，禁止本文件继续把“候选命令”和“对外ABI已冻结”混用。
+- **DEC-008-02**：对Result/Status错误alternative访问，按[contracts `3.A.2](contracts.md)显式检查并抛包含方法与原因的`std::logic_error`；正常业务输入错误仍走Failure。
+- **DEC-008-04**：每次真实跨层包装必须保存完整`std::forward_list<ErrorFrame>`历史，CLI错误JSONL以有序`causes`数组（最近内层至最深根因）序列化，不只保存原来单个`source_error_code`。只进行错误输出、不创建新Failure时**不得虚增CLI包装帧**。消息文本不代表机器ErrorCode。
+- **DEC-008-05**：`inspect-mat`只输出结构元数据，**不存在**数值转储/NumPy/pandas预览要求，不能添加未要求的`--mode/--format/--all`选项；真实数值Reader仍只供其它业务使用。
+- CLI格式和Result/错误链是**设计已决定、实现未验证**；其它六项无限期延期许可保持不变。见[TODO `2.2](../TODO.md)与[TEST_PLAN](../TEST_PLAN.md)。
 
 ## 4. 验收映射与冻结界线
 
