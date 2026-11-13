@@ -325,10 +325,10 @@ regression_tolerance=9.0949470177292824e-13
 | `std::is_default_constructible_v<Result<double,E>>`、`Result<FlowField,E>`、`Status<E>` | 三者必须为`false`；`Result<Scalar,E> r;`和`Status<E> st;`应产生确定编译错误，不是默认`hasValue()==true` |
 | `Result<T,E>::success(valid T)`与`::failure(Failure<E>)` | 必须分别直接建立有效成功alternative与完整失败alternative，包含`code`、`ErrorDetail.stage`、`run_id`若存在；不得通过旧默认Success再赋值/改`variant`类型 |
 | `Result<move-only T,E>`、右值`value()/error()`与const右值禁借用 | 右值返回自拥有值、调用后源对象禁止再次当数值有效的业务对象；无悬垂引用 |
-| `std::variant`异常时构造失败、原结果仍存在/转移 | 不允许`valueless_by_exception`伪装成带`Failure<E>`的完整失败；是否能在所有异常路径排除无值态需要受限实现与故障注入，`DEC-008`未批准 |
+| `std::variant`异常时构造失败、原结果仍存在/转移 | 不允许`valueless_by_exception`伪装成带`Failure<E>`的完整失败；是否能在所有异常路径排除无值态仍需要受限实现与故障注入；**DEC-008已做设计决定，但尚未进行真实软件验证** |
 | 默认`MotionEstimate`的Eigen未初始化值、业务`success(T)`误用 | 即使工厂创建成功，仍须由求解器先保证T的数学/有限性；禁默认Result不等于自动验证任意T |
 
-**特别限制**：建议初版不可变结果封装、private带标签构造和禁止默认构造只是在设计上缩小伪成功和`valueless`路径；无真实头文件和编译前**不能声称`std::is_default_constructible_v`已测通过或绝无异常**。DEC-008详细候选见[TODO `2.2](TODO.md)，除已选择的variant/JSONL方向外其它选项未批准；H-10/H-11等六项仍无限期延期，不在本轮新增生产C++、CTest或MAT写入。
+**特别限制**：建议初版不可变结果封装、private带标签构造和禁止默认构造只是在设计上缩小伪成功和`valueless`路径；无真实头文件和编译前**不能声称`std::is_default_constructible_v`已测通过或绝无异常**。DEC-008已确定的设计方案见[TODO §2.2](TODO.md)；**实现/异常故障注入及真实C++/CTest尚未开展**；H-10/H-11等六项仍无限期延期，不在本轮新增生产C++、CTest或MAT写入。
 
 ### 2.12.2 `Result/Status` 私有variant不等于稳定ABI（2026-11-11，设计更正）
 
@@ -399,7 +399,7 @@ regression_tolerance=9.0949470177292824e-13
 | 请求持久输出时路径指向 `origin/**`、已存在 RunId/文件或越界目标 | `OutputForbidden`，`output/6`，不能修改原文件、不得覆盖已存在目标；底层已知代码、路径及 RunId 保留 |
 | 合法隔离目标中实际写图失败（磁盘权限/写入中断等） | `WriteFailed`，`output/6`；保留失败可追踪性，不把不完整图像/Manifest 伪装成功，不改变既有分析结果 |
 
-这里所有类型、阶段、退出码都是**待 DEC-008 批准的测试候选**；实际图形后端、JSONL、权限失败注入、真实 CTest 与输出文件系统安全尚未执行。图形能力缺失不能阻碍核心数值验收。
+这里的类型、阶段和退出码只按**DEC-008已决定的错误合同**设计静态测试；实际可选绘图后端、JSONL、权限失败注入、真实CTest与文件系统安全验证尚未执行，不能凭测试方案宣布验收通过。图形能力缺失不能阻碍核心数值验收。
 
 ### 2.18 三份原始 illustration 的数值与显示忠实性（AF-090/091，候选未执行）
 
