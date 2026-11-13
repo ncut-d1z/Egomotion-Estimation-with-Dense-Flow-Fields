@@ -156,7 +156,7 @@ regression_tolerance=9.0949470177292824e-13
 
 ### 2.2.1 两种 Bias 噪声策略不可同时生效（2026-11-14，源行为整改）
 
-按原只读`fixed_kugel_symmetric_perfectpoints_randomnear.m`、`fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m`和`nonpropfehler.m`核对：**一轮场景只能选择一个噪声模型**；不能把旧`sampling_noise.md `2`两条独立if都执行，在每分量调用两个`normal()`并叠加两类扰动。原每次N个视线、每视线x/y/z共**3N次normal**，即便系数为0、总流场平均模长为0或当前分量为0，仍必须抽样，不得跳过；若配置非法双选，须在抽样前明确拒绝并保持随机源位置。
+按原只读`fixed_kugel_symmetric_perfectpoints_randomnear.m`、`fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m`和`nonpropfehler.m`核对：**一轮场景只能选择一个噪声模型**；不能把旧`sampling_noise.md` §2两条独立if都执行，在每分量调用两个`normal()`并叠加两类扰动。原每次N个视线、每视线x/y/z共**3N次normal**，即便系数为0、总流场平均模长为0或当前分量为0，仍必须抽样，不得跳过；若配置非法双选，须在抽样前明确拒绝并保持随机源位置。
 
 沿用既有`TC-F-FLOW-003/004`、`TC-DC-NOISE-001`、`TC-DC-RNG-001`做独立`N=1`数学夹具（不假称来自原六/八面Bias）：取`d=(1,1,0)/sqrt(2)`、理想切向`p=(1,-1,0)`、噪声倍数`c=1`、固定normal序列`g=(1,0,0)`。真实均值`mean(||p||)=sqrt(2)`，原`P_d=I-dd^T`，逐模型算得：
 - **MeanMagnitude**：`delta=P_d(sqrt(2)*g)=(1/sqrt(2),-1/sqrt(2),0)`；
