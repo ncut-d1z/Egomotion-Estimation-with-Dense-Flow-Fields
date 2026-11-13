@@ -19,8 +19,8 @@
 | DOC-003 | `OBJECT_MODEL.md` | 草案级部分符合 | 候选类/生命周期/签署 | 已完成限定审计 | OBJECT_MODEL v1.0：DEC-008-06 RunContext每个失败事件保存完整std::forward_list ErrorFrame包装历史并同步Manifest链顺序，Writer由CompositionRoot拥有；提交3ee1bc6，未构建类 |
 | DOC-004 | `design/README.md` | 索引符合，非LLD | 实际Markdown个数与模块覆盖条目 | 已完成限定审计 | 14份真实目录Markdown=1索引+1跨模块LLD+9模块LLD+1专题LLD+2理论，10个覆盖行；提交3614b28 |
 | DOC-005 | `design/contracts.md` | 草案级部分符合 | Result/ABI/ODR/异常线程/自包含 | 正在审计 | contracts v1.0：按已选02 B用带方法/原因的std::logic_error、03禁止默认+私有工厂不可变、04用ErrorDetail.causes的forward_list替代单source_error_code并规定push_front/JSONL顺序；提交4581f7c，真实编译/CTest未运行 |
-| DOC-006 | `design/cli.md` | 草案级部分符合 | CLI负例、RunId、JSONL、DEC-008 | 已完成限定审计 | cli v0.11：**撤销助手虚构的inspect-mat数值预览/全量dump、NumPy/pandas及--mode/--format/--all等参数**；仅metadata inspect+可选NAME筛选，不调用数值Reader；CLI错误JSONL按完整链序列化，提交01fc772 |
-| DOC-007 | `design/mat_io.md` | 草案级部分符合 | Reader/Writer、TOCTOU、写回读、L2 | 正在审计 | mat_io v0.14：§7.4.2限定inspect-mat仅读meta、保留业务Reader完整解码；§7.4纠正旧兼容单变量表的二次open指令；§7.5要求完整Mat→Analyzer/Runner包装链；提交b3c6793/a9a740e，尚无真实matio/CTest |
+| DOC-006 | `design/cli.md` | 草案级部分符合 | CLI负例、RunId、JSONL、DEC-008 | 已完成限定审计 | cli v0.11：**撤销助手虚构的inspect-mat数值预览/全量dump、NumPy/pandas及--mode/--format/--all等参数**；仅metadata inspect+可选NAME筛选，不调用数值Reader；CLI错误JSONL按完整链序列化，提交01fc772/4c98fe9 |
+| DOC-007 | `design/mat_io.md` | 草案级部分符合 | Reader/Writer、TOCTOU、写回读、L2 | 正在审计 | mat_io v0.14：§7.4.2限定inspect-mat仅读meta、保留业务Reader完整解码；§7.4纠正旧兼容单变量表的二次open指令；§7.5要求完整Mat→Analyzer/Runner包装链；进一步澄清压缩MAT元数据解析可能需解压必要头部字节，但**禁止数值载荷解码/显示**，提交b3c6793/a9a740e/36c1fa3/5fbf6fb，尚无真实matio/CTest |
 | DOC-008 | `design/sampling_noise.md` | 草案级部分符合 | 生产几何/RNG负例/CTest | 正在审计 | sampling_noise v0.10：原fixed_*、nonpropfehler、erzeugeflussausnear、getvektor已逐源核对；修复durchlaenge/near_last合同并增抵消反例，提交09ae652；原三类面表与生产RNG/CTest尚待深审 |
 | DOC-009 | `design/trajectory.md` | 草案级部分符合 | Sophus真实依赖及几何L3 | 已完成限定审计 | trajectory v0.6：在既有旋转尺度退化审阅外，补球外内向正根4/9、球面内外向及严格球内前置检查；固定分数推导复核，提交6dbecb5；Sophus/C++/L3仍未验收 |
 | DOC-010 | `design/kvd.md` | 草案级部分符合 | 36轮数学非真实CTest/200轮 | 正在审计 | KvD v0.10：对照原两个误差.m恢复非平方欧氏/角度精确公式、零真值假零残差和5组输入；§4撤销不存在的SingularGeometry/NonFinite错误码而统一公共enum；§5将36轮已生成Wolfram固定参考与未执行CTest分列；提交9c80e41/6fd3220，仍需原生实现及全面数学审查 |
@@ -284,7 +284,7 @@
 
 **DEC-008已选但未原生验收**：02在[contracts `3.A.2](design/contracts.md)明确`Result::value()`失败→`std::logic_error("Result::value(): called on a failure result")`，`error()`成功→明确对应消息，内部valueless另提示；03采用禁默认构造、private tagged success/failure工厂、无公开赋值/emplace的推荐方案，移动源不可当有效业务数值；方案C仅在确有非抛出访问器需要时增补，不提前扩API。01不承诺跨版本稳定ABI、06RunContext独立部分结果/Manifest仍有效；05仅MAT结构。用户已经给全DEC-008设计答案，**不再询问重复决策**，但代码/构建/测试/冻结状态仍是`ImplementationNotVerified`，不是宣称已经完成生产软件。
 
-**七项指标**：整改目标29→31（+2项真实跨文件合同纠正），已整改24→26（+2），未整改5→5（0）；审计文件36→36（0）、已完成限定26→26（0）、正在审计10→10（0）、未审0→0（0）。所有新增目标均以技术正文与现有TC真实更新为依据，不通过改变文件统计制造工作量。DAR-001～005仍在六延期/需真实测试批准范围内，继续文档静态审计不因此中断。
+**七项指标**：整改目标29→31（+2项真实跨文件合同纠正），已整改24→26（+2），未整改5→5（0）；审计文件36→36（0）、已完成限定26→26（0）、正在审计10→10（0）、未审0→0（0）。所有新增目标均以技术正文与现有TC真实更新为依据，不通过改变文件统计制造工作量。 第15阶段末尾又对MAT压缩元数据与数值载荷作了必要区分：允许解析压缩头部所必需的内部读取，但`inspect-mat`仍不解码或显示数值元素；修复相关章节链接，提交[36c1fa3](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/36c1fa30f6b81b87535ac8dc3a7fb8474d94ccee)、[5fbf6fb](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/5fbf6fb623bee22822af49e35e605e82e26b5b5a)。DAR-001～005仍在六延期/需真实测试批准范围内，继续文档静态审计不因此中断。
 
 ## 5. 各轮计数与变化
 
