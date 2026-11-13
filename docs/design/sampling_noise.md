@@ -33,6 +33,8 @@ sample_triangles(level, geometry):
     return directions IN GENERATED ORDER
 
 generate_bias_flow(level, truth_t, truth_omega, noise_kind, rng):
+    if noise_kind not in {MeanMagnitude, ComponentProportional}:
+        return ExperimentErrorCode::InvalidParameters  # BEFORE ANY RNG draw
     directions = required_octahedral_variant(level)
     for each direction: normalized_distance = U(1,4)/2.5; near=1/normalized_distance
     perfect_flow = synthesize(directions, near, truth_t, truth_omega)
@@ -44,9 +46,8 @@ generate_bias_flow(level, truth_t, truth_omega, noise_kind, rng):
             g[i,c] = Normal()  # exactly one draw per component: 3N in total
             if noise_kind == MeanMagnitude:
                 perturbation[i,c] = g[i,c]*coefficient*mean_length
-            else if noise_kind == ComponentProportional:
+            else:  # already proven ComponentProportional before all RNG use
                 perturbation[i,c] = g[i,c]*coefficient*perfect_flow[i,c]
-            else: return InvalidParameters before consuming any draws
         noisy[i] = tangent_project(perfect_flow[i] + perturbation[i], direction[i])
     return flow and original statistical fields
 ~~~
@@ -55,7 +56,7 @@ generate_bias_flow(level, truth_t, truth_omega, noise_kind, rng):
 
 ### 2.1 两种噪声策略必须互斥及切向投影后的精确相关性（2026-11-14 源合同整改）
 
-**原源码事实**：`fixed_kugel_symmetric_perfectpoints_randomnear.m:65–75`始终执行**唯一一组**三分量`randn * fehlerprozent * durchlaenge`；`fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m:65–75`始终执行**唯一一组**`randn * fehlerprozent * p(c)`；`nonpropfehler.m:21–30`是前者的通用函数。三个源函数任一个都没有“同时开启两种噪声模型”的分支。**原§2伪代码将`mean_length_noise`与`component_noise`写成两个独立`if`，在两者都为真时允许每个分量加两次噪声、每场消耗`6N`个normal**，这是与源`3N`严格冲突的实际实现合同漏洞。现已改成一次场景调用只选一种噪声策略（伪代码中的`noise_kind`是由Runner的现有`ExperimentKind`派生的内部判别，不是另增一个公共enum），单个点按x/y/z顺序各取一次normal；非法模型配置须在消费任何随机数之前拒绝，而不能合并两模型。外部“零噪声完全不调用函数”与原`nonpropfehler(...,0)`仍消耗`3N`的既有区别保持不变。
+**原源码事实**：`fixed_kugel_symmetric_perfectpoints_randomnear.m:65–75`始终执行**唯一一组**三分量`randn * fehlerprozent * durchlaenge`；`fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m:65–75`始终执行**唯一一组**`randn * fehlerprozent * p(c)`；`nonpropfehler.m:21–30`是前者的通用函数。三个源函数任一个都没有“同时开启两种噪声模型”的分支。**原§2伪代码将`mean_length_noise`与`component_noise`写成两个独立`if`，在两者都为真时允许每个分量加两次噪声、每场消耗`6N`个normal**，这是与源`3N`严格冲突的实际实现合同漏洞。现已改成一次场景调用只选一种噪声策略（伪代码中的`noise_kind`是由Runner的现有`ExperimentKind`派生的内部判别，不是另增一个公共enum），单个点按x/y/z顺序各取一次normal；非法模型配置须在消费任何随机数之前由Runner以现有`ExperimentErrorCode::InvalidParameters`拒绝（需要先对`noise_kind`门控、再抽距离与噪声），不得在`Normal()`之后才检查，而不能合并两模型。外部“零噪声完全不调用函数”与原`nonpropfehler(...,0)`仍消耗`3N`的既有区别保持不变。
 
 对有限单位方向`d`，写`P_d=I_3-dd^T`，原理想光流为`p`且`p·d=0`。令各分量独立的单位正态向量`g=(g_x,g_y,g_z)`、噪声倍数`c`，两种源模型的**投影后**扰动精确为
 \[
