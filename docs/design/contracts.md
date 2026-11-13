@@ -1,6 +1,6 @@
 # C++17 公共详细设计合同（跨模块 LLD）
 
-> **跨模块合同草案 v0.9（DEC-008-01/06所有者决定已记录，其余仍未冻结、未建公共头、未编译）。** 此处集中定义候选值类型、状态、错误与 ABI 风格，以免 MAT I/O、KvD、Adaptive、实验和分析各自使用不同的 Result、形状和退出码。最终签名必须经 P0.7/P0.8 与项目所有者审批后才能成为编码基线。
+> **跨模块合同草案 v1.0（DEC-008-01～06设计决定已记录；H-10/H-11延期，公共头/编译/CTest未实施）。** 此处集中定义候选值类型、状态、错误与 ABI 风格，以免 MAT I/O、KvD、Adaptive、实验和分析各自使用不同的 Result、形状和退出码。最终签名必须经 P0.7/P0.8 与项目所有者审批后才能成为编码基线。
 
 ## 1. 适用范围与版本边界
 
@@ -67,14 +67,25 @@ enum class ExperimentErrorCode {
 enum class ErrorStage {
     Parse, Read, Decode, Output, Solve, Simulation, Analyze, Plot
 };
-struct ErrorDetail {
-    std::optional<RunId> run_id;
-    ErrorStage stage;                       // 稳定枚举，JSONL 时转固定小写 token
-    std::string message;                   // 供人阅读；不可用于业务条件判断
+// 使用C++17 <forward_list>；std::forword_list不是标准容器拼写。
+struct ErrorFrame {
+    std::string domain;             // MatErrorCode / NumericalErrorCode / ...
+    std::string code;               // 带实际枚举家族身份的成员名
+    ErrorStage stage;               // 该层原来的故障或包装阶段
+    std::string message;            // 原层消息，而不是仅留最后一个message
     std::string source_path;
     std::string variable;
     std::optional<std::size_t> observation_index;
-    std::optional<std::string> source_error_code; // 带源家族的根因，如 NumericalErrorCode::ZeroNorm
+    std::optional<RunId> run_id;
+};
+struct ErrorDetail {
+    std::optional<RunId> run_id;     // 最外层已知RunId；不能凭空制造
+    ErrorStage stage;               // 当前最外层实际故障/包装阶段
+    std::string message;
+    std::string source_path;
+    std::string variable;
+    std::optional<std::size_t> observation_index;
+    std::forward_list<ErrorFrame> causes; // 最近包装层 -> ... -> 最深根因
 };
 template<class Code>
 struct Failure {
@@ -135,7 +146,7 @@ private:
 
 **未来验证用例（复用 TC-DC-DOMAIN-001/TC-NF-OOP-001，不新增正式 TC）**：在两个独立翻译单元分别构造/取出 `Result<move-only T,E>`、`Status<E>`，验证成功/失败/异常生存期及 ODR；若实际设计有跨动态库边界，再用同一批准工具链/stdlib/配置构建生产者与消费者，核对接口调用、对象生存期与版本策略。不能使用历史SH叶子3/3 CTest证明通用合同已 ABI 验收。当前此项仅为**合同设计错误纠正**，实际公共头/链接/ABI/批准仍全部未完成，DAR-003保持未整改。
 
-**已修正的候选API生命周期缺陷（2026-11-11，仍待 P0.8 ABI 批准）**：旧版本把 `Result::value() &&` 定义成 `T&&`，调用方若保留返回的引用而销毁临时 `Result`，即出现悬垂引用；对临时成功/失败 `Result` 或 `Status` 取 `error() const &` 亦有同类风险。现统一要求**左值返回有明确宿主生命周期的 const 引用，右值返回自拥有的移动值**（`T value() &&` / `Failure<Code> error() &&`），并禁用从 const 右值借用。此处是**更安全的设计候选修订**，没有创建或编译公共头，不能声称已通过 C++17 重载解析、move-only T、异常安全、ABI 或 ODR 测试。今后写入真实接口时，需使用固定实例检查 `auto value = std::move(result).value()` 与 `auto failure = std::move(result).error()` 的生存期，并禁止把**左值 `value() const &` 返回的借用引用**保存到宿主 Result 已销毁/移动之后。旧 `T&& value() &&` 下的 `auto&& dangling = makeResult().value()` 是悬垂风险；**新按值 `T value() &&` 会生成独立值对象，直接绑定的局部右值引用可按C++生存期扩展规则安全存活**，不应把这个修正后的场景继续误报为悬垂。跨函数返回引用、引用成员或延迟使用仍须做单独生命周期分析；移动失败不得被当作成功。调用`value`/`error`仍须先检查状态。**DEC-008-02已允许抛出标准库派生自`std::exception`的异常**；具体选择`std::get`自动抛`std::bad_variant_access`、显式条件抛`std::logic_error`或加`tryValue/tryError`探测方法，仍未批准。详见[TODO §2.2 D](../TODO.md)。普通输入/数学失败始终由`Result::failure`返回。
+**已修正的候选API生命周期缺陷（2026-11-11，仍待 P0.8 ABI 批准）**：旧版本把 `Result::value() &&` 定义成 `T&&`，调用方若保留返回的引用而销毁临时 `Result`，即出现悬垂引用；对临时成功/失败 `Result` 或 `Status` 取 `error() const &` 亦有同类风险。现统一要求**左值返回有明确宿主生命周期的 const 引用，右值返回自拥有的移动值**（`T value() &&` / `Failure<Code> error() &&`），并禁用从 const 右值借用。此处是**更安全的设计候选修订**，没有创建或编译公共头，不能声称已通过 C++17 重载解析、move-only T、异常安全、ABI 或 ODR 测试。今后写入真实接口时，需使用固定实例检查 `auto value = std::move(result).value()` 与 `auto failure = std::move(result).error()` 的生存期，并禁止把**左值 `value() const &` 返回的借用引用**保存到宿主 Result 已销毁/移动之后。旧 `T&& value() &&` 下的 `auto&& dangling = makeResult().value()` 是悬垂风险；**新按值 `T value() &&` 会生成独立值对象，直接绑定的局部右值引用可按C++生存期扩展规则安全存活**，不应把这个修正后的场景继续误报为悬垂。跨函数返回引用、引用成员或延迟使用仍须做单独生命周期分析；移动失败不得被当作成功。调用`value`/`error`仍须先检查状态。**DEC-008-02已选择明确错误消息的标准`std::logic_error`方案B**；C式`tryValue/tryError`仅在确有无异常探测需求时才另行增补。普通算法/输入失败始终用`Result::failure`；见本文件§3.A.2及[TODO §2.2 D](../TODO.md)。
 
 - **Mat 错误**与**数值错误**分别归属 IO 与 solver，Runner 可以附带上下文，但不得吞掉原始错误。
 - **源算法与安全行为区别**：只记录原 .m 只读源码能证明的奇异、除零、NaN 分支；原 MATLAB 实际警告、非有限传播并无 L1，**无需运行 MATLAB**。C++ 可以候选地返回明确非成功状态，但“遇错继续/停止/回滚”须按入口专属合同评审，不能误标为已验证的原版运行行为。
@@ -149,6 +160,28 @@ private:
 **所有者已经选择**：当前项目C++公共头、Result/Status、Eigen等值类型，**不承诺跨软件版本、跨不兼容编译器/标准库、跨语言插件的稳定二进制ABI**。可按C++17源接口在**同一兼容工具链、标准库、编译选项的一次产品构建**中联编；版本升级应同步重编依赖公共C++类型的生产者/消费者。不能把private variant成员误称为独立长期ABI保证。无需为了未提出的跨版本ABI需求额外引入pImpl/C桥或替换既定variant方向。
 
 该`DEC-008-01`决定不等于公共头文件、跨TU/共享库ABI测试已完成，也不解除H-10/H-11无限期延期。即便同一发行包含.so，也仍需按该工具链验证对象传递/析构与链接。
+
+### 3.A.2 DEC-008-02 已决定方案B：`std::logic_error` 和明确消息（2026-11-13）
+
+**实际合同**：对失败Result调用value、对成功Result/Status调用error都是**调用方错误**，先检查variant alternative并抛出明确的标准库`std::logic_error`（由`std::exception`派生），不直接暴露`std::bad_variant_access`作为对外常规错误契约，也不返回默认T。`Result::value()&& / error()&&`必须同样检查后按值移动。错误消息至少固定包含类名、方法名与原因；例如：
+
+~~~cpp
+const T& value() const & {
+    if (payload_.valueless_by_exception())
+        throw std::logic_error("Result::value(): internal variant has no active alternative");
+    if (!std::holds_alternative<T>(payload_))
+        throw std::logic_error("Result::value(): called on a failure result");
+    return std::get<0>(payload_);
+}
+const Failure<Code>& error() const & {
+    if (payload_.valueless_by_exception())
+        throw std::logic_error("Result::error(): internal variant has no active alternative");
+    if (!std::holds_alternative<Failure<Code>>(payload_))
+        throw std::logic_error("Result::error(): called on a success result");
+    return std::get<1>(payload_);
+}
+~~~
+`Status::error()`使用`"Status::error(): called on a success result"`（无失败alternative）等明确消息。`std::logic_error::what()`为人类诊断文本，**不能用来识别业务错误Code**；正常数值/IO/解析失败继续返回`Result::failure`，不抛逻辑异常。`tryValue/tryError`指针式辅助仅在实际业务需要非抛出借用时按用户授权增补，**不是这次自动加入的公共API**；若增补须明示仅限宿主寿命、不返回悬垂指针。真实C++/CTest尚未执行。
 
 ### 3.B 默认构造会产生伪成功，必须采用工厂限定的有效状态（2026-11-12 真实API设计缺陷）
 
@@ -175,9 +208,9 @@ private:
 | run_id | `std::optional<RunId>`，未分配的 parse/inspect 可为空，产生后绝不丢失 | RunContext 提供，不产生新的 ID |
 | source_path / variable | 已知时记录源路径/变量名，未知可为空 | 原 Reader/Writer 设置 |
 | observation_index | `std::optional<size_t>`，未知与真实的第 0 个样本明确区分 | 逐样本失败层填写 |
-| source_error_code | 跨层包装时保留**带枚举家族的原始根因**，例如`MatErrorCode::InvalidShape`与`NumericalErrorCode::InvalidShape`必须能区分；不能在多层包装时覆盖已取得的根因 | Runner/Analyzer须保留原始Code/Stage/已知上下文；完整多层cause链仍待DEC-008-04决定 |
+| causes | **已定** `std::forward_list<ErrorFrame>` 保存全部历史包装帧，头为最近内层、尾为最初根因；每帧含domain、code、stage、message与已知path/variable/index/RunId，外层Failure另有自身Code与ErrorDetail | 由当前包装层push_front新增的直接内层节点、原链原样保留；JSONL的`causes`数组按迭代顺序输出，不能只留下裸根因字符串 |
 
-**诊断输出采用 JSONL**：每行一个 UTF-8 JSON 对象，至少包含 `stage`、`error_code`、`exit_code`、`message`；可选 `run_id/path/variable/observation_index/source_error_code`，必须有正确的引号/反斜杠/控制字符转义，非有限浮点不得输出非法 JSON token；日志失败也不能被当作正常完成。可以使用审计过的小型序列化逻辑，**不为 JSONL 强行引入大型依赖**。JSONL 文件的创建与 CLI stderr 消息分离，均不得覆盖原始 MAT。以上仅为已选设计，未实际写/测。
+**诊断输出采用 JSONL**：每行一个 UTF-8 JSON 对象，至少包含`stage`、`error_code`、`exit_code`、`message`及**`causes`数组（空链为`[]`）**；可选`run_id/path/variable/observation_index`。数组每项按`ErrorFrame`的domain/code/stage/message及已知上下文顺序序列化，**从最近内层至最深根因**，不能省略某层或把`causes`替换成单个`source_error_code`。必须正确转义，非有限浮点不得输出非法JSON；日志失败也不能被当作正常完成。可以使用审计过的小型序列化逻辑，**不为 JSONL 强行引入大型依赖**。JSONL 文件的创建与 CLI stderr 消息分离，均不得覆盖原始 MAT。以上仅为已选设计，未实际写/测。
 
 ### 3.0.1 第一轮错误合同未决边界（AF-040，部分文档工作）
 
@@ -186,17 +219,29 @@ private:
 | `Result/Status` 正常与失败态 | **默认构造已禁止，须由带标签的成功/失败工厂直接构造选定variant分支**；只有成功值或 `Failure<Code>{code,detail}`；`hasValue()` 不可将失败伪装为成功；左右值按引用/自拥有值区分；private variant仍参与 ABI 布局 | 真实 `<variant>/<optional>` include、右值重载、move-only T、模板 ODR、自包含头、跨target/跨共享库ABI策略及异常构建兼容性待编译 |
 | `std::variant::valueless_by_exception()` | **不能**将无值内部状态当成功或返回默认 `T`；实现前必须给出能保留失败原因的稳定处理路径 | 使用哪一个公共错误码/异常边界仍待 P0.8 批准与故障注入，不凭文档编造映射 |
 | 对错误调用 `value()` / 成功调用 `error()` | 均属违反访问前置条件；不得泄漏无效引用或转换成默认值 | 选择抛异常/断言/显式返回等精确 ABI 行为待决定与测试 |
-| `ErrorDetail` 与 CLI JSONL | `run_id`、`observation_index` 可空；保持底层 code/stage；JSONL 对字符串/非有限值合法编码 | 实际跨 Mat→Experiment→CLI 嵌套错误、JSONL 转义/失败负例及多线程所有权未测 |
+| `ErrorDetail` 与 CLI JSONL | `run_id`、`observation_index` 可空；已定`std::forward_list<ErrorFrame>`包含完整包装链，JSONL序列化有序`causes`数组；字符串/非有限值合法编码 | Mat→Analyzer→Runner→CLI每一层的顺序、复制/移动/分配失败、JSONL转义/故障注入仍须原生验证 |
 
 **状态**：明确待批准项而非重新设计 Result/Status 方案；`MatDenseArray` 的定义仍仅见 [mat_io.md](mat_io.md)，本文件只引用，不创建第二套值类型。**AF-040 未整改**。
 
-### 3.0.2 DEC-008-04 错误来源家族与跨层根因保真（2026-11-12）
+### 3.0.2 DEC-008-04 已决定：`std::forward_list<ErrorFrame>`完整单链包装历史（2026-11-13）
 
-**发现并修正的合同歧义**：当前`MatErrorCode`与`NumericalErrorCode`都有`InvalidShape`。若`ErrorDetail::source_error_code`只存字符串`InvalidShape`，未来CLI无法知道最初是MAT解码shape错还是求解器N×6输入shape错。已改为要求**内部根因字符串必须包含枚举家族和成员**：`MatErrorCode::InvalidShape`、`NumericalErrorCode::InvalidShape`、`NumericalErrorCode::ZeroNorm`，不能省略家族。
+**已定数据结构是C++17的`std::forward_list<ErrorFrame>`**（头文件`<forward_list>`；`std::forword_list`是拼写错误）。外层`Failure<Code>{code,detail}`表示当前最近包装层，`detail.causes`保存**所有之前的包装帧**；链表**第一个节点为直接内层，向后直到最初根因**。必须保留各层`domain`（枚举家族）、`code`、`stage`、`message`和真实已知的path/variable/observation_index/RunId，不只保留root cause。`MatErrorCode::InvalidShape`与`NumericalErrorCode::InvalidShape`虽然同名，必须区分family。不得伪造没有发生包装的调用层，也不得靠人类消息文本反推Code。
 
-底层最先发生的错误设置实际`ErrorStage`和已知`path/variable/observation_index`及可选RunId；Runner在外层增加`ExperimentErrorCode::SolverFailed`时，不能覆盖原始`source_error_code`、`stage`和原始上下文；若此前没有来源标识，才将本次源枚举`Family::Code`写入。`exit_code`是进程供shell使用的大类状态，**不是枚举Code或错误发生阶段**；例如Solve和Analyze均可能退出5，只有缺可选Plot后端的特定错误退出7，不能一律凭Plot阶段返回7。
+**包装算法的数学/时序合同**（伪代码，非可编译实现）：
 
-**协议边界**：当前一个`source_error_code`字符串能保留约定的根因，却不能表达Reader→Analyzer→Runner→CLI的每一层包装过程。若DEC-008-04需要完整调用链，须另评审公共`cause[]`等字段和JSONL协议版本；未批准前不新增公共结构字段。复用原TC验证两个同名InvalidShape、嵌套包装、根因stage以及未分配RunId场景；不冒称已执行CTest。详细解释见[TODO `2.2 F](../TODO.md)。
+~~~text
+wrap(inner Failure<OldCode>, newCode, newStage, newMessage):
+    outer.detail.causes = move(inner.detail.causes)  # 保留此前所有帧
+    outer.detail.causes.push_front(snapshot(inner.code, inner.detail))
+    outer.detail.stage = newStage                     # 最外层真实包装阶段
+    outer.detail.message = newMessage
+    preserve verified runId/path/variable/index on the appropriate frames
+    return Failure<NewCode>{newCode, move(outer.detail)}
+~~~
+
+**示例**：最深为`MatErrorCode::InvalidShape @ Decode`；Analyzer包装`AnalysisErrorCode::ShapeMismatch @ Analyze`；Runner包装`ExperimentErrorCode::DataMismatch @ Simulation`，则顶层Failure为Experiment、`causes`迭代顺序为`[Analysis, Mat]`。若CLI只序列化、不重新构造Failure，不应虚加CLI一层。`push_front`均摊常数时间，读取完整链是线性时间；`std::forward_list`不是数组，不能按索引随机访问。新层对象分配内存可能抛`std::bad_alloc`，发生时不能伪称错误链已构造或Manifest已持久化。独立并列失败须记录为多个事件，不要把非线性调用图假称为一条单链。
+
+**JSONL与DEC-008-06**：对外诊断最外Code/stage保持独立字段，`causes`为按链表顺序的JSON数组（无内层包裹时为`[]`），包含逐层枚举家族、Code、Stage、人类消息及可得上下文。RunContext对每个运行错误事件保留**相同完整链**，Manifest持久化时不得退化为单个根因字符串；Writer回读失败→Runner OutputFailed等包装应按上述前插规则记录。必须针对同名InvalidShape、2/3次包装、根因不丢、异常分配/移动、JSONL转义和Writer/Manifest失败做原生TC；未开放H-10/H-11前不能冒称已通过。对外exit码仍仅由下方`3.1`决定，不从`causes`第一个或最后一个节点直接猜测。
 
 ### 3.1 错误枚举与 CLI 退出码：唯一候选映射
 
@@ -214,7 +259,7 @@ private:
 | **PlotErrorCode::InvalidSeries**（输入已分析但无法作为合法绘图序列） | 5 | plot |
 | **PlotErrorCode::BackendUnavailable**（可选 plot 后端缺席） | 7 | plot |
 
-**分析错误映射候选（AF-077）**：`AnalysisErrorCode` 的七个枚举值**仅由 [analysis_plotting.md §6](analysis_plotting.md) 定义，不在此复制第二套 enum**；本表作为唯一对外 `exit_code + ErrorStage` 候选来源。分析对缺少真实 MAT 结果或必需字段返回 `MissingResult/MissingVariable → read(3)`，已解码变量的 shape 错误返回 `ShapeMismatch → decode(4)`，分段/统计/非有限与 Analyzer 不支持模式返回 `InvalidSegment/NonFiniteInput/UndefinedStatistic/UnsupportedExperiment → analyze(5)`。**非法的 CLI `--experiment` 枚举在 Parse 阶段即返回 exit 2，不得让它穿透至 Analyzer 后误映射成 5**。跨层若 Mat 错误已发生，保留原 `MatErrorCode` 和 `ErrorDetail::source_error_code`，不可丢失 path/variable/RunId。所有上述退出码仍须 DEC-008/P0.8 签署及真实 CTest。
+**分析错误映射候选（AF-077）**：`AnalysisErrorCode` 的七个枚举值**仅由 [analysis_plotting.md §6](analysis_plotting.md) 定义，不在此复制第二套 enum**；本表作为唯一对外 `exit_code + ErrorStage` 候选来源。分析对缺少真实 MAT 结果或必需字段返回 `MissingResult/MissingVariable → read(3)`，已解码变量的 shape 错误返回 `ShapeMismatch → decode(4)`，分段/统计/非有限与 Analyzer 不支持模式返回 `InvalidSegment/NonFiniteInput/UndefinedStatistic/UnsupportedExperiment → analyze(5)`。**非法的 CLI `--experiment` 枚举在 Parse 阶段即返回 exit 2，不得让它穿透至 Analyzer 后误映射成 5**。跨层若Mat错误已发生，完整复制/移动其`ErrorDetail.causes`并以`push_front`保存此时被包装的`MatErrorCode`及真实stage/path/variable/RunId，不能只留最后根因或覆盖链。所有上述退出码仍须 DEC-008/P0.8 签署及真实 CTest。
 
 **优先级候选**：解析参数 → 输入读取 → 数据解码 → 输出路径安全 → 数值计算/分析 → 仅 plot 命令的后端检查。以实际首先失败的阶段报告，不跨层改写错误为成功；保留底层 code、stage、path 和可用 RunId。上表仍未获项目所有者批准，未生成真实 CLI/CTest 证据。
 
@@ -222,7 +267,7 @@ private:
 
 - `BackendUnavailable → plot(7)`：没有可选绘图后端，不是分析算法错误；`analyze` 仍可返回数值。
 - `InvalidSeries → plot(5)`：导出器收到无法生成有效绘图的 `AnalysisDataset/CurveSeries`，不将其误报为“缺图形后端”；如果错误实际上起源于分析器的 MAT 解码/分段，仍应保留并传播原 `MatErrorCode/AnalysisErrorCode` 及其 `ErrorStage`，不重写为 PlotErrorCode。
-- `OutputForbidden/WriteFailed → output(6)`：仅写出持久图表时发生，沿用固定 `output/<RunId>/` 的安全创建、独占、不覆盖原则；未获授权不得写 MAT 或新增输出。任何已知底层错误须附 `ErrorDetail::source_error_code`、输出路径及可用 RunId。
+- `OutputForbidden/WriteFailed → output(6)`：仅写出持久图表时发生，沿用固定 `output/<RunId>/` 的安全创建、独占、不覆盖原则；未获授权不得写 MAT 或新增输出。任何已知底层错误须附完整`ErrorDetail.causes`（包括每次真实包装）、输出路径及可用RunId。
 
 这个候选映射不等于后端已实现、四类错误已触发或获 DEC-008/P0.8/CTest 批准；诊断中的 `stage` 必须按实际发生层设置。对应 [测试计划 §2.17](../TEST_PLAN.md)。
 
