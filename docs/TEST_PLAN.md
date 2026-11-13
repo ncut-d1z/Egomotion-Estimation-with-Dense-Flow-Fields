@@ -66,7 +66,7 @@ regression_tolerance=9.0949470177292824e-13
 
 - **仅限获授权的球谐叶子**：新增 `projectSourceCoefficientsOrderTwo`（`src/harmonics/low_order_source_projection.cpp`，声明在 `low_order.hpp`），映射原 `koeff_aus_near.m` 固定 `ordnung=2`。按原 `(l,m)` CS 顺序对每项独立计算 `a=(sum(near*Y)/N)*4pi`、`b=(sum(Y²)/N)*4pi` 再 `a/b`；**不求九项联立最小二乘**，不新增跨模块 HarmonicFitter、Adaptive/Session、采样或MAT接口。返回源形状 3×5 和无效位置零填充；输入限有限非空 N×K (K≥3)、N近度、单位方向，异常用本叶子明确错误状态。
 - **独立参考**：`verification/harmonics/verify_source_projection_order2.wl` 已用 Wolfram 15.0.1 实际精确运行，按 7 个非对称单位方向与近度 `(2,-1,4,1/2,-3,5/4,11/2)` 导出九项确切有理×根式系数；九个差全精确 0、所有九个分母正，Gram 的非对角项约 -0.2206948544207615 非零，具有与联合LS不等价的判别力。完整值与输入另存 `verification/harmonics/source_projection_reference.v1.json`，状态 **INDEPENDENT_WOLFRAM_EXACT_CPP_NOT_RUN_UNAPPROVED**；来源 `koeff_aus_near.m` 在 `origin/**` 保持只读。
-- **新测试范围及限制**：`tests/unit/test_low_order_source_projection.cpp` 与 CMake 新的第三个 `low_order_harmonics_source_projection` CTest 逐项核九个原CS系数、无效列置零、只读前三列、不合格 shape、非单位方向、NaN/Inf、分母零和极大有限近度溢出拒绝。**新 C++ 源与测试均未在用户 Ubuntu 原生编译/CTest；不记录通过，也不把 Wolfram 数学参考或现有旧测试1/1冒充新3/3**。
+- **新测试范围及限制**：`tests/unit/test_low_order_source_projection.cpp` 与 CMake 新的第三个 `low_order_harmonics_source_projection` CTest 逐项核九个原CS系数、无效列置零、只读前三列、不合格 shape、非单位方向、NaN/Inf、分母零和极大有限近度溢出拒绝。**该受限源和单独CTest已在固定提交`5e5221988cf093dbfddb88f2f65f06632460f3a1`由用户实际Ubuntu GCC16编译、3/3低阶球谐专项CTest通过，其中source_projection为76次专项检查**；本段旧“尚未原生编译”的时点性描述已按真实证据修复。后续当前分支的C++或未来公共API、NumericalErrorCode/Result错误适配、DEC-005仍未执行/未验收，不得把历史通过推广到新源码。
 - **仍缺的完整义务**：动态阶数、通用 HarmonicFitter/公共 ABI、真实源输入/独立 MAT L2、全面L3/L4、最终 DEC-005/008 及其它模块测试；AF-045/051/055仍开放。新源码和额外 CTest 是低阶SH小范围实现，不扩展 H-10/H-11 到 MAT/CLI/KvD/Adaptive/Runner。
 
 ### 2026-11-09 低阶SH三项CTest首次全通过（E-DOC-062，当前状态）
@@ -333,6 +333,10 @@ regression_tolerance=9.0949470177292824e-13
 ### 2.12.2 `Result/Status` 私有variant不等于稳定ABI（2026-11-11，设计更正）
 
 [contracts.md §3.A](design/contracts.md) 已明确：即使 `payload_` 是 private，值类型 `Result<T,E>` / `Status<E>` 的 `std::variant` 仍决定公开类型的大小/对齐、移动/析构、标准库及二进制ABI。**只在源码调用者隐藏容器成员 ≠ 对编译器或动态库消费方隐藏对象布局**。沿用既有 `TC-DC-DOMAIN-001`、`TC-NF-OOP-001`，按批准的部署模式至少需检查：公共头独立编译与必要 include；两个翻译单元跨TU传递合法值/错误/移动；有实际共享库边界时生产者与消费者的编译器、标准库、编译选项、版本重编策略；异常/valueless状态与资源析构。在未定义稳定二进制升级契约前不得声称跨编译器版本ABI兼容，亦不得擅自把轻量`std::variant`技术选择换成另一个未经批准的设计。这是**代码实施前设计义务**，没有创建公共头/真实ABI测试，不关闭DAR-003。
+
+**2026-11-14 低阶球谐叶子与公共ErrorDetail的真实适配边界**：源[Harmonics LLD `2.1](design/harmonics.md)及`include/egomotion/harmonics/low_order.hpp`表明已存在**局部**`low_order::ErrorCode/Result`，它在非法alternative访问时由标准库`std::get`抛`std::bad_variant_access`，且`Error.message`是`const char*`静态文本；这不等于公共`Result<T,NumericalErrorCode>`已实现，也不符合用户后来批准的公共`std::logic_error`签名。未来适配层必须`if (!leaf.hasValue())`后读取自拥有的`leaf.error()`，复制静态消息到`ErrorFrame.message`，原始枚举家族写`egomotion::harmonics::low_order::ErrorCode`，`stage=Solve`，外层若经Runner包装则顶层可为`ExperimentErrorCode::SolverFailed`且`causes=[low_order frame]`；不要误吞`bad_variant_access`当普通科学错误。
+
+**八个真实局部ErrorCode必须全部检查**：`NonFiniteInput`、`NotUnitDirection`、`NotProperRotation`、`NonFiniteResult`、`ComplexResidue`、`InvalidMethod`、`InvalidSampleShape`、`ZeroProjectionNorm`；其中`NotProperRotation`、`ComplexResidue`、`InvalidMethod`在当前公共`NumericalErrorCode`**无无损一一对应项**，不能`static_cast`按底层整数或改称`InvalidShape/NonFiniteResult`伪成功。复用现有`TC-F-SH-001/002`、`TC-NF-OOP-001`、`TC-I-RESULT-001`的待授权隔离适配测试，逐个验证原域/码/消息拷贝/链序列化和无伪造额外帧；**当前未写/未运行桥接或CTest**，与固定`5e522198`下叶子3/3已通过是两种不同证据级别。
 
 ### 2.12.3 DEC-008所有子项已决定后的定点测试合同（2026-11-13，未执行）
 
