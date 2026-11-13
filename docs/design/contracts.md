@@ -242,7 +242,7 @@ wrap(inner Failure<OldCode>, newCode, newStage, newMessage):
 **真实异常安全缺口及整改（2026-11-13）**：旧伪代码先`outer.causes=std::move(inner.causes)`再`push_front(snapshot(inner))`。`std::forward_list::push_front`需要节点分配，一旦在此处抛`std::bad_alloc`，**内层错误链已经被搬移，调用方可能既没有新外层Failure，又丧失旧内层链的保存路径**。这违背了“每次包装不丢已知证据”的强要求。上述候选顺序现改为：
 
 - **阶段1，可失败且不修改inner**：先快照被包装层的枚举家族、Code、Stage、消息、上下文，创建最外层的非链字段，并用`emplace_front`在尚未合并旧链的**新**`std::forward_list`中创建直接内层节点；任何这阶段的异常都不能先清空inner.causes。
-- **阶段2，节点重挂**：仅在新头节点已成功建立后，调用`outer.causes.splice_after(outer.causes.begin(), inner.detail.causes)`，将原链插在新节点之后，形成`[直接内层, 原最近内层, ..., 根因]`；两个容器须使用兼容分配器（当前标准`std::allocator`），不能跨不兼容allocator进行未定义行为。`splice_after`无需把每个`ErrorFrame`重新构造或分配（但实际异常保证与复杂度须按所用标准库版本验证）。
+- **阶段2，节点重挂**：仅在新头节点已成功建立后，调用`outer.causes.splice_after(outer.causes.begin(), inner.detail.causes)`，将原链插在新节点之后，形成`[直接内层, 原最近内层, ..., 根因]`；两个容器须使用兼容分配器（当前标准`std::allocator`），不能跨不兼容allocator进行未定义行为。`splice_after`无需重新构造/分配各个`ErrorFrame`；在两个`std::forward_list`的`get_allocator()`相等且符合C++17迭代器前置条件时，标准规定该重挂操作**不抛异常**，同时使原链为空；整体拼接的复杂度**对原链长度线性**，不能声称O(1)。若分配器不相等则是未定义行为，而不是可捕获的异常；参见[std::forward_list::splice_after](https://en.cppreference.com/w/cpp/container/forward_list/splice_after)。
 - **阶段3，提交**：构造最终外层`Failure<NewCode>`再向上传播。新对象构造/移动、序列化及独立RunContext记录本身仍可能抛异常；**此次修订只保证阶段1的失败不会提前移动旧链**，不能把它写成任何内存分配失败下百分之百持久化。生产边界必须如实报告无法记录的故障，不能伪称已保存完整链。
 
 **固定可判别输入**：原始`inner.causes=[Mat]`，正在包装成新的`Analysis`层；如果新节点`emplace_front`故障注入抛`bad_alloc`，应检验仍可检查原`inner.causes=[Mat]`，不允许它已经被搬空。正常路径完成后，外层Failure顶层为`Runner`时其`causes=[Analysis,Mat]`；再次包装`CLI`且真正创建新Failure时才出现`[Runner,Analysis,Mat]`，仅序列化CLI并不自动多一层。必须测试标准allocator以及插入失败、frame字符串拷贝失败、已有两层链、原Failure移动与RunContext独立保存的生命周期。
