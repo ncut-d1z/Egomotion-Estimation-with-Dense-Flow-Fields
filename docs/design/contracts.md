@@ -1,6 +1,6 @@
 # C++17 公共详细设计合同（跨模块 LLD）
 
-> **跨模块合同草案 v1.2（修正完整链异常安全与顶层枚举家族JSONL丢失；DEC-008已决定，公共头/编译/CTest未实施）。** 此处集中定义候选值类型、状态、错误与 ABI 风格，以免 MAT I/O、KvD、Adaptive、实验和分析各自使用不同的 Result、形状和退出码。最终签名必须经 P0.7/P0.8 与项目所有者审批后才能成为编码基线。
+> **跨模块合同草案 v1.3（补已实现SH叶子的局部Error/Result与公共错误链桥接约束；DEC-008已决定，公共头/编译/CTest未实施）。** 此处集中定义候选值类型、状态、错误与 ABI 风格，以免 MAT I/O、KvD、Adaptive、实验和分析各自使用不同的 Result、形状和退出码。最终签名必须经 P0.7/P0.8 与项目所有者审批后才能成为编码基线。
 
 ## 1. 适用范围与版本边界
 
@@ -252,6 +252,18 @@ wrap(inner Failure<OldCode>, newCode, newStage, newMessage):
 **示例**：最深为`MatErrorCode::InvalidShape @ Decode`；Analyzer包装`AnalysisErrorCode::ShapeMismatch @ Analyze`；Runner包装`ExperimentErrorCode::DataMismatch @ Simulation`，则顶层Failure为Experiment、`causes`迭代顺序为`[Analysis, Mat]`。若CLI只序列化、不重新构造Failure，不应虚加CLI一层。`push_front`均摊常数时间，读取完整链是线性时间；`std::forward_list`不是数组，不能按索引随机访问。新层对象分配内存可能抛`std::bad_alloc`，发生时不能伪称错误链已构造或Manifest已持久化。独立并列失败须记录为多个事件，不要把非线性调用图假称为一条单链。
 
 **JSONL与DEC-008-06**：对外诊断最外Code/stage保持独立字段，`causes`为按链表顺序的JSON数组（无内层包裹时为`[]`），包含逐层枚举家族、Code、Stage、人类消息及可得上下文。RunContext对每个运行错误事件保留**相同完整链**，Manifest持久化时不得退化为单个根因字符串；Writer回读失败→Runner OutputFailed等包装应按上述前插规则记录。必须针对同名InvalidShape、2/3次包装、根因不丢、异常分配/移动、JSONL转义和Writer/Manifest失败做原生TC；未开放H-10/H-11前不能冒称已通过。对外exit码仍仅由下方`3.1`决定，不从`causes`第一个或最后一个节点直接猜测。
+
+### 3.0.3 已存在`low_order`叶子的局部错误不是公共`NumericalErrorCode`（2026-11-14 真实源码边界）
+
+**实际读码确认**：已获专项实施且有固定`5e522198`原生CTest证据的`include/egomotion/harmonics/low_order.hpp`定义`egomotion::harmonics::low_order::ErrorCode`、`Error{ErrorCode,const char* message}`和**局部**`Result<T>`，其`std::get`错态访问抛`std::bad_variant_access`。这不是本文件尚待实施的通用`Result<T,NumericalErrorCode>`，后者根据所有者DEC-008-02应以**明确消息的`std::logic_error`**处理错态访问。**局部叶子代码已经存在，不等于公共合同已经实施或可无检查地强制替换叶子API**；H-10/H-11仍无限期延期，不能借修文档擅改已测C++。
+
+**必须保留的八个真实局部ErrorCode**：`NonFiniteInput`、`NotUnitDirection`、`NotProperRotation`、`NonFiniteResult`、`ComplexResidue`、`InvalidMethod`、`InvalidSampleShape`、`ZeroProjectionNorm`。其中`NotProperRotation`（SO(3)无效）、`ComplexResidue`（复递推未能稳定产生实输出）、`InvalidMethod`（无效旋转路线）**没有**当前公共`NumericalErrorCode`中可证明语义等价的现成枚举，不能`static_cast`转换enum的整数、不能无证据把有限虚部错误映射成`NonFiniteResult`、也不能消除原Code只保留`SolverFailed`。
+
+**无损的适配责任**：在未来授权的集成边界，`leaf_result.hasValue()==false`时读取其**已存在的局部Error**（`error()`按值返回；`message`是只读静态C字符串，转换为`ErrorFrame.message`时应复制到自拥有`std::string`），从真实`leaf_error.code`确定性生成`ErrorFrame.domain="egomotion::harmonics::low_order::ErrorCode"`与`code`，记录`ErrorStage::Solve`和已知数学样本/上下文；若由Runner包装为已有`ExperimentErrorCode::SolverFailed`，该frame成为`ErrorDetail.causes`首个内层原因，后续每一次真包装依DEC-008-04`std::forward_list`顺序保存。**不能直接把叶子Error当公共`Failure<NumericalErrorCode>`赋值**。如果未来新公共`HarmonicFitter`明确承诺返回`NumericalErrorCode`，其类型转换必须逐项定义且保留局部原Code的frame；对于没有无损对应项不能猜测一个公共enum后当作完全等价，须在集成LLD明确受控的外层失败策略后再实施。
+
+**故障/异常不是同一种通道**：叶子报告的`ErrorCode`是正常数值/输入非成功，须显式检查`!leaf_result.hasValue()`并提取Error；局部错误alternative的误读会由其已实现`std::get`抛`std::bad_variant_access`，是叶子API的**调用方误用**，不能粗暴catch后伪造一个算法`Result::failure`。公共Result自身则继续遵从已定B方案的`std::logic_error`。用户对公共Result的决定不追溯宣称旧球谐叶子已有同样行为。
+
+**验收分层**：已有SH叶子固定SHA的3/3原生CTest与未来通用Result/`forward_list<ErrorFrame>`适配不是同一组源码或测试。新增设计义务映射现有`TC-F-SH-001/002`、`TC-NF-OOP-001`和`TC-I-RESULT-001`（详见[球谐LLD `2.1](harmonics.md)及[TEST_PLAN `2.12.3](../TEST_PLAN.md)）；要求未来按八个局部Code逐项核家族/码/消息复制、最外`error_domain`及`causes`链顺序。**无新增正式TC、无本轮C++/CTest或权限扩大。**
 
 ### 3.1 错误枚举与 CLI 退出码：唯一候选映射
 
