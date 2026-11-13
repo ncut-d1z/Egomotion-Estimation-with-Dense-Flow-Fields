@@ -1,6 +1,6 @@
 # 全工程文档规范审计进度与整改台账（AUDIT_PROGRESS）
 
-> **状态：审计进度 v1.7，第十六批实修forward_list错误链分配失败时的先move后插入缺陷、零包装链JSONL顶层enum家族缺失；跨contracts/Runner/TODO/CLI/SRS/TEST_PLAN实改并明确异常保证与单链复杂度，6项延期待继续先整改其它项目；仍按36文档/既有五项综合阻塞继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
+> **状态：审计进度 v1.8，第十七批逐码核对已实现低阶SH叶子ErrorCode/Result与拟议公共NumericalErrorCode/Result的非同构边界，实修错误无损桥接职责，并纠正受限source_projection已有固定SHA原生3/3而旧LLD/TEST_PLAN误称未编译的证据矛盾；六项延期及DEC-008已决定范围不变；仍按36文档/既有五项综合阻塞继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
 
 ## 1. 口径、状态和可复核方式
 
@@ -14,24 +14,24 @@
 
 | ID | docs/下相对路径 | 用户初始规范判断 | 首轮实际需核对的问题 | 审计状态 | 本轮证据／整改关联 |
 |---|---|---|---|---|---|
-| DOC-001 | `REQUIREMENTS.md` | 草案级部分符合 | AC→LLD章节身份/正式批准 | 已完成限定审计 | SRS v0.22 AC-NF-LOG-001追加零包装causes=[]也必须带顶层error_domain，以区分Mat/Numerical同名InvalidShape；提交c992d0f；66REQ/TC保持、未原生运行 |
+| DOC-001 | `REQUIREMENTS.md` | 草案级部分符合 | AC→LLD章节身份/正式批准 | 已完成限定审计 | SRS v0.23：AC-NF-OOP-001实补已测试局部low_order::ErrorCode/Result与尚未实现公共Result/NumericalErrorCode的类型隔离与完整ErrorFrame来源；提交ded6fcf，不增加66REQ/TC或假报桥接已测 |
 | DOC-002 | `ARCHITECTURE.md` | 草案级部分符合 | 27拟议DAG与真实构建/ADR | 已完成限定审计 | HLD v0.10：设计图27箭头=25内部+2外部；根CMake仅低阶SH及3CTest，部署/DEC-006仍待 |
-| DOC-003 | `OBJECT_MODEL.md` | 草案级部分符合 | 候选类/生命周期/签署 | 已完成限定审计 | OBJECT_MODEL v1.0：DEC-008-06 RunContext每个失败事件保存完整std::forward_list ErrorFrame包装历史并同步Manifest链顺序，Writer由CompositionRoot拥有；提交3ee1bc6，未构建类 |
+| DOC-003 | `OBJECT_MODEL.md` | 草案级部分符合 | 候选类/生命周期/签署 | 已完成限定审计 | 对象模型v1.1区分已实现球谐低阶叶子与未来公共HarmonicFitter/Result适配器；纠正历史行错误‘未核对上传论文、未运行CTest’为局部叶子有5e522198专项实测/公共HarmonicRotator未建；提交0bdaf0b |
 | DOC-004 | `design/README.md` | 索引符合，非LLD | 实际Markdown个数与模块覆盖条目 | 已完成限定审计 | 14份真实目录Markdown=1索引+1跨模块LLD+9模块LLD+1专题LLD+2理论，10个覆盖行；提交3614b28 |
-| DOC-005 | `design/contracts.md` | 草案级部分符合 | Result/ABI/ODR/异常线程/自包含 | 正在审计 | contracts v1.2：修正DEC-008-04旧move(inner.causes)先于push_front时bad_alloc可丢链；先构造/分配新frame，再同allocator splice_after旧节点；核标准不抛且整链线性；顶层JSONL增加error_domain避免空链同名错，提交fcb05e9/a990f0e/183828f，未编译 |
+| DOC-005 | `design/contracts.md` | 草案级部分符合 | Result/ABI/ODR/异常线程/自包含 | 正在审计 | contracts v1.3明确leaf Error{局部ErrorCode,const char*静态消息}/Result与公共NumericalErrorCode/Result不等价，禁止enum整数static_cast与局部bad_variant_access假冒科学Failure；未来跨层用完整ErrorFrame复制源code/message保真；提交a8d7b90，公共适配器未实施 |
 | DOC-006 | `design/cli.md` | 草案级部分符合 | CLI负例、RunId、JSONL、DEC-008 | 已完成限定审计 | cli v0.12：JSONL顶层error_domain在causes=[]也必须存在，Mat/Numerical InvalidShape直接报错不会碰撞，不从message或exit推断家族；提交ad52013，真实CLI未编写 |
 | DOC-007 | `design/mat_io.md` | 草案级部分符合 | Reader/Writer、TOCTOU、写回读、L2 | 正在审计 | mat_io v0.14：§7.4.2限定inspect-mat仅读meta、保留业务Reader完整解码；§7.4纠正旧兼容单变量表的二次open指令；§7.5要求完整Mat→Analyzer/Runner包装链；进一步澄清压缩MAT元数据解析可能需解压必要头部字节，但**禁止数值载荷解码/显示**，提交b3c6793/a9a740e/36c1fa3/5fbf6fb，尚无真实matio/CTest |
 | DOC-008 | `design/sampling_noise.md` | 草案级部分符合 | 生产几何/RNG负例/CTest | 正在审计 | sampling_noise v0.10：原fixed_*、nonpropfehler、erzeugeflussausnear、getvektor已逐源核对；修复durchlaenge/near_last合同并增抵消反例，提交09ae652；原三类面表与生产RNG/CTest尚待深审 |
 | DOC-009 | `design/trajectory.md` | 草案级部分符合 | Sophus真实依赖及几何L3 | 已完成限定审计 | trajectory v0.6：在既有旋转尺度退化审阅外，补球外内向正根4/9、球面内外向及严格球内前置检查；固定分数推导复核，提交6dbecb5；Sophus/C++/L3仍未验收 |
 | DOC-010 | `design/kvd.md` | 草案级部分符合 | 36轮数学非真实CTest/200轮 | 正在审计 | KvD v0.10：对照原两个误差.m恢复非平方欧氏/角度精确公式、零真值假零残差和5组输入；§4撤销不存在的SingularGeometry/NonFinite错误码而统一公共enum；§5将36轮已生成Wolfram固定参考与未执行CTest分列；提交9c80e41/6fd3220，仍需原生实现及全面数学审查 |
-| DOC-011 | `design/harmonics.md` | 草案级部分符合 | 低阶叶子有实测，公共ABI未冻结 | 正在审计 | harmonics v0.15；固定SH 3/3与公共ABI未建分层核对，逐式LLD待核 |
+| DOC-011 | `design/harmonics.md` | 草案级部分符合 | 低阶叶子有实测，公共ABI未冻结 | 正在审计 | harmonics v0.16：实际读当前low_order.hpp/low_order_source_projection.cpp/test头与实现blob，对照8个局部ErrorCode、Result错态bad_variant_access，补适配责任及3项无一一公共同义项；纠正本节source_projection‘未编译’与固定5e522198下3/3 CTest证据矛盾；提交bc30242，公开接口与Bridge未实现 |
 | DOC-012 | `design/adaptive_mfa.md` | 草案级部分符合 | Session原子提交、病态输入和真实软件 | 正在审计 | Adaptive v0.8：与三原始入口源blob逐行核对，Update rates在i=134–182先旋转、按周期刷新本帧主旧系数，比较第一返回写入dumi弃置，仅主返回提交；原比较error不用于保存角误差；固定替身5帧静态重放，提交ba06bea/8dd5dd2/ba3d8c4，Session/CTest仍待 |
 | DOC-013 | `design/experiments.md` | 草案级部分符合 | Runner/Writer/Manifest/Ctest | 正在审计 | experiments v0.12：DEC-008-04包装失败时先emplace节点再splice旧链，RunContext/Manifest及JSONL顶层也必须保存error_domain即使无causes；提交4d468b9/009fe1f，真实Runner/CTest未执行 |
 | DOC-014 | `design/analysis_plotting.md` | 草案级部分符合 | 分析L2/L3曲线、CTest/绘图隔离 | 正在审计 | analysis v0.13：Mat MissingVariable包装成Analysis错误时保留Mat原Frame并允许Runner继续push_front，无source_error_code单根因捷径；提交d2418c8，测试尚未运行 |
 | DOC-015 | `design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 专题草案级部分符合 | 旧版本CMake描述与最新低阶叶子验收区分 | 已完成限定审计 | 对照旧1/1说明与用户固定5e522198 3/3；仅低阶叶子，公共ABI仍未实现；提交4a62a9d |
 | DOC-016 | `design/SH_DISCRETE_REFIT_CONSISTENCY.md` | 理论专题合格，非LLD | 不能替代模块LLD/测试/批准 | 正在审计 | 已核专题定位与35项数学辅助检查，待独立逐式复算 |
 | DOC-017 | `design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md` | 理论专题合格，非LLD | 不能替代Adaptive真实接口/实现 | 正在审计 | 理论专题v0.2：从M2/M3的叉积矩阵推导M对称充要条件mean((mu-1)d)=0，证明均值1不保证对称；提交28c20f6/555eeea，尚未逐式独立重算本专题其它全部25项 |
-| DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 已完成限定审计 | TEST_PLAN新增已有TC的ErrorFrame构造/前插bad_alloc故障注入，要求失败时inner旧链未搬空；同名InvalidShape顶层Mat/Numerical但causes=[]要不同error_domain；提交63381d0/316e03d，未运行C++/CTest |
+| DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 已完成限定审计 | TEST_PLAN更正新源投影未编译的过时结论为固定5e522198用户3/3通过；补8种局部ErrorCode、局部/公共Result异常区分与ErrorFrame错误桥接负例，且清除DEC-008仍未批准的旧句；提交51c5483/9c89b65，正式TC仍66且公共适配测试未执行 |
 | DOC-019 | `PLAN.md` | WBS草案符合 | 98P、M0–M5、真实工期/性能 | 已完成限定审计 | PLAN R-02实改：论文缺失风险改为已取得IR96/IR98/Choi、三路线低阶SH固定证据与未完成公共接口/集成风险分列；提交6f2a426；不冒称27DAG/预算/新CTest已验收 |
 | DOC-020 | `PROGRESS.md` | 符合证据登记 | 固定SHA与历史执行/新状态分离 | 已完成限定审计 | 本轮已核历史E-DOC/SH真实证据与旧97AF；正文修订b69e17c |
 | DOC-021 | `AUDIT.md` | 原专项→本轮综合审计 | 已在初始提交转换为全工程文档规范 | 已完成限定审计 | AUDIT §5.1记录DEC-008六项设计均已决定、05数值打印属之前未经授权扩展必须撤回；仍不解除H-10/H-11等六项无限期延期；提交43eaf2e |
@@ -103,6 +103,8 @@
 
 | DAR-032 | design/contracts.md；design/experiments.md；TODO.md；TEST_PLAN.md | DEC-008-04旧包装伪代码先move(inner.causes)再push_front新节点，push_front分配或ErrorFrame拷贝抛bad_alloc时内层历史已被搬走，不能保证已知链仍可追溯 | 实改先构造新ErrorFrame/外层字段并在独立新链emplace_front，成功后才用兼容allocator的std::forward_list::splice_after在新节点后接入原链；按C++17标准核不抛且整链线性复杂度；补既有TC的分配失败时inner链仍完整负例，明确最终Failure/日志持久化仍可失败 | 纯文档错误链异常安全及来源保真缺陷 | 已整改 |
 | DAR-033 | design/contracts.md；design/cli.md；design/experiments.md；REQUIREMENTS.md；TEST_PLAN.md；TODO.md | 完整causes只保存内层包装，直接Mat/Numerical失败时causes=[]；原JSONL顶层只有error_code，MatErrorCode与NumericalErrorCode同名InvalidShape仍会混淆当前错误家族 | 实改顶层必需error_domain与error_code，由当前Failure<Code>的枚举家族生成，即使causes=[]仍标Mat/Numerical；causes有包装时保留全部原帧，不能凭消息/exit推断家族；SRS/TC补两同名且零包装的区别负例 | 纯文档JSONL顶层错误枚举家族遗漏 | 已整改 |
+
+| DAR-034 | design/harmonics.md；design/contracts.md；OBJECT_MODEL.md；REQUIREMENTS.md；TEST_PLAN.md；真实include/egomotion/harmonics/low_order.hpp与source_projection.cpp | 低阶SH叶子已独立实现自有low_order::ErrorCode/Result，其错态访问std::bad_variant_access且包含NotProperRotation/ComplexResidue/InvalidMethod等公共NumericalErrorCode无无损对应值；旧文档未明确未来桥接责任，容易整数强转丢原始错误来源或把叶子局部行为冒充DEC-008已定公共Result；另SH LLD/TEST_PLAN局部source_projection段误写未编译而固定5e522198用户3/3实测已通过 | 实际核真实C++头与投影实现8个本地ErrorCode，增原局部family/code/message复制及std::forward_list<ErrorFrame>无损包装、分层bad_variant_access与公共logic_error边界；修LLD/TEST_PLAN真实固定SHA CTest范围和OBJECT_MODEL过时源/测试状态，SRS/既有TC映射并明确未实现桥接；不擅改C++或新建enum | 纯文档局部叶子到公共错误接口的无损适配缺口 | 已整改 |
 
 ## 4. 已实施审计、具体整改和验证日志
 
@@ -301,7 +303,21 @@
 
 **本轮统计**：整改总数31→33（+2独立有真实正文改动的问题），已整改26→28（+2仅文档行为合同），未整改5→5（0）。审计文件36→36、完成限定26→26、在审10→10、未审0→0均不变；没有用增加文件审计数冒充工程实施。尚未解决的DAR-001～005由无限期延期的实施/原生验证或正式批准条件阻塞，但这不停止当前其它文档审计。**本轮无需人类立刻作出新决定**；已有六项延期和DEC-008设计决定均已记录，仍应在用户以后主动重新开放权限之前保持不授权实际生产软件执行。
 
+### 第17阶段：低阶SH已实现叶子与拟议公共Result的真实类型边界整改（2026-11-14）
+
+**起始HEAD**：`9b4a373c420dfcda3abbf9c85bcfbb2b8c7ddf36`。起始33整改目标（28已整改、5未整改），36文件（26已完成限定/10正在/0未审）。本轮遵照既有[AUDIT.md](AUDIT.md)仍只读已有生产C++/原MATLAB、修改现有文档，不运行C++/CTest、不写原MAT、不重新要求已无限期延期的H-10/H-11/DEC-005/006/基线/发布授权。
+
+**DAR-034的真实技术缺陷及源码证据**：直接读取当前[`low_order.hpp`](../include/egomotion/harmonics/low_order.hpp) blob`8b2a8723d22fec0c7e544cab57952173c8daacfb`、[`low_order_source_projection.cpp`](../src/harmonics/low_order_source_projection.cpp) blob`7d3c7aadc90841c5c66d41ccebcfdfdca11306e5`与[专项CTest源](../tests/unit/test_low_order_source_projection.cpp)。该**已实现、仅获低阶专项授权**的`egomotion::harmonics::low_order`有**独立局部**`ErrorCode/Result<T>`（`Error{code,const char* message}`，`std::get`错误访问抛`std::bad_variant_access`），不能当作未实现的公共`Result<T,NumericalErrorCode>`。八个实际局部Code为`NonFiniteInput/NotUnitDirection/NotProperRotation/NonFiniteResult/ComplexResidue/InvalidMethod/InvalidSampleShape/ZeroProjectionNorm`；其中`NotProperRotation/ComplexResidue/InvalidMethod`在拟议公共`NumericalErrorCode`中**没有可无损直接替代的同义成员**。如果未来直接`static_cast`局部enum为公共enum，会产生错误类型甚至把有限ComplexResidue误称非有限；如果错误调用叶子`value()`导致bad_variant_access，不能将它当成普通数学失败抛给Runner。已真正修改[球谐详细设计v0.16 `2.1](design/harmonics.md)、[公共合同v1.3 `3.0.3](design/contracts.md)、[对象模型v1.1](OBJECT_MODEL.md)、[SRS v0.23 AC-NF-OOP-001](REQUIREMENTS.md)与[TEST_PLAN](TEST_PLAN.md)，规定未来显式检查叶子`hasValue()`、按值取得局部Error并拷贝`const char*`消息到`ErrorFrame.message`，保留`domain="egomotion::harmonics::low_order::ErrorCode"`与原局部code，Runner如需外层业务类型只用现有`ExperimentErrorCode::SolverFailed`真实包装并保留根因帧；未来直接返回NumericalErrorCode的公共Fitter必须先明确无损/无法无损映射策略，**不得自动添加公共enum或未经批准编程**。主要提交：[bc30242](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/bc302424986053714c6fc3582dc046bb0e33ae80)、[a8d7b90](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/a8d7b90d9e65ea7cf28290ed30d99703e909cd38)、[0bdaf0b](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/0bdaf0b75b659be49dc5f4c559e95f61bcfda152)、[ded6fcf](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/ded6fcf2b09f9308e378983d9679faab96c7b30c)。
+
+**受限软件证据的另一个真矛盾已修**：[harmonics.md](design/harmonics.md) `2和[TEST_PLAN](TEST_PLAN.md) `2的旧段落说新`source_projection`源/CTest**尚未原生编译**，但同文/后文已经据用户固定`5e5221988cf093dbfddb88f2f65f06632460f3a1`记录低阶SH专项**3/3 Passed**、源投影专项76项检查。现正文纠正为“**固定5e522198低阶叶子已由用户原生验证，最新分支变化及未来公共Result适配器未运行/未验收**”，不把固定3/3当全66 TC PASS。旧对象模型关于1996/1998论文“未核对”也改为局部数学/材料已核、规划中的公共HarmonicRotator未建。测试计划继续使用原66 TC，并新增八种局部Code/完整ErrorFrame链/异常来源的**待授权测试设计**；本轮未执行新的C++编译或CTest、MAT/MATLAB/写回。
+
+**不属于新的人类即时决策**：DEC-008已明确公共Result逻辑异常、工厂与forward_list，**不需要为了这次文档纠正重新选择它们**。若以后用户恢复H-10进行实际通用HarmonicFitter接口实施，针对局部`NotProperRotation/ComplexResidue/InvalidMethod`的**无损外层失败策略**可优先采用“Runner旧`SolverFailed`+根因Frame”方案；如果未来直接API被要求使用`NumericalErrorCode`且没有合义项，必须先在实现阶段给出受控接口方案/范围，不能未经批准假映射。六项无限期延期照旧。此轮其它可独立静态审计继续推进。
+
+**七项计数**：整改目标33→34（+1独立技术接口错误），已整改28→29（+1纯文档合同），未整改5→5（0）；审计文件36→36（0）、已完成限定26→26（0）、正在10→10（0）、未审0→0（0）。本轮具体实改五份非台账技术/需求文档，**审计文件数量不变**；仍没有实际公共接口/桥接代码及其CTest，通过实证仅限历史固定低阶叶子SHA。
+
 ## 5. 各轮计数与变化
+
+**第17阶段相对上一轮**：整改目标33→34（+1）、已整改28→29（+1）、未整改5→5（0）；文件36、已完成限定26、正在10、未审0均未变。实改球谐LLD/公共合同/对象模型/SRS/测试计划，基于真实已实现低阶叶子源码而非仅增加审计数。
 
 **第16阶段相对上一轮**：整改目标31→33（+2）、已整改26→28（+2）、未整改5→5（0）；审计文件36→36、已完成限定26→26、正在10→10、未审0→0，全部没有变化。实修完整错误链节点分配次序及JSONL顶层错误家族，更新跨模块设计和实际可判别测试计划。
 
@@ -355,6 +371,7 @@
 | 第14阶段：DEC-008决议/根因家族/Writer拥有者整改 | 36 | 26 | 10 | 0 | 29 | 24 | 5 |
 | 第15阶段：结构检查纠偏/完整forward_list调用链 | 36 | 26 | 10 | 0 | 31 | 26 | 5 |
 | 第16阶段：完整错误链异常安全/顶层error_domain | 36 | 26 | 10 | 0 | 33 | 28 | 5 |
+| 第17阶段：SH叶子局部Result与公共错误链适配/证据状态纠偏 | 36 | 26 | 10 | 0 | 34 | 29 | 5 |
 
 ## 6. 36份文件的同一基准提交身份（DAR-005：只读静态快照）
 
