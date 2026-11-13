@@ -295,7 +295,7 @@ regression_tolerance=9.0949470177292824e-13
 
 | 原 TC | 固定触发条件 | 预期候选返回 | 当前状态 |
 |---|---|---|---|
-| TC-I-ANALYSIS-001 | 新 update-rates 结果不含历史 `rottransratio`；或指定目录缺实际 MAT | `AnalysisErrorCode::MissingVariable/MissingResult`，`read` / exit 3；记录原 path/variable/source_error_code | 仅计划 |
+| TC-I-ANALYSIS-001 | 新 update-rates 结果不含历史 `rottransratio`；或指定目录缺实际 MAT | `AnalysisErrorCode::MissingVariable/MissingResult`，`read`/exit 3；记录原path/variable及完整`std::forward_list<ErrorFrame> causes`，若发生Reader→Analyzer等真实包装，依次保留各层domain/code/stage/message与已知上下文 | 仅计划 |
 | TC-I-ANALYSIS-001 | MAT 解码后 shape 不能满足源曲线合同 | `AnalysisErrorCode::ShapeMismatch`，`decode` / exit 4 | 仅计划 |
 | TC-F-AN-001、TC-I-ANALYSIS-001 | ratio 形成非法分段、分析值非有限或统计未定义 | `InvalidSegment/NonFiniteInput/UndefinedStatistic`，`analyze` / exit 5 | 仅计划 |
 | TC-I-CLI-001、TC-I-ANALYSIS-001 | 非法 CLI `--experiment`；与合法命令内部传给 Analyzer 的 unsupported mode 分开 | CLI 无效枚举 `parse` / exit 2；运行期 `AnalysisErrorCode::UnsupportedExperiment` 为 `analyze` / exit 5 | 仅计划 |
