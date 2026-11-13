@@ -132,11 +132,11 @@ struct ErrorDetail {
 };
 ~~~
 
-**单链规则**：最外层`Failure<Code>{code,detail}`代表当前错误；其`ErrorDetail.causes`保留所有已包装的内层帧，**首节点是直接内层、尾节点是根因**。从内层错误`inner`新建外层错误`outer`时：先`outer.detail.causes = std::move(inner.detail.causes)`，再`outer.detail.causes.push_front(make_frame(inner.code, inner.detail))`，形成**外层失败 + 最近内层 → 更深层 → 根因**；每一层保留原始family/code/stage/message与已知path/variable/index/RunId。没有新增包装时直接传递，不凭空增加层；绝不可覆盖、截断或倒转既有链。
+**单链规则**：最外层`Failure<Code>{code,detail}`代表当前错误；其`ErrorDetail.causes`保留所有已包装的内层帧，**首节点是直接内层、尾节点是根因**。从内层错误`inner`新建外层错误`outer`时，**先完成可能失败的快照、外层字段及新节点创建**：`ErrorFrame frame = make_frame(inner.code,inner.detail)`；`outer.causes.emplace_front(std::move(frame))`。这一步任何分配/拷贝抛异常时，**原`inner.detail.causes`不应提前移动**。新节点已构造成功后才执行`outer.causes.splice_after(outer.causes.begin(),inner.detail.causes)`，将原链节点**插在新节点之后**形成**外层失败 + 最近内层 → 更深层 → 根因**。`splice_after`须两个`forward_list`分配器相等，C++17标准规定此操作不抛异常、整链拼接复杂度对旧链长度为线性；不允许使用“先move旧链再push_front”的旧错误顺序；每一层保留原始family/code/stage/message与已知path/variable/index/RunId。没有新增包装时直接传递，不凭空增加层；绝不可覆盖、截断或倒转既有链。
 
 **例子**：Reader解码`MatErrorCode::InvalidShape (Decode)` → Analyzer包装`AnalysisErrorCode::ShapeMismatch (Analyze)` → Runner包装`ExperimentErrorCode::DataMismatch (Simulation)`。最终Failure顶层为Experiment，链顺序为 **Analysis → Mat**；不能只剩一个`"MatErrorCode::InvalidShape"`字符串。`exit_code`只是对外大类，例如Decode=4、Solve/Analyze=5；不能代替任何一层Code。JSONL序列化为`causes`数组，保持链的迭代顺序，包含各帧的domain/code/stage/message/已知上下文，不能从message反推Code。
 
-`std::forward_list`是单向链，`push_front`头插入适合错误逐层外包，但其元素可能分配内存；**发生`std::bad_alloc`等异常时不承诺错误链自动成功持久化**，必须避免伪造已记录事件。完整包装链并不天然是“函数调用堆栈”：没有实际包装的函数不得编造帧；一个异常并列触发多个独立错误时应保存多个事件，不把分支关系伪造成一条单链。生产实现、链复制/移动、JSONL转义/顺序、RunId合法性都待授权真实测试。
+`std::forward_list`是单向链；**新节点在原链转移前创建**，可在`emplace_front`分配失败时保留内层原链，而`splice_after`不复制/分配已有节点，须满足分配器相容性。**后续Failure移动、RunContext保存、JSONL/Manifest写出仍可能因`std::bad_alloc`等失败，不能承诺错误链自动成功持久化**，必须避免伪造已记录事件。完整包装链并不天然是“函数调用堆栈”：没有实际包装的函数不得编造帧；一个异常并列触发多个独立错误时应保存多个事件，不把分支关系伪造成一条单链。生产实现、链复制/移动、JSONL转义/顺序、RunId合法性都待授权真实测试。
 
 ### G. DEC-008-05 已决定`inspect-mat`仅检查并打印MAT数据结构
 
