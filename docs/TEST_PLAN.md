@@ -102,7 +102,7 @@ regression_tolerance=9.0949470177292824e-13
 
 | 子命令 | 候选必填参数 | 输出/验收 |
 |---|---|---|
-| inspect-mat | --file PATH；可选 --mode strict/compat、--variable NAME（仅strict） | strict/no NAME只枚举元数据；strict/NAME精确读取数值；compat/no NAME有界首变量读取；compat+NAME解析失败；详见design/cli.md §2.0.1 |
+| inspect-mat | --file PATH；可选--variable NAME（仅筛选元数据） | **只枚举/打印MAT结构**：变量名、MAT类型、rank/dims、元素数等；不得解码或打印double值；--mode/--format/--all等为未知参数parse(2)；见design/cli.md §2.0.1 |
 | run-bias-occluded | --seed UINT32 --level NONNEG_INT | xwerte、ywerte1…6 的 MAT 结果 |
 | run-bias-proportional | --seed UINT32 --level NONNEG_INT | 独立完整球面/逐分量噪声结果 |
 | run-adaptive-init | 无 | 原始初始化四类误差结果 |
@@ -111,9 +111,9 @@ regression_tolerance=9.0949470177292824e-13
 | analyze | --experiment NAME --input-root DIR | 独立读取历史 MAT，计算统计序列 |
 | plot（可选） | --experiment NAME --input-root DIR | 图表结果；无图形后端不影响 analyze |
 
-**2026-11-11 `inspect-mat` 的四分支确定性候选测试（真实CLI尚未建立）**：选同一份单变量的原始只读MAT `one.mat`、一个存在多个变量且顺序未获证明的隔离合成MAT `multi.mat`、缺少NAME的反例以及不存在的路径。将 `strict/no NAME` 绑定 `Reader::inspect`，它只需遍历变量metadata；`strict/NAME` 绑定 `readNamed` 必须完整读取指定数值（不能只读文件头后宣布成功）；`compat/no NAME` 绑定 `readFirstCompatible`，单变量成功而多变量`AmbiguousVariable/read(3)`；`compat+NAME` 无论路径是否存在均应在参数解析时直接拒绝 `Parse/exit(2)`（不打开文件）。错误NAME不得回退首变量；未知/重复`--mode`和`--variable`须Parse(2)。要求记录原始文件读取前后SHA-256不变、每分支真实调用层、变量class/dtype/rank/dims与成功时的自拥有值读取状态。**这四个分支不是一项“未带NAME统一只列元数据”的逻辑**；真正stdout输出全部数值还是仅摘要仍由DEC-008/P0.8决定。只更新既有`TC-F-CLI-001`测试条件，不增测试编号或冒称执行过MAT写入。原判断来自[CLI LLD §2.0.1](design/cli.md)和[MAT LLD §7.4](design/mat_io.md)。
+**DEC-008-05新决定的`inspect-mat`结构检查测试（源需求纠偏，未执行）**：原先将结构检查擅自扩展成strict/compat完整数值读取、NumPy/pandas预览和全量打印，是**未经用户要求的虚构需求，现已撤销**。沿用`TC-F-CLI-001`：准备单变量/多变量/含不同MAT class/rank的只读或隔离MAT，调用`inspect-mat --file F`仅报告真实变量名称、class/dtype、rank/dims与元素计数；`--variable NAME`只过滤结构信息（不存在返回`MissingVariable/read(3)`），不要求值为dense double或能通过`MatDenseArray`的业务shape验证。`--mode strict/compat`及`--format/--rows/--cols/--precision/--all`在本命令均按未知参数拒绝`Parse/exit(2)`。验证**不会调用`Mat_VarRead`或`MatResultReader::readNamed/readFirstCompatible`，不会输出任何数值元素**，原MAT SHA不变、无RunId/无写入。`MatResultReader::readNamed/readFirstCompatible`仍单独用原`TC-F-MAT-001/003`测试完整值读取与单句柄身份；绝不可因删除`inspect-mat`数值打印要求而删除算法所需Reader能力。
 
-**2026-11-11 兼容首变量的同一输入身份/TOCTOU负例**：在已有 `TC-F-CLI-001`、`TC-F-MAT-003`、`TC-I-MAT-001`、`TC-NF-SAFETY-001` 下，准备仅含 `alpha` 的合法单变量 MAT A 和仅含 `beta` 的合法单变量 MAT B，在兼容读取的**元数据枚举后、完整数值解码前**将同一可变路径从A切换到B。要求同一成功结果的变量选择、真实解码数据与源文件身份来自**同一次 Mat_Open 句柄**；不允许旧伪代码 `inspect(path)`（句柄A）后 `readNamed(path,name)`（新句柄B）混合构造虚假成功。若发生同一 inode 原地写入或身份不一致而无法证明一致性，必须明确非成功或记录尚未解决的稳定快照边界，不得以 canonical 字符串相同作通过证据。来源见 [MAT LLD §7.4.1](design/mat_io.md) 与原 `getflowfield.m` 一次 `load` 再 `fieldnames/getfield` 的流程。此为隔离文件竞态的测试**设计**，不创建/改写真实 `origin/**`，尚未执行真实 Reader/CTest，具体公共错误码留待 DEC-008 冻结。
+**2026-11-11 兼容首变量的同一输入身份/TOCTOU负例**：**仅对真实数值Reader而非inspect-mat**，在已有`TC-F-MAT-003`、`TC-I-MAT-001`、`TC-NF-SAFETY-001`下，准备仅含 `alpha` 的合法单变量 MAT A 和仅含 `beta` 的合法单变量 MAT B，在兼容读取的**元数据枚举后、完整数值解码前**将同一可变路径从A切换到B。要求同一成功结果的变量选择、真实解码数据与源文件身份来自**同一次 Mat_Open 句柄**；不允许旧伪代码 `inspect(path)`（句柄A）后 `readNamed(path,name)`（新句柄B）混合构造虚假成功。若发生同一 inode 原地写入或身份不一致而无法证明一致性，必须明确非成功或记录尚未解决的稳定快照边界，不得以 canonical 字符串相同作通过证据。来源见 [MAT LLD §7.4.1](design/mat_io.md) 与原 `getflowfield.m` 一次 `load` 再 `fieldnames/getfield` 的流程。此为隔离文件竞态的测试**设计**，不创建/改写真实 `origin/**`，尚未执行真实 Reader/CTest，具体公共错误码留待 DEC-008 冻结。
 
 **统一 CLI 输出约定（项目所有者已决定）**：用户配置输出根的 CLI 选项已删除；新结果固定写入仓库根 `output/<RunId>/`。`--run-id ID` 可选，缺省独立 OS 随机生成，不消费实验 RNG；每个目录与文件均独占创建，重复 RunId/路径逃逸/指向 `origin/**` 均拒绝。纯读取/分析命令保持只读；`plot` 只有保存结果时才分配 RunId。真实 C++/CTest/安全负例仍待后续获准实施。
 
@@ -334,19 +334,19 @@ regression_tolerance=9.0949470177292824e-13
 
 [contracts.md §3.A](design/contracts.md) 已明确：即使 `payload_` 是 private，值类型 `Result<T,E>` / `Status<E>` 的 `std::variant` 仍决定公开类型的大小/对齐、移动/析构、标准库及二进制ABI。**只在源码调用者隐藏容器成员 ≠ 对编译器或动态库消费方隐藏对象布局**。沿用既有 `TC-DC-DOMAIN-001`、`TC-NF-OOP-001`，按批准的部署模式至少需检查：公共头独立编译与必要 include；两个翻译单元跨TU传递合法值/错误/移动；有实际共享库边界时生产者与消费者的编译器、标准库、编译选项、版本重编策略；异常/valueless状态与资源析构。在未定义稳定二进制升级契约前不得声称跨编译器版本ABI兼容，亦不得擅自把轻量`std::variant`技术选择换成另一个未经批准的设计。这是**代码实施前设计义务**，没有创建公共头/真实ABI测试，不关闭DAR-003。
 
-### 2.12.3 DEC-008明确/未明确协议的隔离测试设计（2026-11-12，均未实际执行）
+### 2.12.3 DEC-008所有子项已决定后的定点测试合同（2026-11-13，未执行）
 
-本轮所有者已作出`DEC-008-01`不承诺跨版本稳定ABI、`DEC-008-06`由RunContext独占计数/部分结果/Manifest且失败Result仅带Failure的决定，**不是**同时批准代码/CTest。`DEC-008-02`允许标准库派生自`std::exception`的异常，但具体A/B/C访问器策略待选；`DEC-008-03/04/05`也未获最终协议批准。下面仅复用已存在的TC，不新增第67个：
+所有者已决定：01不承诺跨版本稳定ABI；02选择**明确消息的`std::logic_error`方案B**、`tryValue/tryError`仅必要时增加；03采用不可默认构造、工厂创建、无公开assignment/emplace；04采用C++17的**`std::forward_list<ErrorFrame>`完整包装链**；05`inspect-mat`只打印MAT结构、不显示元素；06部分结果/Manifest由RunContext持有，失败Result只携完整Failure。以下**复用已有TC**，不增加正式测试编号：
 
-| 既有TC映射 | 具体固定输入/故障 | 需要区分的正确/错误结果 |
+| 既有TC | 未来需核验的确定条件 | 不可接受的错误表现 |
 |---|---|---|
-| `TC-DC-DOMAIN-001`、`TC-NF-OOP-001` | 以`Result::success/Result::failure`建立值，错误调用`value()/error()`；准备`std::bad_variant_access`方案与`std::logic_error`方案 | 只在批准的访问器方案下验证相应**标准库异常类型**，不得返回默认T/伪造Failure，也不得让一般数学`failure`走异常；方案C若获批需额外测`tryValue/tryError`借用寿命 |
-| `TC-DC-DOMAIN-001`、`TC-NF-OOP-001` | 让`ThrowOnCtor/ThrowOnMove/ThrowOnCopy`在固定第N次抛`std::runtime_error`或`std::bad_alloc`；再测move-only T、已移动源与跨TU | 禁止默认构造伪成功、工厂只能建立成功/失败有效alternative；异常时不得访问不存在的Failure；不可变Result方案的代价、移动后使用规则与valueless路径须记录 |
-| `TC-F-CLI-001`、`TC-I-CLI-001`、`TC-NF-LOG-001` | `MatErrorCode::InvalidShape` 与 `NumericalErrorCode::InvalidShape`分别从Decode/Solve起源，再包装为Experiment层Failure | 根因字符串必须区分**枚举家族**，源stage、path/variable/RunId/observation_index保持原样；exit=4与5分别正确，多层包装后不能只剩`InvalidShape`，是否新增cause链由DEC-008-04决定 |
-| `TC-F-CLI-001`、`TC-I-CLI-001` | 单/多变量MAT以及N×6、600×4样本，以`strict/no NAME`、`strict+NAME`、`compat/no NAME`和非法`compat+NAME`调用；日后可能的`numpy/table`预览 | 解码完整性与显示截断两种验证分开；表格行列、shape/dtype、精度及`...`不改变真实double；JSONL必须有效，NaN/Inf不作为裸JSON数字；参数未批准不得当已实现 |
-| `TC-I-RESULT-001`、`TC-NF-RECOVERY-001`、`TC-NF-SESSION-001` | Comparison计划八次，分别在第5次失败、Writer发布后回读失败、Manifest写失败、Adaptive本帧比较失败处注入 | 对外Result为Failure且根因可查；RunContext记录expected=8/completed=4、valid/failed/undefined与已核产物；可持久化的有身份部分结果为Incomplete，否则Failed；**不能按4次重算成原8次、不能发布Complete、不能只提交半帧主/比较系数**；Manifest写失败不得声称持久化成功 |
+| `TC-DC-DOMAIN-001`、`TC-NF-OOP-001` | 失败Result上调用`value()`、成功Result/Status上调用`error()`：分别抛`std::logic_error`，消息必须包含`Result::value()/error()`或`Status::error()`、错误alternative状态；valueless提供**不同的明确消息**。如需要C探测再验证指针生命周期 | 抛仅`std::exception`不明确类型、直接露出`std::bad_variant_access`、静默返回0或伪造Failure；正常业务错误不可走异常 |
+| `TC-DC-DOMAIN-001`、`TC-NF-OOP-001` | `Result()/Status()=delete`、private tagged success/failure、没有公开assign/emplace；`ThrowOnCtor/Copy/Move`在第N次操作抛`std::runtime_error`/`std::bad_alloc`，验证移动后对象、析构安全与无伪成功 | variant valueless状态被当成Failure、未创建完整Result就假报成功、把数学失败混成异常 |
+| `TC-NF-LOG-001`、`TC-I-RESULT-001`、`TC-NF-RECOVERY-001` | 依次产生`MatErrorCode::InvalidShape@Decode`、包装`AnalysisErrorCode::ShapeMismatch@Analyze`、再包装`ExperimentErrorCode::DataMismatch@Simulation`。检查顶层Experiment及`std::forward_list<ErrorFrame> causes`为 **[Analysis, Mat]**，逐层code家族/stage/message/path/index/可选RunId保留，JSONL`causes`顺序一致；另测无包装空链`[]`与`push_front`内存分配失败 | 只保留一个`source_error_code`根因、丢中间层、链顺序倒置、重复虚加CLI节点或RunId、非法JSON |
+| `TC-F-CLI-001`、`TC-I-CLI-001`、`TC-F-MAT-002` | `inspect-mat --file F [--variable NAME]`仅读MAT结构元数据；多种MAT类型均可元数据枚举、变量筛选，无数值载荷访问/输出；未知`--mode/--format/--all`解析失败 | 自动进入业务readNamed/readFirstCompatible、读取/打印矩阵值、输出NumPy/pandas内容、改变原MAT SHA |
+| `TC-I-RESULT-001`、`TC-NF-RECOVERY-001`、`TC-NF-SESSION-001` | Comparison八次聚合第5次失败、Writer回读失败、Manifest写失败、Adaptive本帧失败；Failure保留每层完整causes，RunContext独占有效/失败/无定义/部分结果计数；只有全部成功才Complete | 把前4次改当完整八次、只保留最终一条错误、Writer单文件成功即标Complete、Manifest未落盘却声称成功 |
 
-**明确不能以测试计划文字代替CTest/签字**；真实原生编译/测试/MAT写回读仍属H-10/H-11无限期延期范围。DEC-008-01/06已决定的职责可继续用于文档对照；02/03/04/05的最终行为仍要等对应选项确认。
+**说明**：设计已获选择不等于真实API/CTest、MAT写回读或总体基线获得授权；H-10/H-11等六项继续无限期延期。仍需等获准后对真实C++17模板/Result移动/forward_list链异常/JSONL序列化实施测试。
 
 ### 2.13 轨迹与近度的符号级候选（AF-048/080，未运行）
 
