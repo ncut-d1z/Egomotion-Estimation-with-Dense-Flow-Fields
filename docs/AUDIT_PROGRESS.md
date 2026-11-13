@@ -1,6 +1,6 @@
 # 全工程文档规范审计进度与整改台账（AUDIT_PROGRESS）
 
-> **状态：审计进度 v1.5，第十四批落实DEC-008-01不承诺跨版本稳定ABI及DEC-008-06的RunContext失败/Manifest所有权决议；02允许标准库异常、03/04/05待审。真实修复同名InvalidShape跨层错误来源混淆、Writer/RunContext拥有者矛盾；同步合同/SRS/TC/CLI/文档控制；仍按36文档/既有五项综合阻塞继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
+> **状态：审计进度 v1.6，第十五批执行所有者DEC-008-02方案B明确std::logic_error消息、03工厂不可变方案A、04完整std::forward_list包装链、05撤回虚构MAT数值打印需求仅检查元数据、06同步RunContext/Manifest保存完整链。真实整改CLI、Reader/Writer、Runner、SRS/TC及所有者决策说明；仍按36文档/既有五项综合阻塞继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
 
 ## 1. 口径、状态和可复核方式
 
@@ -14,32 +14,32 @@
 
 | ID | docs/下相对路径 | 用户初始规范判断 | 首轮实际需核对的问题 | 审计状态 | 本轮证据／整改关联 |
 |---|---|---|---|---|---|
-| DOC-001 | `REQUIREMENTS.md` | 草案级部分符合 | AC→LLD章节身份/正式批准 | 已完成限定审计 | SRS v0.21新增DEC-008-06完整/部分结果AC和ErrorDetail家族根因；提交14c99dc/2e9ca1f。66REQ/TC保持，未批准C++/CTest |
+| DOC-001 | `REQUIREMENTS.md` | 草案级部分符合 | AC→LLD章节身份/正式批准 | 已完成限定审计 | SRS v0.22：按所有者确认inspect-mat只打印结构元数据、撤销strict/compat及元素转储；REQ-NF-LOG/RECOVERY/I-RESULT明确每层ErrorFrame完整前插链及RunContext部分状态；提交a111f1f/3124f47，66REQ/TC未变 |
 | DOC-002 | `ARCHITECTURE.md` | 草案级部分符合 | 27拟议DAG与真实构建/ADR | 已完成限定审计 | HLD v0.10：设计图27箭头=25内部+2外部；根CMake仅低阶SH及3CTest，部署/DEC-006仍待 |
-| DOC-003 | `OBJECT_MODEL.md` | 草案级部分符合 | 候选类/生命周期/签署 | 已完成限定审计 | OBJECT_MODEL v0.9改正Writer非RunContext自有、CompositionRoot真正拥有Writer且保证寿命；RunContext独占计数/Manifest；提交3f62934 |
+| DOC-003 | `OBJECT_MODEL.md` | 草案级部分符合 | 候选类/生命周期/签署 | 已完成限定审计 | OBJECT_MODEL v1.0：DEC-008-06 RunContext每个失败事件保存完整std::forward_list ErrorFrame包装历史并同步Manifest链顺序，Writer由CompositionRoot拥有；提交3ee1bc6，未构建类 |
 | DOC-004 | `design/README.md` | 索引符合，非LLD | 实际Markdown个数与模块覆盖条目 | 已完成限定审计 | 14份真实目录Markdown=1索引+1跨模块LLD+9模块LLD+1专题LLD+2理论，10个覆盖行；提交3614b28 |
-| DOC-005 | `design/contracts.md` | 草案级部分符合 | Result/ABI/ODR/异常线程/自包含 | 正在审计 | contracts v0.9登记DEC-008-01不承诺跨版本ABI，02标准异常允许但方式未选；修复Mat和Numerical两个InvalidShape来源歧义，规定候选内部Family::Code根因与原stage不覆盖；提交df549e3 |
-| DOC-006 | `design/cli.md` | 草案级部分符合 | CLI负例、RunId、JSONL、DEC-008 | 已完成限定审计 | cli v0.10说明inspect-mat只读MAT检查和NumPy/pandas式摘要预览候选，不引入Python依赖；格式参数尚未批准、未实现；提交b562cb4 |
-| DOC-007 | `design/mat_io.md` | 草案级部分符合 | Reader/Writer、TOCTOU、写回读、L2 | 正在审计 | mat_io v0.12：纠正readFirstCompatible先inspect后另开readNamed可能混淆A/B输入身份；改同一mat_t*的枚举+解码候选并限定原地改写风险；修复§7表对Manifest权责旧句；提交796d1ce，真实TOCTOU/Reader测试未执行 |
+| DOC-005 | `design/contracts.md` | 草案级部分符合 | Result/ABI/ODR/异常线程/自包含 | 正在审计 | contracts v1.0：按已选02 B用带方法/原因的std::logic_error、03禁止默认+私有工厂不可变、04用ErrorDetail.causes的forward_list替代单source_error_code并规定push_front/JSONL顺序；提交4581f7c，真实编译/CTest未运行 |
+| DOC-006 | `design/cli.md` | 草案级部分符合 | CLI负例、RunId、JSONL、DEC-008 | 已完成限定审计 | cli v0.11：**撤销助手虚构的inspect-mat数值预览/全量dump、NumPy/pandas及--mode/--format/--all等参数**；仅metadata inspect+可选NAME筛选，不调用数值Reader；CLI错误JSONL按完整链序列化，提交01fc772 |
+| DOC-007 | `design/mat_io.md` | 草案级部分符合 | Reader/Writer、TOCTOU、写回读、L2 | 正在审计 | mat_io v0.14：§7.4.2限定inspect-mat仅读meta、保留业务Reader完整解码；§7.4纠正旧兼容单变量表的二次open指令；§7.5要求完整Mat→Analyzer/Runner包装链；提交b3c6793/a9a740e，尚无真实matio/CTest |
 | DOC-008 | `design/sampling_noise.md` | 草案级部分符合 | 生产几何/RNG负例/CTest | 正在审计 | sampling_noise v0.10：原fixed_*、nonpropfehler、erzeugeflussausnear、getvektor已逐源核对；修复durchlaenge/near_last合同并增抵消反例，提交09ae652；原三类面表与生产RNG/CTest尚待深审 |
 | DOC-009 | `design/trajectory.md` | 草案级部分符合 | Sophus真实依赖及几何L3 | 已完成限定审计 | trajectory v0.6：在既有旋转尺度退化审阅外，补球外内向正根4/9、球面内外向及严格球内前置检查；固定分数推导复核，提交6dbecb5；Sophus/C++/L3仍未验收 |
 | DOC-010 | `design/kvd.md` | 草案级部分符合 | 36轮数学非真实CTest/200轮 | 正在审计 | KvD v0.10：对照原两个误差.m恢复非平方欧氏/角度精确公式、零真值假零残差和5组输入；§4撤销不存在的SingularGeometry/NonFinite错误码而统一公共enum；§5将36轮已生成Wolfram固定参考与未执行CTest分列；提交9c80e41/6fd3220，仍需原生实现及全面数学审查 |
 | DOC-011 | `design/harmonics.md` | 草案级部分符合 | 低阶叶子有实测，公共ABI未冻结 | 正在审计 | harmonics v0.15；固定SH 3/3与公共ABI未建分层核对，逐式LLD待核 |
 | DOC-012 | `design/adaptive_mfa.md` | 草案级部分符合 | Session原子提交、病态输入和真实软件 | 正在审计 | Adaptive v0.8：与三原始入口源blob逐行核对，Update rates在i=134–182先旋转、按周期刷新本帧主旧系数，比较第一返回写入dumi弃置，仅主返回提交；原比较error不用于保存角误差；固定替身5帧静态重放，提交ba06bea/8dd5dd2/ba3d8c4，Session/CTest仍待 |
-| DOC-013 | `design/experiments.md` | 草案级部分符合 | Runner/Writer/Manifest/Ctest | 正在审计 | experiments v0.10落实DEC-008-06：RunContext持有部分结果/Manifest、Writer单文件Status、失败Result只有Failure；完成/部分/失败状态与Manifest写出故障准确区分，提交f52c904 |
-| DOC-014 | `design/analysis_plotting.md` | 草案级部分符合 | 分析L2/L3曲线、CTest/绘图隔离 | 正在审计 | analysis v0.12：按原graphs_bias_test.m比对单loglog轴/固定xlim/ylim/一条参考+12条误差/仅五legend文本；补末次xwerte与真实N的15.47%差异反例、显示裁剪不能删除数值；提交8ae3344，完整Analyzer与L2/L3/CTest仍未执行 |
+| DOC-013 | `design/experiments.md` | 草案级部分符合 | Runner/Writer/Manifest/Ctest | 正在审计 | experiments v0.11：已决定06RunContext记录每个完整Failure/causes事件、Manifest同序列化；Writer仅单文件Status，回读/Manifest失败不能Complete，独立错误分事件；提交c7e26bb |
+| DOC-014 | `design/analysis_plotting.md` | 草案级部分符合 | 分析L2/L3曲线、CTest/绘图隔离 | 正在审计 | analysis v0.13：Mat MissingVariable包装成Analysis错误时保留Mat原Frame并允许Runner继续push_front，无source_error_code单根因捷径；提交d2418c8，测试尚未运行 |
 | DOC-015 | `design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 专题草案级部分符合 | 旧版本CMake描述与最新低阶叶子验收区分 | 已完成限定审计 | 对照旧1/1说明与用户固定5e522198 3/3；仅低阶叶子，公共ABI仍未实现；提交4a62a9d |
 | DOC-016 | `design/SH_DISCRETE_REFIT_CONSISTENCY.md` | 理论专题合格，非LLD | 不能替代模块LLD/测试/批准 | 正在审计 | 已核专题定位与35项数学辅助检查，待独立逐式复算 |
 | DOC-017 | `design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md` | 理论专题合格，非LLD | 不能替代Adaptive真实接口/实现 | 正在审计 | 理论专题v0.2：从M2/M3的叉积矩阵推导M对称充要条件mean((mu-1)d)=0，证明均值1不保证对称；提交28c20f6/555eeea，尚未逐式独立重算本专题其它全部25项 |
-| DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 已完成限定审计 | TEST_PLAN §2.12.3增标准异常选型、fault injection、同名InvalidShape来源家族/多层包装、MAT预览与8次聚合第5次失败及Manifest失败固定负例；提交06b3187，未执行 |
+| DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 已完成限定审计 | TEST_PLAN修订：删除inspect-mat数值读取/显示四分支、NumPy/pandas/--all预览测试，改结构元数据与无payload负例；增B逻辑异常消息、工厂故障注入、forward_list顶层+Analysis/Mat两帧顺序与06 Manifest失败链事件；提交d056b65/d2f2ba9，66 TC不变 |
 | DOC-019 | `PLAN.md` | WBS草案符合 | 98P、M0–M5、真实工期/性能 | 已完成限定审计 | PLAN R-02实改：论文缺失风险改为已取得IR96/IR98/Choi、三路线低阶SH固定证据与未完成公共接口/集成风险分列；提交6f2a426；不冒称27DAG/预算/新CTest已验收 |
 | DOC-020 | `PROGRESS.md` | 符合证据登记 | 固定SHA与历史执行/新状态分离 | 已完成限定审计 | 本轮已核历史E-DOC/SH真实证据与旧97AF；正文修订b69e17c |
-| DOC-021 | `AUDIT.md` | 原专项→本轮综合审计 | 已在初始提交转换为全工程文档规范 | 已完成限定审计 | AUDIT §5.1更新01/06所有者已决定、02异常已允许、03/04/05待审；六项无限期延期不变；提交1b6d746 |
+| DOC-021 | `AUDIT.md` | 原专项→本轮综合审计 | 已在初始提交转换为全工程文档规范 | 已完成限定审计 | AUDIT §5.1记录DEC-008六项设计均已决定、05数值打印属之前未经授权扩展必须撤回；仍不解除H-10/H-11等六项无限期延期；提交43eaf2e |
 | DOC-022 | `AUDIT_PROCESS.md` | 球谐专项整改，不适用全工程 | 保留SH-01～06，引用原专项快照避免误链 | 已完成限定审计 | 原SH-01～06理论台账保持不变，增加新审计与旧SH历史互不重计的说明；提交569a6e7 |
 | DOC-023 | `DOCUMENT_BASELINE_REGISTER.md` | 部分符合 | 36项固定历史SHA与当期HEAD/批准分开 | 已完成限定审计 | DOCUMENT_BASELINE_REGISTER §6.4新增2026-11-12同一固定提交5de2e9d的36文件全Git blob和审计三态；原历史快照保留，新注册blob7cb2c627；签署/依赖/真实数值仍缺，DAR-005仅实质推进未结案 |
 | DOC-024 | `SOURCE_INVENTORY.md` | 静态来源追踪符合 | 45 .m/50函数、MAT未独立SHA | 已完成限定审计 | 核对45 .m/50函数声明的固定源清单及blob身份；未重算MAT SHA256 |
 | DOC-025 | `MIGRATION_MATRIX.md` | 静态迁移追踪符合 | 45/50候选映射，不是代码实现 | 已完成限定审计 | 核对45/50静态候选迁移映射；不等于真实移植 |
-| DOC-026 | `TODO.md` | 管理清单符合 | 历史审批与分阶段授权时间线 | 已完成限定审计 | TODO §2.2 A-H详细DEC-008异常访问器A/B/C、工厂/移动/故障注入、错误Code/Stage/exit/root、NumPy-pandas显示及06已选方案；提交ba5a52e/ed2eb0f/a71c066/36e3f48 |
+| DOC-026 | `TODO.md` | 管理清单符合 | 历史审批与分阶段授权时间线 | 已完成限定审计 | TODO §2.2逐项更新02 B、03 A、04 forward_list、05结构检查仅元信息及06完整链，删除此前数值dump选项和过时DecisionPending；提交192ce52/12ec367，未声称真实实现 |
 | DOC-027 | `decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | 决策记录符合 | HistoricalOnly与当前save/代码未测试 | 已完成限定审计 | DEC-004：选定当前save/HistoricalOnly/缺失字段失败规则，尚无生产Runner/Analyzer测试 |
 | DOC-028 | `decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md` | 所有者决定符合 | 技术方向≠软件运行/基线签署 | 已完成限定审计 | 历史所有者决策文件增加2026-11-12后续完成附记，保留2026-11-07审批原意并注明论文已交付、5e522198局部SH3/3、其余授权/ABI/DEC仍开；提交5de2e9d |
 | DOC-029 | `decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md` | 专项授权记录符合 | 历史SH局部权限不得扩展 | 已完成限定审计 | 2026-11-09球谐专项授权仅l≤2/Eigen并禁sdla，H-11历史状态不影响后来用户自己实测 |
@@ -97,6 +97,9 @@
 
 | DAR-028 | design/contracts.md；TEST_PLAN.md；TODO.md；REQUIREMENTS.md | MatErrorCode与NumericalErrorCode均有InvalidShape，旧ErrorDetail的source_error_code只规定保存稳定名称，若使用不带家族的InvalidShape就丢失根因模块；多层包装可能再覆盖原stage/根因 | 实改候选内部根因标识为Family::Code，保留原stage和真实path/variable/RunId，并将两个同名错误的区分性固定TC及SRS联系明确；完整cause[]/JSONL拼写仍待DEC-008-04批准，无原生测试 | 纯文档跨层错误来源身份冲突 | 已整改 |
 | DAR-029 | OBJECT_MODEL.md；design/experiments.md；TEST_PLAN.md | 对象模型旧表将Writer/结果目录整体称为RunContext独占，但Runner接口实际是非自有IResultWriter&且CompositionRoot负责寿命；与DEC-008-06的RunContext计数/Manifest责任不一致 | 实改CompositionRoot真正拥有Writer、RunContext借用IResultWriter且独占RunId/计数/Manifest；Runner完整成功门禁与Writer单文件Status分离，补八次聚合第5次失败及Manifest回读失败负例 | 纯文档资源与运行状态所有权冲突 | 已整改 |
+
+| DAR-030 | design/cli.md；design/mat_io.md；REQUIREMENTS.md；TEST_PLAN.md；TODO.md；AUDIT.md | 用户原始需求仅为显示MAT文件数据结构，但先前助手擅自新增inspect-mat通过strict/compat读取数值、NumPy/pandas预览、全量转储及--mode/--format/--all等CLI参数，形成不真实的REQ/LLD/TC | 按DEC-008-05确认删除所有当前数值打印/预览设计，inspect-mat只调用Reader::inspect并可--variable筛选元数据，负例断言不能调用Mat_VarRead/业务Reader或打印元素；保留原业务readNamed/readFirstCompatible能力和历史审计撤回证据 | 纯文档用户需求越权扩展及CLI数据合同 | 已整改 |
+| DAR-031 | design/contracts.md；design/experiments.md；design/mat_io.md；design/analysis_plotting.md；OBJECT_MODEL.md；REQUIREMENTS.md；TEST_PLAN.md；TODO.md | 旧source_error_code只留单个根因字符串，无法按所有者DEC-008-04要求保留Reader→Analyzer→Runner每层真正的包装历史，且DEC-008-06 RunContext/Manifest原只记录根因 | 已在统一ErrorDetail实改std::forward_list<ErrorFrame> causes，顶层Failure携外层Code、push_front存直接内层→最深根因，各帧保存domain/code/stage/message/路径及合法RunId；Reader/Analyzer/Runner/RunContext/JSONL/Manifest与TC完整同步，保证故障事件独立不伪造分支链 | 纯文档完整错误链与已决定运行状态跨模块合同 | 已整改 |
 
 ## 4. 已实施审计、具体整改和验证日志
 
@@ -271,7 +274,21 @@
 - **DAR-029独立缺陷已实修**：原[OBJECT_MODEL](OBJECT_MODEL.md)把Writer称RunContext独占，与Runner LLD明确`IResultWriter&`非自有冲突；已区分CompositionRoot真实Writer所有者与RunContext结果/Manifest所有者；提交[3f62934](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/3f62934a393aa215acfc9d351e65e8af68bdbbb0)。
 
 **七项统计**：整改目标27→29（+2真实纯文档缺陷），已整改22→24（+2），未整改5→5（0）；审计文件36→36（0）、完成限定26→26（0）、正在10→10（0）、未审0→0（0）。DAR-001～005仍受外部批准/软件执行条件限制且六延期事项没有恢复；DEC-008整体PartiallyDecided/NotFullyApproved。本文只登记真实修改与待测义务，不伪造生产CTest或MAT输出。
+### 第15阶段：按所有者DEC-008-02～06真实整改接口链与撤销错误需求（2026-11-13）
+
+**起始HEAD**：`0b1e6b9922aa00036a593323422f652df2b3c6ec`。起始29目标（24已整改、5未整改），36份审计文件（26限定完成、10正在、0未审）。用户确认DEC-008-02选择**方案B明确消息std::logic_error**、必要时才增C；03选择**推荐工厂/不公开赋值方案A**；04完整调用包装链使用C++17**std::forward_list<ErrorFrame>**（用户拼写`forword`应为`forward`）；05用户只要求**打印MAT结构**，不要求打印数据内容；06要求按04进一步修改文档。原六项无限期延期继续适用。
+
+**DAR-030用户需求纠偏是真实删改而非新增功能**：以前的`inspect-mat`被助手擅加矩阵数值dump/NumPy/pandas预览/`--all`等选项，用户从未要求。**现行[CLI v0.11](design/cli.md)、[MAT I/O `7.4.2](design/mat_io.md)、[SRS v0.22](REQUIREMENTS.md)、[TEST_PLAN](TEST_PLAN.md)均已实改**：`inspect-mat --file PATH [--variable NAME]`只调用`MatResultReader::inspect`返回/筛选变量名、MAT class/dtype、rank/dims、元素数和可从头部确认的标志，**不调用Mat_VarRead/readNamed/readFirstCompatible、不打印任何数值元素**。`--mode/--format/--all/--precision/--rows/--cols`均不属于inspect-mat的命令设计，非法参数parse(2)；保留业务`MatResultReader::readNamed/readFirstCompatible`完整值读取能力而不混成元数据检查。原始需求不是NumPy/pandas数据打印，本轮已正式撤销该虚构需求，历史审计日志中的建议仅作**被撤回的历史事实**，不能据此实施。真实修订提交：[01fc772](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/01fc77233cb406db9e1ba728fe75b2ee2403e738)、[b3c6793](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/b3c6793c2e97f70b101d06fb8b5775a31f25f941)、[d056b65](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/d056b65f5f309e7865dd67fae68e3f795fbcc333)。额外修复MAT LLD旧`7.4单变量兼容表要求第二次公共readNamed打开路径的问题，必须继续遵守`7.4.1同一文件句柄来源资格。**没有运行真实matio、MATLAB或业务CLI/CTest**。
+
+**DAR-031完整调用包装链是有API、Runner及测试合同实改的闭环**：旧[contracts v0.9](design/contracts.md)只有一个`std::optional<std::string> source_error_code`，即使带Family::Code也只能表达单个根因，无法满足新DEC-008-04。现已在[contracts v1.0](design/contracts.md)的`ErrorDetail`定义`std::forward_list<ErrorFrame> causes`，记录**当前Failure顶层+每次真实包装层**，`push_front`只插入直接内层、链首最近内层、链尾根因；每帧保留枚举家族/code/stage/message及已知上下文。比如`MatErrorCode::InvalidShape @ Decode`→`AnalysisErrorCode::ShapeMismatch @ Analyze`→`ExperimentErrorCode::DataMismatch @ Simulation`，最终顶层为Experiment，链顺序`[Analysis, Mat]`；CLI只序列化不额外虚加一层。对应同步[Runner v0.11 `6.1.2](design/experiments.md)、[MAT LLD `7.5](design/mat_io.md)、[Analysis LLD](design/analysis_plotting.md)、[对象模型](OBJECT_MODEL.md)、[SRS](REQUIREMENTS.md)、[TEST_PLAN](TEST_PLAN.md)、[TODO `2.2](TODO.md)，确保**DEC-008-06下RunContext每个失败事件/Manifest/JSONL保存完整链**而不是只保存根因；Manifest写入失败不能宣称链已持久化。提交：[4581f7c](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/4581f7c6982616adc4bbe8c143a0692f8b4ea2cf)、[c7e26bb](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/c7e26bb806edc34af485516b855e6d9c05bcd0c3)、[a9a740e](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/a9a740e982802a15a4ecd9a8efd99eba74760443)。**尚无真实C++链构造/故障注入/JSONL与Manifest持久化的原生证据**。
+
+**DEC-008已选但未原生验收**：02在[contracts `3.A.2](design/contracts.md)明确`Result::value()`失败→`std::logic_error("Result::value(): called on a failure result")`，`error()`成功→明确对应消息，内部valueless另提示；03采用禁默认构造、private tagged success/failure工厂、无公开赋值/emplace的推荐方案，移动源不可当有效业务数值；方案C仅在确有非抛出访问器需要时增补，不提前扩API。01不承诺跨版本稳定ABI、06RunContext独立部分结果/Manifest仍有效；05仅MAT结构。用户已经给全DEC-008设计答案，**不再询问重复决策**，但代码/构建/测试/冻结状态仍是`ImplementationNotVerified`，不是宣称已经完成生产软件。
+
+**七项指标**：整改目标29→31（+2项真实跨文件合同纠正），已整改24→26（+2），未整改5→5（0）；审计文件36→36（0）、已完成限定26→26（0）、正在审计10→10（0）、未审0→0（0）。所有新增目标均以技术正文与现有TC真实更新为依据，不通过改变文件统计制造工作量。DAR-001～005仍在六延期/需真实测试批准范围内，继续文档静态审计不因此中断。
+
 ## 5. 各轮计数与变化
+
+**第15阶段相对上一轮**：目标29→31（+2），已整改24→26（+2），未整改5→5（0）；DOC36、完成限定26、正在10、未审0全部不变。本轮实改CLI/MAT/Result/Runner/对象/分析/SRS/TC/TODO/AUDIT正文、撤销虚构数值打印设计并同步完整错误单向链。
 
 **第14阶段相对上一轮**：整改目标27→29（+2），已整改22→24（+2），未整改5→5（0）；36文件/已审26/在审10/未审0均不变。真正修改对象包括公共合同、对象模型、Runner、SRS、测试及DEC-008详细说明。
 
@@ -319,6 +336,7 @@
 | 第12阶段：UpdateRate丢弃返回值/时序与人类批准边界 | 36 | 26 | 10 | 0 | 26 | 21 | 5 |
 | 第13阶段：Result默认伪成功/无限期延期/DEC-008候选 | 36 | 26 | 10 | 0 | 27 | 22 | 5 |
 | 第14阶段：DEC-008决议/根因家族/Writer拥有者整改 | 36 | 26 | 10 | 0 | 29 | 24 | 5 |
+| 第15阶段：结构检查纠偏/完整forward_list调用链 | 36 | 26 | 10 | 0 | 31 | 26 | 5 |
 
 ## 6. 36份文件的同一基准提交身份（DAR-005：只读静态快照）
 
