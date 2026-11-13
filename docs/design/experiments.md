@@ -2,7 +2,7 @@
 
 > **长期参考边界**：本 Runner **不要求 MATLAB/Octave 运行或采集 L1**；原 .m 仅作只读源码依据，结果验收使用 L2 已存 MAT、L3 独立逐帧/逐轮参考与 L4 统计，参见 [长期政策](../golden/NO_MATLAB_EXECUTION_POLICY.md)。
 
-> **LLD v0.11草案（DEC-008-04完整forward_list错误链与06部分结果决议已同步；尚未实现或运行CTest）。** 来源：bias_test/data_generation 中 2 个入口；adaptive_matched_filter_test/data_generation 中 3 个入口。对应 P5、P8、REQ-F-BIAS、REQ-F-EXP、REQ-F-CLI 与 REQ-I-RESULT。
+> **LLD v0.12草案（错误链先构帧后接链、顶层error_domain/空链身份已补；尚未实现或运行CTest）。** 来源：bias_test/data_generation 中 2 个入口；adaptive_matched_filter_test/data_generation 中 3 个入口。对应 P5、P8、REQ-F-BIAS、REQ-F-EXP、REQ-F-CLI 与 REQ-I-RESULT。
 
 ## 1. 实验入口及源代码实际参数
 
@@ -235,7 +235,7 @@ Runner:   ExperimentErrorCode::DataMismatch@Simulation     causes=[Analysis, Mat
 CLI:      serialize same Failure, no new wrapping          causes=[Analysis, Mat]
 ~~~
 
-`RunContext`对**每一次失败事件**保存当前完整最外Failure及其全部causes；可用独立顺序容器保存若干Failure事件（每个事件内部的错误链唯一采用`std::forward_list<ErrorFrame>`），不在失败`Result`里隐藏`RunOutcome`。Manifest成功落盘时按同样的外→内顺序序列化`causes`数组、保留顶层code/stage和RunId。若先有SolverFailed，随后**独立发生**Manifest写入失败，必须记录为**两个独立错误事件**，而非伪造一条不真实的因果单链。无法落盘时应如实返回`OutputFailed`及可得的错误信息，不能假报“错误链已持久化”；`std::forward_list::push_front`分配内存也可能异常，不能在内存失败时假造成功记录。
+`RunContext`对**每一次失败事件**保存当前完整最外Failure及其全部causes；可用独立顺序容器保存若干Failure事件（每个事件内部的错误链唯一采用`std::forward_list<ErrorFrame>`），不在失败`Result`里隐藏`RunOutcome`。Manifest成功落盘时按同样的外→内顺序序列化`causes`数组，并**始终同时保存顶层`error_domain`、`error_code`、stage及真实RunId**。若没有任何包装帧，`causes=[]`仍必须保存顶层家族，不因同名`InvalidShape`或`OutputFailed`而误判来源。若先有SolverFailed，随后**独立发生**Manifest写入失败，必须记录为**两个独立错误事件**，而非伪造一条不真实的因果单链。无法落盘时应如实返回`OutputFailed`及可得的错误信息，不能假报“错误链已持久化”；`std::forward_list::push_front`分配内存也可能异常，不能在内存失败时假造成功记录。
 
 **异常安全负例（2026-11-13）**：旧的“先`std::move(inner.causes)`、再`push_front`分配新帧”如果发生`std::bad_alloc`，会使调用方失去旧链。现在Runner必须遵守[公共合同 §3.0.2](contracts.md)与[TODO §2.2 F](../TODO.md)的**先分配新节点、后`splice_after`转移旧节点**次序；新帧分配故障时旧`inner.causes`应保持原样。`splice_after`本身要求相同allocator且不抛，但以后真正保存RunContext/Manifest、序列化JSONL仍可能失败，不能说“完整链保证已落盘”。对应已有`TC-NF-RECOVERY-001/TC-NF-LOG-001`待测。
 
