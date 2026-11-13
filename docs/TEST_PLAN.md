@@ -336,6 +336,8 @@ regression_tolerance=9.0949470177292824e-13
 
 ### 2.12.3 DEC-008所有子项已决定后的定点测试合同（2026-11-13，未执行）
 
+**2026-11-13无包装的顶层错误家族遗漏整改**：当Reader/求解器Failure没有发生后续包装时，`ErrorDetail.causes=[]`仍是合法情况。此前JSONL只规定顶层`error_code`，直接MAT与直接Numerical的`InvalidShape`会同名歧义。现已要求**顶层`error_domain`必填**，并按现有枚举家族确定性输出；分别断言`MatErrorCode + InvalidShape + decode(4)`及`NumericalErrorCode + InvalidShape + solve(5)`，不凭`message`或退出码猜family。由[contracts §3.0.2](design/contracts.md)维护，仍属既有`TC-NF-LOG-001/TC-I-CLI-001/TC-F-ERROR-001`，未执行真实JSONL/CTest。
+
 **2026-11-13追加的真实异常安全整改**：先搬走旧`causes`后再分配`push_front`节点可能在`std::bad_alloc`时失去可用的原始链。候选已在[contracts §3.0.2](design/contracts.md)改为**先完成可失败的新frame构造/`emplace_front`，然后以兼容allocator的`splice_after`接入旧链**；完整注入场景在下表原`TC-NF-LOG-001`行。**这是修正错误包装时序的具体接口设计缺陷**，不是新增正式TC或已运行C++故障注入。
 
 所有者已决定：01不承诺跨版本稳定ABI；02选择**明确消息的`std::logic_error`方案B**、`tryValue/tryError`仅必要时增加；03采用不可默认构造、工厂创建、无公开assignment/emplace；04采用C++17的**`std::forward_list<ErrorFrame>`完整包装链**；05`inspect-mat`只打印MAT结构、不显示元素；06部分结果/Manifest由RunContext持有，失败Result只携完整Failure。以下**复用已有TC**，不增加正式测试编号：
@@ -344,7 +346,7 @@ regression_tolerance=9.0949470177292824e-13
 |---|---|---|
 | `TC-DC-DOMAIN-001`、`TC-NF-OOP-001` | 失败Result上调用`value()`、成功Result/Status上调用`error()`：分别抛`std::logic_error`，消息必须包含`Result::value()/error()`或`Status::error()`、错误alternative状态；valueless提供**不同的明确消息**。如需要C探测再验证指针生命周期 | 抛仅`std::exception`不明确类型、直接露出`std::bad_variant_access`、静默返回0或伪造Failure；正常业务错误不可走异常 |
 | `TC-DC-DOMAIN-001`、`TC-NF-OOP-001` | `Result()/Status()=delete`、private tagged success/failure、没有公开assign/emplace；`ThrowOnCtor/Copy/Move`在第N次操作抛`std::runtime_error`/`std::bad_alloc`，验证移动后对象、析构安全与无伪成功 | variant valueless状态被当成Failure、未创建完整Result就假报成功、把数学失败混成异常 |
-| `TC-NF-LOG-001`、`TC-I-RESULT-001`、`TC-NF-RECOVERY-001` | 依次产生`MatErrorCode::InvalidShape@Decode`→`AnalysisErrorCode::ShapeMismatch@Analyze`→`ExperimentErrorCode::DataMismatch@Simulation`，顶层Experiment及`causes=[Analysis,Mat]`；**在原inner已有`causes=[Mat]`时注入新frame字符串构造异常和`emplace_front`分配异常，要求原inner链仍可读取`[Mat]`**；成功建新节点后`splice_after(new_head, inner.causes)`，核顺序、原链清空与分配器相容；再核JSONL及空链`[]`。 | 不得**先`move(inner.causes)`后`push_front`**导致异常时链丢失；不得漏帧/倒序/虚加CLI节点；标准`std::forward_list::splice_after`在同分配器前提下不抛异常，整体拼接复杂度对链长线性，不可假称O(1)；未执行CTest。 |
+| `TC-NF-LOG-001`、`TC-I-RESULT-001`、`TC-NF-RECOVERY-001` | 依次产生`MatErrorCode::InvalidShape@Decode`→`AnalysisErrorCode::ShapeMismatch@Analyze`→`ExperimentErrorCode::DataMismatch@Simulation`，顶层Experiment及`causes=[Analysis,Mat]`；**在原inner已有`causes=[Mat]`时注入新frame字符串构造异常和`emplace_front`分配异常，要求原inner链仍可读取`[Mat]`**；成功建新节点后`splice_after(new_head, inner.causes)`，核顺序、原链清空与分配器相容；再核JSONL及空链`[]`；即使空链也应显示**顶层error_domain**，分别给`MatErrorCode::InvalidShape`与`NumericalErrorCode::InvalidShape`以区分。 | 不得**先`move(inner.causes)`后`push_front`**导致异常时链丢失；不得漏帧/倒序/虚加CLI节点；标准`std::forward_list::splice_after`在同分配器前提下不抛异常，整体拼接复杂度对链长线性，不可假称O(1)；未执行CTest。 |
 | `TC-F-CLI-001`、`TC-I-CLI-001`、`TC-F-MAT-002` | `inspect-mat --file F [--variable NAME]`仅读MAT结构元数据；多种MAT类型均可元数据枚举、变量筛选，无数值载荷访问/输出；未知`--mode/--format/--all`解析失败 | 自动进入业务readNamed/readFirstCompatible、读取/打印矩阵值、输出NumPy/pandas内容、改变原MAT SHA |
 | `TC-I-RESULT-001`、`TC-NF-RECOVERY-001`、`TC-NF-SESSION-001` | Comparison八次聚合第5次失败、Writer回读失败、Manifest写失败、Adaptive本帧失败；Failure保留每层完整causes，RunContext独占有效/失败/无定义/部分结果计数；只有全部成功才Complete | 把前4次改当完整八次、只保留最终一条错误、Writer单文件成功即标Complete、Manifest未落盘却声称成功 |
 
