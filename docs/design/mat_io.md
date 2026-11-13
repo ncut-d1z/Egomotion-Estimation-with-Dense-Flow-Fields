@@ -1,6 +1,6 @@
 # MAT I/O、路径安全与原始数据合同——详细设计草案
 
-> **LLD v0.12 候选草案，未冻结。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 L2 逐值/L3 独立参考验证仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
+> **LLD v0.13 候选草案（DEC-008-05已限定inspect-mat只检查元数据；仍未冻结或原生测试）。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 L2 逐值/L3 独立参考验证仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
 
 ## 1. 原始行为、文件身份和支持版本
 
@@ -197,7 +197,7 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 
 | 方法 | 前置条件 | 后置条件 | 非成功分类 | 关联 TC |
 |---|---|---|---|---|
-| inspect(path) | 输入为存在的普通文件，且 Reader 不持有写权限 | 按 MAT 文件真实变量记录返回 name/class/dtype/rank/dims/complex，绝不变更输入 | MissingFile、InvalidMatHeader、CorruptCompressedData | TC-F-MAT-002 |
+| inspect(path) | 输入为存在的普通文件，Reader不持有写权限 | **只读取/返回真实MAT结构元数据**：name/class/dtype/rank/dims/元素数、可由头部确认的complex/logical/压缩标记；不解码任何变量数值载荷，也不打印元素，原输入哈希不变 | MissingFile、PermissionDenied、InvalidMatHeader、元数据损坏（应归可证明的已有错误码） | TC-F-MAT-002、TC-F-CLI-001 |
 | readNamed(path,name) | name 非空；所需 class 已受支持 | 对**唯一指定变量**读取完整自拥有数据，源文件句柄销毁后结果仍有效 | MissingVariable、UnsupportedClassOrType、InvalidShape | TC-F-MAT-001/003 |
 | readFirstCompatible(path) | 路径合法；可明确补齐省略的 `.mat`；不要求 MATLAB 运行 | **同一只读句柄**内完成枚举、单变量选择和完整解码；多变量无顺序证据拒绝 `AmbiguousVariable`，不得跨两次open混用元数据/数值；仅承诺582份单变量归档 | AmbiguousVariable、MissingVariable、UnsupportedClassOrType、InvalidShape | TC-F-MAT-003 |
 | saveNewVariable(RunId,name,data) | **构造时根路径已固定为仓库 `output/`，且写入时再次检验根/RunId/文件名**；不存在输出根 CLI 参数。RunId、变量名合法且文件不存在 | 独占发布新 MAT 并严格回读；Writer只提供单文件Status/错误，整个Manifest及Complete由RunContext/Runner负责 | OutputPathForbidden、OutputExists、WriteFailed、ReadbackMismatch | TC-F-MAT-004 |
@@ -286,7 +286,7 @@ MAT 类支持范围的**最终**记录应由 docs/MAT_DATA_SCHEMA.md 单一维�
 
 | 输入类别 | 候选处理 | 证据/错误及覆盖范围 |
 |---|---|---|
-| 显式文件 `sample.mat`，内部正好 1 个变量 | 保留实际变量名并读取这个变量，调用 `readNamed` 校验 class/type/rank/dims | L2 原作者 582 单变量 MAT；`TC-F-MAT-003` |
+| 显式文件 `sample.mat`，内部正好 1 个变量 | 在**同一个MatFileHandle**中确定唯一真实变量并用内部按名读取/校验class/type/rank/dims；**不**再次调用会另开路径句柄的公共`readNamed(path,name)`，避免元数据/载荷来自不同文件 | L2原作者582单变量MAT；`TC-F-MAT-003` |
 | 无 `.mat` 扩展名 `sample` | 在候选解析中先识别明确存在的原路径；若无此文件且 `sample.mat` 存在，**仅补全一次 `.mat`**；两者均不存在返回 MissingFile | 解析优先级/路径等价写法仍受 `cli.md` 与 DEC-008 审批，不宣称与所有 MATLAB load 搜索路径相同 |
 | 空 MAT 或 0 个可枚举变量 | 返回 MissingVariable；`inspect` 可如实列出空元数据 | L3 构造的独立负例；`TC-F-MAT-003` |
 | 同一 MAT 有 2 个及以上变量，**无经独立核验的 fieldnames 顺序** | 返回 `AmbiguousVariable`，**绝不擅自选字母序最小变量**，也不默认返回第一个磁盘存储变量 | 目前归档没有这样的正例；独立 L3 多变量负例与明确非成功状态 |
@@ -303,6 +303,14 @@ MAT 类支持范围的**最终**记录应由 docs/MAT_DATA_SCHEMA.md 单一维�
 **候选整改约束**：在 `readFirstCompatible` 的同一个 `MatFileHandle` 内枚举、选择唯一变量、调用 `Mat_VarRead(mat_t*,name)`、完成类型/元素验证并拷贝自拥有数据后关闭。可用内部`readNamedOnOpenFile`复用逻辑，但**不改变对外三种Reader API**。必须按项目采用的 matio 1.5.26 实际核准“遍历`Mat_VarReadNextInfo`后按名读取”的句柄状态/所有权。复用已打开句柄只抵御路径替换令前后指向不同inode；**不保证同一inode在读期间被原地并发写入时的稳定字节快照**。需要核验前后身份、SHA-256、不可变副本或明确失败策略；不能宣称仅靠一个fd就消除了所有来源一致性风险。
 
 **独立输入负例（待授权，复用`TC-F-MAT-003`、`TC-I-MAT-001`与`TC-NF-SAFETY-001`）**：准备两个内容不同的合法单变量MAT，A含`alpha`、B含`beta`；在枚举结束后替换同一路径目标，验证解码值与变量名/文件身份来自同一次打开的A，或明确非成功，绝不能出现“选A、解B”。另针对同一个inode原地修改，要求能识别或公开记录尚无可靠快照保证。所有合成/并发输入只允许在经批准的隔离目录，`origin/**`不改。本段是安全设计合同，尚未运行 Reader、编译或 CTest，错误码细节应在P0.8/DEC-008冻结，不擅自创造公共enum。
+### 7.4.2 DEC-008-05 已决定：`inspect-mat`只消费元数据（2026-11-13）
+
+`MatResultReader::inspect(path)`的职责是只读枚举MAT**数据结构**，并返回`std::vector<MatVariableInfo>`：变量名、MAT class/data_type、rank/dims、可确定的元素数量以及元数据可确认的logical/complex/压缩信息。它不必将元数据类型限制为业务`MatDenseArray`目前只支持的非复杂密集double，也**不需要**为检查元数据解压、复制或触碰`matvar_t`变量数值载荷；原用户没有提出打印数据内容的要求。
+
+命令`inspect-mat --file PATH [--variable NAME]`只能调用`inspect`并按真实名字可选筛选元数据；缺少变量返回MissingVariable，全部变量则按文件元数据枚举结果报告。**不得**在该命令调用`readNamed`/`readFirstCompatible`、输出NumPy/pandas式数字预览或新增`--mode/--all/--format/--precision/--rows/--cols`。这些打印方案已由用户拒绝，不可在未授权需求上继续实施。`readNamed/readFirstCompatible`仍在**真正需要数值的业务/原历史兼容读取**中保留完整解码与原`7.4.1`单句柄一致性要求，不能因结构检查的限界删除这些原有核心能力。
+
+**独立可判定测试（尚未执行）**：一个多变量MAT含double矩阵、unsupported class、complex/logical、不同rank与零维数组的元数据；`inspect`仍能在不把它们业务解码为double数组的前提下准确枚举合法结构。`--variable`只筛选元数据；无`--mode`参数；前后原MAT SHA不变，不能输出任何`matvar_t::data`元素或求解器调用。具体matio 1.5.26的`Mat_VarReadNextInfo`信息可用性及元数据错误策略仍需在H-11恢复后真实验证，不能宣称所有MAT变种都能成功解析。
+
 ## 8. 可复现正/负例与计划测试实体（均未建立/未执行）
 
 | 用例类别及 L2/L3 来源 | 输入与预期行为 | 非成功分类（如适用） | TC / 未来测试文件 |
