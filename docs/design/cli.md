@@ -1,6 +1,6 @@
 # CLI 参数、退出码与诊断协议：详细设计草案
 
-> **CLI LLD v0.11（DEC-008-05已纠正为MAT元数据检查；DEC-008-02/04/06已决定，仍未创建CLI或运行CTest）。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
+> **CLI LLD v0.12（顶层JSONL error_domain与完整causes双重来源校验；仍未创建CLI或运行CTest）。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
 
 ## 1. 语法与基本约束
 
@@ -69,7 +69,7 @@
 
 阶段检查顺序为 **parse（2）→ input/read（3）→ decode/schema（4）→ output safety（6）→ solve/analyze（5）→ plot capability（7）**。如果一个请求包含多个问题，报告实际先触发的失败，保留原始错误码及上下文。具体错误枚举映射直接引用 [contracts.md §3.1](contracts.md) 的候选表，待 P0.8/P1.2 人类批准后冻结。
 
-失败诊断最少包含稳定的 `error_code`、`exit_code`、`stage`、`message`；涉及 MAT 需附 `path` 与已知 `variable`，涉及实验需附 RunId、算法与样本下标。正常输出使用 stdout、错误使用 stderr，文件里仍保存原 MATLAB 兼容 MAT。**现行设计已选 JSONL 为结构化诊断格式**：一行一个UTF-8 JSON对象，至少有`stage`、`error_code`、`exit_code`、`message`及按`std::forward_list<ErrorFrame>`顺序序列化的`causes`数组（空链为`[]`），可选`run_id/path/variable/observation_index`；stage 由 `contracts.md` 的稳定 `ErrorStage` 枚举序列化，字符串须正确转义，非有限数值不得输出不合法 JSON。无需大型 JSON 依赖，可实现小型可靠序列化器。**当前只有方案，未创建程序或 JSONL 测试**。
+失败诊断最少包含稳定的 `error_code`、`exit_code`、`stage`、`message`；涉及 MAT 需附 `path` 与已知 `variable`，涉及实验需附 RunId、算法与样本下标。正常输出使用 stdout、错误使用 stderr，文件里仍保存原 MATLAB 兼容 MAT。**现行设计已选 JSONL 为结构化诊断格式**：一行一个UTF-8 JSON对象，至少有**顶层`error_domain`、`error_code`**、`stage`、`exit_code`、`message`及按`std::forward_list<ErrorFrame>`顺序序列化的`causes`数组（空链为`[]`），可选`run_id/path/variable/observation_index`；stage 由 `contracts.md` 的稳定 `ErrorStage` 枚举序列化，字符串须正确转义，非有限数值不得输出不合法 JSON。无需大型 JSON 依赖，可实现小型可靠序列化器。**当前只有方案，未创建程序或 JSONL 测试**。
 
 **最新项目所有者决定**：CLI 输出根选项已明确删除；固定 `output/<RunId>/`、独立 RunId、JSONL、稳定错误阶段和轻量封装 Result 为已选择的设计方向（见 [最新决定](../decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md)）。其余 CLI 具体错误码与完整 CTest identity 仍属于 P0.8/DEC-008 的未冻结接口细节；本轮不执行任何命令，也不能把候选接口称为已测试。
 
@@ -95,8 +95,12 @@
 
 ### 3.3 DEC-008-02/04/05 的现行已决定行为
 
+**2026-11-13零包装错误家族区分**：直接从MAT Reader报告`InvalidShape`与直接从Numerical Solver报告同名`InvalidShape`时，`causes=[]`，不能仅凭`error_code`或退出码判断是何种类型；必须分别输出`error_domain=MatErrorCode`、`error_domain=NumericalErrorCode`。这个字段由已知C++ `Failure<Code>`的枚举家族映射，**不靠`message`文本、路径或`ErrorStage`猜测**，见[contracts §3.0.2](contracts.md)。只有真的在CLI层新建Failure进行包装时才增加新的ErrorFrame；纯序列化不允许虚加节点。
+
+
+
 - **DEC-008-02**：对Result/Status错误alternative访问，按[contracts `3.A.2](contracts.md)显式检查并抛包含方法与原因的`std::logic_error`；正常业务输入错误仍走Failure。
-- **DEC-008-04**：每次真实跨层包装必须保存完整`std::forward_list<ErrorFrame>`历史，CLI错误JSONL以有序`causes`数组（最近内层至最深根因）序列化，不只保存原来单个`source_error_code`。只进行错误输出、不创建新Failure时**不得虚增CLI包装帧**。消息文本不代表机器ErrorCode。
+- **DEC-008-04**：每次真实跨层包装必须保存完整`std::forward_list<ErrorFrame>`历史，CLI错误JSONL顶层**必须包含`error_domain`**和`error_code`（即使`causes=[]`），各内层帧再以有序`causes`数组（最近内层至最深根因）序列化，不只保存原来单个`source_error_code`。只进行错误输出、不创建新Failure时**不得虚增CLI包装帧**。消息文本不代表机器ErrorCode。
 - **DEC-008-05**：`inspect-mat`只输出结构元数据，**不存在**数值转储/NumPy/pandas预览要求，不能添加未要求的`--mode/--format/--all`选项；真实数值Reader仍只供其它业务使用。
 - CLI格式和Result/错误链是**设计已决定、实现未验证**；其它六项无限期延期许可保持不变。见[TODO `2.2](../TODO.md)与[TEST_PLAN](../TEST_PLAN.md)。
 
