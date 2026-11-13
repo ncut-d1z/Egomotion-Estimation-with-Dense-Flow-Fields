@@ -1,6 +1,6 @@
 # C++17 公共详细设计合同（跨模块 LLD）
 
-> **跨模块合同草案 v1.0（DEC-008-01～06设计决定已记录；H-10/H-11延期，公共头/编译/CTest未实施）。** 此处集中定义候选值类型、状态、错误与 ABI 风格，以免 MAT I/O、KvD、Adaptive、实验和分析各自使用不同的 Result、形状和退出码。最终签名必须经 P0.7/P0.8 与项目所有者审批后才能成为编码基线。
+> **跨模块合同草案 v1.1（修正forward_list包装链异常安全次序；DEC-008已决定但公共头/编译/CTest未实施）。** 此处集中定义候选值类型、状态、错误与 ABI 风格，以免 MAT I/O、KvD、Adaptive、实验和分析各自使用不同的 Result、形状和退出码。最终签名必须经 P0.7/P0.8 与项目所有者审批后才能成为编码基线。
 
 ## 1. 适用范围与版本边界
 
@@ -216,9 +216,9 @@ const Failure<Code>& error() const & {
 
 | 分支 | 当前合同检查点 | 真正未定/待验证 |
 |---|---|---|
-| `Result/Status` 正常与失败态 | **默认构造已禁止，须由带标签的成功/失败工厂直接构造选定variant分支**；只有成功值或 `Failure<Code>{code,detail}`；`hasValue()` 不可将失败伪装为成功；左右值按引用/自拥有值区分；private variant仍参与 ABI 布局 | 真实 `<variant>/<optional>` include、右值重载、move-only T、模板 ODR、自包含头、跨target/跨共享库ABI策略及异常构建兼容性待编译 |
+| `Result/Status` 正常与失败态 | **DEC-008-03已决定**禁止默认构造、private tagged工厂及不公开赋值/emplace；只有成功值或`Failure<Code>{code,detail}`，`hasValue()`不得产生假成功；移动后借用值有明确限制，private variant仍决定本次构建对象布局 | 真实C++17公共头、自包含、MoveOnly T、跨TU/同构建库和异常故障注入仍待执行；不再重复请示不可变工厂设计 |
 | `std::variant::valueless_by_exception()` | **不能**将无值内部状态当成功或返回默认 `T`；实现前必须给出能保留失败原因的稳定处理路径 | 使用哪一个公共错误码/异常边界仍待 P0.8 批准与故障注入，不凭文档编造映射 |
-| 对错误调用 `value()` / 成功调用 `error()` | 均属违反访问前置条件；不得泄漏无效引用或转换成默认值 | 选择抛异常/断言/显式返回等精确 ABI 行为待决定与测试 |
+| 对错误调用`value()`/成功调用`error()` | **DEC-008-02已决定**显式检查并抛含方法/原因的`std::logic_error`，内部valueless使用另一明确消息；标准算法失败仍走Failure | 必须对所有左/右值重载及Status进行未来编译/CTest核对；可选try*仅必要时加入 |
 | `ErrorDetail` 与 CLI JSONL | `run_id`、`observation_index` 可空；已定`std::forward_list<ErrorFrame>`包含完整包装链，JSONL序列化有序`causes`数组；字符串/非有限值合法编码 | Mat→Analyzer→Runner→CLI每一层的顺序、复制/移动/分配失败、JSONL转义/故障注入仍须原生验证 |
 
 **状态**：明确待批准项而非重新设计 Result/Status 方案；`MatDenseArray` 的定义仍仅见 [mat_io.md](mat_io.md)，本文件只引用，不创建第二套值类型。**AF-040 未整改**。
@@ -231,13 +231,21 @@ const Failure<Code>& error() const & {
 
 ~~~text
 wrap(inner Failure<OldCode>, newCode, newStage, newMessage):
-    outer.detail.causes = move(inner.detail.causes)  # 保留此前所有帧
-    outer.detail.causes.push_front(snapshot(inner.code, inner.detail))
-    outer.detail.stage = newStage                     # 最外层真实包装阶段
-    outer.detail.message = newMessage
-    preserve verified runId/path/variable/index on the appropriate frames
-    return Failure<NewCode>{newCode, move(outer.detail)}
+    snapshot = make_frame(inner.code, inner.detail)        # 可能抛异常；此时inner链未动
+    outer = make_outer_detail(newStage, newMessage, ...)   # 同上：先构造外层非链字段
+    outer.causes.emplace_front(move(snapshot))            # 可能分配；异常前inner链未动
+    outer.causes.splice_after(outer.causes.begin(),
+                              inner.detail.causes)         # 接到新帧之后，保留原链
+    return Failure<NewCode>{newCode, move(outer)}
 ~~~
+
+**真实异常安全缺口及整改（2026-11-13）**：旧伪代码先`outer.causes=std::move(inner.causes)`再`push_front(snapshot(inner))`。`std::forward_list::push_front`需要节点分配，一旦在此处抛`std::bad_alloc`，**内层错误链已经被搬移，调用方可能既没有新外层Failure，又丧失旧内层链的保存路径**。这违背了“每次包装不丢已知证据”的强要求。上述候选顺序现改为：
+
+- **阶段1，可失败且不修改inner**：先快照被包装层的枚举家族、Code、Stage、消息、上下文，创建最外层的非链字段，并用`emplace_front`在尚未合并旧链的**新**`std::forward_list`中创建直接内层节点；任何这阶段的异常都不能先清空inner.causes。
+- **阶段2，节点重挂**：仅在新头节点已成功建立后，调用`outer.causes.splice_after(outer.causes.begin(), inner.detail.causes)`，将原链插在新节点之后，形成`[直接内层, 原最近内层, ..., 根因]`；两个容器须使用兼容分配器（当前标准`std::allocator`），不能跨不兼容allocator进行未定义行为。`splice_after`无需把每个`ErrorFrame`重新构造或分配（但实际异常保证与复杂度须按所用标准库版本验证）。
+- **阶段3，提交**：构造最终外层`Failure<NewCode>`再向上传播。新对象构造/移动、序列化及独立RunContext记录本身仍可能抛异常；**此次修订只保证阶段1的失败不会提前移动旧链**，不能把它写成任何内存分配失败下百分之百持久化。生产边界必须如实报告无法记录的故障，不能伪称已保存完整链。
+
+**固定可判别输入**：原始`inner.causes=[Mat]`，正在包装成新的`Analysis`层；如果新节点`emplace_front`故障注入抛`bad_alloc`，应检验仍可检查原`inner.causes=[Mat]`，不允许它已经被搬空。正常路径完成后，外层Failure顶层为`Runner`时其`causes=[Analysis,Mat]`；再次包装`CLI`且真正创建新Failure时才出现`[Runner,Analysis,Mat]`，仅序列化CLI并不自动多一层。必须测试标准allocator以及插入失败、frame字符串拷贝失败、已有两层链、原Failure移动与RunContext独立保存的生命周期。
 
 **示例**：最深为`MatErrorCode::InvalidShape @ Decode`；Analyzer包装`AnalysisErrorCode::ShapeMismatch @ Analyze`；Runner包装`ExperimentErrorCode::DataMismatch @ Simulation`，则顶层Failure为Experiment、`causes`迭代顺序为`[Analysis, Mat]`。若CLI只序列化、不重新构造Failure，不应虚加CLI一层。`push_front`均摊常数时间，读取完整链是线性时间；`std::forward_list`不是数组，不能按索引随机访问。新层对象分配内存可能抛`std::bad_alloc`，发生时不能伪称错误链已构造或Manifest已持久化。独立并列失败须记录为多个事件，不要把非线性调用图假称为一条单链。
 
