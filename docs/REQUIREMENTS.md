@@ -1,6 +1,6 @@
 # Egomotion Estimation with Dense Flow Fields：软件需求规格说明书（SRS）
 
-> **状态：草案 v0.22（DEC-008-02/03/04/05/06具体决议已记录；仍无公共实现/CTest或正式冻结）。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
+> **状态：草案 v0.23（真实SH叶子Error/Result与未来公共NumericalErrorCode/Result的边界已追踪；无新软件许可/CTest或正式冻结）。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
 
 ## 1. 目的、范围与约束
 
@@ -115,7 +115,7 @@
 | REQ-NF-LOG-001 | M | 确定 | 系统应记录 RunId、SHA、环境、命令、参数、随机种子、输入身份、退出码及日志位置。 | AC-NF-LOG-001：每次正式运行记录真实RunId（若已分配）、来源SHA、参数、seed、最外**`error_domain`（枚举家族）、`error_code`、stage**与**按`std::forward_list<ErrorFrame>`顺序完整列出的每一层包装历史**，记录各帧enum家族/code/stage/message及可得path/variable/index/RunId；JSONL `causes`数组顺序最近内层至根因；**`causes=[]`时也必须保留顶层`error_domain`以区分MAT和Numerical同名`InvalidShape`**，不得压缩成单个`source_error_code`。Manifest/日志写入失败时如实报告未持久化；暂未获真实C++/CTest授权。 |
 | REQ-NF-NUM-001 | M | M（受 DEC-005 阻塞） | 系统应保持从原 MATLAB 只读源码可静态确认的数学公式、变量覆盖与更新顺序，并基于 L2/L3/L4 可获得来源进行固定输入数值对照与分模块容差审查；不要求运行 MATLAB 或取得 L1。 | AC-NF-NUM-001：必须使用 double，按源可静态确认的计算/分支/更新次序核对 L2/L3/L4；项目所有者确认 `atol=0.01, rtol=0.1` 作为**首轮探索性筛查**，不作为最终 AC PASS 阈值。MAT 变量/类型/形状/原 double 值、RNG 次数/循环次数、样本状态严格匹配；几何不变量和理想零残差有单独严格门槛；各模块最终阈值仍须 DEC-005 根据真实测试证据审定，缺失 L1 不是阻塞。 |
 | REQ-NF-NUM-002 | M | 确定 | 系统应显式报告零范数、奇异、非有限、文件损坏、未定义角度；不可误记成功。 | AC-NF-NUM-002：每类失败有非成功状态及对应日志。 |
-| REQ-NF-OOP-001 | M | 确定 | 系统应明确所有权，隔离算法公式与实验编排，不创建巨型类或错误的通用求解器。 | AC-NF-OOP-001：对象模型和独立测试核实状态、资源与依赖方向。 |
+| REQ-NF-OOP-001 | M | 确定 | 系统应明确所有权，隔离算法公式与实验编排，不创建巨型类或错误的通用求解器。 | AC-NF-OOP-001：对象模型和独立测试核实状态、资源与依赖方向；尤其已实现的`egomotion::harmonics::low_order::ErrorCode`/局部`Result<T>`**不等于**尚未实现的公共`NumericalErrorCode`/`Result<T,Code>`。未来适配须先检查局部`hasValue()`，在失败时复制原`Error.message`并保留局部enum家族/code到`std::forward_list<ErrorFrame>`；不能整数强转、静默丢弃`NotProperRotation/ComplexResidue/InvalidMethod`等无直接公共同义项，局部`std::bad_variant_access`和公共`std::logic_error`的误用异常也须分层。见[球谐LLD §2.1](design/harmonics.md)、[公共合同 §3.0.3](design/contracts.md)、既有`TC-NF-OOP-001/TC-I-RESULT-001`。低阶3/3固定SHA真实证据不等于桥接CTest。 |
 | REQ-NF-PLATFORM-001 | M | 确定 | 系统应在 Debian/Ubuntu 上以 C++17/CMake 源外构建。 | AC-NF-PLATFORM-001：实际支持的平台/编译器构建并留命令与日志。 |
 | REQ-NF-PORTABLE-001 | S | 确定 | 系统应在 Debian/Ubuntu 支持含空格和中文的输入输出路径。 | AC-NF-PORTABLE-001：实际 Unicode/空格路径可读写。 |
 | REQ-NF-RECOVERY-001 | M | 确定 | 系统应保留错误与失败 RunId 原始记录，不覆盖已有结果并可说明原因。 | AC-NF-RECOVERY-001：失败`Result<RunOutcome,E>`仅含Failure，且Failure保留最外层code/detail与**完整`std::forward_list<ErrorFrame>`包装链**；`RunContext`独占attempted/completed/valid/failed/undefined及已核部分文件/Manifest，未满足全部必要步骤不得Complete，Manifest写失败不得声称已落盘。若同一运行有多个独立失败事件，应分别保存各自完整错误链，不伪造单链分支；保留源path与合法RunId，拒绝覆盖旧结果。需未来故障注入/CTest。 |
@@ -614,6 +614,7 @@
 | v0.20 | 2026-11-12：补强AC-DC-DOMAIN-001的未初始化Result/Status伪成功防线，显式禁止默认构造并用工厂唯一建立成功/失败，增加既有TC的编译负例与move-only/异常边界；DEC-008仅候选不批准 | 评审草案，未冻结、未编译/CTest |
 | v0.21 | 2026-11-12：依据已决定DEC-008-06修正AC-I-RESULT-001/AC-NF-RECOVERY-001的RunContext部分结果/Manifest与失败Result边界；AC-NF-LOG-001要求保留家族限定原始错误和真实持久化状态；01不承诺跨版本稳定ABI，02/03/04/05细节仍待定。66REQ/TC不变 | 评审草案、未冻结、未实际CTest |
 | v0.22 | 2026-11-13：按DEC-008-05删除助手擅加的inspect-mat数值读取/打印需求，仅保留结构元数据；按DEC-008-04采用完整std::forward_list错误包装链并同步DEC-008-06的RunContext部分结果/Manifest。保留66 REQ/AC/TC及H-10/H-11延期，不声称已实施或正式冻结 | 评审草案、未执行真实C++/CTest |
+| v0.23 | 2026-11-14：增加已测低阶SH叶子局部ErrorCode/Result与公共Result/NumericalErrorCode之间的无损错误适配要求，不可错误枚举强转或异常类别混用；保留66REQ/AC/TC、当前延期与未验收范围 | 评审草案，未编译桥接/未签署 |
 
 
 ## 附录 A：内部设计约束清单（REQ-DC）
