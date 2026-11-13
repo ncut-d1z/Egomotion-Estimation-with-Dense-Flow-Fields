@@ -1,6 +1,6 @@
 # 对象模型与生命周期合同（Object Model）
 
-> **对象模型草案 v0.9（DEC-008-06已决定）；P0.7/P0.8 待评审，未冻结，拟议业务类与跨模块公共ABI尚未建立。受限低阶球谐叶子C++已独立实现并在固定SHA获得用户原生3/3 CTest证据，不能将其归入下列未创建的公共类。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入；各文档当前版本、固定 SHA 和冻结状态统一由 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记，运行结果以 [PROGRESS](PROGRESS.md) 为准。
+> **对象模型草案 v1.0（DEC-008-04/06完整错误链及失败职责已决定）；P0.7/P0.8 待评审，未冻结，拟议业务类与跨模块公共ABI尚未建立。受限低阶球谐叶子C++已独立实现并在固定SHA获得用户原生3/3 CTest证据，不能将其归入下列未创建的公共类。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入；各文档当前版本、固定 SHA 和冻结状态统一由 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记，运行结果以 [PROGRESS](PROGRESS.md) 为准。
 
 ## 1. 对象职责和约定
 
@@ -58,7 +58,7 @@
 
 **2026-11-12 状态拥有者审计补充**：`ICoefficientUpdatePolicy` 应操作本帧临时的四组比较状态，独立持久拥有者仍是 `AdaptiveMfaSession`；“比较求解器返回新的候选系数”**不是**“策略应提交新系数”。这在 `UpdateRateRunner` 与 `InitializationRunner/AdaptiveComparisonRunner` 中有确定性的不同源代码写回目标（见 [Adaptive LLD §5.0.1](design/adaptive_mfa.md) 与 [Runner §8.0.1](design/experiments.md)）。单一状态机图未画出 `dumi`，不能让图覆盖MATLAB的变量赋值事实。对应既有 `TC-F-ADAPT-003`、`TC-F-EXP-003` 和 `TC-NF-SESSION-001` 的隔离替身资格仍未执行，公共类/签名和ABI没有获得冻结或实现授权。
 
-**DEC-008-06 已决定的跨模块所有权补正（2026-11-12）**：旧表将“RunMatWriter/结果目录”整体描述为“每个RunContext独占”，与[Runner LLD §6.1](design/experiments.md)写明的`IResultWriter&`**非自拥有**矛盾。现已区分：Composition Root负责真实Writer对象及生命周期；RunContext独占本次RunId、已验证产物目录身份、有效/失败/无定义计数及Manifest；单文件Writer只对一个输出返回Status，不决定整个Complete。整次Runner只有全部必要MAT写出/回读、统计和Manifest成功才返回`Result<RunOutcome,E>::success`；中途失败必须返回Failure并保留RunContext中可核实的部分证据。主/比较系数的暂存事务同样不因Writer成功而自动提交。此为所有者已确认的设计决议而非已实现C++、CTest、正式冻结。具体测试分层见[TEST_PLAN §2.12.3](TEST_PLAN.md)。
+**DEC-008-06 已决定的跨模块所有权补正（2026-11-12）**：旧表将“RunMatWriter/结果目录”整体描述为“每个RunContext独占”，与[Runner LLD §6.1](design/experiments.md)写明的`IResultWriter&`**非自拥有**矛盾。现已区分：Composition Root负责真实Writer对象及生命周期；RunContext独占本次RunId、已验证产物目录身份、有效/失败/无定义计数及Manifest；单文件Writer只对一个输出返回Status，不决定整个Complete。整次Runner只有全部必要MAT写出/回读、统计和Manifest成功才返回`Result<RunOutcome,E>::success`；中途失败必须返回带有**完整`std::forward_list<ErrorFrame>`包装历史**的Failure，并保留RunContext中可核实的部分证据。每一层真实包装按`push_front`记录，被包装的既有链不得截断；RunContext的每个独立错误事件持有自己的完整链，Manifest若实际落盘按外→内顺序序列化。Manifest写入失败不能伪称这份链已持久化。主/比较系数的暂存事务同样不因Writer成功而自动提交。此为所有者已确认的设计决议而非已实现C++、CTest、正式冻结。具体测试分层见[TEST_PLAN §2.12.3](TEST_PLAN.md)。
 
 ## 2. 组件对象关系（设计草案）
 
