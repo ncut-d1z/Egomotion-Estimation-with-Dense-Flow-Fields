@@ -305,7 +305,7 @@ MAT 类支持范围的**最终**记录应由 docs/MAT_DATA_SCHEMA.md 单一维�
 **独立输入负例（待授权，复用`TC-F-MAT-003`、`TC-I-MAT-001`与`TC-NF-SAFETY-001`）**：准备两个内容不同的合法单变量MAT，A含`alpha`、B含`beta`；在枚举结束后替换同一路径目标，验证解码值与变量名/文件身份来自同一次打开的A，或明确非成功，绝不能出现“选A、解B”。另针对同一个inode原地修改，要求能识别或公开记录尚无可靠快照保证。所有合成/并发输入只允许在经批准的隔离目录，`origin/**`不改。本段是安全设计合同，尚未运行 Reader、编译或 CTest，错误码细节应在P0.8/DEC-008冻结，不擅自创造公共enum。
 ### 7.4.2 DEC-008-05 已决定：`inspect-mat`只消费元数据（2026-11-13）
 
-`MatResultReader::inspect(path)`的职责是只读枚举MAT**数据结构**，并返回`std::vector<MatVariableInfo>`：变量名、MAT class/data_type、rank/dims、可确定的元素数量以及元数据可确认的logical/complex/压缩信息。它不必将元数据类型限制为业务`MatDenseArray`目前只支持的非复杂密集double，也**不需要**为检查元数据解压、复制或触碰`matvar_t`变量数值载荷；原用户没有提出打印数据内容的要求。
+`MatResultReader::inspect(path)`的职责是只读枚举MAT**数据结构**，并返回`std::vector<MatVariableInfo>`：变量名、MAT class/data_type、rank/dims、可确定的元素数量以及元数据可确认的logical/complex/压缩信息。它不必将元数据类型限制为业务`MatDenseArray`目前只支持的非复杂密集double，为解析某些压缩MAT变量的**元数据头部**，底层matio可能需要读取/解压必要的压缩块字节，不能无依据保证“完全不解压任何内容”；但该结构检查**不调用数值载荷读取接口、不建立MatDenseArray、不输出或使用数值元素**；原用户没有提出打印数据内容的要求。
 
 命令`inspect-mat --file PATH [--variable NAME]`只能调用`inspect`并按真实名字可选筛选元数据；缺少变量返回MissingVariable，全部变量则按文件元数据枚举结果报告。**不得**在该命令调用`readNamed`/`readFirstCompatible`、输出NumPy/pandas式数字预览或新增`--mode/--all/--format/--precision/--rows/--cols`。这些打印方案已由用户拒绝，不可在未授权需求上继续实施。`readNamed/readFirstCompatible`仍在**真正需要数值的业务/原历史兼容读取**中保留完整解码与原`7.4.1`单句柄一致性要求，不能因结构检查的限界删除这些原有核心能力。
 
