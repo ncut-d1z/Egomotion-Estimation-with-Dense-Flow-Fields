@@ -171,7 +171,7 @@
 
 | 入口 | 必填或关键实参 | 可核验的输出 |
 |---|---|---|
-| inspect-mat | --file PATH；可选 --variable NAME、--mode strict/compat | 不写输入文件，显示 MAT 变量与错误诊断 |
+| inspect-mat | --file PATH；可选 --variable NAME（仅结构筛选） | **只打印MAT变量结构元数据**，不解码、不打印数组元素；无`--mode`或数值转储选项，原文件只读/哈希不变 |
 | run-bias-occluded / run-bias-proportional | --seed UINT32、--level NONNEG_INT | 对应两个实验的 xwerte 与六个 ywerte |
 | run-adaptive-init | 无 | 四类初始化误差 |
 | run-adaptive-comparison | --noise-scale FINITE_DOUBLE | 前四种方向误差加 rottransratio 五类 MAT |
@@ -294,7 +294,7 @@
 | data_generation/*; produced_data/* | REQ-I-RESULT-001 | P1.7, P5.4, P8.4, P8.7 | TC-I-RESULT-001 | AC-I-RESULT-001 | 未实现/未运行 |
 | data_analysis/*.m | REQ-I-ANALYSIS-001 | P9.1, P9.2, P9.3, P9.4 | TC-I-ANALYSIS-001 | AC-I-ANALYSIS-001 | 未实现/未运行 |
 
-**2026-11-12 静态追踪纠偏（仍是未批准草案）**：本节第一行此前将 `REQ-F-CLI-001/TC-F-CLI-001/AC-F-CLI-001` 的来源误填为“MATLAB five generation entries”。该 REQ 实际是只读 `inspect-mat`，用于读取/检查存档 MAT 的变量名、类型、形状和错误状态；原五个生成入口分别由 `REQ-F-CLI-002/003` 及 `REQ-F-BIAS/EXP` 负责，**不应把 MAT 检查的来源与生成实验混用**。第一行现更正为 `getflowfield.m` 的 MAT 加载语义、已有 MAT 文件的元数据/读取行为；源 `getflowfield.m` **不是** inspect-mat 程序本身，严格/兼容模式的差别由 [CLI LLD §2.0.1](design/cli.md) 和 [MAT LLD §7.4](design/mat_io.md) 提供设计合同。保持原 REQ/AC/TC/P ID 和全部 66 项追踪数不变；正式证据仍需实际 CLI、Reader/CTest/批复，不能因修正来源标签就宣布 AC 通过。
+**2026-11-12 静态追踪纠偏（仍是未批准草案）**：本节第一行此前将 `REQ-F-CLI-001/TC-F-CLI-001/AC-F-CLI-001` 的来源误填为“MATLAB five generation entries”。该 REQ 实际是只读 `inspect-mat`，用于读取/检查存档 MAT 的变量名、类型、形状和错误状态；原五个生成入口分别由 `REQ-F-CLI-002/003` 及 `REQ-F-BIAS/EXP` 负责，**不应把 MAT 检查的来源与生成实验混用**。第一行现更正为 `getflowfield.m` 的 MAT 加载语义、已有 MAT 文件的元数据/读取行为；源`getflowfield.m`**不是**inspect-mat程序，也不构成显示数据内容的需求。**2026-11-13所有者明确只要求MAT结构元数据**，具体由[CLI LLD §2.0.1](design/cli.md)与[MAT LLD §7.4.2](design/mat_io.md)负责；strict/compat完整数值解码仅属于独立业务Reader，不得作为inspect-mat选项。保持原 REQ/AC/TC/P ID 和全部 66 项追踪数不变；正式证据仍需实际 CLI、Reader/CTest/批复，不能因修正来源标签就宣布 AC 通过。
 
 ### 9.1 反向追踪：98 个 P 子任务 → REQ
 
