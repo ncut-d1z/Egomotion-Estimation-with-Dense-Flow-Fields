@@ -1,6 +1,6 @@
 # MAT I/O、路径安全与原始数据合同——详细设计草案
 
-> **LLD v0.13 候选草案（DEC-008-05已限定inspect-mat只检查元数据；仍未冻结或原生测试）。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 L2 逐值/L3 独立参考验证仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
+> **LLD v0.14 候选草案（DEC-008-04完整错误包装链与05仅结构元数据检查已同步；仍未实现/运行）。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 L2 逐值/L3 独立参考验证仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
 
 ## 1. 原始行为、文件身份和支持版本
 
@@ -310,6 +310,12 @@ MAT 类支持范围的**最终**记录应由 docs/MAT_DATA_SCHEMA.md 单一维�
 命令`inspect-mat --file PATH [--variable NAME]`只能调用`inspect`并按真实名字可选筛选元数据；缺少变量返回MissingVariable，全部变量则按文件元数据枚举结果报告。**不得**在该命令调用`readNamed`/`readFirstCompatible`、输出NumPy/pandas式数字预览或新增`--mode/--all/--format/--precision/--rows/--cols`。这些打印方案已由用户拒绝，不可在未授权需求上继续实施。`readNamed/readFirstCompatible`仍在**真正需要数值的业务/原历史兼容读取**中保留完整解码与原`7.4.1`单句柄一致性要求，不能因结构检查的限界删除这些原有核心能力。
 
 **独立可判定测试（尚未执行）**：一个多变量MAT含double矩阵、unsupported class、complex/logical、不同rank与零维数组的元数据；`inspect`仍能在不把它们业务解码为double数组的前提下准确枚举合法结构。`--variable`只筛选元数据；无`--mode`参数；前后原MAT SHA不变，不能输出任何`matvar_t::data`元素或求解器调用。具体matio 1.5.26的`Mat_VarReadNextInfo`信息可用性及元数据错误策略仍需在H-11恢复后真实验证，不能宣称所有MAT变种都能成功解析。
+
+### 7.5 DEC-008-04 完整错误包装链的 MAT 来源责任（2026-11-13）
+
+Reader/Writer检测`MatErrorCode`时只负责建立**当前最内侧故障层**：`ErrorDetail.stage`准确标记`Read/Decode/Output`，保存真实path/variable、可确认的RunId与index，`std::forward_list<ErrorFrame> causes`最初可以为空。业务Analyzer/Runner如果把失败包装为`AnalysisErrorCode`或`ExperimentErrorCode`，必须把**被包装Mat失败**作为新的`ErrorFrame`执行`push_front`，原有更深层`causes`按序保留；这与[公共合同 `3.0.2](contracts.md)和[Runner `6.1.2](experiments.md)相同。不能把Mat错误仅写成一个`source_error_code`或只保存最新`OutputFailed`而丢失具体`ReadbackMismatch`和其实际Output阶段。
+
+举例：Reader报告`MatErrorCode::InvalidShape@Decode`，Analyzer包装`AnalysisErrorCode::ShapeMismatch@Analyze`，Runner包装`ExperimentErrorCode::DataMismatch@Simulation`，结果顶层Failure是Experiment，cause链为`[Analysis, Mat]`。Writer报告`MatErrorCode::ReadbackMismatch@Output`，Runner包装`ExperimentErrorCode::OutputFailed`时，cause链至少有Mat层与其原始文件身份，**不能**因此把整个运行标Complete。原生测试还须核查异常分配或日志/Manifest写入失败时不伪报“完整错误链已持久化”；这些都尚未实施。
 
 ## 8. 可复现正/负例与计划测试实体（均未建立/未执行）
 
