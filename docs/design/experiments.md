@@ -224,7 +224,7 @@ private:
 
 ### 6.1.2 DEC-008-04：每一层包装都必须保留到RunContext/Manifest（2026-11-13）
 
-DEC-008-06的`RunContext`只管理**运行级**部分结果/Manifest，不改变DEC-008-04确定的**完整错误链表示**。在`Result<RunOutcome, ExperimentErrorCode>::failure`中，`Failure.code`记录最外层例如`SolverFailed/OutputFailed/IncompleteRun`；其`detail.causes`是`std::forward_list<ErrorFrame>`，**最近包装层在链首、最深根因在链尾**。无新包装时原样传递，不把每一次函数调用都当作包装。每次真正换外层ErrorCode时，必须先保留内层`causes`，再以`push_front`加入**当前被包装的那一层**（含枚举家族/code/stage/message/已知RunId/path/variable/index）；不允许清空链再只填最深`source_error_code`。
+DEC-008-06的`RunContext`只管理**运行级**部分结果/Manifest，不改变DEC-008-04确定的**完整错误链表示**。在`Result<RunOutcome, ExperimentErrorCode>::failure`中，`Failure.code`记录最外层例如`SolverFailed/OutputFailed/IncompleteRun`；其`detail.causes`是`std::forward_list<ErrorFrame>`，**最近包装层在链首、最深根因在链尾**。无新包装时原样传递，不把每一次函数调用都当作包装。每次真正换外层ErrorCode时，必须先创建直接内层的`ErrorFrame`、外层字段，并在**尚未移动原链**的新链中成功`emplace_front`；仅在分配完成之后，才用分配器相容的`splice_after(new_head, inner.causes)`把旧内层链插到新节点后面（含枚举家族/code/stage/message/已知RunId/path/variable/index）；不允许清空链再只填最深`source_error_code`。
 
 **真实流程例子（仅设计事实）**：
 
@@ -236,6 +236,8 @@ CLI:      serialize same Failure, no new wrapping          causes=[Analysis, Mat
 ~~~
 
 `RunContext`对**每一次失败事件**保存当前完整最外Failure及其全部causes；可用独立顺序容器保存若干Failure事件（每个事件内部的错误链唯一采用`std::forward_list<ErrorFrame>`），不在失败`Result`里隐藏`RunOutcome`。Manifest成功落盘时按同样的外→内顺序序列化`causes`数组、保留顶层code/stage和RunId。若先有SolverFailed，随后**独立发生**Manifest写入失败，必须记录为**两个独立错误事件**，而非伪造一条不真实的因果单链。无法落盘时应如实返回`OutputFailed`及可得的错误信息，不能假报“错误链已持久化”；`std::forward_list::push_front`分配内存也可能异常，不能在内存失败时假造成功记录。
+
+**异常安全负例（2026-11-13）**：旧的“先`std::move(inner.causes)`、再`push_front`分配新帧”如果发生`std::bad_alloc`，会使调用方失去旧链。现在Runner必须遵守[公共合同 §3.0.2](contracts.md)与[TODO §2.2 F](../TODO.md)的**先分配新节点、后`splice_after`转移旧节点**次序；新帧分配故障时旧`inner.causes`应保持原样。`splice_after`本身要求相同allocator且不抛，但以后真正保存RunContext/Manifest、序列化JSONL仍可能失败，不能说“完整链保证已落盘”。对应已有`TC-NF-RECOVERY-001/TC-NF-LOG-001`待测。
 
 **对Writer/Session的映射**：Writer仅提供单文件`Status<MatErrorCode>`与其错误链；Runner包装为`ExperimentErrorCode::OutputFailed`时保留前一`Failure`为第一个`ErrorFrame`并继承旧链。Adaptive帧中某比较或主求解出错时，暂存主/比较系数不能部分提交，但已经发生的错误包装链需保留，不得因回滚状态而销毁失败原因。Comparison八次第5次失败仍expected=8、completed=4，若Manifest可写则Incomplete，若写失败则明确持久化未确认；不能仅在`RunContext`存最初根因而丢掉中间包装。
 
