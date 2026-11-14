@@ -2,7 +2,7 @@
 
 > **长期参考边界**：本 Runner **不要求 MATLAB/Octave 运行或采集 L1**；原 .m 仅作只读源码依据，结果验收使用 L2 已存 MAT、L3 独立逐帧/逐轮参考与 L4 统计，参见 [长期政策](../golden/NO_MATLAB_EXECUTION_POLICY.md)。
 
-> **LLD v0.13草案（补Bias两噪声模型单选及投影后相关性的原源码控制流；尚未实现或运行CTest）。** 来源：bias_test/data_generation 中 2 个入口；adaptive_matched_filter_test/data_generation 中 3 个入口。对应 P5、P8、REQ-F-BIAS、REQ-F-EXP、REQ-F-CLI 与 REQ-I-RESULT。
+> **LLD v0.14草案（明确Bias选型/非法模式门禁归Runner、底层噪声模型只依赖数值接口且coefficient显式传参；尚未实现或运行CTest）。** 来源：bias_test/data_generation 中 2 个入口；adaptive_matched_filter_test/data_generation 中 3 个入口。对应 P5、P8、REQ-F-BIAS、REQ-F-EXP、REQ-F-CLI 与 REQ-I-RESULT。
 
 ## 1. 实验入口及源代码实际参数
 
@@ -36,7 +36,9 @@ Output: Result<RunOutcome, ExperimentErrorCode>（成功时为 RunOutcome 及记
 - AdaptiveComparisonRunner 的前四种结果累计后除以 **8**；rottransratio 按原脚本在循环中的覆盖次序保留。UpdateRateRunner 的输出系数状态分别保存，不和当前主 akkoeff 共享可写对象。
 - RunContext 跨实验不可共享可变状态；**单步 Adaptive 求解失败不得提交无效主系数**；如果依赖状态无法安全延续，就停止本条连续序列。独立样本或独立实验可记失败后继续其他样本，前提是记录真实有效分母；不得将失败静默改成正常结果。
 
-**2026-11-14 Bias噪声策略互斥的业务编排合同**：`BiasOccluded`仅调用`MeanMagnitudeGaussianNoise`，源`fixed_kugel_symmetric_perfectpoints_randomnear.m`逐分量乘`mean(||p_ideal||)`；`BiasProportional`仅调用`ComponentProportionalGaussianNoise`，源`fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m`逐分量乘相应`p_ideal,c`。任何**一次**场景不能两个模型叠加，否则会额外消耗高斯抽样、改变源分布；源每点x/y/z各抽一次`randn`，严格`3N`个normal（零系数、零分量、总流长零也不优化跳过）。`IFlowNoiseModel`调用方应以`ExperimentKind`确定**唯一模式**并注入对应实现，不能用两个布尔模型开关各自独立生效。**先加三维高斯、再用`P=I-dd^T`投影**是源实际运算次序；投影后的三个坐标噪声一般相关，即使原`randn`输入独立，也不得用额外两维噪声抽样替代`3N`次。固定`d=(1,1,0)/√2,p=(1,-1,0),g=(1,0,0),c=1`时，两个单独噪声模型的最终增量分别为`(1/√2,-1/√2,0)`和`(1/2,-1/2,0)`，与误选“双模型”产生的和不同。严格依据[采样LLD §2.1](sampling_noise.md)，该测试为[TEST_PLAN §2.2.1](../TEST_PLAN.md)的隔离数值输入，不把单点夹具冒充原6/8面Bias运行。若上游传入非法双选配置，应在随机抽样前拒绝，并将失败通过已定`std::forward_list<ErrorFrame>`来源链报告，不得把一半噪声运行保存成Complete。未执行Runner/CTest。
+**2026-11-14 Bias噪声策略互斥的业务编排合同**：`BiasOccluded`仅调用`MeanMagnitudeGaussianNoise`，源`fixed_kugel_symmetric_perfectpoints_randomnear.m`逐分量乘`mean(||p_ideal||)`；`BiasProportional`仅调用`ComponentProportionalGaussianNoise`，源`fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m`逐分量乘相应`p_ideal,c`。任何**一次**场景不能两个模型叠加，否则会额外消耗高斯抽样、改变源分布；源每点x/y/z各抽一次`randn`，严格`3N`个normal（零系数、零分量、总流长零也不优化跳过）。`IFlowNoiseModel`调用方应以`ExperimentKind`确定**唯一模式**并注入对应实现，不能用两个布尔模型开关各自独立生效。**先加三维高斯、再用`P=I-dd^T`投影**是源实际运算次序；投影后的三个坐标噪声一般相关，即使原`randn`输入独立，也不得用额外两维噪声抽样替代`3N`次。固定`d=(1,1,0)/√2,p=(1,-1,0),g=(1,0,0),c=1`时，两个单独噪声模型的最终增量分别为`(1/√2,-1/√2,0)`和`(1/2,-1/2,0)`，与误选“双模型”产生的和不同。严格依据[采样LLD §2.1](sampling_noise.md)，该测试为[TEST_PLAN §2.2.1](../TEST_PLAN.md)的隔离数值输入，不把单点夹具冒充原6/8面Bias运行。**唯一合法模型必须在Runner首次抽样前确定并注入**：不存在“两种模式同时打开”的合法输入；若非法/冲突配置，在所有`uniform()/normal()`消费前由Runner返回`ExperimentErrorCode::InvalidParameters`（Parse/Simulation由真实失败阶段和既有exit映射确定），并记录完整`ErrorFrame`链。下层`egomotion_simulation`仅调用已声明的`IFlowNoiseModel::apply(const FlowField&,double coefficient,IRandomSource&)`，失败为`Result<FlowField,NumericalErrorCode>`，不能依赖`ExperimentKind`或`ExperimentErrorCode`，否则产生架构反向依赖。源Noise `fehlerprozent`必须显式绑定为`coefficient`，而非从不存在的隐式状态读取。详见[采样LLD §2/§3](sampling_noise.md)；该接口分层修复不改源公式、不新增公共enum，未执行Runner/CTest。
+
+**2026-11-14 实验/仿真分层与错误码所有权的静态反例**：原`generate_bias_flow`伪代码漏写`coefficient`形参，新增非法模式判断时还一度将`ExperimentErrorCode::InvalidParameters`放到仿真层，违反拟议[ARCHITECTURE §4](../ARCHITECTURE.md)的“simulation→contracts/sampling，不依赖experiments”。已在[采样LLD](sampling_noise.md)纠正并与本Runner保持一致：**验证ExperimentKind/唯一模式、按其创建IFlowNoiseModel实例、拒绝矛盾配置**属于Runner，返回`ExperimentErrorCode`；**实际3N抽样、单模型噪声及投影**属于仿真具体实现，通过`IFlowNoiseModel::apply`返回`NumericalErrorCode`。对该下层失败由Runner**真正包装**为已有`ExperimentErrorCode::SolverFailed`（或按实际阶段选择其他既有合适错误），必须依DEC-008-04在`std::forward_list<ErrorFrame>`保留数值原错误帧，不可强行转换枚举/改变根因。实验控制流在做完模式校验前不能消费任何RNG。给出固定RNG计数和模拟下层错误传播的既有TC输入见[TEST_PLAN §2.2.2](../TEST_PLAN.md)。这是源与架构一致性的设计合同，未实现/构建。
 
 ## 3. 候选实验和报告结构
 
