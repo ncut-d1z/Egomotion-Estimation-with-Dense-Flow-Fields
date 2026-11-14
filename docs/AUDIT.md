@@ -1,6 +1,6 @@
 # 全工程文档规范审计（AUDIT）
 
-> **状态：文档规范审计规则 v1.0，评审范围已定义，非正式项目基线。** 基准分支 `dev-plan-P0-P1-mat-dictionary-probe`，启动提交 [`cb3129b1510f`](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82)。配套动态审计与整改台账：[AUDIT_PROGRESS.md](AUDIT_PROGRESS.md)。本文件是**规范和输入意见基线**，不是声称下列全部文档已经逐项通过独立审计。
+> **状态：文档规范审计规则 v1.1，2026-11-15已补延期目标单列及全目录复核口径，仍非正式项目基线。** 基准分支 `dev-plan-P0-P1-mat-dictionary-probe`，启动提交 [`cb3129b1510f`](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/commit/cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82)。配套动态审计与整改台账：[AUDIT_PROGRESS.md](AUDIT_PROGRESS.md)。本文件是**规范和输入意见基线**，不是声称下列全部文档已经逐项通过独立审计。
 
 ## 一、评价基准与总体意见
 
