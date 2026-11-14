@@ -1,12 +1,12 @@
 # 全工程文档规范审计进度与整改台账（AUDIT_PROGRESS）
 
-> **状态：审计进度 v2.4，第二十三批全目录复核首先发现并实修DAR-040：上轮DAR-038把无ExperimentKind的Writer错当能校验每入口save白名单，已将每入口集合门禁归Runner并保留Writer自身目标/内部同名与安全检查；第二十二批实修CurveSeries无法追踪跨K个运行的多MAT输入及.m Git blob与MAT SHA-256两类身份混淆；同步分析LLD/SRS/TEST_PLAN三份正文；第二十一批实修MAT Writer双变量名身份校验：明确MatDenseArray内部name与目标MAT文件基名一致性，新增两个有效白名单名字错配仍须预写拒绝的可判别负例并同步SRS/Runner/TEST_PLAN；第二十批实修Bias场景完整返回值构造与理想流Result未检查缺口，已以两视线固定uniform/normal和成功/失败路径补入采样LLD、Runner、TEST_PLAN；第十九批真实整改Bias噪声合成的未绑定coefficient实参与上/下层错误码反向依赖，纠正OBJECT_MODEL公共apply签名及CompositionRoot装配责任，补签名/噪声有符号分量/错误链/固定RNG负例；第十八批噪声模型互斥和协方差证据继续保留；六项延期及DEC-008已决定范围不变；仍按36文档/既有五项综合阻塞继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
+> **状态：审计进度 v3.0，第二十四批完成docs/全目录64文件回退复核，36份正式文档均完成本轮限定审计；按所有者新口径，综合DAR-001～005转为无限期延期并不计未整改（总40/已整改35/未整改0/延期5），没有宣称软件测试或正式基线通过。第二十三批全目录复核首先发现并实修DAR-040：上轮DAR-038把无ExperimentKind的Writer错当能校验每入口save白名单，已将每入口集合门禁归Runner并保留Writer自身目标/内部同名与安全检查；第二十二批实修CurveSeries无法追踪跨K个运行的多MAT输入及.m Git blob与MAT SHA-256两类身份混淆；同步分析LLD/SRS/TEST_PLAN三份正文；第二十一批实修MAT Writer双变量名身份校验：明确MatDenseArray内部name与目标MAT文件基名一致性，新增两个有效白名单名字错配仍须预写拒绝的可判别负例并同步SRS/Runner/TEST_PLAN；第二十批实修Bias场景完整返回值构造与理想流Result未检查缺口，已以两视线固定uniform/normal和成功/失败路径补入采样LLD、Runner、TEST_PLAN；第十九批真实整改Bias噪声合成的未绑定coefficient实参与上/下层错误码反向依赖，纠正OBJECT_MODEL公共apply签名及CompositionRoot装配责任，补签名/噪声有符号分量/错误链/固定RNG负例；第十八批噪声模型互斥和协方差证据继续保留；六项延期及DEC-008已决定范围不变；仍按36文档/既有五项综合阻塞继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
 
 ## 1. 口径、状态和可复核方式
 
-- **36个目标文档**：对应用户两张表的17个核心规范/专题和19个支撑/过程/证据文档。当前审计文件 `AUDIT.md` 已替换为新的全工程范围，但低阶球谐原版仍在[固定历史提交](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82/docs/AUDIT.md)。新增本文件是过程台账，不在36个待审目标中重复计数。
+- **36个目标文档**：对应用户两张表的17个核心规范/专题和19个支撑/过程/证据文档。**2026-11-15全目录复核另读64实际文件（含这36正式文件和28过程/历史附件），不把后者混入36正式审计分母。**当前审计文件 `AUDIT.md` 已替换为新的全工程范围，但低阶球谐原版仍在[固定历史提交](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82/docs/AUDIT.md)。新增本文件是过程台账，不在36个待审目标中重复计数。
 - **文件审计状态**：`未审计` → `正在审计` → `已完成限定审计`。结束审计只代表用户给定维度与记录的核查范围已检查、缺口已明确登记，**不表示文档冻结/代码通过/缺口全部修复**。
-- **整改状态**：`未整改`／`已整改`，另设阻塞性质 `纯文档/需软件证据/需批准`。只有完整验收条件满足、相应固定提交或外部批准可追溯时才可标已整改；不得为了提高比例拆问题。
+- **整改状态（三态）**：`已整改`／`未整改`／`无限期延期`。第三态只属于需要已明确无限期推迟的生产实施、真实测试/性能/容差或所有者签署的综合目标，**单列延期，不计入未整改，也不能归入已整改**；软件与批准证据依旧缺失。正式审计仍依[AUDIT §5.2](AUDIT.md)；不得为了提高比例拆问题。
 - **证据字段**：DOC编号、路径、初始用户判断、实际检查点、文件blob、问题ID、修订提交、剩余风险；对 66TC/98P/27DAG/L2/L3/L4 只记录有来源的数值，不伪造代码执行。
 - **历史隔离**：`AUDIT_PROCESS.md`仍是SH-01～SH-06的低阶球谐专项理论整改记录，原97项全工程历史另有固定提交；本次新DAR不复用旧AF状态或承诺它们已消失。
 
@@ -18,19 +18,19 @@
 | DOC-002 | `ARCHITECTURE.md` | 草案级部分符合 | 27拟议DAG与真实构建/ADR | 已完成限定审计 | HLD v0.10：设计图27箭头=25内部+2外部；根CMake仅低阶SH及3CTest，部署/DEC-006仍待 |
 | DOC-003 | `OBJECT_MODEL.md` | 草案级部分符合 | 候选类/生命周期/签署 | 已完成限定审计 | 对象模型v1.2：修复类图IFlowNoiseModel::perturb(flow,rng)漏系数与唯一公共apply冲突；CompositionRoot注入正确采样器/噪声类，统一ComponentProportionalGaussianNoise名称且不虚构kind()判断，提交13c1d03c/26bc8580，真实装配集成仍待 |
 | DOC-004 | `design/README.md` | 索引符合，非LLD | 实际Markdown个数与模块覆盖条目 | 已完成限定审计 | 14份真实目录Markdown=1索引+1跨模块LLD+9模块LLD+1专题LLD+2理论，10个覆盖行；提交3614b28 |
-| DOC-005 | `design/contracts.md` | 草案级部分符合 | Result/ABI/ODR/异常线程/自包含 | 正在审计 | contracts v1.3明确leaf Error{局部ErrorCode,const char*静态消息}/Result与公共NumericalErrorCode/Result不等价，禁止enum整数static_cast与局部bad_variant_access假冒科学Failure；未来跨层用完整ErrorFrame复制源code/message保真；提交a8d7b90，公共适配器未实施 |
+| DOC-005 | `design/contracts.md` | 草案级部分符合 | Result/ABI/ODR/异常线程/自包含 | 已完成限定审计 | contracts v1.3明确leaf Error{局部ErrorCode,const char*静态消息}/Result与公共NumericalErrorCode/Result不等价，禁止enum整数static_cast与局部bad_variant_access假冒科学Failure；未来跨层用完整ErrorFrame复制源code/message保真；提交a8d7b90，公共适配器未实施；2026-11-15按本次限定范围重新核对：Result/Status 禁默认构造、完整ErrorFrame与SH叶子接口边界，来源/证据身份与已结DAR无回退；数学全域、生产原生/CTest或正式批准仍不得据此宣称已完成 |
 | DOC-006 | `design/cli.md` | 草案级部分符合 | CLI负例、RunId、JSONL、DEC-008 | 已完成限定审计 | cli v0.12：JSONL顶层error_domain在causes=[]也必须存在，Mat/Numerical InvalidShape直接报错不会碰撞，不从message或exit推断家族；提交ad52013，真实CLI未编写 |
-| DOC-007 | `design/mat_io.md` | 草案级部分符合 | Reader/Writer、TOCTOU、写回读、L2 | 正在审计 | mat_io v0.15：新增DAR-038严格Writer目标name与内部MatVariableInfo.name同一性、预暂存拒绝与固定别名冲突负例；此前§7.4.2限定inspect-mat仅读meta、保留业务Reader完整解码；§7.4纠正旧兼容单变量表的二次open指令；§7.5要求完整Mat→Analyzer/Runner包装链；进一步澄清压缩MAT元数据解析可能需解压必要头部字节，但**禁止数值载荷解码/显示**，提交b3c6793/a9a740e/36c1fa3/5fbf6fb，尚无真实matio/CTest |
-| DOC-008 | `design/sampling_noise.md` | 草案级部分符合 | 生产几何/RNG负例/CTest | 正在审计 | sampling_noise v0.13：新增DAR-037的完整FlowSynthesisResult构造、逐阶段Result检查与可复核双视线固定值，二次实修DirectionSet/FlowField字段、0-based列访问与非有限门禁；原有实修generate_bias_flow遗漏coefficient、把ExperimentErrorCode下沉Simulation层及通过隐式函数猜几何模式；明确注入selected_sampler.sample(level)与selected_model.apply(flow,coefficient,rng)，错误只保留NumericalErrorCode并在上层包装；提交6dfcabed/7794781c/6b92e11c，无生产C++/CTest |
+| DOC-007 | `design/mat_io.md` | 草案级部分符合 | Reader/Writer、TOCTOU、写回读、L2 | 已完成限定审计 | mat_io v0.15：新增DAR-038严格Writer目标name与内部MatVariableInfo.name同一性、预暂存拒绝与固定别名冲突负例；此前§7.4.2限定inspect-mat仅读meta、保留业务Reader完整解码；§7.4纠正旧兼容单变量表的二次open指令；§7.5要求完整Mat→Analyzer/Runner包装链；进一步澄清压缩MAT元数据解析可能需解压必要头部字节，但**禁止数值载荷解码/显示**，提交b3c6793/a9a740e/36c1fa3/5fbf6fb，尚无真实matio/CTest；2026-11-15按本次限定范围重新核对：单句柄Reader、MAT双名称匹配和DAR-040每入口save分层，来源/证据身份与已结DAR无回退；数学全域、生产原生/CTest或正式批准仍不得据此宣称已完成 |
+| DOC-008 | `design/sampling_noise.md` | 草案级部分符合 | 生产几何/RNG负例/CTest | 已完成限定审计 | sampling_noise v0.13：新增DAR-037的完整FlowSynthesisResult构造、逐阶段Result检查与可复核双视线固定值，二次实修DirectionSet/FlowField字段、0-based列访问与非有限门禁；原有实修generate_bias_flow遗漏coefficient、把ExperimentErrorCode下沉Simulation层及通过隐式函数猜几何模式；明确注入selected_sampler.sample(level)与selected_model.apply(flow,coefficient,rng)，错误只保留NumericalErrorCode并在上层包装；提交6dfcabed/7794781c/6b92e11c，无生产C++/CTest；2026-11-15按本次限定范围重新核对：固定3N高斯、显式coefficient、完整FlowSynthesisResult与N×6索引，来源/证据身份与已结DAR无回退；数学全域、生产原生/CTest或正式批准仍不得据此宣称已完成 |
 | DOC-009 | `design/trajectory.md` | 草案级部分符合 | Sophus真实依赖及几何L3 | 已完成限定审计 | trajectory v0.6：在既有旋转尺度退化审阅外，补球外内向正根4/9、球面内外向及严格球内前置检查；固定分数推导复核，提交6dbecb5；Sophus/C++/L3仍未验收 |
-| DOC-010 | `design/kvd.md` | 草案级部分符合 | 36轮数学非真实CTest/200轮 | 正在审计 | KvD v0.10：对照原两个误差.m恢复非平方欧氏/角度精确公式、零真值假零残差和5组输入；§4撤销不存在的SingularGeometry/NonFinite错误码而统一公共enum；§5将36轮已生成Wolfram固定参考与未执行CTest分列；提交9c80e41/6fd3220，仍需原生实现及全面数学审查 |
-| DOC-011 | `design/harmonics.md` | 草案级部分符合 | 低阶叶子有实测，公共ABI未冻结 | 正在审计 | harmonics v0.16：实际读当前low_order.hpp/low_order_source_projection.cpp/test头与实现blob，对照8个局部ErrorCode、Result错态bad_variant_access，补适配责任及3项无一一公共同义项；纠正本节source_projection‘未编译’与固定5e522198下3/3 CTest证据矛盾；提交bc30242，公开接口与Bridge未实现 |
-| DOC-012 | `design/adaptive_mfa.md` | 草案级部分符合 | Session原子提交、病态输入和真实软件 | 正在审计 | Adaptive v0.8：与三原始入口源blob逐行核对，Update rates在i=134–182先旋转、按周期刷新本帧主旧系数，比较第一返回写入dumi弃置，仅主返回提交；原比较error不用于保存角误差；固定替身5帧静态重放，提交ba06bea/8dd5dd2/ba3d8c4，Session/CTest仍待 |
-| DOC-013 | `design/experiments.md` | 草案级部分符合 | Runner/Writer/Manifest/Ctest | 正在审计 | experiments v0.16：新增DAR-038写出内部/目标同名约束及回读身份门禁；此前DAR-037的理想流/噪声/完整场景返回类型区分和失败不提交要求；原Runner只验证有效参数/传播底层NumericalErrorCode，具体模型由CompositionRoot按ExperimentKind唯一装配；RNG中断可记录独立失败或必要时IncompleteRun，禁止仿真错误随意标SolverFailed；提交63ebbeb4/7b7f9df4/b85798d1，尚无Runner测试 |
-| DOC-014 | `design/analysis_plotting.md` | 草案级部分符合 | 分析L2/L3曲线、CTest/绘图隔离 | 正在审计 | analysis v0.14：新增DAR-039每条曲线实际MAT输入列表、原.m源码Git blob与原MAT内容SHA-256独立身份及缺哈希不得冒充已验；此前Mat MissingVariable包装成Analysis错误时保留Mat原Frame并允许Runner继续push_front，无source_error_code单根因捷径；提交d2418c8，测试尚未运行 |
+| DOC-010 | `design/kvd.md` | 草案级部分符合 | 36轮数学非真实CTest/200轮 | 已完成限定审计 | KvD v0.10：对照原两个误差.m恢复非平方欧氏/角度精确公式、零真值假零残差和5组输入；§4撤销不存在的SingularGeometry/NonFinite错误码而统一公共enum；§5将36轮已生成Wolfram固定参考与未执行CTest分列；提交9c80e41/6fd3220，仍需原生实现及全面数学审查；2026-11-15按本次限定范围重新核对：两条KvD原source伪代码、旧t旋转更新、原36轮数学参考身份，来源/证据身份与已结DAR无回退；数学全域、生产原生/CTest或正式批准仍不得据此宣称已完成 |
+| DOC-011 | `design/harmonics.md` | 草案级部分符合 | 低阶叶子有实测，公共ABI未冻结 | 已完成限定审计 | harmonics v0.16：实际读当前low_order.hpp/low_order_source_projection.cpp/test头与实现blob，对照8个局部ErrorCode、Result错态bad_variant_access，补适配责任及3项无一一公共同义项；纠正本节source_projection‘未编译’与固定5e522198下3/3 CTest证据矛盾；提交bc30242，公开接口与Bridge未实现；2026-11-15按本次限定范围重新核对：旧CS基/三旋转来源与固定5e522198局部SH3/3证据，来源/证据身份与已结DAR无回退；数学全域、生产原生/CTest或正式批准仍不得据此宣称已完成 |
+| DOC-012 | `design/adaptive_mfa.md` | 草案级部分符合 | Session原子提交、病态输入和真实软件 | 已完成限定审计 | Adaptive v0.8：与三原始入口源blob逐行核对，Update rates在i=134–182先旋转、按周期刷新本帧主旧系数，比较第一返回写入dumi弃置，仅主返回提交；原比较error不用于保存角误差；固定替身5帧静态重放，提交ba06bea/8dd5dd2/ba3d8c4，Session/CTest仍待；2026-11-15按本次限定范围重新核对：近度均值负支、M非对称、UpdateRates系数返回弃置与Session失败，来源/证据身份与已结DAR无回退；数学全域、生产原生/CTest或正式批准仍不得据此宣称已完成 |
+| DOC-013 | `design/experiments.md` | 草案级部分符合 | Runner/Writer/Manifest/Ctest | 已完成限定审计 | experiments v0.16：新增DAR-038写出内部/目标同名约束及回读身份门禁；此前DAR-037的理想流/噪声/完整场景返回类型区分和失败不提交要求；原Runner只验证有效参数/传播底层NumericalErrorCode，具体模型由CompositionRoot按ExperimentKind唯一装配；RNG中断可记录独立失败或必要时IncompleteRun，禁止仿真错误随意标SolverFailed；提交63ebbeb4/7b7f9df4/b85798d1，尚无Runner测试；2026-11-15按本次限定范围重新核对：CompositionRoot与Writer生存期、MAT每入口save、RunContext错误链，来源/证据身份与已结DAR无回退；数学全域、生产原生/CTest或正式批准仍不得据此宣称已完成 |
+| DOC-014 | `design/analysis_plotting.md` | 草案级部分符合 | 分析L2/L3曲线、CTest/绘图隔离 | 已完成限定审计 | analysis v0.14：新增DAR-039每条曲线实际MAT输入列表、原.m源码Git blob与原MAT内容SHA-256独立身份及缺哈希不得冒充已验；此前Mat MissingVariable包装成Analysis错误时保留Mat原Frame并允许Runner继续push_front，无source_error_code单根因捷径；提交d2418c8，测试尚未运行；2026-11-15按本次限定范围重新核对：Bias K-run末次x与平均y、CurveSeries多MAT来源/可选绘图，来源/证据身份与已结DAR无回退；数学全域、生产原生/CTest或正式批准仍不得据此宣称已完成 |
 | DOC-015 | `design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 专题草案级部分符合 | 旧版本CMake描述与最新低阶叶子验收区分 | 已完成限定审计 | 对照旧1/1说明与用户固定5e522198 3/3；仅低阶叶子，公共ABI仍未实现；提交4a62a9d |
-| DOC-016 | `design/SH_DISCRETE_REFIT_CONSISTENCY.md` | 理论专题合格，非LLD | 不能替代模块LLD/测试/批准 | 正在审计 | 已核专题定位与35项数学辅助检查，待独立逐式复算 |
-| DOC-017 | `design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md` | 理论专题合格，非LLD | 不能替代Adaptive真实接口/实现 | 正在审计 | 理论专题v0.2：从M2/M3的叉积矩阵推导M对称充要条件mean((mu-1)d)=0，证明均值1不保证对称；提交28c20f6/555eeea，尚未逐式独立重算本专题其它全部25项 |
+| DOC-016 | `design/SH_DISCRETE_REFIT_CONSISTENCY.md` | 理论专题合格，非LLD | 不能替代模块LLD/测试/批准 | 已完成限定审计 | 已核专题定位与35项数学辅助检查，待独立逐式复算；2026-11-15按本次限定范围重新核对：离散G/D逐项算子、非幂等/负近度反例的数学专题适用域，来源/证据身份与已结DAR无回退；数学全域、生产原生/CTest或正式批准仍不得据此宣称已完成 |
+| DOC-017 | `design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md` | 理论专题合格，非LLD | 不能替代Adaptive真实接口/实现 | 已完成限定审计 | 理论专题v0.2：从M2/M3的叉积矩阵推导M对称充要条件mean((mu-1)d)=0，证明均值1不保证对称；提交28c20f6/555eeea，尚未逐式独立重算本专题其它全部25项；2026-11-15按本次限定范围重新核对：负近度除旧s、M条件数与非对称/纯旋转退化的数学专题适用域，来源/证据身份与已结DAR无回退；数学全域、生产原生/CTest或正式批准仍不得据此宣称已完成 |
 | DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 已完成限定审计 | TEST_PLAN §2.6补DAR-039两RunId三MAT来源+分别独立哈希及K=2固定数值负例；此前§2.9补DAR-038目标名与内部name两合法白名单值错配、空名的预写失败与正确名回读；此前§2.2.3补两视线精确近度、理想/含噪FlowField、全部场景输出、2 uniform/6 normal及失败中断；原§2.2.2补显式coefficient、唯一apply接口与无反向依赖，CompositionRoot对应采样器+噪声实现的level0 6/8条视线和18/24次normal对照及p_y=-1有符号分量反例；提交c2d470ae/488dbc40/cc4c6f4b，66TC不变且未原生验证 |
 | DOC-019 | `PLAN.md` | WBS草案符合 | 98P、M0–M5、真实工期/性能 | 已完成限定审计 | PLAN R-02实改：论文缺失风险改为已取得IR96/IR98/Choi、三路线低阶SH固定证据与未完成公共接口/集成风险分列；提交6f2a426；不冒称27DAG/预算/新CTest已验收 |
 | DOC-020 | `PROGRESS.md` | 符合证据登记 | 固定SHA与历史执行/新状态分离 | 已完成限定审计 | 本轮已核历史E-DOC/SH真实证据与旧97AF；正文修订b69e17c |
@@ -57,11 +57,11 @@
 
 | 目标 | 涉及文件 | 发现/整改方向（待实际验证） | 完整验收条件 | 阻塞性质 | 状态 |
 |---|---|---|---|---|---|
-| DAR-001 | REQUIREMENTS.md；DOCUMENT_BASELINE_REGISTER.md | SRS AC→LLD路径/章节/版本/blob/批准身份目前不是正式闭合链 | 将现有导航与冻结义务明确分离，取得正式各方批准及固定身份再可结案 | 需批准／冻结 | 未整改 |
-| DAR-002 | ARCHITECTURE.md；PLAN.md | 27条设计DAG、部署/性能预算和ADR容易与真实构建混淆 | 逐项标出设计/实测/批准三态；真实target/性能及DEC-006后才能宣布完成 | 需软件证据／批准 | 未整改 |
-| DAR-003 | design/contracts.md；design/cli.md；design/mat_io.md；design/adaptive_mfa.md；design/harmonics.md | 大量公共接口/ABI、Session与错误合同仍是候选签名 | 先核正文是否注明未实现，正式代码/CTest/ABI与批准俱全才结案 | 需授权测试／批准 | 未整改 |
-| DAR-004 | TEST_PLAN.md；PROGRESS.md；golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md | 66 TC的候选覆盖与球谐3/3固定SHA的真实执行必须分层 | 表头/现行段显式区分历史/执行/批准；完整66TC要真实软件证据 | 需软件证据／批准 | 未整改 |
-| DAR-005 | DOCUMENT_BASELINE_REGISTER.md；REQUIREMENTS.md | 36文件版本矩阵是较早固定快照而非当前HEAD基线 | 补真实当前HEAD规范身份/范围/批准人/日期/例外后才允许签正式冻结 | 需批准／当前SHA | 未整改 |
+| DAR-001 | REQUIREMENTS.md；DOCUMENT_BASELINE_REGISTER.md | SRS AC→LLD路径/章节/版本/blob/批准身份目前不是正式闭合链 | 将现有导航与冻结义务明确分离，取得正式各方批准及固定身份再可结案 | 需批准／冻结 | 无限期延期 |
+| DAR-002 | ARCHITECTURE.md；PLAN.md | 27条设计DAG、部署/性能预算和ADR容易与真实构建混淆 | 逐项标出设计/实测/批准三态；真实target/性能及DEC-006后才能宣布完成 | 需软件证据／批准 | 无限期延期 |
+| DAR-003 | design/contracts.md；design/cli.md；design/mat_io.md；design/adaptive_mfa.md；design/harmonics.md | 大量公共接口/ABI、Session与错误合同仍是候选签名 | 先核正文是否注明未实现，正式代码/CTest/ABI与批准俱全才结案 | 需授权测试／批准 | 无限期延期 |
+| DAR-004 | TEST_PLAN.md；PROGRESS.md；golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md | 66 TC的候选覆盖与球谐3/3固定SHA的真实执行必须分层 | 表头/现行段显式区分历史/执行/批准；完整66TC要真实软件证据 | 需软件证据／批准 | 无限期延期 |
+| DAR-005 | DOCUMENT_BASELINE_REGISTER.md；REQUIREMENTS.md | 36文件版本矩阵是较早固定快照而非当前HEAD基线 | 补真实当前HEAD规范身份/范围/批准人/日期/例外后才允许签正式冻结 | 需批准／当前SHA | 无限期延期 |
 | DAR-006 | AUDIT.md；AUDIT_PROCESS.md；design/README.md；DOCUMENT_BASELINE_REGISTER.md | 此前AUDIT.md属于球谐专项，与本轮全工程文档审计及目录新增专题文件的分类/计数不一致 | 建立全工程审计规则和独立进度，固定球谐历史来源，核对design目录实际分类/数量并更新相关文字 | 纯文档 | 已整改 |
 
 | DAR-007 | design/README.md；design/SH_ROTATION_IVANIC_RUEDENBERG.md | 同一个现行低阶球谐模块在某处写“3/3原生已测”，另一处仍写“仅旧1/1且新增2项未验收”；专题LLD未列投影源和两个新CTest | 按固定5e522198区分历史1/1与3/3、受限叶子与未建公共ABI，不改变真实授权/批准 | 纯文档 | 已整改 |
@@ -403,6 +403,8 @@
 
 ## 5. 各轮计数与变化
 
+**第24阶段：全64份文件重读与三态单列**：39→40个目标（+1真实DAR-040），34→35已整改（+1），未整改5→0（−5仅由延期单列），延期0→5（+5仅重新分类）；正式文件36不变，已完成限定26→36、正在10→0、未审0不变。新口径以本轮§8为准，历史各轮不回填。
+
 **第23阶段本次实修**：新增DAR-040并落实五份技术/需求/测试正文，本阶段末尾正式回读后计算目标与状态，保留第22阶段历史原始计数，不预先声称完成待办软件验收。
 
 **第22阶段相对上一轮**：整改目标38→39（+1）、已整改33→34（+1）、未整改5→5（0）；审计文件36、已完成限定26、正在10、未审0不变。已修分析LLD多来源与SHA身份、SRS/TEST_PLAN，未做软件测试。
@@ -475,6 +477,8 @@
 | 第20阶段：Bias完整场景返回与理想流失败闭环整改 | 36 | 26 | 10 | 0 | 37 | 32 | 5 |
 | 第21阶段：MAT双变量名一致与预写拒绝 | 36 | 26 | 10 | 0 | 38 | 33 | 5 |
 | 第22阶段：分析曲线多MAT贡献/双哈希身份合同 | 36 | 26 | 10 | 0 | 39 | 34 | 5 |
+| 第23阶段：DAR-040.Writer职责实改（旧二态） | 36 | 26 | 10 | 0 | 40 | 35 | 5 |
+| 第24阶段：全目录64复核与延期单列（新三态） | 36 | 36 | 0 | 0 | 40 | 35 | 0 |
 
 ## 6. 36份文件的同一基准提交身份（DAR-005：只读静态快照）
 
@@ -520,6 +524,108 @@
 | DOC-036 | `golden/analytic_golden_candidates.v1.json` | `1e6499eff3ce5b55503f8cd913b9f492629da499` | 仅文件身份；不是已批准基线 |
 
 **当前状态仍以上方DOC三态为准。** 确认全部36份文件在同一提交存在，并不意味着36份都已完成内容审计，更不意味着批准人/范围/时区/例外/真实测试俱全。正式基线应在签署时重新固定最新commit+blob并记录完整批准证据。
+
+## 8. 2026-11-15 从头复核全部docs目录、正式36份状态结案与延期单列
+
+**固定审查起点**：`209dd3c846f40ffcdff2fef62b2fa396d3459d90`，发现的DAR-040已通过后续提交`992cebaf340db7500055201c3a76e1eddb8f0c25`实质修复；本节下方64个文件的SHA采自后一个提交的完整Git tree（`63c2e25f57eaa9b37419513f27e0dfbc8a302692`），`truncated=false`。本节自身随提交会产生**新的Git blob**，下表`docs/AUDIT_PROGRESS.md`一行只能说明**本次取证时的旧blob**，不冒充本节提交后自身身份；每次最终身份以远端HEAD回读为准。
+
+### 8.1 实际覆盖范围及哪些能力没有验证
+
+- **目录全体64个实际文件已逐一从GitHub读取**，分为正式审计对象36份（SRS/HLD/LLD/过程/候选，其中17核心+19支撑）和28个辅助过程/审查快照/原始MAT字典/审批HTML。检查各自定位、首段/关键章节/历史时间与版本声明、相对链接有效性、可核验Git blob与当前源身份、现有关键REQ/AC/TC、已修DAR是否在活跃正文中回退。历史reviews的老“未整改/待实施”结论属于当时SHA的**历史观测**，不得拿来覆盖当前DAR；历史HAR/HTML不可冒充现行签署。
+- **所有35个已结DAR（DAR-006～040）按其限定文档义务复查关键不回退锚点**，包括源球谐CS相位与固定叶子3/3、KvD旧t/仅一次归一、Adaptive负均值与不对称M/丢弃dumi、源MAT固定6/8面/3N调用、MAT Reader单句柄、inspect仅读元数据、Writer同名+实验级字段集合责任、Result默认构造与完整forward_list错误链、JSONL顶层error_domain、Bias末次x与平均y、CurveSeries多MAT来源及独立SHA类别。**审阅完成的是上述文档限定事项；所有Wolfram旧25/35项和全部数学全域证明没有本轮重新执行，亦未运行任何C++/CTest/MATLAB/Writer或修改原MAT。**
+- 结构核验从同一Git tree实际得到原`.m`**45份**、原`.mat`**582份**、`docs/design/`**14份Markdown**（1索引+1跨模块LLD+9模块LLD+1专项LLD+2理论专题）；现行SRS的**66个唯一REQ**与TEST_PLAN的**66个唯一TC**按编号一一对应、无缺失。HLD中目标依赖Mermaid图**27条箭头=25内部+2外部**（总文档的其它流程图箭头不得混计）。这只是Git静态数量/追踪身份与图形核对，**不等于66TC已执行或582MAT做了本轮重新读取**。
+- 关键原只读MATLAB源码在本轮固定blob下复读，包括`oneit_adaptiv_matched_filter.m`(`48e51bcd`)、`koeff_aus_near.m`(`5ff91a22`)、`near_aus_koeff.m`(`7373c437`)、`nonpropfehler.m`(`c25d4743`)、`franzeigen.m`(`6fe556fd`)、`norm_koenderink_iteration.m`(`d48048f3`)、`mue_norm_koenderink_iteration.m`(`9ffdac1b`)、两个fixed Bias入口(`8829ceca`/`e3e01b4f`)、`graphs_bias_test.m`(`112aa9ec`)及UpdateRates分析入口(`67cb6133`)。历史数学报告仍只作为报告，源源码没有被写入。
+- **单份文档状态结案**：之前10份“正在审计”的数学/跨模块LLD已完成本次**限定范围（身份、接口职责、先前问题回退）**复核，均改为`已完成限定审计`。例如DOC-016/017的35/25项原历史Wolfram报告未重新执行，不声称全公式全输入100%正确；其余10份的业务/运行/批准证据仍由独立延期DAR和TEST_PLAN保留。不能因延期就把这些文件继续计为“正在/未审计”。
+
+### 8.2 64份文件逐文件审查身份（含28份历史证据附件）
+
+| 实际仓库路径 | 本次开始检查时的Git blob SHA（未必是本轮最终blob） | 审阅类别 | 本轮核查内容属性 |
+|---|---|---|---|
+| `docs/approval/DECISION_IMPLEMENTATION_NOTES.md` | `2dc89dfa563b35c81c747f89c2e0012ddc2ada20` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md` | `f2ece1cdd82641e9978513d06ff47f43c5a6ee9c` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/approval/HUMAN_APPROVAL_REQUEST.html` | `3524578fff58d4a3482d1e8f06e5a077820e6bab` | 辅助历史／配置／数据附件静态复核 | 审批HTML的历史身份 |
+| `docs/ARCHITECTURE.md` | `3e2c749cf83122ca811a4dbb2255e2ec5cac61c2` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/AUDIT_PROCESS.md` | `5ec8a185d662275c0b8e21f5e5f4288b6236f24f` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/AUDIT_PROGRESS.md` | `a5d0582e887a342b045b4f46ed955b52c48f70f5` | 辅助历史／配置／数据附件静态复核 | 本台账旧blob，更新后再复核 |
+| `docs/AUDIT.md` | `2e60fe610ce592aedd747d7697e97605a59642d5` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | `063acaa2dc8e7524546fb85a985a7f8b8e860a88` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md` | `461db8f0ffdc4d11696607fbd2dfb34335a3c042` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md` | `0c708af126d031707e737136c075d29483667877` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md` | `8a21282d3b8730556992fac8cc1a15b31b7dacdc` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/design/adaptive_mfa.md` | `f2728c0236cb85651a0a621071710abbcda0fd6f` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/design/analysis_plotting.md` | `a2fd485311baeb0949f83ff5396c5ca89bb0eea1` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/design/cli.md` | `5b5c54cb42e5978e72274879d2eb4ccc58684077` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/design/contracts.md` | `23ea8d49b8467a8fba7ff69983a9fbee28fab43b` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/design/experiments.md` | `fbb633e809eabe37d8a5f2e54a5b2198d382ba97` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/design/harmonics.md` | `1fd08beb05d6a7c46fb36b57de46ace8bf1c8ca7` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/design/kvd.md` | `dc9e3bd5982676356d271a691b2e4d6a0724bcc2` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/design/mat_io.md` | `f05de12a3189cd140f979b858aa83eaec9ae4c75` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/design/README.md` | `18cbb3c153bf6c1eddae65e225deb2d8cf0b2186` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/design/sampling_noise.md` | `5ed2341dd717d1a46ff5a0368e36eb8a4566d51d` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/design/SH_DISCRETE_REFIT_CONSISTENCY.md` | `caba819f7fcabebdba84dfcefd0fc312e7215b00` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/design/SH_ROTATION_IVANIC_RUEDENBERG.md` | `1f428091894e2899aa9225c7c9f99fe2cf5655da` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/design/trajectory.md` | `2f207fbdb0595b3419a4efcb02c382d70187cb81` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/DOCUMENT_BASELINE_REGISTER.md` | `7cb2c627e92674afb0307ac1396fe6d51365bc89` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/golden/analytic_golden_candidates.v1.json` | `1e6499eff3ce5b55503f8cd913b9f492629da499` | 正式36对象／限定内容复核 | JSON 候选状态 |
+| `docs/golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md` | `df9612759549a9e9820b33a772540a80bbc90c3e` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/golden/GOLDEN_TOLERANCE_PROPOSAL.md` | `fe1ad898090eb2d66ca99149dfeac189cf7c5696` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/golden/NO_MATLAB_EXECUTION_POLICY.md` | `5f2bc13f3fbf0636ac15f5dfe0c38611b80074be` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/golden/SH_PAPER_VERIFICATION_CASES.md` | `1ac44cba46e0d63b9f54f40fe18dbbc4279a627a` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/MAT_DATA_SCHEMA.md` | `a472f76798d265dbeb8422de32fe78214d3f7ed8` | 辅助历史／配置／数据附件静态复核 | 历史探针字典与来源边界 |
+| `docs/MIGRATION_MATRIX.md` | `3d61d69f7962a29c8720528f7fa71628c7008331` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/OBJECT_MODEL.md` | `fe21548e4a3a625ad0982ffdc80d47393c0f7d02` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/PLAN.md` | `9e9e821241c3e1b6fe055726d1c303a56ccf01fb` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/PROGRESS.md` | `00aa3aa77f47081f1fd304adf3c7d1089d275fd7` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/REQUIREMENTS.md` | `f09c9a2c0784f7d503468d94bbf86d7177216124` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/reviews/AN_G_LEVEL0_FACE_ORDER_STATIC_2026-11-08.md` | `47e50aa5ff1db49e79206425bb218014578cd1f3` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/AN_G_RECURSION_INDEX_STATIC_2026-11-08.md` | `3d6c44bb6f5a7d1baf31c72dcfd476dd17f0e9e3` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/AN_G_STATIC_FORMULA_REVIEW_2026-11-08.md` | `e82f04464e09ebcc29024fdf203368ed4091ebb4` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/AN_G08_Z90_STATIC_CONVENTION_2026-11-08.md` | `903544444af25a0a1832822225b3f635ab4cf573` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/AUDIT_AF001_AF012_RESOLUTION_2026-11-07.md` | `ae44ae6ba782a9930b400ea860a50cc326a0cd3f` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/AUDIT_AF013_AF020_RESOLUTION_2026-11-07.md` | `1466ca9534a54cac6bf9b21a5b2bf42491d6e6a9` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/AUDIT_AF021_AF025_RESOLUTION_2026-11-07.md` | `36870185a6e51cf8d0b1ece0dc70d6277c3629a1` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/AUDIT_ANALYSIS_ERROR_MAPPING_SCAN_2026-11-08.md` | `803e095e70c56320267f22ee3cc9881450ff707a` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/AUDIT_ANALYSIS_SEGMENT_SMOOTHING_2026-11-08.md` | `e5a342d4a9db09a95c0ece6803fd82d94948962c` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/AUDIT_ANALYSIS_SEGMENT_SMOOTHING_CORRECTION_2026-11-08.md` | `fd30206e5fc7a29125d4b64946354d09b6156558` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/AUDIT_BIAS_XWERTE_LAST_RUN_STATIC_2026-11-08.md` | `b9653af0a0782b1a6fae1bbdd5e75c77257c338e` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/AUDIT_FOLLOWUP_SCAN_2026-11-07.md` | `9d01086ad3f56105e6e32b4911fcecfef8028b1f` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/AUDIT_FOUR_POLICY_DRIFTS_SCAN_2026-11-08.md` | `6f11a90c38ba7d1277002c495ee55189e1b60d00` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/AUDIT_FUNCTION_DECLARATIONS_AND_LEDGER_COMPACT_2026-11-08.md` | `a42a21e52313f3e7afc8b79421b65aa61d2fc703` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/AUDIT_SEVEN_MATH_DOCS_RESOLUTION_2026-11-08.md` | `4a9d9698652caf3f3505bb877a0e1ba4db4cc154` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/AUDIT_SEVEN_MATH_DOCS_SCAN_2026-11-08.md` | `fbf2e0e8f7963b51e7037a42714b89320773ff1a` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/DOC_CONSISTENCY_RECONCILIATION_2026-11-06.md` | `2d440d1b3273196334150bd35bcb8aa7a9e7b2b2` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/DOCUMENT_REVIEW_AND_SH_DECLARATIONS_2026-11-07.md` | `580e98eae40a5378128b139ce531b6ded11c6c2e` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/FULL_DOCUMENT_AUDIT_2026-11-07.md` | `43446ec3e7ebe3d9b7f2447561f72d64ccbb5e95` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/LLD_CONTRACTS_TARGETS_TESTS_ALIGNMENT_2026-11-07.md` | `0852db6e7654b39698073626e9f92f3fadc8cf1d` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/LLD_MAT_IO_AND_CONSISTENCY_2026-11-07.md` | `d2b34d0d27bc2edec7969d28cf38429507095146` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/LOW_ORDER_SH_THREE_ROUTE_VERIFICATION_2026-11-09.md` | `70f7bcb66d515ab2fa52f1ae8652aac357bea2ef` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/OWNER_TECH_DECISIONS_ALIGNMENT_2026-11-07.md` | `2447abdf341d0ff4d05f6c332453f32b9d1ec047` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/SH_PAPERS_SOURCE_AUDIT_2026-11-09.md` | `141ce73789fce7e6257ad63bc844c7ce0a0f81d6` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/reviews/STATIC_TRACEABILITY_2026-11-06.md` | `2fa3002e1b45b1d3700b3df0dceb2d8ee7c9582c` | 辅助历史／配置／数据附件静态复核 | 固定历史评审，不作现行批准 |
+| `docs/SOURCE_INVENTORY.md` | `9d72f7517e93f774c4b67338cc6b93f6723e7712` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/TEST_PLAN.md` | `a37343ccf9a8fedd3e899c6cf7d14e1d59e5ed7b` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+| `docs/TODO.md` | `23a279aa17cf86e6a401344674719b4061f31b95` | 正式36对象／限定内容复核 | 标题/引用/相对链接/证据状态 |
+
+以上SHA是**固定审查快照**，不覆盖本轮随后修订文件的新blob，也不构成最终批准或全文数学形式证明。若将来任一这些文件再变动，须以新HEAD重新运行相应DAR锚点审阅；不能继承本次“无回退”的结论。
+
+### 8.3 当前真实统计（不把延期写成成功或未整改）
+
+| 指标 | 2026-11-15本轮开始（原二态） | 本次审阅结束（新三态） | 数量差/解释 |
+|---|---:|---:|---|
+| 正式审计文件总数 | 36 | 36 | 0 |
+| 已完成限定审计 | 26 | 36 | +10（10份实读限定核对） |
+| 正在审计 | 10 | 0 | −10 |
+| 未审计 | 0 | 0 | 0 |
+| 整改目标总数 | 39 | 40 | +1：真实修复DAR-040 |
+| 已整改 | 34 | 35 | +1：DAR-040 |
+| **未整改（不含延期）** | 5（原二态把延期包含其中） | **0** | −5为**重新分类**，不是5项实际整改 |
+| **无限期延期（单列）** | 0（当时未单列） | **5** | +5为**重新分类**，不是批准 |
+
+恒等式：**40 = 35已整改 + 0当前未整改 + 5无限期延期**。可继续独立整改的活跃范围为**35/35个已整改，当前无未登记的可独立完成DAR**；这**不等于完整工程、全部数学、66TC、L2/L3/L4、公共接口、性能、基线或发布已经获验收**。未来新证据若发现真实回退，应重新打开对应原DAR或另登记独立实质问题，不凭“零未整改”永远禁止继续审计。
+
+### 8.4 防回退规则（以后文档提交前适用）
+
+对当前已结DAR的技术正文修改至少复核：当前MATLAB源/论文与Git blob身份、旧原型和候选公共签名、禁止MAT数值打印与不得把L1重新设门禁、数学CS相位/递推/不对称求解器的正确域、每种实验当前save与历史字段、N次uniform/3N次normal、Result/Status失败与forward_list完整包装、Writer/Runner权限层和MAT/数值SHA域、真实3/3仅固定旧HEAD且不覆盖66TC。需要原生代码或所有者签署者始终处于无限期延期，**状态不得直接变为已整改**。每次报告都需有具体文件diff、固定HEAD与未运行事项，不允许仅更新状态数字。
 
 ## 7. 结案纪律
 
