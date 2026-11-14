@@ -62,6 +62,8 @@ class UpdateRateRunner;
 
 **2026-11-14 结果Writer双名称身份门禁（DAR-038）**：每个Bias/Adaptive当前有效`save`字段应在I/O适配器内构造成`MatDenseArray{info.name=field_name,...}`，并以相同`field_name`调用`RunMatWriter::saveNewVariable`；绝不能仅凭目标名在白名单，就把内部`info.name`为另一个有效字段的数据写出。例如Bias`target=xwerte`、内部`info.name=ywerte1`会破坏历史`getflowfield`单变量契约，Writer必须在暂存前以既有`MatErrorCode::OutputPathForbidden`拒绝并保留双名和RunId错误上下文。对已合法发布的单文件，Reader独立回读还要确认内部变量名与目标基名相同；RunContext汇总Status、Manifest而不是替Writer隐式改名。详见[MAT LLD §7.2.2](mat_io.md)和[TEST_PLAN §2.9](../TEST_PLAN.md)，均为待测设计，不是已执行软件证据。
 
+**2026-11-15 DAR-040 责任层级复核**：`RunMatWriter::saveNewVariable(run_id,name,data)`没有`ExperimentKind`入参。DAR-038中目标与内部变量名相同的Writer独立检查**仍然有效**；但“此字段是不是本次实验当前有效save”必须由掌握实验种类的Runner在调用`IResultWriter`之前核对完整预期集合，不能要求无从知晓种类的Writer自行判断。区分测试：Comparison允许现行`rottransratio`；UpdateRates尽管Writer目标/内部均为`rottransratio`，也必须由Runner先以既有`ExperimentErrorCode::DataMismatch`拒绝（Writer替身调用数0），因为该字段对此入口是`HistoricalOnly`。Writer仍独立禁止名字不一致、路径穿越和覆盖。**不新增接口字段、反向依赖或公共错误码**。详见[MAT LLD §7.2.3](mat_io.md)及[TEST_PLAN §2.9](../TEST_PLAN.md)，未运行真实Writer/CTest。
+
 ## 4. L2/L3/L4 参考数据、错误和验收边界
 
 - 新输出的所有变量必须通过 matio 回读并与原 MAT 的 shape、统计含义核对；不应要求不同语言在随机数不等价时逐样本完全一致。

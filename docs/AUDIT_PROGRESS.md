@@ -1,6 +1,6 @@
 # 全工程文档规范审计进度与整改台账（AUDIT_PROGRESS）
 
-> **状态：审计进度 v2.3，第二十二批实修CurveSeries无法追踪跨K个运行的多MAT输入及.m Git blob与MAT SHA-256两类身份混淆；同步分析LLD/SRS/TEST_PLAN三份正文；第二十一批实修MAT Writer双变量名身份校验：明确MatDenseArray内部name与目标MAT文件基名一致性，新增两个有效白名单名字错配仍须预写拒绝的可判别负例并同步SRS/Runner/TEST_PLAN；第二十批实修Bias场景完整返回值构造与理想流Result未检查缺口，已以两视线固定uniform/normal和成功/失败路径补入采样LLD、Runner、TEST_PLAN；第十九批真实整改Bias噪声合成的未绑定coefficient实参与上/下层错误码反向依赖，纠正OBJECT_MODEL公共apply签名及CompositionRoot装配责任，补签名/噪声有符号分量/错误链/固定RNG负例；第十八批噪声模型互斥和协方差证据继续保留；六项延期及DEC-008已决定范围不变；仍按36文档/既有五项综合阻塞继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
+> **状态：审计进度 v2.4，第二十三批全目录复核首先发现并实修DAR-040：上轮DAR-038把无ExperimentKind的Writer错当能校验每入口save白名单，已将每入口集合门禁归Runner并保留Writer自身目标/内部同名与安全检查；第二十二批实修CurveSeries无法追踪跨K个运行的多MAT输入及.m Git blob与MAT SHA-256两类身份混淆；同步分析LLD/SRS/TEST_PLAN三份正文；第二十一批实修MAT Writer双变量名身份校验：明确MatDenseArray内部name与目标MAT文件基名一致性，新增两个有效白名单名字错配仍须预写拒绝的可判别负例并同步SRS/Runner/TEST_PLAN；第二十批实修Bias场景完整返回值构造与理想流Result未检查缺口，已以两视线固定uniform/normal和成功/失败路径补入采样LLD、Runner、TEST_PLAN；第十九批真实整改Bias噪声合成的未绑定coefficient实参与上/下层错误码反向依赖，纠正OBJECT_MODEL公共apply签名及CompositionRoot装配责任，补签名/噪声有符号分量/错误链/固定RNG负例；第十八批噪声模型互斥和协方差证据继续保留；六项延期及DEC-008已决定范围不变；仍按36文档/既有五项综合阻塞继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
 
 ## 1. 口径、状态和可复核方式
 
@@ -115,6 +115,8 @@
 | DAR-038 | design/mat_io.md；design/experiments.md；REQUIREMENTS.md；TEST_PLAN.md；原MATLAB当前save与582文件单变量字典 | Writer公共候选同时接收`mat_variable_name`及`MatDenseArray::info().name`，旧文仅限制每个变量名在当前save白名单、非法路径和非覆盖，未验证两者相同；即使`xwerte`和`ywerte1`各合法，分别用于目标名/内部名也可构造文件名`xwerte.mat`、内部变量`ywerte1`的不真实成功文件 | Writer在暂存前检查已批准当前save字段与内部数据变量名非空逐字节相同、不可隐式改名；`(xwerte,xwerte)`正例与`(xwerte,ywerte1)`／空名负例纳入原TC，失败用已有OutputPathForbidden记录双名和RunId；同步SRS AC-F-MAT-004、Runner适配/回读和TEST_PLAN；非生产MAT/Writer实测 | 纯文档输出变量身份与源save语义缺口 | 已整改 |
 
 | DAR-039 | design/analysis_plotting.md；REQUIREMENTS.md；TEST_PLAN.md；原graphs_bias_test.m与Adaptive分析入口 | 旧CurveSeries的SeriesProvenance只有一个original_mat_relative_path、一个original_mat_variable和模糊source_blob_sha，无法表示Bias的K份ywerte与最后一轮xwerte等多个实际数值来源；且source_blob_sha与L2原MAT SHA-256不同，原单字段既不能表述原.m Git blob又能表述MAT字节摘要 | 实际修订为每CurveSeries inputs[]逐个保存MAT路径/变量/k/角色/可核验SHA-256，原.m Git blob及平滑helper源码另列；无来源哈希标nullopt不宣称L2完成。K=2固定不同x例得x_last=[7,28,112]、ybar=[3,6,8]及三个参与MAT来源，原TC与SRS同步；未构建Analyzer/Reader或修改MAT | 纯文档多源聚合及不同哈希身份丢失 | 已整改 |
+
+| DAR-040 | design/mat_io.md；design/experiments.md；OBJECT_MODEL.md；REQUIREMENTS.md；TEST_PLAN.md；原Comparison/UpdateRates的save清单 | 上轮DAR-038要求仅接收`(RunId,name,MatDenseArray)`的Writer验证“该ExperimentKind的有效save白名单”；但接口没有ExperimentKind/每运行策略，无法区别Comparison有效`rottransratio`与UpdateRates HistoricalOnly，同一设计把不可能兑现的义务下沉了 | 实改两层责任：掌握ExperimentKind的Runner在调用IResultWriter前验证完整当前save集，非法输出以既有DataMismatch报告且Writer调用数0；Writer仍提前核name==info.name、安全路径和原子非覆盖等自身可判定内容；Comparison/UpdateRates差异性负例、SRS与对象模型同步，禁止mat_io→experiments反向依赖。不新增公共接口/enum | 纯文档无入参却承诺按实验类型校验的错误分层 | 已整改 |
 
 ## 4. 已实施审计、具体整改和验证日志
 
@@ -391,7 +393,17 @@
 
 **七项计数**：整改目标38→39（+1）、已整改33→34（+1）、未整改5→5（0）；36份文档已审限定26、正在10、未审0保持不变。
 
+### 第23阶段：全目录回退检查发现并修复Writer错误职责（2026-11-15）
+
+**复核起点**：当前分支`209dd3c846f40ffcdff2fef62b2fa396d3459d90`。起点正式审计对象36项：26完成限定审计、10正在审计、0未审；全工程DAR39项，34已整改、5综合外部延期项按历史表暂记未整改。本阶段先复查全部docs/目录64文件（36正式审计对象 + 28辅助归档/审批/管理文件），按当前HEAD逐文件读取/静态链接与状态检查，另复读关键原MATLAB函数的固定blob，不以旧历史报告文字代替新代码证据。
+
+**DAR-040实际回退发现**：上轮DAR-038在正确要求MAT目标变量名与内部变量名相同的同时，错误把`ExperimentKind`当前有效save集合的校验也交给没有该形参的Writer。上一轮文字修复因此在跨层责任上形成不能实际实现的承诺。真实修改[MAT LLD §7.2.1–7.2.3](design/mat_io.md)、[Runner LLD](design/experiments.md)、[OBJECT_MODEL](OBJECT_MODEL.md)、[SRS AC-F-MAT-004](REQUIREMENTS.md)、[TEST_PLAN](TEST_PLAN.md)；由已知ExperimentKind的Runner先按该入口save计划拒绝UpdateRates下历史`rottransratio`，Writer独立检查名称同一、路径和非覆盖。没有扩大接口、发明枚举或实现C++。区分性替身规定UpdateRates错误字段在Writer调用前拒绝，Comparison同名合法，不把Writer全局合法名与per-RunId合法字段混淆。
+
+**本阶段仅数学/接口静态验收，不代表项目最终软件验收**。已形成DAR-040可复查正文和待测输入，未运行MATLAB/CTest/Writer。后续同轮还需要统一五项无限期延期的计数口径、记录全64份文件审阅证据并回读最终远端HEAD，当前不能把本阶段视为最终正式基线冻结。
+
 ## 5. 各轮计数与变化
+
+**第23阶段本次实修**：新增DAR-040并落实五份技术/需求/测试正文，本阶段末尾正式回读后计算目标与状态，保留第22阶段历史原始计数，不预先声称完成待办软件验收。
 
 **第22阶段相对上一轮**：整改目标38→39（+1）、已整改33→34（+1）、未整改5→5（0）；审计文件36、已完成限定26、正在10、未审0不变。已修分析LLD多来源与SHA身份、SRS/TEST_PLAN，未做软件测试。
 

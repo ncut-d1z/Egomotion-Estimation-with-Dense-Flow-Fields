@@ -1,6 +1,6 @@
 # MAT I/O、路径安全与原始数据合同——详细设计草案
 
-> **LLD v0.15 候选草案（DEC-008-04完整错误包装链与05仅结构元数据检查已同步；仍未实现/运行）。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 L2 逐值/L3 独立参考验证仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
+> **LLD v0.16 候选草案（DEC-008-04完整错误包装链与05仅结构元数据检查已同步；仍未实现/运行）。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 L2 逐值/L3 独立参考验证仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
 
 ## 1. 原始行为、文件身份和支持版本
 
@@ -257,7 +257,7 @@ Writer::saveNewVariable(RunId,name,data): // 拟议阶段顺序，尚非代码
 
 ### 7.2.1 变量名与非覆盖发布的独立安全义务（2026-11-11 文档整改）
 
-此前 `saveNewVariable(RunId,name,data)` 接收一般 `string_view`，但“变量名合法”没有规定最小可验证条件；此处明确**不是 CLI 可任意指定 MAT 名称**。Writer 必须在**文件系统层再次**验证 RunId 与目标MAT变量标识，变量名只来自对应已知 Runner 的当前有效 `save` 字段白名单（见[实验LLD §9](experiments.md)与[DEC-004](../decisions/DEC-004_HISTORICAL_MAT_FIELDS.md)），不得接受路径分隔符、`.`/`..`、绝对路径、NUL、空字符串或任何用户直接拼接的任意路径。MAT变量名和磁盘文件名的基名须一一对应；不允许在Writer里替某个未写出的 `HistoricalOnly` 字段补造文件。若未来允许新命名，须经P0.8/DEC-008审查对应规则及TC，不能先在代码里任意放宽。
+此前 `saveNewVariable(RunId,name,data)` 接收一般 `string_view`，但“变量名合法”没有规定最小可验证条件；此处明确**不是 CLI 可任意指定 MAT 名称**。Writer 必须在**文件系统层再次**验证 RunId 与目标MAT变量标识，写入意图应由掌握`ExperimentKind`的Runner按该实验当前有效`save`字段（见[实验LLD §9](experiments.md)与[DEC-004](../decisions/DEC-004_HISTORICAL_MAT_FIELDS.md)）事先确定；现行Writer本身**没有实验类型入参**，只凭`(RunId,name,data)`不能独立知道每个实验的字段白名单，不得接受路径分隔符、`.`/`..`、绝对路径、NUL、空字符串或任何用户直接拼接的任意路径。MAT变量名和磁盘文件名的基名须一一对应；不允许在Writer里替某个未写出的 `HistoricalOnly` 字段补造文件。若未来允许新命名，须经P0.8/DEC-008审查对应规则及TC，不能先在代码里任意放宽。
 
 **阶段级独立负例（现仅为静态设计，未来只用隔离副本）**：
 
@@ -274,9 +274,17 @@ Writer::saveNewVariable(RunId,name,data): // 拟议阶段顺序，尚非代码
 
 **真实设计冲突**：§2候选`MatDenseArray`包含自拥有`MatVariableInfo info_`，其中`info_.name`标识MAT内部变量；§2的`RunMatWriter::saveNewVariable(run_id,mat_variable_name,value)`另接收独立`mat_variable_name`。原§7.2.1只要求**目标名**在已批准字段白名单且无路径分隔符，没有要求已构造数据内的`value.info().name`和目标名一致。若用`info.name="ywerte1"`的数据调用`saveNewVariable(runId,"xwerte",value)`，两个名字分别都是合法Bias字段，单独白名单校验都能通过，却可能形成**目标文件`xwerte.mat`、MAT内部变量`ywerte1`**的错配。原MATLAB `save([speicherstr 'xwerte'],'xwerte')`与原归档各单变量文件名/内部变量名一致，现行`AC-F-MAT-004`也要求变量身份兼容。不能用“先写成功、再读回报错”代替发布之前的确定性拒绝。
 
-**最小修复，不改变已选接口**：Writer在任何临时文件创建、变量序列化或输出文件发布**之前**同时验证（1）`mat_variable_name`是此ExperimentKind当前有效且经批准的`save`字段，（2）`value.info().name`与其**非空、逐字节完全相等**，（3）RunId和输出目录身份合法；不得由Writer静默把`value.info().name`覆写为目标名，也不能用`Mat_VarCreate`暗中把名字换掉。I/O适配器从领域值构造`MatDenseArray`时必须明确赋予同一正确名字；HistoricalOnly额外字段不能因为读到合法MAT就自动获得新save资格。对于该**候选输出目标身份不一致**，不新增公共enum，暂按既有`MatErrorCode::OutputPathForbidden`报告，并在`ErrorDetail`中记录RunId、目标名、内部名及`ErrorStage::Output`；该分类是现行I/O安全合同的候选细化，**不是原MATLAB实际错误码**。由Runner按既有Result/RunContext纪律传播完整来源链。
+**最小修复，不改变已选接口**：两层责任分开。（A）`Runner/CompositionRoot`掌握`ExperimentKind`，生成并检查本次实验当前有效`save`字段的明确集合，**在调用IResultWriter之前**拒绝超出该实验集合或来自`HistoricalOnly`的字段；不把未计划输出拼进Manifest。（B）`RunMatWriter`在任何临时文件创建、变量序列化或输出文件发布**之前**独立验证（1）`mat_variable_name`为已知安全的领域变量名、无危险路径字符，不能凭没有传入的`ExperimentKind`声称检查了具体实验的完整白名单，（2）`value.info().name`与其**非空、逐字节完全相等**，（3）RunId和输出目录身份合法；不得由Writer静默把`value.info().name`覆写为目标名，也不能用`Mat_VarCreate`暗中把名字换掉。I/O适配器从领域值构造`MatDenseArray`时必须明确赋予同一正确名字；HistoricalOnly额外字段不能因为读到合法MAT就自动获得新save资格。对于该**候选输出目标身份不一致**，不新增公共enum，暂按既有`MatErrorCode::OutputPathForbidden`报告，并在`ErrorDetail`中记录RunId、目标名、内部名及`ErrorStage::Output`；该分类是现行I/O安全合同的候选细化，**不是原MATLAB实际错误码**。由Runner按既有Result/RunContext纪律传播完整来源链。
 
 **固定区分性负例（沿用`TC-F-MAT-004/TC-NF-SAFETY-001/TC-I-RESULT-001`）**：在隔离的新增RunId输入同一有效`double[2×3]`列主序数据，分别测试`(target="xwerte", info.name="xwerte")`应进入正常写/回读门禁，`(target="xwerte", info.name="ywerte1")`虽然两个字符串都在Bias现行save白名单仍必须**提前拒绝**，以及`(target="xwerte", info.name="")`和带路径/历史专属名的负例；失败时目标名/暂存文件均不存在、原`origin/**`不变且不消耗写入资源。另若将来业务增加不同展示别名，必须通过显式、有来源的适配层构造新匹配数据与单独授权，不偷偷添加Writer改名能力。原生matio/Writer/CTest/签名冻结仍未实施。
+
+### 7.2.3 DAR-040：Writer不能从无实验身份的签名推断每入口save集合（2026-11-15）
+
+**发现**：DAR-038加强名字一致性时，将“这个名字是否为本次`ExperimentKind`有效save”也直接交给只有`saveNewVariable(run_id,name,data)`三个输入的Writer，但它并没有`ExperimentKind`、`RunContext`输出契约或注入的每运行策略。仅凭字符串无法区分`rottransratio`在Comparison中是当前有效save、在UpdateRates中则为`HistoricalOnly`。即便Writer检查全部项目字段的并集，也**不能**据此宣称通过逐实验白名单。这是上一轮新引入的无法兑现的接口前置条件，且不能让`egomotion_matio`为此反向依赖`egomotion_experiments`，违反HLD target DAG。
+
+**修复后的合同**：由已知`ExperimentKind`的Runner在发出IResultWriter写入调用前核对**本入口实际预期且完整的save字段集合**，CompositionRoot保证选择了合法Runner和Writer；Writer独立保留安全路径、命名基础合法性、输入name与`MatDenseArray.info.name`一致性、输出非覆盖/暂存/回读等本地可核查义务，不能靠接口里不存在的参数做判断。外部用户不能用CLI直接任意提交变量名给Writer。项目其他模块也不能借“Writer接受全局已知名称”合法保存当前入口未生成的历史字段；Runner的最终预期文件集合与Manifest必须匹配。若未来要求Writer对抗不受信任的调用者并独立执行每运行策略，需要**单独评审明确的、构造时注入的不可变输出能力/白名单**及生命周期，不在本轮暗加新公共方法。
+
+**定点未来测试（不执行）**：合法Comparison保留其`rottransratio`；模拟UpdateRates尝试交付同名`rottransratio`（其内部/目标名也可完全相等）时，Runner必须用现有`ExperimentErrorCode::DataMismatch`在调用Writer前拒绝，固定IResultWriter替身记录**0次写出调用**；UpdateRates的`allemittransfehler/allemitrotfehler/akrot`完整三项仍允许。**单独直接调用**当前窄`RunMatWriter`且提供合法同名的`rottransratio`，在没有额外注入每运行白名单时，不能假断言它能自行识别当前ExperimentKind并拒绝；这属于整体分层策略的限制，不降低目标/内部名不匹配时的Writer独立拒绝。未来隔离文件系统及CTest仍需实际证明。
 
 ### 7.3 形状与 MAT 类型扩展策略
 

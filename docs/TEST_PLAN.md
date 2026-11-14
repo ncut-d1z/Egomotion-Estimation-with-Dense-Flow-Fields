@@ -296,6 +296,8 @@ regression_tolerance=9.0949470177292824e-13
 
 **2026-11-14 MAT内部变量名/目标文件名必须一致的独立测试义务（DAR-038）**：`MatDenseArray::info().name`和Writer独立的`mat_variable_name`必须在暂存前逐字节一致。固定同一合法double[2×3]数据：`target=xwerte,info.name=xwerte`可正常执行既有非覆盖/回读测试；`target=xwerte,info.name=ywerte1`虽然两个字段分别在Bias有效save白名单，**必须返回OutputPathForbidden、零临时/最终文件**；空内部名同样失败，不得在Writer内偷偷改名，任何已有文件与`origin/**`均保持不变。验证读回时不仅比较dims/double内容，还要检查MAT变量名=`xwerte`。具体见[MAT LLD §7.2.2](design/mat_io.md)，复用`TC-F-MAT-004/TC-NF-SAFETY-001/TC-I-RESULT-001`；仅静态合同，未运行Writer/CTest，无新TC。
 
+**2026-11-15 DAR-040：每入口白名单不能由无ExperimentKind的Writer虚构校验**：选用现行字段`rottransratio`：Comparison Runner实际save包含它，而UpdateRates脚本当前仅保存`allemittransfehler/allemitrotfehler/akrot`，对UpdateRates该字段是`HistoricalOnly`。以模拟的`IResultWriter`计数替身调用Runner，必须分别断言Comparison可以转交`rottransratio`，UpdateRates即使目标名与`MatDenseArray.info.name`都等于`rottransratio`也**在调用Writer前**以现有`ExperimentErrorCode::DataMismatch`拒绝，写调用数0；合法UpdateRates三字段可正常进入Writer。对Writer单独检查时只要求本地name==info.name、基本合法域命名、路径/非覆盖/回读等，**不能写出“单凭`saveNewVariable(runId,name,data)`可识别当前ExperimentKind”的假PASS**。复用`TC-F-MAT-004/TC-F-EXP-003/TC-I-RESULT-001/TC-NF-OOP-001`，未执行任何真实软件测试，参见[MAT LLD §7.2.3](design/mat_io.md)。
+
 **执行范围限界**：`8eab5dd` 与 `445ed151` 的同一球谐 CTest 均已由用户现场运行并报告通过，后者包括独立基函数、dyadic 符号及 MATLAB 相位回归；并不代表全部 66 TC 或 MAT L2/更广 L3/DEC-005 验收完成。其它模块的实际测试、负例和日志仍缺；凡在 `445ed151` 以后修改的测试必须重新实测。AF-051 保持「未整改」。
 
 ### 2.10 已可手算但未实际执行的数值/抽样负例（AF-041/047/055）
