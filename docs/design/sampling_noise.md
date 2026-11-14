@@ -42,15 +42,13 @@ generate_bias_flow(level, truth_t, truth_omega, coefficient, selected_model, rng
     perfect_flow = synthesize(directions, near, truth_t, truth_omega)
     mean_length = mean(norm(perfect_flow_i))
     # selected_model is already the ONE injected strategy for the experiment.
-    # The lower simulation layer never imports ExperimentKind/ErrorCode.
-    for each point i:
-        for c in [x,y,z] in this order:
-            g[i,c] = Normal()  # exactly one draw per component: 3N in total
-            perturbation[i,c] = selected_model.scale(
-                original_component=perfect_flow[i,c], mean_magnitude=mean_length,
-                coefficient=coefficient, gaussian=g[i,c])
-        noisy[i] = tangent_project(perfect_flow[i] + perturbation[i], direction[i])
-    return flow and original statistical fields
+    # Exactly IFlowNoiseModel::apply(...) is used; no second scale() API.
+    noise_result = selected_model.apply(perfect_flow, coefficient, rng)
+    if !noise_result.hasValue():
+        return a typed non-success, preserving its NumericalErrorCode and detail
+    # Model implementation itself draws g[x],g[y],g[z] in that order per point,
+    # adds exactly one selected 3D perturbation, then tangent-projects it.
+    return noise_result.value() and original statistical fields
 ~~~
 
 原源文件将 [0.6, 2.4, 9.6] 用作 **randn 直接乘数**；不可解释为必须开方的方差。多个入口共用数学函数不表示其 RNG 初始化和调用次数相同；MATLAB/RNG 的逐调用序列须单独跟踪。
@@ -81,7 +79,7 @@ d=(1,1,0)/\sqrt2,\quad p=(1,-1,0),\quad c=1,\quad g=(1,0,0),\quad N=1.
 
 **定位与测试边界**：上述协方差是从原`randn`独立标准正态**在数学意义上的理论结果**，不是当前C++ RNG实际抽样统计、不是已经进行的蒙特卡洛实验或新的噪声验收方差阈值。修改依据是[原三份MATLAB源码](../../origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/nonpropfehler.m)与固定向量计算；将来源单值`NoiseKind`、每组件精确`3N`消费和无条件最后切向投影映射既有`TC-F-FLOW-003/004`、`TC-DC-NOISE-001`及`TC-DC-RNG-001`，不增加TC、不执行生产C++/CTest或MAT写入，H-10/H-11及DEC-005继续无限期延期。
 
-**2026-11-14 第二次核查的跨层类型/实参缺陷**：旧`generate_bias_flow(level,truth_t,truth_omega,noise_kind,rng)`**遗漏必需的`coefficient`形参**，却在噪声公式中使用它；上轮为“抽样前拒绝双模型”补的`return ExperimentErrorCode::InvalidParameters`又使本应只依赖`domain/sampling/contracts`的仿真函数依赖上层`egomotion_experiments`错误类型，违背[HLD §4](../ARCHITECTURE.md)的27条DAG候选，也与本文件`IFlowNoiseModel::apply(...) -> Result<FlowField,NumericalErrorCode>`冲突。现已真正重写伪代码：显式传`coefficient`和**已选的窄接口对象**；合法性与`ExperimentErrorCode::InvalidParameters`仅属于Runner，先于一切RNG消费；仿真层仅接收现有公共`IFlowNoiseModel`，遇自身数值错误按`NumericalErrorCode`报告。这一层级修复不改变原三源噪声函数，不新建公共enum或实现文件；真实函数重载/异常路径/CTest仍被H-10/H-11无限期延期。对应既有`TC-F-FLOW-003/004`、`TC-DC-NOISE-001`、`TC-NF-OOP-001`、`TC-DC-RNG-001`。
+**2026-11-14 第二次核查的跨层类型/实参缺陷**：旧`generate_bias_flow(level,truth_t,truth_omega,noise_kind,rng)`**遗漏必需的`coefficient`形参**，却在噪声公式中使用它；上轮为“抽样前拒绝双模型”补的`return ExperimentErrorCode::InvalidParameters`又使本应只依赖`domain/sampling/contracts`的仿真函数依赖上层`egomotion_experiments`错误类型，违背[HLD §4](../ARCHITECTURE.md)的27条DAG候选，也与本文件`IFlowNoiseModel::apply(...) -> Result<FlowField,NumericalErrorCode>`冲突。现已真正重写伪代码：显式传`coefficient`和**已选的窄接口对象**；合法性与`ExperimentErrorCode::InvalidParameters`仅属于Runner，先于一切RNG消费；仿真层仅接收现有公共`IFlowNoiseModel`，遇自身数值错误按`NumericalErrorCode`报告。伪代码中的`selected_model.apply`**直接对应§3已声明的`IFlowNoiseModel::apply(const FlowField&,double,IRandomSource&)`，而不是增加不存在的`scale()`公共方法**；每次调用的3N随机抽样与切向投影职责在该接口的具体噪声模型实现之内，Runner负责唯一模型选择和上层错误包装。这一层级修复不改变原三源噪声函数，不新建公共enum或实现文件；真实函数重载/异常路径/CTest仍被H-10/H-11无限期延期。对应既有`TC-F-FLOW-003/004`、`TC-DC-NOISE-001`、`TC-NF-OOP-001`、`TC-DC-RNG-001`。
 
 ## 3. 候选 C++17 合同（未批准）
 
