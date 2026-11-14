@@ -175,6 +175,21 @@ regression_tolerance=9.0949470177292824e-13
 
 本节是按原三种只读噪声MATLAB实现及当前HLD公共签名设计的**待测判据**；固定负例用精确向量运算核对，不是现行C++/CTest或跨平台RNG实测，也不恢复无限期推迟的授权。
 
+### 2.2.3 Bias场景完整结果构造与理想流失败路径（2026-11-14，DAR-037）
+
+**固定的隔离两视线夹具**：将只在单元隔离中使用的`IDirectionSampler`替身设为按顺序返回`d_1=(0,0,1)`、`d_2=(1,0,0)`，不把它宣称为原固定完整/缺损八面体采样器；给定`truth_t=e_x, truth_omega=0, coefficient=1`，RNG的两次`uniform`依次为`(1/2,1/12)`，随后六次`normal`按每点xyz分别为`g_1=(0,1,0)`、`g_2=(0,0,1)`。用**单一MeanMagnitudeGaussianNoise**，由原距离公式和投影精确得到：
+
+| 阶段/结果字段 | 必须保留的值或断言 |
+|---|---|
+| 原uniform及近度 | `2.5/(1+3u)`得`nearness=(1,2)`，`near_last=2`（非第一条的1） |
+| 原`realsetofpoints` / `noiseless` | 第1条光流`(-1,0,0)`，第2条`(0,0,0)`；各行前3列仍是对应原方向 |
+| 原`durchlaenge` / `mean_total_flow_magnitude` | `(1+0)/2=1/2`，应在任何`normal`抽样前算出；理想平移均值`1/2`，旋转均值`0` |
+| `noisy`（单一均值模型，先三维加噪后切向投影） | 第1条`(-1,1/2,0)`，第2条`(0,0,1/2)`；不得覆盖`noiseless` |
+| RNG调用 | 顺序严格`uniform,uniform,normal×6`；模型实际读取6次normal，包括所有值为0的分量 |
+| 返回与失败 | 成功必须是包含上述全部字段的`Result<FlowSynthesisResult,NumericalErrorCode>`；若采样、第二次uniform、理想流`synthesize`或噪声模型任一步注入失败，均无成功的部分场景结果；原错误阶段、索引、原因保留，不把低层错误改名`ExperimentErrorCode::SolverFailed` |
+
+本夹具用直接向量公式和明确给出的两组随机样本独立计算，**不是**原作者MATLAB实测、生产C++/CTest或正式DEC-005的PASS。另用一个`synthesizer.synthesize`返回`NumericalErrorCode::NonFiniteResult`的固定失败替身，验证噪声模型**不得再被调用**、RunContext记录真实Simulation阶段、原错误链不丢；如先发生uniform耗尽则后续理想流与噪声也不得运行。两模型/两采样器的实际业务绑定继续使用§2.2.2中的6/8视线及18/24次normal判据，不借此改变源正常场景的采样点数。复用`TC-F-FLOW-001/003/004`、`TC-DC-NOISE-001`、`TC-DC-RNG-001`、`TC-NF-OOP-001`，**不新增TC、不开启H-10/H-11权限**。
+
 ### 2.3 球面采样顺序（TC-F-GEOM-002、TC-F-GEOM-003）
 
 分别对完整八面体 8·4^i、缺损八面体 6·4^i、二十面体 20·4^i 在 i=0、1、2 核对数量、单位范数、缺损面及**相同顺序下的每行三维方向**；不能只比较无序集合或哈希。Golden 输入应由原只读源码面表/递归规则**独立生成并交叉核验 L3**，覆盖 i=0、1、2 全部有序方向；不得由被测 C++ 自算，数值容差经 DEC-005 批准，**无需运行 MATLAB**。

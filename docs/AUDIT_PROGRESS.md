@@ -1,6 +1,6 @@
 # 全工程文档规范审计进度与整改台账（AUDIT_PROGRESS）
 
-> **状态：审计进度 v2.0，第十九批真实整改Bias噪声合成的未绑定coefficient实参与上/下层错误码反向依赖，纠正OBJECT_MODEL公共apply签名及CompositionRoot装配责任，补签名/噪声有符号分量/错误链/固定RNG负例；第十八批噪声模型互斥和协方差证据继续保留；六项延期及DEC-008已决定范围不变；仍按36文档/既有五项综合阻塞继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
+> **状态：审计进度 v2.1，第二十批实修Bias场景完整返回值构造与理想流Result未检查缺口，已以两视线固定uniform/normal和成功/失败路径补入采样LLD、Runner、TEST_PLAN；第十九批真实整改Bias噪声合成的未绑定coefficient实参与上/下层错误码反向依赖，纠正OBJECT_MODEL公共apply签名及CompositionRoot装配责任，补签名/噪声有符号分量/错误链/固定RNG负例；第十八批噪声模型互斥和协方差证据继续保留；六项延期及DEC-008已决定范围不变；仍按36文档/既有五项综合阻塞继续限定审计；仍是未冻结文档审计，不是软件验收。** 审计准则及用户逐文档意见见 [AUDIT.md](AUDIT.md)。固定仓库基准：`cb3129b1510f4ffc5fadeb94b8fd67bdff0d5e82`；本文件首先登记用户提供的36项判断和六类问题。**用户意见不是本轮已经执行的源码审计；状态与整改结果仅随实际读取和提交证据变更。**
 
 ## 1. 口径、状态和可复核方式
 
@@ -21,17 +21,17 @@
 | DOC-005 | `design/contracts.md` | 草案级部分符合 | Result/ABI/ODR/异常线程/自包含 | 正在审计 | contracts v1.3明确leaf Error{局部ErrorCode,const char*静态消息}/Result与公共NumericalErrorCode/Result不等价，禁止enum整数static_cast与局部bad_variant_access假冒科学Failure；未来跨层用完整ErrorFrame复制源code/message保真；提交a8d7b90，公共适配器未实施 |
 | DOC-006 | `design/cli.md` | 草案级部分符合 | CLI负例、RunId、JSONL、DEC-008 | 已完成限定审计 | cli v0.12：JSONL顶层error_domain在causes=[]也必须存在，Mat/Numerical InvalidShape直接报错不会碰撞，不从message或exit推断家族；提交ad52013，真实CLI未编写 |
 | DOC-007 | `design/mat_io.md` | 草案级部分符合 | Reader/Writer、TOCTOU、写回读、L2 | 正在审计 | mat_io v0.14：§7.4.2限定inspect-mat仅读meta、保留业务Reader完整解码；§7.4纠正旧兼容单变量表的二次open指令；§7.5要求完整Mat→Analyzer/Runner包装链；进一步澄清压缩MAT元数据解析可能需解压必要头部字节，但**禁止数值载荷解码/显示**，提交b3c6793/a9a740e/36c1fa3/5fbf6fb，尚无真实matio/CTest |
-| DOC-008 | `design/sampling_noise.md` | 草案级部分符合 | 生产几何/RNG负例/CTest | 正在审计 | sampling_noise v0.12：实修generate_bias_flow遗漏coefficient、把ExperimentErrorCode下沉Simulation层及通过隐式函数猜几何模式；明确注入selected_sampler.sample(level)与selected_model.apply(flow,coefficient,rng)，错误只保留NumericalErrorCode并在上层包装；提交6dfcabed/7794781c/6b92e11c，无生产C++/CTest |
+| DOC-008 | `design/sampling_noise.md` | 草案级部分符合 | 生产几何/RNG负例/CTest | 正在审计 | sampling_noise v0.13：新增DAR-037的完整FlowSynthesisResult构造、逐阶段Result检查与可复核双视线固定值；原有实修generate_bias_flow遗漏coefficient、把ExperimentErrorCode下沉Simulation层及通过隐式函数猜几何模式；明确注入selected_sampler.sample(level)与selected_model.apply(flow,coefficient,rng)，错误只保留NumericalErrorCode并在上层包装；提交6dfcabed/7794781c/6b92e11c，无生产C++/CTest |
 | DOC-009 | `design/trajectory.md` | 草案级部分符合 | Sophus真实依赖及几何L3 | 已完成限定审计 | trajectory v0.6：在既有旋转尺度退化审阅外，补球外内向正根4/9、球面内外向及严格球内前置检查；固定分数推导复核，提交6dbecb5；Sophus/C++/L3仍未验收 |
 | DOC-010 | `design/kvd.md` | 草案级部分符合 | 36轮数学非真实CTest/200轮 | 正在审计 | KvD v0.10：对照原两个误差.m恢复非平方欧氏/角度精确公式、零真值假零残差和5组输入；§4撤销不存在的SingularGeometry/NonFinite错误码而统一公共enum；§5将36轮已生成Wolfram固定参考与未执行CTest分列；提交9c80e41/6fd3220，仍需原生实现及全面数学审查 |
 | DOC-011 | `design/harmonics.md` | 草案级部分符合 | 低阶叶子有实测，公共ABI未冻结 | 正在审计 | harmonics v0.16：实际读当前low_order.hpp/low_order_source_projection.cpp/test头与实现blob，对照8个局部ErrorCode、Result错态bad_variant_access，补适配责任及3项无一一公共同义项；纠正本节source_projection‘未编译’与固定5e522198下3/3 CTest证据矛盾；提交bc30242，公开接口与Bridge未实现 |
 | DOC-012 | `design/adaptive_mfa.md` | 草案级部分符合 | Session原子提交、病态输入和真实软件 | 正在审计 | Adaptive v0.8：与三原始入口源blob逐行核对，Update rates在i=134–182先旋转、按周期刷新本帧主旧系数，比较第一返回写入dumi弃置，仅主返回提交；原比较error不用于保存角误差；固定替身5帧静态重放，提交ba06bea/8dd5dd2/ba3d8c4，Session/CTest仍待 |
-| DOC-013 | `design/experiments.md` | 草案级部分符合 | Runner/Writer/Manifest/Ctest | 正在审计 | experiments v0.15：Runner只验证有效参数/传播底层NumericalErrorCode，具体模型由CompositionRoot按ExperimentKind唯一装配；RNG中断可记录独立失败或必要时IncompleteRun，禁止仿真错误随意标SolverFailed；提交63ebbeb4/7b7f9df4/b85798d1，尚无Runner测试 |
+| DOC-013 | `design/experiments.md` | 草案级部分符合 | Runner/Writer/Manifest/Ctest | 正在审计 | experiments v0.16：新增DAR-037的理想流/噪声/完整场景返回类型区分和失败不提交要求；原Runner只验证有效参数/传播底层NumericalErrorCode，具体模型由CompositionRoot按ExperimentKind唯一装配；RNG中断可记录独立失败或必要时IncompleteRun，禁止仿真错误随意标SolverFailed；提交63ebbeb4/7b7f9df4/b85798d1，尚无Runner测试 |
 | DOC-014 | `design/analysis_plotting.md` | 草案级部分符合 | 分析L2/L3曲线、CTest/绘图隔离 | 正在审计 | analysis v0.13：Mat MissingVariable包装成Analysis错误时保留Mat原Frame并允许Runner继续push_front，无source_error_code单根因捷径；提交d2418c8，测试尚未运行 |
 | DOC-015 | `design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 专题草案级部分符合 | 旧版本CMake描述与最新低阶叶子验收区分 | 已完成限定审计 | 对照旧1/1说明与用户固定5e522198 3/3；仅低阶叶子，公共ABI仍未实现；提交4a62a9d |
 | DOC-016 | `design/SH_DISCRETE_REFIT_CONSISTENCY.md` | 理论专题合格，非LLD | 不能替代模块LLD/测试/批准 | 正在审计 | 已核专题定位与35项数学辅助检查，待独立逐式复算 |
 | DOC-017 | `design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md` | 理论专题合格，非LLD | 不能替代Adaptive真实接口/实现 | 正在审计 | 理论专题v0.2：从M2/M3的叉积矩阵推导M对称充要条件mean((mu-1)d)=0，证明均值1不保证对称；提交28c20f6/555eeea，尚未逐式独立重算本专题其它全部25项 |
-| DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 已完成限定审计 | TEST_PLAN §2.2.2补显式coefficient、唯一apply接口与无反向依赖，CompositionRoot对应采样器+噪声实现的level0 6/8条视线和18/24次normal对照及p_y=-1有符号分量反例；提交c2d470ae/488dbc40/cc4c6f4b，66TC不变且未原生验证 |
+| DOC-018 | `TEST_PLAN.md` | 计划草案部分符合 | 66TC登记与真实运行证据区分 | 已完成限定审计 | TEST_PLAN §2.2.3补两视线精确近度、理想/含噪FlowField、全部场景输出、2 uniform/6 normal及失败中断；原§2.2.2补显式coefficient、唯一apply接口与无反向依赖，CompositionRoot对应采样器+噪声实现的level0 6/8条视线和18/24次normal对照及p_y=-1有符号分量反例；提交c2d470ae/488dbc40/cc4c6f4b，66TC不变且未原生验证 |
 | DOC-019 | `PLAN.md` | WBS草案符合 | 98P、M0–M5、真实工期/性能 | 已完成限定审计 | PLAN R-02实改：论文缺失风险改为已取得IR96/IR98/Choi、三路线低阶SH固定证据与未完成公共接口/集成风险分列；提交6f2a426；不冒称27DAG/预算/新CTest已验收 |
 | DOC-020 | `PROGRESS.md` | 符合证据登记 | 固定SHA与历史执行/新状态分离 | 已完成限定审计 | 本轮已核历史E-DOC/SH真实证据与旧97AF；正文修订b69e17c |
 | DOC-021 | `AUDIT.md` | 原专项→本轮综合审计 | 已在初始提交转换为全工程文档规范 | 已完成限定审计 | AUDIT §5.1记录DEC-008六项设计均已决定、05数值打印属之前未经授权扩展必须撤回；仍不解除H-10/H-11等六项无限期延期；提交43eaf2e |
@@ -109,6 +109,8 @@
 | DAR-035 | design/sampling_noise.md；design/experiments.md；REQUIREMENTS.md；TEST_PLAN.md；原fixed_kugel_symmetric_perfectpoints_randomnear.m、fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m、nonpropfehler.m | 采样LLD旧伪代码对mean_length_noise与component_noise使用两个独立if，若双开会每分量计算两种噪声并消耗6N个normal，然而原任一MATLAB噪声路径仅一种模型、每点xyz共3次；同时未明确原三维独立高斯经球面切向投影后的分量相关性 | 真正改为由已有ExperimentKind派生的单选内部模型，不额外发明公共enum，非法选择在uniform/normal任何抽样之前拒绝；保留任意零噪/零分量仍3N normal；推导mean模型c² mean_norm²P及component模型c²Pdiag(p²)P，对d=(1,1,0)/√2,p=(1,-1,0),g=(1,0,0),c=1静态手算两种不同增量与xy协方差-1/-1/2；SRS与原TC添明确验证输入，不宣称实际C++通过 | 纯文档双噪声执行错误与切向协方差定义缺口 | 已整改 |
 
 | DAR-036 | design/sampling_noise.md；design/experiments.md；OBJECT_MODEL.md；REQUIREMENTS.md；TEST_PLAN.md；ARCHITECTURE.md | 采样LLD候选generate_bias_flow使用未声明的coefficient且把ExperimentErrorCode::InvalidParameters直接作为仿真层返回，违反其Result<FlowField,NumericalErrorCode>及HLD egomotion_simulation不依赖egomotion_experiments的27条DAG；对象模型IFlowNoiseModel::perturb(flow,rng)还遗漏系数并与唯一已声明apply签名冲突；Runner最初还被要求对无kind()窄接口推断具体模型类型 | 实改采样伪代码显式系数及唯一已存在apply接口、不新建scale/NoiseKind公共API；ApplicationCompositionRoot按解析好的实验入口注入对应采样器/模型，Runner在任何RNG抽样前校验外部参数并按ExperimentErrorCode拒绝、Simulation只按NumericalErrorCode失败，Runner需保留完整ErrorFrame链；对象模型类图签名纠正、SRS和TC添加二入口配对、错误类型和有符号p_y数值负例；未实际建C++ | 纯文档噪声接口签名与架构反向依赖/装配合同冲突 | 已整改 |
+
+| DAR-037 | design/sampling_noise.md；design/experiments.md；TEST_PLAN.md；原两个fixed_*_randomnear.m、erzeugeflussausnear.m | §2场景生成伪代码用`return noise_result.value() and original statistical fields`，却只有`FlowField`，没有构造§6承诺的`FlowSynthesisResult`全部七个字段；未显式注入FlowSynthesizer，且忽略其`Result<IdealFlowResult,NumericalErrorCode>`的失败分支。实现者照抄可能丢失`near_last`、`nearness`、理想流及三个统计量，把理想流计算失败误走成功噪声分支 | 实改伪代码使`synthesizer`显式注入、N次uniform先完成、检查采样/uniform/理想流/噪声四阶段Result，成功时建立完整FlowSynthesisResult；以两视线u=(1/2,1/12)、g=(0,1,0)/(0,0,1)确证near=(1,2)、总模长1/2、理想与含噪流不同及2+6 RNG调用，另列合成失败后不执行噪声的负例，联动Runner和原TC；不新建公共enum/新类，不执行C++ | 纯文档返回类型／错误路径合同遗漏 | 已整改 |
 
 ## 4. 已实施审计、具体整改和验证日志
 
@@ -349,7 +351,21 @@
 
 **七项统计**：整改目标35→36（+1个具体跨层接口/实参缺陷），已整改30→31（+1，限合同文本/测试候选），未整改5→5（0）；审计文件36→36、完成限定26→26、正在10→10、未审0→0（全部不变）。本轮有五份非台账技术/需求正文的实差异和真实源/架构依据，未通过DOC状态增长来表现工作量。DAR-001～005仍处于延期的执行/审批/真实验收义务，不因此关闭。
 
+### 第20阶段：Bias完整场景返回对象与理想流失败闭环（2026-11-14）
+
+**本轮开始状态**：固定HEAD `3d4605b4ffebf81baf5683f497e53283e341d94f`；36个整改目标/31已整改/5未整改，36份审计文件26完成限定/10正在/0未审。按现行AUDIT_PROCESS的历史SH专项已无待办，故本次实际从本文件全工程DAR台账继续第一轮整改，不将SH历史6/6误算为全项目全部通过。
+
+**发现与真正修复的DAR-037**：对照只读原`fixed_kugel_symmetric_perfectpoints_randomnear.m`、`fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m`和`erzeugeflussausnear.m`，确认现行`generate_bias_flow`在`IFlowNoiseModel::apply`之后仅取`FlowField`，用无类型的“and original statistical fields”冒充包含`noisy/noiseless/nearness/near_last/mean_total_flow_magnitude/mean_translational_magnitude/mean_rotational_magnitude`的场景结果；还遗漏检查理想流synthesize的Result。此前DAR-036只涉及coefficient、枚举依赖及采样器/模型装配，未解决完整返回对象的构造。已**实际修改**[sampling_noise.md](design/sampling_noise.md)完整伪代码及错误门禁、[experiments.md](design/experiments.md)的Runner返回与不提交纪律、[TEST_PLAN §2.2.3](TEST_PLAN.md)的固定数学输入/失败替身。采样与理想流/噪声三种返回值严格区分；全部成功后才返回自拥有FlowSynthesisResult，不能错误覆盖原理想场。
+
+**独立固定向量复算**：注入两方向d1=ez,d2=ex，t=ex,ω=0；两uniform依次1/2、1/12，来自源公式的nearness=(1,2)、near_last=2；原理想光流(-ex,0)，合成均值模长1/2、独立平移均值1/2及旋转0。仅使用平均模长高斯模型，按点xyz分别取g1=(0,1,0)、g2=(0,0,1)，投影后两行含噪光流分别(-1,1/2,0)、(0,0,1/2)，但无噪流不变；需2次uniform+6次normal。使用直接向量代数独立验证，**不是**源MATLAB运行或生产C++/CTest；两点仅为隔离的IDirectionSampler替身，不假称原固定6/8方向。另要求synthesize数值失败后不能调用noise或提交Complete，保留NumericalErrorCode及完整错误历史。
+
+**授权与继续条件**：H-10、H-11、DEC-005、DEC-006、BASELINE-SIGN、RELEASE-PR六项无限期延期决定未变，DEC-008-01～06已定设计不重选。已完成一个真实文档合同缺陷的静态整改，但五项复合DAR-001～005依赖未授权业务代码/真实测试/正式批准，**不得虚构清零**，因此全工程第二轮审计按AUDIT.md的“全部目标已修复后”条件暂未触发。可继续在授权范围内审核其它公式/文档，不能因此承诺生产验收。
+
+**七项统计**：整改目标36→37（+1）、已整改31→32（+1）、未整改5→5（0）；审计文件36→36（0）、完成限定26→26（0）、正在10→10（0）、未审0→0（0）。
+
 ## 5. 各轮计数与变化
+
+**第20阶段相对上一轮**：整改目标36→37（+1）、已整改31→32（+1）、未整改5→5（0）；文件36、完成限定26、正在10、未审0不变。实际修复场景返回类型、理想流失败Result检查及完整七字段，跨采样/实验/测试三份正文同步，不是单改台账。
 
 **第19阶段相对上一轮**：整改目标35→36（+1）、已整改30→31（+1）、未整改5→5（0）；审计文件36、完成限定26、正在10、未审0均不变。实际修复coefficient遗漏、向上错误码侵入Simulation、对象模型接口签名、CompositionRoot模型绑定/无类型识别及定点负例；只改设计正文。
 
@@ -412,6 +428,7 @@
 | 第17阶段：SH叶子局部Result与公共错误链适配/证据状态纠偏 | 36 | 26 | 10 | 0 | 34 | 29 | 5 |
 | 第18阶段：Bias噪声模型互斥/RNG及切向协方差整改 | 36 | 26 | 10 | 0 | 35 | 30 | 5 |
 | 第19阶段：Bias噪声显式实参与跨模块依赖整改 | 36 | 26 | 10 | 0 | 36 | 31 | 5 |
+| 第20阶段：Bias完整场景返回与理想流失败闭环整改 | 36 | 26 | 10 | 0 | 37 | 32 | 5 |
 
 ## 6. 36份文件的同一基准提交身份（DAR-005：只读静态快照）
 

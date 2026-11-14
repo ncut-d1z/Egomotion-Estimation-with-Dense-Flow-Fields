@@ -1,6 +1,6 @@
 # 视线采样、光流合成与噪声——详细设计草案
 
-> **LLD v0.12 草案，未冻结；采样/噪声仍无生产实现或 CTest。i=0/1/2 全714行方向已通过独立 Wolfram 逐坐标双实现对照（2,142个坐标、最大绝对差1.1102230246251565e-16）；正式 Golden/DEC-005、异常和 RNG 等软件验收尚未批准。** 对应 P2/P3、REQ-F-GEOM-*、REQ-F-FLOW-*、REQ-DC-RNG-001、REQ-DC-NOISE-001。
+> **LLD v0.13 草案，未冻结；采样/噪声仍无生产实现或 CTest。i=0/1/2 全714行方向已通过独立 Wolfram 逐坐标双实现对照（2,142个坐标、最大绝对差1.1102230246251565e-16）；正式 Golden/DEC-005、异常和 RNG 等软件验收尚未批准。** 对应 P2/P3、REQ-F-GEOM-*、REQ-F-FLOW-*、REQ-DC-RNG-001、REQ-DC-NOISE-001。
 
 ## 1. 来源与输入输出
 
@@ -35,23 +35,44 @@ sample_triangles(level, geometry):
 # Composition Root injects ONE matched sampler and noise model per validated
 # experiment kind; Runner checks parameters before any RNG call.
 generate_bias_flow(level, truth_t, truth_omega, coefficient,
-                   selected_sampler, selected_model, rng):
-    # precondition: already-validated IDirectionSampler and IFlowNoiseModel
+                   selected_sampler, selected_model, synthesizer, rng)
+    -> Result<FlowSynthesisResult, NumericalErrorCode>:
+    # Preconditions: Runner has validated parameters and CompositionRoot has
+    # injected exactly one matched sampler, noise model and FlowSynthesizer.
     direction_result = selected_sampler.sample(level)
     if !direction_result.hasValue():
-        return typed non-success, preserving its NumericalErrorCode and detail
+        return failure with unchanged NumericalErrorCode/ErrorDetail
     directions = direction_result.value()
-    for each direction: normalized_distance = U(1,4)/2.5; near=1/normalized_distance
-    perfect_flow = synthesize(directions, near, truth_t, truth_omega)
-    mean_length = mean(norm(perfect_flow_i))
-    # selected_model is already the ONE injected strategy for the experiment.
-    # Exactly IFlowNoiseModel::apply(...) is used; no second scale() API.
+    N = directions.rows()
+    if N == 0: return NumericalErrorCode::EmptyInput with source context
+    nearness = Eigen::VectorXd(N)
+    for i = 0..N-1:
+        u_result = rng.uniform()       # all N uniform calls before any normal
+        if !u_result.hasValue():
+            return failure preserving RNG code, index and context
+        nearness[i] = 2.5 / (1 + 3 * u_result.value())
+        # equivalent to source: entf=(rand*3+1)/2.5; near=1/entf
+    ideal_result = synthesizer.synthesize(
+        directions, nearness, truth_t, truth_omega)
+    if !ideal_result.hasValue():
+        return failure preserving NumericalErrorCode, location and details
+    ideal = ideal_result.value()       # IdealFlowResult, NOT FlowSynthesisResult
+    perfect_flow = ideal.flow          # original realsetofpoints N×6
+    mean_length = sum_i(norm(perfect_flow[i,4:6])) / N
+    # selected_model is the ONE injected strategy; it consumes 3N normals
+    # in x/y/z order, perturbs the original ideal flow and tangent-projects.
     noise_result = selected_model.apply(perfect_flow, coefficient, rng)
     if !noise_result.hasValue():
-        return a typed non-success, preserving its NumericalErrorCode and detail
-    # Model implementation itself draws g[x],g[y],g[z] in that order per point,
-    # adds exactly one selected 3D perturbation, then tangent-projects it.
-    return noise_result.value() and original statistical fields
+        return failure preserving NumericalErrorCode, index and details
+    return success(FlowSynthesisResult{
+        noisy = noise_result.value(),      # original setofpoints N×6
+        noiseless = perfect_flow,           # NOT overwritten by noisy flow
+        nearness = nearness,                # C++ internal N×1 vector
+        near_last = nearness[N-1],          # original MATLAB scalar near
+        mean_total_flow_magnitude = mean_length,  # source durchlaenge
+        mean_translational_magnitude = ideal.mean_translational_magnitude,
+        mean_rotational_magnitude = ideal.mean_rotational_magnitude
+    })
 ~~~
 
 原源文件将 [0.6, 2.4, 9.6] 用作 **randn 直接乘数**；不可解释为必须开方的方差。多个入口共用数学函数不表示其 RNG 初始化和调用次数相同；MATLAB/RNG 的逐调用序列须单独跟踪。
@@ -83,6 +104,14 @@ d=(1,1,0)/\sqrt2,\quad p=(1,-1,0),\quad c=1,\quad g=(1,0,0),\quad N=1.
 **定位与测试边界**：上述协方差是从原`randn`独立标准正态**在数学意义上的理论结果**，不是当前C++ RNG实际抽样统计、不是已经进行的蒙特卡洛实验或新的噪声验收方差阈值。修改依据是[原三份MATLAB源码](../../origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/nonpropfehler.m)与固定向量计算；将来源单值`NoiseKind`、每组件精确`3N`消费和无条件最后切向投影映射既有`TC-F-FLOW-003/004`、`TC-DC-NOISE-001`及`TC-DC-RNG-001`，不增加TC、不执行生产C++/CTest或MAT写入，H-10/H-11及DEC-005继续无限期延期。
 
 **2026-11-14 第二次核查的跨层类型/实参缺陷**：旧`generate_bias_flow(level,truth_t,truth_omega,noise_kind,rng)`**遗漏必需的`coefficient`形参**，却在噪声公式中使用它；上轮为“抽样前拒绝双模型”补的`return ExperimentErrorCode::InvalidParameters`又使本应只依赖`domain/sampling/contracts`的仿真函数依赖上层`egomotion_experiments`错误类型，违背[HLD §4](../ARCHITECTURE.md)的27条DAG候选，也与本文件`IFlowNoiseModel::apply(...) -> Result<FlowField,NumericalErrorCode>`冲突。现已真正重写伪代码：显式传`coefficient`和CompositionRoot按入口预先绑定的**`selected_sampler`及`selected_model`两个窄接口对象**，不通过隐藏的`required_octahedral_variant`函数猜测实验类型；合法性与`ExperimentErrorCode::InvalidParameters`仅属于Runner，先于一切RNG消费；仿真层仅接收现有公共`IFlowNoiseModel`，遇自身数值错误按`NumericalErrorCode`报告。伪代码中的`selected_model.apply`**直接对应§3已声明的`IFlowNoiseModel::apply(const FlowField&,double,IRandomSource&)`，而不是增加不存在的`scale()`公共方法**；每次调用的3N随机抽样与切向投影职责在该接口的具体噪声模型实现之内，Runner负责唯一模型选择和上层错误包装。这一层级修复不改变原三源噪声函数，不新建公共enum或实现文件；真实函数重载/异常路径/CTest仍被H-10/H-11无限期延期。对应既有`TC-F-FLOW-003/004`、`TC-DC-NOISE-001`、`TC-NF-OOP-001`、`TC-DC-RNG-001`。
+
+### 2.2 返回值构造与逐阶段非成功不可丢失（2026-11-14，DAR-037）
+
+旧§2伪代码在 `IFlowNoiseModel::apply` 成功后写 `return noise_result.value() and original statistical fields`；实际 `noise_result.value()` 仅是 `FlowField`，而§6候选场景返回类型是同时保存六项源/内部结果的 `FlowSynthesisResult`。此外旧版本调用 `synthesize(...)` 却既没有显式注入§6声明的 `FlowSynthesizer`，也未检查其 `Result<IdealFlowResult,NumericalErrorCode>`，会让理想流计算失败在含噪分支前被错误视作已成功。**这是独立于DAR-036系数传参与枚举归属的返回类型和失败闭环缺陷。**
+
+现明确三个不同值类型：采样结果是 `DirectionSet`；理想流合成返回 `IdealFlowResult{flow, mean_translational_magnitude, mean_rotational_magnitude}`；噪声模型返回**仅含噪** `FlowField`。成功时**由场景编排者**构造完整自拥有 `FlowSynthesisResult`，其中 `noiseless` 保留合成前的理想流，`noisy` 保存投影后单模型结果，`nearness` 保存 N 次uniform得到的原顺序，`near_last=nearness[N-1]`，`mean_total_flow_magnitude=mean_i(||p_i^ideal||)`在噪声之前求得，另外两个均值直接来自IdealFlowResult，**不得以两个均值相加替换总均值**。这不改变源fixed_*实际只返回标量`near`及实际输出MAT变量集合。
+
+全部 `selected_sampler.sample` / `rng.uniform` / `synthesizer.synthesize` / `selected_model.apply` 的 `Result` 均需先检查 `hasValue`，失败保留 `NumericalErrorCode` 和阶段/索引，**不创建一个看似成功的部分FlowSynthesisResult**；Runner再按既定独立失败纪律记录/包装而不是下层直接产生ExperimentErrorCode。字段及数学等价的可判别两方向固定替身详见[TEST_PLAN §2.2.3](../TEST_PLAN.md)。它是待实现的设计和静态数值检查，非C++/CTest PASS；本轮无新接口枚举/类型、无原源变更或新增TC。
 
 ## 3. 候选 C++17 合同（未批准）
 
