@@ -72,8 +72,8 @@ generate_bias_flow(level, truth_t, truth_omega, coefficient,
     # columns; check this invariant before creating a successful scene.
     if noise_result.value().observations.rows() != N or
        noise_result.value().observations.cols() != 6 or
-       noise_result.value().observations.leftCols<3>() !=
-           perfect_flow.observations.leftCols<3>() (exact rowwise comparison):
+       (first three direction columns of noisy and ideal observations
+        are not elementwise identical):  # explanatory predicate, no new C++ API
         return NumericalErrorCode::InvalidShape/InvalidDirection as appropriate
     return success(FlowSynthesisResult{
         noisy = noise_result.value(),      # original setofpoints N×6
