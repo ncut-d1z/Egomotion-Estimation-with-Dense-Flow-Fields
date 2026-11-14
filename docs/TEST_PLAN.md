@@ -165,6 +165,16 @@ regression_tolerance=9.0949470177292824e-13
 
 对应**理论协方差**（要求写入独立数学资格、**非实际采样统计PASS**）：对单位`d`，`P_d^2=P_d`，独立高斯`g~N(0,I3)`，平均模长模型为`c^2*mean_norm^2*P_d`，逐分量模型为`c^2*P_d*diag(p_x^2,p_y^2,p_z^2)*P_d`。本夹具`Cov_mean_xy=-1`、`Cov_component_xy=-1/2`；说明三维输入randn分量虽独立，但最终切向投影**引入相关性**，不得用独立二分量噪声直接替代并跳过第3个normal。须同时核实场景NoiseKind只能单选，错误时不消耗随机流，正/零/负有限系数仍按源码原路径抽样；真实C++/CTest与DEC-005仍未执行/无限期推迟。
 
+### 2.2.2 Bias 噪声合成的接口/依赖方向与有符号分量（2026-11-14，静态回归）
+
+**从上轮§2.2.1继续核实的独立实现缺陷**：原`sampling_noise.md`伪代码调用未列为形参的`coefficient`，又曾在仿真函数中返回属于**上层Runner**的`ExperimentErrorCode::InvalidParameters`，既不能由候选签名自洽实现，也违反[ARCHITECTURE §4](ARCHITECTURE.md)中`egomotion_simulation`不依赖`egomotion_experiments`的目标依赖方向。现有公共`IFlowNoiseModel::apply(const FlowField&,double coefficient,IRandomSource&)`本来就可以表达两种具体模型，**不得为了修复缺形参而再发明公共`NoiseKind`或`scale()`方法**。复用现有`TC-NF-OOP-001`、`TC-F-FLOW-003/004`、`TC-DC-NOISE-001`、`TC-DC-RNG-001`：
+
+- **调用/类型边界**：Runner根据既定`ExperimentKind`在任何`uniform()/normal()`之前完成参数和唯一噪声实现选择；非法双选时上层返回`ExperimentErrorCode::InvalidParameters`、RNG消费为0。合法时把`coefficient`显式传给已注入的`IFlowNoiseModel::apply`，下层仅产生`Result<FlowField,NumericalErrorCode>`并完成每点3次normal与最后投影，不依赖`ExperimentErrorCode`。独立噪声样本失败由Runner按已定RunContext纪律记录；中断必要场景时外层可返回已有`IncompleteRun`并以`ErrorFrame`保留内层来源，**不得把仿真RNG故障伪称SolverFailed**。
+- **有符号分量的第二个数值负例**：沿用§2.2.1的`d=(1,1,0)/sqrt(2),p=(1,-1,0),c=1`，这次注入`g=(0,1,0)`，即只让原`p_y=-1`对应的`randn`为1。平均模长模型投影后应为`(-1/sqrt(2),+1/sqrt(2),0)`；逐分量模型因为必须用**有符号原始`p_y=-1`**，得到`(+1/2,-1/2,0)`。如果代码错误使用`abs(p_y)`，则会得`(-1/2,+1/2,0)`。这里每种合法模型仍消费**包括两个零值的3个normal**。
+- **失败不提交**：非法配置和下层非成功后不能交付合法`FlowSynthesisResult`或伪造`Complete`；若部分场景已被核实且允继续独立样本，应如实计入失败/无定义与有效分母，不自动改写历史8次聚合。
+
+本节是按原三种只读噪声MATLAB实现及当前HLD公共签名设计的**待测判据**；固定负例用精确向量运算核对，不是现行C++/CTest或跨平台RNG实测，也不恢复无限期推迟的授权。
+
 ### 2.3 球面采样顺序（TC-F-GEOM-002、TC-F-GEOM-003）
 
 分别对完整八面体 8·4^i、缺损八面体 6·4^i、二十面体 20·4^i 在 i=0、1、2 核对数量、单位范数、缺损面及**相同顺序下的每行三维方向**；不能只比较无序集合或哈希。Golden 输入应由原只读源码面表/递归规则**独立生成并交叉核验 L3**，覆盖 i=0、1、2 全部有序方向；不得由被测 C++ 自算，数值容差经 DEC-005 批准，**无需运行 MATLAB**。
