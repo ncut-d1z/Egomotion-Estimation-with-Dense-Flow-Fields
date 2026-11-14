@@ -77,7 +77,7 @@
 | REQ-F-MAT-001 | M | matio 探针 582/582 读取成功；核心 Reader 数值合同未验收 | 系统应使用 matio/zlib 在运行时解码已支持的原始压缩 MAT v5 数值变量并正确返回数据值，不能依赖 MATLAB/Python。 | AC-F-MAT-001：对每个归档源文件执行实际可解码性检查，在已支持类型上验证元素值、长度及列主序；失败必须计入数据字典但不能冒充成功。 |
 | REQ-F-MAT-002 | M | 582 个 MAT 变量元数据已实测；正式接口未实现 | 系统应提供变量枚举与诊断能力，读取 MAT 文件后返回各变量名称、类型、rank、dims、复数标志及不支持原因。 | AC-F-MAT-002：对所有源 MAT 输出元数据报告，按原始文件名准确定位不支持的类别/无效尺寸；其职责是运行时查询而非生成全量字典文档。 |
 | REQ-F-MAT-003 | M | 确定 | 系统应分别提供指定变量名的严格读取和 getflowfield 兼容的首变量/省略扩展名读取。 | AC-F-MAT-003：分别测试单变量、多变量、缺失变量、后缀处理。 |
-| REQ-F-MAT-004 | M | 确定 | 系统应在独立 RunId 输出目录写入变量名与尺寸兼容的 MAT 结果。 | AC-F-MAT-004：写后回读一致，拒绝覆盖原归档/历史 RunId。 |
+| REQ-F-MAT-004 | M | 确定 | 系统应在独立 RunId 输出目录写入变量名与尺寸兼容的 MAT 结果。 | AC-F-MAT-004：在任何暂存/写入前要求Writer目标名与`MatDenseArray::info().name`非空且逐字节相同，并属于当前入口有效save字段，禁止以分别合法但不相等的`xwerte/ywerte1`组合写出错配MAT；使用既有`OutputPathForbidden`报明确目标身份冲突，真实写后回读核内部变量名、class/type、shape和数值一致，拒绝覆盖原归档/历史 RunId。仅合同修正，未运行Writer/CTest，详见[mat_io.md §7.2.2](design/mat_io.md)。 |
 | REQ-F-SH-001 | M | 确定 | 系统应复现 l≤2 的实球谐基函数、3×5 系数、近度恢复与逐项拟合。 | AC-F-SH-001：依据 [design/harmonics.md §1–3](design/harmonics.md) 以固定方向和 **L3 独立解析值**逐项核查 l≤2 九个实球谐基函数的正/负 m 相位、归一化、3×5 有效位置、逐项系数拟合与 near 重建，记录索引/维度、参考 SHA 和误差；必须有独立参考、实际 C++ 用例与 DEC-005 批准容差；不要求原 MATLAB 运行结果。 |
 | REQ-F-SH-002 | M | 数学行为确定；实现依据 ADR-006 | 系统应在 l≤2 实球谐系数旋转时提供与原球谐基函数一致的 R0/R3/R5 和旋转后系数，保持轴、m 顺序、符号相位及旋转方向。 | AC-F-SH-002：用独立 L3 固定输入逐项核验 R0(1)、R3(9)、R5(25)、九系数 before/after、相位/主动被动旋转方向及几何不变量；实现审计需满足 [HLD ADR-006](ARCHITECTURE.md) 和 [球谐详细设计](design/SH_ROTATION_IVANIC_RUEDENBERG.md) 所确定的 1996 原论文/1998 勘误、Eigen-only、禁用 sdla 约束；最终数值 PASS 依 DEC-005 和真实 CTest，不要求 MATLAB/L1。 |
 | REQ-F-TRAJ-001 | M | 确定 | 系统应按原参数生成圆轨迹、正弦轨迹和相邻点局部运动/旋转，不将绘图混入数据生成。 | AC-F-TRAJ-001：样本轨迹、旋转方向、端点和角度转换对照。 |

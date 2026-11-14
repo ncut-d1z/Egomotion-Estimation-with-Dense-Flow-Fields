@@ -60,6 +60,8 @@ class UpdateRateRunner;
 
 **历史 MAT 的类型和 shape 已由 matio 1.5.26 实测**：582 个源文件/变量均为 v5+zlib、double/double，按下方数据契约读取；新 C++ Runner 尚未生成任何结果，未来 MAT 写出仍需回读/数值验收。
 
+**2026-11-14 结果Writer双名称身份门禁（DAR-038）**：每个Bias/Adaptive当前有效`save`字段应在I/O适配器内构造成`MatDenseArray{info.name=field_name,...}`，并以相同`field_name`调用`RunMatWriter::saveNewVariable`；绝不能仅凭目标名在白名单，就把内部`info.name`为另一个有效字段的数据写出。例如Bias`target=xwerte`、内部`info.name=ywerte1`会破坏历史`getflowfield`单变量契约，Writer必须在暂存前以既有`MatErrorCode::OutputPathForbidden`拒绝并保留双名和RunId错误上下文。对已合法发布的单文件，Reader独立回读还要确认内部变量名与目标基名相同；RunContext汇总Status、Manifest而不是替Writer隐式改名。详见[MAT LLD §7.2.2](mat_io.md)和[TEST_PLAN §2.9](../TEST_PLAN.md)，均为待测设计，不是已执行软件证据。
+
 ## 4. L2/L3/L4 参考数据、错误和验收边界
 
 - 新输出的所有变量必须通过 matio 回读并与原 MAT 的 shape、统计含义核对；不应要求不同语言在随机数不等价时逐样本完全一致。

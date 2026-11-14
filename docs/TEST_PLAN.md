@@ -292,6 +292,8 @@ regression_tolerance=9.0949470177292824e-13
 
 **2026-11-11 MAT Writer 失败时点的具体门槛（仅文档设计）**：`TC-F-MAT-004/TC-NF-SAFETY-001/TC-I-RESULT-001` 须分别注入：（a）暂存写出/关闭失败，最终文件名**不存在**；（b）暂存回读逐值不一致时返回 `ReadbackMismatch` 且**不得发布**；（c）两个Writer竞争同一文件的非覆盖发布，一成功一 `OutputExists`，原有内容和SHA不变；（d）**发布后**最终检验或RunContext写Manifest失败，RunOutcome仍为`Incomplete/Failed`，记录已发布文件并不得把全部运行标`Complete`；（e）恶意 `name='../origin/...'` 或输出父组件在检查/创建间变为symlink时失败且原始文件未改变。Writer的 `Status` 只证明单文件操作，整个运行的完整性只由Runner/RunContext在全部期望产物验证后确定。上述均为**将来需执行的隔离负例**，不得把文字或已有582/582只读探针当成安全通过。详见 [mat_io.md §7.2–7.2.1](design/mat_io.md)。
 
+**2026-11-14 MAT内部变量名/目标文件名必须一致的独立测试义务（DAR-038）**：`MatDenseArray::info().name`和Writer独立的`mat_variable_name`必须在暂存前逐字节一致。固定同一合法double[2×3]数据：`target=xwerte,info.name=xwerte`可正常执行既有非覆盖/回读测试；`target=xwerte,info.name=ywerte1`虽然两个字段分别在Bias有效save白名单，**必须返回OutputPathForbidden、零临时/最终文件**；空内部名同样失败，不得在Writer内偷偷改名，任何已有文件与`origin/**`均保持不变。验证读回时不仅比较dims/double内容，还要检查MAT变量名=`xwerte`。具体见[MAT LLD §7.2.2](design/mat_io.md)，复用`TC-F-MAT-004/TC-NF-SAFETY-001/TC-I-RESULT-001`；仅静态合同，未运行Writer/CTest，无新TC。
+
 **执行范围限界**：`8eab5dd` 与 `445ed151` 的同一球谐 CTest 均已由用户现场运行并报告通过，后者包括独立基函数、dyadic 符号及 MATLAB 相位回归；并不代表全部 66 TC 或 MAT L2/更广 L3/DEC-005 验收完成。其它模块的实际测试、负例和日志仍缺；凡在 `445ed151` 以后修改的测试必须重新实测。AF-051 保持「未整改」。
 
 ### 2.10 已可手算但未实际执行的数值/抽样负例（AF-041/047/055）

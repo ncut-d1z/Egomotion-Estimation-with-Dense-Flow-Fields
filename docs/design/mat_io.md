@@ -1,6 +1,6 @@
 # MAT I/O、路径安全与原始数据合同——详细设计草案
 
-> **LLD v0.14 候选草案（DEC-008-04完整错误包装链与05仅结构元数据检查已同步；仍未实现/运行）。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 L2 逐值/L3 独立参考验证仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
+> **LLD v0.15 候选草案（DEC-008-04完整错误包装链与05仅结构元数据检查已同步；仍未实现/运行）。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 L2 逐值/L3 独立参考验证仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
 
 ## 1. 原始行为、文件身份和支持版本
 
@@ -95,6 +95,7 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 - **唯一所有权**：MatFileHandle、MatVariableHandle move-only，析构释放一次；返回 MatDenseArray 后没有指向这些句柄/已释放 matvar_t 的借用视图。
 - **自拥有与访问器**：MatDenseArray 内部为 `std::vector<double>`，`data()` 是只读临时指针、`valuesColumnMajor()` 返回只读引用，`dims()` 返回 `info_.dimensions` 的只读引用。对象存活且未移动/修改时才可借用上述引用；不得存成跨对象生命周期的 Eigen::Map。需要 Eigen 时可在调用作用域内创建只读 Map 或复制为自拥有值对象。
 - **当前必要类型**：`fromColumnMajor` 仅接受非复杂、非 logical、实数密集 double 的 MAT class/type；`dimensions.size()==2` 且两维均大于 0。零长度数组在 `inspect` 中允许**如实报告元数据**，但正式业务数据读取/输出构造当前按 `InvalidShape` 拒绝；其他 rank/type 属未来变更范围，不暗中转成 double。
+- **MAT内部变量名与Writer目标名是两个独立字段**：`MatDenseArray::info().name`来自构造数据时的`MatVariableInfo.name`，`RunMatWriter::saveNewVariable(run_id, mat_variable_name, value)`的`mat_variable_name`又独立决定目标文件名。不能只校验两者分别属于白名单，还必须在写出前验证二者**逐字节完全相等且非空**。严禁隐式改名或因文件名合法就忽略变量内部名称，详见§7.2.2。
 - **形状/长度不变量**：在分配前以检查溢出的乘法计算 `elements=dims[0]*dims[1]` 与 `bytes=elements*sizeof(double)`，要求数据向量长度等于 elements；溢出返回 `SizeOverflow`，维度或长度不符返回 `InvalidShape`，class/type/complex/logical 不支持返回 `UnsupportedClassOrType`。列主序线性元素偏移为 `row + rows*column`，0-based 转换要显式核对。
 - **复制移动**：数组**可深拷贝**（独立 vector/元数据），也可移动；移动后原对象不得作为具有原数据的有效对象使用。当前不采用以 `std::vector<uint8_t>` 承载任意标量类型的泛型变体，避免将单精度、整数或 complex 假装受支持。
 - **元数据边界**：MatVariableInfo 的两个 int 暂是 matio 编码的数值快照，仅做诊断/验证；公共头不引用 matio.h、不提供 mat_t*/matvar_t*。将来稳定 enum/字段及目标 C++ 命名空间是待 P0.8 审核项；本候选不是已冻结、可编译的头文件。
@@ -200,7 +201,7 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 | inspect(path) | 输入为存在的普通文件，Reader不持有写权限 | **只读取/返回真实MAT结构元数据**：name/class/dtype/rank/dims/元素数、可由头部确认的complex/logical/压缩标记；不解码任何变量数值载荷，也不打印元素，原输入哈希不变 | MissingFile、PermissionDenied、InvalidMatHeader、元数据损坏（应归可证明的已有错误码） | TC-F-MAT-002、TC-F-CLI-001 |
 | readNamed(path,name) | name 非空；所需 class 已受支持 | 对**唯一指定变量**读取完整自拥有数据，源文件句柄销毁后结果仍有效 | MissingVariable、UnsupportedClassOrType、InvalidShape | TC-F-MAT-001/003 |
 | readFirstCompatible(path) | 路径合法；可明确补齐省略的 `.mat`；不要求 MATLAB 运行 | **同一只读句柄**内完成枚举、单变量选择和完整解码；多变量无顺序证据拒绝 `AmbiguousVariable`，不得跨两次open混用元数据/数值；仅承诺582份单变量归档 | AmbiguousVariable、MissingVariable、UnsupportedClassOrType、InvalidShape | TC-F-MAT-003 |
-| saveNewVariable(RunId,name,data) | **构造时根路径已固定为仓库 `output/`，且写入时再次检验根/RunId/文件名**；不存在输出根 CLI 参数。RunId、变量名合法且文件不存在 | 独占发布新 MAT 并严格回读；Writer只提供单文件Status/错误，整个Manifest及Complete由RunContext/Runner负责 | OutputPathForbidden、OutputExists、WriteFailed、ReadbackMismatch | TC-F-MAT-004 |
+| saveNewVariable(RunId,name,data) | **构造时根路径已固定为仓库 `output/`，且写入时再次检验根/RunId/文件名**；不存在输出根 CLI 参数。RunId、变量名合法，**name必须与data.info().name逐字节相等**，且文件不存在 | 独占发布新 MAT 并严格回读；Writer只提供单文件Status/错误，整个Manifest及Complete由RunContext/Runner负责 | OutputPathForbidden、OutputExists、WriteFailed、ReadbackMismatch | TC-F-MAT-004 |
 | 句柄析构/移动 | 只允许单一所有者持有 mat_t*/matvar_t* | 释放恰好一次；move 后源句柄变为无所有权状态；MatDenseArray 深拷贝/移动后的存活性另测 | 不通过异常伪装成功；记录资源失败 | TC-DC-IO-001 |
 
 **完整错误枚举以 [contracts.md §3](contracts.md) 为唯一候选规范**；上表只是主要示例，不能视为完整 enum 列表。此模块涉及的 `MatErrorCode` 包括：`MissingFile`、`PermissionDenied`、`InvalidMatHeader`、`CorruptCompressedData`、`MissingVariable`、`AmbiguousVariable`、`UnsupportedClassOrType`、`InvalidShape`、`SizeOverflow`、`OutputPathForbidden`、`OutputExists`、`WriteFailed`、`ReadbackMismatch`。从 `Result/Status` 的失败分支传播原 `MatErrorCode` 与 `ErrorDetail`，CLI 退出码继续只引用 `contracts.md §3.1`，不在此处复制映射。无新增错误码得到批准。
@@ -231,7 +232,9 @@ Reader::readFirstCompatible:
     never silently reopen path or choose alphabetic first
 Writer::saveNewVariable(RunId,name,data): // 拟议阶段顺序，尚非代码
     1 validate fixed output root/owned RunId dir (stable directory identity)
-    2 revalidate RunId and approved domain variable name; disallow separators
+    2 revalidate RunId, approved domain variable name and exact
+      name == data.info().name, without rewriting either; disallow separators
+      reject mismatch BEFORE creating any staging object (OutputPathForbidden)
     3 create a UNIQUE staging path strictly inside owned RunId dir (no clobber)
     4 Mat_VarCreate; Mat_CreateVer only on staging path; Mat_VarWrite; Mat_Close
     5 read staging via independent Reader and STRICTLY compare name/class/type/dims/values
@@ -266,6 +269,14 @@ Writer::saveNewVariable(RunId,name,data): // 拟议阶段顺序，尚非代码
 | 原 `output/` 父组件/RunId 在写出中被软链接替换；或 `name='../origin/...'` | 拒绝逃逸或竞态；原 `origin/**`、已有结果保持未修改；不接受“先canonical后Mat_CreateVer”作为通过证据 |
 
 此处**不替代引入真实C++之后的安全实现与TOCTOU竞态测试**。严格读取/写回读的原始值不适用0.01/0.1宽松筛查，不能以失败产物被保留就认定该数据有效。
+
+### 7.2.2 目标文件名与 MAT 内部变量名双重身份一致性（2026-11-14，DAR-038）
+
+**真实设计冲突**：§2候选`MatDenseArray`包含自拥有`MatVariableInfo info_`，其中`info_.name`标识MAT内部变量；§2的`RunMatWriter::saveNewVariable(run_id,mat_variable_name,value)`另接收独立`mat_variable_name`。原§7.2.1只要求**目标名**在已批准字段白名单且无路径分隔符，没有要求已构造数据内的`value.info().name`和目标名一致。若用`info.name="ywerte1"`的数据调用`saveNewVariable(runId,"xwerte",value)`，两个名字分别都是合法Bias字段，单独白名单校验都能通过，却可能形成**目标文件`xwerte.mat`、MAT内部变量`ywerte1`**的错配。原MATLAB `save([speicherstr 'xwerte'],'xwerte')`与原归档各单变量文件名/内部变量名一致，现行`AC-F-MAT-004`也要求变量身份兼容。不能用“先写成功、再读回报错”代替发布之前的确定性拒绝。
+
+**最小修复，不改变已选接口**：Writer在任何临时文件创建、变量序列化或输出文件发布**之前**同时验证（1）`mat_variable_name`是此ExperimentKind当前有效且经批准的`save`字段，（2）`value.info().name`与其**非空、逐字节完全相等**，（3）RunId和输出目录身份合法；不得由Writer静默把`value.info().name`覆写为目标名，也不能用`Mat_VarCreate`暗中把名字换掉。I/O适配器从领域值构造`MatDenseArray`时必须明确赋予同一正确名字；HistoricalOnly额外字段不能因为读到合法MAT就自动获得新save资格。对于该**候选输出目标身份不一致**，不新增公共enum，暂按既有`MatErrorCode::OutputPathForbidden`报告，并在`ErrorDetail`中记录RunId、目标名、内部名及`ErrorStage::Output`；该分类是现行I/O安全合同的候选细化，**不是原MATLAB实际错误码**。由Runner按既有Result/RunContext纪律传播完整来源链。
+
+**固定区分性负例（沿用`TC-F-MAT-004/TC-NF-SAFETY-001/TC-I-RESULT-001`）**：在隔离的新增RunId输入同一有效`double[2×3]`列主序数据，分别测试`(target="xwerte", info.name="xwerte")`应进入正常写/回读门禁，`(target="xwerte", info.name="ywerte1")`虽然两个字符串都在Bias现行save白名单仍必须**提前拒绝**，以及`(target="xwerte", info.name="")`和带路径/历史专属名的负例；失败时目标名/暂存文件均不存在、原`origin/**`不变且不消耗写入资源。另若将来业务增加不同展示别名，必须通过显式、有来源的适配层构造新匹配数据与单独授权，不偷偷添加Writer改名能力。原生matio/Writer/CTest/签名冻结仍未实施。
 
 ### 7.3 形状与 MAT 类型扩展策略
 
@@ -330,6 +341,7 @@ Reader/Writer检测`MatErrorCode`时只负责建立**当前最内侧故障层**�
 | L3 关闭句柄后仍读取返回数组、拷贝/移动与析构 | MatDenseArray 保持自拥有；MatFileHandle/MatVariableHandle 恰好释放一次；失败后 ErrorDetail 不丢失 | 合同属性检查，不产生伪成功 | TC-DC-IO-001；**候选** `tests/contracts/test_mat_raii.cpp` |
 | L3 输出目标为 origin、路径穿越、符号链接指回原源 | Writer 不允许任意输出路径；不得更改 45 .m/582 MAT | OutputPathForbidden | TC-NF-SAFETY-001；`tests/contracts/test_output_safety.cpp` |
 | L3 已有 RunId、目标 MAT 已存在或并发冲突 | RunContext 新建目录失败或 Writer 拒绝覆盖已存在变量 | OutputExists | TC-F-MAT-004、TC-NF-SAFETY-001；`test_output_safety.cpp` |
+| L3 目标名/内部变量名分别有效但错配 | `saveNewVariable(runId,"xwerte",array{info.name="ywerte1"})`及空内部名均在暂存之前明确拒绝；正确匹配的`xwerte/xwerte`继续走回读、列主序严格比对 | OutputPathForbidden（目标身份不一致），保留RunId/两个名字 | TC-F-MAT-004、TC-NF-SAFETY-001；`test_output_safety.cpp` |
 | L3 单独的新 RunId + 有效值写回读 | 创建 `output/<RunId>/<variable>.mat`，比对变量名/type/rank/dims/列主序值与 SHA，不覆盖已有文件 | WriteFailed / ReadbackMismatch（失败时） | TC-F-MAT-004、TC-I-RESULT-001；`test_mat_archive.cpp` / `test_adaptive_experiments.cpp` |
 | L3 暂存写/关闭失败、**发布前**逐值回读不一致、原子发布冲突、**发布后**最终身份不一致 | 分别验证：发布前失败时最终名不存在；发布冲突不覆盖旧文件；发布后失败时不把产物/Manifest标Complete，保留RunId与源/暂存/最终SHA证据；禁止擅自清除未知用户产物 | WriteFailed / ReadbackMismatch / OutputExists（对应具体阶段） | TC-NF-SAFETY-001、TC-F-MAT-004；`test_output_safety.cpp` |
 
