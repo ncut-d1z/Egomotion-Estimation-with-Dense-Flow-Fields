@@ -1,6 +1,6 @@
 # Egomotion Estimation with Dense Flow Fields：软件需求规格说明书（SRS）
 
-> **状态：草案 v0.24（修订两种Bias噪声模型互斥/3N消耗与切向投影后的相关性验收条件；无新软件授权或CTest）。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
+> **状态：草案 v0.25（补Bias噪声模型coefficient必需参数、CompositionRoot唯一注入及错误类型分层，仍未构建/验收）。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
 
 ## 1. 目的、范围与约束
 
@@ -616,6 +616,7 @@
 | v0.22 | 2026-11-13：按DEC-008-05删除助手擅加的inspect-mat数值读取/打印需求，仅保留结构元数据；按DEC-008-04采用完整std::forward_list错误包装链并同步DEC-008-06的RunContext部分结果/Manifest。保留66 REQ/AC/TC及H-10/H-11延期，不声称已实施或正式冻结 | 评审草案、未执行真实C++/CTest |
 | v0.23 | 2026-11-14：增加已测低阶SH叶子局部ErrorCode/Result与公共Result/NumericalErrorCode之间的无损错误适配要求，不可错误枚举强转或异常类别混用；保留66REQ/AC/TC、当前延期与未验收范围 | 评审草案，未编译桥接/未签署 |
 | v0.24 | 2026-11-14：纠正AC-F-FLOW-003中互斥噪声策略与3N次normal调用的可验证要求，并区分投影引入的协方差相关性与原始独立randn；加入区分两个模型的固定数值，不新增REQ/TC | 评审草案、尚未原生执行 |
+| v0.25 | 2026-11-14：实修AC-DC-NOISE-001的noise coefficient形参、唯一公共apply签名、CompositionRoot入口→模型组合，以及NumericalErrorCode/ExperimentErrorCode分层；补原TC接口和固定负例，保留66REQ/TC及既有延期状态 | 草案，未实施/未验收 |
 
 
 ## 附录 A：内部设计约束清单（REQ-DC）
@@ -632,5 +633,5 @@
 | REQ-DC-EXPERIMENT-001 | M | 设计待冻结 | 系统实验运行器应通过组合注入求解、RNG、采样和写入器，彼此独立。 | AC-DC-EXPERIMENT-001：固定替身运行两种 Bias 模式无交叉状态。 |
 | REQ-DC-IO-001 | M | 设计待冻结 | 系统应使用资源安全的 MAT 读取及独立写入接口，领域计算不直接依赖 matio 指针。 | AC-DC-IO-001：RAII/内存寿命、只读/写入权限、替身可验证。 |
 | REQ-DC-KVD-001 | M | 设计待冻结 | 系统应保持两个 KvD 入口和差异化更新规则，不让公共引擎覆盖原始计算顺序。 | AC-DC-KVD-001：策略替换对照两条原 MATLAB 路径。 |
-| REQ-DC-NOISE-001 | M | 设计待冻结 | 系统应允许通过窄接口选择采样器、噪声模型和无噪声策略。 | AC-DC-NOISE-001：替换实现不修改核心求解器。 |
+| REQ-DC-NOISE-001 | M | 设计待冻结 | 系统应允许通过窄接口选择采样器、噪声模型和无噪声策略。 | AC-DC-NOISE-001：必须沿用唯一`IFlowNoiseModel::apply(const FlowField&,double coefficient,IRandomSource&) -> Result<FlowField,NumericalErrorCode>`候选契约，显式传递源`fehlerprozent`，不能省略coefficient或发明第二个`scale/perturb`公共接口；由CompositionRoot基于已解析的`ExperimentKind`装配**一套合法采样器+噪声实现**，BiasOccluded=缺损/MeanMagnitude，BiasProportional=完整/ComponentGaussian。Runner参数无效在任何RNG前以现有`ExperimentErrorCode::InvalidParameters`拒绝，`egomotion_simulation`不能引用上层`ExperimentErrorCode`或依赖`egomotion_experiments`；对底层数值失败使用`NumericalErrorCode`，上层按完整`ErrorFrame`链包装。由于公开接口不提供`kind()`，不得声称仅靠任意注入的`IFlowNoiseModel&`能运行时识别具体模型，须用CompositionRoot替身/集成TC核对装配。参见[OBJECT_MODEL §1.2](OBJECT_MODEL.md)、[采样LLD §2–3](design/sampling_noise.md)及[TEST_PLAN §2.2.2](TEST_PLAN.md)，无代码/CTest通过证据。 |
 | REQ-DC-RNG-001 | M | 设计待冻结 | 系统应支持显式 RNG 注入、固定序列替身和逐次调用顺序记录。 | AC-DC-RNG-001：同固定序列不改变数学实现即可复现。 |
