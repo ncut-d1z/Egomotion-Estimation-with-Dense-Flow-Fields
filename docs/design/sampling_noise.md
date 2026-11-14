@@ -1,6 +1,6 @@
 # 视线采样、光流合成与噪声——详细设计草案
 
-> **LLD v0.11 草案，未冻结；采样/噪声仍无生产实现或 CTest。i=0/1/2 全714行方向已通过独立 Wolfram 逐坐标双实现对照（2,142个坐标、最大绝对差1.1102230246251565e-16）；正式 Golden/DEC-005、异常和 RNG 等软件验收尚未批准。** 对应 P2/P3、REQ-F-GEOM-*、REQ-F-FLOW-*、REQ-DC-RNG-001、REQ-DC-NOISE-001。
+> **LLD v0.12 草案，未冻结；采样/噪声仍无生产实现或 CTest。i=0/1/2 全714行方向已通过独立 Wolfram 逐坐标双实现对照（2,142个坐标、最大绝对差1.1102230246251565e-16）；正式 Golden/DEC-005、异常和 RNG 等软件验收尚未批准。** 对应 P2/P3、REQ-F-GEOM-*、REQ-F-FLOW-*、REQ-DC-RNG-001、REQ-DC-NOISE-001。
 
 ## 1. 来源与输入输出
 
@@ -32,22 +32,23 @@ sample_triangles(level, geometry):
         normalize terminal face centroid
     return directions IN GENERATED ORDER
 
-generate_bias_flow(level, truth_t, truth_omega, noise_kind, rng):
-    if noise_kind not in {MeanMagnitude, ComponentProportional}:
-        return ExperimentErrorCode::InvalidParameters  # BEFORE ANY RNG draw
+# The Runner validates its ExperimentKind and chooses exactly ONE model
+# before any RNG draw. ExperimentErrorCode belongs to Runner, NOT simulation.
+generate_bias_flow(level, truth_t, truth_omega, coefficient, selected_model, rng):
+    # precondition: selected_model is one already-validated injected IFlowNoiseModel
+    # validation/failure happens in Runner BEFORE any uniform/normal call
     directions = required_octahedral_variant(level)
     for each direction: normalized_distance = U(1,4)/2.5; near=1/normalized_distance
     perfect_flow = synthesize(directions, near, truth_t, truth_omega)
     mean_length = mean(norm(perfect_flow_i))
-    # noise_kind is ONE tagged choice for this invocation, never two booleans.
-    # Original mean-magnitude and component-proportional experiments are distinct.
+    # selected_model is already the ONE injected strategy for the experiment.
+    # The lower simulation layer never imports ExperimentKind/ErrorCode.
     for each point i:
         for c in [x,y,z] in this order:
             g[i,c] = Normal()  # exactly one draw per component: 3N in total
-            if noise_kind == MeanMagnitude:
-                perturbation[i,c] = g[i,c]*coefficient*mean_length
-            else:  # already proven ComponentProportional before all RNG use
-                perturbation[i,c] = g[i,c]*coefficient*perfect_flow[i,c]
+            perturbation[i,c] = selected_model.scale(
+                original_component=perfect_flow[i,c], mean_magnitude=mean_length,
+                coefficient=coefficient, gaussian=g[i,c])
         noisy[i] = tangent_project(perfect_flow[i] + perturbation[i], direction[i])
     return flow and original statistical fields
 ~~~
@@ -56,7 +57,7 @@ generate_bias_flow(level, truth_t, truth_omega, noise_kind, rng):
 
 ### 2.1 两种噪声策略必须互斥及切向投影后的精确相关性（2026-11-14 源合同整改）
 
-**原源码事实**：`fixed_kugel_symmetric_perfectpoints_randomnear.m:65–75`始终执行**唯一一组**三分量`randn * fehlerprozent * durchlaenge`；`fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m:65–75`始终执行**唯一一组**`randn * fehlerprozent * p(c)`；`nonpropfehler.m:21–30`是前者的通用函数。三个源函数任一个都没有“同时开启两种噪声模型”的分支。**原§2伪代码将`mean_length_noise`与`component_noise`写成两个独立`if`，在两者都为真时允许每个分量加两次噪声、每场消耗`6N`个normal**，这是与源`3N`严格冲突的实际实现合同漏洞。现已改成一次场景调用只选一种噪声策略（伪代码中的`noise_kind`是由Runner的现有`ExperimentKind`派生的内部判别，不是另增一个公共enum），单个点按x/y/z顺序各取一次normal；非法模型配置须在消费任何随机数之前由Runner以现有`ExperimentErrorCode::InvalidParameters`拒绝（需要先对`noise_kind`门控、再抽距离与噪声），不得在`Normal()`之后才检查，而不能合并两模型。外部“零噪声完全不调用函数”与原`nonpropfehler(...,0)`仍消耗`3N`的既有区别保持不变。
+**原源码事实**：`fixed_kugel_symmetric_perfectpoints_randomnear.m:65–75`始终执行**唯一一组**三分量`randn * fehlerprozent * durchlaenge`；`fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m:65–75`始终执行**唯一一组**`randn * fehlerprozent * p(c)`；`nonpropfehler.m:21–30`是前者的通用函数。三个源函数任一个都没有“同时开启两种噪声模型”的分支。**原§2伪代码将`mean_length_noise`与`component_noise`写成两个独立`if`，在两者都为真时允许每个分量加两次噪声、每场消耗`6N`个normal**，这是与源`3N`严格冲突的实际实现合同漏洞。现已改成一次场景调用只使用**由Runner根据现有`ExperimentKind`选定的唯一`IFlowNoiseModel`对象**，单个点按x/y/z顺序各取一次normal；非法/矛盾实验配置**只在Runner负责解析与拒绝**，在任何uniform/normal之前返回现有`ExperimentErrorCode::InvalidParameters`。**采样/仿真层不能返回或依赖`ExperimentErrorCode`，也不需要新建全局`NoiseKind`公共枚举。**旧伪代码还使用未在函数签名中声明的`coefficient`，本轮已补为显式实参；不能通过隐式全局变量读取它。外部“零噪声完全不调用函数”与原`nonpropfehler(...,0)`仍消耗`3N`的既有区别保持不变。
 
 对有限单位方向`d`，写`P_d=I_3-dd^T`，原理想光流为`p`且`p·d=0`。令各分量独立的单位正态向量`g=(g_x,g_y,g_z)`、噪声倍数`c`，两种源模型的**投影后**扰动精确为
 \[
@@ -79,6 +80,8 @@ d=(1,1,0)/\sqrt2,\quad p=(1,-1,0),\quad c=1,\quad g=(1,0,0),\quad N=1.
 此时`p·d=0`、`\overline{||p||}=\sqrt2`，切向投影矩阵的`xy`块是`\frac12\begin{bmatrix}1&-1\\-1&1\end{bmatrix}`。单独选择**平均模长模型**得到`\delta p=(1/\sqrt2,-1/\sqrt2,0)`，**逐分量模型**得到`\delta p=(1/2,-1/2,0)`；都必须消费三次normal（包括两个零样本），绝不能输出两组扰动之和`(1/\sqrt2+1/2,-1/\sqrt2-1/2,0)`或消费六次。平均模长模型的`xy`协方差非对角项为`-1`，逐分量模型为`-1/2`，已经证明投影后分量不独立。若使用两个model布尔值均为true的旧伪代码，固定替身能直接产生错误和`6N`消耗。
 
 **定位与测试边界**：上述协方差是从原`randn`独立标准正态**在数学意义上的理论结果**，不是当前C++ RNG实际抽样统计、不是已经进行的蒙特卡洛实验或新的噪声验收方差阈值。修改依据是[原三份MATLAB源码](../../origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/nonpropfehler.m)与固定向量计算；将来源单值`NoiseKind`、每组件精确`3N`消费和无条件最后切向投影映射既有`TC-F-FLOW-003/004`、`TC-DC-NOISE-001`及`TC-DC-RNG-001`，不增加TC、不执行生产C++/CTest或MAT写入，H-10/H-11及DEC-005继续无限期延期。
+
+**2026-11-14 第二次核查的跨层类型/实参缺陷**：旧`generate_bias_flow(level,truth_t,truth_omega,noise_kind,rng)`**遗漏必需的`coefficient`形参**，却在噪声公式中使用它；上轮为“抽样前拒绝双模型”补的`return ExperimentErrorCode::InvalidParameters`又使本应只依赖`domain/sampling/contracts`的仿真函数依赖上层`egomotion_experiments`错误类型，违背[HLD §4](../ARCHITECTURE.md)的27条DAG候选，也与本文件`IFlowNoiseModel::apply(...) -> Result<FlowField,NumericalErrorCode>`冲突。现已真正重写伪代码：显式传`coefficient`和**已选的窄接口对象**；合法性与`ExperimentErrorCode::InvalidParameters`仅属于Runner，先于一切RNG消费；仿真层仅接收现有公共`IFlowNoiseModel`，遇自身数值错误按`NumericalErrorCode`报告。这一层级修复不改变原三源噪声函数，不新建公共enum或实现文件；真实函数重载/异常路径/CTest仍被H-10/H-11无限期延期。对应既有`TC-F-FLOW-003/004`、`TC-DC-NOISE-001`、`TC-NF-OOP-001`、`TC-DC-RNG-001`。
 
 ## 3. 候选 C++17 合同（未批准）
 
