@@ -185,6 +185,7 @@ regression_tolerance=9.0949470177292824e-13
 | 原`realsetofpoints` / `noiseless` | 第1条光流`(-1,0,0)`，第2条`(0,0,0)`；各行前3列仍是对应原方向 |
 | 原`durchlaenge` / `mean_total_flow_magnitude` | `(1+0)/2=1/2`，应在任何`normal`抽样前算出；理想平移均值`1/2`，旋转均值`0` |
 | `noisy`（单一均值模型，先三维加噪后切向投影） | 第1条`(-1,1/2,0)`，第2条`(0,0,1/2)`；不得覆盖`noiseless` |
+| 包装对象/列索引及数值门禁 | `DirectionSet.directions.rows()==2`，`FlowField.observations` 的C++ 0-based列3/4/5为p；非法尺寸/改变前三方向列的noise success不得构造成功场景；理想模长求和溢出后不消耗任何normal并报原`NonFiniteResult` |
 | RNG调用 | 顺序严格`uniform,uniform,normal×6`；模型实际读取6次normal，包括所有值为0的分量 |
 | 返回与失败 | 成功必须是包含上述全部字段的`Result<FlowSynthesisResult,NumericalErrorCode>`；若采样、第二次uniform、理想流`synthesize`或噪声模型任一步注入失败，均无成功的部分场景结果；原错误阶段、索引、原因保留，不把低层错误改名`ExperimentErrorCode::SolverFailed` |
 

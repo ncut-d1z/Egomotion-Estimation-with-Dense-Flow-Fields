@@ -21,7 +21,7 @@
 | DOC-005 | `design/contracts.md` | 草案级部分符合 | Result/ABI/ODR/异常线程/自包含 | 正在审计 | contracts v1.3明确leaf Error{局部ErrorCode,const char*静态消息}/Result与公共NumericalErrorCode/Result不等价，禁止enum整数static_cast与局部bad_variant_access假冒科学Failure；未来跨层用完整ErrorFrame复制源code/message保真；提交a8d7b90，公共适配器未实施 |
 | DOC-006 | `design/cli.md` | 草案级部分符合 | CLI负例、RunId、JSONL、DEC-008 | 已完成限定审计 | cli v0.12：JSONL顶层error_domain在causes=[]也必须存在，Mat/Numerical InvalidShape直接报错不会碰撞，不从message或exit推断家族；提交ad52013，真实CLI未编写 |
 | DOC-007 | `design/mat_io.md` | 草案级部分符合 | Reader/Writer、TOCTOU、写回读、L2 | 正在审计 | mat_io v0.14：§7.4.2限定inspect-mat仅读meta、保留业务Reader完整解码；§7.4纠正旧兼容单变量表的二次open指令；§7.5要求完整Mat→Analyzer/Runner包装链；进一步澄清压缩MAT元数据解析可能需解压必要头部字节，但**禁止数值载荷解码/显示**，提交b3c6793/a9a740e/36c1fa3/5fbf6fb，尚无真实matio/CTest |
-| DOC-008 | `design/sampling_noise.md` | 草案级部分符合 | 生产几何/RNG负例/CTest | 正在审计 | sampling_noise v0.13：新增DAR-037的完整FlowSynthesisResult构造、逐阶段Result检查与可复核双视线固定值；原有实修generate_bias_flow遗漏coefficient、把ExperimentErrorCode下沉Simulation层及通过隐式函数猜几何模式；明确注入selected_sampler.sample(level)与selected_model.apply(flow,coefficient,rng)，错误只保留NumericalErrorCode并在上层包装；提交6dfcabed/7794781c/6b92e11c，无生产C++/CTest |
+| DOC-008 | `design/sampling_noise.md` | 草案级部分符合 | 生产几何/RNG负例/CTest | 正在审计 | sampling_noise v0.13：新增DAR-037的完整FlowSynthesisResult构造、逐阶段Result检查与可复核双视线固定值，二次实修DirectionSet/FlowField字段、0-based列访问与非有限门禁；原有实修generate_bias_flow遗漏coefficient、把ExperimentErrorCode下沉Simulation层及通过隐式函数猜几何模式；明确注入selected_sampler.sample(level)与selected_model.apply(flow,coefficient,rng)，错误只保留NumericalErrorCode并在上层包装；提交6dfcabed/7794781c/6b92e11c，无生产C++/CTest |
 | DOC-009 | `design/trajectory.md` | 草案级部分符合 | Sophus真实依赖及几何L3 | 已完成限定审计 | trajectory v0.6：在既有旋转尺度退化审阅外，补球外内向正根4/9、球面内外向及严格球内前置检查；固定分数推导复核，提交6dbecb5；Sophus/C++/L3仍未验收 |
 | DOC-010 | `design/kvd.md` | 草案级部分符合 | 36轮数学非真实CTest/200轮 | 正在审计 | KvD v0.10：对照原两个误差.m恢复非平方欧氏/角度精确公式、零真值假零残差和5组输入；§4撤销不存在的SingularGeometry/NonFinite错误码而统一公共enum；§5将36轮已生成Wolfram固定参考与未执行CTest分列；提交9c80e41/6fd3220，仍需原生实现及全面数学审查 |
 | DOC-011 | `design/harmonics.md` | 草案级部分符合 | 低阶叶子有实测，公共ABI未冻结 | 正在审计 | harmonics v0.16：实际读当前low_order.hpp/low_order_source_projection.cpp/test头与实现blob，对照8个局部ErrorCode、Result错态bad_variant_access，补适配责任及3项无一一公共同义项；纠正本节source_projection‘未编译’与固定5e522198下3/3 CTest证据矛盾；提交bc30242，公开接口与Bridge未实现 |
@@ -360,6 +360,8 @@
 **独立固定向量复算**：注入两方向d1=ez,d2=ex，t=ex,ω=0；两uniform依次1/2、1/12，来自源公式的nearness=(1,2)、near_last=2；原理想光流(-ex,0)，合成均值模长1/2、独立平移均值1/2及旋转0。仅使用平均模长高斯模型，按点xyz分别取g1=(0,1,0)、g2=(0,0,1)，投影后两行含噪光流分别(-1,1/2,0)、(0,0,1/2)，但无噪流不变；需2次uniform+6次normal。使用直接向量代数独立验证，**不是**源MATLAB运行或生产C++/CTest；两点仅为隔离的IDirectionSampler替身，不假称原固定6/8方向。另要求synthesize数值失败后不能调用noise或提交Complete，保留NumericalErrorCode及完整错误历史。
 
 **授权与继续条件**：H-10、H-11、DEC-005、DEC-006、BASELINE-SIGN、RELEASE-PR六项无限期延期决定未变，DEC-008-01～06已定设计不重选。已完成一个真实文档合同缺陷的静态整改，但五项复合DAR-001～005依赖未授权业务代码/真实测试/正式批准，**不得虚构清零**，因此全工程第二轮审计按AUDIT.md的“全部目标已修复后”条件暂未触发。可继续在授权范围内审核其它公式/文档，不能因此承诺生产验收。
+
+**推送后的真实回读与同DAR追加实修**：在确认首个提交四个文件均被远端回读后，又发现伪代码把`DirectionSet`包装值误写成有`rows()`成员，并以`perfect_flow[i,4:6]`混用MATLAB 1-based与C++ 0-based列下标；已改为`directions.directions.rows()`与`perfect_flow.observations.row(i).segment<3>(3)`，并增加总模长非有限值先拒绝、Noise成功返回N×6/方向保持不变的门禁；联动Runner/TEST_PLAN。仍属DAR-037同一场景结果值对象与返回资格修订，**不重复计算新整改目标**，不宣称实际运行C++。
 
 **七项统计**：整改目标36→37（+1）、已整改31→32（+1）、未整改5→5（0）；审计文件36→36（0）、完成限定26→26（0）、正在10→10（0）、未审0→0（0）。
 

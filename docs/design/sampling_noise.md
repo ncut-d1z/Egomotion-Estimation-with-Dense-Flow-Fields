@@ -43,7 +43,7 @@ generate_bias_flow(level, truth_t, truth_omega, coefficient,
     if !direction_result.hasValue():
         return failure with unchanged NumericalErrorCode/ErrorDetail
     directions = direction_result.value()
-    N = directions.rows()
+    N = directions.directions.rows()  # DirectionSet owns DirectionMatrix
     if N == 0: return NumericalErrorCode::EmptyInput with source context
     nearness = Eigen::VectorXd(N)
     for i = 0..N-1:
@@ -58,12 +58,23 @@ generate_bias_flow(level, truth_t, truth_omega, coefficient,
         return failure preserving NumericalErrorCode, location and details
     ideal = ideal_result.value()       # IdealFlowResult, NOT FlowSynthesisResult
     perfect_flow = ideal.flow          # original realsetofpoints N×6
-    mean_length = sum_i(norm(perfect_flow[i,4:6])) / N
+    mean_length = sum_i(
+        norm(perfect_flow.observations.row(i).segment<3>(3))) / N
+    # i is C++ 0-based; columns 3..5 correspond to MATLAB p columns 4..6.
+    if !isfinite(mean_length):
+        return NumericalErrorCode::NonFiniteResult before calling the noise model
     # selected_model is the ONE injected strategy; it consumes 3N normals
     # in x/y/z order, perturbs the original ideal flow and tangent-projects.
     noise_result = selected_model.apply(perfect_flow, coefficient, rng)
     if !noise_result.hasValue():
         return failure preserving NumericalErrorCode, index and details
+    # A successful noise model must preserve N×6 and the original direction
+    # columns; check this invariant before creating a successful scene.
+    if noise_result.value().observations.rows() != N or
+       noise_result.value().observations.cols() != 6 or
+       noise_result.value().observations.leftCols<3>() !=
+           perfect_flow.observations.leftCols<3>() (exact rowwise comparison):
+        return NumericalErrorCode::InvalidShape/InvalidDirection as appropriate
     return success(FlowSynthesisResult{
         noisy = noise_result.value(),      # original setofpoints N×6
         noiseless = perfect_flow,           # NOT overwritten by noisy flow
@@ -111,7 +122,9 @@ d=(1,1,0)/\sqrt2,\quad p=(1,-1,0),\quad c=1,\quad g=(1,0,0),\quad N=1.
 
 现明确三个不同值类型：采样结果是 `DirectionSet`；理想流合成返回 `IdealFlowResult{flow, mean_translational_magnitude, mean_rotational_magnitude}`；噪声模型返回**仅含噪** `FlowField`。成功时**由场景编排者**构造完整自拥有 `FlowSynthesisResult`，其中 `noiseless` 保留合成前的理想流，`noisy` 保存投影后单模型结果，`nearness` 保存 N 次uniform得到的原顺序，`near_last=nearness[N-1]`，`mean_total_flow_magnitude=mean_i(||p_i^ideal||)`在噪声之前求得，另外两个均值直接来自IdealFlowResult，**不得以两个均值相加替换总均值**。这不改变源fixed_*实际只返回标量`near`及实际输出MAT变量集合。
 
-全部 `selected_sampler.sample` / `rng.uniform` / `synthesizer.synthesize` / `selected_model.apply` 的 `Result` 均需先检查 `hasValue`，失败保留 `NumericalErrorCode` 和阶段/索引，**不创建一个看似成功的部分FlowSynthesisResult**；Runner再按既定独立失败纪律记录/包装而不是下层直接产生ExperimentErrorCode。字段及数学等价的可判别两方向固定替身详见[TEST_PLAN §2.2.3](../TEST_PLAN.md)。它是待实现的设计和静态数值检查，非C++/CTest PASS；本轮无新接口枚举/类型、无原源变更或新增TC。
+全部 `selected_sampler.sample` / `rng.uniform` / `synthesizer.synthesize` / `selected_model.apply` 的 `Result` 均需先检查 `hasValue`，失败保留 `NumericalErrorCode` 和阶段/索引，**不创建一个看似成功的部分FlowSynthesisResult**；Runner再按既定独立失败纪律记录/包装而不是下层直接产生ExperimentErrorCode。字段及数学等价的可判别两方向固定替身详见[TEST_PLAN §2.2.3](../TEST_PLAN.md)。**同步回读修订**：§2伪代码中的`DirectionSet`是`{directions:DirectionMatrix}`值对象，行数须从`directions.directions.rows()`读取，而非从没有`rows()`成员的包装对象读取。完整光流是`FlowField{observations:FlowMatrix}`，C++中前三列0..2为方向、后三列3..5为光流，理想总模长按`perfect_flow.observations.row(i).segment<3>(3).norm()`累计；不把源MATLAB的1-based列4..6直接当C++数组下标。总模长出现非有限值须在调用噪声模型前以现有`NumericalErrorCode::NonFiniteResult`拒绝，不能继续消耗normal；成功噪声输出还必须保留N×6、每行方向前三列不变。这些是对实际已定义字段/维度和失败状态的细化，不另起新DAR或误称已经过编译验证。
+
+它是待实现的设计和静态数值检查，非C++/CTest PASS；本轮无新接口枚举/类型、无原源变更或新增TC。
 
 ## 3. 候选 C++17 合同（未批准）
 
