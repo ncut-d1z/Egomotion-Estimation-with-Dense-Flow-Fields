@@ -1,6 +1,6 @@
 # MAT 结果分析与可选绘图——详细设计草案
 
-> **LLD v0.13草案（DEC-008-04完整ErrorFrame包装链已同步；未执行Analyzer/可视化程序）。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
+> **LLD v0.14草案（DEC-008-04完整ErrorFrame包装链已同步；未执行Analyzer/可视化程序）。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
 
 ## 1. 只读分析合同
 
@@ -16,7 +16,7 @@ kurveglaetten.m 使用窗口内均值；原代码在头尾保留零值。该行�
 ## 2. 结构化曲线数据（候选接口）
 
 建议 Analyzer 输出包含：
-- curve_id、source_mat_path、source_variable、source_sha、source_index_start/end、axis-x、axis-y、axis-unit、raw_values、smoothing_window；
+- curve_id、**所有实际贡献的 MAT 输入列表**（逐项 path/variable/所属 k、贡献角色与可核验的原始MAT SHA-256）、**独立的原分析 .m Git blob SHA**、source_index_start/end、axis-x、axis-y、axis-unit、raw_values、smoothing_window；不能用单个source_mat_path代替跨RunId聚合输入；MAT SHA-256当前缺失时要明确未知，不得由FNV64或.m的Git blob冒充；
 - 对分段值另带 segment_start/end、threshold、invalid_flag，输出明确有效样本数及数据缺失原因；
 - 图像后端只消费这些不可变值，不负责重新读取 MAT、选择随机种子或触发求解。
 
@@ -195,10 +195,19 @@ for col in 1..4:
 ~~~cpp
 // 设计合同，不是已实现类；公共 Result/Error 在 contracts.md。
 enum class AxisScale { Linear, Log10 };
+// 当前仍为可审查候选值类型，不表示公共ABI已获批准。
+struct MatInputProvenance {
+    std::string original_mat_relative_path; // one actually contributing MAT
+    std::string original_mat_variable;      // exact internal variable name
+    std::size_t source_run_ordinal_matlab;  // original 1-based k; single-run = 1
+    std::string role;                       // e.g. "y_member", "x_last", "ratio"
+    std::optional<std::string> mat_content_sha256;
+    // nullopt means NOT verified; never substitute FNV64 or a .m Git blob.
+};
 struct SeriesProvenance {
-    std::string original_mat_relative_path;
-    std::string original_mat_variable;
-    std::string source_blob_sha;
+    std::vector<MatInputProvenance> inputs; // all actual x/y/ratio contributors
+    std::string source_blob_sha;            // original analysis .m Git blob ONLY
+    std::vector<std::string> helper_source_blob_shas; // e.g. smoothing .m
 };
 struct CurveSeries {
     SeriesProvenance provenance;
@@ -218,6 +227,12 @@ enum class AnalysisErrorCode {
     NonFiniteInput, UndefinedStatistic, UnsupportedExperiment
 };
 ~~~
+
+**2026-11-14 DAR-039：多输入曲线的可验证身份和两个不同哈希域。** 原§6只含一个`original_mat_relative_path`、一个`original_mat_variable`及含糊的`source_blob_sha`；但源`graphs_bias_test.m`的每条`ywerte3..6`曲线**依赖K份运行目录中的同名y变量和最后一次的xwerte**，而Comparison等也同时依赖误差MAT与`rottransratio`。单一MAT路径无法完整说明数据如何聚合，且`source_blob_sha`若被当成MAT内容SHA-256会将**原.m源码Git blob（40位SHA-1身份）**与**原MAT字节SHA-256（64位内容摘要）**混淆，违反[contracts §4](contracts.md)的来源分层。
+
+现按已存在的`CurveSeries/SeriesProvenance`候选性质细化为`inputs[]`：每个参与本条曲线数值的MAT路径/内部变量名/原1-based k/角色均必须列出；`source_blob_sha`只表示原**分析 .m** Git blob，若使用`kurveglaetten.m`等附属公式则另保存其Git blob身份；`mat_content_sha256`单独属于该实际MAT文件，**只有从被分析的稳定文件身份获得并验证后才填写**，否则为`nullopt`并明确`L2 SHA not verified`，不得把历史探针FNV64或另一份文件的哈希顶替。算法能从Reader的值对象做分析，不代表获得MAT原始文件的字节摘要；实际读取/绑定哈希的可靠性属于未来I/O和集成测试，不能凭新增字段伪称582份独立SHA已经完成。此处不增加对外新Reader方法，也不改变历史MAT。
+
+**K=2固定来源测试**：使用仅用于鉴别的两个隔离运行（不冒充作者实际40份）——第一轮`xwerte=[6,24,96]`、`ywerte3(:,1)=[2,4,6]`；第二轮`xwerte=[7,28,112]`、`ywerte3(:,1)=[4,8,10]`。应有`x_plot=[7,28,112]`、`mean_y=[3,6,8]`，MATLAB绘图行3得到`(x,y)=(112,8)`、理论参考`100/sqrt(112)`。该曲线的`inputs[]`必须至少追溯到`k=1,ywerte3`、`k=2,ywerte3`及`k=2,xwerte`**三个实际来源**；不得记录`k=1,xwerte`作为最终x的数值贡献。三份MAT的SHA应分别关联同一份真实已读文件，不存在则标未知而非填写原.m Git blob。这个独立静态输入与[TEST_PLAN §2.6](../TEST_PLAN.md)原TC绑定，**不是已运行Analyzer/CTest，也不将额外分析数据字段写入原MAT**。
 
 **单一分析错误归属（AF-077）**：`AnalysisErrorCode` 七个状态只在本分析 LLD 定义；其对外 `exit_code/ErrorStage` **唯一候选映射**由 [contracts.md §3.1](contracts.md) 维护：缺结果/变量归 `read(3)`，shape 归 `decode(4)`，无效分段/非有限/无定义统计/Analyzer 内部不支持模式归 `analyze(5)`；不再在本模块定义第二份退出码表。非法 `--experiment` 值应在 CLI parse(2) 阶段被拒绝而非进入 Analyzer；底层缺MAT/变量的原`MatErrorCode`与阶段/路径/变量须按DEC-008-04保存于**`ErrorDetail.causes`的`std::forward_list<ErrorFrame>`完整包装链**：例如Reader `MissingVariable@Read`被Analyzer `AnalysisErrorCode::MissingVariable@Analyze`包装，则外层Analysis为当前Failure，链首是内层Mat错误；如果继续由Runner包装，再`push_front`保留Analyzer和更深的Mat帧，不能只存最初的根因字符串。例：新多更新率结果没有历史 `rottransratio` 时应报告 `AnalysisErrorCode::MissingVariable` 和缺失变量身份，**不得**编造比值。此映射为待 DEC-008 签署的**候选**，并无真实分析测试或 JSONL PASS。
 
@@ -243,7 +258,7 @@ PlotExporter 仅消费 AnalysisDataset，输出图形位置必须在独立 RunId
 
 所有参考数据须来自原只读 .m 源公式/历史 MAT L2 及独立 L3 曲线实现，带原源码 SHA、输入 MAT SHA、参考生成过程与明确 Golden 版本；**不要求运行原 MATLAB 分析脚本**。图像像素一致性不要求，但**数据值、MATLAB 索引、绘图分段、单位和有效数量必须可审查**。
 
-**当前状态**：分析的索引、分段和平滑合同已列出；**历史 582 个 MAT 已由 matio 实测 READ_OK，真实形状与类型见下表**。实际曲线数值 Golden、批准容差、绘图后端、C++ 分析程序与 CTest 仍未完成。
+**当前状态**：分析的索引、分段、平滑及每曲线多MAT来源合同已列出；**历史 582 个 MAT 已由 matio 实测 READ_OK，真实形状与类型见下表**。实际曲线数值 Golden、批准容差、绘图后端、C++ 分析程序与 CTest 仍未完成。
 
 ## 8. matio 已确认的历史分析输入合同
 

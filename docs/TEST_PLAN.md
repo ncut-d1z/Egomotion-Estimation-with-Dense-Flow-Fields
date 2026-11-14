@@ -236,7 +236,9 @@ regression_tolerance=9.0949470177292824e-13
 - 初始化分析图：allemittransfehler(1:13,1) 与 allemitrotfehler(:,1) 的数值、索引、对数纵轴语义；数据被读取不代表一定进入图线。
 - 比较分析图：x=50:550 的旋转与平移方向角度误差、rottransratio 双纵轴，阈值 0.01，分段规则精确依据原 MATLAB。
 - 更新频率分析图：x=50:550、阈值 0.02，四条曲线与不同半窗 2/5/10 的平滑；kurveglaetten 的边缘零值语义不替换。
-- 每条曲线的**L2 输入/L3 独立计算参考**应记录原始 source MAT+variable 和 SHA-256、原只读源码中的 1-based 索引规则、x/y 数组、axis/units、分段、窗宽及有效样本状态；**不运行 MATLAB**，只比较图片像素不能算通过。
+- 每条曲线的**L2 输入/L3 独立计算参考**必须记录**每一份实际贡献的MAT路径、变量及内容SHA-256**（未单独验证时标未知，不能捏造）和原分析.m/平滑.m的**不同Git blob SHA**，原只读源码中的 1-based 索引规则、x/y 数组、axis/units、分段、窗宽及有效样本状态；尤其K-run Bias的y聚合不能只留一条输入MAT，x取最后k应另有来源；**不运行 MATLAB**，只比较图片像素不能算通过。
+
+**2026-11-14 Bias与Adaptive曲线多来源身份的固定负例（DAR-039；不新增TC）**：在仅用于验证的K=2两目录人工数据中，令run1的`xwerte=[6,24,96]`与`ywerte3(:,1)=[2,4,6]`、run2的`xwerte=[7,28,112]`与`ywerte3(:,1)=[4,8,10]`，按原`graphs_bias_test.m`必须形成`x_plot=[7,28,112]`、`mean_y=[3,6,8]`、行3绘图点`(112,8)`及参考`100/sqrt(112)`。对该`CurveSeries`的`SeriesProvenance.inputs`至少检查三项实际贡献：run1/ywerte3、run2/ywerte3、run2/xwerte；不能只保留一个source_mat_path，不能误把已覆写的run1/xwerte算成最终x来源。每个MAT的`mat_content_sha256`与`source_blob_sha`（原.m文件Git blob）必须分属不同类型/长度/文件身份；当前原归档SHA-256还未独立产生时对应optional应为空而非使用FNV64替代。对Comparison要求误差MAT与实际ratio MAT均可追溯，对使用`kurveglaetten`的曲线附加平滑脚本的固定blob身份；真实Reader/Analyzer/CTest/哈希回读均未执行。参照[analysis_plotting.md §6](design/analysis_plotting.md)，使用既有`TC-F-AN-001`、`TC-F-BIAS-003`、`TC-I-ANALYSIS-001`。
 
 **Adaptive 输出源时序与物理单位的未执行夹具（AF-088/089，不新增 TC）**：`TC-F-EXP-003` 须从原真实相对旋转向量 `bestrot` **弧度值**独立计算 `akrot=(180/π)*||bestrot||`，输出单位 **deg**，非角速度/误差；`bestrot=(0,0,0)`、`(0,0,π/2)`、`(0,0,π)` 分别期待 **0°/90°/180°**，而来源 600×1 数组的首/末帧另按原 `zeros` 保留 0。`TC-F-EXP-002` 应记录 `erzeugeflussausnear` 的加噪前 `durchrotfluss` 与 `durchtransfluss` 并对其**平均模长之比**核对 `rottransratio`（无量纲），`nonpropfehler` 是这两项计算之后的流程：给定相同理想流的不同固定噪声样本，ratio 应一致；将 AN-G05 的单点 `mean_rot=1,mean_trans=2` 作为待独立复核候选，ratio=0.5；分母为零/非有限要单列非成功而不能被宽松容差吞没。仍核其为**第 8 次缓冲**而非八次均值。分析 `TC-F-AN-001` 只使用归档中真实存在的 ratio 变量，不给新 Update rates 补造历史字段。原源码行与期望边界见 [实验 LLD §5.1](design/experiments.md)；以上手算输入只是**测试设计、非生成/执行的 L3 或 CTest**。
 
