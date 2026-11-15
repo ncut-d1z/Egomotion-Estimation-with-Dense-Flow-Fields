@@ -144,15 +144,25 @@ Result<DirectionSet,NumericalErrorCode> IcosahedralSampler::sample(int level) co
 
 Result<Vector3, NumericalErrorCode> randomUnitDirection(IRandomSource& random) {
     auto first = random.uniform();
-    if (!first.hasValue())
-        return Result<Vector3,NumericalErrorCode>::failure(std::move(first).error());
+    if (!first.hasValue()) {
+        ErrorDetail stage;
+        stage.stage = ErrorStage::Simulation;
+        stage.message = "getvektor: first uniform call failed";
+        return Result<Vector3,NumericalErrorCode>::failure(
+            wrapFailure(first.error().code, std::move(stage), first.error()));
+    }
     const double u1 = first.value();
     if (!std::isfinite(u1) || u1 < 0.0 || u1 >= 1.0)
         return failure<Vector3>(NumericalErrorCode::InvalidRandomSample,
                                 "getvektor: invalid first uniform");
     auto second = random.uniform();
-    if (!second.hasValue())
-        return Result<Vector3,NumericalErrorCode>::failure(std::move(second).error());
+    if (!second.hasValue()) {
+        ErrorDetail stage;
+        stage.stage = ErrorStage::Simulation;
+        stage.message = "getvektor: second uniform call failed";
+        return Result<Vector3,NumericalErrorCode>::failure(
+            wrapFailure(second.error().code, std::move(stage), second.error()));
+    }
     const double u2 = second.value();
     if (!std::isfinite(u2) || u2 < 0.0 || u2 >= 1.0)
         return failure<Vector3>(NumericalErrorCode::InvalidRandomSample,

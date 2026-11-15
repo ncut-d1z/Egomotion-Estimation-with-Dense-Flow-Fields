@@ -21,6 +21,19 @@ Result<Value,NumericalErrorCode> fail(NumericalErrorCode code,
     detail.observation_index = index;
     return Result<Value,NumericalErrorCode>::failure({code, std::move(detail)});
 }
+template<class Value>
+Result<Value,NumericalErrorCode> propagate(
+    const Failure<NumericalErrorCode>& underlying, std::string message,
+    std::optional<std::size_t> point = std::nullopt) {
+    ErrorDetail context;
+    context.stage = ErrorStage::Simulation;
+    context.message = std::move(message);
+    context.observation_index = point;
+    // Preserve the original RNG/synthesis failure as an additional frame.
+    return Result<Value,NumericalErrorCode>::failure(
+        wrapFailure(underlying.code, std::move(context), underlying));
+}
+
 bool unit(const Vector3& d) {
     return d.allFinite() && std::abs(d.squaredNorm()-1.0) <= 1e-8;
 }
@@ -66,8 +79,9 @@ Result<FlowField,NumericalErrorCode> noiseApply(const FlowField& ideal,
                 // regardless of coefficient or source component being zero.
                 auto drawn=rng.normal();
                 if (!drawn.hasValue())
-                    return Result<FlowField,NumericalErrorCode>::failure(
-                        std::move(drawn).error());
+                    return propagate<FlowField>(
+                        drawn.error(), "Noise normal failed at component "+
+                            std::to_string(axis), static_cast<std::size_t>(i));
                 const double g=drawn.value();
                 if (!std::isfinite(g))
                     return fail<FlowField>(NumericalErrorCode::InvalidRandomSample,
@@ -180,8 +194,9 @@ Result<FlowSynthesisResult,NumericalErrorCode> generateBiasFlow(
                                          "Invalid truth parameters or noise scale");
     auto sampled=sampler.sample(params.subdivision_level);
     if (!sampled.hasValue())
-        return Result<FlowSynthesisResult,NumericalErrorCode>::failure(
-            std::move(sampled).error());
+        return propagate<FlowSynthesisResult>(
+            sampled.error(), "Bias direction sampling failed at level "+
+                std::to_string(params.subdivision_level));
     DirectionSet directions=std::move(sampled).value();
     const Eigen::Index count=directions.directions.rows();
     if (count==0)
@@ -192,8 +207,9 @@ Result<FlowSynthesisResult,NumericalErrorCode> generateBiasFlow(
         for (Eigen::Index i=0;i<count;++i) {
             auto u=rng.uniform();
             if (!u.hasValue())
-                return Result<FlowSynthesisResult,NumericalErrorCode>::failure(
-                    std::move(u).error());
+                return propagate<FlowSynthesisResult>(
+                    u.error(), "Bias nearness uniform call failed",
+                    static_cast<std::size_t>(i));
             const double sample=u.value();
             if (!std::isfinite(sample) || sample < 0.0 || sample >= 1.0)
                 return fail<FlowSynthesisResult>(NumericalErrorCode::InvalidRandomSample,
@@ -204,8 +220,8 @@ Result<FlowSynthesisResult,NumericalErrorCode> generateBiasFlow(
         auto ideal=synthesizer.synthesize(
             directions, nearness, params.truth_translation, params.truth_rotation);
         if (!ideal.hasValue())
-            return Result<FlowSynthesisResult,NumericalErrorCode>::failure(
-                std::move(ideal).error());
+            return propagate<FlowSynthesisResult>(
+                ideal.error(), "Bias ideal flow synthesis failed");
         IdealFlowResult full=std::move(ideal).value();
         const double mean_total=meanFlowMagnitude(full.flow);
         if (!std::isfinite(mean_total))
@@ -213,8 +229,8 @@ Result<FlowSynthesisResult,NumericalErrorCode> generateBiasFlow(
                                              "Bias ideal total flow mean overflow");
         auto perturbed=noise.apply(full.flow,params.noise_coefficient,rng);
         if (!perturbed.hasValue())
-            return Result<FlowSynthesisResult,NumericalErrorCode>::failure(
-                std::move(perturbed).error());
+            return propagate<FlowSynthesisResult>(
+                perturbed.error(), "Bias noise injection failed");
         FlowField noisy=std::move(perturbed).value();
         if (noisy.observations.rows()!=count || !noisy.observations.allFinite() ||
             !(noisy.observations.leftCols<3>().array()==
