@@ -166,7 +166,7 @@ Status<MatErrorCode> RunMatWriter::saveNewVariable(
         // flags=0 -> matio copies values. It will own and free the copy.
         VarHandle variable(Mat_VarCreate(name.c_str(),MAT_C_DOUBLE,MAT_T_DOUBLE,
                              2,dims,
-                             const_cast<double*>(payload.values_column_major.data()),0));
+                             payload.values_column_major.data(),0));
         if(!variable)
             return fail(MatErrorCode::WriteFailed,directory_,name,
                         "matio could not allocate the named double variable");
@@ -181,16 +181,30 @@ Status<MatErrorCode> RunMatWriter::saveNewVariable(
         // against a different pathname can substitute this check.
         MatResultReader reader;
         auto back=reader.readNamed(fd_path,name);
-        if(!back.hasValue())
-            return fail(MatErrorCode::ReadbackMismatch,directory_,name,
-                        "Staging MAT cannot be fully decoded");
+        if(!back.hasValue()) {
+            ErrorDetail outer;
+            outer.stage=ErrorStage::Output;
+            outer.run_id=directory_.runId();
+            outer.variable=name;
+            outer.source_path=(directory_.outputRoot()/
+                               directory_.runId().text).string();
+            outer.message="Staging MAT cannot be fully decoded";
+            return Status<MatErrorCode>::failure(wrapFailure(
+                MatErrorCode::ReadbackMismatch,std::move(outer),back.error()));
+        }
         if(!sameValues(payload,back.value()))
             return fail(MatErrorCode::ReadbackMismatch,directory_,name,
                         "Staging MAT variable name/type/shape/bytes do not match");
         auto sha=sha256Fd(file.get());
-        if(!sha.hasValue())
-            return fail(MatErrorCode::ReadbackMismatch,directory_,name,
-                        "Cannot SHA-256 the staging MAT file");
+        if(!sha.hasValue()) {
+            ErrorDetail outer;
+            outer.stage=ErrorStage::Output;
+            outer.run_id=directory_.runId();
+            outer.variable=name;
+            outer.message="Cannot SHA-256 the staging MAT file";
+            return Status<MatErrorCode>::failure(wrapFailure(
+                MatErrorCode::ReadbackMismatch,std::move(outer),sha.error()));
+        }
         struct stat before{};
         if(::fstat(file.get(),&before)!=0||!S_ISREG(before.st_mode))
             return fail(MatErrorCode::OutputPathForbidden,directory_,name,
