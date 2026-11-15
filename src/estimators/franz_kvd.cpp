@@ -200,7 +200,8 @@ Result<KvDResult,NumericalErrorCode> estimateKvD(
         // Source returns near from the beginning of the FINAL iteration;
         // it does not recompute near from the last t and omega.
         const double nearMean=near.sum()*invCount;
-        result.motion={translation*nearMean,rotation};
+        result.motion.translation=translation*nearMean;
+        result.motion.rotation=rotation;
         result.final_nearness=std::move(near);
         result.final_nearness_mean=nearMean;
         result.final_translation_direction_before_scale=translation;
@@ -231,7 +232,9 @@ FranzMatchedFilter::estimateWithTrace(const FlowField& field) const {
                                                   "Franz requires unit direction vectors",
                                                   static_cast<std::size_t>(i));
     FranzInitializationTrace trace;
-    MotionEstimate motion{Vector3::Zero(),Vector3::Zero()};
+    MotionEstimate motion;
+    motion.translation.setZero();
+    motion.rotation.setZero();
     for (int axis=0;axis<3;++axis) {
         Vector3 e=Vector3::Zero();
         e[axis]=1.0;
