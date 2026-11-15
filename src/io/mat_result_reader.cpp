@@ -238,7 +238,8 @@ MatResultReader::scanFile(const std::filesystem::path& path, ScanMode mode) cons
                 entry.status = cls >= 6 && cls <= 15 && value->nbytes > 0 &&
                                value->data == nullptr ? "NO_NUMERIC_DATA" : "READ_OK";
             }
-            result.variables.push_back(std::move(entry));        }
+            result.variables.push_back(std::move(entry));
+        }
     } catch (const std::bad_alloc&) {
         return fail<MatFileScan>(MatErrorCode::SizeOverflow, ErrorStage::Decode,
                                  path, "Cannot allocate MAT variable metadata");
