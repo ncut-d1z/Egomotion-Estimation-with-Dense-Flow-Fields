@@ -169,9 +169,13 @@ int runExperiment(const Command& command,
         }
     }();
     if(!result.hasValue()) {
-        err<<jsonFailure(result.error(),result.error().detail.stage==ErrorStage::Output?6:5)
-           <<"\n";
-        return result.error().detail.stage==ErrorStage::Output?6:5;
+        const int code=result.error().detail.stage==ErrorStage::Output?6:5;
+        // The computational failure and an independent Manifest failure are
+        // distinct events: never fake a common causal chain for both.
+        err<<jsonFailure(result.error(),code)<<"\n";
+        auto status=context.publishFailureRecord(result.error());
+        if(!status.hasValue())err<<jsonFailure(status.error(),6)<<"\n";
+        return code;
     }
     const auto& state=result.value();
     out<<"{\"run_id\":"<<jsonQuote(state.run_id.text)

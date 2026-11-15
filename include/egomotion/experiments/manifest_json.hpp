@@ -12,4 +12,9 @@ namespace egomotion::experiments {
 Result<std::string,ExperimentErrorCode> makeCompleteManifestJson(
     const RunContext& run,const std::vector<FileEvidence>& published);
 
+// Never labels a partial run Complete. Persists full outer->inner cause chain
+// and all independently confirmed/uncertain output file identities.
+Result<std::string,ExperimentErrorCode> makeFailureManifestJson(
+    const RunContext& run,const std::vector<FileEvidence>& published);
+
 }  // namespace egomotion::experiments

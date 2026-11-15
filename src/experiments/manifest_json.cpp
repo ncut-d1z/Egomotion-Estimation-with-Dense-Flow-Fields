@@ -109,4 +109,60 @@ Result<std::string,ExperimentErrorCode> makeCompleteManifestJson(
     }
 }
 
+Result<std::string,ExperimentErrorCode> makeFailureManifestJson(
+    const RunContext& run,const std::vector<FileEvidence>& published) {
+    const auto& d=run.manifestDraft();
+    if(d.errors.empty())
+        return fail<std::string>("Cannot publish failure Manifest without error event");
+    try{
+        const bool has_partial=
+            d.completed>0||d.valid>0||!published.empty();
+        std::string json="{\"schema\":\"egomotion-run-manifest-v1\"";
+        json+=",\"run_id\":"+jsonQuote(run.runId().text);
+        json+=",\"experiment_kind\":"+jsonQuote(kindName(run.experimentKind()));
+        json+=",\"completeness\":";
+        json+=jsonQuote(has_partial?"Incomplete":"Failed");
+        json+=",\"repo_sha\":"+jsonQuote(run.provenance().repository_commit_sha);
+        json+=",\"source_blob_sha\":"+jsonQuote(run.provenance().matlab_source_blob_sha);
+        json+=",\"algorithm_rng_seed\":";
+        if(run.provenance().rng_seed)
+            json+=std::to_string(*run.provenance().rng_seed);
+        else json+="null";
+        json+=",\"expected_repetitions\":"+std::to_string(d.expected_repetitions);
+        json+=",\"attempted\":"+std::to_string(d.attempted);
+        json+=",\"completed\":"+std::to_string(d.completed);
+        json+=",\"valid\":"+std::to_string(d.valid);
+        json+=",\"failed\":"+std::to_string(d.failed);
+        json+=",\"undefined\":"+std::to_string(d.undefined);
+        json+=",\"errors\":[";
+        bool first=true;
+        for(const auto& err:d.errors){
+            if(!first)json+=",";
+            first=false;
+            json+=jsonFailure(err,err.detail.stage==ErrorStage::Output?6:5);
+        }
+        json+="],\"mat_files\":[";
+        first=true;
+        for(const auto& f:published){
+            if(!first)json+=",";
+            first=false;
+            json+="{\"variable\":"+jsonQuote(f.variable);
+            json+=",\"file\":"+jsonQuote(f.filename);
+            json+=",\"sha256\":";
+            if(validSha256(f.sha256))json+=jsonQuote(f.sha256);
+            else json+="null";
+            json+=",\"bytes\":"+std::to_string(f.size_bytes);
+            json+=",\"durably_confirmed\":";
+            json+=f.durably_confirmed?"true":"false";
+            json+="}";
+        }
+        json+="]}\n";
+        return Result<std::string,ExperimentErrorCode>::success(std::move(json));
+    }catch(const std::bad_alloc&){
+        return fail<std::string>("Cannot allocate failure Manifest JSON");
+    }catch(const std::length_error&){
+        return fail<std::string>("Failure Manifest JSON exceeds container limits");
+    }
+}
+
 }  // namespace egomotion::experiments

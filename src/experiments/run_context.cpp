@@ -153,6 +153,49 @@ Result<RunOutcome,ExperimentErrorCode> RunContext::publishCompleteOutcome() {
     }
 }
 
+
+Status<ExperimentErrorCode> RunContext::publishFailureRecord(
+    Failure<ExperimentErrorCode> original) {
+    if(manifest_published_) {
+        ErrorDetail d;d.stage=ErrorStage::Output;d.run_id=run_id_;
+        d.message="A RunId Manifest has already been published";
+        return Status<ExperimentErrorCode>::failure(
+            {ExperimentErrorCode::OutputFailed,std::move(d)});
+    }
+    try{
+        recordFailure(std::move(original));
+        ++draft_.failed;
+        // Partial in-memory or verified file results remain an audit record,
+        // not a substitute for a successful Complete run.
+        draft_.status=(draft_.completed>0||
+                       !draft_.files_writer_confirmed.empty())
+                      ?RunStatus::Incomplete:RunStatus::Failed;
+        auto json=experiments::makeFailureManifestJson(
+            *this,writer_.fileEvidence());
+        if(!json.hasValue())
+            return Status<ExperimentErrorCode>::failure(std::move(json).error());
+        auto persisted=manifest_publisher_.publishNew("manifest.json",json.value());
+        if(!persisted.hasValue()){
+            ErrorDetail d;d.stage=ErrorStage::Output;d.run_id=run_id_;
+            d.message="Failure Manifest itself could not be durably published";
+            return Status<ExperimentErrorCode>::failure(wrapFailure(
+                ExperimentErrorCode::OutputFailed,std::move(d),persisted.error()));
+        }
+        manifest_published_=true;
+        return Status<ExperimentErrorCode>::success();
+    }catch(const std::bad_alloc&){
+        ErrorDetail d;d.stage=ErrorStage::Output;d.run_id=run_id_;
+        d.message="Cannot allocate the failure Manifest audit record";
+        return Status<ExperimentErrorCode>::failure(
+            {ExperimentErrorCode::OutputFailed,std::move(d)});
+    }catch(const std::length_error&){
+        ErrorDetail d;d.stage=ErrorStage::Output;d.run_id=run_id_;
+        d.message="Failure Manifest audit container exceeds capacity";
+        return Status<ExperimentErrorCode>::failure(
+            {ExperimentErrorCode::OutputFailed,std::move(d)});
+    }
+}
+
 void RunContext::recordFailure(Failure<ExperimentErrorCode> failure) {
     // ErrorDetail.causes is kept whole; do not collapse to root code.
     draft_.errors.push_back(std::move(failure));

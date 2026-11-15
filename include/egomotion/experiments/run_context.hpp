@@ -74,6 +74,11 @@ public:
     // a success RunOutcome. The optional plotting path cannot trigger it.
     Result<RunOutcome,ExperimentErrorCode> publishCompleteOutcome();
 
+    // A failed or incomplete run still attempts to persist a truthful
+    // Failed/Incomplete audit. Failure to persist is reported separately.
+    Status<ExperimentErrorCode> publishFailureRecord(
+        Failure<ExperimentErrorCode> original_failure);
+
     // Counts and failure events can be observed by the future Manifest
     // publisher. They are never themselves durable evidence of a file.
     void noteAttempt() noexcept { ++draft_.attempted; }
