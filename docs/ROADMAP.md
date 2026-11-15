@@ -1,0 +1,27 @@
+# C++ 实施路线图
+
+> **状态：实施计划，尚未开始本路线图的新业务代码。** 2026-11-15 用户解除 **H-10 编程权限**：可在独立开发分支编写、提交 C++17 生产代码、公共头、CMake 配置文本与测试源码。**H-11 运行权限仍单独延期**：本次不执行 CMake/编译/CTest/程序、不安装依赖、不写 MAT；正式容差、性能、基线签署和发布仍未获批准。最新权限见 [TODO](TODO.md)。
+
+## 目标与边界
+
+从用户操作自顶向下贯通：**CLI / Composition Root → 五类实验 Runner 或四类只读 Analyzer → 采样/轨迹/求解器 → 公共值类型与 MAT I/O → 结果及 Manifest**。优先交付可隔离测试的纵向业务链，而非机械按 MATLAB 文件逐个移植；目标命令见 [CLI LLD](design/cli.md)，11 个候选 target/27 条设计依赖见 [HLD §4](ARCHITECTURE.md)。
+
+只支持 Debian/Ubuntu、C++17、Eigen、matio/zlib，SO(3) 按既定 Sophus 方案；现有低阶球谐叶子**复用而不重写**。原 `origin/**` 永远只读；无 MATLAB/Octave/L1、ROS、Python/NumPy/NPZ 或 sdla。新输出只能是 `output/<RunId>/`（须待运行/写入授权）。
+
+## 自顶向下实施批次
+
+| 批次 | 优先贯通的外部行为 | 编程交付与阶段出口（尚待实现/验证） |
+|---|---|---|
+| **R0 外层契约** | `inspect-mat`、两种 Bias、三种 Adaptive、`analyze`；`plot` 可选 | 确定参数/错误/RunId/RunOutcome 和各命令预期输出；用接口替身先描绘完整调用链，不为未实现命令伪造成功。参考 [CLI](design/cli.md)、[Runner](design/experiments.md)。 |
+| **R1 工程骨架** | CLI → Composition Root → Reader/Runner/Analyzer 接口 | 建立 `domain/contracts`、Result/Status/完整错误链、值对象、窄读写与RNG接口和 CMake target 骨架；分离各层依赖，接入已有 SH 叶子。参考 [合同](design/contracts.md)、[对象模型](OBJECT_MODEL.md)。 |
+| **R2 第一条只读纵切** | `inspect-mat --file` → Reader → 元数据输出 | 实现 matio RAII、`inspect`（**只显示结构，不读取数值载荷**）、严格/兼容业务Reader及错误传播；隔离测试源码覆盖shape、列主序与资源生命周期。参考 [MAT I/O](design/mat_io.md)。 |
+| **R3 Bias 纵切** | `run-bias-*` → BiasRunner → Franz/KvD → 结果值对象 | 接入三种有序视线采样、显式RNG、光流/两噪声模型；实现Franz及Original/Modified KvD，先用**内存Writer替身**检查两种Bias的计算与输出字段，不启动真实MAT写入。参考 [采样](design/sampling_noise.md)、[KvD](design/kvd.md)。 |
+| **R4 Adaptive 纵切** | `run-adaptive-*` → Session → 单步求解 | 实现圆/正弦轨迹、球内近度与局部旋转、现有SH叶子公共适配、Adaptive单步及三种实验的时序；比较输出`dumi`不写回，失败不提交后验。参考 [轨迹](design/trajectory.md)、[球谐](design/harmonics.md)、[Adaptive](design/adaptive_mfa.md)。 |
+| **R5 结果与分析** | Writer/RunContext → 新MAT；`analyze` → 数值曲线；可选`plot` | 实现独占RunId、单文件非覆盖发布/回读与Manifest；四种Analyzer及HistoricalOnly缺字段失败；绘图不得成为数值计算依赖。**仅编写代码，运行/实际写MAT仍受H-11约束**。参考 [MAT I/O](design/mat_io.md)、[分析](design/analysis_plotting.md)。 |
+| **R6 证据闭环** | 全部命令的错误路径、端到端输出与复现 | 先补齐隔离单测/集成/独立L3、原MAT只读L2和必要L4的测试源码及追踪；待H-11另行授权后才运行构建/CTest/安全回读并记录固定SHA。正式DEC-005/006与基线、发布仍独立审批。参考 [TEST_PLAN](TEST_PLAN.md)。 |
+
+## 执行规则
+
+1. **从 R0/R1 开始**，每批先把调用方和失败边界写清，再向下实现所需最小模块；每个逻辑单元单独提交、推送。不得让下层依赖CLI/实验/具体matio。
+2. 只对已实际实现的接口宣称“代码已写”；**已推送、已构建、已测试、已验收**分别记录，未经H-11不得标PASS。候选签名变化同步对应LLD/REQ/TC，不凭路线图宣称P0.8已冻结。
+3. 细粒度任务、测试映射和实际证据分别以 [PLAN](PLAN.md)、[TEST_PLAN](TEST_PLAN.md)、[PROGRESS](PROGRESS.md)为准；本文件只维护阶段顺序，不重复98项WBS。
