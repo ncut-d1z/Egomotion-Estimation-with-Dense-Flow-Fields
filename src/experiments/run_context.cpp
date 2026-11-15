@@ -1,6 +1,7 @@
 #include "egomotion/experiments/run_context.hpp"
 
 #include <cstddef>
+#include <new>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -51,15 +52,37 @@ Status<ExperimentErrorCode> RunContext::writeCurrentResults(
     if (!validated.hasValue())
         return validated;
 
+    // Plan all strings/vector capacity BEFORE the first Writer operation.
+    // After a successful write, vector insertion moves a preallocated name,
+    // and therefore cannot lose the audit identity due to allocation.
+    std::vector<std::string> ordered_names;
+    try {
+        ordered_names=experiments::currentSaveFields(kind_);
+        draft_.files_writer_confirmed.reserve(
+            draft_.files_writer_confirmed.size()+ordered_names.size());
+    } catch (const std::bad_alloc&) {
+        ErrorDetail detail;
+        detail.stage=ErrorStage::Output;
+        detail.run_id=run_id_;
+        detail.message="Cannot reserve output audit identities before writing";
+        return Status<ExperimentErrorCode>::failure(
+            {ExperimentErrorCode::OutputFailed,std::move(detail)});
+    } catch (const std::length_error&) {
+        ErrorDetail detail;
+        detail.stage=ErrorStage::Output;
+        detail.run_id=run_id_;
+        detail.message="Output audit identities exceed container capacity";
+        return Status<ExperimentErrorCode>::failure(
+            {ExperimentErrorCode::OutputFailed,std::move(detail)});
+    }
     // Safe ordering comes from the source save sequence, not map iteration.
-    // Only the R5 Writer adapter will perform durable file identity/hash
-    // verification; this code cannot claim it performed those operations.
-    for (const std::string& name:experiments::currentSaveFields(kind_)) {
+    for (std::string& name:ordered_names) {
         const DenseDoubleArray& value=outputs.at(name);
         auto committed=writer_.saveNewVariable(run_id_,name,value);
         if (!committed.hasValue())
             return outputFailure(committed.error(),run_id_,name);
-        draft_.files_writer_confirmed.push_back(name);
+        draft_.files_writer_confirmed.push_back(std::move(name));
+        draft_.status=RunStatus::Incomplete; // only an unpersisted draft
     }
     // Deliberately no RunOutcome{Complete} and no saved-Manifest claim.
     return Status<ExperimentErrorCode>::success();
