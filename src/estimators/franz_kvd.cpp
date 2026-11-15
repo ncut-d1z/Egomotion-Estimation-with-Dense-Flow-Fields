@@ -66,7 +66,7 @@ Result<KvDResult,NumericalErrorCode> estimateKvD(
         initialization.initial_translation_norm;
     Vector3 rotation=initialization.before_translation_normalization.rotation;
     const Eigen::Index count=field.observations.rows();
-    const double invCount=1.0/static_cast<double>(count);
+    const double sample_count=static_cast<double>(count);
     try {
         Eigen::VectorXd near(count), denominators(count);
         KvDResult result;
@@ -138,8 +138,9 @@ Result<KvDResult,NumericalErrorCode> estimateKvD(
                 rotB+=mu*d;
                 rotC+=rotation.dot(d)*d;
             }
-            a*=invCount; b*=invCount; c*=invCount;
-            rotA*=invCount; rotB*=invCount; rotC*=invCount;
+            // Original m-sources use a=a/anzahl (not a*=1/anzahl).
+            a/=sample_count; b/=sample_count; c/=sample_count;
+            rotA/=sample_count; rotB/=sample_count; rotC/=sample_count;
             const Vector3 rawTranslation=-(a+rotation.cross(b)-c);
             const double length=rawTranslation.norm();
             if (!std::isfinite(length))
@@ -168,7 +169,7 @@ Result<KvDResult,NumericalErrorCode> estimateKvD(
                 if (params.retain_trace)
                     trace.predicted_flow_xyz.row(i)=prediction.transpose();
             }
-            mse*=invCount;
+            mse/=sample_count;
             const double rms=std::sqrt(mse);
             const double previous=previousRms;
             delta=std::abs(previous-rms);
@@ -201,7 +202,10 @@ Result<KvDResult,NumericalErrorCode> estimateKvD(
         }
         // Source returns near from the beginning of the FINAL iteration;
         // it does not recompute near from the last t and omega.
-        const double nearMean=near.sum()*invCount;
+        double source_near_sum=0.0;
+        for (Eigen::Index i=0;i<count;++i)
+            source_near_sum+=near[i]; // source's explicit for-loop order
+        const double nearMean=source_near_sum/sample_count;
         result.motion.translation=translation*nearMean;
         result.motion.rotation=rotation;
         result.final_nearness=std::move(near);

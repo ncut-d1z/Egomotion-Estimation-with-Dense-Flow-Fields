@@ -79,8 +79,8 @@ Result<AdaptiveStepResult,NumericalErrorCode> AdaptiveMfaStepSolver::solve(
             trace.near_raw[i]=near.value();
             raw_sum+=near.value();
         }
-        const double invCount=1.0/static_cast<double>(count);
-        const double mean=raw_sum*invCount;
+        const double sample_count=static_cast<double>(count);
+        const double mean=raw_sum/sample_count;
         if (!std::isfinite(mean)||mean==0.0)
             return fail<AdaptiveStepResult>(NumericalErrorCode::InvalidNearness,
                                              "Adaptive initial nearness mean is zero or non-finite");
@@ -108,12 +108,14 @@ Result<AdaptiveStepResult,NumericalErrorCode> AdaptiveMfaStepSolver::solve(
             rhs_translation-=p;
             rhs_rotation+=p.cross(d);
         }
-        trace.m1=Matrix3::Identity()-sum_near_outer*invCount;
-        trace.m4=Matrix3::Identity()-sum_outer*invCount;
-        trace.m2=crossMatrix(-sum_direction*invCount);
-        trace.m3=crossMatrix(sum_near_direction*invCount);
-        trace.rhs.head<3>()=rhs_translation*invCount;
-        trace.rhs.tail<3>()=rhs_rotation*invCount;
+        // Preserve source m=m/anzahl and a=a/anzahl rather than multiply
+        // by a precomputed reciprocal (same mathematics, different rounding).
+        trace.m1=Matrix3::Identity()-sum_near_outer/sample_count;
+        trace.m4=Matrix3::Identity()-sum_outer/sample_count;
+        trace.m2=crossMatrix(-sum_direction/sample_count);
+        trace.m3=crossMatrix(sum_near_direction/sample_count);
+        trace.rhs.head<3>()=rhs_translation/sample_count;
+        trace.rhs.tail<3>()=rhs_rotation/sample_count;
         trace.system_matrix.topLeftCorner<3,3>()=trace.m1;
         trace.system_matrix.topRightCorner<3,3>()=trace.m2;
         trace.system_matrix.bottomLeftCorner<3,3>()=trace.m3;
@@ -163,7 +165,7 @@ Result<AdaptiveStepResult,NumericalErrorCode> AdaptiveMfaStepSolver::solve(
                                                  "Adaptive recomputed near is non-finite",
                                                  static_cast<std::size_t>(i));
         }
-        result.error_mse=error_sum*invCount;
+        result.error_mse=error_sum/sample_count;
         trace.error_mse=result.error_mse;
         if (!std::isfinite(result.error_mse))
             return fail<AdaptiveStepResult>(NumericalErrorCode::NonFiniteResult,
