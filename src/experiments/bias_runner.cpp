@@ -51,10 +51,12 @@ Result<Scalar,NumericalErrorCode> normalizedVectorError(
         return Result<Scalar,NumericalErrorCode>::failure(
             {NumericalErrorCode::NonFiniteInput,std::move(detail)});
     }
-    if (ne==0) {
+    // transfehler_div yields mathematical zero for zero truth and nonzero
+    // estimate, but that is NOT a valid error statistic; never count it.
+    if (nt==0 || ne==0) {
         ErrorDetail detail;
         detail.stage=ErrorStage::Solve;
-        detail.message="Source transfehler_div has undefined estimate norm";
+        detail.message="Source transfehler_div has undefined zero vector norm";
         return Result<Scalar,NumericalErrorCode>::failure(
             {NumericalErrorCode::ZeroNorm,std::move(detail)});
     }
