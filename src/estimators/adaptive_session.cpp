@@ -77,9 +77,11 @@ AdaptiveMfaSession::AdaptiveMfaSession(AdaptiveSessionMode mode)
 
 Result<AdaptiveFrameResult,ExperimentErrorCode>
 AdaptiveMfaSession::processFrame(const AdaptiveFrameInput& frame) {
-    if (frame.matlab_frame_index<2)
+    if (frame.matlab_frame_index!=expected_matlab_frame_index_)
         return fail(ExperimentErrorCode::InvalidParameters,
-                    "Original Adaptive frame sequence starts at MATLAB i=2");
+                    "Adaptive frames must be processed in original consecutive "
+                    "MATLAB 1-based order, starting with i=2 (expected i="+
+                    std::to_string(expected_matlab_frame_index_)+")");
     if (!frame.coefficient_argument_rotation.allFinite()||
         !frame.truth.translation.allFinite()||!frame.truth.rotation.allFinite())
         return fail(ExperimentErrorCode::InvalidParameters,
@@ -171,6 +173,7 @@ AdaptiveMfaSession::processFrame(const AdaptiveFrameInput& frame) {
         primary_=std::move(next_primary);
         if (mode_==AdaptiveSessionMode::UpdateRates)
             baselines_=std::move(next_baselines);
+        ++expected_matlab_frame_index_;
         return complete;
     } catch (const std::bad_alloc&) {
         Failure<NumericalErrorCode> inner{

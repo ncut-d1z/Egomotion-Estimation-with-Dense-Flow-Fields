@@ -49,6 +49,9 @@ private:
     HarmonicCoefficients primary_;
     std::array<HarmonicCoefficients,4> baselines_;
     AdaptiveMfaStepSolver solver_;
+    // Each successful call consumes exactly one original MATLAB frame.
+    // Invalid/out-of-order frames never advance persistent state.
+    std::size_t expected_matlab_frame_index_ = 2;
 };
 
 }  // namespace egomotion::estimators
