@@ -1,0 +1,181 @@
+#include "egomotion/estimators/adaptive_session.hpp"
+#include "egomotion/harmonics/adapter.hpp"
+
+#include <array>
+#include <cmath>
+#include <new>
+#include <stdexcept>
+#include <string>
+#include <utility>
+
+namespace egomotion::estimators {
+namespace {
+constexpr std::array<std::size_t,4> kUpdatePeriods{{1,5,11,21}};
+
+HarmonicCoefficients originalInitialCoefficients() {
+    HarmonicCoefficients value;
+    value.values.setZero();
+    value.values(0,0)=1.0; // original MATLAB akkoeff(1,1)=1
+    return value;
+}
+Result<AdaptiveFrameResult,ExperimentErrorCode> fail(
+    ExperimentErrorCode code,std::string message) {
+    ErrorDetail error;
+    error.stage=ErrorStage::Simulation;
+    error.message=std::move(message);
+    return Result<AdaptiveFrameResult,ExperimentErrorCode>::failure(
+        {code,std::move(error)});
+}
+Result<AdaptiveFrameResult,ExperimentErrorCode> propagate(
+    const Failure<NumericalErrorCode>& child,std::string message,
+    std::size_t frame_index) {
+    ErrorDetail outer;
+    outer.stage=ErrorStage::Simulation;
+    outer.message=std::move(message)+" (matlab_frame_index="+
+                  std::to_string(frame_index)+")";
+    return Result<AdaptiveFrameResult,ExperimentErrorCode>::failure(
+        wrapFailure(ExperimentErrorCode::SolverFailed,std::move(outer),child));
+}
+Result<Scalar,NumericalErrorCode> sourceDirectionErrorDegrees(
+    const Vector3& truth,const Vector3& estimated) {
+    const double reference_norm=std::sqrt(truth.dot(truth));
+    const double computed_norm=std::sqrt(estimated.dot(estimated));
+    ErrorDetail detail;
+    detail.stage=ErrorStage::Solve;
+    if (!std::isfinite(reference_norm)||!std::isfinite(computed_norm)) {
+        detail.message="normrelfehler input norm is non-finite";
+        return Result<Scalar,NumericalErrorCode>::failure(
+            {NumericalErrorCode::NonFiniteInput,std::move(detail)});
+    }
+    if (reference_norm==0.0||computed_norm==0.0) {
+        detail.message="normrelfehler angle is undefined for zero vector";
+        return Result<Scalar,NumericalErrorCode>::failure(
+            {NumericalErrorCode::UndefinedAngle,std::move(detail)});
+    }
+    const Vector3 u=truth/reference_norm,v=estimated/computed_norm;
+    const double cosine=u.dot(v);
+    if (!std::isfinite(cosine)||cosine < -1.0||cosine > 1.0) {
+        detail.message="normrelfehler acos argument outside [-1,1]";
+        return Result<Scalar,NumericalErrorCode>::failure(
+            {NumericalErrorCode::UndefinedAngle,std::move(detail)});
+    }
+    const double pi=std::acos(-1.0);
+    const double degrees=std::abs(std::acos(cosine)*(360.0/(pi*2.0)));
+    if (!std::isfinite(degrees)) {
+        detail.message="normrelfehler output is non-finite";
+        return Result<Scalar,NumericalErrorCode>::failure(
+            {NumericalErrorCode::NonFiniteResult,std::move(detail)});
+    }
+    return Result<Scalar,NumericalErrorCode>::success(degrees);
+}
+}  // namespace
+
+AdaptiveMfaSession::AdaptiveMfaSession(AdaptiveSessionMode mode)
+    : mode_(mode),primary_(originalInitialCoefficients()) {
+    baselines_.fill(originalInitialCoefficients());
+}
+
+Result<AdaptiveFrameResult,ExperimentErrorCode>
+AdaptiveMfaSession::processFrame(const AdaptiveFrameInput& frame) {
+    if (frame.matlab_frame_index<2)
+        return fail(ExperimentErrorCode::InvalidParameters,
+                    "Original Adaptive frame sequence starts at MATLAB i=2");
+    if (!frame.coefficient_argument_rotation.allFinite()||
+        !frame.truth.translation.allFinite()||!frame.truth.rotation.allFinite())
+        return fail(ExperimentErrorCode::InvalidParameters,
+                    "Adaptive frame rotation/truth contains non-finite values");
+    try {
+        // Copy first: no state changes become visible before every required
+        // comparison AND the primary solve have succeeded.
+        HarmonicCoefficients next_primary=primary_;
+        auto next_baselines=baselines_;
+        if (mode_!=AdaptiveSessionMode::Initialization) {
+            auto rotated=harmonics::rotateCoefficients(
+                next_primary,frame.coefficient_argument_rotation);
+            if (!rotated.hasValue())
+                return propagate(rotated.error(),
+                                 "Adaptive primary coefficient rotation failed",
+                                 frame.matlab_frame_index);
+            next_primary=std::move(rotated).value();
+        }
+        if (mode_==AdaptiveSessionMode::UpdateRates) {
+            for (std::size_t j=0;j<next_baselines.size();++j) {
+                auto rotated=harmonics::rotateCoefficients(
+                    next_baselines[j],frame.coefficient_argument_rotation);
+                if (!rotated.hasValue())
+                    return propagate(rotated.error(),
+                                     "Adaptive baseline rotation failed (period="+
+                                         std::to_string(kUpdatePeriods[j])+")",
+                                     frame.matlab_frame_index);
+                next_baselines[j]=std::move(rotated).value();
+                // Source refreshes from current main BEFORE this frame's primary solve.
+                if (frame.matlab_frame_index%kUpdatePeriods[j]==0)
+                    next_baselines[j]=next_primary;
+            }
+        }
+
+        AdaptiveFrameResult output;
+        output.matlab_frame_index=frame.matlab_frame_index;
+        const std::size_t comparison_count=
+            mode_==AdaptiveSessionMode::UpdateRates ? kUpdatePeriods.size() : 2u;
+        output.comparison_motion.reserve(comparison_count);
+        output.comparison_translation_error_deg.reserve(comparison_count);
+        output.comparison_rotation_error_deg.reserve(comparison_count);
+        for (std::size_t j=0;j<comparison_count;++j) {
+            HarmonicCoefficients trial;
+            if (mode_==AdaptiveSessionMode::UpdateRates)
+                trial=next_baselines[j];
+            else if (j==0)
+                trial=originalInitialCoefficients(); // ohne
+            else
+                trial=next_primary; // mit
+            // The source does one comparison iteration per frame.
+            auto comparison=solver_.solve(trial,frame.observations);
+            if (!comparison.hasValue())
+                return propagate(comparison.error(),
+                                 "Adaptive comparison solve failed (baseline="+
+                                     std::to_string(j)+")",
+                                 frame.matlab_frame_index);
+            // For UpdateRates the first return (dumi) MUST be discarded.
+            // In initialization/comparison the returned coeff is local to this
+            // frame only (source anzahlitfuerini=1).
+            const MotionEstimate& motion=comparison.value().motion;
+            auto t_error=sourceDirectionErrorDegrees(
+                frame.truth.translation,motion.translation);
+            if (!t_error.hasValue())
+                return propagate(t_error.error(),
+                                 "Adaptive comparison translation angle undefined",
+                                 frame.matlab_frame_index);
+            auto r_error=sourceDirectionErrorDegrees(
+                frame.truth.rotation,motion.rotation);
+            if (!r_error.hasValue())
+                return propagate(r_error.error(),
+                                 "Adaptive comparison rotation angle undefined",
+                                 frame.matlab_frame_index);
+            output.comparison_motion.push_back(motion);
+            output.comparison_translation_error_deg.push_back(t_error.value());
+            output.comparison_rotation_error_deg.push_back(r_error.value());
+        }
+        auto primary_result=solver_.solve(next_primary,frame.observations);
+        if (!primary_result.hasValue())
+            return propagate(primary_result.error(),
+                             "Adaptive primary solve failed; state not committed",
+                             frame.matlab_frame_index);
+        output.primary_step=std::move(primary_result).value();
+        next_primary=output.primary_step.coefficients_next;
+        // The only place in this function that mutates persistent state.
+        primary_=std::move(next_primary);
+        if (mode_==AdaptiveSessionMode::UpdateRates)
+            baselines_=std::move(next_baselines);
+        return Result<AdaptiveFrameResult,ExperimentErrorCode>::success(
+            std::move(output));
+    } catch (const std::bad_alloc&) {
+        return fail(ExperimentErrorCode::SolverFailed,
+                    "Adaptive session allocation failure; state unchanged");
+    } catch (const std::length_error&) {
+        return fail(ExperimentErrorCode::SolverFailed,
+                    "Adaptive session comparison array too large; state unchanged");
+    }
+}
+
+}  // namespace egomotion::estimators
