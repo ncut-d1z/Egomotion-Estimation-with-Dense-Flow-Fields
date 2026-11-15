@@ -31,6 +31,15 @@ public:
         const DenseDoubleArray& array) = 0;
 };
 
+// Atomic, exclusive, single-file text publication within an already
+// reserved RunId directory; never accepts a user-supplied path.
+class ITextPublisher {
+public:
+    virtual ~ITextPublisher() = default;
+    virtual Status<MatErrorCode> publishNew(
+        std::string_view filename,std::string_view data)=0;
+};
+
 class IRandomSource {
 public:
     virtual ~IRandomSource() = default;
