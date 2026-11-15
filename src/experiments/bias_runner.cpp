@@ -11,6 +11,7 @@
 #include <memory>
 #include <new>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -159,13 +160,27 @@ ErrorResult computeImpl(const BiasExperimentConfig& config,
         }
         return ErrorResult::success(std::move(data));
     } catch (const std::bad_alloc&) {
-        ErrorDetail detail;
-        detail.stage=ErrorStage::Simulation;
-        detail.message="Cannot allocate Bias experiment arrays";
+        ErrorDetail inner;
+        inner.stage=ErrorStage::Simulation;
+        inner.message="Bias experiment allocation failed";
+        ErrorDetail outer;
+        outer.stage=ErrorStage::Simulation;
+        outer.message="Bias experiment cannot continue after allocation failure";
         return ErrorResult::failure(wrapFailure(
-            ExperimentErrorCode::SolverFailed,std::move(detail),
+            ExperimentErrorCode::SolverFailed,std::move(outer),
             Failure<NumericalErrorCode>{NumericalErrorCode::ResourceLimitExceeded,
-                ErrorDetail{}}));
+                std::move(inner)}));
+    } catch (const std::length_error&) {
+        ErrorDetail inner;
+        inner.stage=ErrorStage::Simulation;
+        inner.message="Bias experiment container exceeds maximum size";
+        ErrorDetail outer;
+        outer.stage=ErrorStage::Simulation;
+        outer.message="Bias experiment cannot continue after size overflow";
+        return ErrorResult::failure(wrapFailure(
+            ExperimentErrorCode::SolverFailed,std::move(outer),
+            Failure<NumericalErrorCode>{NumericalErrorCode::ResourceLimitExceeded,
+                std::move(inner)}));
     }
 }
 }  // namespace

@@ -6,6 +6,7 @@
 #include <limits>
 #include <new>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -215,6 +216,9 @@ Result<KvDResult,NumericalErrorCode> estimateKvD(
     } catch (const std::bad_alloc&) {
         return fail<KvDResult>(NumericalErrorCode::ResourceLimitExceeded,
                                "Cannot allocate KvD nearness or iteration trace");
+    } catch (const std::length_error&) {
+        return fail<KvDResult>(NumericalErrorCode::ResourceLimitExceeded,
+                               "KvD trace exceeds supported container size");
     }
 }
 } // namespace

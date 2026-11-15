@@ -8,6 +8,7 @@
 #include <limits>
 #include <new>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -128,18 +129,51 @@ Result<DirectionSet, NumericalErrorCode> generate(
     } catch (const std::bad_alloc&) {
         return failure<DirectionSet>(NumericalErrorCode::ResourceLimitExceeded,
                                      "Cannot allocate direction samples");
+    } catch (const std::length_error&) {
+        return failure<DirectionSet>(NumericalErrorCode::ResourceLimitExceeded,
+                                     "Direction sample container exceeds its maximum size");
     }
 }
 }  // namespace
 
 Result<DirectionSet,NumericalErrorCode> OctahedralSampler::sample(int level) const {
-    return generate(level, octahedralFaces(false));
+    if (level < 0)
+        return failure<DirectionSet>(NumericalErrorCode::InvalidSubdivisionLevel,
+                                     "Negative triangle subdivision level");
+    try { return generate(level, octahedralFaces(false)); }
+    catch (const std::bad_alloc&) {
+        return failure<DirectionSet>(NumericalErrorCode::ResourceLimitExceeded,
+                                     "Cannot allocate octahedral face table");
+    } catch (const std::length_error&) {
+        return failure<DirectionSet>(NumericalErrorCode::ResourceLimitExceeded,
+                                     "Octahedral face table is too large");
+    }
 }
 Result<DirectionSet,NumericalErrorCode> OccludedOctahedralSampler::sample(int level) const {
-    return generate(level, octahedralFaces(true));
+    if (level < 0)
+        return failure<DirectionSet>(NumericalErrorCode::InvalidSubdivisionLevel,
+                                     "Negative triangle subdivision level");
+    try { return generate(level, octahedralFaces(true)); }
+    catch (const std::bad_alloc&) {
+        return failure<DirectionSet>(NumericalErrorCode::ResourceLimitExceeded,
+                                     "Cannot allocate occluded face table");
+    } catch (const std::length_error&) {
+        return failure<DirectionSet>(NumericalErrorCode::ResourceLimitExceeded,
+                                     "Occluded face table is too large");
+    }
 }
 Result<DirectionSet,NumericalErrorCode> IcosahedralSampler::sample(int level) const {
-    return generate(level, icosahedralFaces());
+    if (level < 0)
+        return failure<DirectionSet>(NumericalErrorCode::InvalidSubdivisionLevel,
+                                     "Negative triangle subdivision level");
+    try { return generate(level, icosahedralFaces()); }
+    catch (const std::bad_alloc&) {
+        return failure<DirectionSet>(NumericalErrorCode::ResourceLimitExceeded,
+                                     "Cannot allocate icosahedral face table");
+    } catch (const std::length_error&) {
+        return failure<DirectionSet>(NumericalErrorCode::ResourceLimitExceeded,
+                                     "Icosahedral face table is too large");
+    }
 }
 
 Result<Vector3, NumericalErrorCode> randomUnitDirection(IRandomSource& random) {

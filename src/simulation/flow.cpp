@@ -5,6 +5,7 @@
 #include <cmath>
 #include <new>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -98,6 +99,9 @@ Result<FlowField,NumericalErrorCode> noiseApply(const FlowField& ideal,
             output.observations.row(i).tail<3>()=noisy.transpose();
         }
         return Result<FlowField,NumericalErrorCode>::success(std::move(output));
+    } catch (const std::length_error&) {
+        return fail<FlowField>(NumericalErrorCode::ResourceLimitExceeded,
+                               "Flow container exceeds maximum size");
     } catch (const std::bad_alloc&) {
         return fail<FlowField>(NumericalErrorCode::ResourceLimitExceeded,
                                "Cannot allocate noisy flow field");
@@ -149,6 +153,9 @@ FlowSynthesizer::synthesize(const DirectionSet& directions,
             return fail<IdealFlowResult>(NumericalErrorCode::NonFiniteResult,
                                          "Ideal component averages are non-finite");
         return Result<IdealFlowResult,NumericalErrorCode>::success(std::move(result));
+    } catch (const std::length_error&) {
+        return fail<IdealFlowResult>(NumericalErrorCode::ResourceLimitExceeded,
+                               "Flow container exceeds maximum size");
     } catch (const std::bad_alloc&) {
         return fail<IdealFlowResult>(NumericalErrorCode::ResourceLimitExceeded,
                                      "Cannot allocate ideal flow field");
@@ -177,6 +184,9 @@ Result<FlowField,NumericalErrorCode> NoNoise::apply(
                                    static_cast<std::size_t>(i));
     try {
         return Result<FlowField,NumericalErrorCode>::success(FlowField{ideal.observations});
+    } catch (const std::length_error&) {
+        return fail<FlowField>(NumericalErrorCode::ResourceLimitExceeded,
+                               "Flow container exceeds maximum size");
     } catch (const std::bad_alloc&) {
         return fail<FlowField>(NumericalErrorCode::ResourceLimitExceeded,
                                "Cannot copy ideal field");
@@ -254,6 +264,9 @@ Result<FlowSynthesisResult,NumericalErrorCode> generateBiasFlow(
         output.noiseless=std::move(full.flow);
         output.noisy=std::move(noisy);
         return Result<FlowSynthesisResult,NumericalErrorCode>::success(std::move(output));
+    } catch (const std::length_error&) {
+        return fail<FlowSynthesisResult>(NumericalErrorCode::ResourceLimitExceeded,
+                               "Flow container exceeds maximum size");
     } catch (const std::bad_alloc&) {
         return fail<FlowSynthesisResult>(NumericalErrorCode::ResourceLimitExceeded,
                                          "Cannot allocate Bias scene values");
