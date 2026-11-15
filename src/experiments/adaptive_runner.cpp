@@ -209,14 +209,14 @@ Output compute(Mode mode, double noise_scale, IRandomSource* rng) {
                 if (!ideal.hasValue())
                     return fromNumeric(ideal,"ideal spherical flow",mode,
                                        run+1,matlab_i);
+                // Read IDEAL component means before moving the owning flow.
+                // Nonpropfehler changes observed flow but not these statistics.
+                const double numerator=ideal.value().mean_rotational_magnitude;
+                const double denominator=ideal.value().mean_translational_magnitude;
                 // All source scenario outputs are N×6; no Writer/RunId here.
                 FlowField observations=std::move(ideal).value().flow;
                 double ratio=0;
                 if (mode==Mode::Comparison) {
-                    // Source ratio uses two IDEAL component magnitudes BEFORE
-                    // nonpropfehler, even though it stores the ratio after noise.
-                    const double numerator=ideal.value().mean_rotational_magnitude;
-                    const double denominator=ideal.value().mean_translational_magnitude;
                     if (!(denominator>0.0)||!std::isfinite(numerator)||
                         !std::isfinite(denominator))
                         return fail(ExperimentErrorCode::SolverFailed,
@@ -287,9 +287,10 @@ Output compute(Mode mode, double noise_scale, IRandomSource* rng) {
                           values.comparison_translation_error_deg[1]);
                 }
             }
-            // Complete this entire run before contributing its values.
-            ++aggregate.completed_runs;
+            // A complete run contributes atomically to the aggregate.
+            // Only the final planned run may supply rottransratio.
             accumulate(aggregate,current,run+1==aggregate.planned_runs);
+            ++aggregate.completed_runs;
         }
         if (mode==Mode::Comparison) {
             if (aggregate.completed_runs!=kComparisonRuns)
