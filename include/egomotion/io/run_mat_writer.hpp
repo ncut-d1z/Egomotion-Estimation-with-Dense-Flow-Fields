@@ -1,6 +1,9 @@
 #pragma once
 
 #include "egomotion/io/run_directory.hpp"
+#include "egomotion/contracts/interfaces.hpp"
+
+#include <cstddef>
 
 #include <map>
 #include <string>

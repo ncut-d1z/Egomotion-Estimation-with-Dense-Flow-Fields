@@ -1,6 +1,7 @@
 #include "egomotion/experiments/manifest_json.hpp"
 #include "egomotion/contracts/diagnostics.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <map>
 #include <new>
@@ -52,6 +53,10 @@ Result<std::string,ExperimentErrorCode> makeCompleteManifestJson(
             if(!by_name.emplace(file.variable,file).second)
                 return fail<std::string>("Duplicate evidence for MAT output variable");
         for(const auto& name:planned){
+            if(std::find(draft.files_writer_confirmed.begin(),
+                         draft.files_writer_confirmed.end(),name)==
+               draft.files_writer_confirmed.end())
+                return fail<std::string>("Writer did not confirm every expected save name");
             const auto found=by_name.find(name);
             if(found==by_name.end()||
                found->second.filename!=name+".mat"||
