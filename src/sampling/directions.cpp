@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <limits>
 #include <new>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -18,7 +19,7 @@ using Face = std::array<Vector3, 3>;
 template<class Value>
 Result<Value, NumericalErrorCode> failure(NumericalErrorCode code,
                                           std::string message,
-                                          std::size_t index = 0) {
+                                          std::optional<std::size_t> index = std::nullopt) {
     ErrorDetail detail;
     detail.stage = ErrorStage::Simulation;
     detail.message = std::move(message);

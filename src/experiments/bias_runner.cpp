@@ -28,8 +28,10 @@ ErrorResult fromSolver(const Result<T,NumericalErrorCode>& failed,
                        std::string message, std::size_t level) {
     ErrorDetail outer;
     outer.stage=ErrorStage::Simulation;
-    outer.message=std::move(message);
-    outer.observation_index=level;
+    // The subdivision level is NOT an observation index: a nested solver
+    // failure may already contain the real per-direction observation index.
+    outer.message=std::move(message)+" (subdivision_level="+
+                  std::to_string(level)+")";
     return ErrorResult::failure(wrapFailure(
         ExperimentErrorCode::SolverFailed, std::move(outer), failed.error()));
 }

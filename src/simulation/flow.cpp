@@ -4,6 +4,7 @@
 
 #include <cmath>
 #include <new>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -13,7 +14,7 @@ namespace {
 template<class Value>
 Result<Value,NumericalErrorCode> fail(NumericalErrorCode code,
                                      std::string message,
-                                     std::size_t index = 0) {
+                                     std::optional<std::size_t> index = std::nullopt) {
     ErrorDetail detail;
     detail.stage = ErrorStage::Simulation;
     detail.message = std::move(message);

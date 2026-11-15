@@ -5,6 +5,7 @@
 #include <cmath>
 #include <limits>
 #include <new>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -15,7 +16,7 @@ enum class TranslationRule { Original, Modified };
 template<class T>
 Result<T,NumericalErrorCode> fail(NumericalErrorCode code,
                                   std::string message,
-                                  std::size_t index = 0) {
+                                  std::optional<std::size_t> index = std::nullopt) {
     ErrorDetail detail;
     detail.stage = ErrorStage::Solve;
     detail.message = std::move(message);
