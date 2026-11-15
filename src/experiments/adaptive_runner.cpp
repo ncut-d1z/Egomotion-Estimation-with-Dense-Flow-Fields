@@ -146,7 +146,8 @@ void divideComparisonErrors(AdaptiveRunData& data) {
             x/=static_cast<double>(kComparisonRuns);
     }
 }
-Output compute(Mode mode, double noise_scale, IRandomSource* rng) {
+Output compute(Mode mode, double noise_scale, IRandomSource* rng,
+               const AdaptiveProgress& progress) {
     if (mode==Mode::Comparison &&
         (!std::isfinite(noise_scale)||rng==nullptr))
         return fail(ExperimentErrorCode::InvalidParameters,
@@ -182,6 +183,7 @@ Output compute(Mode mode, double noise_scale, IRandomSource* rng) {
                         "Trajectory and frame count do not match");
 
         for (std::size_t run=0;run<aggregate.planned_runs;++run) {
+            if(progress)progress(AdaptiveProgressEvent::RunStarted);
             AdaptiveRunData current=newResult(mode);
             estimators::AdaptiveMfaSession session(
                 mode==Mode::Initialization
@@ -286,11 +288,13 @@ Output compute(Mode mode, double noise_scale, IRandomSource* rng) {
                     write(current,"allemittransfehler",row,0,
                           values.comparison_translation_error_deg[1]);
                 }
+                if(progress)progress(AdaptiveProgressEvent::FrameCompleted);
             }
             // A complete run contributes atomically to the aggregate.
             // Only the final planned run may supply rottransratio.
             accumulate(aggregate,current,run+1==aggregate.planned_runs);
             ++aggregate.completed_runs;
+            if(progress)progress(AdaptiveProgressEvent::RunCompleted);
         }
         if (mode==Mode::Comparison) {
             if (aggregate.completed_runs!=kComparisonRuns)
@@ -314,18 +318,19 @@ Output compute(Mode mode, double noise_scale, IRandomSource* rng) {
 
 Result<AdaptiveRunData,ExperimentErrorCode>
 AdaptiveExperimentRunner::computeInitialization(
-    const AdaptiveInitializationConfig&) const {
-    return compute(Mode::Initialization,0.0,nullptr);
+    const AdaptiveInitializationConfig&,const AdaptiveProgress& progress) const {
+    return compute(Mode::Initialization,0.0,nullptr,progress);
 }
 Result<AdaptiveRunData,ExperimentErrorCode>
 AdaptiveExperimentRunner::computeComparison(
-    const AdaptiveComparisonConfig& config,IRandomSource& rng) const {
-    return compute(Mode::Comparison,config.noise_scale,&rng);
+    const AdaptiveComparisonConfig& config,IRandomSource& rng,
+    const AdaptiveProgress& progress) const {
+    return compute(Mode::Comparison,config.noise_scale,&rng,progress);
 }
 Result<AdaptiveRunData,ExperimentErrorCode>
 AdaptiveExperimentRunner::computeUpdateRates(
-    const AdaptiveUpdateRatesConfig&) const {
-    return compute(Mode::UpdateRates,0.0,nullptr);
+    const AdaptiveUpdateRatesConfig&,const AdaptiveProgress& progress) const {
+    return compute(Mode::UpdateRates,0.0,nullptr,progress);
 }
 
 }  // namespace egomotion::experiments

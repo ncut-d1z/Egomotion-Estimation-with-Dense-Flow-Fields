@@ -47,6 +47,15 @@ Outcome finishBias(const Result<BiasRunData,ExperimentErrorCode>& source,
     if(!packed.hasValue())return propagate(packed,"Bias current-save encoding failed");
     return publish(packed.value(),ctx,1,3*source.value().level_count);
 }
+AdaptiveProgress progressFor(RunContext& ctx) {
+    return [&ctx](AdaptiveProgressEvent event) noexcept {
+        switch(event) {
+        case AdaptiveProgressEvent::RunStarted:ctx.noteAttempt();break;
+        case AdaptiveProgressEvent::FrameCompleted:ctx.noteValid();break;
+        case AdaptiveProgressEvent::RunCompleted:ctx.noteCompleted();break;
+        }
+    };
+}
 Outcome finishAdaptive(const Result<AdaptiveRunData,ExperimentErrorCode>& source,
                        RunContext& ctx,ExperimentKind kind) {
     if(!source.hasValue())return propagate(source,"Adaptive numerical computation failed");
@@ -71,7 +80,12 @@ Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runBiasOcclud
     sampling::OccludedOctahedralSampler sampler;
     simulation::MeanMagnitudeGaussianNoise noise;
     const BiasExperimentRunner calculator(sampler,noise);
-    return finishBias(calculator.compute(config),context,ExperimentKind::BiasOccluded);
+    context.noteAttempt();
+    auto data=calculator.compute(config,[&context]() noexcept {
+        context.noteValid();
+    });
+    if(data.hasValue())context.noteCompleted();
+    return finishBias(data,context,ExperimentKind::BiasOccluded);
 }
 Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runBiasProportional(
     const BiasExperimentConfig& config,RunContext& context) {
@@ -81,7 +95,12 @@ Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runBiasPropor
     sampling::OctahedralSampler sampler;
     simulation::ComponentProportionalGaussianNoise noise;
     const BiasExperimentRunner calculator(sampler,noise);
-    return finishBias(calculator.compute(config),context,ExperimentKind::BiasProportional);
+    context.noteAttempt();
+    auto data=calculator.compute(config,[&context]() noexcept {
+        context.noteValid();
+    });
+    if(data.hasValue())context.noteCompleted();
+    return finishBias(data,context,ExperimentKind::BiasProportional);
 }
 Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runAdaptiveInitialization(
     const AdaptiveInitializationConfig& config,RunContext& context) {
@@ -89,7 +108,7 @@ Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runAdaptiveIn
         return failed(ExperimentErrorCode::InvalidParameters,
                       "Composition Root injected wrong Adaptive kind");
     const AdaptiveExperimentRunner calculator;
-    return finishAdaptive(calculator.computeInitialization(config),context,
+    return finishAdaptive(calculator.computeInitialization(config,progressFor(context)),context,
                           ExperimentKind::AdaptiveInitialization);
 }
 Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runAdaptiveComparison(
@@ -98,7 +117,8 @@ Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runAdaptiveCo
         return failed(ExperimentErrorCode::InvalidParameters,
                       "Composition Root injected wrong Adaptive kind");
     const AdaptiveExperimentRunner calculator;
-    return finishAdaptive(calculator.computeComparison(config,context.randomSource()),
+    return finishAdaptive(calculator.computeComparison(
+                              config,context.randomSource(),progressFor(context)),
                           context,ExperimentKind::AdaptiveComparison);
 }
 Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runAdaptiveUpdateRates(
@@ -107,7 +127,7 @@ Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runAdaptiveUp
         return failed(ExperimentErrorCode::InvalidParameters,
                       "Composition Root injected wrong Adaptive kind");
     const AdaptiveExperimentRunner calculator;
-    return finishAdaptive(calculator.computeUpdateRates(config),context,
+    return finishAdaptive(calculator.computeUpdateRates(config,progressFor(context)),context,
                           ExperimentKind::AdaptiveUpdateRates);
 }
 

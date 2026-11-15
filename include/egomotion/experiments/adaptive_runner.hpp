@@ -4,6 +4,7 @@
 #include "egomotion/experiments/runner.hpp"
 
 #include <cstddef>
+#include <functional>
 #include <map>
 #include <string>
 
@@ -19,18 +20,24 @@ struct AdaptiveRunData {
     std::size_t completed_runs = 0;
 };
 
+enum class AdaptiveProgressEvent { RunStarted, FrameCompleted, RunCompleted };
+using AdaptiveProgress = std::function<void(AdaptiveProgressEvent)>;
+
 class AdaptiveExperimentRunner {
 public:
     Result<AdaptiveRunData,ExperimentErrorCode> computeInitialization(
-        const AdaptiveInitializationConfig& config = {}) const;
+        const AdaptiveInitializationConfig& config = {},
+        const AdaptiveProgress& progress = {}) const;
 
     // External RNG is not reseeded between the eight runs. In particular,
     // noise_scale=0 still consumes all the original nonpropfehler normals.
     Result<AdaptiveRunData,ExperimentErrorCode> computeComparison(
-        const AdaptiveComparisonConfig& config, IRandomSource& rng) const;
+        const AdaptiveComparisonConfig& config, IRandomSource& rng,
+        const AdaptiveProgress& progress = {}) const;
 
     Result<AdaptiveRunData,ExperimentErrorCode> computeUpdateRates(
-        const AdaptiveUpdateRatesConfig& config = {}) const;
+        const AdaptiveUpdateRatesConfig& config = {},
+        const AdaptiveProgress& progress = {}) const;
 };
 
 }  // namespace egomotion::experiments

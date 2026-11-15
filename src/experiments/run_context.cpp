@@ -167,7 +167,7 @@ Status<ExperimentErrorCode> RunContext::publishFailureRecord(
         ++draft_.failed;
         // Partial in-memory or verified file results remain an audit record,
         // not a substitute for a successful Complete run.
-        draft_.status=(draft_.completed>0||
+        draft_.status=(draft_.completed>0||draft_.valid>0||
                        !draft_.files_writer_confirmed.empty())
                       ?RunStatus::Incomplete:RunStatus::Failed;
         auto json=experiments::makeFailureManifestJson(

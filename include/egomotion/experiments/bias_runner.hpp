@@ -4,6 +4,7 @@
 
 #include <array>
 #include <cstddef>
+#include <functional>
 #include <vector>
 
 namespace egomotion::experiments {
@@ -29,7 +30,8 @@ public:
         : sampler_(sampler), noise_(noise) {}
 
     Result<BiasRunData, ExperimentErrorCode> compute(
-        const BiasExperimentConfig& config) const;
+        const BiasExperimentConfig& config,
+        const std::function<void()>& sample_completed={}) const;
 
 private:
     const IDirectionSampler& sampler_;

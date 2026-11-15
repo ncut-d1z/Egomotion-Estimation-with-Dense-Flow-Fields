@@ -74,7 +74,8 @@ Result<Scalar,NumericalErrorCode> normalizedVectorError(
 
 ErrorResult computeImpl(const BiasExperimentConfig& config,
                         const IDirectionSampler& sampler,
-                    const IFlowNoiseModel& noise) {
+                    const IFlowNoiseModel& noise,
+                    const std::function<void()>& sample_completed) {
     // One sample for each (noise coefficient, subdivision level); source
     // uses 3 noise coefficients in this order, then levels 0..maximum.
     if (config.maximum_subdivision_level<0)
@@ -151,6 +152,8 @@ ErrorResult computeImpl(const BiasExperimentConfig& config,
                             level,v);
                     data.ywerte[metric][v*levels+level]=err.value();
                 }
+                // A Bias sample becomes valid only when all six metrics exist.
+                if(sample_completed)sample_completed();
                 if (level+1<levels) {
                     if (x_count>std::numeric_limits<std::size_t>::max()/4)
                         return invalid("Bias xwerte sample count overflows");
@@ -186,8 +189,9 @@ ErrorResult computeImpl(const BiasExperimentConfig& config,
 }  // namespace
 
 Result<BiasRunData,ExperimentErrorCode> BiasExperimentRunner::compute(
-    const BiasExperimentConfig& config) const {
-    return computeImpl(config,sampler_,noise_);
+    const BiasExperimentConfig& config,
+    const std::function<void()>& sample_completed) const {
+    return computeImpl(config,sampler_,noise_,sample_completed);
 }
 
 }  // namespace egomotion::experiments
