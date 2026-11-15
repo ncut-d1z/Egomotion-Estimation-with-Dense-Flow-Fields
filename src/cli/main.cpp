@@ -16,14 +16,14 @@ int main(int argc,char** argv) {
 
     // R5: all services own their own internal state. Plot is optional;
     // changing the configured plot backend must not affect analyze.
-    const egomotion::io::MatResultReader reader;
+    egomotion::io::MatResultReader reader;
     egomotion::analysis::MatResultAnalyzer analyzer;
     egomotion::analysis::SvgPlotExporter plotter;
     egomotion::experiments::ProductionExperimentRunner runner;
     // The application must start from the trusted repository checkout,
     // identified by the presence of origin/; no output-root CLI argument.
     const egomotion::cli::ApplicationCompositionRoot app(
-        const_cast<egomotion::io::MatResultReader*>(&reader),
+        &reader,
         &runner,&analyzer,&plotter,std::filesystem::current_path());
     return egomotion::cli::run(args,std::cout,std::cerr,app);
 }

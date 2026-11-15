@@ -42,9 +42,11 @@ Result<std::string,ExperimentErrorCode> makeCompleteManifestJson(
     const auto planned=currentSaveFields(run.experimentKind());
     // A build-local SOURCE_COMMIT macro, NOT the later Git HEAD in a
     // working tree, provides the executable's actual provenance.
-    if(run.provenance().repository_commit_sha.size()!=40||
-       !validSha256(run.provenance().repository_commit_sha+
-                    run.provenance().repository_commit_sha.substr(0,24)))
+    const auto& build_commit=run.provenance().repository_commit_sha;
+    if(build_commit.size()!=40||
+       !std::all_of(build_commit.begin(),build_commit.end(),[](char c){
+           return (c>='0'&&c<='9')||(c>='a'&&c<='f');
+       }))
         return fail<std::string>("Build source commit identity is not a verified 40-hex SHA");
     if(planned.empty()||published.size()!=planned.size()||
        draft.files_writer_confirmed.size()!=planned.size()||
