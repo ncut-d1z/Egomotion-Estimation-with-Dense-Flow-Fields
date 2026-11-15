@@ -208,38 +208,37 @@ MatResultReader::scanFile(const std::filesystem::path& path, ScanMode mode) cons
     try {
         result.variables.reserve(count);
         for (std::size_t i = 0; i < count; ++i) {
-        if (!directory[i]) {
-            MatScanVariable bad;
-            bad.info.name = "(null)";
-            bad.status = "INVALID_NAME";
-            result.variables.push_back(std::move(bad));
-            continue;
-        }
-        const std::string name(directory[i]);
-        // Metadata-only inspection never calls Mat_VarRead.
-        VariableHandle value(mode == ScanMode::MetadataOnly
-            ? Mat_VarReadInfo(mat.get(), name.c_str())
-            : Mat_VarRead(mat.get(), name.c_str()));
-        if (!value) {
-            MatScanVariable bad;
-            bad.info.name = name;
-            bad.status = mode == ScanMode::MetadataOnly ? "INFO_FAILED" : "READ_FAILED";
-            result.variables.push_back(std::move(bad));
-            continue;
-        }
-        MatScanVariable entry;
-        entry.info = describe(*value, name);
-        if (!hasValidDims(*value)) {
-            entry.status = "INVALID_DIMS";
-        } else if (mode == ScanMode::MetadataOnly) {
-            entry.status = "METADATA_OK";
-        } else {
-            const int cls = static_cast<int>(value->class_type);
-            entry.status = cls >= 6 && cls <= 15 && value->nbytes > 0 &&
-                           value->data == nullptr ? "NO_NUMERIC_DATA" : "READ_OK";
-        }
-        result.variables.push_back(std::move(entry));
-        }
+            if (!directory[i]) {
+                MatScanVariable bad;
+                bad.info.name = "(null)";
+                bad.status = "INVALID_NAME";
+                result.variables.push_back(std::move(bad));
+                continue;
+            }
+            const std::string name(directory[i]);
+            // Metadata-only inspection never calls Mat_VarRead.
+            VariableHandle value(mode == ScanMode::MetadataOnly
+                ? Mat_VarReadInfo(mat.get(), name.c_str())
+                : Mat_VarRead(mat.get(), name.c_str()));
+            if (!value) {
+                MatScanVariable bad;
+                bad.info.name = name;
+                bad.status = mode == ScanMode::MetadataOnly ? "INFO_FAILED" : "READ_FAILED";
+                result.variables.push_back(std::move(bad));
+                continue;
+            }
+            MatScanVariable entry;
+            entry.info = describe(*value, name);
+            if (!hasValidDims(*value)) {
+                entry.status = "INVALID_DIMS";
+            } else if (mode == ScanMode::MetadataOnly) {
+                entry.status = "METADATA_OK";
+            } else {
+                const int cls = static_cast<int>(value->class_type);
+                entry.status = cls >= 6 && cls <= 15 && value->nbytes > 0 &&
+                               value->data == nullptr ? "NO_NUMERIC_DATA" : "READ_OK";
+            }
+            result.variables.push_back(std::move(entry));        }
     } catch (const std::bad_alloc&) {
         return fail<MatFileScan>(MatErrorCode::SizeOverflow, ErrorStage::Decode,
                                  path, "Cannot allocate MAT variable metadata");
