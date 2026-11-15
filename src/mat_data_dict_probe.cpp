@@ -24,6 +24,11 @@ egomotion::io::MatDictionaryOptions parse(int argc, char** argv) {
             options.source_sha = argv[++i];
         } else if (flag == "--expected-count" && i + 1 < argc) {
             const std::string digits(argv[++i]);
+            if (digits.empty())
+                throw std::invalid_argument("Bad expected count");
+            for (char digit : digits)
+                if (digit < '0' || digit > '9')
+                    throw std::invalid_argument("Bad expected count");
             std::size_t used = 0;
             const auto parsed = std::stoull(digits, &used);
             if (used != digits.size() || parsed == 0 ||

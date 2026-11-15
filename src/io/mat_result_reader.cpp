@@ -121,10 +121,14 @@ Result<MatHandle, MatErrorCode> openReadOnly(const fs::path& path) {
     MatHandle handle(Mat_Open(path.string().c_str(), MAT_ACC_RDONLY));
     if (!handle) {
         const int saved_errno = errno;
+        // matio may clear errno internally. The supplementary existence probe
+        // is error classification ONLY, never a second MAT data read.
+        std::error_code status_error;
+        const bool still_exists = fs::exists(path, status_error);
         const MatErrorCode code = saved_errno == EACCES || saved_errno == EPERM
             ? MatErrorCode::PermissionDenied
-            : (saved_errno == ENOENT ? MatErrorCode::MissingFile
-                                     : MatErrorCode::InvalidMatHeader);
+            : (saved_errno == ENOENT || (!status_error && !still_exists)
+                ? MatErrorCode::MissingFile : MatErrorCode::InvalidMatHeader);
         return fail<MatHandle>(code, ErrorStage::Read, path,
                                "Unable to open MAT file for reading");
     }
