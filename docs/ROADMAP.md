@@ -21,4 +21,4 @@
 2. **待H-11明确授权后**统一配置、构建、执行 CTest 和 CLI/Reader/Writer 安全负例，保留版本/命令/退出码/日志/固定SHA；检查原有SH回归。
 3. 使用 L2历史MAT、独立L3参考和必要L4统计做数值复现；**不要求MATLAB/Octave/L1**。最终容差与性能、设计冻结、发布分别走已有延期批准，见 [TEST_PLAN](TEST_PLAN.md) 和 [TODO](TODO.md)。
 
-**状态（2026-11-15）**：R0/R1代码已推送；R2代码已推送但仍需静态缺陷闭合检查；R3–R5未完成。历史`mat_data_dict_probe`单文件g++命令在R2拆分后不再适用；R6统一通过CMake链接Eigen/matio/zlib。禁止把过去固定SHA的3项低阶SH CTest或旧582/582探针误计为本次新代码测试结果。
+**状态（2026-11-15）**：R0/R1代码已推送；R2数据读取源码完成（补MAT v5数值范围及同名变量拒绝，仍未编译）；**R3采样/理想流/两噪声/Franz/两KvD/Bias内存结果计算代码已推送**，但业务CLI实际输出/Manifest仍属于R5，R3新模块的CMake接线留到R6。R4/R5代码尚未完成，均未构建/测试。历史`mat_data_dict_probe`单文件g++命令在R2拆分后不再适用；R6统一通过CMake链接Eigen/matio/zlib。禁止把过去固定SHA的3项低阶SH CTest或旧582/582探针误计为本次新代码测试结果。

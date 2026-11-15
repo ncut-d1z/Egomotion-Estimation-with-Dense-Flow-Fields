@@ -20,6 +20,23 @@
 
 **未运行的证据与限制**：H-11仍延期，本轮没有执行`cmake`、`g++`、CTest、旧582文件数据字典重建、独立L2逐值/SHA-256或任何MAT写入；当前原582/582扫描结果属于旧探针历史版本，不能自动继承为本次新代码PASS。CMake静态检查涵盖源文件存在、target命名及非循环边，不能保证编译/链接；正/负例和元数据压缩头行为需真实运行复核。**R2代码就绪待原生验证，R3尚未开始。**
 
+
+## 0.2 最新顺序决定与R2代码闭合、R3源码推进（2026-11-15）
+
+**所有代码先行**：用户本轮明确要求[ROADMAP](ROADMAP.md)把构建、测试、数值运行、测试源码收尾和验收全部集中R6。R0–R5只做**代码和静态设计复核**，不得以每阶段需先编译/CTest为前置；H-11仍没有原生运行及MAT写入授权。旧章节中“先构建/验证再做R3”的文字只反映形成时的历史建议，本段及ROADMAP的新顺序优先。
+
+**R2代码复核与实修**：保留CLI分离、Reader单MAT句柄、结构`Mat_VarReadInfo`与数值`Mat_VarRead`独立职责；补上`readNamed`检测同名重复变量返回`AmbiguousVariable`及数值读取只接受MAT v5的拒绝门禁（结构元数据枚举仍可报告不同版本）。R2代码范围当前没有已知阻止继续实现R3的未处理缺陷；**这是静态源码判断，不是R2数值等价/原生通过**。
+
+**R3已提交的计算源码**：
+- `src/sampling/`：按源面表和A/B/C/D深度优先产生完整/缺损八面体与二十面体视线；`getvektor`两次uniform；独立`Mt19937RandomSource`支持seed重置。标准库normal分布**不承诺与MATLAB同seed逐样本一致**。
+- `src/simulation/flow.cpp`：近度/理想流与分量平均、两种互斥三维噪声/切平面投影，严格N次uniform后3N次normal，零噪声系数仍消耗样本；结果保存理想/含噪流、全部近度和末次源标量，处理非有限/非法方向/内存失败。
+- `src/estimators/franz_kvd.cpp`：Franz三轴响应/分母、Original与Modified KvD独立命名入口；near负和翻号、旧t算旋转、一次t归一、至少6/通常最多200次及终局mean(near)缩放，提供可选逐轮trace。
+- `src/experiments/bias_runner.cpp`：通过构造注入**一组**采样器/噪声模型；每次Bias实验先生成truth t/ω再用同seed重置RNG，三档系数、0..level顺序、两种算法和六类`transfehler_div`归一误差保存至自拥有`xwerte/ywerte1..6`列主序内存，不触碰MAT文件。
+
+**R3与R5的分界**：这一轮的`BiasExperimentRunner::compute`只返回内存`BiasRunData`，**没有**把新结果伪装为`RunOutcome::Complete`。CLI的`run-bias-*`到具体RunContext/Writer/Manifest装配与实际MAT保存由R5实现；本轮新C++文件还没有进入根CMake目标的编译源清单，按用户指令在**全部R0–R5代码完成后再于R6一次性接入并构建/测试**。当前不能报告R3/完整业务可运行或MAT结果正确；R4/R5未开始。
+
+**执行证据**：所有新生产文件已提交、推送；本轮**没有**运行CMake、g++、CTest、程序、MATLAB、MAT读取/写入或任何数值/性能测试，也未修改`origin/**`。此前R2注册的只读CTest仍只是测试源码登记，不能算已通过。详细本轮Git提交见该分支提交历史。
+
 ## 1. 当前边界
 
 仓库 `ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields`，分支 `dev-plan-P0-P1-mat-dictionary-probe`；不合并main、不发布。`origin/**` 原45份.m与582份.mat只读；不要求执行MATLAB/Octave或获得L1。既有66REQ/66TC/98P、27条HLD设计边不变；数学子案例不新增正式TC。
