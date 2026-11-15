@@ -36,7 +36,8 @@ struct RunManifestDraft {
 class RunContext {
 public:
     RunContext(RunId run_id, std::unique_ptr<IRandomSource> random,
-               IResultWriter& writer, std::filesystem::path validated_output_root,
+               IResultWriter& writer,ITextPublisher& manifest_publisher,
+               std::filesystem::path validated_output_root,
                SourceProvenance provenance, experiments::ExperimentKind kind,
                std::size_t expected_repetitions);
 
@@ -61,6 +62,15 @@ public:
     Status<ExperimentErrorCode> writeCurrentResults(
         const std::map<std::string,DenseDoubleArray>& outputs);
 
+    // Only after all necessary source repetitions succeeded.
+    Status<ExperimentErrorCode> noteCompletedMemory(
+        std::size_t repetitions,std::size_t valid_samples);
+
+    // The ONLY production gateway that can produce Complete. It validates
+    // the exact receipts, durably publishes manifest.json and THEN returns
+    // a success RunOutcome. The optional plotting path cannot trigger it.
+    Result<RunOutcome,ExperimentErrorCode> publishCompleteOutcome();
+
     // Counts and failure events can be observed by the future Manifest
     // publisher. They are never themselves durable evidence of a file.
     void noteAttempt() noexcept { ++draft_.attempted; }
@@ -75,10 +85,13 @@ private:
     RunId run_id_;
     std::unique_ptr<IRandomSource> random_;
     IResultWriter& writer_;
+    ITextPublisher& manifest_publisher_;
     std::filesystem::path output_root_;
     SourceProvenance provenance_;
     experiments::ExperimentKind kind_;
     RunManifestDraft draft_;
+    bool write_started_=false;
+    bool manifest_published_=false;
 };
 
 }  // namespace egomotion

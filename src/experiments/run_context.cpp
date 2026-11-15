@@ -1,4 +1,5 @@
 #include "egomotion/experiments/run_context.hpp"
+#include "egomotion/experiments/manifest_json.hpp"
 
 #include <cstddef>
 #include <new>
@@ -30,9 +31,11 @@ Status<ExperimentErrorCode> outputFailure(
 
 RunContext::RunContext(
     RunId run_id,std::unique_ptr<IRandomSource> random,IResultWriter& writer,
+    ITextPublisher& manifest_publisher,
     std::filesystem::path validated_output_root,SourceProvenance provenance,
     experiments::ExperimentKind kind,std::size_t expected_repetitions)
     : run_id_(std::move(run_id)),random_(std::move(random)),writer_(writer),
+      manifest_publisher_(manifest_publisher),
       output_root_(std::move(validated_output_root)),
       provenance_(std::move(provenance)),kind_(kind) {
     if (!validRunId(run_id_.text))
@@ -48,9 +51,16 @@ RunContext::RunContext(
 
 Status<ExperimentErrorCode> RunContext::writeCurrentResults(
     const std::map<std::string,DenseDoubleArray>& outputs) {
+    if(write_started_) {
+        ErrorDetail d;d.stage=ErrorStage::Output;d.run_id=run_id_;
+        d.message="Duplicate writeCurrentResults is prohibited";
+        return Status<ExperimentErrorCode>::failure({
+            ExperimentErrorCode::OutputFailed,std::move(d)});
+    }
     auto validated=experiments::validateCurrentOutput(kind_,outputs);
     if (!validated.hasValue())
         return validated;
+    write_started_=true;
 
     // Plan all strings/vector capacity BEFORE the first Writer operation.
     // After a successful write, vector insertion moves a preallocated name,
@@ -86,6 +96,61 @@ Status<ExperimentErrorCode> RunContext::writeCurrentResults(
     }
     // Deliberately no RunOutcome{Complete} and no saved-Manifest claim.
     return Status<ExperimentErrorCode>::success();
+}
+
+
+Status<ExperimentErrorCode> RunContext::noteCompletedMemory(
+    std::size_t repetitions,std::size_t valid_samples) {
+    if(repetitions!=draft_.expected_repetitions||!repetitions||!valid_samples) {
+        ErrorDetail d;d.stage=ErrorStage::Simulation;d.run_id=run_id_;
+        d.message="Completed source repetitions or valid observations are missing";
+        return Status<ExperimentErrorCode>::failure({
+            ExperimentErrorCode::IncompleteRun,std::move(d)});
+    }
+    draft_.attempted=repetitions;
+    draft_.completed=repetitions;
+    draft_.valid=valid_samples;
+    return Status<ExperimentErrorCode>::success();
+}
+
+Result<RunOutcome,ExperimentErrorCode> RunContext::publishCompleteOutcome() {
+    using Output=Result<RunOutcome,ExperimentErrorCode>;
+    if(manifest_published_ || !write_started_) {
+        ErrorDetail d;d.stage=ErrorStage::Output;d.run_id=run_id_;
+        d.message="Manifest cannot be republished or published before outputs";
+        return Output::failure({ExperimentErrorCode::OutputFailed,std::move(d)});
+    }
+    try {
+        auto json=experiments::makeCompleteManifestJson(*this,writer_.fileEvidence());
+        if(!json.hasValue())
+            return Output::failure(std::move(json).error());
+        auto persisted=manifest_publisher_.publishNew("manifest.json",json.value());
+        if(!persisted.hasValue()) {
+            ErrorDetail d;d.stage=ErrorStage::Output;d.run_id=run_id_;
+            d.message="Complete Manifest publication failed or durability unconfirmed";
+            return Output::failure(wrapFailure(
+                ExperimentErrorCode::OutputFailed,std::move(d),persisted.error()));
+        }
+        manifest_published_=true;
+        draft_.status=RunStatus::Complete;
+        RunOutcome outcome;
+        outcome.run_id=run_id_;
+        outcome.status=RunStatus::Complete;
+        outcome.attempted=draft_.attempted;
+        outcome.completed=draft_.completed;
+        outcome.valid=draft_.valid;
+        outcome.failed=draft_.failed;
+        outcome.undefined=draft_.undefined;
+        return Output::success(std::move(outcome));
+    } catch(const std::bad_alloc&) {
+        ErrorDetail d;d.stage=ErrorStage::Output;d.run_id=run_id_;
+        d.message="Manifest evidence allocation failed before confirmed outcome";
+        return Output::failure({ExperimentErrorCode::OutputFailed,std::move(d)});
+    } catch(const std::length_error&) {
+        ErrorDetail d;d.stage=ErrorStage::Output;d.run_id=run_id_;
+        d.message="Manifest evidence exceeded container capacity";
+        return Output::failure({ExperimentErrorCode::OutputFailed,std::move(d)});
+    }
 }
 
 void RunContext::recordFailure(Failure<ExperimentErrorCode> failure) {
