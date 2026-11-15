@@ -144,8 +144,8 @@ std::size_t occurrences(char* const* directory, std::size_t count,
 }
 // Business numeric reads are limited to the actual MAT v5/zlib archive;
 // metadata enumeration can still identify otherwise unsupported versions.
-bool isSupportedNumericFile(const mat_t* handle) {
-    return static_cast<int>(Mat_GetVersion(const_cast<mat_t*>(handle))) == 0x0100;
+bool isSupportedNumericFile(mat_t* handle) {
+    return static_cast<int>(Mat_GetVersion(handle)) == 0x0100;
 }
 
 Result<DenseDoubleArray, MatErrorCode> owningDouble(const matvar_t& variable,

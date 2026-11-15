@@ -1,7 +1,6 @@
 #include "egomotion/experiments/bias_runner.hpp"
 
 #include "egomotion/estimators/franz_kvd.hpp"
-#include "egomotion/sampling/directions.hpp"
 #include "egomotion/sampling/random.hpp"
 #include "egomotion/simulation/flow.hpp"
 
@@ -56,7 +55,9 @@ Result<Scalar,NumericalErrorCode> normalizedVectorError(
     return Result<Scalar,NumericalErrorCode>::success(scaled);
 }
 
-ErrorResult compute(const BiasExperimentConfig& config, bool occluded) {
+ErrorResult computeImpl(const BiasExperimentConfig& config,
+                        const IDirectionSampler& sampler,
+                    const IFlowNoiseModel& noise) {
     // One sample for each (noise coefficient, subdivision level); source
     // uses 3 noise coefficients in this order, then levels 0..maximum.
     if (config.maximum_subdivision_level<0)
@@ -82,16 +83,8 @@ ErrorResult compute(const BiasExperimentConfig& config, bool occluded) {
         data.level_count=levels;
         data.xwerte.assign(levels,0.0);
         for (auto& y:data.ywerte) y.assign(levels*3,0.0);
-        sampling::OctahedralSampler full_sampler;
-        sampling::OccludedOctahedralSampler occluded_sampler;
-        const IDirectionSampler& sampler=occluded
-            ? static_cast<const IDirectionSampler&>(occluded_sampler)
-            : static_cast<const IDirectionSampler&>(full_sampler);
-        simulation::MeanMagnitudeGaussianNoise mean_noise;
-        simulation::ComponentProportionalGaussianNoise component_noise;
-        const IFlowNoiseModel& noise=occluded
-            ? static_cast<const IFlowNoiseModel&>(mean_noise)
-            : static_cast<const IFlowNoiseModel&>(component_noise);
+        // Caller/Composition Root owns the single injected sampler/noise pair.
+        // No duplicate concrete model is created or selected in the Runner.
         const simulation::FlowSynthesizer synthesizer;
         const estimators::FranzMatchedFilter franz;
         const estimators::OriginalKvDEstimator original;
@@ -159,13 +152,9 @@ ErrorResult compute(const BiasExperimentConfig& config, bool occluded) {
 }
 }  // namespace
 
-Result<BiasRunData,ExperimentErrorCode> BiasExperimentRunner::computeOccluded(
+Result<BiasRunData,ExperimentErrorCode> BiasExperimentRunner::compute(
     const BiasExperimentConfig& config) const {
-    return compute(config,true);
-}
-Result<BiasRunData,ExperimentErrorCode> BiasExperimentRunner::computeProportional(
-    const BiasExperimentConfig& config) const {
-    return compute(config,false);
+    return computeImpl(config,sampler_,noise_);
 }
 
 }  // namespace egomotion::experiments

@@ -20,10 +20,20 @@ struct BiasRunData {
 
 class BiasExperimentRunner {
 public:
-    Result<BiasRunData, ExperimentErrorCode> computeOccluded(
+    // Composition Root must inject the EXACT one permitted pair:
+    // OccludedOctahedralSampler + MeanMagnitudeGaussianNoise OR
+    // OctahedralSampler + ComponentProportionalGaussianNoise.
+    // There is no runtime kind() or dual-noise mode.
+    BiasExperimentRunner(const IDirectionSampler& sampler,
+                         const IFlowNoiseModel& noise) noexcept
+        : sampler_(sampler), noise_(noise) {}
+
+    Result<BiasRunData, ExperimentErrorCode> compute(
         const BiasExperimentConfig& config) const;
-    Result<BiasRunData, ExperimentErrorCode> computeProportional(
-        const BiasExperimentConfig& config) const;
+
+private:
+    const IDirectionSampler& sampler_;
+    const IFlowNoiseModel& noise_;
 };
 
 }  // namespace egomotion::experiments
