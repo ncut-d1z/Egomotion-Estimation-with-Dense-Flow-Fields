@@ -1,11 +1,15 @@
 #include "egomotion/cli/command.hpp"
 
-#include <cassert>
+#include <stdexcept>
 #include <sstream>
 #include <string>
 #include <vector>
 
 namespace {
+void require(bool condition) {
+    if (!condition) throw std::runtime_error("R01 CLI assertion failed");
+}
+
 struct FakeReader : egomotion::IResultReader {
     mutable int inspect_calls = 0;
     mutable int read_calls = 0;
@@ -46,11 +50,11 @@ int main() {
                      const std::string& needle) {
         std::ostringstream out, err;
         const int exit_code = run(args, out, err, app);
-        assert(exit_code == expected);
+        require(exit_code == expected);
         if (expected == 0)
-            assert(out.str().find(needle) != std::string::npos);
+            require(out.str().find(needle) != std::string::npos);
         else
-            assert(err.str().find(needle) != std::string::npos);
+            require(err.str().find(needle) != std::string::npos);
     };
     check({}, 0, "Usage:");
     check({"--version"}, 0, "0.1.0");
@@ -74,6 +78,6 @@ int main() {
           0, "variable=xwerte");
     check({"inspect-mat", "--file", "a.mat", "--variable", "missing"},
           3, "MissingVariable");
-    assert(reader.inspect_calls == 3);
-    assert(reader.read_calls == 0);
+    require(reader.inspect_calls == 3);
+    require(reader.read_calls == 0);
 }

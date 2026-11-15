@@ -1,6 +1,6 @@
 # C++ 实施路线图
 
-> **状态：实施计划，尚未开始本路线图的新业务代码。** 2026-11-15 用户解除 **H-10 编程权限**：可在独立开发分支编写、提交 C++17 生产代码、公共头、CMake 配置文本与测试源码。**H-11 运行权限仍单独延期**：本次不执行 CMake/编译/CTest/程序、不安装依赖、不写 MAT；正式容差、性能、基线签署和发布仍未获批准。最新权限见 [TODO](TODO.md)。
+> **状态：R0/R1 代码与 CMake 骨架已编写并推送，尚未获得实际编译/CTest 证据。** H-10 已允许 C++17 业务源码、头文件、CMake 和测试源码编写；**H-11 运行权限仍单独延期**：本批未执行 CMake configure/build/CTest/CLI 程序、未安装依赖、未读写 MAT；正式容差、性能、基线签署和发布仍未获批准。最新权限见 [TODO](TODO.md)。
 
 ## 目标与边界
 
@@ -19,6 +19,10 @@
 | **R4 Adaptive 纵切** | `run-adaptive-*` → Session → 单步求解 | 实现圆/正弦轨迹、球内近度与局部旋转、现有SH叶子公共适配、Adaptive单步及三种实验的时序；比较输出`dumi`不写回，失败不提交后验。参考 [轨迹](design/trajectory.md)、[球谐](design/harmonics.md)、[Adaptive](design/adaptive_mfa.md)。 |
 | **R5 结果与分析** | Writer/RunContext → 新MAT；`analyze` → 数值曲线；可选`plot` | 实现独占RunId、单文件非覆盖发布/回读与Manifest；四种Analyzer及HistoricalOnly缺字段失败；绘图不得成为数值计算依赖。**仅编写代码，运行/实际写MAT仍受H-11约束**。参考 [MAT I/O](design/mat_io.md)、[分析](design/analysis_plotting.md)。 |
 | **R6 证据闭环** | 全部命令的错误路径、端到端输出与复现 | 先补齐隔离单测/集成/独立L3、原MAT只读L2和必要L4的测试源码及追踪；待H-11另行授权后才运行构建/CTest/安全回读并记录固定SHA。正式DEC-005/006与基线、发布仍独立审批。参考 [TEST_PLAN](TEST_PLAN.md)。 |
+
+## R0/R1 当前交付
+
+已建立 `include/egomotion/{domain,contracts,experiments,analysis,cli}/`、`src/cli/`，保留现存低阶球谐叶子，根 `CMakeLists.txt` 登记11个`egomotion_*`目标、CLI程序和5项CTest注册（既有SH 3项＋新增R0/R1 2项）。其中`sampling/simulation/estimators/matio/experiments/analysis/plotting`仍为仅声明依赖的**INTERFACE占位**，不冒充算法或MAT Reader已实现；业务命令尚无后端，必须显式失败。源码和CTest注册已推送，但**configure/编译/CTest均未执行（H-11）**。静态结构检查只能核文件存在、target无环/依赖关系和CMake括号配平；真实CMake正确性仍须待执行验证。
 
 ## 执行规则
 

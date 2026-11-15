@@ -1,29 +1,34 @@
 #include "egomotion/contracts/diagnostics.hpp"
 #include "egomotion/contracts/interfaces.hpp"
 
-#include <cassert>
 #include <memory>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <utility>
 
+namespace {
+void require(bool condition) {
+    if (!condition) throw std::runtime_error("R01 contract assertion failed");
+}
+}  // namespace
+
 int main() {
     using namespace egomotion;
     using OwnedResult = Result<std::unique_ptr<int>, NumericalErrorCode>;
     using UnitStatus = Status<MatErrorCode>;
 
-    static_assert(!std::is_default_constructible<OwnedResult>::value);
-    static_assert(!std::is_default_constructible<UnitStatus>::value);
-    static_assert(!std::is_copy_assignable<OwnedResult>::value);
-    static_assert(!std::is_move_assignable<UnitStatus>::value);
+    static_require(!std::is_default_constructible<OwnedResult>::value);
+    static_require(!std::is_default_constructible<UnitStatus>::value);
+    static_require(!std::is_copy_assignable<OwnedResult>::value);
+    static_require(!std::is_move_assignable<UnitStatus>::value);
 
     auto good = OwnedResult::success(std::make_unique<int>(7));
-    assert(good.hasValue());
+    require(good.hasValue());
     const auto& borrowed = good.value();
-    assert(*borrowed == 7);
+    require(*borrowed == 7);
     auto extracted = std::move(good).value();
-    assert(*extracted == 7);
+    require(*extracted == 7);
 
     ErrorDetail source;
     source.stage = ErrorStage::Decode;
@@ -36,27 +41,27 @@ int main() {
     outer.stage = ErrorStage::Analyze;
     outer.message = "failed to decode data";
     auto wrapped = wrapFailure(ExperimentErrorCode::DataMismatch, outer, original);
-    assert(wrapped.detail.causes.front().domain == "MatErrorCode");
-    assert(wrapped.detail.causes.front().code == "InvalidShape");
-    assert(wrapped.detail.causes.front().observation_index == 0);
-    assert(original.detail.causes.empty());
+    require(wrapped.detail.causes.front().domain == "MatErrorCode");
+    require(wrapped.detail.causes.front().code == "InvalidShape");
+    require(wrapped.detail.causes.front().observation_index == 0);
+    require(original.detail.causes.empty());
 
     ErrorDetail second;
     second.stage = ErrorStage::Solve;
     second.message = "dependent process cannot continue";
     auto twice = wrapFailure(ExperimentErrorCode::IncompleteRun, second, wrapped);
     auto it = twice.detail.causes.begin();
-    assert(it->code == "DataMismatch");
+    require(it->code == "DataMismatch");
     ++it;
-    assert(it->code == "InvalidShape");
+    require(it->code == "InvalidShape");
     ++it;
-    assert(it == twice.detail.causes.end());
+    require(it == twice.detail.causes.end());
 
     const std::string json = jsonFailure(twice, 5);
-    assert(json.find("\"error_domain\":\"ExperimentErrorCode\"") != std::string::npos);
-    assert(json.find("\"causes\":[") != std::string::npos);
-    assert(json.find("\"observation_index\":0") != std::string::npos);
-    assert(jsonQuote("x\"\n\\") == "\"x\\\"\\n\\\\\"");
+    require(json.find("\"error_domain\":\"ExperimentErrorCode\"") != std::string::npos);
+    require(json.find("\"causes\":[") != std::string::npos);
+    require(json.find("\"observation_index\":0") != std::string::npos);
+    require(jsonQuote("x\"\n\\") == "\"x\\\"\\n\\\\\"");
 
     auto failure = OwnedResult::failure(
         {NumericalErrorCode::EmptyInput, ErrorDetail{}});
@@ -65,7 +70,7 @@ int main() {
     catch (const std::logic_error& exception) {
         threw = std::string(exception.what()) == "Result::value(): no success value";
     }
-    assert(threw);
+    require(threw);
 
     auto status = UnitStatus::success();
     threw = false;
@@ -73,7 +78,7 @@ int main() {
     catch (const std::logic_error& exception) {
         threw = std::string(exception.what()) == "Status::error(): no failure value";
     }
-    assert(threw);
-    assert(!UnitStatus::failure(
+    require(threw);
+    require(!UnitStatus::failure(
         {MatErrorCode::MissingFile, ErrorDetail{}}).hasValue());
 }

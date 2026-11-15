@@ -4,6 +4,14 @@
 >
 > 为消除旧NOT_RUN、旧授权与动态计数反复堆叠，既有E-DOC-054～067详细记录完整保存在[9825375固定PROGRESS](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/982537556be1ac5a414af368a0082806a9179d32/docs/PROGRESS.md)。更早E-DATA-001、E-DOC-001～053保存在[98e95e2固定历史](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/98e95e2f867dc7142fa0d5ac0f1c79f5d6429ed1/docs/PROGRESS.md)。未改写任何Git历史或历史审批；下表保留定位和关键事实，E-DOC-068为上一轮、最新证据为§5的E-DOC-069。
 
+## 0. 2026-11-15 R0/R1 新编程批次（尚无原生运行权限）
+
+**新授权**：项目所有者已解锁H-10的全工程C++代码编写/提交权限（参见[TODO](TODO.md)和[ROADMAP](ROADMAP.md)）；H-11仍单独延期，**本次只编写/提交代码、CMake和测试源码，不进行CMake配置、编译、CTest或业务CLI运行**。以下§1～6是原E-DOC-069历史数学批次记录，不随本批次追溯改写。
+
+**本批次交付**：R0解析`inspect-mat`、2种Bias、3种Adaptive、`analyze`和可选`plot`命令，校验必需/重复/未知参数、uint32/level/有限噪声及安全RunId；现无真实后端时返回有明确消息的失败而非伪造Complete。R1提供C++17的Eigen自拥有值类型、Result/Status（禁默认构造、明确逻辑错误）、`std::forward_list<ErrorFrame>`完整包装链与JSONL、Reader/Writer/RNG、Runner和Analyzer抽象接口。根CMake保留原SH静态库/3测试，同时增加CLI程序、公共接口与7个INTERFACE占位模块、2个新增合同测试源码，未实际执行测试。未实现matio生产Reader/Writer、采样/KvD/Adaptive、真实RunContext/Manifest及结果写入，这些属于R2～R5。
+
+**静态CMake检查**：源文件路径存在、11模块目标命名及依赖非环、旧3+新2测试对象均已登记；**不等于CMake configure/compile通过**。没有实际运行环境、工具链或日志的成功证据，不登记虚构PASS。详细批次与依赖以[ROADMAP](ROADMAP.md)为准。
+
 ## 1. 当前边界
 
 仓库 `ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields`，分支 `dev-plan-P0-P1-mat-dictionary-probe`；不合并main、不发布。`origin/**` 原45份.m与582份.mat只读；不要求执行MATLAB/Octave或获得L1。既有66REQ/66TC/98P、27条HLD设计边不变；数学子案例不新增正式TC。
