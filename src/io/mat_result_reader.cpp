@@ -134,11 +134,18 @@ Result<MatHandle, MatErrorCode> openReadOnly(const fs::path& path) {
     }
     return Result<MatHandle, MatErrorCode>::success(std::move(handle));
 }
-bool includesName(char* const* directory, std::size_t count, std::string_view target) {
-    if (!directory) return false;
+std::size_t occurrences(char* const* directory, std::size_t count,
+                        std::string_view target) {
+    std::size_t matches = 0;
+    if (!directory) return matches;
     for (std::size_t i = 0; i < count; ++i)
-        if (directory[i] && target == directory[i]) return true;
-    return false;
+        if (directory[i] && target == directory[i]) ++matches;
+    return matches;
+}
+// Business numeric reads are limited to the actual MAT v5/zlib archive;
+// metadata enumeration can still identify otherwise unsupported versions.
+bool isSupportedNumericFile(const mat_t* handle) {
+    return static_cast<int>(Mat_GetVersion(const_cast<mat_t*>(handle))) == 0x0100;
 }
 
 Result<DenseDoubleArray, MatErrorCode> owningDouble(const matvar_t& variable,
@@ -281,10 +288,19 @@ MatResultReader::readNamed(const std::filesystem::path& path,
     if (!directory || count == 0)
         return fail<DenseDoubleArray>(MatErrorCode::InvalidMatHeader,
                                       ErrorStage::Read, path, "MAT directory is missing");
-    if (!includesName(directory, count, variable))
+    const auto matches = occurrences(directory, count, variable);
+    if (matches == 0)
         return fail<DenseDoubleArray>(MatErrorCode::MissingVariable, ErrorStage::Read,
                                       path, "Named MAT variable does not exist",
                                       std::string(variable));
+    if (matches != 1)
+        return fail<DenseDoubleArray>(MatErrorCode::AmbiguousVariable, ErrorStage::Read,
+                                      path, "Duplicate variable name in MAT directory",
+                                      std::string(variable));
+    if (!isSupportedNumericFile(mat.get()))
+        return fail<DenseDoubleArray>(MatErrorCode::UnsupportedClassOrType,
+                                      ErrorStage::Decode, path,
+                                      "Numeric MAT reader supports only MAT v5", std::string(variable));
     return readWithHandle(mat.get(), path, std::string(variable));
 }
 
@@ -309,6 +325,11 @@ MatResultReader::readFirstCompatible(const std::filesystem::path& path) const {
     if (count != 1 || !directory[0])
         return fail<DenseDoubleArray>(MatErrorCode::AmbiguousVariable, ErrorStage::Read,
                                       actual, "MAT variable order is ambiguous");
+    if (!isSupportedNumericFile(mat.get()))
+        return fail<DenseDoubleArray>(MatErrorCode::UnsupportedClassOrType,
+                                      ErrorStage::Decode, actual,
+                                      "Numeric MAT reader supports only MAT v5",
+                                      directory[0]);
     return readWithHandle(mat.get(), actual, directory[0]);
 }
 
