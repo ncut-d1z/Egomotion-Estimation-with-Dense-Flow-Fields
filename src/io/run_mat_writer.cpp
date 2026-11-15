@@ -6,6 +6,7 @@
 #include <matio.h>
 
 #include <cerrno>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
@@ -17,6 +18,7 @@
 #include <cstddef>
 #include <limits>
 #include <memory>
+#include <stdexcept>
 #include <new>
 #include <string>
 #include <string_view>
@@ -206,9 +208,13 @@ Status<MatErrorCode> RunMatWriter::saveNewVariable(
         if(::fstatat(directory_.runFd(),final_name.c_str(),&published,
                      AT_SYMLINK_NOFOLLOW)!=0 ||
            published.st_ino!=before.st_ino||published.st_dev!=before.st_dev||
-           ::fsync(directory_.runFd())!=0)
+           ::fsync(directory_.runFd())!=0) {
+            // Retain its *actual* published identity for a partial-run audit,
+            // but do not mark it durably confirmed.
             return fail(MatErrorCode::ReadbackMismatch,directory_,name,
                         "Published MAT inode or directory durability could not be confirmed");
+        }
+        receipts_.at(name).durably_confirmed=true;
         // This temporary name was uniquely created by THIS invocation.
         (void)::unlinkat(directory_.runFd(),temporary.c_str(),0);
         return Status<MatErrorCode>::success();

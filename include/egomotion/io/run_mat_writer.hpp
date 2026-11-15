@@ -12,6 +12,7 @@ struct MatFileReceipt {
     std::string filename;
     std::string sha256; // SHA-256 of the successfully published MAT inode
     std::size_t bytes=0;
+    bool durably_confirmed=false; // false after link but before directory fsync
 };
 
 // Lifetime: the RunDirectory must outlive this Writer and its RunContext.
