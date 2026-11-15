@@ -124,6 +124,19 @@ Result<RunOutcome,ExperimentErrorCode> RunContext::publishCompleteOutcome() {
         auto json=experiments::makeCompleteManifestJson(*this,writer_.fileEvidence());
         if(!json.hasValue())
             return Output::failure(std::move(json).error());
+        // Prepare the entire success alternative BEFORE publishing. If
+        // copying RunId or allocating the Result fails, no Complete Manifest
+        // has been published yet; after publication only noexcept moves
+        // remain. Disk and in-process success cannot disagree on allocation.
+        RunOutcome outcome;
+        outcome.run_id=run_id_;
+        outcome.status=RunStatus::Complete;
+        outcome.attempted=draft_.attempted;
+        outcome.completed=draft_.completed;
+        outcome.valid=draft_.valid;
+        outcome.failed=draft_.failed;
+        outcome.undefined=draft_.undefined;
+        auto completed=Output::success(std::move(outcome));
         auto persisted=manifest_publisher_.publishNew("manifest.json",json.value());
         if(!persisted.hasValue()) {
             ErrorDetail d;d.stage=ErrorStage::Output;d.run_id=run_id_;
@@ -133,15 +146,7 @@ Result<RunOutcome,ExperimentErrorCode> RunContext::publishCompleteOutcome() {
         }
         manifest_published_=true;
         draft_.status=RunStatus::Complete;
-        RunOutcome outcome;
-        outcome.run_id=run_id_;
-        outcome.status=RunStatus::Complete;
-        outcome.attempted=draft_.attempted;
-        outcome.completed=draft_.completed;
-        outcome.valid=draft_.valid;
-        outcome.failed=draft_.failed;
-        outcome.undefined=draft_.undefined;
-        return Output::success(std::move(outcome));
+        return completed;
     } catch(const std::bad_alloc&) {
         ErrorDetail d;d.stage=ErrorStage::Output;d.run_id=run_id_;
         d.message="Manifest evidence allocation failed before confirmed outcome";
