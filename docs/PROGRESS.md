@@ -37,6 +37,26 @@
 
 **执行证据**：所有新生产文件已提交、推送；本轮**没有**运行CMake、g++、CTest、程序、MATLAB、MAT读取/写入或任何数值/性能测试，也未修改`origin/**`。此前R2注册的只读CTest仍只是测试源码登记，不能算已通过。详细本轮Git提交见该分支提交历史。
 
+
+## 0.3 R3完成静态源码缺口修复，进入R4实作（2026-11-15）
+
+**范围判断**：按[ROADMAP](ROADMAP.md)定义，R3只要求**内存**Bias业务计算（不包含R5的持久化Writer、RunContext/Manifest及CLI完整装配）。从`ec0a3a74f9fe`复核后，对实际源码执行多次修正：
+
+- `src/sampling/directions.cpp`/`src/simulation/flow.cpp`/`src/estimators/franz_kvd.cpp`：全局失败的`observation_index`不得默认伪造0；明确每个源uniform/normal失败的观测/分量与真实包装链，修正参数/资源超限分支并保留源MATLAB采样顺序。
+- `generateBiasFlow`：距离抽样恢复源`entf=(rand*(4-1)+1)/2.5; near=1/entf`的浮点操作顺序，避免把代数等价的`2.5/(1+3*rand)`误当逐步骤复现；先N次uniform、再3N次normal不变。
+- `BiasExperimentRunner`：明确`subdivision_level`和`noise_column_matlab_1_based`属于不同身份，不误用观测下标；失败带上`ywerte1..6`指标，零真值不记假0误差，资源分配失败保留完整数值根因。
+- 仍由Composition Root持有/注入唯一相配采样器+噪声模型；R3源码范围已具备三种有序采样、两类互斥噪声、Franz、Original/Modified KvD以及两类Bias的六组内存输出。**“R3源码范围闭合”只是静态检查判断，不是已成功编译/运行；如果R6发现实际错误仍须重新打开修复。**
+
+**R4新增生产源码**（都已提交推送、尚未编译）：`include/egomotion/trajectory/trajectory.hpp`与`src/trajectory/{trajectory,kinematics,sphere}.cpp`实现circle/sinusoidal源N分母、有效中间帧`Rᵀ`局部运动、Sophus SO(3) exp接口和严格球内正根；对于原`drehvektor_aus_zwei_vektoren`精确反向会返回伪零的问题，新路径采取**显式InvalidDirection失败**并标识这是C++安全边界而非MATLAB原有处理。
+
+`src/harmonics/adapter.cpp`重用已有l≤2叶子的3×5↔9系数转换、重建、原source逐通道二阶拟合及SH旋转，不复制球谐公式。公共系数旋转参数的R/Rᵀ约定**必须由未来Runner按原调用方明确选择**，不可反向猜测。
+
+`src/estimators/adaptive_step.cpp`按原`oneit_adaptiv_matched_filter`顺序计算near_raw/s/翻号与归一、6×6**一般非对称**M1–M4及RHS、FullPivLU求解、t单位化、原返回MSE、1e−11新near与二阶系数拟合；不用错误的LDLT对称化。FullPivLU与源`real(inv(M))*b`的浮点差异和病态阈值需在R6另行核验，DEC-005不能先虚设PASS。
+
+`src/estimators/adaptive_session.cpp`将Initialization、Comparison、UpdateRates的主状态/比较状态分离：UpdateRates按MATLAB **1-based** i周期1/5/11/21刷新，比较调用的`dumi`新系数不提交；仅当全部比较与主求解完成后提交主系数及持久基线，失败保留之前状态与错误链。**R4尚未完成三类Runner的完整场景生成、八次聚合及实际内存输出；R5的MAT写入/CLI也未接入。**
+
+**执行约束**：本批严格**没有**调用CMake、编译器、CTest、Wolfram/数值实验、MATLAB或读写任何MAT；`origin/**`原始文件未改。R0–R5仍只编写实现，R6最后统一准备构建/测试源码及执行；本次没有新PASS或代码验收结论。
+
 ## 1. 当前边界
 
 仓库 `ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields`，分支 `dev-plan-P0-P1-mat-dictionary-probe`；不合并main、不发布。`origin/**` 原45份.m与582份.mat只读；不要求执行MATLAB/Octave或获得L1。既有66REQ/66TC/98P、27条HLD设计边不变；数学子案例不新增正式TC。
