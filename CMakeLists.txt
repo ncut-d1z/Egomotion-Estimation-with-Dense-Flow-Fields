@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 
-# R0/R1: typed CLI bootstrap, header-only public contracts, existing SH leaf.
-# Remaining libraries are INTERFACE dependency placeholders until R2-R5.
+# R6 source graph: all R0-R5 production implementations are now explicitly linked.
+# No configure/build/CTest is authorized by writing this CMake file.
 project(EgomotionEstimationWithDenseFlowFields VERSION 0.1.0 LANGUAGES CXX)
 
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -15,6 +15,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(Sophus CONFIG REQUIRED)
+if(NOT TARGET Sophus::Sophus)
+    message(FATAL_ERROR "SophusConfig.cmake must define Sophus::Sophus")
+endif()
 
 
 add_library(egomotion_domain INTERFACE)
@@ -35,6 +39,7 @@ add_library(egomotion_harmonics STATIC
     src/harmonics/low_order_rotation.cpp
     src/harmonics/low_order_choi.cpp
     src/harmonics/low_order_source_projection.cpp
+    src/harmonics/adapter.cpp
 )
 add_library(egomotion::harmonics ALIAS egomotion_harmonics)
 
@@ -52,20 +57,34 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 
 
-# Planned interface-only targets express graph edges, not compiled backends.
-add_library(egomotion_sampling INTERFACE)
+# Source boundaries match the domain-oriented dependency DAG.
+add_library(egomotion_sampling STATIC
+    src/sampling/directions.cpp
+    src/sampling/random.cpp
+)
 add_library(egomotion::sampling ALIAS egomotion_sampling)
-target_link_libraries(egomotion_sampling INTERFACE egomotion_domain egomotion_contracts)
+target_link_libraries(egomotion_sampling PUBLIC
+    egomotion_domain egomotion_contracts)
 
-add_library(egomotion_simulation INTERFACE)
+add_library(egomotion_simulation STATIC
+    src/simulation/flow.cpp
+    src/trajectory/trajectory.cpp
+    src/trajectory/kinematics.cpp
+    src/trajectory/sphere.cpp
+)
 add_library(egomotion::simulation ALIAS egomotion_simulation)
-target_link_libraries(egomotion_simulation INTERFACE
-    egomotion_domain egomotion_sampling egomotion_contracts)
+target_link_libraries(egomotion_simulation PUBLIC
+    egomotion_domain egomotion_sampling egomotion_contracts
+    PRIVATE Sophus::Sophus)
 
-add_library(egomotion_estimators INTERFACE)
+add_library(egomotion_estimators STATIC
+    src/estimators/franz_kvd.cpp
+    src/estimators/adaptive_step.cpp
+    src/estimators/adaptive_session.cpp
+)
 add_library(egomotion::estimators ALIAS egomotion_estimators)
-target_link_libraries(egomotion_estimators INTERFACE
-    egomotion_domain egomotion_harmonics)
+target_link_libraries(egomotion_estimators PUBLIC
+    egomotion_domain egomotion_harmonics egomotion_simulation)
 
 # R2 uses the existing libmatio via pkg-config (no vendored parser).
 # Public interfaces remain MAT-library-free; all matio.h calls are PRIVATE.
@@ -76,6 +95,11 @@ find_package(ZLIB REQUIRED)
 add_library(egomotion_matio STATIC
     src/io/mat_result_reader.cpp
     src/io/mat_data_dictionary.cpp
+    src/io/sha256.cpp
+    src/io/run_directory.cpp
+    src/io/run_mat_writer.cpp
+    src/io/run_text_publisher.cpp
+    src/io/manifest_publisher.cpp
 )
 add_library(egomotion::matio ALIAS egomotion_matio)
 target_link_libraries(egomotion_matio
@@ -96,21 +120,35 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(mat_data_dict_probe PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
-add_library(egomotion_experiments INTERFACE)
+add_library(egomotion_experiments STATIC
+    src/experiments/bias_runner.cpp
+    src/experiments/adaptive_runner.cpp
+    src/experiments/output_contract.cpp
+    src/experiments/output_values.cpp
+    src/experiments/run_context.cpp
+    src/experiments/manifest_json.cpp
+    src/experiments/production_runner.cpp
+)
 add_library(egomotion::experiments ALIAS egomotion_experiments)
-target_link_libraries(egomotion_experiments INTERFACE
-    egomotion_domain egomotion_contracts
-    egomotion_sampling egomotion_simulation egomotion_estimators)
+target_link_libraries(egomotion_experiments PUBLIC
+    egomotion_domain egomotion_contracts egomotion_sampling
+    egomotion_simulation egomotion_estimators)
 
-add_library(egomotion_analysis INTERFACE)
+add_library(egomotion_analysis STATIC
+    src/analysis/reader_helpers.cpp
+    src/analysis/result_analyzer.cpp
+    src/analysis/bias.cpp
+    src/analysis/adaptive.cpp
+    src/analysis/dataset_json.cpp
+)
 add_library(egomotion::analysis ALIAS egomotion_analysis)
-target_link_libraries(egomotion_analysis INTERFACE
+target_link_libraries(egomotion_analysis PUBLIC
     egomotion_domain egomotion_contracts)
 
-# Plot backend remains optional and is not implemented in R0/R1.
-add_library(egomotion_plotting INTERFACE)
+# Plotting consumes only immutable numerical curves, never a MAT reader.
+add_library(egomotion_plotting STATIC src/analysis/svg_plot.cpp)
 add_library(egomotion::plotting ALIAS egomotion_plotting)
-target_link_libraries(egomotion_plotting INTERFACE egomotion_analysis)
+target_link_libraries(egomotion_plotting PUBLIC egomotion_analysis egomotion_contracts)
 
 add_library(egomotion_cli STATIC
     src/cli/command.cpp
@@ -118,17 +156,52 @@ add_library(egomotion_cli STATIC
 )
 add_library(egomotion::cli ALIAS egomotion_cli)
 target_link_libraries(egomotion_cli PUBLIC
-    egomotion_experiments egomotion_analysis
-    egomotion_matio egomotion_contracts)
+    egomotion_experiments egomotion_analysis egomotion_plotting
+    egomotion_matio egomotion_sampling egomotion_contracts)
 target_compile_features(egomotion_cli PUBLIC cxx_std_17)
+
+# Fix executable provenance at CONFIGURE time, not by reading a potentially
+# changed runtime HEAD. A dirty/unversioned source tree cannot publish a
+# Complete Manifest: it receives UNVERIFIED_BUILD_SOURCE and is rejected
+# by makeCompleteManifestJson. Reconfigure after every source commit.
+find_package(Git QUIET)
+set(EGOMOTION_BUILD_SOURCE_SHA "UNVERIFIED_BUILD_SOURCE")
+if(GIT_FOUND)
+    execute_process(
+        COMMAND "${GIT_EXECUTABLE}" -C "${CMAKE_CURRENT_SOURCE_DIR}" rev-parse --verify HEAD
+        OUTPUT_VARIABLE EGOMOTION_GIT_HEAD OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET RESULT_VARIABLE EGOMOTION_GIT_HEAD_RESULT
+    )
+    execute_process(
+        COMMAND "${GIT_EXECUTABLE}" -C "${CMAKE_CURRENT_SOURCE_DIR}" status --porcelain --untracked-files=no
+        OUTPUT_VARIABLE EGOMOTION_GIT_DIRTY OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET RESULT_VARIABLE EGOMOTION_GIT_STATUS_RESULT
+    )
+    string(LENGTH "${EGOMOTION_GIT_HEAD}" EGOMOTION_SHA_LENGTH)
+    if(EGOMOTION_GIT_HEAD_RESULT EQUAL 0 AND
+       EGOMOTION_GIT_STATUS_RESULT EQUAL 0 AND
+       EGOMOTION_SHA_LENGTH EQUAL 40 AND
+       EGOMOTION_GIT_HEAD MATCHES "^[0-9a-f]+$" AND
+       EGOMOTION_GIT_DIRTY STREQUAL "")
+        set(EGOMOTION_BUILD_SOURCE_SHA "${EGOMOTION_GIT_HEAD}")
+    endif()
+endif()
+target_compile_definitions(egomotion_cli PRIVATE
+    "EGOMOTION_BUILD_SOURCE_SHA=\"${EGOMOTION_BUILD_SOURCE_SHA}\""
+)
+message(STATUS "Executable source commit: ${EGOMOTION_BUILD_SOURCE_SHA}")
 
 add_executable(egomotion src/cli/main.cpp)
 target_link_libraries(egomotion PRIVATE egomotion_cli)
 target_compile_features(egomotion PRIVATE cxx_std_17)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(egomotion_cli PRIVATE -Wall -Wextra -Wpedantic)
-    target_compile_options(egomotion PRIVATE -Wall -Wextra -Wpedantic)
+    foreach(target IN ITEMS
+            egomotion_sampling egomotion_simulation egomotion_estimators
+            egomotion_matio egomotion_experiments egomotion_analysis
+            egomotion_plotting egomotion_cli egomotion)
+        target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
+    endforeach()
 endif()
 
 include(CTest)
@@ -207,6 +280,5 @@ endif()
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
 message(STATUS "C++ standard: C++${CMAKE_CXX_STANDARD}")
 message(STATUS "Eigen: ${Eigen3_VERSION}")
-message(STATUS "Scope: R0/R1 CLI + R2 matio Reader/dictionary + low-order SH")
-message(STATUS "R3-R5 simulation, estimators, experiments and analysis: INTERFACE placeholders")
+message(STATUS "Scope: R0-R5 compiled source targets; R6 config/build/tests require separate H-11 authorization")
 message(STATUS "BUILD_TESTING=${BUILD_TESTING} (not a test result)")
