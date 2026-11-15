@@ -1,0 +1,74 @@
+#include "egomotion/io/run_directory.hpp"
+#include "egomotion/io/run_mat_writer.hpp"
+#include "egomotion/io/run_text_publisher.hpp"
+#include "egomotion/io/sha256.hpp"
+#include "egomotion/io/mat_result_reader.hpp"
+
+#include <fcntl.h>
+#include <unistd.h>
+
+#include <filesystem>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+namespace {
+void require(bool condition,const char* why){
+    if(!condition)throw std::runtime_error(why);
+}
+}
+int main(int argc,char** argv){
+    using namespace egomotion;
+    namespace fs=std::filesystem;
+    if(argc!=2)throw std::invalid_argument("Expected isolated build-tree sandbox");
+    // The sandbox is NEVER the user repo's origin/, and no cleanup/deletion
+    // is performed: repeated runs create different, OS-random RunIds.
+    const fs::path root=fs::absolute(argv[1]);
+    fs::create_directories(root/"origin");
+    auto directory=io::RunDirectory::create(root);
+    require(directory.hasValue(),"Cannot allocate isolated synthetic RunId");
+    auto run=std::move(directory).value();
+
+    io::RunTextPublisher text(*run);
+    require(text.publishNew("hello.txt","hello").hasValue(),
+            "Cannot publish original synthetic text");
+    auto duplicate=text.publishNew("hello.txt","overwrite");
+    require(!duplicate.hasValue()&&duplicate.error().code==MatErrorCode::OutputExists,
+            "Second publication must not overwrite existing text");
+    require(!text.publishNew("../origin/attack.txt","bad").hasValue(),
+            "Text publisher must reject parent directory escape");
+
+    const int fd=::openat(run->runFd(),"hello.txt",O_RDONLY|O_CLOEXEC|O_NOFOLLOW);
+    require(fd>=0,"Anchored text file cannot be reopened");
+    auto digest=io::sha256Fd(fd);
+    ::close(fd);
+    require(digest.hasValue()&&
+            digest.value()=="2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+            "SHA256 of hello differs from published FIPS-180-4 reference");
+
+    DenseDoubleArray a;
+    a.info.name="xwerte";
+    a.info.original_class_type=6;
+    a.info.original_data_type=9;
+    a.info.dimensions={2,3};
+    a.info.data_bytes=6*sizeof(double);
+    a.values_column_major={1,2,3,4,5,6};
+    io::RunMatWriter writer(*run);
+    require(writer.saveNewVariable(run->runId(),"xwerte",a).hasValue(),
+            "Synthetic MAT Writer cannot publish and read back 2x3 double");
+    const auto evidence=writer.fileEvidence();
+    require(evidence.size()==1&&evidence[0].durably_confirmed&&
+            evidence[0].sha256.size()==64,
+            "A successfully published MAT must have durable SHA256 evidence");
+    auto already=writer.saveNewVariable(run->runId(),"xwerte",a);
+    require(!already.hasValue()&&already.error().code==MatErrorCode::OutputExists,
+            "MAT Writer must reject overwriting its own result");
+    auto unsafe=writer.saveNewVariable(run->runId(),"../origin/attack",a);
+    require(!unsafe.hasValue(),"MAT Writer must reject invalid target basename");
+
+    io::MatResultReader reader;
+    auto back=reader.readNamed(run->outputRoot()/run->runId().text/"xwerte.mat","xwerte");
+    require(back.hasValue()&&back.value().info.dimensions==a.info.dimensions&&
+            back.value().values_column_major==a.values_column_major,
+            "MAT published output must decode to the exact original column-major values");
+}
