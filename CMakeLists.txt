@@ -192,6 +192,16 @@ if(BUILD_TESTING)
     target_compile_features(test_r01_cli PRIVATE cxx_std_17)
     add_test(NAME r01_cli_contract COMMAND test_r01_cli)
     set_tests_properties(r01_cli_contract PROPERTIES LABELS "r01;cli" TIMEOUT 30)
+
+    # R2 exclusively reads two repository fixtures. It never writes origin or reports.
+    add_executable(test_r02_reader tests/integration/test_r02_reader.cpp)
+    target_link_libraries(test_r02_reader PRIVATE egomotion_cli egomotion_matio)
+    target_compile_features(test_r02_reader PRIVATE cxx_std_17)
+    add_test(NAME r02_mat_reader COMMAND test_r02_reader
+        "${CMAKE_CURRENT_SOURCE_DIR}/origin/egomotion_estimation_dense_flow_fields_matlab_scripts/bias_test/produced_data/occluded_regions/1/xwerte.mat"
+        "${CMAKE_CURRENT_SOURCE_DIR}/origin/egomotion_estimation_dense_flow_fields_matlab_scripts/bias_test/produced_data/occluded_regions/1/ywerte3.mat"
+    )
+    set_tests_properties(r02_mat_reader PROPERTIES LABELS "r02;mat;readonly" TIMEOUT 60)
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
