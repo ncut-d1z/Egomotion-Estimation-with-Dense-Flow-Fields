@@ -1,6 +1,7 @@
 #pragma once
 
 #include "egomotion/analysis/analyzer.hpp"
+#include "egomotion/analysis/plot.hpp"
 #include "egomotion/experiments/runner.hpp"
 
 #include <cstdint>
@@ -10,6 +11,7 @@
 #include <string>
 #include <variant>
 #include <vector>
+#include <utility>
 
 namespace egomotion::cli {
 
@@ -57,8 +59,11 @@ class ApplicationCompositionRoot {
 public:
     explicit ApplicationCompositionRoot(IResultReader* reader = nullptr,
                                         IExperimentRunner* runner = nullptr,
-                                        IAnalyzer* analyzer = nullptr) noexcept
-        : reader_(reader), runner_(runner), analyzer_(analyzer) {}
+                                        IAnalyzer* analyzer = nullptr,
+                                        IPlotExporter* plotter = nullptr,
+                                        std::filesystem::path trusted_repo = {})
+        : reader_(reader), runner_(runner), analyzer_(analyzer),
+          plotter_(plotter), trusted_repo_(std::move(trusted_repo)) {}
 
     int dispatch(const Command& command, std::ostream& out,
                  std::ostream& err) const;
@@ -67,6 +72,8 @@ private:
     IResultReader* reader_;
     IExperimentRunner* runner_;
     IAnalyzer* analyzer_;
+    IPlotExporter* plotter_;
+    std::filesystem::path trusted_repo_;
 };
 
 int run(const std::vector<std::string>& args, std::ostream& out,

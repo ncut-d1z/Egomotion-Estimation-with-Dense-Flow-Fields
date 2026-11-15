@@ -40,6 +40,12 @@ Result<std::string,ExperimentErrorCode> makeCompleteManifestJson(
     const RunContext& run,const std::vector<FileEvidence>& published) {
     const auto& draft=run.manifestDraft();
     const auto planned=currentSaveFields(run.experimentKind());
+    // A build-local SOURCE_COMMIT macro, NOT the later Git HEAD in a
+    // working tree, provides the executable's actual provenance.
+    if(run.provenance().repository_commit_sha.size()!=40||
+       !validSha256(run.provenance().repository_commit_sha+
+                    run.provenance().repository_commit_sha.substr(0,24)))
+        return fail<std::string>("Build source commit identity is not a verified 40-hex SHA");
     if(planned.empty()||published.size()!=planned.size()||
        draft.files_writer_confirmed.size()!=planned.size()||
        draft.expected_repetitions==0||
@@ -71,6 +77,10 @@ Result<std::string,ExperimentErrorCode> makeCompleteManifestJson(
         json+=",\"completeness\":\"Complete\"";
         json+=",\"repo_sha\":"+jsonQuote(run.provenance().repository_commit_sha);
         json+=",\"source_blob_sha\":"+jsonQuote(run.provenance().matlab_source_blob_sha);
+        json+=",\"algorithm_rng_seed\":";
+        if(run.provenance().rng_seed)
+            json+=std::to_string(*run.provenance().rng_seed);
+        else json+="null";
         json+=",\"expected_repetitions\":"+std::to_string(draft.expected_repetitions);
         json+=",\"attempted\":"+std::to_string(draft.attempted);
         json+=",\"completed\":"+std::to_string(draft.completed);

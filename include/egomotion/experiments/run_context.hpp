@@ -3,6 +3,8 @@
 #include "egomotion/experiments/output_contract.hpp"
 
 #include <cstddef>
+#include <cstdint>
+#include <optional>
 #include <filesystem>
 #include <map>
 #include <memory>
@@ -14,6 +16,7 @@ namespace egomotion {
 struct SourceProvenance {
     std::string repository_commit_sha;
     std::string matlab_source_blob_sha; // source identity, not MATLAB execution
+    std::optional<std::uint32_t> rng_seed; // exact injected C++ seed, if applicable
 };
 
 // Unpersisted audit state ONLY. This is NOT a published Manifest.
