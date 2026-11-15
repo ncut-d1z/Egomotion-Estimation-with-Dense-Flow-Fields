@@ -1,6 +1,6 @@
 # C++ 实施路线图
 
-> **状态：R0/R1 代码与 CMake 骨架已编写并推送，尚未获得实际编译/CTest 证据。** H-10 已允许 C++17 业务源码、头文件、CMake 和测试源码编写；**H-11 运行权限仍单独延期**：本批未执行 CMake configure/build/CTest/CLI 程序、未安装依赖、未读写 MAT；正式容差、性能、基线签署和发布仍未获批准。最新权限见 [TODO](TODO.md)。
+> **状态：R0/R1骨架及R2 MAT只读Reader、旧字典CLI重构已编写；尚未取得实际CMake/CTest证据。** H-10 已允许 C++17 业务源码、头文件、CMake 和测试源码编写；**H-11 运行权限仍单独延期**：本批未执行 CMake configure/build/CTest/CLI 程序、未安装依赖、未读写 MAT；正式容差、性能、基线签署和发布仍未获批准。最新权限见 [TODO](TODO.md)。
 
 ## 目标与边界
 
@@ -23,6 +23,19 @@
 ## R0/R1 当前交付
 
 已建立 `include/egomotion/{domain,contracts,experiments,analysis,cli}/`、`src/cli/`，保留现存低阶球谐叶子，根 `CMakeLists.txt` 登记11个`egomotion_*`目标、CLI程序和5项CTest注册（既有SH 3项＋新增R0/R1 2项）。其中`sampling/simulation/estimators/matio/experiments/analysis/plotting`仍为仅声明依赖的**INTERFACE占位**，不冒充算法或MAT Reader已实现；业务命令尚无后端，必须显式失败。源码和CTest注册已推送，但**configure/编译/CTest均未执行（H-11）**。静态结构检查只能核文件存在、target无环/依赖关系和CMake括号配平；真实CMake正确性仍须待执行验证。
+
+## R2 已实现的边界与构建命令
+
+`MatResultReader` 位于 `src/io/mat_result_reader.cpp`：`inspect` 仅读结构元数据；`readNamed/readFirstCompatible` 完整解码并复制二维实数`double`列主序数据，RAII管理matio句柄。`src/mat_data_dict_probe.cpp`已改为薄CLI，字典扫描/FNV64/Markdown生成由`src/io/mat_data_dictionary.cpp`负责。旧`MAT_ROOT REPORT.md --expected-count N --source-sha SHA [--replace-generated]`调用格式保留；**报告已存在时必须显式`--replace-generated`并验证生成标记**。
+
+后续获H-11授权时推荐：
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --target egomotion mat_data_dict_probe
+# 仅当允许写入 docs/MAT_DATA_SCHEMA.md 时才运行此命令：
+./build/mat_data_dict_probe origin/egomotion_estimation_dense_flow_fields_matlab_scripts docs/MAT_DATA_SCHEMA.md --expected-count 582 --source-sha "$(git rev-parse HEAD)" --replace-generated
+```
+原先仅编译`src/mat_data_dict_probe.cpp`的单文件g++命令**不再有效**：需要同时链接共享Reader和字典服务、Eigen/matio/zlib。正式`MatResultReader`数值读取不允许变成`inspect-mat`的数值打印。CMake目标与注册测试是否能真实编译/运行仍需H-11另行授权核验。
 
 ## 执行规则
 

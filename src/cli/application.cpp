@@ -66,8 +66,11 @@ int ApplicationCompositionRoot::dispatch(const Command& command,
                 if (i != 0) out << 'x';
                 out << variable.dimensions[i];
             }
-            out << " complex=" << variable.is_complex
-                << " logical=" << variable.is_logical << '\n';
+            out << " data_bytes=" << variable.data_bytes
+                << " compressed=" << variable.is_compressed
+                << " complex=" << variable.is_complex
+                << " logical=" << variable.is_logical
+                << " global=" << variable.is_global << '\n';
         }
         if (params.variable && !found) {
             ErrorDetail detail;

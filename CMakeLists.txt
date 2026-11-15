@@ -67,11 +67,34 @@ add_library(egomotion::estimators ALIAS egomotion_estimators)
 target_link_libraries(egomotion_estimators INTERFACE
     egomotion_domain egomotion_harmonics)
 
-# R2 will add matio/zlib and compiled RAII Reader/Writer sources.
-add_library(egomotion_matio INTERFACE)
+# R2 uses the existing libmatio via pkg-config (no vendored parser).
+# Public interfaces remain MAT-library-free; all matio.h calls are PRIVATE.
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(MATIO REQUIRED IMPORTED_TARGET matio)
+find_package(ZLIB REQUIRED)
+
+add_library(egomotion_matio STATIC
+    src/io/mat_result_reader.cpp
+    src/io/mat_data_dictionary.cpp
+)
 add_library(egomotion::matio ALIAS egomotion_matio)
-target_link_libraries(egomotion_matio INTERFACE
-    egomotion_domain egomotion_contracts)
+target_link_libraries(egomotion_matio
+    PUBLIC egomotion_domain egomotion_contracts
+    PRIVATE PkgConfig::MATIO ZLIB::ZLIB
+)
+target_compile_features(egomotion_matio PUBLIC cxx_std_17)
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(egomotion_matio PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+# Historical command remains a separate thin executable; source location
+# and report CLI arguments are unchanged after the refactor.
+add_executable(mat_data_dict_probe src/mat_data_dict_probe.cpp)
+target_link_libraries(mat_data_dict_probe PRIVATE egomotion_matio)
+target_compile_features(mat_data_dict_probe PRIVATE cxx_std_17)
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(mat_data_dict_probe PRIVATE -Wall -Wextra -Wpedantic)
+endif()
 
 add_library(egomotion_experiments INTERFACE)
 add_library(egomotion::experiments ALIAS egomotion_experiments)
@@ -174,6 +197,6 @@ endif()
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
 message(STATUS "C++ standard: C++${CMAKE_CXX_STANDARD}")
 message(STATUS "Eigen: ${Eigen3_VERSION}")
-message(STATUS "Scope: R0/R1 CLI bootstrap + contracts + low-order SH")
-message(STATUS "R2-R5 modules remain interface placeholders, not implemented")
+message(STATUS "Scope: R0/R1 CLI + R2 matio Reader/dictionary + low-order SH")
+message(STATUS "R3-R5 simulation, estimators, experiments and analysis: INTERFACE placeholders")
 message(STATUS "BUILD_TESTING=${BUILD_TESTING} (not a test result)")
