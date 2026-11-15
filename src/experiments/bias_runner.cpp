@@ -10,6 +10,7 @@
 #include <limits>
 #include <memory>
 #include <new>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -25,13 +26,18 @@ ErrorResult invalid(std::string message) {
 }
 template<class T>
 ErrorResult fromSolver(const Result<T,NumericalErrorCode>& failed,
-                       std::string message, std::size_t level) {
+                       std::string message, std::size_t level,
+                       std::optional<std::size_t> coefficient_column=std::nullopt) {
     ErrorDetail outer;
     outer.stage=ErrorStage::Simulation;
-    // The subdivision level is NOT an observation index: a nested solver
-    // failure may already contain the real per-direction observation index.
+    // A subdivision level or 1-based MATLAB noise column is NOT a direction
+    // observation index. Keep the leaf's actual observation_index unchanged.
     outer.message=std::move(message)+" (subdivision_level="+
-                  std::to_string(level)+")";
+                  std::to_string(level);
+    if (coefficient_column)
+        outer.message+=", noise_column_matlab_1_based="+
+                       std::to_string(*coefficient_column+1);
+    outer.message+=")";
     return ErrorResult::failure(wrapFailure(
         ExperimentErrorCode::SolverFailed, std::move(outer), failed.error()));
 }
@@ -113,18 +119,18 @@ ErrorResult computeImpl(const BiasExperimentConfig& config,
                 auto scene=simulation::generateBiasFlow(
                     params,sampler,synthesizer,noise,rng);
                 if (!scene.hasValue())
-                    return fromSolver(scene,"Bias flow generation failed",level);
+                    return fromSolver(scene,"Bias flow generation failed",level,v);
 
                 const FlowField& flow=scene.value().noisy;
                 auto franz_result=franz.estimate(flow);
                 if (!franz_result.hasValue())
-                    return fromSolver(franz_result,"Franz failed on Bias sample",level);
+                    return fromSolver(franz_result,"Franz failed on Bias sample",level,v);
                 auto orig_result=original.estimate(flow,kvd);
                 if (!orig_result.hasValue())
-                    return fromSolver(orig_result,"Original KvD failed on Bias sample",level);
+                    return fromSolver(orig_result,"Original KvD failed on Bias sample",level,v);
                 auto mod_result=modified.estimate(flow,kvd);
                 if (!mod_result.hasValue())
-                    return fromSolver(mod_result,"Modified KvD failed on Bias sample",level);
+                    return fromSolver(mod_result,"Modified KvD failed on Bias sample",level,v);
                 const MotionEstimate& f=franz_result.value();
                 const MotionEstimate& o=orig_result.value().motion;
                 const MotionEstimate& m=mod_result.value().motion;
@@ -137,7 +143,9 @@ ErrorResult computeImpl(const BiasExperimentConfig& config,
                     auto err=normalizedVectorError(pairs[metric].first,
                                                    pairs[metric].second);
                     if (!err.hasValue())
-                        return fromSolver(err,"Bias vector error undefined",level);
+                        return fromSolver(err,
+                            "Bias ywerte"+std::to_string(metric+1)+" error undefined",
+                            level,v);
                     data.ywerte[metric][v*levels+level]=err.value();
                 }
                 if (level+1<levels) {

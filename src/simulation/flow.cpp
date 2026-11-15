@@ -215,7 +215,15 @@ Result<FlowSynthesisResult,NumericalErrorCode> generateBiasFlow(
                 return fail<FlowSynthesisResult>(NumericalErrorCode::InvalidRandomSample,
                                                  "Invalid distance RNG sample",
                                                  static_cast<std::size_t>(i));
-            nearness[i]=2.5/(1.0+3.0*sample);
+            // Preserve the MATLAB assignment order:
+            // entf=(rand*(maxentf-minentf)+minentf)/entfdurch; near=1/entf.
+            constexpr double min_distance=1.0;
+            constexpr double max_distance=4.0;
+            constexpr double average_distance=2.5;
+            const double normalized_distance=
+                (sample*(max_distance-min_distance)+min_distance)/
+                average_distance;
+            nearness[i]=1.0/normalized_distance;
         }
         auto ideal=synthesizer.synthesize(
             directions, nearness, params.truth_translation, params.truth_rotation);
