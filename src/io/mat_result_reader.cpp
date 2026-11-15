@@ -144,15 +144,15 @@ bool includesName(char* const* directory, std::size_t count, std::string_view ta
 Result<DenseDoubleArray, MatErrorCode> owningDouble(const matvar_t& variable,
                                                     const fs::path& path,
                                                     std::string name) {
-    if (!hasValidDims(variable) || variable.rank != 2 ||
-        variable.dims[0] == 0 || variable.dims[1] == 0)
-        return fail<DenseDoubleArray>(MatErrorCode::InvalidShape, ErrorStage::Decode,
-                                      path, "Expected a nonempty two-dimensional array", name);
     if (variable.class_type != MAT_C_DOUBLE || variable.data_type != MAT_T_DOUBLE ||
         variable.isComplex || variable.isLogical)
         return fail<DenseDoubleArray>(MatErrorCode::UnsupportedClassOrType,
                                       ErrorStage::Decode, path,
                                       "Only real dense non-logical double arrays are supported", name);
+    if (!hasValidDims(variable) || variable.rank != 2 ||
+        variable.dims[0] == 0 || variable.dims[1] == 0)
+        return fail<DenseDoubleArray>(MatErrorCode::InvalidShape, ErrorStage::Decode,
+                                      path, "Expected a nonempty two-dimensional array", name);
     const std::size_t rows = variable.dims[0], columns = variable.dims[1];
     if (columns > std::numeric_limits<std::size_t>::max() / rows)
         return fail<DenseDoubleArray>(MatErrorCode::SizeOverflow, ErrorStage::Decode,
@@ -205,8 +205,9 @@ MatResultReader::scanFile(const std::filesystem::path& path, ScanMode mode) cons
                                  path, "EMPTY_OR_DIRECTORY_FAILED");
     MatFileScan result;
     result.version = versionName(Mat_GetVersion(mat.get()));
-    result.variables.reserve(count);
-    for (std::size_t i = 0; i < count; ++i) {
+    try {
+        result.variables.reserve(count);
+        for (std::size_t i = 0; i < count; ++i) {
         if (!directory[i]) {
             MatScanVariable bad;
             bad.info.name = "(null)";
@@ -238,6 +239,10 @@ MatResultReader::scanFile(const std::filesystem::path& path, ScanMode mode) cons
                            value->data == nullptr ? "NO_NUMERIC_DATA" : "READ_OK";
         }
         result.variables.push_back(std::move(entry));
+        }
+    } catch (const std::bad_alloc&) {
+        return fail<MatFileScan>(MatErrorCode::SizeOverflow, ErrorStage::Decode,
+                                 path, "Cannot allocate MAT variable metadata");
     }
     return Result<MatFileScan, MatErrorCode>::success(std::move(result));
 }
