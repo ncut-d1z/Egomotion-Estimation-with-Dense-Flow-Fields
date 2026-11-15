@@ -112,6 +112,17 @@ bool sameValues(const DenseDoubleArray& expected,const DenseDoubleArray& readbac
 }
 }  // namespace
 
+std::vector<FileEvidence> RunMatWriter::fileEvidence() const {
+    std::vector<FileEvidence> result;
+    result.reserve(receipts_.size());
+    for(const auto& pair:receipts_) {
+        const auto& r=pair.second;
+        result.push_back(FileEvidence{r.variable,r.filename,r.sha256,
+                                      r.bytes,r.durably_confirmed});
+    }
+    return result;
+}
+
 Status<MatErrorCode> RunMatWriter::saveNewVariable(
     const RunId& run_id,std::string_view variable_name,
     const DenseDoubleArray& payload) {

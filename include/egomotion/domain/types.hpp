@@ -45,6 +45,13 @@ struct DenseDoubleArray {
     std::vector<double> values_column_major;
 };
 
+struct FileEvidence {
+    std::string variable;
+    std::string filename;
+    std::string sha256;
+    std::size_t size_bytes=0;
+    bool durably_confirmed=false;
+};
 enum class RunStatus { Complete, Incomplete, Failed };
 
 struct RunOutcome {

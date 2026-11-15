@@ -26,6 +26,7 @@ public:
     Status<MatErrorCode> saveNewVariable(
         const RunId& run_id,std::string_view name,
         const DenseDoubleArray& value) override;
+    std::vector<FileEvidence> fileEvidence() const override;
     const std::map<std::string,MatFileReceipt>& receipts() const noexcept {
         return receipts_;
     }

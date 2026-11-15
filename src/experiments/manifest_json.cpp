@@ -97,21 +97,4 @@ Result<std::string,ExperimentErrorCode> makeCompleteManifestJson(
     }
 }
 
-Result<RunOutcome,ExperimentErrorCode> completedOutcomeAfterManifest(
-    const RunContext& run) {
-    const auto& d=run.manifestDraft();
-    const auto planned=currentSaveFields(run.experimentKind());
-    if(d.completed!=d.expected_repetitions||d.failed||d.undefined||
-       !d.errors.empty()||d.files_writer_confirmed.size()!=planned.size())
-        return fail<RunOutcome>("Cannot report Complete for a partial run");
-    RunOutcome outcome;
-    outcome.status=RunStatus::Complete;
-    outcome.run_id=run.runId();
-    outcome.attempted=d.attempted;
-    outcome.completed=d.completed;
-    outcome.valid=d.valid;
-    outcome.failed=d.failed;
-    outcome.undefined=d.undefined;
-    return Result<RunOutcome,ExperimentErrorCode>::success(std::move(outcome));
-}
 }  // namespace egomotion::experiments

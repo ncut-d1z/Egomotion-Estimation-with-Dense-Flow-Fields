@@ -29,6 +29,8 @@ public:
     virtual Status<MatErrorCode> saveNewVariable(
         const RunId& run_id, std::string_view variable_name,
         const DenseDoubleArray& array) = 0;
+    // Read-only receipts. These are NOT a claim that a Manifest was saved.
+    virtual std::vector<FileEvidence> fileEvidence() const = 0;
 };
 
 // Atomic, exclusive, single-file text publication within an already
