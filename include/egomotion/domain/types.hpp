@@ -30,6 +30,12 @@ struct MatVariableInfo {
     int original_data_type = 0;
     bool is_complex = false;
     bool is_logical = false;
+    // Optional diagnostic metadata populated by the R2 matio reader.
+    bool is_global = false;
+    bool is_compressed = false;
+    std::size_t data_bytes = 0;
+    std::string class_name;
+    std::string data_type_name;
 };
 
 // The reader/writer boundary returns an owning, column-major double payload.
