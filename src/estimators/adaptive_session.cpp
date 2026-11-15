@@ -163,18 +163,31 @@ AdaptiveMfaSession::processFrame(const AdaptiveFrameInput& frame) {
                              frame.matlab_frame_index);
         output.primary_step=std::move(primary_result).value();
         next_primary=output.primary_step.coefficients_next;
-        // The only place in this function that mutates persistent state.
+        // Construct the full success alternative BEFORE changing persistent
+        // state. A failure while allocating/moving the output cannot commit
+        // the main or any baseline coefficients.
+        auto complete=Result<AdaptiveFrameResult,ExperimentErrorCode>::success(
+            std::move(output));
         primary_=std::move(next_primary);
         if (mode_==AdaptiveSessionMode::UpdateRates)
             baselines_=std::move(next_baselines);
-        return Result<AdaptiveFrameResult,ExperimentErrorCode>::success(
-            std::move(output));
+        return complete;
     } catch (const std::bad_alloc&) {
-        return fail(ExperimentErrorCode::SolverFailed,
-                    "Adaptive session allocation failure; state unchanged");
+        Failure<NumericalErrorCode> inner{
+            NumericalErrorCode::ResourceLimitExceeded,
+            ErrorDetail{}};
+        inner.detail.stage=ErrorStage::Solve;
+        inner.detail.message="Adaptive session allocation failed";
+        return propagate(inner,"Adaptive session failed without committing state",
+                         frame.matlab_frame_index);
     } catch (const std::length_error&) {
-        return fail(ExperimentErrorCode::SolverFailed,
-                    "Adaptive session comparison array too large; state unchanged");
+        Failure<NumericalErrorCode> inner{
+            NumericalErrorCode::ResourceLimitExceeded,
+            ErrorDetail{}};
+        inner.detail.stage=ErrorStage::Solve;
+        inner.detail.message="Adaptive session comparison array too large";
+        return propagate(inner,"Adaptive session failed without committing state",
+                         frame.matlab_frame_index);
     }
 }
 
