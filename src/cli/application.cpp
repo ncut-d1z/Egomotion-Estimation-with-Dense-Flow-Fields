@@ -9,9 +9,10 @@
 namespace egomotion::cli {
 namespace {
 void unavailable(std::ostream& error, std::string_view stage,
-                 std::string_view name) {
+                 std::string_view name, int exit_code = 5) {
     error << jsonBackendUnavailable(stage,
-        std::string(name) + " backend is not implemented (R0/R1 contract only)") << '\n';
+        std::string(name) + " backend is not implemented (R0/R1 contract only)",
+        exit_code) << '\n';
 }
 int matExit(MatErrorCode code) {
     switch (code) {
@@ -86,8 +87,8 @@ int ApplicationCompositionRoot::dispatch(const Command& command,
         unavailable(err, "analyze", "Analyzer");
         return 5;
     case CommandKind::Plot:
-        unavailable(err, "plot", "Plot");
-        return 5;
+        unavailable(err, "plot", "Plot", 7);
+        return 7;
     default:
         // Deliberately never create output/<RunId> before R3/R5.
         (void)runner_;

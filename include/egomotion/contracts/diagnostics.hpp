@@ -73,11 +73,13 @@ std::string jsonFailure(const Failure<Code>& error, int exit_code) {
 // Only an R0/R1 bootstrap diagnostic, NOT a newly approved public error enum.
 // Once a concrete backend exists, failures use the real contracts enum.
 inline std::string jsonBackendUnavailable(std::string_view stage,
-                                          std::string_view message) {
+                                          std::string_view message,
+                                          int exit_code = 5) {
     return "{\"error_domain\":\"Bootstrap\","
            "\"error_code\":\"BackendUnavailable\","
            "\"stage\":" + jsonQuote(stage)
-           + ",\"exit_code\":5,\"message\":" + jsonQuote(message)
+           + ",\"exit_code\":" + std::to_string(exit_code)
+           + ",\"message\":" + jsonQuote(message)
            + ",\"causes\":[]}";
 }
 

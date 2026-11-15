@@ -120,8 +120,10 @@ Result<Command, ExperimentErrorCode> parseCommand(
             !has(options, "--seed") || !has(options, "--level"))
             return invalid("Bias requires --seed UINT32 and --level NONNEG_INT");
         std::uint64_t seed = 0, level = 0;
-        if (!unsignedDecimal(options.at("--seed"), UINT32_MAX, seed) ||
-            !unsignedDecimal(options.at("--level"), INT32_MAX, level))
+        if (!unsignedDecimal(options.at("--seed"),
+                             std::numeric_limits<std::uint32_t>::max(), seed) ||
+            !unsignedDecimal(options.at("--level"),
+                             std::numeric_limits<int>::max(), level))
             return invalid("Invalid --seed or --level decimal range");
         return Result<Command, ExperimentErrorCode>::success(
             {kind, BiasArgs{{static_cast<std::uint32_t>(seed),
