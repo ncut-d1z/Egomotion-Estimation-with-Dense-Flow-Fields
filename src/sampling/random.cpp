@@ -1,6 +1,7 @@
 #include "egomotion/sampling/random.hpp"
 
 #include <cmath>
+#include <utility>
 
 namespace egomotion::sampling {
 namespace {

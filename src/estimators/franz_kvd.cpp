@@ -28,14 +28,6 @@ Vector3 direction(const FlowField& field, Eigen::Index i) {
 Vector3 velocity(const FlowField& field, Eigen::Index i) {
     return field.observations.row(i).tail<3>().transpose();
 }
-bool validFlow(const FlowField& field) {
-    if (field.observations.rows()==0 || !field.observations.allFinite()) return false;
-    for (Eigen::Index i=0; i<field.observations.rows(); ++i) {
-        const double squared=direction(field,i).squaredNorm();
-        if (!std::isfinite(squared)||std::abs(squared-1.0)>1e-8) return false;
-    }
-    return true;
-}
 bool validParameters(const KvDParameters& p) {
     return std::isfinite(p.nearness_denominator_epsilon) &&
            std::isfinite(p.initial_threshold) &&
@@ -148,7 +140,10 @@ Result<KvDResult,NumericalErrorCode> estimateKvD(
             rotA*=invCount; rotB*=invCount; rotC*=invCount;
             const Vector3 rawTranslation=-(a+rotation.cross(b)-c);
             const double length=rawTranslation.norm();
-            if (!std::isfinite(length)||length==0)
+            if (!std::isfinite(length))
+                return fail<KvDResult>(NumericalErrorCode::NonFiniteResult,
+                                       "KvD translation norm overflow");
+            if (length==0)
                 return fail<KvDResult>(NumericalErrorCode::ZeroNorm,
                                        "KvD translation update cannot be normalized");
             const Vector3 tNew=rawTranslation/length; // exactly once
@@ -224,9 +219,17 @@ Result<KvDResult,NumericalErrorCode> estimateKvD(
 
 Result<FranzInitializationTrace,NumericalErrorCode>
 FranzMatchedFilter::estimateWithTrace(const FlowField& field) const {
-    if (!validFlow(field))
-        return fail<FranzInitializationTrace>(NumericalErrorCode::InvalidShape,
-                                              "Franz requires nonempty finite unit-direction flow");
+    if (field.observations.rows()==0)
+        return fail<FranzInitializationTrace>(NumericalErrorCode::EmptyInput,
+                                              "Franz requires a nonempty flow field");
+    if (!field.observations.allFinite())
+        return fail<FranzInitializationTrace>(NumericalErrorCode::NonFiniteInput,
+                                              "Franz flow contains non-finite values");
+    for (Eigen::Index i=0;i<field.observations.rows();++i)
+        if (std::abs(direction(field,i).squaredNorm()-1.0)>1e-8)
+            return fail<FranzInitializationTrace>(NumericalErrorCode::InvalidDirection,
+                                                  "Franz requires unit direction vectors",
+                                                  static_cast<std::size_t>(i));
     FranzInitializationTrace trace;
     MotionEstimate motion{Vector3::Zero(),Vector3::Zero()};
     for (int axis=0;axis<3;++axis) {
@@ -242,6 +245,11 @@ FranzMatchedFilter::estimateWithTrace(const FlowField& field) const {
             rResponse+=qr.dot(p);
             rDenom+=qr.squaredNorm();
         }
+        if (!std::isfinite(tResponse)||!std::isfinite(rResponse)||
+            !std::isfinite(tDenom)||!std::isfinite(rDenom))
+            return fail<FranzInitializationTrace>(NumericalErrorCode::NonFiniteResult,
+                                                  "Franz matched-filter sums overflow",
+                                                  static_cast<std::size_t>(axis));
         if (!(tDenom>0) || !(rDenom>0))
             return fail<FranzInitializationTrace>(NumericalErrorCode::SingularSystem,
                                                   "Franz matched-filter axis denominator is zero",

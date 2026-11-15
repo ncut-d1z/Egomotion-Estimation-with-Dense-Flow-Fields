@@ -36,8 +36,14 @@ ErrorResult fromSolver(const Result<T,NumericalErrorCode>& failed,
 Result<Scalar,NumericalErrorCode> normalizedVectorError(
     const Vector3& truth, const Vector3& estimate) {
     const double nt=truth.norm(), ne=estimate.norm();
-    if (!std::isfinite(nt)||!std::isfinite(ne)||ne==0)
-    {
+    if (!std::isfinite(nt)||!std::isfinite(ne)) {
+        ErrorDetail detail;
+        detail.stage=ErrorStage::Solve;
+        detail.message="Source transfehler_div input norm is non-finite";
+        return Result<Scalar,NumericalErrorCode>::failure(
+            {NumericalErrorCode::NonFiniteInput,std::move(detail)});
+    }
+    if (ne==0) {
         ErrorDetail detail;
         detail.stage=ErrorStage::Solve;
         detail.message="Source transfehler_div has undefined estimate norm";

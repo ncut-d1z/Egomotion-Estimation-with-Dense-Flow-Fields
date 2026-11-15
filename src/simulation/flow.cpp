@@ -23,12 +23,6 @@ Result<Value,NumericalErrorCode> fail(NumericalErrorCode code,
 bool unit(const Vector3& d) {
     return d.allFinite() && std::abs(d.squaredNorm()-1.0) <= 1e-8;
 }
-bool validFlow(const FlowField& flow) {
-    if (flow.observations.rows() == 0 || !flow.observations.allFinite()) return false;
-    for (Eigen::Index i=0; i<flow.observations.rows(); ++i)
-        if (!unit(flow.observations.row(i).head<3>().transpose())) return false;
-    return true;
-}
 Vector3 directionOf(const FlowField& flow, Eigen::Index i) {
     return flow.observations.row(i).head<3>().transpose();
 }
@@ -45,9 +39,17 @@ Result<FlowField,NumericalErrorCode> noiseApply(const FlowField& ideal,
                                                 Scalar coefficient,
                                                 IRandomSource& rng,
                                                 bool component_wise) {
-    if (!std::isfinite(coefficient) || !validFlow(ideal))
+    if (!std::isfinite(coefficient) || !ideal.observations.allFinite())
         return fail<FlowField>(NumericalErrorCode::NonFiniteInput,
-                               "Non-finite coefficient/flow or invalid unit direction");
+                               "Noise input or coefficient is non-finite");
+    if (ideal.observations.rows()==0)
+        return fail<FlowField>(NumericalErrorCode::EmptyInput,
+                               "Noise field contains no rows");
+    for (Eigen::Index i=0;i<ideal.observations.rows();++i)
+        if (!unit(directionOf(ideal,i)))
+            return fail<FlowField>(NumericalErrorCode::InvalidDirection,
+                                   "Noise field direction is not unit length",
+                                   static_cast<std::size_t>(i));
     const double magnitude = meanFlowMagnitude(ideal);
     if (!std::isfinite(magnitude))
         return fail<FlowField>(NumericalErrorCode::NonFiniteResult,
@@ -147,9 +149,17 @@ Result<FlowField,NumericalErrorCode> ComponentProportionalGaussianNoise::apply(
 }
 Result<FlowField,NumericalErrorCode> NoNoise::apply(
     const FlowField& ideal, Scalar coefficient, IRandomSource&) const {
-    if (!std::isfinite(coefficient) || !validFlow(ideal))
+    if (!std::isfinite(coefficient) || !ideal.observations.allFinite())
         return fail<FlowField>(NumericalErrorCode::NonFiniteInput,
-                               "Invalid ideal field passed to NoNoise");
+                               "Non-finite NoNoise input or coefficient");
+    if (ideal.observations.rows()==0)
+        return fail<FlowField>(NumericalErrorCode::EmptyInput,
+                               "NoNoise input contains no rows");
+    for (Eigen::Index i=0;i<ideal.observations.rows();++i)
+        if (!unit(directionOf(ideal,i)))
+            return fail<FlowField>(NumericalErrorCode::InvalidDirection,
+                                   "NoNoise direction is not unit length",
+                                   static_cast<std::size_t>(i));
     try {
         return Result<FlowField,NumericalErrorCode>::success(FlowField{ideal.observations});
     } catch (const std::bad_alloc&) {
