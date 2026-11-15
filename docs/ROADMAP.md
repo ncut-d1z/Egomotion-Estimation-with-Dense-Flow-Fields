@@ -35,7 +35,14 @@ cmake --build build --target egomotion mat_data_dict_probe
 # 仅当允许写入 docs/MAT_DATA_SCHEMA.md 时才运行此命令：
 ./build/mat_data_dict_probe origin/egomotion_estimation_dense_flow_fields_matlab_scripts docs/MAT_DATA_SCHEMA.md --expected-count 582 --source-sha "$(git rev-parse HEAD)" --replace-generated
 ```
-原先仅编译`src/mat_data_dict_probe.cpp`的单文件g++命令**不再有效**：需要同时链接共享Reader和字典服务、Eigen/matio/zlib。正式`MatResultReader`数值读取不允许变成`inspect-mat`的数值打印。CMake目标与注册测试是否能真实编译/运行仍需H-11另行授权核验。
+原先仅编译`src/mat_data_dict_probe.cpp`的单文件g++命令**不再有效**。如需继续使用手动g++而非CMake（**仅供H-11授权后执行**），须安装包含Eigen的开发依赖并一次链接三个源文件：
+```sh
+g++ -std=c++17 -O2 -Wall -Wextra -pedantic -Iinclude \
+  src/mat_data_dict_probe.cpp src/io/mat_data_dictionary.cpp \
+  src/io/mat_result_reader.cpp -o build/mat_data_dict_probe \
+  $(pkg-config --cflags --libs eigen3 matio) -lz
+```
+正式`MatResultReader`数值读取不允许变成`inspect-mat`的数值打印。CMake目标与注册测试是否能真实编译/运行仍需H-11另行授权核验。
 
 ## 执行规则
 

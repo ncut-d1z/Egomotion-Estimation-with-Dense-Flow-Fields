@@ -12,6 +12,14 @@
 
 **静态CMake检查**：源文件路径存在、11模块目标命名及依赖非环、旧3+新2测试对象均已登记；**不等于CMake configure/compile通过**。没有实际运行环境、工具链或日志的成功证据，不登记虚构PASS。详细批次与依赖以[ROADMAP](ROADMAP.md)为准。
 
+## 0.1 R2 MAT Reader复用与旧探针重构（2026-11-15）
+
+**已编写/已推送，不是已编译/已运行**：`src/mat_data_dict_probe.cpp`仅解析旧位置参数和`--expected-count/--source-sha/--replace-generated`并返回诊断/退出码，不再调用`Mat_Open/Mat_GetDir/Mat_VarRead`；`src/io/mat_data_dictionary.cpp`负责遍历输入、FNV64、旧格式Markdown报告和生成文件保护；`src/io/mat_result_reader.cpp`统一负责matio RAII及两条输入能力：`inspect`用`Mat_VarReadInfo`**仅读结构**，`readNamed/readFirstCompatible`用`Mat_VarRead`**完整解码、列主序拷贝到自拥有double数组**。字典扫描复用同一Reader的`VerifyDecoded`模式，仍在单个Mat_Open句柄内逐变量验证读取状态。公共`IResultReader`无matio类型；现有`egomotion inspect-mat`经Composition Root装配真实Reader，不回读或展示数值。
+
+**工程与测试源码**：CMake的`egomotion_matio`由空INTERFACE改为实际STATIC，私有链接`PkgConfig::MATIO`与`ZLIB::ZLIB`；新`mat_data_dict_probe`目标以及`r02_mat_reader`只读原MAT夹具测试已登记，保留既有5项CTest。历史手动`g++ src/mat_data_dict_probe.cpp`**单文件编译已不适用**；需编译/链接三个源文件（含`src/io/`）和Eigen/matio/zlib，或通过CMake构建。详细命令见[ROADMAP R2](ROADMAP.md)。
+
+**未运行的证据与限制**：H-11仍延期，本轮没有执行`cmake`、`g++`、CTest、旧582文件数据字典重建、独立L2逐值/SHA-256或任何MAT写入；当前原582/582扫描结果属于旧探针历史版本，不能自动继承为本次新代码PASS。CMake静态检查涵盖源文件存在、target命名及非循环边，不能保证编译/链接；正/负例和元数据压缩头行为需真实运行复核。**R2代码就绪待原生验证，R3尚未开始。**
+
 ## 1. 当前边界
 
 仓库 `ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields`，分支 `dev-plan-P0-P1-mat-dictionary-probe`；不合并main、不发布。`origin/**` 原45份.m与582份.mat只读；不要求执行MATLAB/Octave或获得L1。既有66REQ/66TC/98P、27条HLD设计边不变；数学子案例不新增正式TC。
