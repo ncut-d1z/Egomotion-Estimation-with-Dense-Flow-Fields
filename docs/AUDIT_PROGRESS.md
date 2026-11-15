@@ -630,3 +630,62 @@
 ## 8. 结案纪律
 
 针对文档措辞/数量错误可以完成纯文档整改；但AC冻结、正式接口ABI、真实C++/CTest/写回读、独立MAT SHA-256、DEC-005/006/008及所有者签字，不得通过编辑Markdown宣布完成。严格保持MATLAB/Octave/L1**永久非必需**。代码/原MAT修改、编译、运行及发布不属于本轮用户指示。
+
+## 9. 2026-11-15 本轮新输入意见登记（审计开始之前）
+
+**取证时点**：本轮开始时分支HEAD=`55ac2e75107c9a610d847c7cf58e373eacc093f7`、tree=`dfc914700b02a9ca06a60fc24cabdac2c162a929`，`AUDIT.md`原blob=`d47382e24569e65338204f615f9519ba52ce606e`、本台账原blob=`99bb665c91a66d18d2d240b29ec6b2434fc80d22`。在录入意见前的现行台账为**36份已完成限定审计/0正在/0未审计；40个DAR=35已整改+0当前未整改+5无限期延期**。这些是**上一轮审查结束时状态**，**不是本轮新的SRS/HLD/LLD结构分型审计已经完成**。本次新审计批次在意见提交之后才开始，分型逐项验证须另记本节后续结果。
+
+### 9.1 两份评价的时间顺序和真实性限定
+
+- **输入批次A（材料不含LLD正文）**：SRS`REQUIREMENTS.md`和HLD`ARCHITECTURE.md`草案结构基本符合/正式基线未符合；`OBJECT_MODEL.md`为HLD附件；因**该材料包未提供**`design/*.md`模块正文，LLD在A**材料范围**只能判`材料不足无法判定`，不构成对本Git分支的缺失事实。
+- **输入批次B（追加/现在可访问LLD正文）**：10份跨模块/模块LLD及1份专题LLD可逐文件审查，用户预评“多数草案结构基本符合，公共/正式可编码基线未冻结”；索引、两份理论专题和机器Golden不按LLD判。审阅必须读当前Git文件，并对每份指出证据与尚缺。
+- **DEC-008时间线纠偏**：材料中“DEC-005/006/008未批准”的旧措辞，按现行[TODO §0/§2.2](TODO.md)拆为：DEC-005/006无限期延期未定正式阈值/预算；**DEC-008-01～06已有设计决定，但公共实施/CTest/正式冻结未验收**。不得把它们重新列入需人工立刻决策。
+- 用户优先整改意见已完整归纳于[AUDIT §7.5](AUDIT.md)，其中“LLD正文与DAR/AF整改历史混杂”的可读性意见需要按真实段落评估，不可凭用户评价就直接删除数学证据/改变原合同。
+
+### 9.2 本轮新分型审计队列（仅登记待核，不撤销上轮已完成限定状态）
+
+| DOC | docs/下路径 | 文档类别 | 用户结构预评（未按本轮HEAD重验） | **本轮新分型复核状态** |
+|---|---|---|---|---|
+| DOC-001 | `REQUIREMENTS.md` | SRS | 草案结构基本符合；正式冻结尚缺 | 待复核 |
+| DOC-002 | `ARCHITECTURE.md` | HLD | 草案结构基本符合；正式冻结尚缺 | 待复核 |
+| DOC-003 | `OBJECT_MODEL.md` | HLD附件 | 对象草案部分符合，非模块LLD | 待复核 |
+| DOC-004 | `design/README.md` | LLD索引 | 按自身用途/不适用核心设计冻结 | 待复核 |
+| DOC-005 | `design/contracts.md` | 跨模块/模块LLD | 草案结构基本符合；正式冻结尚缺 | 待复核 |
+| DOC-006 | `design/cli.md` | 跨模块/模块LLD | 草案结构基本符合；正式冻结尚缺 | 待复核 |
+| DOC-007 | `design/mat_io.md` | 跨模块/模块LLD | 草案结构基本符合；正式冻结尚缺 | 待复核 |
+| DOC-008 | `design/sampling_noise.md` | 跨模块/模块LLD | 草案结构基本符合；正式冻结尚缺 | 待复核 |
+| DOC-009 | `design/trajectory.md` | 跨模块/模块LLD | 草案结构基本符合；正式冻结尚缺 | 待复核 |
+| DOC-010 | `design/kvd.md` | 跨模块/模块LLD | 草案结构基本符合；正式冻结尚缺 | 待复核 |
+| DOC-011 | `design/harmonics.md` | 跨模块/模块LLD | 草案结构基本符合；正式冻结尚缺 | 待复核 |
+| DOC-012 | `design/adaptive_mfa.md` | 跨模块/模块LLD | 草案结构基本符合；正式冻结尚缺 | 待复核 |
+| DOC-013 | `design/experiments.md` | 跨模块/模块LLD | 草案结构基本符合；正式冻结尚缺 | 待复核 |
+| DOC-014 | `design/analysis_plotting.md` | 跨模块/模块LLD | 草案结构基本符合；正式冻结尚缺 | 待复核 |
+| DOC-015 | `design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 专题LLD | 草案结构基本符合；正式冻结尚缺 | 待复核 |
+| DOC-016 | `design/SH_DISCRETE_REFIT_CONSISTENCY.md` | 数学理论 | 按自身用途/不适用核心设计冻结 | 待复核 |
+| DOC-017 | `design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md` | 数学理论 | 按自身用途/不适用核心设计冻结 | 待复核 |
+| DOC-018 | `TEST_PLAN.md` | 测试计划 | 按自身用途/不适用核心设计冻结 | 待复核 |
+| DOC-019 | `PLAN.md` | WBS | 按自身用途/不适用核心设计冻结 | 待复核 |
+| DOC-020 | `PROGRESS.md` | 证据 | 按自身用途/不适用核心设计冻结 | 待复核 |
+| DOC-021 | `AUDIT.md` | 审计 | 按自身用途/不适用核心设计冻结 | 待复核 |
+| DOC-022 | `AUDIT_PROCESS.md` | 审计 | 按自身用途/不适用核心设计冻结 | 待复核 |
+| DOC-023 | `DOCUMENT_BASELINE_REGISTER.md` | 配置管理 | 按自身用途/不适用核心设计冻结 | 待复核 |
+| DOC-024 | `SOURCE_INVENTORY.md` | 来源清单 | 按自身用途/不适用核心设计冻结 | 待复核 |
+| DOC-025 | `MIGRATION_MATRIX.md` | 迁移 | 按自身用途/不适用核心设计冻结 | 待复核 |
+| DOC-026 | `TODO.md` | 管理 | 按自身用途/不适用核心设计冻结 | 待复核 |
+| DOC-027 | `decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | 审批/决策 | 按自身用途/不适用核心设计冻结 | 待复核 |
+| DOC-028 | `decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md` | 审批/决策 | 按自身用途/不适用核心设计冻结 | 待复核 |
+| DOC-029 | `decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md` | 审批/决策 | 按自身用途/不适用核心设计冻结 | 待复核 |
+| DOC-030 | `approval/DECISION_IMPLEMENTATION_NOTES.md` | 审批/决策 | 按自身用途/不适用核心设计冻结 | 待复核 |
+| DOC-031 | `approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md` | 审批/决策 | 按自身用途/不适用核心设计冻结 | 待复核 |
+| DOC-032 | `golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md` | 参考/政策 | 按自身用途/不适用核心设计冻结 | 待复核 |
+| DOC-033 | `golden/GOLDEN_TOLERANCE_PROPOSAL.md` | 参考/政策 | 按自身用途/不适用核心设计冻结 | 待复核 |
+| DOC-034 | `golden/NO_MATLAB_EXECUTION_POLICY.md` | 参考/政策 | 按自身用途/不适用核心设计冻结 | 待复核 |
+| DOC-035 | `golden/SH_PAPER_VERIFICATION_CASES.md` | 参考/政策 | 按自身用途/不适用核心设计冻结 | 待复核 |
+| DOC-036 | `golden/analytic_golden_candidates.v1.json` | 参考/政策 | 按自身用途/不适用核心设计冻结 | 待复核 |
+
+**本轮新批次待复核**36/36；与先前36/36历史限定审计同时成立，因为二者的“审查问题/完成时点”不同。不能把意见登记自动计为本批次已审。类别分布（36份）为：SRS 1；HLD 1；HLD附件 1；LLD索引 1；跨模块/模块LLD 10；专题LLD 1；数学理论 2；测试计划 1；WBS 1；证据 1；审计 2；配置管理 1；来源清单 1；迁移 1；管理 1；审批/决策 5；参考/政策 5。严格设计核心分母：SRS1、HLD1、跨模块/模块LLD10、专题LLD1，HLD附件1单列。
+
+### 9.3 新的双轴结论模板与后续整改台账要求
+
+对每一份本批次对象实际输出：`结构判定`（草案级基本符合／部分符合／不适用）、`正式基线判定`（未冻结或不适用）、`核验位置/固定blob`、`已证实的不足和未执行的检查`。材料缺失与源码不存在必须分开。发现**独立可修复的真实错误**时单列新DAR，先修相关技术正文/测试追踪并提交，不得只加数字；若仅是已延期的软件/批准义务，引用DAR-001～005的`无限期延期`状态，**不计当前未整改**。本轮范围仍然是文档/静态对照，未授权实施C++、MAT写入、CTest、正式签署或发布。
+

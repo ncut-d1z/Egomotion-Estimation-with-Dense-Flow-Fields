@@ -107,3 +107,93 @@
 **单份文档审计结案**要求定位明确、核对条目/问题记录完成、剩余缺口公开、修订经固定SHA复核。**正式规范冻结**另外要求最新版本、完整追踪链、真实测试与批准，不能因为审计表变为“已审计”而自动发生。全项目正式基线建议顺序：SRS外部义务及AC → HLD组件/依赖/质量属性 → LLD精确签名/状态 → TEST_PLAN/PLAN → PROGRESS真实执行 → 所有者签署。
 
 本次审计进度与问题证据以 [AUDIT_PROGRESS.md](AUDIT_PROGRESS.md) 为准；它不能替代 `TEST_PLAN.md`、`PROGRESS.md`、`DOCUMENT_BASELINE_REGISTER.md`。原低阶球谐三路线历史不被删除，固定在上述不可变Git版本中。
+
+## 七、2026-11-15 新一轮“文档类型 × 规范符合性”审计输入
+
+> **审计输入，不是审计结果或签署结论。** 本节保留本次用户提供的两份材料范围不同的判定：**意见A**只取得部分核心文件，缺少LLD正文，因此“LLD无法判定”仅对当时材料成立；**意见B**后来提供了各跨模块/模块LLD正文，因此更新为“多数LLD结构上基本符合草案要求，但均未正式冻结”。当前Git分支已有这些LLD，实际审计必须采用意见B的资料可用性，不得倒退为“仓库不存在LLD”，也不得将用户预判冒充对当前HEAD的逐行验收。用户提供的`SRS v0.25`、`TEST_PLAN v0.31`等是**意见形成时的版本记述**，现行文件以本轮读取到的blob/标题为准。
+>
+> **术语分层**：`草案级基本符合`只评价内容结构与自述职责；`正式基线未符合/未冻结`表示本项目所需签名、固定身份、真实测试、签署尚缺；`不适用`表示该文档不应按SRS/HLD/LLD的标准考核；`材料不足无法判定`只表示指定材料包未提供正文，**不等于文档本身质量不合格**。无外部标准条文的逐条合规宣称。
+
+### 7.1 两轮意见的时间与证据范围
+
+| 维度 | 意见A：限定提供材料 | 意见B：追加LLD正文（当前采用的审阅范围） | 不能作出的推论 |
+|---|---|---|---|
+| SRS | `REQUIREMENTS.md`：草案结构基本符合；正式需求基线未满足 | 同意；需核版本、66 REQ/AC/TC、§9追踪、冻结字段、DEC-005/006/008状态 | 候选AC→LLD链接≠已批准身份、66TC编号≠66TC已执行 |
+| HLD | `ARCHITECTURE.md`草案结构基本符合；`OBJECT_MODEL.md`为附件 | 同意；27条DAG是设计候选，真实CMake/部署/ADR/性能未验收 | 对象模型≠模块LLD，设计箭头≠真实target链 |
+| LLD | 因当时未提供`design/contracts.md`等正文，仅能写**材料不足无法判定** | 已提供跨模块与模块正文；**多数LLD草案结构基本符合，但正式/可编码冻结基线均未完成**；低阶SH叶子局部已有固定SHA原生证据 | 不得将旧材料缺失写成现行仓库无LLD，也不能把受限SH局部CTest推广至完整业务 |
+| 过程/证据/管理 | 按自身用途评估，多数符合，不适用设计冻结 | 保持；历史决策/授权、WBS、测试计划、JSON、数学专题不是LLD | 过程文档数量或历史审批不等于正式批准或软件通过 |
+
+**综合判定（用户意见，待本轮逐文件证据复核）**：没有一份核心SRS/HLD/完整公共LLD达到“冻结＋批准＋验收”的正式项目基线；SRS/HLD在草案结构上基本符合，模块LLD正文可审且多数草案结构基本符合，过程/证据文件多数符合其自述用途。尤其**DEC-008-01～06的设计决定已作出，状态是DesignDecided / ImplementationNotVerified**：意见中“DEC-008未批准”应精确解释为**公共接口实施/验收/正式冻结未完成**，不是重新要求人类决定01～06。H-10/H-11/DEC-005/006/BASELINE-SIGN/RELEASE-PR无限期延期，须单列且不当作当前未整改。
+
+### 7.2 本次适用的分类型审计准则
+
+| 文档类别 | 草案必须检查的核心要素 | 从草案升级为本项目正式基线额外需要 | 不适用的替代材料 |
+|---|---|---|---|
+| SRS/需求分析 | 目的范围、干系人/用例、功能/非功能/数据/接口需求、优先级、AC、REQ/AC/TC追踪、术语、假设依赖、变更 | 精确AC→LLD文件/章节/blob/commit、适用DEC例外、真实证据、批准人/日期/范围 | 对象模型、测试计划不能替代需求 |
+| HLD/概要设计 | 架构目标/质量属性/约束、组件边界、接口责任、依赖DAG、部署、数据/状态流、错误、ADR、质量场景与冻结清单 | 实际target/链接依赖验证、部署与性能/质量证据、ADR批准、基线身份和所有者签署 | 仅类图或目录矩阵不能证明架构可构建 |
+| LLD/详细设计 | 准确函数/模板签名、类型/shape/单位、所有权/生命周期、算法/伪代码、失败/异常状态、并发/ABI/边界、TC/AC与依赖映射 | 候选公共头/实现、真实编译/CTest/输入域与负例、ODR/ABI/线程/TOCTOU（适用时）、DEC和冻结身份/签署 | HLD/OBJECT_MODEL/TEST_PLAN/MIGRATION_MATRIX/SOURCE_INVENTORY/索引/理论专题不得替代 |
+| WBS/计划 | 任务/依赖/里程碑/风险/角色/验收前提 | 如果需承诺交付，再取得批准的预算/工期/性能 | 不按LLD签名检验 |
+| 测试计划/证据登记 | TC→候选实体/CTest→AC映射；L2/L3/L4来源、状态和固定SHA | **真实执行证据另记**，不同SHA不得混同 | TEST_PLAN不是测试结果，PROGRESS不是正式批准 |
+| 审计/配置/来源/迁移/授权 | 文档定位、版本/对象清单、历史与现行隔离、权限/身份和未完成声明 | 对应类型需有完整记录/批准（若适用） | 不计入SRS/HLD/LLD正式符合分母 |
+| 专题理论/候选JSON/政策 | 数学假设/证明域/反例或机器状态、证据来源、变更/适用边界 | 只按自述用途评判；不得升级为正式模块接口或测试通过 | 数学25/35检查、Golden候选、L1政策都不能替代软件验收 |
+
+**冻结前共同清单**：路径、精确章节、文档版本、Git blob SHA与commit SHA、依赖集合、批准人、日期及时区、批准范围、例外及DEC、对应真实测试实体与固定来源证据必须能逐项核实；缺项应记具体缺口。没有冻结授权时只登记`未冻结/无限期延期`，不要通过修改Markdown虚构签字。
+
+### 7.3 设计类逐文档用户意见（17份）
+
+| 文档 | 真实类型 | 用户意见中的草案级判定 | 当前优先复核的实质点及正式缺口 |
+|---|---|---|---|
+| `REQUIREMENTS.md` | SRS | 基本符合结构 | 目的/范围/干系人/用例、66REQ/AC/TC、功能/数据/接口/非功能、优先级、§9和§9.7映射；引用仍是候选身份、DEC-005/006无限延期、008设计已定但未实测、所有者签署缺 |
+| `ARCHITECTURE.md` | HLD | 基本符合结构 | 质量属性/部署/组件/时序/ADR/质量场景；27候选DAG≠真实CMake/链接/CTest，冻结清单/性能批准缺 |
+| `OBJECT_MODEL.md` | HLD附件 | 对象模型部分符合，不能替代LLD | 类接口/值对象、所有权/生命周期/状态机/45文件映射；候选公共签名未实现/批准 |
+| `design/README.md` | LLD索引 | 符合索引用途，非LLD | 14文件分类/10覆盖条目、模板、冻结字段与证据辞典，不把索引当详细设计 |
+| `design/contracts.md` | 跨模块LLD | 草案结构基本符合 | Result/Status、ErrorDetail及forward_list、JSONL、类型/线程/ABI与TC；公共头自包含/ODR/跨TU/异常/ABI未实测 |
+| `design/cli.md` | 模块LLD | 草案结构基本符合 | 参数schema、exit/stage/JSONL/RunId、安全优先级；inspect-mat仅结构元数据，CLI/负例/TOCTOU未运行 |
+| `design/mat_io.md` | 模块LLD | 草案结构基本符合 | RAII、class/type/shape/列主序、Reader/Writer、暂存/回读/不覆盖与责任边界；582/582探针不等于业务Reader/Writer/CTest |
+| `design/sampling_noise.md` | 模块LLD | 草案结构基本符合 | 光流/采样/噪声公式、N uniform/3N normal、两噪声互斥、返回与错误；714行独立数学参考不等于生产采样CTest |
+| `design/trajectory.md` | 模块LLD | 草案结构基本符合 | 圆/正弦/局部运动/球内近度、Sophus替代/奇异边界；链接与L3/CTest未完成 |
+| `design/kvd.md` | 模块LLD | 草案结构基本符合 | Franz/KvD两公式、近度/旧t/一次归一、迭代停止、trace与TC；36轮Wolfram是数学参考，非一般/200轮/生产CTest |
+| `design/harmonics.md` | 模块LLD | 草案结构基本符合；受限叶子有实测 | 论文与原CS相位、l≤2基/拟合/三旋转路线、局部Result错误桥接；固定`5e522198` 3/3 SH CTest不能代替公共Harmonic* ABI/集成/DEC-005 |
+| `design/adaptive_mfa.md` | 模块LLD | 草案结构基本符合 | M1–M4、RHS、MSE、Session周期/失败不提交、正/负近度与非对称矩阵；生产C++/CTest缺 |
+| `design/experiments.md` | 模块LLD | 草案结构基本符合 | 五入口Config/RunContext/Writer注入/Manifest/八轮分母、CurrentSave/HistoricalOnly；真实Runner/Writer/CTest缺 |
+| `design/analysis_plotting.md` | 模块LLD | 草案结构基本符合 | 四分析入口、索引/分段/窗口、CurveSeries多MAT来源、可选绘图隔离；L2/L3曲线与Analyzer/CTest缺 |
+| `design/SH_ROTATION_IVANIC_RUEDENBERG.md` | 专题LLD | 专题草案符合，公共接口未实现 | IR96/IR98/Choi证据、纯Eigen/禁sdla、递推边界与公共接口候选，不能代替完整harmonics业务 |
+| `design/SH_DISCRETE_REFIT_CONSISTENCY.md` | 纯理论专题 | 符合数学专题，不适用LLD | G/D离散逐项拟合、非幂等、正性反例的证明域；数学参考不等于实际C++ |
+| `design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md` | 纯理论专题 | 符合数学专题，不适用LLD | s=0/负均值、条件数、非对称/纯旋转退化的数学限定，不新增TC或Session实现 |
+
+**类型分母**：正式36审计对象中，设计结构评价应分别报告SRS=1、HLD=1、HLD附件=1、跨模块/模块LLD=10、专题LLD=1；`design/README.md`索引1、理论专题2和其他19份**不计入核心SRS/HLD/模块LLD的正式符合分母**。11份含专题LLD的候选正文均须区分数学/原生/冻结状态，不据其章节目录宣称全部公式正确。
+
+### 7.4 支撑/过程/授权类逐文件用户意见（19份）
+
+| 文档 | 类型 | 本次意见结论／必须保留的效力边界 |
+|---|---|---|
+| `TEST_PLAN.md` | 测试计划 | 草案级部分符合；66TC→候选测试实体/CTest→AC，不代表66通过，正式容差未批准 |
+| `PLAN.md` | WBS实施计划 | 符合自身用途；98任务P、M0–M5尚未验收，工期/性能不应臆断 |
+| `PROGRESS.md` | 证据记录 | 符合用途；固定SHA与原生/数学/历史批次分层，不能替代测试计划或基线 |
+| `AUDIT.md` | 审计规则 | 符合自身用途；七维、状态、DOC-P1～P6；本轮新增的分类判定不得冒充已做审计 |
+| `AUDIT_PROCESS.md` | 历史SH台账 | SH-01～06限定理论，不能代替现行全工程审计 |
+| `DOCUMENT_BASELINE_REGISTER.md` | 配置管理 | 部分符合；固定旧快照可查，不是现行签署基线，当前HEAD/签字/例外缺 |
+| `SOURCE_INVENTORY.md` | 源清单 | 静态追踪符合；45 .m/50函数的Git blob不是MAT字节SHA-256、实现或CTest |
+| `MIGRATION_MATRIX.md` | 迁移责任表 | 静态追踪符合；45文件/50函数归属是候选，不是C++实现 |
+| `TODO.md` | 人类输入/延期 | 符合管理职责；六无限期延期独立不计当前未整改，DEC-008六设计决定已记录、实现未验 |
+| `approval/DECISION_IMPLEMENTATION_NOTES.md` | 历史审批落实 | 当时H项/权限为历史事实，applicationCommit/scopeIds不完整，不等于现行许可 |
+| `approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md` | 审批材料包 | 符合材料包，不等于执行许可/测试验收；权限位不得按后续局部授权倒填 |
+| `decisions/DEC-004_HISTORICAL_MAT_FIELDS.md` | 决策 | CurrentGenerated/HistoricalOnly/缺字段明确失败设计已选，生产测试尚缺 |
+| `decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md` | 历史决定 | MIT、Eigen/禁sdla、固定输出根、Result/JSONL、失败等当时决定不能当作当前实现 |
+| `decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md` | 专项授权 | 仅l≤2球谐局部，不能自动授权其它模块或代理全工程CTest |
+| `golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md` | 证据规划 | L1永久非必需，L2/L3/L4与AC证据未全部闭合 |
+| `golden/GOLDEN_TOLERANCE_PROPOSAL.md` | 容差候选 | atol=0.01/rtol=0.1仅探索，DEC-005未批准，不作正式PASS |
+| `golden/NO_MATLAB_EXECUTION_POLICY.md` | 长期政策 | 取消MATLAB/Octave/L1强制门禁，但不取消真实软件/安全/批准 |
+| `golden/SH_PAPER_VERIFICATION_CASES.md` | 论文验证候选 | SH-P候选/未执行，不混淆受限SH叶子的真实旧SHA回归 |
+| `golden/analytic_golden_candidates.v1.json` | 候选机器数据 | DRAFT_UNAPPROVED_UNEXECUTED、非原MATLAB/生产输出，不能计入设计/软件已验收分母 |
+
+### 7.5 本轮检查计划与优先整改建议（不越权实施）
+
+1. **先审材料身份**：以当前HEAD分别读上述36份正式对象与真实设计正文，依“实际提供/实际存在”裁决，不把意见A的“LLD缺失”记成当前事实。
+2. **类型分母独立报告**：SRS/HLD/HLD附件/10模块LLD/专题LLD/理论专题/索引/19过程证据分开，避免以`36/36已完成限定审计`冒充“正式设计符合”。
+3. **SRS/HLD冻结门槛**：对AC→LLD精确身份/批准、27拟议DAG与真实CMake/CTest、部署/性能/ADR/质量场景的证据缺口逐项登记；受无限期延期限制的动作只标`DeferredIndefinitelyByOwner`，不催办，不造假签署。
+4. **LLD独立逐模块审**：逐项核实字段/接口/shape/单位/所有权/算法/错误/线程/ABI/TC和状态；对实际前后不一致、错误源事实或不可实现的签名，能文档整改就实改并留新DAR证据；真实C++/运行/签署保持延期。
+5. **计划与实证分开**：TEST_PLAN中的66TC、PROGRESS固定SHA的3/3球谐局部和582/582只读探针不能互相替代、不能扩大覆盖；L1永久非必需。
+6. **清理正文中的历史讨论**：优先按内容性质将DAR/AF长篇历史过程放到审计台账，LLD保留稳定合同、输入输出、现行错误与TC；但**不得机械删除使证据或数学前置条件丢失**，改变正文时需回退审计。
+7. **输出逐类型结论和真实审计记录**：每条给出“草案结构/正式冻结”两个独立结果、实际证据身份及尚缺范围；零新增整改必须如实写0，禁止靠增减状态数代替真实修正。
+
