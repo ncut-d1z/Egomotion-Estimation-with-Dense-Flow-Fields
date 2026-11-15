@@ -22,6 +22,16 @@ Result<T,NumericalErrorCode> fail(NumericalErrorCode code, std::string message,
     detail.observation_index=index;
     return Result<T,NumericalErrorCode>::failure({code,std::move(detail)});
 }
+template<class T>
+Result<T,NumericalErrorCode> propagate(const Failure<NumericalErrorCode>& source,
+                                       std::string message,std::size_t frame) {
+    ErrorDetail outer;
+    outer.stage=ErrorStage::Simulation;
+    outer.message=std::move(message);
+    outer.observation_index=frame; // current frame index, not source ray
+    return Result<T,NumericalErrorCode>::failure(
+        wrapFailure(source.code,std::move(outer),source));
+}
 }  // namespace
 
 Result<Vector3,NumericalErrorCode> sourceRotationBetween(
@@ -106,20 +116,20 @@ TrajectoryKinematics::fromPoints(const TrajectoryPoints& input) const {
             const Vector3 v2=next-current;
             auto relative=sourceRotationBetween(v1,v2);
             if (!relative.hasValue())
-                return fail<std::vector<FrameKinematics>>(
-                    relative.error().code,
+                return propagate<std::vector<FrameKinematics>>(
+                    relative.error(),
                     "Source relative rotation is undefined at trajectory point",
                     static_cast<std::size_t>(i));
             auto absolute=sourceRotationBetween(initial_forward,v1);
             if (!absolute.hasValue())
-                return fail<std::vector<FrameKinematics>>(
-                    absolute.error().code,
+                return propagate<std::vector<FrameKinematics>>(
+                    absolute.error(),
                     "Source absolute rotation is undefined at trajectory point",
                     static_cast<std::size_t>(i));
             auto matrix=rotationMatrixFromVector(absolute.value());
             if (!matrix.hasValue())
-                return fail<std::vector<FrameKinematics>>(
-                    matrix.error().code,
+                return propagate<std::vector<FrameKinematics>>(
+                    matrix.error(),
                     "Frame SO3 rotation conversion failed",static_cast<std::size_t>(i));
 
             FrameKinematics frame;

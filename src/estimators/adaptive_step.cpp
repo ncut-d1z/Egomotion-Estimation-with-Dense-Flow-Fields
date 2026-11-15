@@ -87,7 +87,8 @@ Result<AdaptiveStepResult,NumericalErrorCode> AdaptiveMfaStepSolver::solve(
         trace.original_near_mean=mean;
         // Source: save s; if s<0: near=-near; then near=near/s.
         // For s<0 this gives raw/abs(s), NOT post-flip/abs(s).
-        trace.near_after_sign=mean<0?-trace.near_raw:trace.near_raw;
+        trace.near_after_sign=trace.near_raw;
+        if (mean<0.0) trace.near_after_sign=-trace.near_after_sign;
         trace.near_normalized=trace.near_after_sign/mean;
         if (!trace.near_normalized.allFinite())
             return fail<AdaptiveStepResult>(NumericalErrorCode::NonFiniteResult,

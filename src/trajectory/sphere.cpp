@@ -40,9 +40,14 @@ Result<Eigen::VectorXd,NumericalErrorCode> SphereEnvironment::nearnessInUnitSphe
         return fail(NumericalErrorCode::InvalidNearness,
                     "Camera position must lie strictly inside the unit sphere");
     auto orientation=rotationMatrixFromVector(absolute_rotation_vector);
-    if (!orientation.hasValue())
+    if (!orientation.hasValue()) {
+        ErrorDetail outer;
+        outer.stage=ErrorStage::Simulation;
+        outer.message="Cannot rotate sphere camera rays";
         return Result<Eigen::VectorXd,NumericalErrorCode>::failure(
-            orientation.error());
+            wrapFailure(orientation.error().code,std::move(outer),
+                        orientation.error()));
+    }
     try {
         Eigen::VectorXd nearness(directions.directions.rows());
         for (Eigen::Index i=0;i<directions.directions.rows();++i) {
