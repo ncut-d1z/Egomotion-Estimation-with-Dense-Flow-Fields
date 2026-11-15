@@ -21,4 +21,4 @@
 2. **待H-11明确授权后**统一配置、构建、执行 CTest 和 CLI/Reader/Writer 安全负例，保留版本/命令/退出码/日志/固定SHA；检查原有SH回归。
 3. 使用 L2历史MAT、独立L3参考和必要L4统计做数值复现；**不要求MATLAB/Octave/L1**。最终容差与性能、设计冻结、发布分别走已有延期批准，见 [TEST_PLAN](TEST_PLAN.md) 和 [TODO](TODO.md)。
 
-**状态（2026-11-15）**：R0–R2源码已推送；**R3按本路线图限定的内存计算范围完成源码静态补齐**（失败链/观测索引/原距离浮点次序/容量异常/零真值域），并非编译或数值验证通过。**R4已开始编写轨迹、球内近度、Sophus转换、复用SH叶子、Adaptive单步与Session**，三类实验的完整场景及结果编排仍未完成。R5尚未开始；R3/R4新增C++文件的CMake接线、所有编译/CTest/Golden均留到R6。历史`mat_data_dict_probe`单文件g++命令在R2拆分后不再适用；R6统一通过CMake链接Eigen/matio/zlib。禁止把过去固定SHA的3项低阶SH CTest或旧582/582探针误计为本次新代码测试结果。
+**状态（2026-11-15）**：R0–R3源码范围已完成静态补齐；**R4纯内存实现已补齐三类Adaptive Runner**（35帧初始化、600帧×8次Comparison、600帧四周期UpdateRates）、Session严格连续帧、相应实际save字段和结果矩阵，**未编译且未数值验证**；SHRotate的旧源组合与新物理球谐作用的差异仍须R6做独立L3限定验证。**R5已开始**：实现各入口当前save白名单及shape校验、Bias/Adaptive内存输出转换、RunContext和Writer窄接口调用；真正安全MAT Writer/Manifest落盘、四种Analyzer、CLI端到端装配仍未完成。R4/R5新增C++文件的CMake接线与所有构建/CTest/Golden均留到R6。历史`mat_data_dict_probe`单文件g++命令在R2拆分后不再适用；R6统一通过CMake链接Eigen/matio/zlib。禁止把过去固定SHA的3项低阶SH CTest或旧582/582探针误计为本次新代码测试结果。

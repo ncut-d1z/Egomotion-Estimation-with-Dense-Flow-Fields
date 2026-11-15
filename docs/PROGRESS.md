@@ -57,6 +57,21 @@
 
 **执行约束**：本批严格**没有**调用CMake、编译器、CTest、Wolfram/数值实验、MATLAB或读写任何MAT；`origin/**`原始文件未改。R0–R5仍只编写实现，R6最后统一准备构建/测试源码及执行；本次没有新PASS或代码验收结论。
 
+
+## 0.4 R4内存计算源码闭合复核与R5第一批输出合同（2026-11-15）
+
+**本轮起点**：`0ea0f0324514d7e06691fe45a155c8e774e1d3b3`。先读实际`src/trajectory`、球谐适配、Adaptive Step/Session，再逐行核对三份原只读MATLAB的默认场景、循环、当前`save`与错误统计。R4最大缺口为**三类Adaptive Runner完全不存在**，已新增：
+- `include/egomotion/experiments/adaptive_runner.hpp`和`src/experiments/adaptive_runner.cpp`：Initialization用35点circle(0.6,0.3)/level2/单次；Comparison用600点sinus(.5,1,2,.3)/level4/八个完整run，依次累积四类角度误差，**仅全部八次完成后固定除8**，理想流平移/旋转平均模长之比`rottransratio`只取最后一轮，`nonpropfehler`即使scale=0仍消耗3N normal；UpdateRates用600点/level2，四周期1/5/11/21，对照求解器返回的`dumi`仍丢弃，当前save只有两组600×4误差及600×1的`akrot`（deg），绝不补造HistoricalOnly字段。所有输出为自拥有列主序double矩阵，首尾按原MATLAB的zeros保持0且不计有效估计。
+- `include/egomotion/estimators/adaptive_session.hpp`与`src/estimators/adaptive_session.cpp`：新增MATLAB从i=2开始的严格连续帧资格检查，成功提交时才推进下一帧；所有比较及主求解完成前，主系数/四份周期基线均不改变。每次R4`compute*`只有完整内存结果才能返回成功，不允许在失败alternative假装返回完整`Complete`。
+- 再修复Comparison**移动理想流后读取分量均值**的生命周期瑕疵，把`mean_rot/mean_trans`提前取得；累积完一轮后才增加`completed_runs`，第八次之外不提交末次比值。
+
+**本轮已转入R5代码**（非R6的测试实施）：
+- `output_contract.cpp`按实验类型拒绝旧归档`HistoricalOnly`及跨入口错字段；在任何Writer调用前核对完整当前save集合、内部变量名、MAT double/shape/bytes、有限数值；
+- `output_values.cpp`将R3的7个Bias矩阵和R4的4/5/3个Adaptive当前字段转换为自拥有公共领域值；Comparison必须保留**8/8**才具备发布资格；
+- `run_context.cpp`独占RunId/RNG、持有CompositionRoot保障生命周期的Writer引用，保留全部错误链和独立文件确认记录。先准备当前save字段和确认列表容量，再逐个交给IResultWriter；部分写入只标内存`Incomplete`草稿，**不得产生假的正式Manifest/RunOutcome Complete**。真实安全文件发布、SHA校验、Manifest持久化和CLI全链接仍属R5未完成事项。
+
+**残余资格与代码状态**：当前R4的三种在内存中的实验计算流程已按原入口结构静态闭合，但由于H-11未授权，本轮**没有**执行编译、CTest、真实MAT读写、MATLAB、Wolfram或数值实验，也未更改`CMakeLists.txt`。该判断不是原源与新物理球谐旋转作用逐值等价的声明（旧`transfor_koeff/SHRotate`按[球谐LLD](design/harmonics.md)存在明确相位/动作差异），亦不保证数值病态、异常和性能行为；R6必须独立限定验证，不通过应重开代码修正。真实CMake目标/测试源码收尾全部留R6，`origin/**`保持只读。
+
 ## 1. 当前边界
 
 仓库 `ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields`，分支 `dev-plan-P0-P1-mat-dictionary-probe`；不合并main、不发布。`origin/**` 原45份.m与582份.mat只读；不要求执行MATLAB/Octave或获得L1。既有66REQ/66TC/98P、27条HLD设计边不变；数学子案例不新增正式TC。
