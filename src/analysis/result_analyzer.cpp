@@ -2,6 +2,7 @@
 #include "reader_helpers.hpp"
 
 #include <new>
+#include <filesystem>
 #include <stdexcept>
 #include <string>
 

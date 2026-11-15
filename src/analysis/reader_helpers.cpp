@@ -4,6 +4,8 @@
 #include <cstddef>
 #include <filesystem>
 #include <new>
+#include <limits>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -45,7 +47,7 @@ ArrayResult load(IResultReader& reader,const std::filesystem::path& root,
                         "MAT variable name/type/shape mismatch",path.string(),name}});
     const auto n=info.dimensions[0];
     const auto c=info.dimensions[1];
-    if(!n||!c||c>SIZE_MAX/n||value.values_column_major.size()!=n*c)
+    if(!n||!c||c>std::numeric_limits<std::size_t>::max()/n||value.values_column_major.size()!=n*c)
         return ArrayResult::failure({
             AnalysisErrorCode::ShapeMismatch,
             ErrorDetail{std::nullopt,ErrorStage::Decode,
