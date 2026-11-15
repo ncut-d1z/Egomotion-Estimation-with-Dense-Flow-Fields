@@ -8,7 +8,7 @@
 
 仓库 `ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields`，分支 `dev-plan-P0-P1-mat-dictionary-probe`；不合并main、不发布。`origin/**` 原45份.m与582份.mat只读；不要求执行MATLAB/Octave或获得L1。既有66REQ/66TC/98P、27条HLD设计边不变；数学子案例不新增正式TC。
 
-本轮无C++、头文件、CMake、CTest、构建脚本或MAT的修改和原生构建运行。Wolfram中的代数与高精度数值是实际执行的数学检查，不称作生产Adaptive实现、C++单测或批准Golden。动态批准事项仍归 [TODO](TODO.md) 与 [DOCUMENT_BASELINE_REGISTER](DOCUMENT_BASELINE_REGISTER.md)，当前没有批准DEC-005/006/008或冻结接口。
+本轮无C++、头文件、CMake、CTest、构建脚本或MAT的修改和原生构建运行。Wolfram中的代数与高精度数值是实际执行的数学检查，不称作生产Adaptive实现、C++单测或批准Golden。动态批准事项仍归 [TODO](TODO.md) 与 [DOCUMENT_BASELINE_REGISTER](DOCUMENT_BASELINE_REGISTER.md)，原E-DOC-069历史批次尚未完成DEC-005/006及正式接口冻结；之后DEC-008-01～06已作出设计决定（见[TODO §2.2](TODO.md)），但公共接口实现、原生测试及正式冻结仍未验证。
 
 ## 2. 固定里程碑与历史检索
 
