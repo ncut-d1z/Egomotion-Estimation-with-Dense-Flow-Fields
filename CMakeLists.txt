@@ -275,6 +275,30 @@ if(BUILD_TESTING)
         "${CMAKE_CURRENT_SOURCE_DIR}/origin/egomotion_estimation_dense_flow_fields_matlab_scripts/bias_test/produced_data/occluded_regions/1/ywerte3.mat"
     )
     set_tests_properties(r02_mat_reader PROPERTIES LABELS "r02;mat;readonly" TIMEOUT 60)
+
+    # R5 domain-only contract tests must not write to origin or output/.
+    add_executable(test_r05_manifest tests/contracts/test_r05_manifest.cpp)
+    target_link_libraries(test_r05_manifest PRIVATE egomotion_experiments)
+    target_compile_features(test_r05_manifest PRIVATE cxx_std_17)
+    add_test(NAME r05_manifest_gate COMMAND test_r05_manifest)
+    set_tests_properties(r05_manifest_gate PROPERTIES LABELS "r05;contracts;manifest" TIMEOUT 30)
+
+    # All synthetic writes happen beneath the CMake BINARY directory only.
+    # Never clean user files or reuse an old RunId; each run uses OS randomness.
+    add_executable(test_r05_io tests/integration/test_r05_io.cpp)
+    target_link_libraries(test_r05_io PRIVATE egomotion_matio)
+    target_compile_features(test_r05_io PRIVATE cxx_std_17)
+    add_test(NAME r05_anchored_io COMMAND test_r05_io
+        "${CMAKE_CURRENT_BINARY_DIR}/r05_synthetic_io")
+    set_tests_properties(r05_anchored_io PROPERTIES LABELS "r05;io;write-sandbox" TIMEOUT 60)
+
+    add_executable(test_r05_analysis tests/integration/test_r05_analysis.cpp)
+    target_link_libraries(test_r05_analysis PRIVATE egomotion_analysis)
+    target_compile_features(test_r05_analysis PRIVATE cxx_std_17)
+    add_test(NAME r05_analysis_source_contract COMMAND test_r05_analysis
+        "${CMAKE_CURRENT_BINARY_DIR}/r05_synthetic_analysis")
+    set_tests_properties(r05_analysis_source_contract PROPERTIES
+        LABELS "r05;analysis;synthetic-only" TIMEOUT 60)
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
