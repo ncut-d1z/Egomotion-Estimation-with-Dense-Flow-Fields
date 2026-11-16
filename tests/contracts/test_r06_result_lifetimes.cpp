@@ -1,6 +1,7 @@
 // R6 contract coverage: Result/Status owned rvalue access and full wrapper
 // chain. No MAT I/O or numerical solver is required for this test.
 #include "egomotion/contracts/interfaces.hpp"
+#include "egomotion/analysis/analyzer.hpp"
 #include "egomotion/contracts/diagnostics.hpp"
 
 #include <cstddef>
@@ -112,7 +113,7 @@ void failureChains() {
     const auto json=jsonFailure(extracted,5);
     check(json.find("\"error_domain\":\"AnalysisErrorCode\"")!=
           std::string::npos&&
-          json.find("\"code\":\"UndefinedStatistic\"")!=std::string::npos&&
+          json.find("\"error_code\":\"UndefinedStatistic\"")!=std::string::npos&&
           json.find("\"observation_index\":7")!=std::string::npos,
           "JSONL diagnostics dropped required source error identity");
 
