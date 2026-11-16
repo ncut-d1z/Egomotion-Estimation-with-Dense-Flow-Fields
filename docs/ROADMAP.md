@@ -52,3 +52,15 @@
 `CMakeLists.txt`登记四个新CTest且修复先前两条路径中错误转义的 `${CMAKE_CURRENT_SOURCE_DIR}`（若不修复将无法正确展开源目录）；`build.sh`改为真实**全工程R6**范围及`build/r06-full`默认目录，加入`EGOMOTION_H11_APPROVED=YES`显式执行门禁，防止误把全工程构建当旧低阶SH构建。该开关只防误操作，**不是代替真实H-11审批**。本轮全部修改为源文件与静态复核，没有执行构建、CTest、MAT读写或数值实验。
 
 **结案仍需**：H-11明确批准后才可原生配置/编译/CTest并逐项修复；完成真实MAT Reader/Writer安全竞态与独立文件SHA、历史L2逐值、R3/R4完整runner与必要L4统计、源SHRotate相位/参数动作限定、DEC-005/006最终数值与性能资格。新增20项“注册”不等于20项“通过”；未增设R7，也未改变历史源数据。
+
+## R6 第三批：发布安全与合同缺口（2026-11-16，静态源码）
+
+**R6尚未完成**。本轮在原20项CTest之外增加`r06_result_lifetimes_error_frames`，因此**现有登记21项，当前HEAD没有原生CTest执行或PASS证据**。代码实修：
+
+1. `src/io/run_mat_writer.cpp`：为独占`.r5_*.mat-tmp`暂存文件增加RAII清理守卫，所有预发布错误路径都只删除本次生成的暂存名；成功链接最终MAT后，验证暂存硬链接移除以及目录fsync，最后才将receipt标记为`durably_confirmed`。最终文件已发布但清理/持久化不确定时维持非成功，保留既有文件及未确认receipt供`Incomplete`审计，**绝不覆盖最终结果**。
+2. `src/io/run_text_publisher.cpp`：对`.text_*.tmp`作同样的独占暂存文件清理；最终链接发布后若清理/目录fsync不成功，则明确`ReadbackMismatch`，不假报成功。
+3. `tests/integration/test_r05_io.cpp`：扩展真实Linux沙箱Writer正例与重复写负例，在独立RunId目录确认没有孤立的MAT/文本暂存文件。
+4. `tests/contracts/test_r05_manifest.cpp`：扩展无效MAT SHA-256、未核实的40位构建源SHA、完整Writer receipts但Manifest发布失败、Failed/Incomplete持久化与完整底层错误帧的测试。缺数据或验证未通过，禁止产生`Complete`。
+5. `tests/contracts/test_r06_result_lifetimes.cpp`：新增`Result<T,Code>`和`Status<Code>`的右值自拥有提取、临时对象析构后生命周期、move-only值、三层错误链/JSONL身份测试。CMake新增单独CTest，不改变已冻结公共错误码。
+
+**边界**：这些是源码、CTest准备和静态审阅；没有H-11许可，未执行配置、编译、CTest、MAT读写、数值实验，未修改`origin/**`。R6继续需要真实原生执行/失败修复、L2独立SHA与逐值、剩余L3/L4实验与SHRotate限定核查、DEC-005/006和冻结签署；不能用注册21项替代通过21项。R7仍无已批准定义。
