@@ -32,7 +32,11 @@ struct AdaptiveFrameResult {
 // subsequent primary StepSolver fails.
 class AdaptiveMfaSession {
 public:
-    explicit AdaptiveMfaSession(AdaptiveSessionMode mode);
+    // Default uses the real source-derived solver; optional injection is
+    // intended for deterministic tests. The supplied solver must outlive the
+    // Session. No change to the scientific algorithm for production callers.
+    explicit AdaptiveMfaSession(AdaptiveSessionMode mode,
+                                const IAdaptiveStepSolver* injected_solver = nullptr);
 
     Result<AdaptiveFrameResult,ExperimentErrorCode> processFrame(
         const AdaptiveFrameInput& frame);
@@ -48,7 +52,8 @@ private:
     AdaptiveSessionMode mode_;
     HarmonicCoefficients primary_;
     std::array<HarmonicCoefficients,4> baselines_;
-    AdaptiveMfaStepSolver solver_;
+    AdaptiveMfaStepSolver production_solver_;
+    const IAdaptiveStepSolver* solver_=nullptr;
     // Each successful call consumes exactly one original MATLAB frame.
     // Invalid/out-of-order frames never advance persistent state.
     std::size_t expected_matlab_frame_index_ = 2;
