@@ -35,6 +35,23 @@ public:
     int get() const noexcept{return fd_;}
 private:int fd_;
 };
+// Unlink only the uniquely O_EXCL-created staging name. The owned dirfd
+// prevents pathname redirection; this guard never removes the published name.
+class StagingGuard {
+public:
+    StagingGuard(int dir_fd,const std::string& name) noexcept
+        : dir_fd_(dir_fd),name_(name) {}
+    StagingGuard(const StagingGuard&)=delete;
+    StagingGuard& operator=(const StagingGuard&)=delete;
+    ~StagingGuard() noexcept {
+        if(active_)(void)::unlinkat(dir_fd_,name_.c_str(),0);
+    }
+    void disarm() noexcept {active_=false;}
+private:
+    int dir_fd_;
+    const std::string& name_;
+    bool active_=true;
+};
 class MatHandle {
 public:
     explicit MatHandle(mat_t* mat=nullptr) noexcept:mat_(mat) {}
@@ -155,6 +172,7 @@ Status<MatErrorCode> RunMatWriter::saveNewVariable(
             return fail(errno==EEXIST?MatErrorCode::OutputExists:
                         MatErrorCode::OutputPathForbidden,directory_,name,
                         "Exclusive MAT staging-file creation failed");
+        StagingGuard staging(directory_.runFd(),temporary);
         // Stable /proc/self/fd/NN refers to this very inode. matio may
         // reopen that descriptor but cannot follow a replaced RunId symlink.
         const std::string fd_path="/proc/self/fd/"+std::to_string(file.get());
@@ -239,9 +257,17 @@ Status<MatErrorCode> RunMatWriter::saveNewVariable(
             return fail(MatErrorCode::ReadbackMismatch,directory_,name,
                         "Published MAT inode or directory durability could not be confirmed");
         }
+        // Publishing the final name does not authorize an orphan staging
+        // hard-link. Failure to remove/sync it is a non-success output event;
+        // the final MAT and receipt remain available for Incomplete audit.
+        if(::unlinkat(directory_.runFd(),temporary.c_str(),0)!=0)
+            return fail(MatErrorCode::ReadbackMismatch,directory_,name,
+                        "Published MAT exists, but staging hard-link cleanup failed");
+        staging.disarm();
+        if(::fsync(directory_.runFd())!=0)
+            return fail(MatErrorCode::ReadbackMismatch,directory_,name,
+                        "Published MAT exists, but staging cleanup durability is unconfirmed");
         receipts_.at(name).durably_confirmed=true;
-        // This temporary name was uniquely created by THIS invocation.
-        (void)::unlinkat(directory_.runFd(),temporary.c_str(),0);
         return Status<MatErrorCode>::success();
     } catch(const std::bad_alloc&) {
         return fail(MatErrorCode::WriteFailed,directory_,
