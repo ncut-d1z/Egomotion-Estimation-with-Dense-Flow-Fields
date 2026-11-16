@@ -24,6 +24,23 @@ public:
     int get()const noexcept{return fd_;}
 private:int fd_;
 };
+// Scope cleanup for an O_EXCL name. Never delete the final published file,
+// even when a later directory fsync reports uncertain durability.
+class StagingGuard {
+public:
+    StagingGuard(int directory_fd,const std::string& unique_name) noexcept
+        : directory_fd_(directory_fd),unique_name_(unique_name) {}
+    StagingGuard(const StagingGuard&)=delete;
+    StagingGuard& operator=(const StagingGuard&)=delete;
+    ~StagingGuard() noexcept {
+        if(armed_)(void)::unlinkat(directory_fd_,unique_name_.c_str(),0);
+    }
+    void disarm() noexcept {armed_=false;}
+private:
+    int directory_fd_;
+    const std::string& unique_name_;
+    bool armed_=true;
+};
 Status<MatErrorCode> fail(const RunDirectory& run,MatErrorCode code,
                           std::string_view name,std::string message) {
     ErrorDetail d;d.stage=ErrorStage::Output;d.run_id=run.runId();
@@ -78,6 +95,7 @@ Status<MatErrorCode> RunTextPublisher::publishNew(
         return fail(run_,errno==EEXIST?MatErrorCode::OutputExists:
                     MatErrorCode::WriteFailed,filename,
                     "Exclusive output staging creation failed");
+    StagingGuard staging(run_.runFd(),tmp);
     std::size_t n=0;
     while(n<contents.size()){
         constexpr std::size_t chunk=1<<20;
@@ -101,8 +119,15 @@ Status<MatErrorCode> RunTextPublisher::publishNew(
     if(::fsync(run_.runFd())!=0)
         return fail(run_,MatErrorCode::ReadbackMismatch,filename,
                     "Output file exists but directory durability is unconfirmed");
-    // This temporary is exclusively owned by this invocation only.
-    (void)::unlinkat(run_.runFd(),tmp.c_str(),0);
+    // The file was linked under its final name; staging cleanup only removes
+    // our temporary hard link. A failure cannot be reported as Complete.
+    if(::unlinkat(run_.runFd(),tmp.c_str(),0)!=0)
+        return fail(run_,MatErrorCode::ReadbackMismatch,filename,
+                    "Published text exists, but staging cleanup failed");
+    staging.disarm();
+    if(::fsync(run_.runFd())!=0)
+        return fail(run_,MatErrorCode::ReadbackMismatch,filename,
+                    "Published text exists, but cleanup durability is unconfirmed");
     return Status<MatErrorCode>::success();
 }
 } // namespace egomotion::io
