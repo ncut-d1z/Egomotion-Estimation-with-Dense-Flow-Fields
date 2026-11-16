@@ -27,11 +27,21 @@ struct AdaptiveStepResult {
     AdaptiveStepTrace trace;
 };
 
-// Stateless. Only a successful StepResult may update a Session's main coeff.
-class AdaptiveMfaStepSolver {
+// A narrow, read-only numerical step seam permits deterministic Session
+// transaction tests. A Session never owns a caller-injected solver.
+class IAdaptiveStepSolver {
+public:
+    virtual ~IAdaptiveStepSolver() = default;
+    virtual Result<AdaptiveStepResult,NumericalErrorCode> solve(
+        const HarmonicCoefficients& old, const FlowField& observations) const = 0;
+};
+
+// Production algorithm remains the default in every public Runner.
+// Only a successful StepResult may update a Session's main coefficients.
+class AdaptiveMfaStepSolver final : public IAdaptiveStepSolver {
 public:
     Result<AdaptiveStepResult,NumericalErrorCode> solve(
-        const HarmonicCoefficients& old, const FlowField& observations) const;
+        const HarmonicCoefficients& old, const FlowField& observations) const override;
 };
 
 }  // namespace egomotion::estimators
