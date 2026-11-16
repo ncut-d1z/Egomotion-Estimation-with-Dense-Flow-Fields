@@ -348,7 +348,7 @@ if(BUILD_TESTING)
     target_compile_features(test_r06_archive_readonly PRIVATE cxx_std_17)
     add_test(NAME r06_historical_mat_readonly_schema
         COMMAND test_r06_archive_readonly
-        "\${CMAKE_CURRENT_SOURCE_DIR}/origin/egomotion_estimation_dense_flow_fields_matlab_scripts")
+        "${CMAKE_CURRENT_SOURCE_DIR}/origin/egomotion_estimation_dense_flow_fields_matlab_scripts")
     set_tests_properties(r06_historical_mat_readonly_schema PROPERTIES
         LABELS "r06;mat;archive;readonly;schema-only" TIMEOUT 180)
 
@@ -369,7 +369,7 @@ if(BUILD_TESTING)
     target_compile_features(test_r06_direction_rows_l3 PRIVATE cxx_std_17)
     add_test(NAME r06_directions_all_ordered_l3
         COMMAND test_r06_direction_rows_l3
-        "\${CMAKE_CURRENT_SOURCE_DIR}/verification/geometry/source_direction_levels_0_2.v1.json")
+        "${CMAKE_CURRENT_SOURCE_DIR}/verification/geometry/source_direction_levels_0_2.v1.json")
     set_tests_properties(r06_directions_all_ordered_l3 PROPERTIES
         LABELS "r06;geometry;sampling;ordered-l3-candidate" TIMEOUT 60)
 
