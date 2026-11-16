@@ -85,6 +85,19 @@
 
 **严格未执行项**：未运行CMake configure、编译、CTest、CLI、真实MAT读写、MATLAB/Octave、Wolfram、L2/L3/L4、性能或数值测试；没有MAT生成或改动`origin/**`。H-11执行权限未得到本轮授权。R6下一阶段仍须在获许可后统一原生构建并修复发现的实际错误，执行真实Writer路径/竞态负例与完整数据来源验证，补齐独立L3逐节点、历史L2/必要L4，核验SHRotate相位/动作差异及DEC-005/006、冻结和最终验收。此前固定SHA的3项SH CTest与旧582/582探针不能冒充本HEAD新增测试的PASS证据。
 
+## 0.6 R6源码覆盖继续补充（2026-11-16，所有新测试未运行）
+
+**核查起点**：`bd229ecf75e5af432fba9720eae3d486768d58c6`。按[ROADMAP](ROADMAP.md) R6仍需完成统一CMake、单测/集成/独立L3候选源码及获授权后的原生验收。R5代码静态闭合的声明保持限定；**R6代码实现与原生验证均未完成，不存在已批准R7批次**。本次实作不是补充空壳计数，实际新增下列C++测试文件：
+
+- `tests/integration/test_r06_kvd_l3.cpp`：将既有 `verification/kvd/six_direction_exact_trace.v1.json` 与 `near_sign_flip_exact_trace.v1.json` 的独立Wolfram结果组织成三组6/8方向固定流。检查Franz各轴分母与初态、Original/Modified首轮不同的原始t更新、非零近度、符号翻转、六轮迭代停止/continue、预测光流shape、MSE与RMS分类、末次近度均值缩放；不借被测算法生成参考数据。
+- `tests/integration/test_r06_adaptive_l3.cpp`：将 `verification/adaptive/asymmetric_signed_near_one_step.v1.json` 的正/负均值九方向、3×5原CS系数、切向流及独立M1/M2/M3/M4、rhs、6维解、归一t、旋转、MSE、新near、九新系数写成固定输入。负均值仅作非物理有符号对照，不宣称正距离普适失败；阈值是未批准L3回归诊断而非DEC-005最终容差。
+- `tests/integration/test_r06_archive_readonly.cpp`：对现有582 MAT只读扫描、单变量double及列主序自拥有数据、5种历史shape分布和SHA-256可计算性进行原生测试准备；**不触碰原文件写入、不作独立逐值Golden或声称已核验预期SHA**。
+- `tests/integration/test_r06_sh_adapter.cpp`：验证AN-G08的90°物理旋转、`near_new(d)=near_old(R*d)`参数作用、反方向Rᵀ鉴别及往返与反平行失败；不把旧源SHRotate相位/作用差异抹去或虚报等价。
+
+**CMake实修**：上述四项独立CTest均已接线，登记条目由12增为**16**，但**本分支新CTest实际通过项仍为0（没有执行）**。同时核查 `tests/integration/test_r01_cli.cpp`，发现旧R0占位消息`not implemented`和`plot`退出码的过时断言，与R5现行Composition Root实际错误映射不一致；实际修正3处断言，另外加入具有假Analyzer但无SVG后端时`analyze`成功、`plot`退出7的隔离合同断言。不是只修改PROGRESS记录。
+
+**执行与结案门禁**：本轮没有执行CMake/g++/CTest/业务CLI/MAT读写/数值/性能实验，也没有新运行日志或PASS；没有修改`origin/**`。H-11仍待明确授权。R6余下包括未完成的原生编译修复、真实Reader/Writer安全/权限竞态、L2独立逐值及完整可信文件哈希、剩余L3多轮/多帧和SHRotate独立相位/动作验证、必要L4统计、DEC-005/006与最终冻结/发布；真实执行若失败需回到业务源码修复。旧固定SHA的SH 3/3和旧582/582探针绝不能冒充本轮16项通过。
+
 ## 1. 当前边界
 
 仓库 `ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields`，分支 `dev-plan-P0-P1-mat-dictionary-probe`；不合并main、不发布。`origin/**` 原45份.m与582份.mat只读；不要求执行MATLAB/Octave或获得L1。既有66REQ/66TC/98P、27条HLD设计边不变；数学子案例不新增正式TC。
