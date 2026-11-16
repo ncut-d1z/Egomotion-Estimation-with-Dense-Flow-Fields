@@ -17,6 +17,13 @@ namespace {
 void require(bool condition,const char* why){
     if(!condition)throw std::runtime_error(why);
 }
+void requireNoStagingFiles(const std::filesystem::path& run_path) {
+    for(const auto& entry:std::filesystem::directory_iterator(run_path)){
+        const auto name=entry.path().filename().string();
+        require(name.rfind(".r5_",0)!=0&&name.rfind(".text_",0)!=0,
+                "Writer left an orphan MAT/text staging file or hard link");
+    }
+}
 }
 int main(int argc,char** argv){
     using namespace egomotion;
@@ -72,4 +79,7 @@ int main(int argc,char** argv){
     require(back.hasValue()&&back.value().info.dimensions==a.info.dimensions&&
             back.value().values_column_major==a.values_column_major,
             "MAT published output must decode to the exact original column-major values");
+    // Both successful publications and negative duplicate attempts must
+    // leave no orphan random staging names in the pinned RunId directory.
+    requireNoStagingFiles(run->outputRoot()/run->runId().text);
 }
