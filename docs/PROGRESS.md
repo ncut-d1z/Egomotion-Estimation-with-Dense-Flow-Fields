@@ -98,6 +98,19 @@
 
 **执行与结案门禁**：本轮没有执行CMake/g++/CTest/业务CLI/MAT读写/数值/性能实验，也没有新运行日志或PASS；没有修改`origin/**`。H-11仍待明确授权。R6余下包括未完成的原生编译修复、真实Reader/Writer安全/权限竞态、L2独立逐值及完整可信文件哈希、剩余L3多轮/多帧和SHRotate独立相位/动作验证、必要L4统计、DEC-005/006与最终冻结/发布；真实执行若失败需回到业务源码修复。旧固定SHA的SH 3/3和旧582/582探针绝不能冒充本轮16项通过。
 
+## 0.7 R6静态源码复核及四项回归扩充（2026-11-16）
+
+**检查起点**：`127a215a31ee6697eac3af4e30af1e9b76984265`。对真实 `ROADMAP.md`、`PROGRESS.md`、根CMake/构建脚本、R6已登记16项CTest、采样/轨迹/Adaptive Session/RunDirectory生产实现与独立方向参考进行了静态核查。结论：**R6代码/测试源码范围仍有缺口，继续R6，不进入R7**。此轮完成以下实质代码修改并推送：
+
+1. `tests/integration/test_r06_direction_rows_l3.cpp`：首次将全部714个独立方向参考（2142个坐标）作为源文件中的C++运行时只读候选夹具输入，直接逐行/逐坐标比较0–2级三类采样器。依赖已有 `verification/geometry/source_direction_levels_0_2.v1.json`；来源既有独立Wolfram对照，不在测试里自算标准答案，不将候选设为批准Golden。
+2. `tests/integration/test_r06_trajectory_sphere.cpp`：给circle/sinusoidal源分母、首末帧身份、三点直线相对姿态与局部平移、垂直/反平行方向、球内解析近度、相机旋转与边界失败新增静态手工数值预期；修复新测试中对`Result<T>::error() const &&`禁用重载的错误调用，先保留Result左值再读取错误。
+3. `include/egomotion/estimators/adaptive_step.hpp`增加独立`IAdaptiveStepSolver`抽象；`AdaptiveMfaStepSolver`实现其`solve`；`AdaptiveMfaSession`构造接受可选**借用**求解器，不注入时仍创建真实默认求解器，算法、输出及源周期逻辑不改。Session禁复制/移动，避免默认求解器指针悬垂。`tests/contracts/test_r06_adaptive_periods.cpp`使用只在测试中出现的定值步进替身覆盖MATLAB i=2..22的四周期刷新、`dumi`丢弃、主状态提交、period5比较失败和主Step失败的原子回滚与同帧重试，另核初始化/比较模式真实调用顺序。**这是控制流测试，不冒称求解器独立L3数值验证。**
+4. `tests/integration/test_r06_io_safety.cpp`在未来CMake二进制树独立沙箱构造源目录和拒绝路径，验证重复/非法RunId及仓库根、origin、output符号链接拒绝；不修改真实`origin/**`，不清理/覆盖用户结果。
+5. `CMakeLists.txt`将上述四测试独立登记，CTest目标**16→20（+4）**，并纠正两处此前新增的`CMAKE_CURRENT_SOURCE_DIR`变量被反斜杠转义而无法展开的路径bug。新注册数不转为完成或通过数。
+6. `build.sh`旧注释误称只编译低阶SH，但CMake实际已包含全工程R0–R6；修订为全项目编译/CTest，默认目录改`build/r06-full`，在真正进入配置/构建前设置显式H-11批准开关检查，修复错误消息换行。该开关不会自动授予权限，H-11决策仍由人类批准。
+
+**本轮没有执行任何 native CMake、编译器、CTest、业务CLI、MAT读取/写入、Python/Wolfram数值实验或基准测试。** 本次引用的旧582/582只读探针与固定SH 3/3均属于其它固定SHA，不宣称是当前HEAD的通过证据；新20项CTest**登记20，运行0，验证通过0（未执行）**。未更改任何`origin/**`内容、不改历史签署或既有审计台账。R6未结案：真实编译与错误修复（需H-11）、MAT安全与SHA/L2逐值、R3/R4完整数值与8次聚合、SHRotate源作用独立等价/差异判定、必要L4/DEC-005/006/冻结批准都仍需证据。原`ROADMAP.md`没有R7，故本轮不新增。
+
 ## 1. 当前边界
 
 仓库 `ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields`，分支 `dev-plan-P0-P1-mat-dictionary-probe`；不合并main、不发布。`origin/**` 原45份.m与582份.mat只读；不要求执行MATLAB/Octave或获得L1。既有66REQ/66TC/98P、27条HLD设计边不变；数学子案例不新增正式TC。
