@@ -405,6 +405,17 @@ if(BUILD_TESTING)
     set_tests_properties(r06_io_symlink_and_runid_safety PROPERTIES
         LABELS "r06;io;security;synthetic-only" TIMEOUT 60)
 
+    # R6 ABI/lifetime contract: temporary Results extract owned values;
+    # nested Result/Status failures retain original error frame identities.
+    add_executable(test_r06_result_lifetimes
+        tests/contracts/test_r06_result_lifetimes.cpp)
+    target_link_libraries(test_r06_result_lifetimes PRIVATE egomotion_contracts)
+    target_compile_features(test_r06_result_lifetimes PRIVATE cxx_std_17)
+    add_test(NAME r06_result_lifetimes_error_frames
+        COMMAND test_r06_result_lifetimes)
+    set_tests_properties(r06_result_lifetimes_error_frames PROPERTIES
+        LABELS "r06;contracts;ownership;error-chain" TIMEOUT 30)
+
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
