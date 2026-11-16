@@ -323,6 +323,44 @@ if(BUILD_TESTING)
     set_tests_properties(r06_analysis_segments_smoothing PROPERTIES
         LABELS "r06;analysis;source-index;synthetic-only" TIMEOUT 60)
 
+    # Independent R6 reference fixtures: Wolfram source math is NOT an
+    # approved tolerance, MATLAB result, or previously executed CTest.
+    add_executable(test_r06_kvd_l3 tests/integration/test_r06_kvd_l3.cpp)
+    target_link_libraries(test_r06_kvd_l3 PRIVATE egomotion_estimators)
+    target_compile_features(test_r06_kvd_l3 PRIVATE cxx_std_17)
+    add_test(NAME r06_kvd_independent_l3 COMMAND test_r06_kvd_l3)
+    set_tests_properties(r06_kvd_independent_l3 PROPERTIES
+        LABELS "r06;kvd;franz;independent-l3-candidate" TIMEOUT 90)
+
+    add_executable(test_r06_adaptive_l3 tests/integration/test_r06_adaptive_l3.cpp)
+    target_link_libraries(test_r06_adaptive_l3 PRIVATE egomotion_estimators)
+    target_compile_features(test_r06_adaptive_l3 PRIVATE cxx_std_17)
+    add_test(NAME r06_adaptive_step_independent_l3 COMMAND test_r06_adaptive_l3)
+    set_tests_properties(r06_adaptive_step_independent_l3 PROPERTIES
+        LABELS "r06;adaptive;6x6;independent-l3-candidate" TIMEOUT 90)
+
+    # H-11 remains a separate gate for even READ-ONLY native execution.
+    # This target never modifies origin/** and does NOT compare numeric L2
+    # values with an independently approved reference.
+    add_executable(test_r06_archive_readonly
+        tests/integration/test_r06_archive_readonly.cpp)
+    target_link_libraries(test_r06_archive_readonly PRIVATE egomotion_matio)
+    target_compile_features(test_r06_archive_readonly PRIVATE cxx_std_17)
+    add_test(NAME r06_historical_mat_readonly_schema
+        COMMAND test_r06_archive_readonly
+        "\${CMAKE_CURRENT_SOURCE_DIR}/origin/egomotion_estimation_dense_flow_fields_matlab_scripts")
+    set_tests_properties(r06_historical_mat_readonly_schema PROPERTIES
+        LABELS "r06;mat;archive;readonly;schema-only" TIMEOUT 180)
+
+    # Physical SH argument action != automatic source-SHRotate equivalence.
+    add_executable(test_r06_sh_adapter tests/integration/test_r06_sh_adapter.cpp)
+    target_link_libraries(test_r06_sh_adapter PRIVATE
+        egomotion_harmonics egomotion_simulation)
+    target_compile_features(test_r06_sh_adapter PRIVATE cxx_std_17)
+    add_test(NAME r06_sh_argument_action COMMAND test_r06_sh_adapter)
+    set_tests_properties(r06_sh_argument_action PROPERTIES
+        LABELS "r06;sh;so3;argument-action" TIMEOUT 60)
+
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
