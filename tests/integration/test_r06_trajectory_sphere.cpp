@@ -6,6 +6,7 @@
 #include <Eigen/Core>
 #include <cmath>
 #include <cstddef>
+#include <initializer_list>
 #include <limits>
 #include <stdexcept>
 #include <string>
@@ -76,8 +77,10 @@ void checkRelativeKinematics() {
     require(quarter.hasValue(),"Source perpendicular directional turn failed");
     close(quarter.value().z(),std::acos(-1.0)/2,
           "Perpendicular direction change must produce positive pi/2 about z");
-    require(sourceRotationBetween(Vector3::UnitX(),-Vector3::UnitX()).error().code==
-            NumericalErrorCode::InvalidDirection,
+    const auto antiparallel=sourceRotationBetween(
+        Vector3::UnitX(),-Vector3::UnitX());
+    require(!antiparallel.hasValue()&&
+            antiparallel.error().code==NumericalErrorCode::InvalidDirection,
             "Exact antiparallel source axis must explicitly fail in safe C++");
 }
 DirectionSet unitAxes() {
