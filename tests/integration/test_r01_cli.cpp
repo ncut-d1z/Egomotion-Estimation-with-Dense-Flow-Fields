@@ -67,12 +67,12 @@ int main() {
           2, "decimal range");
     check({"run-bias-proportional", "--seed", "4", "--level", "-1"}, 2, "decimal range");
     check({"run-adaptive-comparison", "--noise-scale", "NaN"}, 2, "finite");
-    check({"run-adaptive-comparison", "--noise-scale", "-0.5"}, 5, "not implemented");
+    check({"run-adaptive-comparison", "--noise-scale", "-0.5"}, 5, "backend is not connected");
     check({"run-adaptive-update-rates", "--run-id", "../origin"}, 2, "Invalid RunId");
     check({"analyze", "--experiment", "unknown", "--input-root", "a"},
           2, "Invalid --experiment");
-    check({"analyze", "--experiment", "bias", "--input-root", "a"}, 5, "not implemented");
-    check({"plot", "--experiment", "bias", "--input-root", "a"}, 7, "not implemented");
+    check({"analyze", "--experiment", "bias", "--input-root", "a"}, 5, "backend is not connected");
+    check({"plot", "--experiment", "bias", "--input-root", "a"}, 5, "backend is not connected");
     check({"inspect-mat", "--file", "input file.mat"}, 0, "rank=2");
     check({"inspect-mat", "--file", "a.mat", "--variable", "xwerte"},
           0, "variable=xwerte");
