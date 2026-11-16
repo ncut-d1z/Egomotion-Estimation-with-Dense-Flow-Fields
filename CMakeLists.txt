@@ -393,6 +393,18 @@ if(BUILD_TESTING)
     set_tests_properties(r06_adaptive_periods_atomic_commit PROPERTIES
         LABELS "r06;adaptive;periodic;success-transaction;synthetic" TIMEOUT 60)
 
+    # R6 Linux anchored I/O safety negatives, sandboxed under build tree.
+    # No cleanup, original MAT access, or trusted user output involved.
+    add_executable(test_r06_io_safety
+        tests/integration/test_r06_io_safety.cpp)
+    target_link_libraries(test_r06_io_safety PRIVATE egomotion_matio)
+    target_compile_features(test_r06_io_safety PRIVATE cxx_std_17)
+    add_test(NAME r06_io_symlink_and_runid_safety
+        COMMAND test_r06_io_safety
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_synthetic_io_safety")
+    set_tests_properties(r06_io_symlink_and_runid_safety PROPERTIES
+        LABELS "r06;io;security;synthetic-only" TIMEOUT 60)
+
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
