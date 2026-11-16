@@ -111,6 +111,20 @@
 
 **本轮没有执行任何 native CMake、编译器、CTest、业务CLI、MAT读取/写入、Python/Wolfram数值实验或基准测试。** 本次引用的旧582/582只读探针与固定SH 3/3均属于其它固定SHA，不宣称是当前HEAD的通过证据；新20项CTest**登记20，运行0，验证通过0（未执行）**。未更改任何`origin/**`内容、不改历史签署或既有审计台账。R6未结案：真实编译与错误修复（需H-11）、MAT安全与SHA/L2逐值、R3/R4完整数值与8次聚合、SHRotate源作用独立等价/差异判定、必要L4/DEC-005/006/冻结批准都仍需证据。原`ROADMAP.md`没有R7，故本轮不新增。
 
+## 0.8 R6输出暂存安全与Result/Manifest合同（2026-11-16；未执行）
+
+**检查起点**：`f69a6220b644f1aa15e04c16f6fdfb7efc884eb5`。复核ROADMAP、PROGRESS、20项CTest与R5发布路径的实际代码后，发现现有MAT/文本Writer在多种prepublish错误或发布后核查失败时可能遗留随机暂存文件，且最终发布确认先于暂存硬链接清理。**这是真正的生产源码安全缺口，并非为增加计数而改台账**。
+
+**已修改的生产代码**：`src/io/run_mat_writer.cpp`及`src/io/run_text_publisher.cpp`增加Linux RunId目录fd锚定的专用`StagingGuard` RAII清理，释放仅由本次`O_CREAT|O_EXCL`创建的暂存名字，不删除已发布的最终文件或其它用户文件。完成`linkat`后，如暂存名`unlinkat`或目录`fsync`失败，返回明确`ReadbackMismatch`且不声明成功；MAT receipt `durably_confirmed=true`仅在最终发布、暂存清理和目录持久性都确认后设置。失败时保留已链接最终文件和未确认receipt作为真实`Incomplete`审计，而不是回滚已发布数据或伪造`Complete`。
+
+**新增/强化的测试源码**：
+
+- `tests/integration/test_r05_io.cpp`：沙箱成功写入和重复写入后扫描独立RunId，断言无`.r5_*.mat-tmp`及`.text_*.tmp`遗留。
+- `tests/contracts/test_r05_manifest.cpp`：在真实既有RunContext合同基础上注入无效MAT receipt哈希、Manifest TextPublisher发布失败以及`UNVERIFIED_BUILD_SOURCE`，验证`Complete`门禁、独立原因链和恢复后只能持久化`Incomplete`，不靠虚假签署或触碰MAT。
+- 新增`tests/contracts/test_r06_result_lifetimes.cpp`：编译期类型断言与运行期所有权合同，覆盖临时`Result`右值自拥有提取、move-only对象、`Status`失败值和多层`std::forward_list<ErrorFrame>`原始错误信息/JSONL。`CMakeLists.txt`登记单独`r06_result_lifetimes_error_frames`。
+
+**状态变化**：CTest登记**20→21（+1）**，并在原测试内扩展2类断言。R6生产代码发生2文件实质安全修复。此处只是源码静态完成工作记录，**本分支原生CMake/编译/CTest实际执行0项、通过0项（非失败0项）**；没有L2/L3/L4新数值实验或原MAT写入。H-11仍待人类明确授权，历史SH固定SHA的3/3、旧582/582探针不迁移为本轮PASS。R6尚未完成，真实运行/测试发现错误时重开代码；后续需真正编译、I/O安全竞态与回读验证、独立L2/L3/L4、源SHRotate方向/相位证据及DEC-005/006批准，不启动无定义的R7。
+
 ## 1. 当前边界
 
 仓库 `ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields`，分支 `dev-plan-P0-P1-mat-dictionary-probe`；不合并main、不发布。`origin/**` 原45份.m与582份.mat只读；不要求执行MATLAB/Octave或获得L1。既有66REQ/66TC/98P、27条HLD设计边不变；数学子案例不新增正式TC。
