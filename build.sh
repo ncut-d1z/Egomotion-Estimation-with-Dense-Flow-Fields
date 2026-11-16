@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Ubuntu 24.04 / GCC 16.2.0 / CMake 4.3.4
-# 一键配置、构建、CTest：仅限已存在的低阶球谐模块，不构建尚未实现的其他模块。
+# R6 统一构建/CTest 入口（整个已登记的 R0-R6 源码与测试）。
+# 此文件只供 H-11 被明确授权后的原生执行；编辑脚本不等于授权。
 set -Eeuo pipefail
 
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
-BUILD_DIR="${BUILD_DIR:-${ROOT_DIR}/build/low-order-harmonics}"
+BUILD_DIR="${BUILD_DIR:-${ROOT_DIR}/build/r06-full}"
 BUILD_TYPE="${BUILD_TYPE:-Release}"
 JOBS="${JOBS:-4}"
 CMAKE_BIN="${CMAKE_BIN:-cmake}"
@@ -56,6 +57,14 @@ for executable in "${CMAKE_BIN}" "${CTEST_BIN}" "${CXX_COMPILER}"; do
     fi
 done
 
+# Fail closed: R6 now builds every production target and runs the complete
+# registered CTest suite. Do not run it under the former SH-only permission.
+if [[ "${EGOMOTION_H11_APPROVED:-}" != "YES" ]]; then
+    printf 'ERROR: R6 native configure/build/CTest requires separate H-11 approval.\\n' >&2
+    printf 'After authorization, set EGOMOTION_H11_APPROVED=YES explicitly.\\n' >&2
+    exit 2
+fi
+
 mkdir -p -- "${BUILD_DIR}/logs"
 LOG_FILE="${BUILD_DIR}/logs/build-$(date -u +%Y%m%dT%H%M%SZ)-$$.log"
 on_error() {
@@ -84,7 +93,7 @@ fi
     "${CMAKE_BIN}" --version | sed -n '1p'
     "${CXX_COMPILER}" --version | sed -n '1p'
     printf 'C++ standard: C++17 (project contract; compiler may support up to C++23)\n'
-    printf 'Scope: egomotion_harmonics + low-order regression, archived-golden and source-projection CTests only\n'
+    printf 'Scope: all R0-R6 production CMake targets + all currently registered CTests (including read-only legacy MAT schema)\n'
     printf 'Log: %s\n' "${LOG_FILE}"
 } 2>&1 | tee -a "${LOG_FILE}"
 
