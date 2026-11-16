@@ -38,6 +38,13 @@ public:
     explicit AdaptiveMfaSession(AdaptiveSessionMode mode,
                                 const IAdaptiveStepSolver* injected_solver = nullptr);
 
+    // The default solver pointer refers to this Session's owned instance;
+    // copying or moving would otherwise leave an unsafe internal pointer.
+    AdaptiveMfaSession(const AdaptiveMfaSession&)=delete;
+    AdaptiveMfaSession& operator=(const AdaptiveMfaSession&)=delete;
+    AdaptiveMfaSession(AdaptiveMfaSession&&)=delete;
+    AdaptiveMfaSession& operator=(AdaptiveMfaSession&&)=delete;
+
     Result<AdaptiveFrameResult,ExperimentErrorCode> processFrame(
         const AdaptiveFrameInput& frame);
 
