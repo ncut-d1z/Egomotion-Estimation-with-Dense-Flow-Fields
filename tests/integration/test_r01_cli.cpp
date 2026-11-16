@@ -40,6 +40,25 @@ struct FakeReader : egomotion::IResultReader {
             {egomotion::MatErrorCode::MissingVariable, egomotion::ErrorDetail{}});
     }
 };
+// R6: a connected numeric Analyzer must work without a Plot backend.
+struct FixedAnalyzer final : egomotion::IAnalyzer {
+    egomotion::Result<egomotion::AnalysisDataset,egomotion::AnalysisErrorCode>
+    analyze(egomotion::AnalysisKind,
+            const std::filesystem::path&,
+            egomotion::IResultReader&) override {
+        egomotion::AnalysisDataset dataset;
+        dataset.source_analysis_blob="R6_SYNTHETIC_NO_MAT";
+        egomotion::AnalysisSeries curve;
+        curve.name="synthetic";
+        curve.panel="translation";
+        curve.x={50.0,51.0};
+        curve.y={1.0,2.0};
+        dataset.curves.push_back(std::move(curve));
+        return egomotion::Result<egomotion::AnalysisDataset,
+                                 egomotion::AnalysisErrorCode>::success(
+                                     std::move(dataset));
+    }
+};
 }  // namespace
 
 int main() {
@@ -78,6 +97,21 @@ int main() {
           0, "variable=xwerte");
     check({"inspect-mat", "--file", "a.mat", "--variable", "missing"},
           3, "MissingVariable");
+    // Production composition has a numeric Analyzer but no optional SVG:
+    // analyze remains successful, while plot reports its own exit(7).
+    FixedAnalyzer analyzer;
+    ApplicationCompositionRoot analysis_app(&reader,nullptr,&analyzer);
+    std::ostringstream numeric_out,numeric_err;
+    require(run({"analyze","--experiment","bias","--input-root","synthetic"},
+                numeric_out,numeric_err,analysis_app)==0);
+    require(numeric_out.str().find("\"schema\":\"egomotion-analysis-v1\"")!=
+            std::string::npos);
+    require(numeric_err.str().empty());
+    std::ostringstream plot_out,plot_err;
+    require(run({"plot","--experiment","bias","--input-root","synthetic"},
+                plot_out,plot_err,analysis_app)==7);
+    require(plot_out.str().empty());
+    require(plot_err.str().find("Optional SVG exporter")!=std::string::npos);
     require(reader.inspect_calls == 3);
     require(reader.read_calls == 0);
 }
