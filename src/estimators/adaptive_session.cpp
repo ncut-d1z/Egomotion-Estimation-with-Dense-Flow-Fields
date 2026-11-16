@@ -70,8 +70,10 @@ Result<Scalar,NumericalErrorCode> sourceDirectionErrorDegrees(
 }
 }  // namespace
 
-AdaptiveMfaSession::AdaptiveMfaSession(AdaptiveSessionMode mode)
-    : mode_(mode),primary_(originalInitialCoefficients()) {
+AdaptiveMfaSession::AdaptiveMfaSession(
+    AdaptiveSessionMode mode,const IAdaptiveStepSolver* injected_solver)
+    : mode_(mode),primary_(originalInitialCoefficients()),
+      solver_(injected_solver ? injected_solver : &production_solver_) {
     baselines_.fill(originalInitialCoefficients());
 }
 
@@ -132,7 +134,7 @@ AdaptiveMfaSession::processFrame(const AdaptiveFrameInput& frame) {
             else
                 trial=next_primary; // mit
             // The source does one comparison iteration per frame.
-            auto comparison=solver_.solve(trial,frame.observations);
+            auto comparison=solver_->solve(trial,frame.observations);
             if (!comparison.hasValue())
                 return propagate(comparison.error(),
                                  "Adaptive comparison solve failed (baseline="+
@@ -158,7 +160,7 @@ AdaptiveMfaSession::processFrame(const AdaptiveFrameInput& frame) {
             output.comparison_translation_error_deg.push_back(t_error.value());
             output.comparison_rotation_error_deg.push_back(r_error.value());
         }
-        auto primary_result=solver_.solve(next_primary,frame.observations);
+        auto primary_result=solver_->solve(next_primary,frame.observations);
         if (!primary_result.hasValue())
             return propagate(primary_result.error(),
                              "Adaptive primary solve failed; state not committed",
