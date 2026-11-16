@@ -37,3 +37,18 @@
 同时修复 `tests/integration/test_r01_cli.cpp` 中R0占位错误消息/退出码的过时断言，增加**纯数值 analyze 能成功且可选 SVG 缺席时 plot 单独失败**的替身断言。旧3项球谐CTest与其他R0/R2/R5/R6既有登记保留，未修改任何 `origin/**`。
 
 **仍未完成的R6义务**：实际 Debian/Ubuntu CMake配置/编译/CTest/异常负例与日志（H-11未授权）；真正跨目录L2逐值独立数值对照/预期SHA、完整L3逐节点与源SHRotate动作差异限定验证、原始实验与R4多帧/8-run行为、必要L4统计及错误修复、最终DEC-005/006审批与工程冻结发布。以上不得以“已增加测试源码”标为已验证通过；真实执行如发现错误须重新打开相应代码批次。**R6代码/测试准备继续进行，R7未定义。**
+
+## R6 源码复核第二批（2026-11-16，不执行原生测试）
+
+**最新状态：R6仍未结案，CTest登记由16项增加为20项，当前分支新增R0–R6代码原生测试通过证据仍为0项。** 本轮直接补足四个可定位的代码/测试缺口：
+
+| R6新增或改造 | 实际代码 | 判据与证据边界 |
+|---|---|---|
+| 全行球面采样参考 | `tests/integration/test_r06_direction_rows_l3.cpp` | 读取已有独立 `verification/geometry/source_direction_levels_0_2.v1.json`，比较完整/缺损八面体及二十面体的0–2级**714行、2142坐标**，保持face和A/B/C/D源顺序，不再仅靠样本数与签名 |
+| 轨迹与球内近度 | `tests/integration/test_r06_trajectory_sphere.cpp` | 圆35帧与正弦600帧的原N分母、连续三点局部运动与两端无效帧、SO(3)转角、球心/偏心近度、R乘本地视线、边界/非单位视线非成功 |
+| Adaptive刷新成功/回滚 | `IAdaptiveStepSolver` 窄接口 + `AdaptiveMfaSession` 借用注入（默认真实求解器不变）+ `tests/contracts/test_r06_adaptive_periods.cpp` | MATLAB 1-based帧2–22，周期1/5/11/21在**主求解前**刷新；比较的`dumi`更新不提交；period5比较失败和主求解失败均原子回滚、可在原帧重试；Session禁复制/移动以保护内部指针 |
+| Linux输出安全负例 | `tests/integration/test_r06_io_safety.cpp` | build目录隔离：重复RunId、非法名字、`origin`/输出根/仓库根符号链接拒绝；不操作真实`origin/**`或用户结果 |
+
+`CMakeLists.txt`登记四个新CTest且修复先前两条路径中错误转义的 `${CMAKE_CURRENT_SOURCE_DIR}`（若不修复将无法正确展开源目录）；`build.sh`改为真实**全工程R6**范围及`build/r06-full`默认目录，加入`EGOMOTION_H11_APPROVED=YES`显式执行门禁，防止误把全工程构建当旧低阶SH构建。该开关只防误操作，**不是代替真实H-11审批**。本轮全部修改为源文件与静态复核，没有执行构建、CTest、MAT读写或数值实验。
+
+**结案仍需**：H-11明确批准后才可原生配置/编译/CTest并逐项修复；完成真实MAT Reader/Writer安全竞态与独立文件SHA、历史L2逐值、R3/R4完整runner与必要L4统计、源SHRotate相位/参数动作限定、DEC-005/006最终数值与性能资格。新增20项“注册”不等于20项“通过”；未增设R7，也未改变历史源数据。
