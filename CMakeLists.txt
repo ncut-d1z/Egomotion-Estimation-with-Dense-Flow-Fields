@@ -382,6 +382,17 @@ if(BUILD_TESTING)
     set_tests_properties(r06_trajectory_sphere_geometry PROPERTIES
         LABELS "r06;trajectory;sphere;analytic" TIMEOUT 60)
 
+    # Session success is observable with a deterministic injected StepSolver.
+    # This tests period-1/5/11/21, discarded dumi and two failure injection
+    # sites without performing scientific numerical experiments.
+    add_executable(test_r06_adaptive_periods
+        tests/contracts/test_r06_adaptive_periods.cpp)
+    target_link_libraries(test_r06_adaptive_periods PRIVATE egomotion_estimators)
+    target_compile_features(test_r06_adaptive_periods PRIVATE cxx_std_17)
+    add_test(NAME r06_adaptive_periods_atomic_commit COMMAND test_r06_adaptive_periods)
+    set_tests_properties(r06_adaptive_periods_atomic_commit PROPERTIES
+        LABELS "r06;adaptive;periodic;success-transaction;synthetic" TIMEOUT 60)
+
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
