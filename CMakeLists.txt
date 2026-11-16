@@ -299,6 +299,30 @@ if(BUILD_TESTING)
         "${CMAKE_CURRENT_BINARY_DIR}/r05_synthetic_analysis")
     set_tests_properties(r05_analysis_source_contract PROPERTIES
         LABELS "r05;analysis;synthetic-only" TIMEOUT 60)
+    # R6 source-only regressions. Register now, execute only after H-11.
+    add_executable(test_r06_sampling_flow tests/integration/test_r06_sampling_flow.cpp)
+    target_link_libraries(test_r06_sampling_flow PRIVATE
+        egomotion_sampling egomotion_simulation)
+    target_compile_features(test_r06_sampling_flow PRIVATE cxx_std_17)
+    add_test(NAME r06_sampling_flow_contract COMMAND test_r06_sampling_flow)
+    set_tests_properties(r06_sampling_flow_contract PROPERTIES
+        LABELS "r06;sampling;flow;synthetic-only" TIMEOUT 60)
+
+    add_executable(test_r06_session_contract tests/contracts/test_r06_session_contract.cpp)
+    target_link_libraries(test_r06_session_contract PRIVATE
+        egomotion_estimators egomotion_experiments)
+    target_compile_features(test_r06_session_contract PRIVATE cxx_std_17)
+    add_test(NAME r06_adaptive_session_transaction COMMAND test_r06_session_contract)
+    set_tests_properties(r06_adaptive_session_transaction PROPERTIES
+        LABELS "r06;adaptive;session;failure-atomic" TIMEOUT 60)
+
+    add_executable(test_r06_analysis_segments tests/integration/test_r06_analysis_segments.cpp)
+    target_link_libraries(test_r06_analysis_segments PRIVATE egomotion_analysis)
+    target_compile_features(test_r06_analysis_segments PRIVATE cxx_std_17)
+    add_test(NAME r06_analysis_segments_smoothing COMMAND test_r06_analysis_segments)
+    set_tests_properties(r06_analysis_segments_smoothing PROPERTIES
+        LABELS "r06;analysis;source-index;synthetic-only" TIMEOUT 60)
+
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
