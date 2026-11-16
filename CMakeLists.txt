@@ -361,6 +361,27 @@ if(BUILD_TESTING)
     set_tests_properties(r06_sh_argument_action PROPERTIES
         LABELS "r06;sh;so3;argument-action" TIMEOUT 60)
 
+    # R6 complete ordered source sampling: 714 rows / 2142 coordinates from
+    # the pre-existing independent geometry reference (unapproved L3).
+    add_executable(test_r06_direction_rows_l3
+        tests/integration/test_r06_direction_rows_l3.cpp)
+    target_link_libraries(test_r06_direction_rows_l3 PRIVATE egomotion_sampling)
+    target_compile_features(test_r06_direction_rows_l3 PRIVATE cxx_std_17)
+    add_test(NAME r06_directions_all_ordered_l3
+        COMMAND test_r06_direction_rows_l3
+        "\${CMAKE_CURRENT_SOURCE_DIR}/verification/geometry/source_direction_levels_0_2.v1.json")
+    set_tests_properties(r06_directions_all_ordered_l3 PROPERTIES
+        LABELS "r06;geometry;sampling;ordered-l3-candidate" TIMEOUT 60)
+
+    # R6 hand-derived source trajectory, SO(3) kinematics and sphere nearness.
+    add_executable(test_r06_trajectory_sphere
+        tests/integration/test_r06_trajectory_sphere.cpp)
+    target_link_libraries(test_r06_trajectory_sphere PRIVATE egomotion_simulation)
+    target_compile_features(test_r06_trajectory_sphere PRIVATE cxx_std_17)
+    add_test(NAME r06_trajectory_sphere_geometry COMMAND test_r06_trajectory_sphere)
+    set_tests_properties(r06_trajectory_sphere_geometry PROPERTIES
+        LABELS "r06;trajectory;sphere;analytic" TIMEOUT 60)
+
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
