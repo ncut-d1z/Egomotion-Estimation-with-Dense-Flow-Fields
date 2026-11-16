@@ -144,4 +144,78 @@ int main() {
     require(!rates.writeCurrentResults(output).hasValue(),
             "UpdateRates must refuse HistoricalOnly fields before MAT IO");
     require(rates_writer.calls==0,"Illegal save set must not reach Writer");
+
+    // R6: receipts must contain a verified per-file digest, not just a
+    // successful Writer status. Invalid evidence cannot create Complete.
+    FakeWriter unverified_writer;
+    FakePublisher unverified_publisher;
+    RunContext unverified(RunId{"test_unverified_sha"},
+        std::make_unique<FixedRandom>(),unverified_writer,
+        unverified_publisher,std::filesystem::path("/R5-UNIT-ONLY"),
+        provenance(),ExperimentKind::AdaptiveInitialization,1);
+    require(unverified.noteCompletedMemory(1,33).hasValue(),
+            "Synthetic in-memory run must set truthful completed count");
+    require(unverified.writeCurrentResults(data).hasValue(),
+            "Synthetic Writer must accept all current MATLAB fields");
+    unverified_writer.receipts[0].sha256="NOT_A_VERIFIED_SHA256";
+    auto denied_sha=unverified.publishCompleteOutcome();
+    require(!denied_sha.hasValue()&&unverified_publisher.contents.empty(),
+            "Missing/invalid SHA256 evidence must block Complete publication");
+    require(unverified.publishFailureRecord(denied_sha.error()).hasValue(),
+            "Unverified receipts must remain in an Incomplete audit, not disappear");
+    require(unverified_publisher.contents.find("\"completeness\":\"Incomplete\"")!=
+                std::string::npos &&
+            unverified_publisher.contents.find("\"sha256\":null")!=
+                std::string::npos,
+            "Incomplete Manifest must identify unverified SHA as null");
+    require(!unverified.publishCompleteOutcome().hasValue(),
+            "Published Incomplete Manifest must permanently bar later Complete");
+
+    // R6: a Publisher failure is independent of scientific success. In
+    // particular, all MAT receipts do NOT authorize a success RunOutcome
+    // when manifest.json publication/durability cannot be confirmed.
+    FakeWriter complete_writer;
+    FakePublisher unreliable_publisher;
+    unreliable_publisher.fail=true;
+    RunContext incomplete(RunId{"test_manifest_failure"},
+        std::make_unique<FixedRandom>(),complete_writer,
+        unreliable_publisher,std::filesystem::path("/R5-UNIT-ONLY"),
+        provenance(),ExperimentKind::AdaptiveInitialization,1);
+    require(incomplete.noteCompletedMemory(1,33).hasValue()&&
+            incomplete.writeCurrentResults(data).hasValue(),
+            "Before publication all synthetic scientific/Writer inputs must be ready");
+    auto cannot_complete=incomplete.publishCompleteOutcome();
+    require(!cannot_complete.hasValue()&&unreliable_publisher.contents.empty(),
+            "Injected failed Manifest write must never claim a Complete outcome");
+    bool underlying_mat_writer=false;
+    for(const auto& cause:cannot_complete.error().detail.causes)
+        underlying_mat_writer|=(cause.domain=="MatErrorCode"&&
+                                cause.code=="WriteFailed");
+    require(underlying_mat_writer,
+            "Manifest publication failure must retain underlying MAT I/O cause");
+    unreliable_publisher.fail=false;
+    require(incomplete.publishFailureRecord(cannot_complete.error()).hasValue(),
+            "Independent failure record should remain publishable when backend recovers");
+    require(unreliable_publisher.contents.find("\"completeness\":\"Incomplete\"")!=
+                std::string::npos &&
+            unreliable_publisher.contents.find("\"completeness\":\"Complete\"")==
+                std::string::npos,
+            "After a failed Complete publication only truthful Incomplete is allowed");
+
+    // An executable built from an unverified/dirty source identity may write
+    // an Incomplete audit but must not attach a fictional 40-hex repo_sha.
+    auto missing_provenance=provenance();
+    missing_provenance.repository_commit_sha="UNVERIFIED_BUILD_SOURCE";
+    FakeWriter dirty_writer;
+    FakePublisher dirty_publisher;
+    RunContext dirty(RunId{"test_dirty_source"},
+        std::make_unique<FixedRandom>(),dirty_writer,
+        dirty_publisher,std::filesystem::path("/R5-UNIT-ONLY"),
+        std::move(missing_provenance),ExperimentKind::AdaptiveInitialization,1);
+    require(dirty.noteCompletedMemory(1,33).hasValue()&&
+            dirty.writeCurrentResults(data).hasValue(),
+            "Synthetic unverified-build input setup failed");
+    auto blocked=dirty.publishCompleteOutcome();
+    require(!blocked.hasValue()&&dirty_publisher.name.empty(),
+            "Unverified executable source identity must block Complete Manifest");
 }
