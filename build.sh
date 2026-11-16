@@ -60,8 +60,8 @@ done
 # Fail closed: R6 now builds every production target and runs the complete
 # registered CTest suite. Do not run it under the former SH-only permission.
 if [[ "${EGOMOTION_H11_APPROVED:-}" != "YES" ]]; then
-    printf 'ERROR: R6 native configure/build/CTest requires separate H-11 approval.\\n' >&2
-    printf 'After authorization, set EGOMOTION_H11_APPROVED=YES explicitly.\\n' >&2
+    printf 'ERROR: R6 native configure/build/CTest requires separate H-11 approval.\n' >&2
+    printf 'After authorization, set EGOMOTION_H11_APPROVED=YES explicitly.\n' >&2
     exit 2
 fi
 
