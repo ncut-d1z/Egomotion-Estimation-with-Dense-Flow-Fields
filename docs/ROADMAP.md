@@ -22,3 +22,18 @@
 3. 使用 L2历史MAT、独立L3参考和必要L4统计做数值复现；**不要求MATLAB/Octave/L1**。最终容差与性能、设计冻结、发布分别走已有延期批准，见 [TEST_PLAN](TEST_PLAN.md) 和 [TODO](TODO.md)。
 
 **状态（2026-11-16，源码静态核查）**：R0–R5业务C++实现范围已具备源码级闭合条件；**R5代码实现完成（未原生验证）**，不能把此前R5早期记录当成当前HEAD状态。实有`RunDirectory`独占RunId与dirfd锚定、MAT v5 Writer及回读/SHA-256/no-overwrite、`RunTextPublisher`、Complete/Failed/Incomplete Manifest、五实验Runner真实入口、四类只读Analyzer、结构化JSON、可选SVG，以及CLI Composition Root装配。R6已为这些源文件接入CMake，保留原有3项SH及R01/R02/R05测试，并新增3项**尚未执行**的合成合同测试（采样与光流/RNG、Adaptive Session失败原子性、Analysis分段与平滑），当前CTest登记共12项。**本分支R0–R6新源码没有原生构建、CTest、MAT读写或数值验收通过证据**；严格未更改`origin/**`，不据旧582/582探针或固定SHA的SH 3/3推断本HEAD通过。后续需H-11独立授权方可执行R6统一构建/CTest/安全负例、L2历史MAT、独立L3和必要L4统计验证；特别核SHRotate源组合/物理球谐作用、DEC-005/006容差与性能、基线批准和发布。真实测试若发现失败应重开对应代码批次修复。
+
+## R6 本轮代码与测试源码补充（2026-11-16，仅写源码）
+
+**复核结论：R6 尚未完成，不进入 R7。** 原路线图只定义 R0–R6；在 R6 测试源码准备、批准及真实执行闭环之前，不擅自设立 R7。当前 CTest **仅登记 16 项，执行证据 0 项（对于当前 R0–R6 新代码）**；由此前登记12项增加4项，均尚未编译、运行：
+
+| 新R6登记 | 实际源码 | 边界 |
+|---|---|---|
+| `r06_kvd_independent_l3` | `tests/integration/test_r06_kvd_l3.cpp` | 固定6方向两组及8方向负均值、Franz分母/响应、Original/Modified近度/翻号/迭代停止/末次尺度；从 `verification/kvd/*.v1.json` 的独立数学参考选取数值，L3候选未批准 |
+| `r06_adaptive_step_independent_l3` | `tests/integration/test_r06_adaptive_l3.cpp` | 非对称9方向正/负均值、旧系数、M1–M4、6×6 rhs/解、MSE、新near/九系数；参考 `verification/adaptive/asymmetric_signed_near_one_step.v1.json`，未批准 |
+| `r06_historical_mat_readonly_schema` | `tests/integration/test_r06_archive_readonly.cpp` | 原582 MAT的只读metadata、单变量double解码及5类shape频数；计算每文件SHA-256但**没有独立预批准SHA进行比对，不是L2逐值Golden** |
+| `r06_sh_argument_action` | `tests/integration/test_r06_sh_adapter.cpp` | AN-G08物理90°SO(3)、低阶SH对参数R/Rᵀ的反向鉴别、旋转-逆旋转往返；**不宣称源SHRotate逐项等价** |
+
+同时修复 `tests/integration/test_r01_cli.cpp` 中R0占位错误消息/退出码的过时断言，增加**纯数值 analyze 能成功且可选 SVG 缺席时 plot 单独失败**的替身断言。旧3项球谐CTest与其他R0/R2/R5/R6既有登记保留，未修改任何 `origin/**`。
+
+**仍未完成的R6义务**：实际 Debian/Ubuntu CMake配置/编译/CTest/异常负例与日志（H-11未授权）；真正跨目录L2逐值独立数值对照/预期SHA、完整L3逐节点与源SHRotate动作差异限定验证、原始实验与R4多帧/8-run行为、必要L4统计及错误修复、最终DEC-005/006审批与工程冻结发布。以上不得以“已增加测试源码”标为已验证通过；真实执行如发现错误须重新打开相应代码批次。**R6代码/测试准备继续进行，R7未定义。**
