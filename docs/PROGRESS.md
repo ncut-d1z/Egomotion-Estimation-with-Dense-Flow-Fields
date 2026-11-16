@@ -72,6 +72,19 @@
 
 **残余资格与代码状态**：当前R4的三种在内存中的实验计算流程已按原入口结构静态闭合，但由于H-11未授权，本轮**没有**执行编译、CTest、真实MAT读写、MATLAB、Wolfram或数值实验，也未更改`CMakeLists.txt`。该判断不是原源与新物理球谐旋转作用逐值等价的声明（旧`transfor_koeff/SHRotate`按[球谐LLD](design/harmonics.md)存在明确相位/动作差异），亦不保证数值病态、异常和性能行为；R6必须独立限定验证，不通过应重开代码修正。真实CMake目标/测试源码收尾全部留R6，`origin/**`保持只读。
 
+## 0.5 R5代码范围完成静态核查，继续R6测试源码（2026-11-16）
+
+**本轮核查起点**：`0d3b6071844ac5799ded0fed8553d31e661cb40b`；依据真实文件与近十次R5/R6提交复核，而非沿用§0.4和ROADMAP中早期R5快照。核实R5的五种业务Runner全部连接到真实CLI Composition Root，MAT v5 Writer带Linux dirfd锚定、禁止覆盖、回读和SHA-256证据；RunContext具有全字段白名单与shape校验、Complete Manifest资格及独立Failed/Incomplete失败记录。四类只读Analyzer分别处理Bias、Adaptive Initialization、Comparison、UpdateRates，输出结构化JSON；SVG适配只消费数值曲线，不阻塞独立`analyze`。**R5在ROADMAP定义的“代码实现部分”静态闭合，尚不表示已编译或原生验收**。源码发现仍须在R6用真实测试核对的安全竞态、数据等价和异常行为，若失败则重新打开R5修复。
+
+**R6本轮真实提交的源码工作（3个新测试文件，1次CMake登记）**：
+
+- `tests/integration/test_r06_sampling_flow.cpp`：三类采样器level 0/1/2计数、单位视线和缺损八面体逐行保序、getvektor两次uniform、Bias内存近度与末项标量、零高斯3N正态抽样、NoNoise区分、理想流分量抵消与component proportional噪声、RNG耗尽错误链。
+- `tests/contracts/test_r06_session_contract.cpp`：三种Adaptive Session在非法帧次序/非有限旋转/空流求解失败时不推进帧、不提交主球谐系数或四组周期基线；验证根因ErrorFrame和Comparison非法参数不消耗RNG。
+- `tests/integration/test_r06_analysis_segments.cpp`：合成600行ratio与误差数组，检查Comparison固定四段边界、阈值等值不触发跳变、平移/ratio的501个连续点、UpdateRates旋转局部分段窗口及零边缘、平移全600行平滑后裁剪，以及非法分段和NaN ratio的明确拒绝。
+- `CMakeLists.txt`：将以上3项登记为`r06_sampling_flow_contract`、`r06_adaptive_session_transaction`、`r06_analysis_segments_smoothing`，原有9项CTest登记保持不变，**共12项登记，不等于通过12项**。
+
+**严格未执行项**：未运行CMake configure、编译、CTest、CLI、真实MAT读写、MATLAB/Octave、Wolfram、L2/L3/L4、性能或数值测试；没有MAT生成或改动`origin/**`。H-11执行权限未得到本轮授权。R6下一阶段仍须在获许可后统一原生构建并修复发现的实际错误，执行真实Writer路径/竞态负例与完整数据来源验证，补齐独立L3逐节点、历史L2/必要L4，核验SHRotate相位/动作差异及DEC-005/006、冻结和最终验收。此前固定SHA的3项SH CTest与旧582/582探针不能冒充本HEAD新增测试的PASS证据。
+
 ## 1. 当前边界
 
 仓库 `ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields`，分支 `dev-plan-P0-P1-mat-dictionary-probe`；不合并main、不发布。`origin/**` 原45份.m与582份.mat只读；不要求执行MATLAB/Octave或获得L1。既有66REQ/66TC/98P、27条HLD设计边不变；数学子案例不新增正式TC。
