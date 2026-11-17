@@ -91,13 +91,13 @@ std::vector<double> select(const std::vector<double>& v,
                                v.begin()+static_cast<std::ptrdiff_t>(last));
 }
 AnalysisSeries makeCurve(const std::filesystem::path& root,
-                         const std::string& variable,
+                         const DenseDoubleArray& source,
                          const std::string& name,const std::string& panel,
                          std::size_t from,std::size_t to,
                          std::vector<double> y,
                          const std::string& unit="angle error in degree") {
     auto curve=series(name,panel,matlabRange(from,to),std::move(y),
-                      {provenance(root,variable,1,"y_values")},from,to);
+                      {provenance(root,source,1,"y_values")},from,to);
     curve.y_unit=unit;
     curve.y_scale="log"; // original comparison uses log-y for angle/ratio
     return curve;
@@ -143,11 +143,11 @@ DatasetResult adaptive(AnalysisKind kind,const std::filesystem::path& root,
         auto without_r=load(reader,root,"alleohnerotfehler",35,1);
         if(!without_r.hasValue())return DatasetResult::failure(std::move(without_r).error());
         out.source_analysis_blob="8816675ef5a4eb6767919df36ee11f95de36dac6";
-        auto t=makeCurve(root,"allemittransfehler","mittrans_1_to_13",
+        auto t=makeCurve(root,trans.value(),"mittrans_1_to_13",
                          "initialisation-semilogy",1,13,
                          select(column(trans.value(),0),1,13));
         t.y_scale="log";
-        auto r=makeCurve(root,"allemitrotfehler","mitrot_all",
+        auto r=makeCurve(root,rot.value(),"mitrot_all",
                          "initialisation-semilogy",1,35,
                          column(rot.value(),0));
         out.curves.push_back(std::move(t));
@@ -175,27 +175,27 @@ DatasetResult adaptive(AnalysisKind kind,const std::filesystem::path& root,
         const auto without_rotation=column(without_r.value(),0);
         for(std::size_t i=0;i<segments.value().size();++i) {
             const auto& s=segments.value()[i];
-            auto a=makeCurve(root,"alleohnerotfehler",
+            auto a=makeCurve(root,without_r.value(),
                              "without_rotation_segment_"+std::to_string(i+1),
                              "rotation",s.begin,s.end,
                              select(without_rotation,s.begin,s.end));
-            a.inputs.push_back(provenance(root,"rottransratio",1,"segment_threshold"));
-            auto b=makeCurve(root,"allemitrotfehler",
+            a.inputs.push_back(provenance(root,ratio.value(),1,"segment_threshold"));
+            auto b=makeCurve(root,rot.value(),
                              "with_rotation_segment_"+std::to_string(i+1),
                              "rotation",s.begin,s.end,
                              select(with_rotation,s.begin,s.end));
-            b.inputs.push_back(provenance(root,"rottransratio",1,"segment_threshold"));
+            b.inputs.push_back(provenance(root,ratio.value(),1,"segment_threshold"));
             out.curves.push_back(std::move(a));
             out.curves.push_back(std::move(b));
         }
-        out.curves.push_back(makeCurve(root,"alleohnetransfehler",
+        out.curves.push_back(makeCurve(root,without_t.value(),
             "without_translation","translation",50,550,
             select(column(without_t.value(),0),50,550)));
-        out.curves.push_back(makeCurve(root,"allemittransfehler",
+        out.curves.push_back(makeCurve(root,trans.value(),
             "with_translation","translation",50,550,
             select(column(trans.value(),0),50,550)));
         for(const std::string panel:{"rotation","translation"}) {
-            auto ratio_curve=makeCurve(root,"rottransratio",
+            auto ratio_curve=makeCurve(root,ratio.value(),
                 "ratio_"+panel,panel,50,550,select(ratios,50,550),"rot/trans flow ratio");
             out.curves.push_back(std::move(ratio_curve));
         }
@@ -219,10 +219,10 @@ DatasetResult adaptive(AnalysisKind kind,const std::filesystem::path& root,
             const auto from=s.begin+half,to=s.end-half;
             const auto plotted=half?select(smoothed,half+1,smoothed.size()-half):
                                     smoothed;
-            auto curve=makeCurve(root,"allemitrotfehler",
+            auto curve=makeCurve(root,rot.value(),
                 "rotation_period_"+std::to_string(col+1)+"_segment_"+
                     std::to_string(z+1),"rotation",from,to,plotted);
-            curve.inputs.push_back(provenance(root,"rottransratio",1,"segment_threshold"));
+            curve.inputs.push_back(provenance(root,ratio.value(),1,"segment_threshold"));
             // many_parameter.m 使用 plot；只有 Comparison/Initialization 为 log-y。
             curve.y_scale="linear";
             curve.smoothing_half_window=half;
@@ -235,7 +235,7 @@ DatasetResult adaptive(AnalysisKind kind,const std::filesystem::path& root,
         const auto all=column(trans.value(),col);
         const std::size_t half=halfwindows[col];
         const auto smoothed=half?smoothSource(all,half):all;
-        auto curve=makeCurve(root,"allemittransfehler",
+        auto curve=makeCurve(root,trans.value(),
             "translation_period_"+std::to_string(col+1),
             "translation",50,550,select(smoothed,50,550));
         curve.y_scale="linear";

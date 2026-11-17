@@ -77,12 +77,12 @@ DatasetResult bias(const std::filesystem::path& root,IResultReader& reader) {
             for(auto& group:totals)for(auto& values:group)values.assign(rows,0.0);
         }
         last_x=column(x.value(),0); // source overwrites x every k
-        if(k+1==dirs.size())provenance_x=provenance(dirs[k],"xwerte",k+1,"x_last");
+        if(k+1==dirs.size())provenance_x=provenance(dirs[k],x.value(),k+1,"x_last");
         for(std::size_t kind=0;kind<ys.size();++kind){
             const std::string name=ys[kind];
             auto y=load(reader,dirs[k],name,rows,3);
             if(!y.hasValue())return DatasetResult::failure(std::move(y).error());
-            provenance_y[kind].push_back(provenance(dirs[k],name,k+1,"y_member"));
+            provenance_y[kind].push_back(provenance(dirs[k],y.value(),k+1,"y_member"));
             for(std::size_t c=0;c<3;++c)
                 for(std::size_t row=0;row<rows;++row)
                     totals[kind][c][row]+=y.value().values_column_major[c*rows+row];

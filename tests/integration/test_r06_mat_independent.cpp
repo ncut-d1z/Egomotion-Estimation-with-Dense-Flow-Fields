@@ -64,6 +64,8 @@ void checkFile(const fs::path& root,const std::string& relative,const std::strin
     const auto decoded=io::MatResultReader{}.readNamed(path,name);
     require(decoded.hasValue(),"Production Reader failed: "+relative);
     const auto& value=decoded.value();
+    require(value.source_mat_sha256&&*value.source_mat_sha256==expected_sha,
+            "Decoded snapshot identity differs from independent fixed MAT inventory: "+relative);
     require(value.info.dimensions==std::vector<std::size_t>({rows,cols})&&
             value.info.original_class_type==kDoubleClass&&value.info.original_data_type==kDouble&&
             !value.info.is_complex&&!value.info.is_logical&&

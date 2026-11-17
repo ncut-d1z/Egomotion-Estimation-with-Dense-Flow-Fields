@@ -71,11 +71,12 @@ std::vector<double> column(const DenseDoubleArray& array,std::size_t col) {
     return std::vector<double>(first,first+static_cast<std::ptrdiff_t>(rows));
 }
 AnalysisInput provenance(const std::filesystem::path& root,
-                         std::string name,std::size_t matlab_run,
+                         const DenseDoubleArray& source,std::size_t matlab_run,
                          std::string role) {
     AnalysisInput p;
-    p.path=root/(name+".mat");
-    p.variable=std::move(name);
+    p.path=root/(source.info.name+".mat");
+    p.variable=source.info.name;
+    p.mat_sha256=source.source_mat_sha256;
     p.matlab_run_ordinal=matlab_run;
     p.role=std::move(role);
     return p;

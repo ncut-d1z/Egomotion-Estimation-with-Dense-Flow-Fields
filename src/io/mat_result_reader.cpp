@@ -1,5 +1,6 @@
 #include "egomotion/io/mat_result_reader.hpp"
 #include "mat_container_validation.hpp"
+#include "mat_read_snapshot.hpp"
 
 #include <matio.h>
 #include <fcntl.h>
@@ -31,6 +32,11 @@ struct VariableCloser {
 };
 using MatHandle = std::unique_ptr<mat_t, MatCloser>;
 using VariableHandle = std::unique_ptr<matvar_t, VariableCloser>;
+struct MatInput {
+    std::optional<detail::MatReadSnapshot> snapshot;
+    MatHandle handle;
+    mat_t* get() const noexcept{return handle.get();}
+};
 struct ReadDescriptor {
     int fd=-1;
     ~ReadDescriptor(){if(fd>=0)::close(fd);}
@@ -121,23 +127,28 @@ MatVariableInfo describe(const matvar_t& value, const std::string& name) {
     return info;
 }
 
-Result<MatHandle, MatErrorCode> openReadOnly(const fs::path& path,bool verify_container=false,
+Result<MatInput, MatErrorCode> openReadOnly(const fs::path& path,bool verify_container=false,
                                            std::string_view variable={}) {
     if (path.empty() || path.native().find('\0') != std::string::npos)
-        return fail<MatHandle>(MatErrorCode::MissingFile, ErrorStage::Read,
+        return fail<MatInput>(MatErrorCode::MissingFile, ErrorStage::Read,
                                path, "MAT path is empty or contains NUL");
     errno = 0;
-    // 完整读取先固定文件身份；容器校验与 matio 不因路径替换而读到不同文件。
+    // 完整数值读取捕获并封存字节；元数据入口仍不读取数值载荷。
     ReadDescriptor descriptor;
+    MatInput input;
     if(verify_container)descriptor.fd=::open(path.c_str(),O_RDONLY|O_CLOEXEC|O_NONBLOCK);
     if(descriptor.fd>=0){
         struct stat info{};
         if(::fstat(descriptor.fd,&info)!=0||!S_ISREG(info.st_mode))
-            return fail<MatHandle>(MatErrorCode::InvalidMatHeader,ErrorStage::Read,path,
+            return fail<MatInput>(MatErrorCode::InvalidMatHeader,ErrorStage::Read,path,
                                    "Numeric MAT input must be a regular file",std::string(variable));
+        auto snapshot=detail::snapshotMatInput(descriptor.fd,path,variable);
+        if(!snapshot.hasValue())
+            return Result<MatInput,MatErrorCode>::failure(std::move(snapshot).error());
+        input.snapshot.emplace(std::move(snapshot).value());
     }
     const std::string read_path=verify_container?
-        "/proc/self/fd/"+std::to_string(descriptor.fd):path.string();
+        "/proc/self/fd/"+std::to_string(input.snapshot?input.snapshot->fd():-1):path.string();
     MatHandle handle(verify_container&&descriptor.fd<0?nullptr:
                      Mat_Open(read_path.c_str(), MAT_ACC_RDONLY));
     if (!handle) {
@@ -150,15 +161,16 @@ Result<MatHandle, MatErrorCode> openReadOnly(const fs::path& path,bool verify_co
             ? MatErrorCode::PermissionDenied
             : (saved_errno == ENOENT || (!status_error && !still_exists)
                 ? MatErrorCode::MissingFile : MatErrorCode::InvalidMatHeader);
-        return fail<MatHandle>(code, ErrorStage::Read, path,
+        return fail<MatInput>(code, ErrorStage::Read, path,
                                "Unable to open MAT file for reading");
     }
     if(verify_container&&Mat_GetVersion(handle.get())==MAT_FT_MAT5){
-        auto checked=detail::validateMat5Container(descriptor.fd,path,variable);
+        auto checked=detail::validateMat5Container(input.snapshot->fd(),path,variable);
         if(!checked.hasValue())
-            return Result<MatHandle,MatErrorCode>::failure(std::move(checked).error());
+            return Result<MatInput,MatErrorCode>::failure(std::move(checked).error());
     }
-    return Result<MatHandle, MatErrorCode>::success(std::move(handle));
+    input.handle=std::move(handle);
+    return Result<MatInput, MatErrorCode>::success(std::move(input));
 }
 std::size_t occurrences(char* const* directory, std::size_t count,
                         std::string_view target) {
@@ -212,15 +224,19 @@ Result<DenseDoubleArray, MatErrorCode> owningDouble(const matvar_t& variable,
                                       path, "Cannot allocate owning MAT payload", name);
     }
 }
-Result<DenseDoubleArray, MatErrorCode> readWithHandle(mat_t* mat,
+Result<DenseDoubleArray, MatErrorCode> readWithHandle(const MatInput& mat,
                                                       const fs::path& path,
                                                       const std::string& name) {
-    VariableHandle value(Mat_VarRead(mat, name.c_str()));
+    VariableHandle value(Mat_VarRead(mat.get(), name.c_str()));
     if (!value)
         return fail<DenseDoubleArray>(MatErrorCode::CorruptCompressedData,
                                       ErrorStage::Decode, path,
                                       "matio could not decode named MAT variable", name);
-    return owningDouble(*value, path, name);
+    auto decoded=owningDouble(*value,path,name);
+    if(!decoded.hasValue())return decoded;
+    auto array=std::move(decoded).value();
+    if(mat.snapshot)array.source_mat_sha256=mat.snapshot->sha256();
+    return Result<DenseDoubleArray,MatErrorCode>::success(std::move(array));
 }
 }  // namespace
 
@@ -230,7 +246,7 @@ MatResultReader::scanFile(const std::filesystem::path& path, ScanMode mode) cons
     if (!opened.hasValue())
         return Result<MatFileScan, MatErrorCode>::failure(
             std::move(opened).error());
-    MatHandle mat = std::move(opened).value();
+    MatInput mat = std::move(opened).value();
     std::size_t count = 0;
     char* const* directory = Mat_GetDir(mat.get(), &count);
     if (!directory || count == 0)
@@ -308,7 +324,7 @@ MatResultReader::readNamed(const std::filesystem::path& path,
     if (!opened.hasValue())
         return Result<DenseDoubleArray, MatErrorCode>::failure(
             std::move(opened).error());
-    MatHandle mat = std::move(opened).value();
+    MatInput mat = std::move(opened).value();
     std::size_t count = 0;
     char* const* directory = Mat_GetDir(mat.get(), &count);
     if (!directory || count == 0)
@@ -327,7 +343,7 @@ MatResultReader::readNamed(const std::filesystem::path& path,
         return fail<DenseDoubleArray>(MatErrorCode::UnsupportedClassOrType,
                                       ErrorStage::Decode, path,
                                       "Numeric MAT reader supports only MAT v5", std::string(variable));
-    return readWithHandle(mat.get(), path, std::string(variable));
+    return readWithHandle(mat, path, std::string(variable));
 }
 
 Result<DenseDoubleArray, MatErrorCode>
@@ -342,7 +358,7 @@ MatResultReader::readFirstCompatible(const std::filesystem::path& path) const {
     if (!opened.hasValue())
         return Result<DenseDoubleArray, MatErrorCode>::failure(
             std::move(opened).error());
-    MatHandle mat = std::move(opened).value();
+    MatInput mat = std::move(opened).value();
     std::size_t count = 0;
     char* const* directory = Mat_GetDir(mat.get(), &count);
     if (!directory || count == 0)
@@ -356,7 +372,7 @@ MatResultReader::readFirstCompatible(const std::filesystem::path& path) const {
                                       ErrorStage::Decode, actual,
                                       "Numeric MAT reader supports only MAT v5",
                                       directory[0]);
-    return readWithHandle(mat.get(), actual, directory[0]);
+    return readWithHandle(mat, actual, directory[0]);
 }
 
 std::string MatResultReader::libraryVersion() {

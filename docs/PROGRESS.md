@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 MAT封存读取与摘要（2026-11-17）
+
+**准备 `[HUMAN-EXECUTE/APPROVE]`，尚未执行。** 完整数值Reader通过只读源fd捕获匿名封存副本，校验/摘要/解码使用同一字节；Analyzer从实际数组传递已有JSON摘要字段，合成未知来源保持空。新增30种named/compatible快照场景及metadata例，扩展582固定SHA、历史Bias与有限分析摘要核验，登记48项待远端检查点后构建/CTest。详见 [范围与准备](reviews/R6_MAT_SNAPSHOT_2026-11-17.md)，不改原MAT/数值策略或正式资格，R6未结案。
+
 ## 最新接续：R6 失败诊断的RunId（2026-11-17）
 
 **实测 `[HUMAN-EXECUTE/APPROVE]`：`9eb831531ce04f2bfab8bf813011c36a451ee409` 无诊断构建、47/47 CTest（MAT5/5，其余42/42）。** 8次装配调用/63项检查、独立RunContext和真实Adaptive失败身份断言通过；stderr与Manifest保留完整错误链及真实RunId。三个Adaptive仍因既有数值边界Incomplete且无MAT，原始输入SHA不变。RunId `r6-runid-diagnostics-20261117-ccfLwnss`，见 [实测记录](reviews/R6_RUNID_DIAGNOSTICS_2026-11-17.md)。继续45源当前映射与MAT输入稳定摘要等独立工作；R6未结案。

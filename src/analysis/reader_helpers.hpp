@@ -21,7 +21,7 @@ ArrayResult load(IResultReader& reader,const std::filesystem::path& root,
                  std::size_t expected_cols=0);
 std::vector<double> column(const DenseDoubleArray& array,std::size_t col);
 AnalysisInput provenance(const std::filesystem::path& root,
-                         std::string name,std::size_t matlab_run,
+                         const DenseDoubleArray& source,std::size_t matlab_run,
                          std::string role);
 AnalysisSeries series(std::string name,std::string panel,
                       std::vector<double> x,std::vector<double> y,

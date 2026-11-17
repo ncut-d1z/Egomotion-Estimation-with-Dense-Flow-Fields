@@ -94,6 +94,7 @@ find_package(ZLIB REQUIRED)
 
 add_library(egomotion_matio STATIC
     src/io/mat_result_reader.cpp
+    src/io/mat_read_snapshot.cpp
     src/io/mat_container_validation.cpp
     src/io/mat_payload_validation.cpp
     src/io/mat_data_dictionary.cpp
@@ -481,6 +482,16 @@ if(BUILD_TESTING)
         LABELS "r06;analysis;bias;readonly-archive;independent-l2-l3" TIMEOUT 180)
 
     add_executable(test_r06_reader_negative tests/integration/test_r06_reader_negative.cpp)
+    add_executable(test_r06_mat_snapshot tests/integration/test_r06_mat_snapshot.cpp)
+    target_link_libraries(test_r06_mat_snapshot PRIVATE egomotion_matio PkgConfig::MATIO)
+    foreach(symbol memfd_create pread write fcntl Mat_VarRead)
+        target_link_options(test_r06_mat_snapshot PRIVATE "LINKER:--wrap=${symbol}")
+    endforeach()
+    target_compile_options(test_r06_mat_snapshot PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_mat_snapshot_identity COMMAND test_r06_mat_snapshot
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_mat_snapshot")
+    set_tests_properties(r06_mat_snapshot_identity PROPERTIES
+        LABELS "r06;mat;snapshot;write-sandbox;synthetic-only" TIMEOUT 60)
     target_link_libraries(test_r06_reader_negative PRIVATE egomotion_matio PkgConfig::MATIO)
     target_compile_features(test_r06_reader_negative PRIVATE cxx_std_17)
     target_compile_options(test_r06_reader_negative PRIVATE -Wall -Wextra -Wpedantic)

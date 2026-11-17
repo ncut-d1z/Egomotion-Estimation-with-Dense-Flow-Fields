@@ -1,5 +1,7 @@
 # C++17 公共详细设计合同（跨模块 LLD）
 
+> **2026-11-17 接口候选增量，未冻结**：`DenseDoubleArray`尾部增加 `std::optional<std::string> source_mat_sha256`，表示产生当前解码值的封存原MAT字节摘要；纯合成或未知输入为空。值仍自拥有且无matio/fd，Reader三方法和既有JSON字段不变；这改变C++值布局，须重新构建依赖方，不承诺跨旧二进制ABI兼容。见 [实现范围与待执行验证](../reviews/R6_MAT_SNAPSHOT_2026-11-17.md)，不据AI实现签署DEC-008。
+
 > **跨模块合同草案 v1.3（补已实现SH叶子的局部Error/Result与公共错误链桥接约束；DEC-008已决定，公共头/编译/CTest未实施）。** 此处集中定义候选值类型、状态、错误与 ABI 风格，以免 MAT I/O、KvD、Adaptive、实验和分析各自使用不同的 Result、形状和退出码。最终签名必须经 P0.7/P0.8 与项目所有者审批后才能成为编码基线。
 
 ## 1. 适用范围与版本边界

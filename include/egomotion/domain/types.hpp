@@ -2,6 +2,7 @@
 
 #include <Eigen/Core>
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -45,6 +46,8 @@ struct MatVariableInfo {
 struct DenseDoubleArray {
     MatVariableInfo info;
     std::vector<double> values_column_major;
+    // 仅Reader完整解码的封存MAT字节身份；合成数组/未知来源保持空。
+    std::optional<std::string> source_mat_sha256;
 };
 
 struct FileEvidence {

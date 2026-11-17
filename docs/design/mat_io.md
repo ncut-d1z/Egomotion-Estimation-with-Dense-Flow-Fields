@@ -1,5 +1,7 @@
 # MAT I/O、路径安全与原始数据合同——详细设计草案
 
+> **2026-11-17 实现候选，未冻结/待测试**：完整读取新增匿名封存字节副本，校验、SHA-256和matio解码消费同一份副本；可观测到的复制期间改动明确失败。元数据inspect保持原边界。新增可选值字段 `DenseDoubleArray::source_mat_sha256`，无新Reader方法/错误枚举，见 [快照设计与测试准备](../reviews/R6_MAT_SNAPSHOT_2026-11-17.md)。后文旧“尚无可靠快照/摘要”是旧SHA事实，当前实现仍待本轮实测，不代表DEC-008冻结。
+
 > **2026-11-17 执行注记（[AI-EDIT]）**：`bc51fddca2a56d0dae988086824266b68ff995c2` 已通过29/29 CTest，含94个raw载荷、29个Reader边界及582 MAT/33,340值独立对照；见 [载荷修复](../reviews/R6_MAT_PAYLOAD_VALIDATION_2026-11-17.md)。下列旧“未实现/未运行”属于原设计时点，不覆盖此处固定SHA证据；更广类型、资源与正式验收/冻结仍未完成。
 
 > **LLD v0.16 候选草案（DEC-008-04完整错误包装链与05仅结构元数据检查已同步；仍未实现/运行）。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 L2 逐值/L3 独立参考验证仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。

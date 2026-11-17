@@ -127,8 +127,8 @@ void provenance(const AnalysisInput& input,const fs::path& root,
     ++contributors;
     check(input.path==root/std::to_string(run)/(name+".mat")&&input.variable==name&&
           input.matlab_run_ordinal==run&&input.role==role,"Incorrect curve contributor identity");
-    // Reader当前未绑定稳定读取快照的原文件摘要；独立测试摘要不能填进生产对象。
-    check(!input.mat_sha256,"Analyzer invented a digest without Reader snapshot binding");
+    check(input.mat_sha256&&*input.mat_sha256==sha256(input.path),
+          "Analyzer contributor must carry the digest bound to Reader's sealed snapshot");
 }
 void curveMetadata(const AnalysisSeries& curve,const std::string& name) {
     check(curve.name==name&&curve.panel=="bias-loglog","Incorrect Bias curve identity");
