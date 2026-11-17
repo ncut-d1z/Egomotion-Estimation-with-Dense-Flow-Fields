@@ -13,6 +13,8 @@
 namespace egomotion::analysis::detail {
 namespace {
 
+constexpr const char* kSmoothingSourceBlob="eced66659205a6386ec84723e37a46517d06c017";
+
 struct Segment {
     std::size_t begin=0; // source MATLAB 1-based, inclusive
     std::size_t end=0;
@@ -225,6 +227,7 @@ DatasetResult adaptive(AnalysisKind kind,const std::filesystem::path& root,
             curve.y_scale="linear";
             curve.smoothing_half_window=half;
             curve.smoothing_full=smoothed;
+            if(half>0)curve.helper_source_blob_shas.push_back(kSmoothingSourceBlob);
             out.curves.push_back(std::move(curve));
         }
     }
@@ -238,6 +241,7 @@ DatasetResult adaptive(AnalysisKind kind,const std::filesystem::path& root,
         curve.y_scale="linear";
         curve.smoothing_half_window=half;
         curve.smoothing_full=smoothed;
+        if(half>0)curve.helper_source_blob_shas.push_back(kSmoothingSourceBlob);
         out.curves.push_back(std::move(curve));
     }
     return DatasetResult::success(std::move(out));

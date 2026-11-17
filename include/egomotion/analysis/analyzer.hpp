@@ -52,6 +52,8 @@ struct AnalysisSeries {
     std::string y_scale="linear";
     std::string panel;
     std::vector<AnalysisInput> inputs;
+    // 原辅助 .m 的 Git blob 身份，与 MAT 文件的 SHA-256 分开。
+    std::vector<std::string> helper_source_blob_shas;
     std::size_t source_begin_matlab=0;
     std::size_t source_end_matlab=0;
     std::size_t smoothing_half_window=0;

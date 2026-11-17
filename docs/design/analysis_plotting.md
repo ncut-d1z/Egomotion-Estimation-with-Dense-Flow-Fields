@@ -196,6 +196,8 @@ for col in 1..4:
 关联原 `TC-F-BIAS-003`、`TC-I-ANALYSIS-001`、`TC-F-CLI-005`；必须分别核对数值13条序列的来源、单轴loglog显示、数据和视窗裁剪的区分。本段是源静态复核与未来测试合同，**未生成正式Plot/Analyzer、未运行MATLAB或CTest，也不批准新ABI字段**。
 ## 6. 候选 CurveSeries 输出 schema 与 C++17 错误合同
 
+**2026-11-17 实现接续（未冻结）**：既有 `helper_source_blob_shas` 候选现落实为 `AnalysisSeries` 的同名字段及 `egomotion-analysis-v1` 每曲线JSON数组；仅真正调用平滑的UpdateRates曲线填入 `kurveglaetten.m` 的Git blob，未平滑曲线为空。SVG逐曲线metadata同步记录。此为既有来源义务的实现，未改数值公式/阈值，亦不签署公共ABI或schema冻结；实际状态见 [R6专项记录](../reviews/R6_BIAS_ARCHIVE_ANALYSIS_2026-11-17.md)。MAT文件摘要与Reader稳定快照的绑定仍未实现，生产 `mat_sha256=null` 不由测试旁路摘要替代。
+
 ~~~cpp
 // 设计合同，不是已实现类；公共 Result/Error 在 contracts.md。
 enum class AxisScale { Linear, Log10 };

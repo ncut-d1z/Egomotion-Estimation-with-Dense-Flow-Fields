@@ -141,6 +141,9 @@ std::string renderPanel(const std::string& panel,
 
     std::size_t series_index=0;
     for(const auto* series:curves){
+        for(const auto& helper:series->helper_source_blob_shas)
+            out<<"<metadata data-curve=\""<<xml(series->name)
+               <<"\">helper .m blob: "<<xml(helper)<<"</metadata>\n";
         const auto color=colors[series_index%colors.size()];
         const bool right_y=rightAxis(*series);
         const Bounds& axis=right_y?byRight:by;

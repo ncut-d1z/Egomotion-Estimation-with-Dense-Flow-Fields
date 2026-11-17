@@ -210,6 +210,9 @@ function(archive_case label experiment relative expected_curves source_blob pane
     set(unknown_hashes 0)
     foreach(index RANGE 0 ${last})
         string(JSON curve GET "${output}" curves ${index})
+        # 成功历史入口为Bias/Initialization，均未调用平滑辅助函数。
+        string(JSON helpers LENGTH "${curve}" helper_source_blob_shas)
+        equal("${helpers}" 0 "${label} must not claim an unused smoothing helper")
         string(JSON xs LENGTH "${curve}" x)
         string(JSON ys LENGTH "${curve}" y)
         equal("${xs}" "${ys}" "${label} x/y lengths")

@@ -457,6 +457,16 @@ if(BUILD_TESTING)
     set_tests_properties(r06_mat_independent_storage_values PROPERTIES
         LABELS "r06;mat;readonly;independent-l2;storage-tags" TIMEOUT 180)
 
+    add_executable(test_r06_bias_archive tests/integration/test_r06_bias_archive.cpp)
+    target_link_libraries(test_r06_bias_archive PRIVATE egomotion_analysis egomotion_matio ZLIB::ZLIB)
+    target_compile_features(test_r06_bias_archive PRIVATE cxx_std_17)
+    target_compile_options(test_r06_bias_archive PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_bias_archive_independent_curves COMMAND test_r06_bias_archive
+        "${CMAKE_CURRENT_SOURCE_DIR}/origin/egomotion_estimation_dense_flow_fields_matlab_scripts"
+        "${CMAKE_CURRENT_SOURCE_DIR}/verification/mat/archive_storage_identity.v1.tsv")
+    set_tests_properties(r06_bias_archive_independent_curves PROPERTIES
+        LABELS "r06;analysis;bias;readonly-archive;independent-l2-l3" TIMEOUT 180)
+
     add_executable(test_r06_reader_negative tests/integration/test_r06_reader_negative.cpp)
     target_link_libraries(test_r06_reader_negative PRIVATE egomotion_matio PkgConfig::MATIO)
     target_compile_features(test_r06_reader_negative PRIVATE cxx_std_17)

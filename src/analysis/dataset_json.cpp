@@ -57,6 +57,12 @@ Result<std::string,AnalysisErrorCode> datasetJson(const AnalysisDataset& data) {
             numbers(json,c.y);
             json<<",\"smoothing_full\":";
             numbers(json,c.smoothing_full);
+            json<<",\"helper_source_blob_shas\":[";
+            for(std::size_t i=0;i<c.helper_source_blob_shas.size();++i){
+                if(i)json<<",";
+                json<<jsonQuote(c.helper_source_blob_shas[i]);
+            }
+            json<<"]";
             json<<",\"inputs\":[";
             bool first_input=true;
             for(const auto& p:c.inputs){

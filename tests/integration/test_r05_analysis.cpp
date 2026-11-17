@@ -81,6 +81,8 @@ int main(int argc,char** argv){
     require(result.hasValue(),"Bias K=2 analysis failed");
     const auto& curves=result.value().curves;
     require(curves.size()==13,"Bias must yield exactly 12 data curves + one reference");
+    for(const auto& curve:curves)
+        require(curve.helper_source_blob_shas.empty(),"Bias must not claim a smoothing source");
     require(curves[0].x.size()==1&&curves[0].x[0]==112.0,
             "The last run's original xwerte must be preserved");
     require(curves[1].y.size()==1&&curves[1].y[0]==8.0,

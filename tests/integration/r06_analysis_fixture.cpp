@@ -98,6 +98,9 @@ struct Oracle {
         for(auto k=range.first;k<=range.last;++k){if(k!=range.first)out<<',';out<<k;}
         out<<"],\"y\":";numbers(out,y);
         out<<",\"smoothing_full\":";numbers(out,full);
+        out<<",\"helper_source_blob_shas\":[";
+        if(half>0)out<<"\"eced66659205a6386ec84723e37a46517d06c017\"";
+        out<<"]";
         out<<",\"inputs\":[";input(out,input_root,variable,"y_values");
         if(threshold){out<<',';input(out,input_root,"rottransratio","segment_threshold");}
         out<<"]}";

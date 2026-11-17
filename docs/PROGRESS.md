@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 历史Bias全曲线与平滑来源（2026-11-17）
+
+**首轮准备 `[HUMAN-EXECUTE/APPROVE]`，尚未执行。** 新增两组40-run历史Bias的独立MAT标签/宽精度均值参考，覆盖全部26曲线/208对x-y及400份实际输入；将既有LLD的平滑辅助来源字段落实到曲线/JSON/SVG并补相关测试。43项CTest仅登记，待远程检查点后实测，见 [验证记录](reviews/R6_BIAS_ARCHIVE_ANALYSIS_2026-11-17.md)。原始资料只读，不运行完整科学实验、不改变正式数值阈值或冻结状态。
+
 ## 最新接续：R6 Session / RunContext 交替隔离（2026-11-17）
 
 **最终复测 `[HUMAN-EXECUTE/APPROVE]`：`b05a28b42a9e499f2c67c91af67a1c482f2f730e` 无诊断构建、42/42 CTest（MAT5/5，其余37/37）。** Session9579项、RunContext282项和误差703项检查均通过，后者新增acos双端舍入越界拒绝；所有输入SHA不变。RunId `r6-interleaving-acos-20261117-MqJnnIm2`，完整环境/命令/日志/合成输出位置见 [验证记录](reviews/R6_INTERLEAVING_2026-11-17.md)。下一项为历史Bias曲线独立重算、平滑来源及插图入口；完整科学/L4、跨环境数值资格和正式验收仍未完成，R6未结案。

@@ -101,6 +101,8 @@ void verifyComparisonSegments() {
     const auto& curves=result.value().curves;
     require(curves.size()==12,
             "Comparison requires eight rotation, two translation and two ratio curves");
+    for(const auto& curve:curves)
+        require(curve.helper_source_blob_shas.empty(),"Comparison must not claim a smoothing source");
     constexpr std::array<std::size_t,4> starts{{50,180,320,460}};
     constexpr std::array<std::size_t,4> ends{{120,260,400,550}};
     for(std::size_t zone=0;zone<4;++zone)
@@ -132,6 +134,12 @@ void verifyRatesSmoothing() {
     require(curves.size()==20,
             "UpdateRates requires sixteen segmented rotation and four translation curves");
     const auto& rotation=curves[1];
+    for(const auto& curve:curves) {
+        const std::vector<std::string> helpers=curve.smoothing_half_window?
+            std::vector<std::string>{"eced66659205a6386ec84723e37a46517d06c017"}:
+            std::vector<std::string>{};
+        require(curve.helper_source_blob_shas==helpers,"Wrong per-curve smoothing source identity");
+    }
     require(rotation.name=="rotation_period_2_segment_1"&&
             rotation.source_begin_matlab==52&&
             rotation.source_end_matlab==118&&
