@@ -1,5 +1,7 @@
 # 系统概要设计（HLD）— MATLAB 自运动估计 C++ 移植
 
+> **2026-11-17 可选绘图实测 `[AI-EDIT]`**：`f3398b0` 已移除CLI库对具体SVG库的依赖；`EGOMOTION_ENABLE_SVG=OFF`不构建两个SVG目标，main注入空后端。ON/OFF分别48/48、47/47 CTest，实际依赖图无环；完整链接与系统matio的间接依赖见 [无绘图构建记录](reviews/R6_HEADLESS_BUILD_2026-11-17.md)。下文拟议架构/冻结状态不变。
+
 > **2026-11-17 实际符号索引 `[AI-EDIT]`**：原45源当前对应统一见 [MIGRATION_MATRIX](MIGRATION_MATRIX.md)，包括四类分析由MatResultAnalyzer分派、三Adaptive由AdaptiveExperimentRunner分模式计算、两Bias共享注入式计算，以及SH低阶自由函数/源phase适配。下文候选类/target名称不是源码符号证明；本次只登记事实，不改变依赖/所有权合同或冻结状态。
 
 > **2026-11-17 实际target补充 `[AI-EDIT]`**：CMake增加 `egomotion_illustrations`（几何/JSON，链接领域/合同并私有复用simulation轨迹）与独立 `egomotion_illustration_svg`（仅消费插图Data）。CLI库仅需要数值模块，实际可执行程序装配SVG导出器；没有新增外部绘图库。固定 `8c808be` 构建及45/45 CTest有 [证据](reviews/R6_ILLUSTRATIONS_2026-11-17.md)。这是实现事实，下面拟议target图的正式评审/冻结状态不变。

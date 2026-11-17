@@ -1,6 +1,6 @@
 # 人类输入、已决定事项与无限期延期清单（TODO）
 
-> **2026-11-17 更新**：用户已明确允许生产代码修改、构建/CTest和方案文档修改；最新受测源码 `130a82ba0090e186fcf43bc28bb98c282e68c96c` 构建无诊断、**48/48 CTest**，见 [MAT封存摘要验证](reviews/R6_MAT_SNAPSHOT_2026-11-17.md) 与 [PROGRESS](PROGRESS.md)。MAT读取字节与分析来源SHA已绑定；三Adaptive入口仍为Incomplete、无完整MAT。继续 [剩余工作](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md) 中的交付依赖、可选绘图与日志/输出合同独立复核；[45源现行映射](MIGRATION_MATRIX.md)已更新。完整成功、病态数值资格、L4/完整实验、资源、DEC-005/006/008及正式验收仍未完成，不擅改角度策略或重复催办延期审批。
+> **2026-11-17 更新**：用户已明确允许生产代码修改、构建/CTest和方案文档修改；最新受测源码 `f3398b099c70233e55e150ecf41c2dd90f282c00` 两种配置构建无诊断、**SVG ON 48/48、全新SVG OFF 47/47 CTest**，见 [无绘图构建验证](reviews/R6_HEADLESS_BUILD_2026-11-17.md) 与 [PROGRESS](PROGRESS.md)。MAT读取字节与分析来源SHA已绑定；三Adaptive入口仍为Incomplete、无完整MAT。继续 [剩余工作](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md) 中的日志/输出合同及P/TC覆盖独立复核；[45源现行映射](MIGRATION_MATRIX.md)已更新。完整成功、病态数值资格、L4/完整实验、资源、DEC-005/006/008及正式验收仍未完成，不擅改角度策略或重复催办延期审批。
 
 > **文档类型：项目管理/人类输入清单，不是基线签署。** 用户此前仅开放低阶球谐相关 C++ 实现与 Wolfram 验证，其它模块仍禁止开启代码实现。用户已在固定 `8eab5dd`、`445ed151`、`601c74de` 的旧版本分别报告1/1球谐CTest通过，并于最新固定 `5e5221988cf093dbfddb88f2f65f06632460f3a1` 在Ubuntu 24.04/GCC16.2上完成三个SH独立CTest **3/3 Passed、0失败**，覆盖源二阶逐系数投影。**当前卡点不是低阶SH首次编译，而是其它模块权限、公共ABI、扩大数值覆盖及DEC-005/006/008与正式批准**。代理未在用户VM执行或获得全工程授权；不写MAT、不合并/发布。见[专项授权](decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md)及[PROGRESS E-DOC-062](PROGRESS.md)。
 

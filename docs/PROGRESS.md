@@ -2,6 +2,8 @@
 
 ## 最新接续：R6 可选 SVG 独立构建（2026-11-17）
 
+**实测 `[HUMAN-EXECUTE/APPROVE]`：`f3398b099c70233e55e150ecf41c2dd90f282c00` 两种配置无诊断构建、ON 48/48及OFF 47/47 CTest。** OFF使用全新构建目录，唯一缺席项为SVG专用画幅测试；真实CLI9次合法绘图请求明确拒绝且不预留输出。14份有限Bias MAT载荷和3类插图JSON跨模式一致；输入SHA不变，依赖图无环、OFF实际二进制无SVG实现。RunId `r6-headless-20261117-Joe73gEd`，见 [证据](reviews/R6_HEADLESS_BUILD_2026-11-17.md)。继续日志/输出合同及P/TC覆盖复核；三Adaptive完整成功、L4/资源/正式资格仍未完成，R6未结案。
+
 **准备 `[HUMAN-EXECUTE/APPROVE]`，尚未执行。** 默认开启 `EGOMOTION_ENABLE_SVG`；关闭后不构建两个 SVG 库，保留全部数值入口。真实CLI补缺后端错误/不预留输出断言，CTest统一无显示环境；预期ON 48项、OFF 47项，仅少SVG专用画幅测试。见 [范围与准备](reviews/R6_HEADLESS_BUILD_2026-11-17.md)。待远端检查点后分别构建及MAT优先CTest；不改变原始数据、数值判据或正式资格，R6未结案。
 
 ## 最新接续：R6 45源现行实现映射（2026-11-17）

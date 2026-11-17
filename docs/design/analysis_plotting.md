@@ -50,6 +50,8 @@ public:
 
 实际签名需在模块间的值对象、异常枚举和 CLI 子命令冻结后确认；IPlotExporter 为可选组件，不应强迫 numerical-only 构建携带绘图库。
 
+**实现事实 `[AI-EDIT]`，2026-11-17**：`f3398b0` 的 `EGOMOTION_ENABLE_SVG` 默认ON；OFF不构建或链接曲线/插图SVG导出器，真实数值入口及独立数值参考仍通过，合法SVG请求退出7且不预留RunId。两模式48/48、47/47及二进制/依赖证据见 [专项记录](../reviews/R6_HEADLESS_BUILD_2026-11-17.md)。这是既有可选后端要求的实现，不冻结上面的候选签名。
+
 ## 3. 展示脚本与选择性图形复现
 
 - circle_curve_in_the_sphere：绘制单位球与圆轨迹；
