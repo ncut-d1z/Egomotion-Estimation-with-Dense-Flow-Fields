@@ -2,7 +2,7 @@
 
 `[AI-EDIT]` 事实索引，基于当前Git树、CMake登记、测试源码及实际日志。保留 [TEST_PLAN §3](../TEST_PLAN.md) 的66个TC/REQ/AC和 [PLAN](../PLAN.md) 的98项任务，不替换候选规范、改动阈值或签署验收。下表每个TC仅列一次；其REQ/AC采用相同后缀，正式义务仍以 [REQUIREMENTS](../REQUIREMENTS.md) 为准。
 
-**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面列出的具体程序/样本已有运行证据，不代表该TC全部条款已满足。最新受测源码 `65d59fe2640aa59768d4bb86386886f1692874d6` 为37/37，SVG专项103项几何/输入边界检查；本轮新增SVG测试在 `80ae1ac` 的首次失败保留。正式容差/Golden资格、环境预算及基线签署仍独立办理；不以这些审批尚未完成为理由停止已授权的源码/测试补足。
+**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面列出的具体程序/样本已有运行证据，不代表该TC全部条款已满足。最新受测源码 `bcee2ca02ef100b569da3ee2a54137b6875bb0af` 为39/39；直接误差函数685项、KvD停止75080项检查通过，见 [专项证据](R6_MOTION_STOPPING_2026-11-17.md)。首轮覆盖不足及此前SVG失败保留。正式容差/Golden资格、环境预算及基线签署仍独立办理；不以这些审批尚未完成为理由停止已授权的源码/测试补足。
 
 ## 实际测试组及证据入口
 
@@ -15,7 +15,8 @@
 | IO | `r05_anchored_io`, `r06_io_symlink_and_runid_safety`, `r06_linux_writer_faults`, `r06_real_manifest_faults` | `tests/integration/test_r05_io.cpp`, `test_r06_io_safety.cpp`, `test_r06_io_faults.cpp`；[发布故障](R6_IO_FAULT_VALIDATION_2026-11-17.md) |
 | CONTRACT | `r01_contracts`, `r05_manifest_gate`, `r06_result_lifetimes_error_frames` | `tests/contracts/test_r01_contracts.cpp`, `test_r05_manifest.cpp`, `test_r06_result_lifetimes.cpp`；[原生记录](R6_NATIVE_VALIDATION_2026-11-17.md) |
 | GEOM | `r06_sampling_flow_contract`, `r06_directions_all_ordered_l3`, `r06_trajectory_sphere_geometry` | `tests/integration/test_r06_sampling_flow.cpp`, `test_r06_direction_rows_l3.cpp`, `test_r06_trajectory_sphere.cpp`；`verification/geometry/` |
-| KVD | `r06_kvd_independent_l3` | `tests/integration/test_r06_kvd_l3.cpp`；`verification/kvd/`；六方向/斜向/有符号近度固定逐轮参考，正常固定例均6轮 |
+| KVD | `r06_kvd_independent_l3`, `r06_kvd_stopping_reference` | `tests/integration/test_r06_kvd_l3.cpp`, `test_r06_kvd_stopping.cpp`；`verification/kvd/`；原逐节点参考及506次独立解析控制流参考，见 [停止分支](R6_MOTION_STOPPING_2026-11-17.md) |
+| METRIC | `r06_source_motion_errors` | `tests/integration/test_r06_motion_errors.cpp`；直接调用两个生产内部实现，解析几何/尺度/弦长恒等式/零/非有限/上溢/下溢；[685项实测](R6_MOTION_STOPPING_2026-11-17.md) |
 | STEP | `r06_adaptive_step_independent_l3` | `tests/integration/test_r06_adaptive_l3.cpp`；`verification/adaptive/asymmetric_signed_near_one_step.v1.json`，正/负有符号近度的固定九方向单步 |
 | SH | `low_order_harmonics`, `low_order_harmonics_archived_golden`, `low_order_harmonics_source_projection`, `r06_sh_argument_action`, `r06_sh_source_phase_reference`, `r06_sh_source_session_action` | `tests/unit/test_low_order*.cpp`, `tests/integration/test_r06_sh_adapter.cpp`, `test_r06_source_sh.cpp`；[源相位作用](R6_SH_SOURCE_ACTION_2026-11-17.md) |
 | SESSION | `r06_adaptive_session_transaction`, `r06_adaptive_periods_atomic_commit` | `tests/contracts/test_r06_session_contract.cpp`, `test_r06_adaptive_periods.cpp`；三模式失败原子性及1/5/11/21刷新 |
@@ -45,8 +46,8 @@
 | TC-F-FLOW-004 | GEOM | 球心、一般位置、旋转射线、边界/非法输入已有解析例 |
 | TC-F-FILTER-001 | KVD、RUNNER | Franz独立固定输入及奇异响应；覆盖不等于全输入域证明 |
 | TC-F-KVD-001 | KVD | 两路径逐轮固定L3；未批准最终数值门槛 |
-| TC-F-KVD-002 | KVD | 现有正常例6轮，缺达到上限及跨动态阈值退出的区别性实测 |
-| TC-F-ERROR-001 | RUNNER、SESSION间接 | 有独立chord/angle核对；仍缺直接调用误差函数的正交/反向/任一零向量等完整边界矩阵 |
+| TC-F-KVD-002 | KVD | 两算法实际默认200轮上限、单动态/单绝对退出及最少6轮已实测；506次停止行为与独立解析参考一致，限固定输入族 |
+| TC-F-ERROR-001 | METRIC、RUNNER、SESSION | 正交/反向/尺度/任一零/非有限/范数边界直接实测；两指标及弦长恒等式区分。acos舍入越界专例尚缺，正式数值资格未批准 |
 | TC-F-BIAS-001 | GEOM、RUNNER、CLI | 有界level0…2、seed7/11、三噪声列、实际求解器/发布；不是40份level9实验 |
 | TC-F-BIAS-002 | GEOM、RUNNER、CLI | 同上，分量噪声路径独立核对；不是完整统计复现 |
 | TC-F-BIAS-003 | ANALYSIS、CLI、SVG | K=2区别性参考、两个40目录实际读取；历史全曲线数值的独立重算仍需补足 |
@@ -70,7 +71,7 @@
 | TC-DC-IO-001 | MAT、IO、CONTRACT | 自拥有载荷、故障/权限与寿命用例；不凭测试数声称全资源状态证明 |
 | TC-DC-RNG-001 | GEOM、RUNNER | RNG注入/顺序/耗尽/seed分离；正式接口冻结未完成 |
 | TC-DC-NOISE-001 | GEOM、RUNNER | 噪声接口两路径与错误上下文已有固定测试 |
-| TC-DC-KVD-001 | KVD | Original/Modified单独入口与差异化trace；上限分支待补 |
+| TC-DC-KVD-001 | KVD | Original/Modified单独入口与差异化trace；两路径实际默认上限及其他退出条件已有独立参考实测 |
 | TC-DC-ADAPT-001 | STEP、SESSION | 单步和Session已独立测试；两个Session交替隔离待补 |
 | TC-DC-EXPERIMENT-001 | RUNNER、CONTRACT | 注入/编排/Writer/状态已有例；两个RunContext交替状态隔离仍待直接验证 |
 | TC-DC-ANALYSIS-001 | CLI、ANALYSIS、SVG | 无后端替身与纯数值/绘图数据不变；三份illustration未完成 |
@@ -78,7 +79,7 @@
 | TC-NF-DEPS-001 | ENV、CMake | 当前核心Eigen/matio与可选SVG，无Python/MATLAB/NPZ；完整交付链接审计仍待整理 |
 | TC-NF-SAFETY-001 | IO、MAT、CLI | 原SHA不变、RunId/路径/符号链接/拒覆盖及真实故障已有测试 |
 | TC-NF-NUM-001 | KVD、STEP、SH、GEOM | 独立固定参考存在；完整资格/DEC-005未批准，不宣称数值验收 |
-| TC-NF-NUM-002 | MAT、KVD、RUNNER、SESSION | 多类明确失败已有用例；误差函数完整边界与conditioning族待补 |
+| TC-NF-NUM-002 | MAT、KVD、METRIC、RUNNER、SESSION | 多类明确失败及直接误差范数/非有限边界已有用例；acos舍入越界专例与conditioning族待补 |
 | TC-PROC-TRACE-001 | SOURCE及本文 | 66项证据索引已整理；98任务/45源的逐义务关闭与正式冻结仍未完成 |
 | TC-NF-RNG-001 | GEOM、RUNNER | 固定序列/两seed与失败数量保存；L4统计及全样本账本未完成 |
 | TC-NF-LOG-001 | CONTRACT、RUNNER、CLI | 顶层家族/完整causes/Manifest与执行日志已测；完整科学运行未发生 |
@@ -100,7 +101,7 @@
 
 ## 下一步按缺口实施
 
-1. 本轮原绘图视窗修复及37/37复测已完成，失败SVG及数值不变证据保留；不等于三份illustration或完整视觉等价完成。
-2. 为现有M级义务补直接误差函数边界、KvD迭代上限/退出分支、Adaptive conditioning固定参考族、两个Session/RunContext交替隔离。先读源/现有参考，不能用增加相似正常例代替。
+1. 原绘图视窗修复及误差/停止分支补足已完成39/39复测，失败日志及原始数据不变证据保留；不等于三份illustration或完整视觉等价完成。
+2. 为现有M级义务补Adaptive conditioning固定参考族、两个Session/RunContext交替隔离；误差函数另缺acos舍入越界专例。先读源/现有参考，不能用增加相似正常例代替。
 3. 补足原历史Bias分析逐值独立重算、平滑来源身份；审查三份illustration真实数据和展示入口。若需要改动CLI/公共schema合同，先保留候选边界，不自行宣称冻结。
 4. 完整科学/L4实验、跨发行版资格、资源预算与正式审批不在本轮运行授权内；准备具体材料并在真正到达该边界时请求相应授权。无MATLAB/L1阻塞。

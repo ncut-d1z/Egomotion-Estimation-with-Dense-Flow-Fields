@@ -2,6 +2,8 @@
 
 ## 最新接续：R6 误差函数与 KvD 停止分支（2026-11-17）
 
+**最终复测 `[HUMAN-EXECUTE/APPROVE]`：`bcee2ca02ef100b569da3ee2a54137b6875bb0af` 无诊断构建、39/39 CTest（MAT5/5，其余34/34）。** 误差函数685项、KvD75080项全部通过；506次真实KvD停止轮数/继续标志与独立解析降维参考一致，两算法均覆盖默认200轮上限、两类独立门限退出及最少6轮。RunId `r6-motion-stopping-fix-20261117-sQGrT7nI`，首轮失败保留、原始SHA不变，见 [验证记录](reviews/R6_MOTION_STOPPING_2026-11-17.md)。下一项为conditioning及交替Session/RunContext隔离，其余分析/插图、完整科学/L4与正式验收仍未完成；R6未结案。
+
 **首轮实测 `[HUMAN-EXECUTE/APPROVE]`：`54e3ac1` 无诊断构建、38/39 CTest。** 误差函数503项通过；500次KvD求解的独立停止轮数/继续标志一致，唯一失败为Modified缺单动态门限场景。现保留全部断言/失败日志，补六次带固定切向扰动的解析参考；待新检查点复测。原始SHA不变，见 [验证记录](reviews/R6_MOTION_STOPPING_2026-11-17.md)。
 
 **首轮准备 `[HUMAN-EXECUTE/APPROVE]`，尚未执行。** 提取内部原始误差函数并直接测解析几何/异常边界；新增独立标量降维参考，检查两种 KvD 的默认停止条件。39 项 CTest 仅登记，待远程检查点后真实构建与测试；见 [验证记录](reviews/R6_MOTION_STOPPING_2026-11-17.md)。不改变算法门限或正式验收义务，R6 未结案。

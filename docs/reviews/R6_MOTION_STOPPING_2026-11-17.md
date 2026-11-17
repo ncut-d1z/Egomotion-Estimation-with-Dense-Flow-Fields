@@ -2,9 +2,9 @@
 
 任务标签：`[HUMAN-EXECUTE/APPROVE]`。用户已明确授权生产代码、构建、CTest 及文档修改；本批仅有界固定输入测试。以下是实现与验证记录，不是 DEC-005/008 批准、MATLAB 运行等价声明或 R6 结案。
 
-## 首轮检查点（未执行）
+## 首轮检查点准备（历史未执行状态）
 
-新增 `r06_source_motion_errors`、`r06_kvd_stopping_reference`，总登记数从 37 增至 39；登记不代表通过。运行前提交、正常推送、核实远端 SHA，仍先执行五项 MAT 测试，再执行其余测试。所有日志与失败记录存入独立忽略目录，原始文件只读。
+当时新增 `r06_source_motion_errors`、`r06_kvd_stopping_reference`，总登记数从 37 增至 39；登记不代表通过。运行前提交、正常推送、核实远端 SHA，仍先执行五项 MAT 测试，再执行其余测试。所有日志与失败记录存入独立忽略目录，原始文件只读。最终结果见下文。
 
 ## 误差函数的实现边界
 
@@ -30,7 +30,36 @@
 
 该解析族只核查此对称场景下的控制流，不替代既有非对称逐节点 L3，也不证明一般场景所有退出路径或完整论文实验。
 
-## 实际结果
+## 最终复测
+
+受测源码 **`bcee2ca02ef100b569da3ee2a54137b6875bb0af`** 已先推送并经 GitHub branch API 核实，分支 `dev-plan-P0-P1-mat-dictionary-probe`。RunId **`r6-motion-stopping-fix-20261117-sQGrT7nI`**。CMake、增量构建、CTest 均成功，构建 stdout 无编译器诊断且 stderr 为空；先 MAT **5/5**，再其余 **34/34**，合计 **39/39**。首轮失败及其后全部输入场景保留。
+
+- 误差函数 **685 项检查、0 失败**：91 组合法解析输入及全部异常边界，并核对弦长—角度恒等式与输入字节不变。
+- KvD **75080 项检查、0 失败**：506 次真实求解全部与独立参考的停止轮数和继续标志一致。Original：仅上限触发 80 例、仅动态门限 6 例、仅绝对门限 164 例；Modified：分别 43、3、206 例。另各有 650 次在低于门限时仍继续到最少轮数的 trace 检查；该数是轮数，不能当独立场景数。
+- 新扰动 `b=1,4,16`：Original 在第 133/51/9 轮退出，Modified 在第 61/31/8 轮退出，均由动态门限单独触发；参考与生产一致。真实上限例 `m=(1,1,16),s=1,b=0` 的两算法都达到第 200 轮且两个误差门限仍未满足，没有修改最少/最多轮数制造覆盖。
+- 原始及被记录测试/参考输入的 SHA-256 检查退出 0，原始 Git tree 保持 `70ee155131c24a50169346d0ffbaff0c01b1c547`。未安装依赖、未运行 MATLAB/Octave、未执行完整科学实验；原数据未修改。
+
+### 环境、命令与证据
+
+实际环境为 Ubuntu 24.04.5 LTS / Linux 7.0.0-43 x86_64、GCC 16.2.0、C++17 Release、CMake/CTest 4.3.4、Eigen 3.4.0、Sophus 1.24.6、matio 1.5.26、zlib 1.3。工作目录为仓库根；构建目录 `build/r6-20261117-KzjFHPDQ/cmake`。本次两个新测试无 RNG；其余固定 seed 与 OS RunId 随机源记录在证据目录 `randomness-source.txt`。
+
+| 步骤 | 本地时间（2026-11-17，UTC+08:00） | 退出码 / 结果 |
+|---|---|---|
+| configure | 19:36:59–19:37:01 | 0 |
+| build | 19:37:01–19:37:27 | 0，无诊断 |
+| CTest MAT | 19:37:27–19:37:29 | 0，5/5，1.34 s |
+| CTest 其余 | 19:37:29–19:37:33 | 0，34/34，4.02 s |
+
+入口为 `bash build/r6-motion-stopping-fix-20261117-sQGrT7nI/run.sh bcee2ca02ef100b569da3ee2a54137b6875bb0af`。实际配置 `cmake -S <repo> -B <build> -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DBUILD_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`；构建 `cmake --build <build> --parallel 4 -- -k`；CTest 使用 `-C Release --verbose --no-tests=error --output-junit <log>`，MAT 以五个既有测试名的精确正则 `-R`、并行 2，其余同正则 `-E`、并行 4。完整展开参数、cwd/开始结束/退出码在各 `.meta` 中。
+
+日志根 `build/r6-motion-stopping-fix-20261117-sQGrT7nI/evidence/` 包含独立 stdout/stderr、JUnit、两次 `Testing` 快照、环境、输入 blob/逐文件 SHA-256 和运行后完整性结果。所有 launcher stderr 为 0 字节，子程序输出保存在 CTest verbose/JUnit 中，不宣称所有子进程均无 stderr。关键 stdout 的 SHA-256：
+
+- `ctest-mat.stdout`：`7daf193f58ccbadb142c545cc3390856ecaa78a26f1862612c7250c7ad1f33fc`
+- `ctest-remaining.stdout`：`e70a78116207c8d5e6d4607bbddd7b459991bde75d80bb853f3a5c3b492bdb93`
+
+本批覆盖事项 `R6-STOP-001` 已以新增固定输入与复测闭合。Issue/PR 全状态检索为空，没有创建、关闭或合并。后续为 Adaptive conditioning 独立族、两个 Session/RunContext 交替隔离、其余分析参考与插图入口；正式数值资格及 R6 整体仍未完成。
+
+## 首轮失败与修订（历史记录）
 
 首轮源码 `54e3ac140403025aa57246431a50fd925f678ca6`，RunId `r6-motion-stopping-20261117-SZFD6nbw`，构建无诊断，MAT 5/5、其余 33/34，合计 **38/39**。误差函数 503 项通过；KvD 74470 项检查中仅一项覆盖断言失败，500 次求解的独立轮数/继续标志全部一致。Original 实际上限 80 例、单动态 3 例、单绝对 164 例；Modified 上限 43 例、单动态 0 例、单绝对 206 例；各有 650 次最少轮数覆盖。原始输入摘要保持不变。失败记录完整保留在 `build/r6-motion-stopping-20261117-SZFD6nbw/evidence/`。
 

@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **2026-11-17 最新执行事实（[AI-EDIT]）**：源码 `65d59fe2640aa59768d4bb86386886f1692874d6` 构建无诊断、**37/37 CTest Passed**（先MAT5项，再其余32项），原始输入SHA不变。新 `r06_svg_source_windows` 六个有效情境和14个负例共103项检查通过，恢复源固定视窗/裁剪且数值不变，见 [视窗证据](reviews/R6_SVG_WINDOWS_2026-11-17.md)。原36项仍通过。新增 [66 TC实际证据映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)，保留各项不足；后续补误差/退出/conditioning/状态隔离与插图等。未改动下列66项TC/AC、阈值、优先级或冻结状态；37项通过不等于66项全部验收，L4/完整实验与正式签署仍缺，旧未实现/未运行描述保留其历史语境。
+> **2026-11-17 最新执行事实（[AI-EDIT]）**：源码 `bcee2ca02ef100b569da3ee2a54137b6875bb0af` 构建无诊断、**39/39 CTest Passed**（先MAT5项，再其余34项），原始输入SHA不变。新增两个CTest直接验证误差函数685项、KvD停止75080项，506次实际求解与独立解析参考一致，见 [专项证据](reviews/R6_MOTION_STOPPING_2026-11-17.md)。[66 TC实际证据映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)已同步，保留conditioning、状态隔离、acos越界及插图等不足。未改下列66项TC/AC、阈值、优先级或冻结状态；39项通过不等于66项全部验收，L4/完整实验与正式签署仍缺，旧未实现/未运行描述保留其历史语境。
 
 > **测试计划草案 v0.31，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
 
