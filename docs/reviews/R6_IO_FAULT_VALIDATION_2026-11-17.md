@@ -1,6 +1,6 @@
 # R6 Linux 发布故障验证（2026-11-17）
 
-**[HUMAN-EXECUTE/APPROVE] 已获代码修改、构建/CTest 授权；本检查点尚未运行。** 接续 `8292d9d26b57ffcd2f9b37ca4b57c51c3733ab57`，分支 `dev-plan-P0-P1-mat-dictionary-probe`，当前本地/远端已核实一致、Issue/PR 全状态查询为空。上一批次 `84c8662` 的21项通过属于已执行证据，本批新增不能自动继承 PASS。
+**[HUMAN-EXECUTE/APPROVE] 已实际通过：23/23 CTest。** 源码 SHA 为 `1e15b9c32342c96e2e553325a8870c0a276b31a4`，接续 `8292d9d26b57ffcd2f9b37ca4b57c51c3733ab57`，分支 `dev-plan-P0-P1-mat-dictionary-probe`；运行前核实远端 SHA，Issue/PR 全状态查询为空。上一批次21项与本批新增2项均已重新执行。
 
 ## 实现范围与判据
 
@@ -33,4 +33,18 @@
 
 ## 执行记录
 
-提交/正常推送/远端 SHA 核实后执行全工程构建及23项CTest。命令、环境、输入哈希、stdout/stderr、退出码和结果待真实执行后补充；不运行 MATLAB/Octave、完整科学实验、依赖安装或自动合并发布。
+RunId：`r6-io-faults-20261117-sm6Ovszn`，工作目录为仓库根。证据位于 `build/r6-io-faults-20261117-sm6Ovszn/evidence/`，含逐步 `.meta/.stdout/.stderr`、JUnit、Testing 快照、工具链、随机源及输入 SHA-256。复用 `build/r6-20261117-KzjFHPDQ/cmake/` 缓存并重新配置 SHA，**不是新的干净构建**。
+
+环境仍为 Ubuntu 24.04.5/GCC16.2/CMake4.3.4/Eigen3.4/Sophus1.24.6/matio1.5.26/zlib1.3，C++17 Release；无依赖安装。配置参数 `-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DBUILD_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`；构建 `cmake --build <build-dir> --parallel 4 -- -k`。CTest 使用 `-C Release --verbose --no-tests=error --output-junit <evidence>.xml`，先 `--parallel 2 -R '^(r02_mat_reader|r06_historical_mat_readonly_schema)$'`，再 `--parallel 4 -E` 同一表达式，覆盖全部23个不同名称。
+
+| 步骤 | 开始/结束（UTC+08:00） | 退出码 | 结果 |
+|---|---|---:|---|
+| configure | 15:39:51 / 15:39:52 | 0 | 新SHA正确 |
+| build | 15:39:52 / 15:40:19 | 0 | 全目标成功，无编译诊断 |
+| MAT CTest | 15:40:19 / 15:40:19 | 0 | 2/2 Passed，0.48秒 |
+| 其余 CTest | 15:40:19 / 15:40:20 | 0 | 21/21 Passed，0.85秒 |
+| 输入 SHA-256 | 15:40:20 完成 | 0 | 运行前后全部一致 |
+
+新增测试实际输出 `Writer fault scenarios=23`、`Manifest fault scenarios=6`；每例 RunId、精确注入计数和断言已执行，无跳过。持续 unlink 失败的暂存文件保留在沙箱，属于预期审计证据，不自动删除。全部步骤 stderr 为空。`ctest-remaining.stdout` SHA-256：`379a9bf0fc8bb8ceee8f15b64d951eab126c657831fa59bded9dc00ba99f38e2`。
+
+没有执行 MATLAB/Octave、完整科学实验或合并发布，也没有修改任何科学算法/数值门限。生产 I/O 此批不需要修正；新增证据支持现有错误/回执行为，但上述剩余边界仍未完成。
