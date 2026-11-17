@@ -1,10 +1,14 @@
 # R6 原脚本视窗与 SVG 几何验证
 
-**补充边界检查中 `[HUMAN-EXECUTE/APPROVE]`**：37/37版本之后复核发现，固定视窗可能掩盖空数组/非有限坐标；现增加Exporter显式empty/NaN/Inf拒绝及已知/未知来源两组共14个负例，要求InvalidSeries/plot、零发布、输入位模式不变。合法全零Bias仍输出空图；不更改Analyzer已有非有限拒绝。此增量待新远程检查点复测，下段37/37仅对应其固定SHA。
+**最终补充复测 `[HUMAN-EXECUTE/APPROVE]`**：受测源码 `65d59fe2640aa59768d4bb86386886f1692874d6` 无诊断编译、37/37 CTest。固定视窗不能掩盖空数组/非有限坐标，Exporter显式empty/NaN/Inf拒绝及已知/未知来源两组14个负例全部通过，返回InvalidSeries/plot、零发布、输入位模式不变。合法全零Bias仍输出空图；Analyzer已有非有限拒绝保持通过。SVG专项六有效情境加14负例，共103项检查、0失败；下段早期37/37只代表其固定SHA。
 
-`[HUMAN-EXECUTE/APPROVE]`：生产修复、构建及CTest已授权。最终源码 `7fc83c1a828b84318b382ad2e052ba735e489ec4` 无诊断构建、37/37 CTest通过；首轮25处失败保留。关联P9.2/P9.4/P9.6、TC-F-BIAS-003、TC-F-CLI-005、TC-F-AN-002、TC-DC-ANALYSIS-001。此次修复既有源行为，不改变数值公式、CLI/JSON合同、容差或冻结状态。
+最终RunId `r6-svg-guard-20261117-zp9qajzR`，正常推送及远端SHA核实后运行；cwd、构建目录、环境和命令参数同下段第一版。2026-11-17 UTC+08:00配置19:16:15…19:16:16、编译19:16:16…19:17:26、MAT5/5测试19:17:26…19:17:27（0.97秒）、其余32/32测试19:17:27…19:17:30（3.76秒），四步均exit0且launcher stderr为空。输入完整性19:17:30完成exit0。没有依赖安装或完整实验。
 
-## 最终复测（事实登记 `[AI-EDIT]`）
+证据 `build/r6-svg-guard-20261117-zp9qajzR/evidence/` 保存命令、环境、分支/提交、原始/参考/测试输入身份、种子索引、时间、退出码、stdout/stderr及JUnit/Testing。MAT stdout SHA-256 `1421eeb9b33dd98f86c4dbbdcc1397e4daa1c1e004df6f16ec8e7314c5b43624`；其余stdout `2e6f6b6ec72fc54e6497dec76a239d7db6655cc1cb742b175fabf8ba75998a14`。SVG/JSON及14个直接Exporter负例记录位于 `build/r6-20261117-KzjFHPDQ/cmake/r06_svg_windows/svg-windows-B3txct/`。固定SVG输入无算法随机数；没有把Exporter负例声称成真实CLI负例。
+
+`[HUMAN-EXECUTE/APPROVE]`：生产修复、构建及CTest已授权。第一版修复源码 `7fc83c1a828b84318b382ad2e052ba735e489ec4` 无诊断构建、37/37 CTest通过；首轮25处失败保留。关联P9.2/P9.4/P9.6、TC-F-BIAS-003、TC-F-CLI-005、TC-F-AN-002、TC-DC-ANALYSIS-001。此次修复既有源行为，不改变数值公式、CLI/JSON合同、容差或冻结状态。
+
+## 第一版修复复测（事实登记 `[AI-EDIT]`）
 
 上述SHA提交/推送及远端分支核实后执行，RunId `r6-svg-final-20261117-p2M56Yrq`，日志 `build/<RunId>/evidence/`，工作目录仓库根；源外增量构建目录及环境同首轮。固定合成SVG数据无算法随机数；其余测试的固定seed见 `randomness-source.txt`，目录名独立随机。没有安装依赖、运行MATLAB/Octave、完整科学实验或性能基准。
 

@@ -2,7 +2,7 @@
 
 ## 最新接续：R6 原脚本绘图视窗（2026-11-17）
 
-**补充边界 `[HUMAN-EXECUTE/APPROVE]`**：37/37之后静态复核固定窗口对空/非有限坐标的影响，增加Exporter显式拒绝及14个负例；合法全零图仍成功。增量待新远程检查点复测，不将前一个SHA的通过自动沿用。
+**最终补充复测 `[HUMAN-EXECUTE/APPROVE]`：`65d59fe2640aa59768d4bb86386886f1692874d6` 无诊断构建、37/37 CTest（MAT5/5，其余32/32）。** 六个有效SVG情境与14个直接Exporter负例共103项检查全部通过：合法全零图成功，empty/NaN/Inf明确InvalidSeries且零发布，输入不变。最终RunId `r6-svg-guard-20261117-zp9qajzR`，见 [视窗记录](reviews/R6_SVG_WINDOWS_2026-11-17.md)；原始SHA不变，未改变阈值/CLI/公共schema。后续缺口见 [66 TC映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)，R6仍未结案。
 
 **最终复测 `[HUMAN-EXECUTE/APPROVE]`：`7fc83c1a828b84318b382ad2e052ba735e489ec4` 无诊断构建、37/37 CTest（MAT5/5，其余32/32）。** 恢复Bias固定x/y窗口、Comparison固定右轴及SVG裁剪；全零Bias可出空图，分析数据不变。六情境61项SVG几何检查通过，原始SHA不变，失败图像/日志保留，见 [视窗证据](reviews/R6_SVG_WINDOWS_2026-11-17.md)。另新增 [66 TC实际证据映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)，未更改既有验收义务。下一项为直接误差函数边界、KvD迭代上限/退出分支、Adaptive conditioning及交替Session/RunContext隔离；插图/其余来源与L4、完整科学实验和正式验收仍未完成，R6未结案。
 

@@ -4,7 +4,7 @@ A planned **C++17 reimplementation that directly reads the original MATLAB MAT f
 
 > **Permanent evidence policy:** Running MATLAB/Octave or collecting original MATLAB L1 execution traces is **not required** for design, coding, verification, or release. The original scripts are read-only specifications; numerical evidence will use the preserved MAT results (L2), independently checked analytic/reference implementations (L3), and statistical comparisons (L4). See [No MATLAB Execution Policy](docs/golden/NO_MATLAB_EXECUTION_POLICY.md). This change does not authorize C++ builds/tests or imply any numerical acceptance.
 
-> **项目状态（2026-11-17）**：R6仍在验证。最新受测源码 `7fc83c1a828b84318b382ad2e052ba735e489ec4` 增量构建无诊断、**37/37 CTest通过**。已恢复原Bias/Comparison绘图视窗，61项SVG几何检查通过且分析数据不变，见 [最新验证](docs/reviews/R6_SVG_WINDOWS_2026-11-17.md)。原36项仍通过，原始资料哈希不变；原始NaN拒绝不代表科学图像成功复现。[66项TC证据映射](docs/reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)明确了误差函数边界、迭代退出、状态隔离、三份illustration等剩余缺口；完整科学实验/L4和正式验收未完成。
+> **项目状态（2026-11-17）**：R6仍在验证。最新受测源码 `65d59fe2640aa59768d4bb86386886f1692874d6` 增量构建无诊断、**37/37 CTest通过**。已恢复原Bias/Comparison绘图视窗，103项SVG几何及输入边界检查通过且分析数据不变，见 [最新验证](docs/reviews/R6_SVG_WINDOWS_2026-11-17.md)。原36项仍通过，原始资料哈希不变；原始NaN拒绝不代表科学图像成功复现。[66项TC证据映射](docs/reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)明确了误差函数边界、迭代退出、状态隔离、三份illustration等剩余缺口；完整科学实验/L4和正式验收未完成。
 
 ## Original research and source material
 
