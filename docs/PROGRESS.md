@@ -2,7 +2,7 @@
 
 ## 最新接续：R6 原脚本绘图视窗（2026-11-17）
 
-**准备中 `[HUMAN-EXECUTE/APPROVE]`**：当前HEAD检查确认SVG未保留Bias固定x/y范围、Comparison固定右轴及viewport裁剪。新增第37项CTest，直接核对SVG几何、log零值断线与数据不变；尚未执行，见 [视窗验证](reviews/R6_SVG_WINDOWS_2026-11-17.md)。并核对既有66 TC的真实测试对应关系，R6不以测试数量替代完整验收。
+**首轮实测 `[HUMAN-EXECUTE/APPROVE]`**：`80ae1acf7caf083fa97aeff76f4f228a56f6dc03` 无诊断编译、36/37 CTest；新SVG几何测试60项断言中25项失败，确认Bias固定x/y范围、Comparison固定右轴及viewport裁剪缺失，全零Bias被错误拒绝。现修复Exporter显示范围/clipPath，待新检查点复测，见 [视窗验证](reviews/R6_SVG_WINDOWS_2026-11-17.md)。并核对既有66 TC的真实测试对应关系，R6不以测试数量替代完整验收。
 
 ## 最新接续：R6 有限MAT与非线性分析（2026-11-17）
 

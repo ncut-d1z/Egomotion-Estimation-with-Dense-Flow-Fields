@@ -64,6 +64,23 @@ double transformed(double value,bool logarithmic) {
         return std::numeric_limits<double>::quiet_NaN();
     return logarithmic?std::log10(value):value;
 }
+void applySourceWindows(const std::string& panel,const std::string& source_blob,
+                        const std::vector<const AnalysisSeries*>& curves,
+                        Bounds& x,Bounds& y,Bounds& ratio) {
+    // 原 graphs_bias_test.m:70–71；这些是显示范围，不是数值截断阈值。
+    if(source_blob=="112aa9eca1fa9728f493d31fc8e59620a8445230"&&panel=="bias-loglog") {
+        constexpr double x_min=100,x_max=3000000,y_min=0.06,y_max=200;
+        x={std::log10(x_min),std::log10(x_max)};
+        y={std::log10(y_min),std::log10(y_max)};
+    }
+    // 原 Comparison 两幅 plotyy 图仅显式固定右轴，左轴保持自动范围。
+    if(source_blob=="3924038f0ccd70de5ea7b60c589afe166da9c8fb"&&
+       (panel=="rotation"||panel=="translation")&&
+       std::any_of(curves.begin(),curves.end(),[](const auto* s){return rightAxis(*s);})) {
+        constexpr double ratio_min=0.01,ratio_max=100;
+        ratio={std::log10(ratio_min),std::log10(ratio_max)};
+    }
+}
 std::string renderPanel(const std::string& panel,
                         const std::vector<const AnalysisSeries*>& curves,
                         const std::string& source_blob) {
@@ -84,6 +101,7 @@ std::string renderPanel(const std::string& panel,
             }
         }
     }
+    applySourceWindows(panel,source_blob,curves,bx,by,byRight);
     if(!bx.valid()||!by.valid())
         throw std::invalid_argument("SVG panel has no valid primary curve coordinates");
     const double xrange=bx.maximum>bx.minimum?bx.maximum-bx.minimum:1;
@@ -101,6 +119,10 @@ std::string renderPanel(const std::string& panel,
        <<"viewBox=\"0 0 1200 720\" role=\"img\" aria-label=\""
        <<xml(panel)<<"\">\n";
     out<<"<rect width=\"1200\" height=\"720\" fill=\"white\"/>\n";
+    // SVG裁剪保留跨窗口线段；不能删去越界端点或改写AnalysisDataset。
+    out<<"<defs><clipPath id=\"plot-window\"><rect x=\""<<left<<"\" y=\""<<top
+       <<"\" width=\""<<(right-left)<<"\" height=\""<<(bottom-top)
+       <<"\"/></clipPath></defs>\n";
     out<<"<text x=\"95\" y=\"35\" font-size=\"23\">"<<xml(panel)<<"</text>\n";
     out<<"<path d=\"M"<<left<<" "<<top<<" V"<<bottom<<" H"<<right
        <<"\" fill=\"none\" stroke=\"#222\" stroke-width=\"2\"/>\n";
@@ -124,7 +146,8 @@ std::string renderPanel(const std::string& panel,
         auto flush=[&](){
             if(!points.empty()){
                 out<<"<polyline fill=\"none\" stroke=\""<<color
-                   <<"\" stroke-width=\"1.5\" points=\""<<points<<"\"/>\n";
+                   <<"\" stroke-width=\"1.5\" clip-path=\"url(#plot-window)\" points=\""
+                   <<points<<"\"/>\n";
                 points.clear();
             }
         };
