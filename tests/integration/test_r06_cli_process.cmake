@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 include("${CMAKE_CURRENT_LIST_DIR}/execution_record_checks.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/artifact_record_checks.cmake")
 # 启动真实CLI；不链接测试替身，不执行完整科学实验或原MATLAB。
 foreach(required IN ITEMS CLI SOURCE_ROOT SANDBOX SOURCE_SHA CASE SVG_ENABLED)
     if(NOT DEFINED ${required} OR "${${required}}" STREQUAL "")
@@ -280,6 +281,7 @@ function(archive_case label experiment relative expected_curves source_blob pane
     invoke("repeat-analyze-${label}" 0 analyze --experiment "${experiment}" --input-root "${input}")
     file(GLOB output_after LIST_DIRECTORIES true "${root}/output/*")
     equal("${output_after}" "${output_before}" "Analyze must not create outputs")
+    set(analyzed_dataset "${output}")
     invoke("plot-${label}" "${plot_exit}" plot --experiment "${experiment}" --input-root "${input}" --run-id "plot_${label}")
     if(NOT SVG_ENABLED)
         field("${diagnostic}" Bootstrap error_domain)
@@ -290,6 +292,11 @@ function(archive_case label experiment relative expected_curves source_blob pane
         return()
     endif()
     field("${output}" "plot_${label}" run_id)
+    check_artifact_execution("${root}" "plot_${label}" "${source_blob}"
+        plot --experiment "${experiment}" --input-root "${input}" --run-id "plot_${label}")
+    artifact_field("${recorded_artifact_invocation}" "${experiment}" effective_config experiment)
+    artifact_field("${recorded_artifact_invocation}" "${input}" effective_config input_root)
+    check_artifact_inputs("${recorded_artifact_invocation}" "${analyzed_dataset}")
     string(JSON files LENGTH "${output}" plot_files)
     equal("${files}" "${panels}" "${label} SVG panel count")
     math(EXPR last_file "${files}-1")

@@ -2,6 +2,7 @@
 #include "egomotion/contracts/diagnostics.hpp"
 #include "egomotion/experiments/production_runner.hpp"
 #include "egomotion/experiments/run_context.hpp"
+#include "egomotion/io/mat_result_reader.hpp"
 
 #include <cerrno>
 #include <cstdlib>
@@ -169,6 +170,141 @@ void preserveCompleteAndExisting(const fs::path& root) {
     require(blocked.code == 6, "Existing execution record is a publication failure");
     require(read(root / "output/blocked/execution.json") == "retained blocker\n", "Never overwrite previous execution evidence");
 }
+class FixedAnalyzer final : public IAnalyzer {
+public:
+    Result<AnalysisDataset,AnalysisErrorCode> analyze(AnalysisKind,const fs::path&,IResultReader&) override {
+        AnalysisDataset data;data.source_analysis_blob="fixture-analysis-blob";
+        AnalysisSeries curve;curve.name="曲线\"\n";curve.x={1};curve.y={2};
+        curve.helper_source_blob_shas={"fixture-helper"};
+        // 故意不可打开；记录必须借用Analyzer快照身份，不能重读这些路径。
+        curve.inputs={{"missing/中文 引号\".mat","v",7,"retained snapshot",std::string(64,'a')},
+                      {"missing/unknown.mat","u",8,"unknown digest",std::nullopt}};
+        data.curves.push_back(std::move(curve));
+        return Result<AnalysisDataset,AnalysisErrorCode>::success(std::move(data));
+    }
+};
+class TrackingExporter final : public IPlotExporter,public illustrations::IExporter {
+public:
+    fs::path directory;
+    std::size_t invocations=0;
+    bool throws=false,block_finish=false;
+    std::optional<PlotErrorCode> failure;
+    Result<std::vector<std::string>,PlotErrorCode> publish(ITextPublisher& publisher) {
+        ++invocations;
+        contains(read(directory/"invocation.json"),"\"phase\":\"started\"","Record precedes exporter");
+        require(publisher.publishNew("kept.txt","Retained artifact\n").hasValue(),"Artifact fixture publication");
+        if(block_finish)std::ofstream(directory/"execution.json")<<"retained blocker\n";
+        if(throws)throw std::runtime_error("Injected exporter exception");
+        if(failure) {
+            ErrorDetail inner;inner.stage=ErrorStage::Read;inner.source_path="输入.mat";
+            inner.variable="value";inner.observation_index=7;inner.run_id=RunId{"source_run"};
+            inner.message="Injected nested failure\n第二行";
+            ErrorDetail outer;outer.stage=ErrorStage::Plot;outer.message="Injected exporter failure";
+            return Result<std::vector<std::string>,PlotErrorCode>::failure(wrapFailure(*failure,
+                std::move(outer),Failure<MatErrorCode>{MatErrorCode::InvalidMatHeader,std::move(inner)}));
+        }
+        return Result<std::vector<std::string>,PlotErrorCode>::success({"kept.txt"});
+    }
+    Result<std::vector<std::string>,PlotErrorCode> exportPlot(const AnalysisDataset&,ITextPublisher& p) override {return publish(p);}
+    Result<std::vector<std::string>,PlotErrorCode> exportSvg(const illustrations::Data&,ITextPublisher& p) override {return publish(p);}
+};
+class FlushFailure final : public std::stringbuf {
+    int sync() override {return -1;}
+};
+Response artifact(const fs::path& root,TrackingExporter& exporter,bool plot,const std::string& id,
+                  bool direct=false,bool bad_out=false,bool bad_err=false) {
+    ++calls;
+    io::MatResultReader reader;FixedAnalyzer analyzer;
+    cli::ApplicationCompositionRoot app(&reader,nullptr,&analyzer,&exporter,root,&exporter);
+    auto args=plot?std::vector<std::string>{"plot","--experiment","bias","--input-root","missing"}:
+        std::vector<std::string>{"illustrate","--kind","harmonic","--degree","3","--order","-2","--format","svg"};
+    args.insert(args.end(),{"--run-id",id});
+    exporter.directory=root/"output"/id;
+    FlushFailure out_buffer,err_buffer;
+    std::ostringstream good_out,good_err;
+    std::ostream failed_out(&out_buffer),failed_err(&err_buffer);
+    std::ostream& out=bad_out?failed_out:good_out;
+    std::ostream& err=bad_err?failed_err:good_err;
+    const auto code=direct?app.dispatch(cli::parseCommand(args).value(),out,err):cli::run(args,out,err,app);
+    return {code,bad_out?out_buffer.str():good_out.str(),bad_err?err_buffer.str():good_err.str()};
+}
+void artifactSuccess(const fs::path& root,bool plot) {
+    TrackingExporter exporter;
+    const auto response=artifact(root,exporter,plot,"success",true);
+    require(response.code==0&&response.err.empty()&&exporter.invocations==1,"Successful export");
+    const auto start=read(exporter.directory/"invocation.json");
+    const auto finish=read(exporter.directory/"execution.json");
+    contains(start,"\"arguments\":null","Direct dispatch does not invent argv");
+    contains(start,"\"engine\":null,\"seed\":null,\"seed_origin\":\"not_used\"","No scientific RNG used");
+    contains(start,"\"calculation_manifest\":null","No invented calculation manifest");
+    contains(finish,"\"calculation_manifest\":null","No invented end manifest");
+    contains(finish,"\"attempted_text\":"+jsonQuote(response.out),"Whole output retained");
+    contains(finish,"\"exit_code_if_record_published\":0","Successful audit exit");
+    require(!fs::exists(exporter.directory/"manifest.json"),"No computation manifest for export");
+    if(plot) {
+        contains(start,"\"mat_sha256\":"+jsonQuote(std::string(64,'a')),"Retain snapshot digest");
+        contains(start,"\"mat_sha256\":null","Unknown digest remains unknown");
+        contains(start,"\"matlab_run_ordinal\":7","Keep 1-based source ordinal");
+        contains(start,"\"path\":"+jsonQuote("missing/中文 引号\".mat"),"Escaped original path");
+        contains(start,"fixture-helper","Retain source helper");
+    } else contains(start,"\"kind\":\"harmonic\",\"degree\":3,\"order\":-2","Actual signed harmonic config");
+}
+void artifactRecordFaults(const fs::path& root,bool plot) {
+    for(const auto kind:{Fault::StartLink,Fault::StartSync,Fault::FinishLink,Fault::FinishSync}) {
+        TrackingExporter exporter;fault=kind;hits=0;
+        const bool start_failed=kind==Fault::StartLink||kind==Fault::StartSync;
+        const auto response=artifact(root,exporter,plot,"record_"+std::to_string(static_cast<int>(kind)));
+        fault=Fault::None;
+        require(response.code==6&&hits==1,"Artifact audit fault actually fired");
+        require(exporter.invocations==(start_failed?0U:1U),"No exporter before confirmed start");
+        require(fs::exists(exporter.directory/"kept.txt")==!start_failed,"Preserve published artifact");
+        require(fs::exists(exporter.directory/"invocation.json")==(kind!=Fault::StartLink),"Start publication state");
+        if(kind==Fault::FinishLink)require(!fs::exists(exporter.directory/"execution.json"),"Unpublished end absent");
+        else {
+            const auto finish=read(exporter.directory/"execution.json");
+            contains(finish,start_failed?"\"invocation_confirmed\":false":"\"invocation_confirmed\":true","Actual start confirmation");
+            contains(finish,start_failed?"\"exit_code_if_record_published\":6":"\"exit_code_if_record_published\":0","Conditional outcome");
+            contains(finish,"\"exit_code_on_record_failure\":6","Record failure condition retained");
+        }
+    }
+}
+void artifactFailures(const fs::path& root,bool plot) {
+    const std::vector<std::pair<PlotErrorCode,int>> failures={
+        {PlotErrorCode::BackendUnavailable,7},{PlotErrorCode::InvalidSeries,5},
+        {PlotErrorCode::OutputForbidden,6},{PlotErrorCode::WriteFailed,6}};
+    for(std::size_t i=0;i<failures.size();++i) {
+        TrackingExporter exporter;exporter.failure=failures[i].first;
+        const auto response=artifact(root,exporter,plot,"export_"+std::to_string(i));
+        require(response.code==failures[i].second&&response.out.empty(),"Original export classification");
+        contains(response.err,"\"path\":\"输入.mat\"","Nested source identity");
+        contains(response.err,"\"run_id\":\"source_run\"","Nested RunId retained");
+        contains(response.err,"\"observation_index\":7","Nested observation index retained");
+        contains(read(exporter.directory/"execution.json"),"\"attempted_text\":"+jsonQuote(response.err),"Complete diagnostic chain retained");
+        require(read(exporter.directory/"kept.txt")=="Retained artifact\n","Failure preserves prior artifact");
+    }
+    for(const auto mode:{"exception","blocked","stdout","stderr"}) {
+        TrackingExporter exporter;const std::string id(mode);
+        exporter.throws=id=="exception";exporter.block_finish=id=="blocked";
+        if(id=="stderr")exporter.failure=PlotErrorCode::InvalidSeries;
+        const auto response=artifact(root,exporter,plot,id,false,id=="stdout",id=="stderr");
+        require(response.code==6,"Exception, record collision and stream failures return 6");
+        require(read(exporter.directory/"kept.txt")=="Retained artifact\n","All failures preserve artifact");
+        const auto finish=read(exporter.directory/"execution.json");
+        if(id=="blocked")require(finish=="retained blocker\n","End record never overwritten");
+        else {
+            contains(finish,"\"exit_code_if_record_published\":6","Final output failure retained");
+            if(id=="exception")contains(finish,"Injected exporter exception","Thrown exporter recorded with RunId");
+            else contains(finish,"\"write_and_flush_succeeded\":false","Stream delivery failure retained");
+        }
+    }
+}
+void artifacts(const fs::path& root) {
+    for(const bool plot:{true,false}) {
+        const auto repo=root/(plot?"plot":"illustration");fs::create_directories(repo/"origin");
+        artifactSuccess(repo,plot);artifactRecordFaults(repo,plot);artifactFailures(repo,plot);
+        require(fs::is_empty(repo/"origin"),"Artifact original marker untouched");
+    }
+}
 }  // namespace
 int main(int argc, char** argv) {
     require(argc == 2, "Expected sandbox directory");
@@ -176,7 +312,7 @@ int main(int argc, char** argv) {
     std::string pattern = (fs::path(argv[1]) / "运行记录 中文-XXXXXX").string();
     require(::mkdtemp(pattern.data()) != nullptr, "Cannot reserve new execution sandbox");
     const fs::path root(pattern); fs::create_directory(root / "origin");
-    allEntries(root); recordFaults(root); preserveCompleteAndExisting(root);
+    allEntries(root); recordFaults(root); preserveCompleteAndExisting(root); artifacts(root);
     require(fs::is_empty(root / "origin"), "Original marker untouched");
     std::cout << "PASS execution records checks=" << checks << " calls=" << calls
               << " evidence=" << root << '\n';

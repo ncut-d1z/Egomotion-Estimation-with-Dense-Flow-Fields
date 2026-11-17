@@ -21,7 +21,14 @@ struct CommandDelivery {
 // argv来自本次cli::run，明确不含argv[0]。直接dispatch时留null，绝不反推伪造。
 std::string invocationRecord(const Command&, const std::vector<std::string>* argv,
                              const RunContext&);
-std::string executionRecord(const RunId&, const CommandDelivery&, bool invocation_confirmed);
+std::string artifactInvocationRecord(const Command&, const std::vector<std::string>* argv,
+                                      const RunId&, const std::filesystem::path& output_directory,
+                                      const AnalysisDataset&);
+std::string artifactInvocationRecord(const Command&, const std::vector<std::string>* argv,
+                                      const RunId&, const std::filesystem::path& output_directory,
+                                      const illustrations::Data&);
+std::string executionRecord(const RunId&, const CommandDelivery&, bool invocation_confirmed,
+                            bool has_calculation_manifest = true);
 // 日志记录每次尝试的全文及完整交付状态，失败时不捏造已送达字节数。
 CommandDelivery deliverRecorded(std::string stdout_text,
                                 const std::vector<std::string>& diagnostics,

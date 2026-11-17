@@ -78,6 +78,27 @@ std::string environment() {
     return json;
 }
 std::string parameters(const Command& command) {
+    if (command.kind == CommandKind::Plot) {
+        const auto& args = std::get<AnalysisArgs>(command.arguments);
+        const char* kind = nullptr;
+        switch (args.kind) {
+        case AnalysisKind::Bias: kind = "bias"; break;
+        case AnalysisKind::AdaptiveInitialization: kind = "adaptive-init"; break;
+        case AnalysisKind::AdaptiveComparison: kind = "adaptive-comparison"; break;
+        case AnalysisKind::AdaptiveUpdateRates: kind = "adaptive-update-rates"; break;
+        }
+        if (!kind) throw std::invalid_argument("Unknown plot analysis kind");
+        return "{\"experiment\":" + jsonQuote(kind) + ",\"input_root\":" +
+            jsonQuote(args.input_root.string()) + '}';
+    }
+    if (command.kind == CommandKind::Illustrate) {
+        const auto& args = std::get<IllustrationArgs>(command.arguments);
+        if (const auto* harmonic = std::get_if<illustrations::HarmonicConfig>(&args.config))
+            return "{\"format\":\"svg\",\"kind\":\"harmonic\",\"degree\":" +
+                std::to_string(harmonic->degree) + ",\"order\":" + std::to_string(harmonic->order) + '}';
+        return "{\"format\":\"svg\",\"kind\":" + jsonQuote(
+            std::holds_alternative<illustrations::CircleConfig>(args.config) ? "circle" : "sinusoidal") + '}';
+    }
     if (command.kind == CommandKind::BiasOccluded || command.kind == CommandKind::BiasProportional) {
         const auto& config = std::get<BiasArgs>(command.arguments).config;
         return "{\"seed\":" + std::to_string(config.seed) +
@@ -101,23 +122,23 @@ std::string commandName(CommandKind command) {
     case CommandKind::AdaptiveInitialization: return "run-adaptive-init";
     case CommandKind::AdaptiveComparison: return "run-adaptive-comparison";
     case CommandKind::AdaptiveUpdateRates: return "run-adaptive-update-rates";
-    default: throw std::invalid_argument("Invocation record requires an experiment command");
+    case CommandKind::Plot: return "plot";
+    case CommandKind::Illustrate: return "illustrate";
+    default: throw std::invalid_argument("Invocation record requires an output command");
     }
 }
-}  // namespace
-
-std::string invocationRecord(const Command& command, const std::vector<std::string>* argv,
-                             const RunContext& context) {
-    const auto& provenance = context.provenance();
+std::string invocationPrefix(const Command& command, const std::vector<std::string>* argv,
+                              const RunId& id, const std::filesystem::path& output_directory,
+                              const std::string& repository_sha, const std::string& source_blob) {
     std::error_code error;
     const auto cwd = std::filesystem::current_path(error);
     const std::string cwd_json = error ? "null" : jsonQuote(cwd.string());
     const auto executable = std::filesystem::read_symlink("/proc/self/exe", error);
     const std::string executable_json = error ? "null" : jsonQuote(executable.string());
     std::string json = "{\"schema\":\"egomotion-invocation-v1\",\"phase\":\"started\"";
-    json += ",\"run_id\":" + jsonQuote(context.runId().text) + ",\"started_utc\":" + timestamp();
-    json += ",\"repo_sha\":" + jsonQuote(provenance.repository_commit_sha);
-    json += ",\"source_blob_sha\":" + jsonQuote(provenance.matlab_source_blob_sha);
+    json += ",\"run_id\":" + jsonQuote(id.text) + ",\"started_utc\":" + timestamp();
+    json += ",\"repo_sha\":" + jsonQuote(repository_sha);
+    json += ",\"source_blob_sha\":" + jsonQuote(source_blob);
     json += ",\"command\":" + jsonQuote(commandName(command.kind));
     json += ",\"arguments_exclude_argv0\":true,\"arguments\":";
     if (argv) {
@@ -129,8 +150,31 @@ std::string invocationRecord(const Command& command, const std::vector<std::stri
         json += ']';
     } else json += "null";
     json += ",\"executable\":" + executable_json + ",\"working_directory\":" + cwd_json;
-    json += ",\"output_directory\":" + jsonQuote((context.approvedOutputRoot() / context.runId().text).string());
+    json += ",\"output_directory\":" + jsonQuote(output_directory.string());
     json += ",\"effective_config\":" + parameters(command);
+    return json;
+}
+std::string stringArray(const std::vector<std::string>& values) {
+    std::string json = "[";
+    for (std::size_t i = 0; i < values.size(); ++i) {
+        if (i) json += ',';
+        json += jsonQuote(values[i]);
+    }
+    return json + ']';
+}
+std::string artifactSuffix() {
+    return ",\"record_scope\":\"artifact_export\",\"algorithm_rng\":{\"engine\":null,\"seed\":null,\"seed_origin\":\"not_used\"}"
+        ",\"environment\":" + environment() +
+        ",\"execution_record\":\"execution.json\",\"calculation_manifest\":null}\n";
+}
+}  // namespace
+
+std::string invocationRecord(const Command& command, const std::vector<std::string>* argv,
+                             const RunContext& context) {
+    const auto& provenance = context.provenance();
+    auto json = invocationPrefix(command, argv, context.runId(),
+        context.approvedOutputRoot() / context.runId().text,
+        provenance.repository_commit_sha, provenance.matlab_source_blob_sha);
     json += ",\"algorithm_rng\":{\"engine\":\"std::mt19937\",\"seed\":";
     json += provenance.rng_seed ? std::to_string(*provenance.rng_seed) : "null";
     json += ",\"seed_origin\":" + jsonQuote(command.kind == CommandKind::BiasOccluded ||
@@ -141,15 +185,53 @@ std::string invocationRecord(const Command& command, const std::vector<std::stri
     return json;
 }
 
+std::string artifactInvocationRecord(const Command& command, const std::vector<std::string>* argv,
+                                      const RunId& id, const std::filesystem::path& output_directory,
+                                      const AnalysisDataset& data) {
+    auto json = invocationPrefix(command, argv, id, output_directory,
+        EGOMOTION_BUILD_SOURCE_SHA, data.source_analysis_blob);
+    // 使用Analyzer读取时已绑定的身份，不重新打开路径计算一个可能已变化的摘要。
+    json += ",\"inputs\":{\"kind\":\"analyzed_mat_snapshots\",\"curves\":[";
+    for (std::size_t i = 0; i < data.curves.size(); ++i) {
+        if (i) json += ',';
+        const auto& curve = data.curves[i];
+        json += "{\"id\":" + jsonQuote(curve.name) + ",\"helper_source_blob_shas\":" +
+            stringArray(curve.helper_source_blob_shas) + ",\"mat_files\":[";
+        for (std::size_t j = 0; j < curve.inputs.size(); ++j) {
+            if (j) json += ',';
+            const auto& input = curve.inputs[j];
+            json += "{\"path\":" + jsonQuote(input.path.string()) +
+                ",\"variable\":" + jsonQuote(input.variable) +
+                ",\"role\":" + jsonQuote(input.role) +
+                ",\"matlab_run_ordinal\":" + std::to_string(input.matlab_run_ordinal) +
+                ",\"mat_sha256\":" + (input.mat_sha256 ? jsonQuote(*input.mat_sha256) : "null") + '}';
+        }
+        json += "]}";
+    }
+    return json + "]}" + artifactSuffix();
+}
+
+std::string artifactInvocationRecord(const Command& command, const std::vector<std::string>* argv,
+                                      const RunId& id, const std::filesystem::path& output_directory,
+                                      const illustrations::Data& data) {
+    auto json = invocationPrefix(command, argv, id, output_directory,
+        EGOMOTION_BUILD_SOURCE_SHA, data.source_script_blob);
+    json += ",\"inputs\":{\"kind\":\"generated_from_source_and_config\",\"mat_files\":[],"
+        "\"helper_source_blob_shas\":" + stringArray(data.helper_source_blobs) + '}';
+    return json + artifactSuffix();
+}
+
 std::string executionRecord(const RunId& id, const CommandDelivery& delivery,
-                            bool invocation_confirmed) {
+                            bool invocation_confirmed, bool has_calculation_manifest) {
     std::string json = "{\"schema\":\"egomotion-execution-v1\",\"run_id\":" + jsonQuote(id.text);
     json += ",\"finished_utc\":" + timestamp();
     json += ",\"invocation_confirmed\":" + std::string(invocation_confirmed ? "true" : "false");
     // 记录本身也可能发布失败。该条件字段不把随后返回6冒称为已存的0/5。
     json += ",\"exit_code_if_record_published\":" + std::to_string(delivery.exit_code);
     json += ",\"exit_code_on_record_failure\":6,\"invocation_record\":\"invocation.json\"";
-    json += ",\"calculation_manifest\":\"manifest.json\",\"channel_attempts\":[";
+    json += ",\"calculation_manifest\":";
+    json += has_calculation_manifest ? "\"manifest.json\"" : "null";
+    json += ",\"channel_attempts\":[";
     bool first = true;
     for (const auto& channel : delivery.channels) {
         if (!first) json += ',';

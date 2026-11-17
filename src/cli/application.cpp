@@ -132,9 +132,10 @@ Status<MatErrorCode> startRecord(ITextPublisher& text,const Command& command,
     }
 }
 int finishRecord(ITextPublisher& text,const RunId& id,const CommandDelivery& delivery,
-                 bool invocation_confirmed,std::ostream& err) {
+                 bool invocation_confirmed,std::ostream& err,bool has_calculation_manifest=true) {
     try {
-        auto recorded=text.publishNew("execution.json",executionRecord(id,delivery,invocation_confirmed));
+        auto recorded=text.publishNew("execution.json",executionRecord(
+            id,delivery,invocation_confirmed,has_calculation_manifest));
         if(recorded.hasValue())return delivery.exit_code;
         return streams::report(err,recorded.error(),6);
     } catch(const std::exception& error) {
@@ -225,10 +226,46 @@ int runExperiment(const Command& command,
     const auto delivery=deliverRecorded(outcomeResponse(result.value()),{},0,context.runId(),out,err);
     return finishRecord(text,context.runId(),delivery,true,err);
 }
+template<class Data,class Export>
+int exportRecorded(const Command& command,const std::vector<std::string>* args,
+                   io::RunDirectory& directory,const Data& data,Export export_artifact,
+                   std::ostream& out,std::ostream& err) {
+    io::RunTextPublisher publisher(directory);
+    const auto& id=directory.runId();
+    bool invocation_confirmed=false;
+    CommandDelivery delivery;
+    try {
+        const auto started=publisher.publishNew("invocation.json",artifactInvocationRecord(
+            command,args,id,directory.outputRoot()/id.text,data));
+        invocation_confirmed=started.hasValue();
+        if(!invocation_confirmed) {
+            delivery=deliverRecorded({}, {jsonFailure(started.error(),6)+"\n"},6,id,out,err);
+        } else {
+            auto exported=export_artifact(publisher);
+            if(!exported.hasValue()) {
+                const auto code=plotExit(exported.error().code);
+                const auto error=detail::withRunIdIfMissing(exported.error(),id);
+                delivery=deliverRecorded({}, {jsonFailure(error,code)+"\n"},code,id,out,err);
+            } else {
+                std::string response="{\"run_id\":"+jsonQuote(id.text)+",\"plot_files\":[";
+                for(std::size_t i=0;i<exported.value().size();++i) {
+                    if(i)response+=',';
+                    response+=jsonQuote(exported.value()[i]);
+                }
+                delivery=deliverRecorded(response+"]}\n",{},0,id,out,err);
+            }
+        }
+    } catch(const std::exception& error) {
+        ErrorDetail detail;detail.stage=ErrorStage::Output;detail.run_id=id;detail.message=error.what();
+        delivery=deliverRecorded({}, {jsonFailure(Failure<ExperimentErrorCode>{
+            ExperimentErrorCode::OutputFailed,std::move(detail)},6)+"\n"},6,id,out,err);
+    }
+    return finishRecord(publisher,id,delivery,invocation_confirmed,err,false);
+}
 int analyzeOrPlot(const Command& cmd,IAnalyzer& analyzer,
                   IPlotExporter* plotter,IResultReader& reader,
                   const std::filesystem::path& repository_root,
-                  std::ostream& out,std::ostream& err) {
+                  std::ostream& out,std::ostream& err,const std::vector<std::string>* invocation_arguments) {
     const auto& args=std::get<AnalysisArgs>(cmd.arguments);
     auto result=analyzer.analyze(args.kind,args.input_root,reader);
     if(!result.hasValue()){
@@ -252,26 +289,13 @@ int analyzeOrPlot(const Command& cmd,IAnalyzer& analyzer,
         return streams::report(err,reserved.error(),code);
     }
     auto dir=std::move(reserved).value();
-    io::RunTextPublisher publisher(*dir);
-    auto exported=plotter->exportPlot(result.value(),publisher);
-    if(!exported.hasValue()){
-        const auto code=plotExit(exported.error().code);
-        return streams::report(err,detail::withRunIdIfMissing(exported.error(),dir->runId()),code);
-    }
-    std::ostringstream response;
-    response.imbue(std::locale::classic());
-    response.exceptions(std::ios::badbit|std::ios::failbit);
-    response<<"{\"run_id\":"<<jsonQuote(dir->runId().text)<<",\"plot_files\":[";
-    bool first=true;
-    for(const auto& file:exported.value()){
-        if(!first)response<<",";
-        first=false;response<<jsonQuote(file);
-    }
-    response<<"]}\n";
-    return streams::success(out,err,response.str(),&dir->runId());
+    return exportRecorded(cmd,invocation_arguments,*dir,result.value(),
+        [&](ITextPublisher& publisher){return plotter->exportPlot(result.value(),publisher);},out,err);
 }
-int illustrate(const IllustrationArgs& args,illustrations::IExporter* exporter,
-               const std::filesystem::path& repository_root,std::ostream& out,std::ostream& err) {
+int illustrate(const Command& command,illustrations::IExporter* exporter,
+               const std::filesystem::path& repository_root,std::ostream& out,std::ostream& err,
+               const std::vector<std::string>* invocation_arguments) {
+    const auto& args=std::get<IllustrationArgs>(command.arguments);
     auto data=illustrations::generate(args.config);
     if(!data.hasValue())return streams::report(err,data.error(),5);
     if(!args.svg) {
@@ -286,19 +310,8 @@ int illustrate(const IllustrationArgs& args,illustrations::IExporter* exporter,
         return streams::report(err,reserved.error(),code);
     }
     auto directory=std::move(reserved).value();
-    io::RunTextPublisher publisher(*directory);
-    auto files=exporter->exportSvg(data.value(),publisher);
-    if(!files.hasValue()) {
-        const auto code=plotExit(files.error().code);
-        return streams::report(err,detail::withRunIdIfMissing(files.error(),directory->runId()),code);
-    }
-    std::ostringstream response;
-    response.imbue(std::locale::classic());
-    response.exceptions(std::ios::badbit|std::ios::failbit);
-    response<<"{\"run_id\":"<<jsonQuote(directory->runId().text)<<",\"plot_files\":[";
-    for(std::size_t i=0;i<files.value().size();++i){if(i)response<<',';response<<jsonQuote(files.value()[i]);}
-    response<<"]}\n";
-    return streams::success(out,err,response.str(),&directory->runId());
+    return exportRecorded(command,invocation_arguments,*directory,data.value(),
+        [&](ITextPublisher& publisher){return exporter->exportSvg(data.value(),publisher);},out,err);
 }
 } // namespace
 
@@ -354,9 +367,9 @@ int ApplicationCompositionRoot::dispatch(
     case CommandKind::Plot:
         if(!reader_||!analyzer_)return unavailable(err,"analyze","Analyzer/Reader");
         return analyzeOrPlot(command,*analyzer_,plotter_,*reader_,
-                             trusted_repo_,out,err);
+                             trusted_repo_,out,err,invocation_arguments);
     case CommandKind::Illustrate:
-        return illustrate(std::get<IllustrationArgs>(command.arguments),illustrator_,trusted_repo_,out,err);
+        return illustrate(command,illustrator_,trusted_repo_,out,err,invocation_arguments);
     default:
         if(!runner_)return unavailable(err,"simulation","Experiment Runner");
         return runExperiment(command,trusted_repo_,*runner_,out,err,invocation_arguments);

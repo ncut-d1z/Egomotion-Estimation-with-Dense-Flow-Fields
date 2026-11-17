@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
+include("${CMAKE_CURRENT_LIST_DIR}/artifact_record_checks.cmake")
 # 固定有限 MAT -> 真实 CLI -> 独立多项式参考；不运行 MATLAB 或完整实验。
 foreach(required IN ITEMS CLI FIXTURE SANDBOX SOURCE_SHA SVG_ENABLED)
     if(NOT DEFINED ${required} OR "${${required}}" STREQUAL "")
@@ -128,6 +129,11 @@ function(check_dataset id experiment expected_count expected_points expected_ful
     if(NOT "${actual_status}" STREQUAL "0")
         return()
     endif()
+    string(JSON source_blob GET "${expected}" source_analysis_blob)
+    check_artifact_execution("${root}" "plot_${id}" "${source_blob}"
+        plot --experiment "${experiment}" --input-root "${root}/output/${id}" --run-id "plot_${id}")
+    artifact_field("${recorded_artifact_invocation}" "${experiment}" effective_config experiment)
+    check_artifact_inputs("${recorded_artifact_invocation}" "${expected}")
     string(JSON count LENGTH "${output}" plot_files)
     equal("${count}" 2 "${id} SVG panel count")
     foreach(index RANGE 0 1)
