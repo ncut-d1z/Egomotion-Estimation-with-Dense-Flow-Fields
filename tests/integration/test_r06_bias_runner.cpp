@@ -178,6 +178,12 @@ BiasRunData observedCompute(ExperimentKind kind,std::uint32_t seed) {
              <<" normal_draws="<<noise.normal_calls<<'\n';
     return result.value();
 }
+struct ZeroFlowNoise final:IFlowNoiseModel {
+    Result<FlowField,NumericalErrorCode> apply(const FlowField& ideal,Scalar,IRandomSource&) const override {
+        FlowField zero=ideal;zero.observations.rightCols<3>().setZero();
+        return Result<FlowField,NumericalErrorCode>::success(std::move(zero));
+    }
+};
 void failureContracts() {
     sampling::OctahedralSampler full;simulation::ComponentProportionalGaussianNoise component;
     for(const auto fail_call:{1u,5u}) {
@@ -206,6 +212,15 @@ void failureContracts() {
     const auto invalid=experiments::BiasExperimentRunner(sampler,noise).compute({7,-1},[&]{++completed;});
     check(!invalid.hasValue()&&invalid.error().code==ExperimentErrorCode::InvalidParameters&&
           sampler.levels.empty()&&noise.calls==0&&completed==0,"Negative level rejected before sampling");
+    // 流生成成功但真实KvD初始化不可解，仍必须归类为SolverFailed。
+    ZeroFlowNoise zero;completed=0;
+    const auto solver_failure=experiments::BiasExperimentRunner(full,zero).compute({7,0},[&]{++completed;});
+    check(!solver_failure.hasValue()&&solver_failure.error().code==ExperimentErrorCode::SolverFailed&&completed==0,
+          "Actual solver failure must retain SolverFailed and zero valid samples");
+    bool zero_norm=false;
+    if(!solver_failure.hasValue())for(const auto& cause:solver_failure.error().detail.causes)
+        zero_norm|=cause.code=="ZeroNorm";
+    check(zero_norm,"Actual zero-flow KvD failure retains ZeroNorm root cause");
 }
 void contracts() {
     for(const auto kind:{ExperimentKind::BiasOccluded,ExperimentKind::BiasProportional}) {

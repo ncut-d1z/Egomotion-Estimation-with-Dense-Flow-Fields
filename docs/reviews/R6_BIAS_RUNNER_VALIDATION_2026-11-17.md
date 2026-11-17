@@ -1,6 +1,14 @@
 # R6 Bias Runner有界集成验证
 
-## 首轮准备：尚未运行
+## 首轮实测与修复候选
+
+已提交/推送/远端核实 `ff18a3a584c76bb2b63489732968b07f53d78d89`；RunId `r6-bias-baseline-20261117-V6NJqqUX`。配置/编译exit0且无诊断，MAT先5/5、其余27/28，合计32/33。新编排17693项中仅2失败：第一/第五样本的normal故障外层均为SolverFailed而不是既有合同的IncompleteRun；有效前缀0/4、精确样本身份和根因索引均正确。真实发布5558项全部通过，七个MAT和部分写出/无效参数状态正确；两组最大数值残差均6.6613381477509392e-16。每次完整occluded/proportional分别消耗1134/1512个normal，7→11→7输出逐位一致，全部原始输入哈希未变。
+
+**本地缺陷R6-BIAS-001**：`bias_runner.cpp` 共用 `fromSolver` 将RNG/场景生成与真正求解器失败都命名为SolverFailed。保存证据后再次查询全部open/closed Issue/PR为空，未创建远端Issue。完整证据在 `build/r6-bias-baseline-20261117-V6NJqqUX/evidence/`；其余CTest stdout SHA-256 `b82ab6f15b1520b4fb64656b854b55ce5a4792c61765a0eb50cc8eb4ca39d091`。生成MAT、失败Manifest和日志全部保留。
+
+修正将私有包装函数命名为 `fromNumerical`，显式传入外层枚举：真值RNG/场景生成用IncompleteRun，Franz/Original/Modified求解和最终指标仍为SolverFailed；保留Simulation阶段、全部cause链、MATLAB噪声列和level，未改变生成/求解数值、控制流或样本计数。输出的Failed/Incomplete仍由RunContext依据可靠进度独立决定，IncompleteRun并不强制将零进度Manifest写成Incomplete。原两项失败断言不变，另用成功生成的合成零流触发真实KvD的ZeroNorm，确认真正求解失败仍为SolverFailed；待新检查点后复测全33项。
+
+## 首轮准备（历史）：尚未运行
 
 **[HUMAN-EXECUTE/APPROVE]** 起点 `96a695d14b05a19482fc9ee74ac445a43b8e95e8` 本地/远端一致，工作区干净；关联任务仍要求继续R6，全部Issue/PR查询为空。用户授权生产修改及构建/CTest，仍遵守执行前提交/推送/远端SHA规则。前批31/31仅属于 `632139b`；新登记两项后共33项，不能继承通过状态。
 

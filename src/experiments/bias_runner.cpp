@@ -27,7 +27,8 @@ ErrorResult invalid(std::string message) {
     return ErrorResult::failure({ExperimentErrorCode::InvalidParameters, std::move(detail)});
 }
 template<class T>
-ErrorResult fromSolver(const Result<T,NumericalErrorCode>& failed,
+ErrorResult fromNumerical(const Result<T,NumericalErrorCode>& failed,
+                       ExperimentErrorCode outer_code,
                        std::string message, std::size_t level,
                        std::optional<std::size_t> coefficient_column=std::nullopt) {
     ErrorDetail outer;
@@ -41,7 +42,7 @@ ErrorResult fromSolver(const Result<T,NumericalErrorCode>& failed,
                        std::to_string(*coefficient_column+1);
     outer.message+=")";
     return ErrorResult::failure(wrapFailure(
-        ExperimentErrorCode::SolverFailed, std::move(outer), failed.error()));
+        outer_code, std::move(outer), failed.error()));
 }
 Result<Scalar,NumericalErrorCode> normalizedVectorError(
     const Vector3& truth, const Vector3& estimate) {
@@ -88,10 +89,10 @@ ErrorResult computeImpl(const BiasExperimentConfig& config,
     try {
         sampling::Mt19937RandomSource rng(config.seed);
         auto truth_t=sampling::randomUnitDirection(rng);
-        if (!truth_t.hasValue()) return fromSolver(truth_t,
+        if (!truth_t.hasValue()) return fromNumerical(truth_t,ExperimentErrorCode::IncompleteRun,
             "Bias truth translation RNG failed",0);
         auto truth_w=sampling::randomUnitDirection(rng);
-        if (!truth_w.hasValue()) return fromSolver(truth_w,
+        if (!truth_w.hasValue()) return fromNumerical(truth_w,ExperimentErrorCode::IncompleteRun,
             "Bias truth rotation RNG failed",0);
         const Vector3 t=std::move(truth_t).value(), w=std::move(truth_w).value();
 
@@ -124,18 +125,22 @@ ErrorResult computeImpl(const BiasExperimentConfig& config,
                 auto scene=simulation::generateBiasFlow(
                     params,sampler,synthesizer,noise,rng);
                 if (!scene.hasValue())
-                    return fromSolver(scene,"Bias flow generation failed",level,v);
+                    return fromNumerical(scene,ExperimentErrorCode::IncompleteRun,
+                                         "Bias flow generation failed",level,v);
 
                 const FlowField& flow=scene.value().noisy;
                 auto franz_result=franz.estimate(flow);
                 if (!franz_result.hasValue())
-                    return fromSolver(franz_result,"Franz failed on Bias sample",level,v);
+                    return fromNumerical(franz_result,ExperimentErrorCode::SolverFailed,
+                                         "Franz failed on Bias sample",level,v);
                 auto orig_result=original.estimate(flow,kvd);
                 if (!orig_result.hasValue())
-                    return fromSolver(orig_result,"Original KvD failed on Bias sample",level,v);
+                    return fromNumerical(orig_result,ExperimentErrorCode::SolverFailed,
+                                         "Original KvD failed on Bias sample",level,v);
                 auto mod_result=modified.estimate(flow,kvd);
                 if (!mod_result.hasValue())
-                    return fromSolver(mod_result,"Modified KvD failed on Bias sample",level,v);
+                    return fromNumerical(mod_result,ExperimentErrorCode::SolverFailed,
+                                         "Modified KvD failed on Bias sample",level,v);
                 const MotionEstimate& f=franz_result.value();
                 const MotionEstimate& o=orig_result.value().motion;
                 const MotionEstimate& m=mod_result.value().motion;
@@ -148,7 +153,7 @@ ErrorResult computeImpl(const BiasExperimentConfig& config,
                     auto err=normalizedVectorError(pairs[metric].first,
                                                    pairs[metric].second);
                     if (!err.hasValue())
-                        return fromSolver(err,
+                        return fromNumerical(err,ExperimentErrorCode::SolverFailed,
                             "Bias ywerte"+std::to_string(metric+1)+" error undefined",
                             level,v);
                     data.ywerte[metric][v*levels+level]=err.value();
