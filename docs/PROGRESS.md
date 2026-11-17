@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 plot/SVG导出记录（2026-11-18）
+
+`[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`00d174258f502d6c458fb26b8e0727d148b98672`两模式构建无诊断、**ON55/55、OFF54/54 CTest**，零失败/跳过/禁用。plot和SVG插图保留真实参数/来源/输入快照/交付状态，开始记录未确认不导出；运行记录专项394项/38次调用，实际插图CLI各29次。首轮54/55的测试夹具负order错误已修复，失败证据及 [Issue #2](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/2)保持开放供复核。RunId `r6-artifact-retest-20261118-f3PrRXse`，见 [专项记录](reviews/R6_ARTIFACT_RECORDS_2026-11-18.md)。原始SHA不变；D4已分配RunId的导出记录缺口已补，只读/预留前/信号边界、D1/D2及Adaptive其它装配仍待收敛，完整实验/资格/冻结未完成，R6未结案。
+
 ## 最新接续：R6 MAT v7.3拒绝（2026-11-18）
 
 `[HUMAN-EXECUTE/APPROVE]` 实测：修复源码`f1a7ab2aed7795877e070260ebfb1b30a89d6f33`两模式构建无诊断、**ON55/55、OFF54/54 CTest**；MAT73专项32场景/308项通过，版本拒绝不再调用Mat_Open，原582MAT/33340逐位值和快照回归通过，输入SHA不变。旧Reader`0d73ed1`的29/32场景失败记录保留，修复追踪 [Issue #1](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/1)仍开放。RunId `r6-mat73-rejection-20261118-3L89aVqh`，详见 [专项记录](reviews/R6_MAT73_REJECTION_2026-11-18.md)。D5缺口已补；继续D4日志、D1/D2结构和Adaptive其它装配边界，完整实验/资格/冻结未完成，R6未结案。

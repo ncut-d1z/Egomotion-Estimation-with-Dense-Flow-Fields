@@ -4,7 +4,7 @@ A planned **C++17 reimplementation that directly reads the original MATLAB MAT f
 
 > **Permanent evidence policy:** Running MATLAB/Octave or collecting original MATLAB L1 execution traces is **not required** for design, coding, verification, or release. The original scripts are read-only specifications; numerical evidence will use the preserved MAT results (L2), independently checked analytic/reference implementations (L3), and statistical comparisons (L4). See [No MATLAB Execution Policy](docs/golden/NO_MATLAB_EXECUTION_POLICY.md). This change does not authorize C++ builds/tests or imply any numerical acceptance.
 
-> **项目状态（2026-11-18）**：R6仍在验证。最新受测源码 `f1a7ab2aed7795877e070260ebfb1b30a89d6f33` 两模式构建无诊断，**SVG ON55/55、OFF54/54 CTest通过**；真实MAT v7.3误分类已修复，32场景/308项版本拒绝检查通过，见 [最新验证](docs/reviews/R6_MAT73_REJECTION_2026-11-18.md)。真实Adaptive三入口仍因初始化第14帧acos越界或第151帧零旋转返回Incomplete，无MAT；**错误处理通过不等于科学实验成功**。[数值证据汇总](docs/NUMERICAL_EQUIVALENCE.md)、[98项任务复核](docs/reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)及[66项TC映射](docs/reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)列明实际证据和剩余义务；原始资料哈希不变。
+> **项目状态（2026-11-18）**：R6仍在验证。最新受测源码 `00d174258f502d6c458fb26b8e0727d148b98672` 两模式构建无诊断，**SVG ON55/55、OFF54/54 CTest通过**；plot/SVG导出记录专项394项/38次调用通过，见 [最新验证](docs/reviews/R6_ARTIFACT_RECORDS_2026-11-18.md)。真实Adaptive三入口仍因初始化第14帧acos越界或第151帧零旋转返回Incomplete，无MAT；**错误处理通过不等于科学实验成功**。[数值证据汇总](docs/NUMERICAL_EQUIVALENCE.md)、[98项任务复核](docs/reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)及[66项TC映射](docs/reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)列明实际证据和剩余义务；原始资料哈希不变。
 
 ## Original research and source material
 
@@ -60,6 +60,8 @@ Original research references (retained):
 `egomotion` 检查终端/重定向输出的写入与刷新。普通输出流错误返回6；stderr也失效时无法保证诊断送达。计算可能已经成功保存MAT与Complete Manifest，而最后的stdout通知交付失败；请核对该RunId下的现有产物，不以通知失败覆盖或删除结果。失败审计在stderr通知前保存，默认SIGPIPE行为保持不变。实际范围见 [输出故障验证](docs/reviews/R6_CLI_STREAM_OUTPUT_2026-11-17.md)。
 
 五个 `run-*` 实验在同一RunId目录保存 `invocation.json`（命令、实际参数、seed、源码与环境）和 `execution.json`（输出尝试、完整交付状态与返回码规则）。结束记录确认发布后，程序返回 `exit_code_if_record_published`；记录自身写入/持久化失败返回6并报错，已有计算Manifest保持原状态。信号终止可能只有开始记录，不能据此认定完成。字段与验证范围见 [运行记录说明](docs/reviews/R6_EXECUTION_RECORDS_2026-11-17.md)。
+
+`plot` 和 `illustrate --format svg` 也在已分配的RunId目录保存这两份记录；`record_scope=artifact_export`从导出前开始，保留实际配置和已绑定的输入来源。没有科学RNG或计算Manifest时明确记null。开始记录未确认不导出，结束记录失败返回6并保留已有文件。只读analyze/JSON插图继续不创建输出目录，详见 [导出记录说明](docs/reviews/R6_ARTIFACT_RECORDS_2026-11-18.md)。
 
 ## Minimal C++ MAT dictionary probe
 

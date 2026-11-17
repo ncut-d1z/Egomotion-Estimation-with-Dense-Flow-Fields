@@ -1,6 +1,6 @@
 # C++ 实施路线图
 
-> **2026-11-18 最新结果**：`f1a7ab2aed7795877e070260ebfb1b30a89d6f33`构建无诊断，**SVG ON55/55、OFF54/54 CTest**，先MAT7项，零失败/跳过/禁用。真实MAT73夹具复现了后端先打开导致的误分类，现前移版本拒绝，32场景/308项及全量回归通过，见 [专项证据](reviews/R6_MAT73_REJECTION_2026-11-18.md)和 [Issue #1](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/1)（保持开放）。[98项P证据表](reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)和 [数值汇总](NUMERICAL_EQUIVALENCE.md)同步；D3的Bias注入和D5的真实版本负例已补，继续D4非生成日志、D1/D2公共边界/候选差异及Adaptive其它装配边界。未改PLAN/AC、数值阈值或正式资格，R6未结案。
+> **2026-11-18 最新结果**：`00d174258f502d6c458fb26b8e0727d148b98672`构建无诊断，**SVG ON55/55、OFF54/54 CTest**，先MAT7项，零失败/跳过/禁用。plot/SVG插图的参数/输入快照/交付记录及故障路径已补，专项394项/38次调用、插图实际CLI各29次，见 [导出记录证据](reviews/R6_ARTIFACT_RECORDS_2026-11-18.md)。首轮测试夹具问题及修复见 [Issue #2](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/2)，保持开放。此前Bias注入、MAT73回归保留；[98项P复核](reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)同步。继续D1/D2及Adaptive其它装配、只读/预留前记录边界；未改PLAN/AC、数值阈值或正式资格，R6未结案。
 
 > **2026-11-17 最新执行授权**：用户已明确允许生产代码修改、构建/CTest 和方案文档修改。现进入 R6 原生验证及失败修复，旧批次的运行暂缓只作历史记录；每次运行前仍执行远程检查点规则。实际命令/结果见 [PROGRESS](PROGRESS.md)，本次授权不等于数值验收或冻结。
 

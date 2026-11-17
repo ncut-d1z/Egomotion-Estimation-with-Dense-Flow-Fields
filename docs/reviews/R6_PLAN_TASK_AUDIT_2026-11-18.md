@@ -1,6 +1,6 @@
 # R6：PLAN 的98项任务逐项复核
 
-> **接续实测**：`f1a7ab2aed7795877e070260ebfb1b30a89d6f33`构建无诊断，SVG ON55/55、OFF54/54 CTest；真实MAT73误分类已复现/修复，32场景/308项通过，见 [专项记录](R6_MAT73_REJECTION_2026-11-18.md)。此前Bias注入及668项检查仍通过。下文首次文档复核起点保留，P1.5/D5和P5.7/D3按新证据更新，其他未覆盖义务不变。
+> **接续实测**：`00d174258f502d6c458fb26b8e0727d148b98672`构建无诊断，SVG ON55/55、OFF54/54 CTest；plot/SVG导出记录394项/38次调用通过，见 [专项记录](R6_ARTIFACT_RECORDS_2026-11-18.md)。此前Bias注入与MAT73回归保留。下文首次文档复核起点保留，P1.5/D5、P5.7/D3和P5.3/D4按新证据更新，其他未覆盖义务不变。
 
 `[AI-EDIT]`，2026-11-18。本表逐项保留 [PLAN](../PLAN.md) 的98个P编号和原义务，核对实际文件、现有测试及缺口；**不修改需求、验收门槛、批准或冻结状态，也不将“有代码/测试通过”改称“任务已验收”**。原始任务全文及REQ/TC/AC/依赖仍以PLAN为准；下列“核对对象”只是定位摘要，不替代它。
 
@@ -83,7 +83,7 @@
 | P4.10 | Franz服务状态隔离 | KVD、RUN：无成员模板状态、const estimate | 实测（有限） | 有限重复/交替调用与源码可复核；不是全线程安全证明。 |
 | P5.1 | 缺损Bias入口 | RUN、CLI：三噪声列、有限level0…2、真实求解 | 部分 | 完整原规模/40目录重生成未运行。 |
 | P5.2 | 球面比例Bias入口 | RUN、CLI：独立采样/噪声装配 | 部分 | 完整规模/L4未运行；有界两模式已有结果。 |
-| P5.3 | seed与运行管理 | RUNID、RUN、EXECUTION：独立seed/RunId/计数/日志 | 部分 | 五生成入口记录已测；分配前错误及非生成调用记录仍待落实。 |
+| P5.3 | seed与运行管理 | RUNID、RUN、EXECUTION：独立seed/RunId/计数/日志 | 部分 | 五生成入口及plot/SVG导出记录已测；只读入口/分配前错误的产品记录边界仍待核对。 |
 | P5.4 | 七MAT输出 | IO、RUN、CLI：xwerte及ywerte1…6变量/形状/值 | 实测（有限） | 拒覆盖与发布故障已测，限有界生成。 |
 | P5.5 | 40目录数值分析 | ANALYSIS：两组26曲线/208点独立复核 | 实测（有限） | 按源取末轮x、使用ywerte3…6，不修改历史128横值。 |
 | P5.6 | 560历史Bias对照 | MAT、ANALYSIS：560存储值，400实际分析输入 | 部分 | 160个ywerte1/2不贡献源曲线；未完成新40-run科学对照。 |
@@ -125,12 +125,12 @@
 | P9.8 | 分析与导出分层 | ANALYSIS、SVG：MatResultAnalyzer/IAnalyzer/IPlotExporter | 部分 | 候选两个Analyzer类未照名实现；数据只读、导出不改值有证据，见D2。 |
 | P10.1 | README及直接MAT入口 | SRC、CLI、BUILD：README现行命令/两DOI/构建说明 | 已有材料 | 实际运行范围和失败限制明确；不是全平台支持承诺。 |
 | P10.2 | 45源最终追踪 | SRC：45路径/50声明现行映射 | 部分 | 已定位实现与非使用范围；最终人工验收/全部分支资格未完成。 |
-| P10.3 | 逐层构建测试 | BUILD及全部TC证据组：ON53/OFF52 | 实测（有限） | 每次固定SHA/日志，未把失败合同算实验成功；全部失败历史保留。 |
+| P10.3 | 逐层构建测试 | BUILD及全部TC证据组：ON55/OFF54 | 实测（有限） | 每次固定SHA/日志，未把失败合同算实验成功；全部失败历史保留。 |
 | P10.4 | 560+22结果合同 | MAT、ANALYSIS、RUN：582独立值、历史字段/NaN | 部分 | 数据与合同复核已有；三个Adaptive新完整产物及正式人工复核缺失。 |
 | P10.5 | 论文数值图表复现 | NUM、RUN、ANALYSIS | 未完成 | 历史曲线分析/有限回归不等于完整Bias、初始化、轨迹、更新频率及L4。 |
 | P10.6 | 证据汇总及平台 | NUM、PROGRESS、BUILD：本轮新增NUMERICAL_EQUIVALENCE | 部分 | 实际仅一个Ubuntu/GCC环境；完整实验/性能/资源预算仍缺。 |
 | P10.7 | 来源notice与输出保护 | SRC、BUILD、IO：根MIT/来源与.gitignore | 已有材料/实测 | 不重授原作者许可，不上传output/MAT；正式发布单独授权。 |
-| P10.8 | Draft PR交付 | GitHub all-state Issue/PR当前为空 | 未完成 | 尚未创建Draft PR；不合并/发布，后续准备具体范围与证据后办理。 |
+| P10.8 | Draft PR交付 | Issue #1/#2开放，尚无PR | 未完成 | 尚未创建Draft PR；不合并/发布，后续准备具体范围与证据后办理。 |
 | P10.9 | OOP边界验收 | CONTRACT、IO、SESSION、RUN、SRC | 部分 | 所有权/替换/隔离有有限实测；D1–D4未核销，不代签总体设计验收。 |
 | P10.10 | 避免过度继承/统一求解器 | KVD、STEP、SH、ANALYSIS：真实类及自由函数 | 部分 | 未引入统一虚假求解基类；与候选结构的差别需逐义务收敛，不能仅凭简洁或通过数宣布完成。 |
 
@@ -141,12 +141,12 @@
 - **D1：构造不变量（P2.1/P2.8/P10.9）**。实际FlowField、MotionEstimate、HarmonicCoefficients是Eigen成员的aggregate；当前在算法入口校验，并无“构造时验证全部维度/有限性/有效填充”的统一保证。已有寿命/失败测试不证明任意默认构造对象有效。下一步核对公共边界与既有DEC-008，定位需要强制的初始化/校验，不能用文档改词抹平义务。
 - **D2：策略和纯数学职责（P4.9/P7.1/P7.10/P8.8/P8.9/P9.8）**。KvD使用共享函数及枚举，不存在IKvDTranslationRule/KvDIterationEngine类；Session使用三模式枚举，不存在ICoefficientUpdatePolicy。球谐用纯函数，winkelausvektor被笛卡尔基融合；实际一个AdaptiveExperimentRunner三个方法、一个MatResultAnalyzer四种分析。职责/数值已有有限证据，但命名及可替换策略结构未逐项核销。
 - **D3：编排依赖注入（P5.7/P10.9）**。首次发现Bias在compute内创建Franz/Original/Modified及RNG，与SRS附录A的**REQ-DC-EXPERIMENT-001“通过组合注入求解、RNG、采样和写入器”**存在差距。`909fd57`已补BiasEstimators三槽及RunContext RNG注入，保留采样/噪声/Writer接口、源两次reseed和求解顺序；[668项测试及真实回归](R6_BIAS_INJECTION_2026-11-18.md)验证该Bias缺口。Adaptive允许Step注入，但轨迹/环境/采样装配的其它候选替换边界仍需逐项核对，不能据此关闭总体OOP验收；不为凑类名添加无用途包装。
-- **D4：正式运行记录边界（P5.3/P8.9/P10.6）**。五生成入口已有开始/结束记录、真实身份、参数、环境与交付状态；inspect/analyze/JSON illustration为只读调用，不能未经合同核对就强制创建输出目录。plot/SVG illustration虽有RunId，尚无同等运行记录。解析失败、RunId预留失败、信号终止依赖外部执行者证据；产品层记录义务尚未完整实现，不能只用本次构建包装脚本关闭REQ-NF-LOG。
+- **D4：正式运行记录边界（P5.3/P8.9/P10.6）**。五生成入口已有开始/结束记录；`00d1742`补齐plot/SVG在分配RunId后的导出记录，394项/38次调用及真实进程检查通过，见 [证据](R6_ARTIFACT_RECORDS_2026-11-18.md)。来源摘要沿用读取快照，未使用的RNG/计算Manifest明确为null；记录失败保留已有产物。inspect/analyze/JSON illustration继续只读，解析/分析/几何/RunId预留失败及信号终止仍依赖外部证据；不将这一有限补足等同整个REQ-NF-LOG验收。
 - **D5：MAT v7.3真实拒绝用例已补（P1.5）**。`f1fb7d3`生成并直接matio逐位核验真实合成夹具，`0d73ed1`复现后端先打开的错误分类（32场景中29失败），[Issue #1](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/1)登记后在`f1a7ab2`前移封存头预检。32场景/308项及两模式全量CTest通过，详见 [证据](R6_MAT73_REJECTION_2026-11-18.md)。v7.3拒绝不调用Mat_Open；普通构建/测试读取固定夹具，不新增HDF5依赖。后端不可用由确定性替身验证，实际无HDF5工具链未验证，元数据能力不扩大；不代签正式数据资格。
 
 ## 后续次序与权限边界
 
-1. D3的Bias求解/RNG及D5的真实版本负例缺口已补，继续D4日志及D1–D2公共边界/候选设计差异，并核对Adaptive其它装配边界。保留原数值公式、输入只读和检查点顺序。P10.8仍缺可审查Draft PR，后续以实际范围与测试证据准备，不合并或发布。
+1. D3的Bias求解/RNG、D5真实版本负例及D4的已分配RunId导出记录已补，继续D1–D2公共边界/候选设计差异、Adaptive其它装配和只读/预留前记录范围。保留原数值公式、输入只读和检查点顺序。P10.8仍缺可审查Draft PR，后续以实际范围与测试证据准备，不合并或发布。
 2. 三个Adaptive真实失败（初始化帧14acos越界，另外两入口帧151零旋转）及完整Bias/L4仍未解决；不可修改门限、跳帧或改分母以获得成功。具体结果与未执行成功分支见NUM。
 3. 容差、资源、跨环境、基线及发布的正式批准仍按TODO的既定延期状态处理；本表不擅自解锁、催办或代签。**没有MATLAB/Octave/L1阻塞。**
 4. 本次新增NUMERICAL_EQUIVALENCE补齐了P10.6缺失的汇总文件；P10.6以及R6整体仍未完成。
