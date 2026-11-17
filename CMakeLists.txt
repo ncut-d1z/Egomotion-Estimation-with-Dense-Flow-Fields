@@ -94,6 +94,7 @@ find_package(ZLIB REQUIRED)
 
 add_library(egomotion_matio STATIC
     src/io/mat_result_reader.cpp
+    src/io/mat_container_validation.cpp
     src/io/mat_data_dictionary.cpp
     src/io/sha256.cpp
     src/io/run_directory.cpp

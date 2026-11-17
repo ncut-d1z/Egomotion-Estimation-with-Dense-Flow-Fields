@@ -143,6 +143,8 @@ void requireRejected(const fs::path& path) {
     io::MatResultReader reader;
     require(!reader.readNamed(path,"value").hasValue(),"Damaged MAT accepted by named Reader");
     require(!reader.readFirstCompatible(path).hasValue(),"Damaged MAT accepted by compatible Reader");
+    require(!reader.scanFile(path,io::ScanMode::VerifyDecoded).hasValue(),
+            "Full dictionary scan accepted a damaged MAT container");
     require(digest(path)==before,"Rejected input was modified");
     std::cout<<"SHA256 "<<before<<' '<<path.filename().string()<<'\n';
 }

@@ -1,6 +1,10 @@
 #include "egomotion/io/mat_result_reader.hpp"
+#include "mat_container_validation.hpp"
 
 #include <matio.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include <cerrno>
 #include <cstring>
@@ -27,6 +31,10 @@ struct VariableCloser {
 };
 using MatHandle = std::unique_ptr<mat_t, MatCloser>;
 using VariableHandle = std::unique_ptr<matvar_t, VariableCloser>;
+struct ReadDescriptor {
+    int fd=-1;
+    ~ReadDescriptor(){if(fd>=0)::close(fd);}
+};
 
 template<class Value>
 Result<Value, MatErrorCode> fail(MatErrorCode code, ErrorStage stage,
@@ -113,12 +121,25 @@ MatVariableInfo describe(const matvar_t& value, const std::string& name) {
     return info;
 }
 
-Result<MatHandle, MatErrorCode> openReadOnly(const fs::path& path) {
+Result<MatHandle, MatErrorCode> openReadOnly(const fs::path& path,bool verify_container=false,
+                                           std::string_view variable={}) {
     if (path.empty() || path.native().find('\0') != std::string::npos)
         return fail<MatHandle>(MatErrorCode::MissingFile, ErrorStage::Read,
                                path, "MAT path is empty or contains NUL");
     errno = 0;
-    MatHandle handle(Mat_Open(path.string().c_str(), MAT_ACC_RDONLY));
+    // 完整读取先固定文件身份；容器校验与 matio 不因路径替换而读到不同文件。
+    ReadDescriptor descriptor;
+    if(verify_container)descriptor.fd=::open(path.c_str(),O_RDONLY|O_CLOEXEC|O_NONBLOCK);
+    if(descriptor.fd>=0){
+        struct stat info{};
+        if(::fstat(descriptor.fd,&info)!=0||!S_ISREG(info.st_mode))
+            return fail<MatHandle>(MatErrorCode::InvalidMatHeader,ErrorStage::Read,path,
+                                   "Numeric MAT input must be a regular file",std::string(variable));
+    }
+    const std::string read_path=verify_container?
+        "/proc/self/fd/"+std::to_string(descriptor.fd):path.string();
+    MatHandle handle(verify_container&&descriptor.fd<0?nullptr:
+                     Mat_Open(read_path.c_str(), MAT_ACC_RDONLY));
     if (!handle) {
         const int saved_errno = errno;
         // matio may clear errno internally. The supplementary existence probe
@@ -131,6 +152,11 @@ Result<MatHandle, MatErrorCode> openReadOnly(const fs::path& path) {
                 ? MatErrorCode::MissingFile : MatErrorCode::InvalidMatHeader);
         return fail<MatHandle>(code, ErrorStage::Read, path,
                                "Unable to open MAT file for reading");
+    }
+    if(verify_container&&Mat_GetVersion(handle.get())==MAT_FT_MAT5){
+        auto checked=detail::validateMat5Container(descriptor.fd,path,variable);
+        if(!checked.hasValue())
+            return Result<MatHandle,MatErrorCode>::failure(std::move(checked).error());
     }
     return Result<MatHandle, MatErrorCode>::success(std::move(handle));
 }
@@ -200,7 +226,7 @@ Result<DenseDoubleArray, MatErrorCode> readWithHandle(mat_t* mat,
 
 Result<MatFileScan, MatErrorCode>
 MatResultReader::scanFile(const std::filesystem::path& path, ScanMode mode) const {
-    auto opened = openReadOnly(path);
+    auto opened = openReadOnly(path,mode==ScanMode::VerifyDecoded);
     if (!opened.hasValue())
         return Result<MatFileScan, MatErrorCode>::failure(
             std::move(opened).error());
@@ -278,7 +304,7 @@ MatResultReader::readNamed(const std::filesystem::path& path,
     if (variable.empty() || variable.find('\0') != std::string_view::npos)
         return fail<DenseDoubleArray>(MatErrorCode::MissingVariable, ErrorStage::Read,
                                       path, "MAT variable name is empty or invalid");
-    auto opened = openReadOnly(path);
+    auto opened = openReadOnly(path,true,variable);
     if (!opened.hasValue())
         return Result<DenseDoubleArray, MatErrorCode>::failure(
             std::move(opened).error());
@@ -312,7 +338,7 @@ MatResultReader::readFirstCompatible(const std::filesystem::path& path) const {
         if (!std::filesystem::exists(actual, ec))
             actual += ".mat";
     }
-    auto opened = openReadOnly(actual);
+    auto opened = openReadOnly(actual,true);
     if (!opened.hasValue())
         return Result<DenseDoubleArray, MatErrorCode>::failure(
             std::move(opened).error());
