@@ -18,6 +18,8 @@ Comparison和UpdateRates均在 **run1/MATLAB frame151** 返回 `UndefinedAngle`�
 
 ## 范围及不变量
 
+**首次28项通过及后续修正**：`0b33cf7d2a5d85a9a9cf1c706f6953ff839a763d` 已完成配置/编译和28/28 CTest，输入哈希不变。复核真实RNG失败JSON时发现其外层仍为SolverFailed；[实验LLD §1](../design/experiments.md)明确禁止把噪声生成失败命名为求解失败，要求保留原NumericalErrorCode并用已有IncompleteRun包装。接续仅为 `nonpropfehler` 分支选择该既有码，根因、阶段、ray索引和run/frame身份不改，更新负例断言验证既定合同。修正后需要新检查点和全量复测，不能继承0b33cf7的PASS。
+
 **接续构建失败记录**：`3349d33a1e736a75441f7f8ce3564c0fb46bca3b` 已推送并核实；RunId `r6-adaptive-aggregation-20261117-nP4IGdxp` 配置exit0、编译exit2，CTest未启动。新私有 `adaptive_publication.hpp` 缺少定义 `ExperimentKind` 的直接include，导致声明不可编译；修复为显式包含已有 `output_contract.hpp`，不依赖包含顺序。原失败stdout/stderr保留，修复版须另建检查点并复测。
 
 关联 PLAN P8.1～P8.8、P1.7/P1.9、TC-F-EXP-001/002/003、TC-F-ADAPT-002/003、TC-I-RESULT-001。静态核对三份原 `agent_in_sphere_*.m` 的35/600帧、级别2/4、Comparison八次重复、逐帧2/4比较调用加一次主调用、1/5/11/21刷新、两端预分配零、当前save字段和除以8的顺序；原文件仅静态读取。

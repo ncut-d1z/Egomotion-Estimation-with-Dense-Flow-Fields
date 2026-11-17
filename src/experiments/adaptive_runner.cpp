@@ -46,7 +46,8 @@ Output fail(ExperimentErrorCode code, std::string message) {
 template<class T>
 Output fromNumeric(const Result<T,NumericalErrorCode>& value,
                    const std::string& stage, Mode mode, std::size_t run,
-                   std::size_t matlab_frame=0) {
+                   std::size_t matlab_frame=0,
+                   ExperimentErrorCode outer_code=ExperimentErrorCode::SolverFailed) {
     ErrorDetail detail;
     detail.stage=ErrorStage::Simulation;
     detail.message=modeName(mode)+": "+stage+
@@ -56,7 +57,7 @@ Output fromNumeric(const Result<T,NumericalErrorCode>& value,
     detail.message+=")";
     // A frame index is not a ray index. Preserve the inner observation_index.
     return Output::failure(wrapFailure(
-        ExperimentErrorCode::SolverFailed,std::move(detail),value.error()));
+        outer_code,std::move(detail),value.error()));
 }
 Output fromSession(const Failure<ExperimentErrorCode>& value, Mode mode,
                    std::size_t run, std::size_t matlab_frame) {
@@ -207,7 +208,7 @@ Output compute(Mode mode, double noise_scale, IRandomSource* rng,
                     auto noisy=noise_model.apply(observations,noise_scale,*rng);
                     if (!noisy.hasValue())
                         return fromNumeric(noisy,"nonpropfehler",mode,
-                                           run+1,matlab_i);
+                                           run+1,matlab_i,ExperimentErrorCode::IncompleteRun);
                     observations=std::move(noisy).value();
                     write(current,"rottransratio",row,0,ratio);
                 }

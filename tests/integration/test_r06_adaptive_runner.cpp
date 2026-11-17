@@ -271,7 +271,9 @@ void sourceFailureCase(const fs::path& root,const std::string& sha,const Mode& m
     Sandbox sandbox(root,sha,mode,counts);
     experiments::ProductionExperimentRunner runner(&selected);
     const auto result=execute(runner,mode,*sandbox.context);
-    require(!result.hasValue()&&result.error().code==ExperimentErrorCode::SolverFailed,"Partial run returned successful mean");
+    const auto expected_code=rng_failure?ExperimentErrorCode::IncompleteRun:ExperimentErrorCode::SolverFailed;
+    require(!result.hasValue()&&result.error().code==expected_code,
+            "Partial run returned successful mean or mislabeled simulation failure as solver failure");
     const auto& draft=sandbox.context->manifestDraft();
     const auto diagnostic=jsonFailure(result.error(),5);
     std::cout<<"Observed failure: attempted="<<draft.attempted<<" completed="<<draft.completed
