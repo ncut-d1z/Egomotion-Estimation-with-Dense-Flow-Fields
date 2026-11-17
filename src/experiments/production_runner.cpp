@@ -1,4 +1,5 @@
 #include "egomotion/experiments/production_runner.hpp"
+#include "adaptive_publication.hpp"
 
 #include "egomotion/experiments/adaptive_runner.hpp"
 #include "egomotion/experiments/bias_runner.hpp"
@@ -56,11 +57,23 @@ AdaptiveProgress progressFor(RunContext& ctx) {
         }
     };
 }
-Outcome finishAdaptive(const Result<AdaptiveRunData,ExperimentErrorCode>& source,
+}  // namespace
+
+Outcome detail::finishAdaptive(const Result<AdaptiveRunData,ExperimentErrorCode>& source,
                        RunContext& ctx,ExperimentKind kind) {
-    if(!source.hasValue())return propagate(source,"Adaptive numerical computation failed");
+    if(!source.hasValue()){
+        // 终止本轨迹的无定义角也是实际无效样本，不能只留在错误链而漏记计数。
+        for(const auto& cause:source.error().detail.causes){
+            if(cause.domain==errorDomain<NumericalErrorCode>()&&
+               cause.code==errorName(NumericalErrorCode::UndefinedAngle)){
+                ctx.noteUndefined();
+                break;
+            }
+        }
+        return propagate(source,"Adaptive numerical computation failed");
+    }
     const auto& data=source.value();
-    if(data.frame_count<3||data.completed_runs!=data.planned_runs||
+    if(data.frame_count<3||data.planned_runs==0||data.completed_runs!=data.planned_runs||
        (data.frame_count-2)>
        std::numeric_limits<std::size_t>::max()/data.planned_runs)
         return failed(ExperimentErrorCode::IncompleteRun,
@@ -70,7 +83,6 @@ Outcome finishAdaptive(const Result<AdaptiveRunData,ExperimentErrorCode>& source
     return publish(packed.value(),ctx,data.completed_runs,
                    (data.frame_count-2)*data.completed_runs);
 }
-}  // namespace
 
 Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runBiasOccluded(
     const BiasExperimentConfig& config,RunContext& context) {
@@ -108,7 +120,7 @@ Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runAdaptiveIn
         return failed(ExperimentErrorCode::InvalidParameters,
                       "Composition Root injected wrong Adaptive kind");
     const AdaptiveExperimentRunner calculator(injected_solver_);
-    return finishAdaptive(calculator.computeInitialization(config,progressFor(context)),context,
+    return detail::finishAdaptive(calculator.computeInitialization(config,progressFor(context)),context,
                           ExperimentKind::AdaptiveInitialization);
 }
 Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runAdaptiveComparison(
@@ -117,7 +129,7 @@ Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runAdaptiveCo
         return failed(ExperimentErrorCode::InvalidParameters,
                       "Composition Root injected wrong Adaptive kind");
     const AdaptiveExperimentRunner calculator(injected_solver_);
-    return finishAdaptive(calculator.computeComparison(
+    return detail::finishAdaptive(calculator.computeComparison(
                               config,context.randomSource(),progressFor(context)),
                           context,ExperimentKind::AdaptiveComparison);
 }
@@ -127,7 +139,7 @@ Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runAdaptiveUp
         return failed(ExperimentErrorCode::InvalidParameters,
                       "Composition Root injected wrong Adaptive kind");
     const AdaptiveExperimentRunner calculator(injected_solver_);
-    return finishAdaptive(calculator.computeUpdateRates(config,progressFor(context)),context,
+    return detail::finishAdaptive(calculator.computeUpdateRates(config,progressFor(context)),context,
                           ExperimentKind::AdaptiveUpdateRates);
 }
 

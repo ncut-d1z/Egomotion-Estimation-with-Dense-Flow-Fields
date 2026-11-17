@@ -1,5 +1,19 @@
 # R6 Adaptive Runner 跨帧与发布合同验证
 
+## 最新诊断与接续（2026-11-17）
+
+**[HUMAN-EXECUTE/APPROVE] 第二轮配置/编译通过且无编译诊断，27项中25通过、2失败；新28项版本待运行。** 受测源码 `cc2f668f8ef49fb618650d110230cdb1ca15a842`，RunId `r6-adaptive-diagnostics-20261117-MMnO6TbY`，完整stdout/stderr/命令、JUnit及输入哈希在同名build目录 `evidence/`。MAT4/4、其余21/23，输入哈希核对exit0。初始化真实流水线已通过（99次替身Step，4个真实MAT）；首次第7个normal故障场景通过。
+
+Comparison和UpdateRates均在 **run1/MATLAB frame151** 返回 `UndefinedAngle`。Comparison实际已完成149帧、调用448次Step、消耗2,304,000个normal；此时尚无完整重复。根因是默认600点正弦轨迹该帧真实相对旋转为零，而替身估计非零，Session依现有合同拒绝零范数夹角。静态原 `normrelfehler.m` 也直接除以向量范数；没有执行原脚本，不能推断其具体运行轨迹。**这不是第8次注入求解器故障，也不能通过填零、跳过帧、缩小样本、钳位或修改轨迹来伪造完整成功。** 全状态Issue检索仍为空，作为本地记录R6-ADAPT-001保存；真实默认求解器或其他工具链可能更早失败，不能把替身下的帧151当普遍保证。
+
+首版测试“默认轨迹每帧夹角都有定义”的假定无效。接续按已有设计 [experiments §8.2](../design/experiments.md#82-第一轮-runnermanifest-的固定替身验收场景af-049设计补齐)拆分证据，不变更验收义务：
+
+- 新 `r06_adaptive_default_undefined_contract` 保留两个原600帧配置和原采样级别，必须在当前固定工具链/替身下准确报告帧151、149有效帧、0完成重复、完整根因及Incomplete Manifest，禁止MAT输出；正例不会替换这个默认路径。
+- `r06_adaptive_runner_complete_contract` 保留35帧初始化；Comparison直接输入8组**各不相同**的600×1四误差及比值，复用抽出的私有生产聚合与发布函数，独立闭式验证四误差平均和第8组比值，真实Writer/Reader/SHA/Manifest检查照常。UpdateRates以明确非零合成真值完成600帧Session/2,990次Step和原1/5/11/21周期，验证独立atan2误差和三个当前输出字段。**后两种不是原轨迹端到端科学实验；UpdateRates的akrot由夹具构造，不能据此宣称生产单位转换已经单独验证。**
+- `r06_adaptive_runner_incomplete_contract` 验证0～7组的每个缺样本前缀均不除法/不发布，保存实际完成数；第8组缺比值、维度转置或NaN必须原子拒绝，再提交正确第8组可重试，第9组拒绝。RNG第7个normal失败场景仍使用原Runner。
+
+生产聚合仍按原顺序加法、八轮全部成功后除以8，比值只复制最后一轮；前置检查补足字段/shape/非有限值的原子性。仅向私有头提取接缝，不加CLI参数或新配置合同。静态复核同时发现 `noteUndefined()` 原来没有任何生产调用，故Adaptive失败发布门禁现按完整错误链的 `NumericalErrorCode::UndefinedAngle` 增加一次真实undefined计数；不把它算成有效样本。最终门禁先拒绝planned_runs=0，避免检查计数时除零。以上修正及28项CTest须经新远端检查点后验证；下文保留最初目标和失败记录，不能据其旧措辞宣称已全部贯通。
+
 **[HUMAN-EXECUTE/APPROVE] 首次构建成功，27项中25通过、2失败；正在定位/修正。** 起点 `3383b0c4075dc7f5abf214a851c1369a73cc7965`，关联任务最新要求继续R6代码与验证；用户已允许源码、构建/CTest和方案文档。首次读取的本地/远端SHA一致、工作区干净，GitHub全状态Issue/PR为空。上一批受测源码为 `dffddf3b6a62b906a5b20eba365a2087e9c86662`，25/25 CTest通过；新增2项没有通过证据。
 
 ## 范围及不变量

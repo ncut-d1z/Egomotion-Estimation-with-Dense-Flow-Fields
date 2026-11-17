@@ -124,6 +124,7 @@ endif()
 add_library(egomotion_experiments STATIC
     src/experiments/bias_runner.cpp
     src/experiments/adaptive_runner.cpp
+    src/experiments/adaptive_aggregation.cpp
     src/experiments/output_contract.cpp
     src/experiments/output_values.cpp
     src/experiments/run_context.cpp
@@ -455,14 +456,19 @@ if(BUILD_TESTING)
 
     add_executable(test_r06_adaptive_runner tests/integration/test_r06_adaptive_runner.cpp)
     target_link_libraries(test_r06_adaptive_runner PRIVATE egomotion_experiments egomotion_matio)
+    target_include_directories(test_r06_adaptive_runner PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/experiments")
     target_compile_features(test_r06_adaptive_runner PRIVATE cxx_std_17)
     target_compile_options(test_r06_adaptive_runner PRIVATE -Wall -Wextra -Wpedantic)
     add_test(NAME r06_adaptive_runner_complete_contract COMMAND test_r06_adaptive_runner
         "${CMAKE_CURRENT_BINARY_DIR}/r06_runner_complete" "${EGOMOTION_BUILD_SOURCE_SHA}" complete)
     add_test(NAME r06_adaptive_runner_incomplete_contract COMMAND test_r06_adaptive_runner
         "${CMAKE_CURRENT_BINARY_DIR}/r06_runner_incomplete" "${EGOMOTION_BUILD_SOURCE_SHA}" incomplete)
+    add_test(NAME r06_adaptive_default_undefined_contract COMMAND test_r06_adaptive_runner
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_runner_undefined" "${EGOMOTION_BUILD_SOURCE_SHA}" undefined)
     set_tests_properties(r06_adaptive_runner_complete_contract r06_adaptive_runner_incomplete_contract PROPERTIES
-        LABELS "r06;runner;full-frame-contract;synthetic-step;write-sandbox" TIMEOUT 180)
+        LABELS "r06;runner;fixed-600-row-aggregation;synthetic-step;write-sandbox" TIMEOUT 180)
+    set_tests_properties(r06_adaptive_default_undefined_contract PROPERTIES
+        LABELS "r06;runner;source-trajectory;undefined-angle;synthetic-step;write-sandbox" TIMEOUT 180)
 
 endif()
 

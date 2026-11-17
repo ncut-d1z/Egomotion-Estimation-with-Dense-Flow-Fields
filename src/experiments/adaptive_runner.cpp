@@ -1,4 +1,5 @@
 #include "egomotion/experiments/adaptive_runner.hpp"
+#include "adaptive_aggregation.hpp"
 
 #include "egomotion/estimators/adaptive_session.hpp"
 #include "egomotion/sampling/directions.hpp"
@@ -120,31 +121,6 @@ void write(AdaptiveRunData& data,const std::string& field,
     if (row>=rows || column>=columns || !std::isfinite(value))
         throw std::logic_error("Invalid Adaptive output index or non-finite statistic");
     array.values_column_major[column*rows+row]=value;
-}
-void accumulate(AdaptiveRunData& aggregate,const AdaptiveRunData& one,
-                bool include_ratio) {
-    for (auto& item:aggregate.fields) {
-        const auto it=one.fields.find(item.first);
-        if (it==one.fields.end())throw std::logic_error("Missing Adaptive run field");
-        auto& target=item.second.values_column_major;
-        const auto& values=it->second.values_column_major;
-        if (target.size()!=values.size())
-            throw std::logic_error("Adaptive aggregate shape mismatch");
-        if (item.first=="rottransratio") {
-            if (include_ratio) target=values; // last run ONLY, never average
-            continue;
-        }
-        for (std::size_t i=0;i<target.size();++i)
-            target[i]+=values[i];
-    }
-}
-void divideComparisonErrors(AdaptiveRunData& data) {
-    // This is called ONLY after all eight complete runs have succeeded.
-    for (auto& pair:data.fields) {
-        if (pair.first=="rottransratio")continue;
-        for (double& x:pair.second.values_column_major)
-            x/=static_cast<double>(kComparisonRuns);
-    }
 }
 Output compute(Mode mode, double noise_scale, IRandomSource* rng,
                const AdaptiveProgress& progress,
@@ -293,17 +269,11 @@ Output compute(Mode mode, double noise_scale, IRandomSource* rng,
             }
             // A complete run contributes atomically to the aggregate.
             // Only the final planned run may supply rottransratio.
-            accumulate(aggregate,current,run+1==aggregate.planned_runs);
-            ++aggregate.completed_runs;
+            auto accumulated=detail::accumulateCompleteAdaptiveRun(aggregate,current);
+            if(!accumulated.hasValue())return Output::failure(std::move(accumulated).error());
             if(progress)progress(AdaptiveProgressEvent::RunCompleted);
         }
-        if (mode==Mode::Comparison) {
-            if (aggregate.completed_runs!=kComparisonRuns)
-                return fail(ExperimentErrorCode::IncompleteRun,
-                            "Comparison cannot divide partial eight-run results");
-            divideComparisonErrors(aggregate);
-        }
-        return Output::success(std::move(aggregate));
+        return detail::finishAdaptiveAggregation(std::move(aggregate),mode==Mode::Comparison);
     } catch (const std::bad_alloc&) {
         return fail(ExperimentErrorCode::SolverFailed,
                     "Adaptive memory-only Runner allocation failure");
