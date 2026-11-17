@@ -1,6 +1,6 @@
 # R6 原始 MAT 存储身份与独立 Reader 对照
 
-**[HUMAN-EXECUTE/APPROVE]** 用户已授权源码、构建/CTest与方案文档。本批代码/候选参考尚未编译测试；只读诊断已实际执行。沿用 `dev-plan-P0-P1-mat-dictionary-probe`，不执行MATLAB，不修改原始文件，不宣布Golden/DEC冻结。
+**[HUMAN-EXECUTE/APPROVE] 已实际通过：24/24 CTest。** 用户已授权源码、构建/CTest与方案文档，受测源码为 `68a5f684cc9fb45ee33a7b87b70525ac0510c8fa`。沿用 `dev-plan-P0-P1-mat-dictionary-probe`，运行前已提交、正常推送并核实远端相同SHA；不执行MATLAB，不修改原始文件，不宣布Golden/DEC冻结。
 
 ## 发现与证据
 
@@ -24,4 +24,18 @@
 
 ## 执行结果
 
-待本批提交/推送/远端核实后执行构建、MAT测试与其余CTest，记录真实结果；当前只有只读标签和SHA交叉核查，不能将新增CTest标为通过。
+RunId `r6-mat-storage-20261117-83tbiC2N`，工作目录为仓库根；证据目录 `build/r6-mat-storage-20261117-83tbiC2N/evidence/` 包含逐步命令/时间/退出码、stdout/stderr、JUnit、Testing快照、环境、输入Git blob和SHA-256。复用 `build/r6-20261117-KzjFHPDQ/cmake/` 并重新配置受测SHA，本批是增量构建；首次干净构建另见[原生记录](R6_NATIVE_VALIDATION_2026-11-17.md)。
+
+实际环境 Ubuntu24.04.5、GCC16.2、CMake/CTest4.3.4、Eigen3.4、Sophus1.24.6、matio1.5.26、zlib1.3，C++17 Release，无依赖安装。配置参数 `-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DBUILD_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`，构建 `cmake --build <build-dir> --parallel 4 -- -k`。CTest使用 `-C Release --verbose --no-tests=error --output-junit <evidence>.xml`，先 `--parallel 2 -R '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values)$'`，再 `--parallel 4 -E` 同一表达式，完整覆盖24项。没有算法随机抽样；故障测试的独立OS RunId在日志中，既有固定种子另有源码索引。
+
+| 步骤 | 开始/结束（2026-11-17 UTC+08:00） | 退出码 | 结果 |
+|---|---|---:|---|
+| configure | 15:56:23 / 15:56:24 | 0 | SHA正确，配置成功 |
+| build | 15:56:24 / 15:57:36 | 0 | 全目标成功，无编译诊断 |
+| MAT CTest | 15:57:36 / 15:57:38 | 0 | 3/3 Passed，1.37秒 |
+| 其余 CTest | 15:57:38 / 15:57:39 | 0 | 21/21 Passed，0.80秒 |
+| 输入 SHA-256 | 15:57:39 完成 | 0 | 原始数据、测试及参考文件运行前后均不变 |
+
+独立Reader实际输出：`files=582 elements=33340 mxDOUBLE/miINT32=80 mxDOUBLE/miDOUBLE=502`。全部文件的固定SHA、原始存储/维度/变量名以及生产解码列主序binary64值精确一致；没有容差或跳过文件。所有步骤stderr为空。MAT日志SHA-256为 `26656902ae39ca96bda7a05c49b9f35d589cbf22a02adccab12a5dbdf0071848`，其余CTest日志为 `4425d75499e1772e9c212f7a4cbd85195af5971edbecb38d2a0f185f8f2c8b29`。
+
+该结果补齐当前582个归档的独立Reader逐值/身份执行证据，不等于完整实验复现或人类正式验收；上节所列生产Reader严格负例和L3/L4仍未完成。

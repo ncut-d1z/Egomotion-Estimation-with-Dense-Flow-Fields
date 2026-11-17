@@ -4,7 +4,7 @@ A planned **C++17 reimplementation that directly reads the original MATLAB MAT f
 
 > **Permanent evidence policy:** Running MATLAB/Octave or collecting original MATLAB L1 execution traces is **not required** for design, coding, verification, or release. The original scripts are read-only specifications; numerical evidence will use the preserved MAT results (L2), independently checked analytic/reference implementations (L3), and statistical comparisons (L4). See [No MATLAB Execution Policy](docs/golden/NO_MATLAB_EXECUTION_POLICY.md). This change does not authorize C++ builds/tests or imply any numerical acceptance.
 
-> **项目状态（2026-11-17）**：R0–R5 生产源码已实现，现推进 R6 验证。在 `84c86624954406b31e8a82d5e145c7f6ae30ee93` 完成干净全工程 Release 构建，**21/21 CTest 通过**，覆盖原始582个 MAT 的只读解码和隔离沙箱 Writer 回读；`origin/` 全部628个受控文件 SHA-256 保持不变。尚未完成独立 L2 逐值、全部 L3/L4 科学复现、所有 I/O 故障负例和正式验收，不能宣称 MATLAB/C++ 全部行为等价。见 [本轮验证记录](docs/reviews/R6_NATIVE_VALIDATION_2026-11-17.md)。
+> **项目状态（2026-11-17）**：R0–R5生产源码已实现，R6仍在验证。最新受测源码 `68a5f684cc9fb45ee33a7b87b70525ac0510c8fa` 增量构建成功、**24/24 CTest通过**，包含原始582个MAT/33,340个数值的独立SHA及逐位读取对照、29个真实发布故障场景；`origin/`哈希保持不变。首次干净全工程构建及修复见 [原生记录](docs/reviews/R6_NATIVE_VALIDATION_2026-11-17.md)，最新证据见 [独立MAT](docs/reviews/R6_MAT_STORAGE_VALIDATION_2026-11-17.md) 与 [I/O故障](docs/reviews/R6_IO_FAULT_VALIDATION_2026-11-17.md)。严格Reader异常输入、全部L3/L4科学复现、完整Runner及正式验收尚未完成，不能宣称MATLAB/C++全部行为等价。
 
 ## Original research and source material
 
@@ -41,7 +41,7 @@ This separately archived research artifact provides MATLAB scripts and associate
 - Document provenance and transformations for any redistributed data.
 - Verify bounded numerical correspondence using existing MAT archives (L2), independently produced deterministic references (L3), and statistics (L4); **do not require running original MATLAB scripts or acquiring L1**. Explicitly disclose any original MATLAB runtime behavior that cannot be verified.
 
-**Not yet implemented:** No C++ numerical solver or validated experiment reproduction pipeline exists. NumPy NPZ conversion is deliberately out of scope.
+**实现与验证边界：** C++数值求解器及实验管线源码已实现，局部固定输入测试已执行；完整实验复现仍待验证。NumPy NPZ转换不在范围内。
 
 ## Project MIT license, references and implementation direction
 
@@ -59,7 +59,7 @@ Original research references (retained):
 
 ## Minimal C++ MAT dictionary probe
 
-The first C++ utility is [src/mat_data_dict_probe.cpp](src/mat_data_dict_probe.cpp). It discovers all original MAT files, opens each file **read-only** using matio, enumerates names with Mat_GetDir, reads each variable using Mat_VarRead, and generates a Markdown data dictionary. Per-file output includes its location, size, FNV-1a 64-bit change-detection fingerprint, MAT version, variable name, class, stored data type, dimensions, compression, flags and read status. **FNV is not a cryptographic hash.**
+The first C++ utility is [src/mat_data_dict_probe.cpp](src/mat_data_dict_probe.cpp). It discovers all original MAT files, opens each file **read-only** using matio, enumerates names with Mat_GetDir, reads each variable using Mat_VarRead, and generates a Markdown data dictionary. Per-file output includes its location, size, FNV-1a 64-bit change-detection fingerprint, MAT version, variable name, class, decoded data type, dimensions, compression, flags and read status. **FNV is not a cryptographic hash.**
 
 当前探针已复用生产 Reader，不能再单独编译一个 `.cpp`。Debian/Ubuntu 依赖为 C++17、CMake ≥3.28、Eigen3、matio、zlib 和提供 `Sophus::Sophus` CMake target 的 Sophus。常规系统依赖安装命令如下（本轮使用既有安装，未执行依赖安装）：
 
@@ -74,9 +74,9 @@ build_dir="build/r6-$(date -u +%Y%m%dT%H%M%SZ)-$$"
 cmake -S . -B "$build_dir" -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
 cmake --build "$build_dir" --parallel 4
 ctest --test-dir "$build_dir" --verbose --no-tests=error \
-    -R '^(r02_mat_reader|r06_historical_mat_readonly_schema)$'
+    -R '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values)$'
 ctest --test-dir "$build_dir" --verbose --no-tests=error \
-    -E '^(r02_mat_reader|r06_historical_mat_readonly_schema)$'
+    -E '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values)$'
 ~~~
 
 构建产物包含 `egomotion` 和 `mat_data_dict_probe`。探针生成新报告时应指定新的隔离输出文件；下列已提交的数据字典保留其原始来源，不因新 Reader 测试通过而自动重新生成。逐步骤 stdout/stderr、退出码及工具链身份须按仓库规则另行保存，本次实际命令与日志索引见验证记录。
