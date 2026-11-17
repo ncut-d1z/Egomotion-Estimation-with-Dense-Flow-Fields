@@ -1,6 +1,34 @@
 # R6 Adaptive Runner 跨帧与发布合同验证
 
-## 最新诊断与接续（2026-11-17）
+## 最新结果：28/28 CTest通过（2026-11-17）
+
+**[HUMAN-EXECUTE/APPROVE] 受测源码 `a5336b3e9072be16dcf296b927a24de3e39cdc06` 已提交、正常推送、核实远端并通过配置/编译及全部28项CTest。** 文档登记为 `[AI-EDIT]`；没有改变AC、数值阈值或冻结状态。远端分支 `dev-plan-P0-P1-mat-dictionary-probe`，没有新增/关闭Issue或PR、没有合并/发布。原始 `origin` Git树仍为 `70ee155131c24a50169346d0ffbaff0c01b1c547`，原始资料始终只读。
+
+RunId `r6-adaptive-errors-20261117-BxUi6ya8`，完整证据在 `build/r6-adaptive-errors-20261117-BxUi6ya8/evidence/`，包括环境、原始输入/固定参考/测试文件SHA、来源Git blob、命令与cwd、stdout/stderr、JUnit和CTest日志快照。工作目录为仓库根，复用 `build/r6-20261117-KzjFHPDQ/cmake/`，是重新配置后的增量构建。Ubuntu24.04.5、GCC16.2.0、CMake/CTest4.3.4、Eigen3.4.0、Sophus1.24.6、matio1.5.26、zlib1.3，C++17 Release；无依赖安装。数值输入及RNG替身固定，无统计种子；RunId使用独立OS随机源。所有生成物在build沙箱，未提交MAT或原始运行日志。
+
+| 步骤 | 开始/结束（2026-11-17 UTC+08:00） | 退出码 | 实测结果 |
+|---|---|---:|---|
+| configure | 16:50:20 / 16:50:22 | 0 | 受测SHA正确 |
+| build | 16:50:22 / 16:51:41 | 0 | 全目标通过，无编译诊断 |
+| MAT CTest | 16:51:41 / 16:51:42 | 0 | 4/4，0.61秒 |
+| 其余CTest | 16:51:42 / 16:51:43 | 0 | 24/24，0.81秒 |
+| 输入SHA核对 | 16:51:43完成 | 0 | 原始资料/固定参考/测试输入均未改变 |
+
+配置参数 `-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DBUILD_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`；编译 `cmake --build <build-dir> --parallel 4 -- -k`。CTest使用 `-C Release --verbose --no-tests=error --output-junit <evidence>.xml`，先 `--parallel 2 -R '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values|r06_mat_reader_boundaries)$'`，再 `--parallel 4 -E` 同表达式，无跳过登记项。所有步骤stderr为空。MAT日志SHA-256 `82d59a9e593ece1f5e8a4c6c9ef999b698af176d9fe1472a31392b203ceb8311`，其余CTest日志SHA-256 `d9c5b0cccc974b8ce1d093e73bd2600ac45f8496e195303d6a8abf9598084dcf`。
+
+三项新增CTest的**实际证据边界**：
+
+| CTest | 实测通过内容 |
+|---|---|
+| `r06_adaptive_runner_complete_contract` | 原35帧初始化/99次替身Step/4 MAT（独立atan2最大差 `1.42109e-14` 度）；8组独立固定600×1结果经实际生产聚合及发布门禁，四误差闭式平均精确相等、比值只取第8组；非零合成真值的600帧UpdateRates Session共2,990次Step、原周期刷新、3个当前MAT字段；全部真实Writer/Reader/SHA/Manifest核对 |
+| `r06_adaptive_runner_incomplete_contract` | 0～7个完整结果的全部缺样本前缀禁止均值/Complete/MAT，保留实际次数；第8次缺比值/转置/NaN原子拒绝并允许合法重试、第9次及零计划次数拒绝；原Runner的第7个normal故障准确为IncompleteRun→InvalidRandomSample，索引2及帧2保留 |
+| `r06_adaptive_default_undefined_contract` | 原600点轨迹+原级别2/4+替身Step下，两模式在第151帧为零旋转真值失败；attempted=1、completed=0、valid=149、undefined=1，保存Incomplete、无MAT。Comparison 448次Step/2,304,000次normal，UpdateRates 746次Step/0normal |
+
+源修改包括两Runner头的可选借用StepSolver、`adaptive_runner.cpp`、私有 `adaptive_aggregation.{hpp,cpp}` / `adaptive_publication.hpp`、`production_runner.cpp`、测试及CMake。修复了undefined漏计、RNG失败被误标求解失败，新增聚合整轮预检和零计划次数保护；原始公式、默认轨迹、采样级别、帧数、八次分母不变。28项通过包括对**预期非成功**的验证，绝不能写成原默认600帧实验已成功。
+
+**R6仍未结案**：原轨迹端到端科学结果不能从固定替身推断；第151帧无定义角仍是原配置在本工具链的可见限制，并未通过改变规则消除。真实完整科学实验、剩余独立L3/L4、其它Reader raw tag/资源负例、源SHRotate动作限定、DEC-005/006及最终人类验收仍待完成。未运行MATLAB/Octave，不要求L1；未签署验收或冻结。下文按历史顺序保留失败、诊断与当时待测状态。
+
+## 失败诊断与修正过程（历史）
 
 **[HUMAN-EXECUTE/APPROVE] 第二轮配置/编译通过且无编译诊断，27项中25通过、2失败；新28项版本待运行。** 受测源码 `cc2f668f8ef49fb618650d110230cdb1ca15a842`，RunId `r6-adaptive-diagnostics-20261117-MMnO6TbY`，完整stdout/stderr/命令、JUnit及输入哈希在同名build目录 `evidence/`。MAT4/4、其余21/23，输入哈希核对exit0。初始化真实流水线已通过（99次替身Step，4个真实MAT）；首次第7个normal故障场景通过。
 

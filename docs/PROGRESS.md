@@ -2,6 +2,8 @@
 
 ## 最新接续：R6 Adaptive Runner 跨帧合同（2026-11-17）
 
+**最终复测 `[HUMAN-EXECUTE/APPROVE]`：源码 `a5336b3e9072be16dcf296b927a24de3e39cdc06` 构建无诊断，28/28 CTest通过。** 先MAT4/4，再其余24/24，原始输入SHA不变；RunId `r6-adaptive-errors-20261117-BxUi6ya8`。新增固定8组600行聚合/真实发布、完整600帧合成真值Session、各缺样本前缀及默认轨迹无定义失败；修复undefined漏计及噪声失败外层分类。**默认Comparison/UpdateRates在当前替身下第151帧中止仍存在，不把负例通过或固定结果当端到端科学成功。** 完整修改、命令/环境/日志哈希与剩余范围见 [Runner合同验证](reviews/R6_ADAPTIVE_RUNNER_CONTRACT_2026-11-17.md)。下面的25/27与构建失败是保留的历史证据；R6未结案。
+
 **接续诊断 `[HUMAN-EXECUTE/APPROVE]`**：`cc2f668` 第二轮构建无警告、仍25/27。两个默认正弦轨迹模式在第151帧遇到零旋转真值，按既有UndefinedAngle合同中止；初始化和RNG负例通过。现新增独立默认路径负例，按已设计的8组600行固定结果检验原生产聚合/发布函数，并以非零合成真值核对完整600帧Session；不修改轨迹、阈值、帧数或分母，不冒充科学实验。修复漏记undefined计数，28项待远程检查点后验证。详见 [Runner合同验证](reviews/R6_ADAPTIVE_RUNNER_CONTRACT_2026-11-17.md)。
 
 **[HUMAN-EXECUTE/APPROVE] 首次27项中25通过、2失败，待修正复测。** `e77eb402` 构建成功但替身Trace有未初始化警告；回执检查错误假定枚举顺序，已改为变量身份核对。第八轮故障用例在预定注入前遇到SolverFailed，原因待更完整诊断；不放宽任何断言或科学阈值。保持35/600帧、级别2/4及8次重复，真实Writer输出与失败记录均保留；不将替身称为科学实验。日志、修改和边界见 [Runner合同验证](reviews/R6_ADAPTIVE_RUNNER_CONTRACT_2026-11-17.md)。

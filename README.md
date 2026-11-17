@@ -4,7 +4,7 @@ A planned **C++17 reimplementation that directly reads the original MATLAB MAT f
 
 > **Permanent evidence policy:** Running MATLAB/Octave or collecting original MATLAB L1 execution traces is **not required** for design, coding, verification, or release. The original scripts are read-only specifications; numerical evidence will use the preserved MAT results (L2), independently checked analytic/reference implementations (L3), and statistical comparisons (L4). See [No MATLAB Execution Policy](docs/golden/NO_MATLAB_EXECUTION_POLICY.md). This change does not authorize C++ builds/tests or imply any numerical acceptance.
 
-> **项目状态（2026-11-17）**：R0–R5生产源码已实现，R6仍在验证。最新受测源码 `dffddf3b6a62b906a5b20eba365a2087e9c86662` 增量构建成功、**25/25 CTest通过**；已修复Reader错误接受截断及校验和损坏MAT的问题，29个Reader边界场景通过。原始582 MAT/33,340值独立SHA/逐位对照、29个发布故障场景均通过，原始文件哈希不变。首次干净构建见 [原生记录](docs/reviews/R6_NATIVE_VALIDATION_2026-11-17.md)，最新修复与证据见 [Reader验证](docs/reviews/R6_READER_BOUNDARIES_2026-11-17.md)。其它raw tag/资源负例、全部L3/L4科学复现、完整Runner及正式验收尚未完成，不能宣称MATLAB/C++全部行为等价。
+> **项目状态（2026-11-17）**：R0–R5生产源码已实现，R6仍在验证。最新受测源码 `a5336b3e9072be16dcf296b927a24de3e39cdc06` 增量构建无诊断、**28/28 CTest通过**；新增固定8组600行聚合、600帧合成Session及默认轨迹无定义角负例，修复undefined漏计与噪声失败分类。原582 MAT/33,340值独立SHA/逐位对照、Reader边界29场景及发布故障29场景仍通过，原始输入哈希不变。见 [最新验证](docs/reviews/R6_ADAPTIVE_RUNNER_CONTRACT_2026-11-17.md) 和 [首次干净构建](docs/reviews/R6_NATIVE_VALIDATION_2026-11-17.md)。默认正弦轨迹在当前替身下第151帧中止的限制仍存在；通过负例及固定结果不等于完整科学实验成功。其它raw tag/资源负例、剩余L3/L4、端到端Runner及正式验收尚未完成。
 
 ## Original research and source material
 
