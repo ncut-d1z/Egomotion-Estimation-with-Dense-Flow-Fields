@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 Linux 发布故障测试（2026-11-17）
+
+**[HUMAN-EXECUTE/APPROVE] 代码/CTest已授权，新增测试尚未运行。** 在干净 `8292d9d` 基础上新增仅测试链接的系统调用故障包装，直接验证真实 MAT/Text Writer 的23个场景及真实 RunContext/Manifest 的6个场景；覆盖指定 fd/阶段的同步、发布竞争和暂存清理失败，并检查精确调用次数、最终 inode/字节、未确认回执及独立错误链。使用构建目录内中文/空格合成沙箱，不写原始数据。新增2项CTest使登记总数为23；上一批21/21仍仅对应 `84c8662`。实现边界与待执行清单见 [发布故障验证](reviews/R6_IO_FAULT_VALIDATION_2026-11-17.md)。R6仍未结案。
+
 ## 最新执行批次：R6 原生验证（2026-11-17）
 
 **[HUMAN-EXECUTE/APPROVE] 本轮已执行：干净全工程构建成功，21/21 CTest 通过。** 已验证源码 SHA 为 `84c86624954406b31e8a82d5e145c7f6ae30ee93`，RunId 为 `r6-20261117-KzjFHPDQ`。用户直接允许生产代码修改、构建/CTest 和方案文档修改，覆盖本页历史批次的 H-11 暂缓。起点工作区/远端为 `5fa2e65b09dcfad15a0e467383e14c185bf0e540`，全状态 Issue/PR 查询为空；沿用专用分支 `dev-plan-P0-P1-mat-dictionary-probe`。不改写历史审批或代签验收。

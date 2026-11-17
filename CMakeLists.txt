@@ -416,6 +416,23 @@ if(BUILD_TESTING)
     set_tests_properties(r06_result_lifetimes_error_frames PROPERTIES
         LABELS "r06;contracts;ownership;error-chain" TIMEOUT 30)
 
+    # 故障包装仅链接进测试程序，不改变生产库/CLI 或动态 matio 内部调用。
+    add_executable(test_r06_io_faults
+        tests/integration/test_r06_io_faults.cpp
+        tests/support/io_fault_injection.cpp)
+    target_link_libraries(test_r06_io_faults PRIVATE egomotion_experiments egomotion_matio)
+    target_compile_features(test_r06_io_faults PRIVATE cxx_std_17)
+    target_compile_options(test_r06_io_faults PRIVATE -Wall -Wextra -Wpedantic)
+    foreach(symbol IN ITEMS openat write fsync linkat unlinkat fstatat)
+        target_link_options(test_r06_io_faults PRIVATE "LINKER:--wrap=${symbol}")
+    endforeach()
+    add_test(NAME r06_linux_writer_faults COMMAND test_r06_io_faults
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_writer_faults" writers)
+    add_test(NAME r06_real_manifest_faults COMMAND test_r06_io_faults
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_manifest_faults" manifest)
+    set_tests_properties(r06_linux_writer_faults r06_real_manifest_faults PROPERTIES
+        LABELS "r06;io;fault-injection;synthetic-only;write-sandbox" TIMEOUT 60)
+
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
