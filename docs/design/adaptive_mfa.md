@@ -1,5 +1,7 @@
 # Adaptive MFA 单步计算与轨迹状态——详细设计草案
 
+> **2026-11-18 候选策略接口，未冻结**：已编写`ICoefficientUpdatePolicy`及Reset/Inherit/Periodic三实现，Session默认拥有策略或显式借用注入对象；策略只返回本帧比较候选，Session保留唯一主/基线状态和最终事务提交。现行签名见 [策略公共头](../../include/egomotion/estimators/coefficient_update.hpp)、[Session](../../include/egomotion/estimators/adaptive_session.hpp)，顺序/引用生命周期/独立性及验证状态见 [专项记录](../reviews/R6_COEFFICIENT_POLICY_2026-11-18.md)。不修改本节源公式、周期或错误合同；下列旧“无实现/未执行”描述保留历史语境，不代表当前HEAD。
+
 > **LLD v0.8：未冻结、没有生产Adaptive C++/CTest。** 已逐段核对原 MATLAB 公式；除 AN-G12 理想对称案例外，新增九方向非对称正/负均值近度的独立 Wolfram 逐节点数学参考，并发现 s<0 归一化与 M1 矩阵模型之间存在确定的 2I 差异。一般状态、Session、正式接口及 DEC-005 仍未完成。
 
 ## 1. 单步输入/输出与接口候选

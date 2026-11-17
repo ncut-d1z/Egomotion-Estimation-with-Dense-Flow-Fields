@@ -11,7 +11,7 @@
 
 namespace egomotion::estimators {
 namespace {
-constexpr std::array<std::size_t,4> kUpdatePeriods{{1,5,11,21}};
+constexpr std::size_t kResetAndInheritComparisons=2;
 
 HarmonicCoefficients originalInitialCoefficients() {
     HarmonicCoefficients value;
@@ -44,8 +44,20 @@ AdaptiveMfaSession::AdaptiveMfaSession(
     : mode_(mode),primary_(originalInitialCoefficients()),
       solver_(injected_solver ? injected_solver : &production_solver_) {
     baselines_.fill(originalInitialCoefficients());
+    if(mode_==AdaptiveSessionMode::UpdateRates) {
+        for(std::size_t j=0;j<policies_.size();++j)policies_[j]=&periodic_policies_[j];
+    } else {
+        policies_[0]=&reset_policy_;
+        policies_[1]=&inherit_policy_;
+    }
 }
 
+AdaptiveMfaSession::AdaptiveMfaSession(
+    AdaptiveSessionMode mode,const AdaptiveCoefficientPolicies& policies,
+    const IAdaptiveStepSolver* injected_solver)
+    : AdaptiveMfaSession(mode,injected_solver) { policies_=policies; }
+
+// 旋转、策略候选、比较、主求解和提交集中保持源时序，保留完整事务体便于审计。
 Result<AdaptiveFrameResult,ExperimentErrorCode>
 AdaptiveMfaSession::processFrame(const AdaptiveFrameInput& frame) {
     if (frame.matlab_frame_index!=expected_matlab_frame_index_)
@@ -57,6 +69,12 @@ AdaptiveMfaSession::processFrame(const AdaptiveFrameInput& frame) {
         !frame.truth.translation.allFinite()||!frame.truth.rotation.allFinite())
         return fail(ExperimentErrorCode::InvalidParameters,
                     "Adaptive frame rotation/truth contains non-finite values");
+    const std::size_t comparison_count=mode_==AdaptiveSessionMode::UpdateRates
+        ? kAdaptiveUpdatePeriods.size() : kResetAndInheritComparisons;
+    for(std::size_t j=0;j<comparison_count;++j)
+        if(policies_[j]==nullptr)
+            return fail(ExperimentErrorCode::InvalidParameters,
+                        "Adaptive comparison coefficient policy is missing");
     try {
         // Copy first: no state changes become visible before every required
         // comparison AND the primary solve have succeeded.
@@ -71,37 +89,29 @@ AdaptiveMfaSession::processFrame(const AdaptiveFrameInput& frame) {
                                  frame.matlab_frame_index);
             next_primary=std::move(rotated).value();
         }
-        if (mode_==AdaptiveSessionMode::UpdateRates) {
-            for (std::size_t j=0;j<next_baselines.size();++j) {
-                auto rotated=harmonics::rotateSourceCoefficients(
-                    next_baselines[j],frame.source_coefficient_rotation);
-                if (!rotated.hasValue())
-                    return propagate(rotated.error(),
-                                     "Adaptive baseline rotation failed (period="+
-                                         std::to_string(kUpdatePeriods[j])+")",
-                                     frame.matlab_frame_index);
-                next_baselines[j]=std::move(rotated).value();
-                // Source refreshes from current main BEFORE this frame's primary solve.
-                if (frame.matlab_frame_index%kUpdatePeriods[j]==0)
-                    next_baselines[j]=next_primary;
+        for(std::size_t j=0;j<comparison_count;++j) {
+            auto candidate=policies_[j]->prepare(frame.matlab_frame_index,next_primary,
+                                                baselines_[j],frame.source_coefficient_rotation);
+            if(!candidate.hasValue())
+                return propagate(candidate.error(),
+                                 "Adaptive coefficient update failed (baseline="+
+                                     std::to_string(j)+")",frame.matlab_frame_index);
+            if(!candidate.value().values.allFinite()) {
+                ErrorDetail detail;detail.stage=ErrorStage::Solve;
+                detail.message="Coefficient update policy returned non-finite candidate";
+                return propagate({NumericalErrorCode::NonFiniteResult,std::move(detail)},
+                                 "Adaptive coefficient candidate invalid",frame.matlab_frame_index);
             }
+            next_baselines[j]=std::move(candidate).value();
         }
 
         AdaptiveFrameResult output;
         output.matlab_frame_index=frame.matlab_frame_index;
-        const std::size_t comparison_count=
-            mode_==AdaptiveSessionMode::UpdateRates ? kUpdatePeriods.size() : 2u;
         output.comparison_motion.reserve(comparison_count);
         output.comparison_translation_error_deg.reserve(comparison_count);
         output.comparison_rotation_error_deg.reserve(comparison_count);
         for (std::size_t j=0;j<comparison_count;++j) {
-            HarmonicCoefficients trial;
-            if (mode_==AdaptiveSessionMode::UpdateRates)
-                trial=next_baselines[j];
-            else if (j==0)
-                trial=originalInitialCoefficients(); // ohne
-            else
-                trial=next_primary; // mit
+            const HarmonicCoefficients& trial=next_baselines[j];
             // The source does one comparison iteration per frame.
             auto comparison=solver_->solve(trial,frame.observations);
             if (!comparison.hasValue())

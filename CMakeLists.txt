@@ -82,6 +82,7 @@ add_library(egomotion_estimators STATIC
     src/estimators/franz_kvd.cpp
     src/estimators/adaptive_step.cpp
     src/estimators/adaptive_session.cpp
+    src/estimators/coefficient_update.cpp
 )
 add_library(egomotion::estimators ALIAS egomotion_estimators)
 target_link_libraries(egomotion_estimators PUBLIC
@@ -496,6 +497,13 @@ if(BUILD_TESTING)
     add_test(NAME r06_adaptive_periods_atomic_commit COMMAND test_r06_adaptive_periods)
     set_tests_properties(r06_adaptive_periods_atomic_commit PROPERTIES
         LABELS "r06;adaptive;periodic;success-transaction;synthetic" TIMEOUT 60)
+
+    add_executable(test_r06_coefficient_policies tests/contracts/test_r06_coefficient_policies.cpp)
+    target_link_libraries(test_r06_coefficient_policies PRIVATE egomotion_estimators)
+    target_compile_options(test_r06_coefficient_policies PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_coefficient_policy_composition COMMAND test_r06_coefficient_policies)
+    set_tests_properties(r06_coefficient_policy_composition PROPERTIES
+        LABELS "r06;adaptive;policy;source-order;failure-injection" TIMEOUT 60)
 
     # R6 Linux anchored I/O safety negatives, sandboxed under build tree.
     # No cleanup, original MAT access, or trusted user output involved.

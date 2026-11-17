@@ -1,6 +1,7 @@
 #pragma once
 
 #include "egomotion/estimators/adaptive_step.hpp"
+#include "egomotion/estimators/coefficient_update.hpp"
 
 #include <array>
 #include <cstddef>
@@ -40,6 +41,13 @@ public:
     explicit AdaptiveMfaSession(AdaptiveSessionMode mode,
                                 const IAdaptiveStepSolver* injected_solver = nullptr);
 
+    // 显式替换比较策略：前两槽用于Initialization/Comparison，四槽用于
+    // UpdateRates。使用的槽不可为空；策略及solver须比Session活得更久。
+    // Session复制指针数组，不借用数组本身；策略只提供临时候选。
+    AdaptiveMfaSession(AdaptiveSessionMode mode,
+                       const AdaptiveCoefficientPolicies& policies,
+                       const IAdaptiveStepSolver* injected_solver = nullptr);
+
     // The default solver pointer refers to this Session's owned instance;
     // copying or moving would otherwise leave an unsafe internal pointer.
     AdaptiveMfaSession(const AdaptiveMfaSession&)=delete;
@@ -61,6 +69,14 @@ private:
     AdaptiveSessionMode mode_;
     HarmonicCoefficients primary_;
     std::array<HarmonicCoefficients,4> baselines_;
+    ResetCoefficientUpdatePolicy reset_policy_;
+    InheritCoefficientUpdatePolicy inherit_policy_;
+    std::array<PeriodicCoefficientUpdatePolicy,4> periodic_policies_{{
+        PeriodicCoefficientUpdatePolicy{kAdaptiveUpdatePeriods[0]},
+        PeriodicCoefficientUpdatePolicy{kAdaptiveUpdatePeriods[1]},
+        PeriodicCoefficientUpdatePolicy{kAdaptiveUpdatePeriods[2]},
+        PeriodicCoefficientUpdatePolicy{kAdaptiveUpdatePeriods[3]}}};
+    AdaptiveCoefficientPolicies policies_{};
     AdaptiveMfaStepSolver production_solver_;
     const IAdaptiveStepSolver* solver_=nullptr;
     // Each successful call consumes exactly one original MATLAB frame.

@@ -1,5 +1,7 @@
 # 对象模型与生命周期合同（Object Model）
 
+> **2026-11-18 策略实现追踪，候选/未冻结**：KvD已组合引擎与平移规则，见 [实测](reviews/R6_KVD_STRATEGY_2026-11-18.md)；Adaptive Session现增加`ICoefficientUpdatePolicy`的Reset/Inherit/Periodic实现和显式注入，策略仅准备临时比较系数，Session仍独占持久主/基线状态，见 [实现与验证状态](reviews/R6_COEFFICIENT_POLICY_2026-11-18.md)。这不核销其它对象不变量/装配缺口或签署总体设计验收。
+
 > **2026-11-17 当前实现追踪 `[AI-EDIT]`**：45份源文件及50个声明的实际承接位置、融合实现和范围见 [迁移矩阵](MIGRATION_MATRIX.md)；§7保留候选设计分配，不用其旧“未创建”文字否定现有实现。实际四分析入口使用MatResultAnalyzer，三Adaptive入口使用AdaptiveExperimentRunner，低阶球谐采用自由函数/适配层；这些名称差别不代表已批准对象模型冻结。受测代码130a82的48/48及剩余边界见 [复核记录](reviews/R6_SOURCE_IMPLEMENTATION_MAP_2026-11-17.md)。
 
 > **2026-11-17 插图实现事实 `[AI-EDIT]`**：实际公共头 `include/egomotion/illustrations/illustration.hpp` 提供三个独立Config、值对象Data/SurfaceGrid和可选IExporter；generate/dataJson为纯数值函数，SvgExporter消费const Data及ITextPublisher。没有在分析IPlotExporter中新增draw*方法；§7三行映射已据实更新。固定 `8c808be` 的45/45 CTest及限制见 [记录](reviews/R6_ILLUSTRATIONS_2026-11-17.md)，不替代对象模型整体冻结/验收；其余旧“未创建”描述须结合当前PROGRESS读取。
