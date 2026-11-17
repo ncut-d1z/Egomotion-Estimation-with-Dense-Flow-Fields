@@ -25,3 +25,5 @@ D1构造不变量、D2其它球谐/分析职责、D3 Adaptive装配及D4只读/�
 固定`4efcf0e395b05801e7a51a582b5f60794999a352`完成推送与远端核验后，SVG ON配置exit0、构建exit2；新增测试三处修改`Result::value() const &`的只读载荷，GNU报`discards qualifiers`/`assignment of read-only location`。生产策略已编译，CTest尚未执行，OFF未执行。RunId `r6-coefficient-policy-20261118-HxGMtusL`，其`evidence-ON/`完整meta/stdout/stderr与输入SHA保留；构建后另行只读SHA后验exit0，未覆盖日志。
 
 检索all-state与本地记录后登记 [Issue #3](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/3)。修正测试为`std::move(result).value()`移出自拥有候选，再修改局部值并重新构造成功Result；不修改生产Result接口、策略代码、阈值或断言范围。待新提交/推送/远端核验后双模式复测，Issue保持开放供复核。
+
+第二轮`daf6c5e91a742ae3b161349f9834cb156b5334fb`在新远端检查点完成SVG ON配置/构建exit0、CTest 7+50=57/57，策略测试46507项通过；但GNU发出`-Wmaybe-uninitialized`，定位同一新增替身`Solver`未初始化返回trace中的`coefficients_next`。不将该构建标为无诊断，也不关闭Issue #3。RunId `r6-coefficient-retest-20261118-Pu5TeopC`，输入SHA后验exit0，OFF尚未执行。追加修复为显式将已构造候选复制到trace，并加入返回trace与候选一致的逐位断言；保留所有已有检查，不关闭诊断选项，待新检查点双模式复测。

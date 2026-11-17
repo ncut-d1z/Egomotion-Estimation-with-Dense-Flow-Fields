@@ -130,6 +130,7 @@ struct Solver final:IAdaptiveStepSolver {
         }
         AdaptiveStepResult result;result.motion.translation=Vector3::UnitX();result.motion.rotation=Vector3::UnitY();
         result.coefficients_next=old;result.coefficients_next.values+=coefficients(100).values;result.error_mse=0;
+        result.trace.coefficients_next=result.coefficients_next;
         return Result<AdaptiveStepResult,NumericalErrorCode>::success(std::move(result));
     }
 };
@@ -157,6 +158,7 @@ void composition(AdaptiveSessionMode mode) {
         events.clear();const auto input=frame(i);const auto output=session.processFrame(input),expected=reference.processFrame(input);
         require(output.hasValue()&&expected.hasValue(),"Both assemblies succeed");stateEquals(session,reference);
         same(output.value().primary_step.coefficients_next.values,expected.value().primary_step.coefficients_next.values,"Primary result unchanged");
+        same(output.value().primary_step.trace.coefficients_next.values,output.value().primary_step.coefficients_next.values,"Synthetic trace is fully initialized and consistent");
         require(output.value().comparison_motion.size()==count(mode),"Comparison count unchanged");
         require(events.size()==count(mode)*2+1,"All policies then comparisons then primary");
         auto primary=mode==AdaptiveSessionMode::Initialization
