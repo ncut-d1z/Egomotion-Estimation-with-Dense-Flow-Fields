@@ -18,6 +18,8 @@ Comparison和UpdateRates均在 **run1/MATLAB frame151** 返回 `UndefinedAngle`�
 
 ## 范围及不变量
 
+**接续构建失败记录**：`3349d33a1e736a75441f7f8ce3564c0fb46bca3b` 已推送并核实；RunId `r6-adaptive-aggregation-20261117-nP4IGdxp` 配置exit0、编译exit2，CTest未启动。新私有 `adaptive_publication.hpp` 缺少定义 `ExperimentKind` 的直接include，导致声明不可编译；修复为显式包含已有 `output_contract.hpp`，不依赖包含顺序。原失败stdout/stderr保留，修复版须另建检查点并复测。
+
 关联 PLAN P8.1～P8.8、P1.7/P1.9、TC-F-EXP-001/002/003、TC-F-ADAPT-002/003、TC-I-RESULT-001。静态核对三份原 `agent_in_sphere_*.m` 的35/600帧、级别2/4、Comparison八次重复、逐帧2/4比较调用加一次主调用、1/5/11/21刷新、两端预分配零、当前save字段和除以8的顺序；原文件仅静态读取。
 
 `AdaptiveExperimentRunner` 与 `ProductionExperimentRunner` 允许借用已有 `IAdaptiveStepSolver`，生命周期由调用者保证；传递给每轮新建的Session。默认空指针与CLI仍使用真实求解器，未增加CLI参数或更改公式、帧数、采样级别、重复数。新增测试替身按run/frame/slot返回预定非对称非零运动，并核对精确调用顺序、每轮状态重置、基线刷新与丢弃比较dumi。替身只验证调度/聚合合同，不是科学算法或独立数值Golden。
