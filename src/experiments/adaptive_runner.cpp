@@ -125,38 +125,44 @@ void write(AdaptiveRunData& data,const std::string& field,
 Output compute(Mode mode, double noise_scale, IRandomSource* rng,
                const AdaptiveProgress& progress,
                const estimators::IAdaptiveStepSolver* injected_solver,
-               AdaptiveSampling sampling) {
+               AdaptiveSampling sampling, AdaptiveScene scene) {
     if (mode==Mode::Comparison &&
         (!std::isfinite(noise_scale)||rng==nullptr))
         return fail(ExperimentErrorCode::InvalidParameters,
                     "Comparison requires finite noise scale and injected RNG");
     try {
         AdaptiveRunData aggregate=newResult(mode);
-        const trajectory::TrajectoryGenerator generator;
-        const trajectory::TrajectoryKinematics kinematics;
-        const trajectory::SphereEnvironment sphere;
         const simulation::FlowSynthesizer flow_synthesizer;
 
         Result<trajectory::TrajectoryPoints,NumericalErrorCode> points=
             mode==Mode::Initialization
-            ? generator.circle(kInitializationFrames,0.6,0.3)
-            : generator.sinusoidal(kRegularFrames,0.5,1.0,2,0.3);
+            ? scene.trajectory.circle(kInitializationFrames,0.6,0.3)
+            : scene.trajectory.sinusoidal(kRegularFrames,0.5,1.0,2,0.3);
         if (!points.hasValue())
             return fromNumeric(points,"trajectory generation",mode,1);
-        auto motions=kinematics.fromPoints(points.value());
+        const std::size_t n=aggregate.frame_count;
+        if(points.value().points.rows()!=static_cast<Eigen::Index>(n) ||
+           !points.value().points.allFinite())
+            return fail(ExperimentErrorCode::DataMismatch,
+                        "Trajectory returned wrong point count or non-finite positions");
+        auto motions=scene.kinematics.fromPoints(points.value());
         if (!motions.hasValue())
             return fromNumeric(motions,"trajectory kinematics",mode,1);
+        const auto& frames=motions.value();
+        if(frames.size()!=n)
+            return fail(ExperimentErrorCode::DataMismatch,
+                        "Trajectory and frame count do not match");
+        for(const auto& frame:frames)
+            if(!frame.local_translation.allFinite() || !frame.absolute_rotation.allFinite() ||
+               !frame.relative_rotation.allFinite())
+                return fail(ExperimentErrorCode::DataMismatch,
+                            "Trajectory kinematics returned non-finite motion");
 
         const int level=mode==Mode::Comparison?4:2;
         auto sampled=sampling.sampler.sample(level);
         if (!sampled.hasValue())
             return fromNumeric(sampled,"icosahedral sampling",mode,1);
         const DirectionSet& directions=sampled.value();
-        const std::size_t n=aggregate.frame_count;
-        const auto& frames=motions.value();
-        if (frames.size()!=n)
-            return fail(ExperimentErrorCode::DataMismatch,
-                        "Trajectory and frame count do not match");
 
         for (std::size_t run=0;run<aggregate.planned_runs;++run) {
             if(progress)progress(AdaptiveProgressEvent::RunStarted);
@@ -176,7 +182,7 @@ Output compute(Mode mode, double noise_scale, IRandomSource* rng,
                                 "Expected source-valid trajectory interior frame");
                 const Vector3 position=points.value().points.row(
                     static_cast<Eigen::Index>(row)).transpose();
-                auto nearness=sphere.nearnessInUnitSphere(
+                auto nearness=scene.environment.nearnessInUnitSphere(
                     directions,position,frames[row].absolute_rotation);
                 if (!nearness.hasValue())
                     return fromNumeric(nearness,"sphere nearness",mode,
@@ -295,18 +301,18 @@ Output compute(Mode mode, double noise_scale, IRandomSource* rng,
 Result<AdaptiveRunData,ExperimentErrorCode>
 AdaptiveExperimentRunner::computeInitialization(
     const AdaptiveInitializationConfig&,const AdaptiveProgress& progress) const {
-    return compute(Mode::Initialization,0.0,nullptr,progress,injected_solver_,sampling_);
+    return compute(Mode::Initialization,0.0,nullptr,progress,injected_solver_,sampling_,scene_);
 }
 Result<AdaptiveRunData,ExperimentErrorCode>
 AdaptiveExperimentRunner::computeComparison(
     const AdaptiveComparisonConfig& config,IRandomSource& rng,
     const AdaptiveProgress& progress) const {
-    return compute(Mode::Comparison,config.noise_scale,&rng,progress,injected_solver_,sampling_);
+    return compute(Mode::Comparison,config.noise_scale,&rng,progress,injected_solver_,sampling_,scene_);
 }
 Result<AdaptiveRunData,ExperimentErrorCode>
 AdaptiveExperimentRunner::computeUpdateRates(
     const AdaptiveUpdateRatesConfig&,const AdaptiveProgress& progress) const {
-    return compute(Mode::UpdateRates,0.0,nullptr,progress,injected_solver_,sampling_);
+    return compute(Mode::UpdateRates,0.0,nullptr,progress,injected_solver_,sampling_,scene_);
 }
 
 }  // namespace egomotion::experiments

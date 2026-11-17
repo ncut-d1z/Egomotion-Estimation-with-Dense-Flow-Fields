@@ -80,7 +80,10 @@ void verifySessionRollback(estimators::AdaptiveSessionMode mode) {
 void verifyInvalidComparisonHasNoRngSideEffect() {
     sampling::IcosahedralSampler sampler;
     simulation::MeanMagnitudeGaussianNoise noise;
-    experiments::AdaptiveExperimentRunner runner({sampler,noise});
+    trajectory::TrajectoryGenerator generator;
+    trajectory::TrajectoryKinematics kinematics;
+    trajectory::SphereEnvironment environment;
+    experiments::AdaptiveExperimentRunner runner({sampler,noise},{generator,kinematics,environment});
     CountRandom random;
     AdaptiveComparisonConfig bad{
         std::numeric_limits<double>::quiet_NaN()};

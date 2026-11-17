@@ -18,6 +18,12 @@ namespace {
 using namespace egomotion;
 using namespace egomotion::experiments;
 using Events=std::vector<std::string>;
+struct Scene {
+    trajectory::TrajectoryGenerator generator;
+    trajectory::TrajectoryKinematics kinematics;
+    trajectory::SphereEnvironment environment;
+    AdaptiveScene services() const {return {generator,kinematics,environment};}
+};
 std::size_t checks=0;
 void require(bool value,const char* message) {
     ++checks;if(!value)throw std::runtime_error(message);
@@ -132,7 +138,7 @@ void routingAndReplay() {
         Events events;Sampler sampler(events);Noise noise(events);Random rng(events);Step step(events);
         noise.substitute=true;
         const std::size_t slots=mode==2?5:3;step.fail_at=slots+1;
-        AdaptiveExperimentRunner runner({sampler,noise},&step);
+        Scene scene;AdaptiveExperimentRunner runner({sampler,noise},scene.services(),&step);
         auto progress=[&](AdaptiveProgressEvent event){
             events.push_back(event==AdaptiveProgressEvent::RunStarted?"start":
                 event==AdaptiveProgressEvent::FrameCompleted?"frame":"complete");};
@@ -169,7 +175,7 @@ void serviceFailures() {
     for(int mode:{0,1,2})for(Fault fault:{Fault::Failure,Fault::Allocation,Fault::Length,
                                        Fault::Empty,Fault::NonFinite,Fault::Direction}) {
         Events events;Sampler sampler(events);Noise noise(events);Random rng(events);Step step(events);
-        sampler.fault=fault;AdaptiveExperimentRunner runner({sampler,noise},&step);
+        sampler.fault=fault;Scene scene;AdaptiveExperimentRunner runner({sampler,noise},scene.services(),&step);
         const auto result=compute(mode,runner,rng);
         require(!result.hasValue()&&step.flows.empty()&&noise.coefficients.empty()&&rng.normals==0,
                 "Invalid sampling cannot reach noise or solver");
@@ -177,7 +183,7 @@ void serviceFailures() {
     }
     for(Fault fault:{Fault::Failure,Fault::Allocation,Fault::Length,Fault::Empty,Fault::NonFinite,Fault::Direction}) {
         Events events;Sampler sampler(events);Noise noise(events);Random rng(events);Step step(events);
-        noise.fault=fault;AdaptiveExperimentRunner runner({sampler,noise},&step);
+        noise.fault=fault;Scene scene;AdaptiveExperimentRunner runner({sampler,noise},scene.services(),&step);
         const auto result=compute(1,runner,rng);
         require(!result.hasValue()&&step.flows.empty(),"Invalid noise success never reaches Session");
         if(fault==Fault::Failure){require(result.error().code==ExperimentErrorCode::IncompleteRun,"Noise failure classification");checkCause(result.error());}
@@ -185,7 +191,7 @@ void serviceFailures() {
             require(result.error().code==ExperimentErrorCode::DataMismatch,"Noise contract mismatch classification");
     }
     Events events;Sampler sampler(events);Noise noise(events);Random rng(events);Step step(events);
-    const AdaptiveExperimentRunner runner({sampler,noise},&step);
+    Scene scene;const AdaptiveExperimentRunner runner({sampler,noise},scene.services(),&step);
     const auto invalid=compute(1,runner,rng,{},std::numeric_limits<double>::quiet_NaN());
     require(!invalid.hasValue()&&invalid.error().code==ExperimentErrorCode::InvalidParameters&&events.empty(),
             "Invalid config before dependencies");

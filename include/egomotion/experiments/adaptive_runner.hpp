@@ -2,6 +2,7 @@
 
 #include "egomotion/contracts/interfaces.hpp"
 #include "egomotion/experiments/runner.hpp"
+#include "egomotion/trajectory/trajectory.hpp"
 
 #include <cstddef>
 #include <functional>
@@ -32,13 +33,20 @@ struct AdaptiveSampling {
     const IFlowNoiseModel& comparison_noise;
 };
 
+// 场景服务只返回自拥有值，不接触Session/RunContext；引用须长于Runner。
+struct AdaptiveScene {
+    const trajectory::ITrajectoryGenerator& trajectory;
+    const trajectory::ITrajectoryKinematics& kinematics;
+    const trajectory::ISphereEnvironment& environment;
+};
+
 class AdaptiveExperimentRunner {
 public:
     // 可选借用同一求解器做跨帧合同测试；调用者须保证其生命周期。
     // 空指针保留真实 StepSolver，不改变生产帧数、采样级别或八次重复。
-    AdaptiveExperimentRunner(AdaptiveSampling sampling,
+    AdaptiveExperimentRunner(AdaptiveSampling sampling, AdaptiveScene scene,
         const estimators::IAdaptiveStepSolver* injected_solver=nullptr)
-        : sampling_(sampling), injected_solver_(injected_solver) {}
+        : sampling_(sampling), scene_(scene), injected_solver_(injected_solver) {}
     Result<AdaptiveRunData,ExperimentErrorCode> computeInitialization(
         const AdaptiveInitializationConfig& config = {},
         const AdaptiveProgress& progress = {}) const;
@@ -54,6 +62,7 @@ public:
         const AdaptiveProgress& progress = {}) const;
 private:
     AdaptiveSampling sampling_;
+    AdaptiveScene scene_;
     const estimators::IAdaptiveStepSolver* injected_solver_;
 };
 

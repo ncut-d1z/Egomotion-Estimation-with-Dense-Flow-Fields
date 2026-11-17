@@ -61,7 +61,11 @@ int main(int argc,char** argv) {
         RecordingStep recorded;
         sampling::IcosahedralSampler sampler;
         simulation::MeanMagnitudeGaussianNoise noise;
-        experiments::AdaptiveExperimentRunner runner({sampler,noise},&recorded);
+        trajectory::TrajectoryGenerator generator;
+        trajectory::TrajectoryKinematics kinematics;
+        trajectory::SphereEnvironment environment;
+        experiments::AdaptiveExperimentRunner runner(
+            {sampler,noise},{generator,kinematics,environment},&recorded);
         std::size_t started=0,valid=0,completed=0;
         const auto result=runner.computeInitialization({},[&](experiments::AdaptiveProgressEvent event) {
             if(event==experiments::AdaptiveProgressEvent::RunStarted)++started;

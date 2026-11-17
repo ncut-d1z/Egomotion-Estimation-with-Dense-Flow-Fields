@@ -21,20 +21,37 @@ struct FrameKinematics {
     bool has_original_matlab_motion = false;
 };
 
-class TrajectoryGenerator {
+class ITrajectoryGenerator {
+public:
+    virtual ~ITrajectoryGenerator() = default;
+    virtual Result<TrajectoryPoints,NumericalErrorCode> circle(
+        std::size_t count, Scalar radius, Scalar height) const = 0;
+    virtual Result<TrajectoryPoints,NumericalErrorCode> sinusoidal(
+        std::size_t count, Scalar amplitude, Scalar length,
+        std::size_t periods, Scalar height) const = 0;
+};
+
+class TrajectoryGenerator final : public ITrajectoryGenerator {
 public:
     Result<TrajectoryPoints,NumericalErrorCode> circle(
-        std::size_t count, Scalar radius, Scalar height) const;
+        std::size_t count, Scalar radius, Scalar height) const override;
 
     Result<TrajectoryPoints,NumericalErrorCode> sinusoidal(
         std::size_t count, Scalar amplitude, Scalar length,
-        std::size_t periods, Scalar height) const;
+        std::size_t periods, Scalar height) const override;
 };
 
-class TrajectoryKinematics {
+class ITrajectoryKinematics {
+public:
+    virtual ~ITrajectoryKinematics() = default;
+    virtual Result<std::vector<FrameKinematics>,NumericalErrorCode> fromPoints(
+        const TrajectoryPoints& positions) const = 0;
+};
+
+class TrajectoryKinematics final : public ITrajectoryKinematics {
 public:
     Result<std::vector<FrameKinematics>,NumericalErrorCode> fromPoints(
-        const TrajectoryPoints& positions) const;
+        const TrajectoryPoints& positions) const override;
 };
 
 // Explicitly preserves the original 1e-11 UNNORMALIZED cross-product
@@ -47,11 +64,19 @@ Result<Vector3,NumericalErrorCode> sourceRotationBetween(
 Result<Matrix3,NumericalErrorCode> rotationMatrixFromVector(
     const Vector3& rotation_vector);
 
-class SphereEnvironment {
+class ISphereEnvironment {
+public:
+    virtual ~ISphereEnvironment() = default;
+    virtual Result<Eigen::VectorXd,NumericalErrorCode> nearnessInUnitSphere(
+        const DirectionSet& directions, const Vector3& camera_position,
+        const Vector3& absolute_rotation_vector) const = 0;
+};
+
+class SphereEnvironment final : public ISphereEnvironment {
 public:
     Result<Eigen::VectorXd,NumericalErrorCode> nearnessInUnitSphere(
         const DirectionSet& directions, const Vector3& camera_position,
-        const Vector3& absolute_rotation_vector) const;
+        const Vector3& absolute_rotation_vector) const override;
 };
 
 }  // namespace egomotion::trajectory

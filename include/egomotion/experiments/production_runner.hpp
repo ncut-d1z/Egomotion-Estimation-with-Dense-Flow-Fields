@@ -27,6 +27,10 @@ public:
     explicit ProductionExperimentRunner(AdaptiveSampling adaptive_sampling,
         const estimators::IAdaptiveStepSolver* injected_solver=nullptr)
         : injected_solver_(injected_solver), injected_sampling_(adaptive_sampling) {}
+    ProductionExperimentRunner(AdaptiveSampling adaptive_sampling,AdaptiveScene scene,
+        const estimators::IAdaptiveStepSolver* injected_solver=nullptr)
+        : injected_solver_(injected_solver), injected_sampling_(adaptive_sampling),
+          injected_scene_(scene) {}
     Result<RunOutcome,ExperimentErrorCode> runBiasOccluded(
         const BiasExperimentConfig&,RunContext&) override;
     Result<RunOutcome,ExperimentErrorCode> runBiasProportional(
@@ -46,14 +50,22 @@ private:
         if(injected_sampling_)return *injected_sampling_;
         return {adaptive_sampler_,adaptive_noise_};
     }
+    AdaptiveScene adaptiveScene() const noexcept {
+        if(injected_scene_)return *injected_scene_;
+        return {trajectory_,kinematics_,environment_};
+    }
     const estimators::IAdaptiveStepSolver* injected_solver_;
     std::optional<BiasEstimators> injected_bias_;
     std::optional<AdaptiveSampling> injected_sampling_;
+    std::optional<AdaptiveScene> injected_scene_;
     estimators::FranzMatchedFilter franz_;
     estimators::OriginalKvDEstimator original_;
     estimators::ModifiedKvDEstimator modified_;
     sampling::IcosahedralSampler adaptive_sampler_;
     simulation::MeanMagnitudeGaussianNoise adaptive_noise_;
+    trajectory::TrajectoryGenerator trajectory_;
+    trajectory::TrajectoryKinematics kinematics_;
+    trajectory::SphereEnvironment environment_;
 };
 
 }  // namespace egomotion::experiments

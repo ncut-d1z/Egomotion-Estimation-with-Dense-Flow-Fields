@@ -659,6 +659,13 @@ if(BUILD_TESTING)
     set_tests_properties(r06_adaptive_dependency_injection PROPERTIES
         LABELS "r06;adaptive;runner;dependency-injection;fixed-solvers;memory-only" TIMEOUT 180)
 
+    add_executable(test_r06_adaptive_scene tests/integration/test_r06_adaptive_scene.cpp)
+    target_link_libraries(test_r06_adaptive_scene PRIVATE egomotion_experiments)
+    target_compile_options(test_r06_adaptive_scene PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_adaptive_scene_composition COMMAND test_r06_adaptive_scene)
+    set_tests_properties(r06_adaptive_scene_composition PROPERTIES
+        LABELS "r06;adaptive;runner;scene-injection;fixed-solvers;memory-only;eight-runs" TIMEOUT 180)
+
     foreach(case IN ITEMS contract archive)
         add_test(NAME r06_cli_process_${case} COMMAND "${CMAKE_COMMAND}"
             "-DCLI=$<TARGET_FILE:egomotion>"

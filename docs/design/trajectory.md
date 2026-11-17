@@ -1,5 +1,7 @@
 # 轨迹、相机旋转与球内环境——详细设计草案
 
+> **2026-11-18 场景接口候选增量，未冻结**：现有三个具体类分别实现`ITrajectoryGenerator/ITrajectoryKinematics/ISphereEnvironment`，返回值与参数沿用原签名；接口仍位于轨迹模块，不反向依赖experiments。ProductionExperimentRunner拥有默认服务，经`AdaptiveScene`注入内存Runner；原轨迹/运动学/球相交函数体不变。非法服务返回值的门禁及完整八轮合成合同见 [场景记录](../reviews/R6_ADAPTIVE_SCENE_2026-11-18.md)，不替代真实轨迹数值资格或冻结。
+
 > **LLD v0.6 草案，未冻结、未运行原生数值测试。** 来源：kreis_trajektorie.m、sinuskurve_trajektorie.m、trajektorie_aus_punkten.m、drehvektor_aus_zwei_vektoren.m、rodrigues.m、getnear_in_kugel_Drehung.m。对应 P3.6、P6.1–P6.7、REQ-F-TRAJ-001。
 
 ## 1. 轨迹点列与离散化

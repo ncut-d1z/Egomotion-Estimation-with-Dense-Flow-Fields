@@ -1,5 +1,7 @@
 # 实验 Runner 与结果写出——详细设计草案
 
+> **2026-11-18 场景装配候选增量，未冻结**：Adaptive内存Runner增加必需`AdaptiveScene`借用包，经轨迹模块的`ITrajectoryGenerator/ITrajectoryKinematics/ISphereEnvironment`调用原实现；ProductionExperimentRunner拥有默认具体服务或显式借用。轨迹点数/有限性先于运动学检查，运动帧数/有限性先于采样检查，防止替身success造成越界或无效值继续传播。局部FlowSynthesizer仍只负责确定性公式；原轨迹、旋转、球相交函数体未改。完整八轮合成场景及第五轮中断合同验证见 [场景记录](../reviews/R6_ADAPTIVE_SCENE_2026-11-18.md)，不作为真实科学实验成功或公共ABI冻结。
+
 > **2026-11-18 Adaptive装配候选增量，未冻结**：内存`AdaptiveExperimentRunner`显式借用`AdaptiveSampling{IDirectionSampler&,IFlowNoiseModel&}`；ProductionExperimentRunner拥有默认Icosahedral/MeanMagnitude服务或借用外部同接口服务，RNG仍从各RunContext取得。Comparison才调用噪声，即便系数0也保留原3N次normal；Initialization/UpdateRates不调用。成功噪声输出仍须通过行数、方向列不变及有限性检查才进入Session；接口不能识别任意替身的具体类型。生产级别2/4/2、35/600/600帧、8次聚合及公式不变，见 [实现/验证记录](../reviews/R6_ADAPTIVE_INJECTION_2026-11-18.md)。旧无参数的内存Runner构造已替换，生产适配的默认构造仍可用；不承诺未冻结API的二进制兼容。
 
 > **2026-11-18 候选实现补充（未冻结）**：BiasExperimentRunner构造借用`IDirectionSampler`、`IFlowNoiseModel`及`BiasEstimators`（Franz/Original/Modified独立槽）；compute借用`IRandomSource&`，生产适配传入RunContext的独占实例。Franz使用`IFranzMatchedFilter`返回MotionEstimate，两个KvD使用`IKvDEstimator`保留KvDResult。ProductionExperimentRunner拥有默认真实求解服务或借用外部替身，调用者保证借用服务生命周期；固定入口仍只装配各自唯一采样/噪声。原两次seed重置及求解顺序不变，参见 [实现/验证记录](../reviews/R6_BIAS_INJECTION_2026-11-18.md)。
