@@ -2,7 +2,7 @@
 
 `[AI-EDIT]` 事实索引，基于当前Git树、CMake登记、测试源码及实际日志。保留 [TEST_PLAN §3](../TEST_PLAN.md) 的66个TC/REQ/AC和 [PLAN](../PLAN.md) 的98项任务，不替换候选规范、改动阈值或签署验收。下表每个TC仅列一次；其REQ/AC采用相同后缀，正式义务仍以 [REQUIREMENTS](../REQUIREMENTS.md) 为准。
 
-**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面具体程序/样本已有运行证据。最新受测源码 `0cd5439b7195cd6b7355deb5f7eb951a649be8b1` 为SVG ON59/59、OFF58/58，见 [Adaptive注入证据](R6_ADAPTIVE_INJECTION_2026-11-18.md)；此前各专项回归保留。Issue #1/#2/#3和旧失败日志保持开放供复核。真实Adaptive三入口仍失败、无完整MAT。正式数值/环境/基线资格独立办理，不以尚未签署为理由停止已授权的源码/测试补足。
+**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面具体程序/样本已有运行证据。最新受测源码 `74dbccd01afe23465d7914444917f7f357e69f9a` 为SVG ON60/60、OFF59/59，见 [Adaptive场景证据](R6_ADAPTIVE_SCENE_2026-11-18.md)；此前各专项回归保留。Issue #1/#2/#3和旧失败日志保持开放供复核。真实Adaptive三入口仍失败、无完整MAT；合成八轮成功只证明组合合同。正式数值/环境/基线资格独立办理，不以尚未签署为理由停止已授权的源码/测试补足。
 
 ## 实际测试组及证据入口
 
@@ -11,6 +11,7 @@
 | 索引 | 实际CTest（完整名称） | 源码/证据 |
 |---|---|---|
 | MAT73 | `r06_mat73_version_rejection` | `tests/integration/test_r06_mat73.cpp`及固定合成v7.3夹具；32场景/308项，3入口在Mat_Open之前拒绝、EINTR/短读/EIO/后端替身/描述符/输入身份，见 [版本证据](R6_MAT73_REJECTION_2026-11-18.md)。无HDF5库实际构建未验证 |
+| ADAPT-SCENE | `r06_adaptive_scene_composition` | `tests/integration/test_r06_adaptive_scene.cpp`；88121项三入口完整合成场景、Comparison八轮聚合/状态重置、54服务故障及第5轮失败前缀，见 [证据](R6_ADAPTIVE_SCENE_2026-11-18.md)；Step及Writer/Publisher为替身，不证明真实科学实验或MAT持久化 |
 | ADAPT-INJECT | `r06_adaptive_dependency_injection` | `tests/integration/test_r06_adaptive_injection.cpp`；36088项路由/重放、24服务故障及三生产默认/显式装配，见 [证据](R6_ADAPTIVE_INJECTION_2026-11-18.md)；固定Step只作合同替身 |
 | BIAS-INJECT | `r06_bias_dependency_injection` | `tests/integration/test_r06_bias_injection.cpp`；668项两模式RNG/求解顺序、精确失败前缀、交错隔离及内存交付检查，见 [注入证据](R6_BIAS_INJECTION_2026-11-18.md)。替身不充当真实MAT或独立求解Golden |
 | CLI | `r01_cli_contract`, `r06_cli_process_contract`, `r06_cli_process_archive` | `tests/integration/test_r01_cli.cpp`, `test_r06_cli_process.cmake`；[CLI实测](R6_CLI_PROCESS_VALIDATION_2026-11-17.md) |
@@ -62,7 +63,7 @@
 | TC-F-BIAS-001 | GEOM、RUNNER、BIAS-INJECT、CLI | 有界level0…2、seed7/11、三噪声列、实际求解器/发布；另有两次reset/三求解槽/精确失败前缀，非40份level9实验 |
 | TC-F-BIAS-002 | GEOM、RUNNER、BIAS-INJECT、CLI | 同上，分量噪声路径及两模式注入隔离独立核对；不是完整统计复现 |
 | TC-F-BIAS-003 | ANALYSIS、CLI、SVG | K=2区别性参考、两组40-run全部26曲线/208对x-y独立重算与986来源条目已实测；沿用回归余量，正式数值资格仍未批准 |
-| TC-F-TRAJ-001 | GEOM、RUNNER | 独立轨迹/运动/端点例；默认600帧的第151帧UndefinedAngle明确记录 |
+| TC-F-TRAJ-001 | GEOM、RUNNER、ADAPT-SCENE | 独立轨迹/运动/端点例；三场景接口在生产Runner中的真实流合成/调用边界已测。默认600帧的第151帧UndefinedAngle仍明确记录，合成成功不能替代真实场景 |
 | TC-F-SH-001 | SH、STEP | 独立解析九基/布局/拟合与重建，源角度18解析方向及边界；最终Golden/容差资格另办 |
 | TC-F-SH-002 | SH | 源相位作用与物理旋转分别实测；不声称MATLAB运行轨迹相同 |
 | TC-F-ADAPT-001 | STEP、SH | 正/负近度固定单步及zero_mean_conditioning解析族已接入；六轴/窄锥完整步骤因投影零范数拒绝，运动阶段可独立核对。病态前向误差未正式验收 |
@@ -84,7 +85,7 @@
 | TC-DC-NOISE-001 | GEOM、RUNNER、ADAPT-INJECT | 噪声接口两路径、Adaptive显式coefficient/零值仍3N抽样、非法success拒绝及错误上下文已有固定测试 |
 | TC-DC-KVD-001 | KVD | 两具名入口组合KvDIterationEngine与各自IKvDTranslationRule实现，策略替换/交错复用/完整故障链/翻号后旧运动顺序均已测；两路径停止条件保留独立参考。候选接口未冻结 |
 | TC-DC-ADAPT-001 | STEP、SESSION | 单步/Session/系数策略已分离；显式策略替换、所有准备先于求解、借用对象/状态隔离已测，真实Session交错回归保留，候选接口未冻结 |
-| TC-DC-EXPERIMENT-001 | RUNNER、BIAS-INJECT、ADAPT-INJECT、CONTRACT | 两RunContext交替RNG/错误链/计数/真实MAT及Manifest隔离已测；Bias求解器和RunContext RNG注入已补并通过替身验证。Adaptive采样/噪声注入与success边界、默认/显式对照已测；轨迹/环境等其它装配仍待核对，见 [98项复核D3](R6_PLAN_TASK_AUDIT_2026-11-18.md)；不等于总体设计验收或全科学实验 |
+| TC-DC-EXPERIMENT-001 | RUNNER、BIAS-INJECT、ADAPT-INJECT、ADAPT-SCENE、CONTRACT | 两RunContext交替RNG/错误链/计数/真实MAT及Manifest隔离已测；Bias求解器/RNG、Adaptive采样/噪声/轨迹/运动学/球环境均显式注入。返回值边界、完整合成八轮与第5轮失败不发布部分均值已有实测；已列明的装配源码缺口已补，见 [98项复核D3](R6_PLAN_TASK_AUDIT_2026-11-18.md)，总体设计验收和全科学实验仍未完成 |
 | TC-DC-ANALYSIS-001 | CLI、ANALYSIS、SVG、ILLUSTRATION | 无后端时纯数值成功、SVG明确不可用；三份插图JSON导出前后不变已实测，候选接口未冻结 |
 | TC-NF-PLATFORM-001 | ENV | 仅实际Ubuntu24.04.5，不能推断其它Debian/Ubuntu版本已测 |
 | TC-NF-DEPS-001 | ENV、CMake、HEADLESS | 两模式CMake实图无环、ELF/传递依赖已审计；无被禁止运行时/图形库。系统matio间接含HDF5等库，不扩大MAT支持范围；其它环境仍未验证 |
@@ -99,7 +100,7 @@
 | TC-NF-RECOVERY-001 | IO、CONTRACT、RUNNER、ADAPTIVE-CLI、RUNID、STREAM、DICTIONARY、EXECUTION | 开始记录未确认不调用Runner/导出器，结束记录失败保留已有Manifest/MAT/导出产物和原错误；失败Manifest先于stderr，SIGPIPE保留开始记录和审计、不伪造结束。探针报告write/close失败退出2并保留内容，不声称报告fsync保证；三Adaptive仍Incomplete、无MAT |
 | TC-NF-PORTABLE-001 | IO、MAT、CLI | 实际中文/空格路径；目标仅GNU/Linux，不推断其它平台 |
 | TC-NF-RUNTIME-001 | 无完整基准 | 未授权完整实验/性能测量，DEC-006预算未批准；编译耗时不能代替实验预算 |
-| TC-NF-SESSION-001 | SESSION、RUNNER、BIAS-INJECT、ADAPT-INJECT | 两Session三模式独立/交替重放、两RunContext交替RNG/输出/失败隔离及两Bias模式嵌套交错、同Adaptive Runner重放的主/比较首帧状态重置已测；不承诺单Session多线程，正式验收仍未签署 |
+| TC-NF-SESSION-001 | SESSION、RUNNER、BIAS-INJECT、ADAPT-INJECT、ADAPT-SCENE | 两Session三模式独立/交替重放、两RunContext交替RNG/输出/失败隔离、Bias交错及同Adaptive Runner重放已有实测；新增完整八轮逐轮主/比较全系数重置和精确失败前缀。不承诺单Session多线程，正式验收仍未签署 |
 | TC-NF-COPYRIGHT-001 | SOURCE | 根MIT与来源notice存在；不将MIT扩展至原MATLAB/MAT/论文，不以额外普通版权审批阻塞编码 |
 | TC-F-CLI-002 | CLI、RUNNER、EXECUTION | 两Bias真实进程、有界输出/seed/RunId及拒覆盖，开始/结束记录独立解析；完整规模未运行 |
 | TC-F-CLI-003 | CLI、RUNNER、ADAPTIVE-CLI、EXECUTION | 三入口实际失败链/计数/源身份/无MAT/拒覆盖及运行记录已测；默认初始化因acos越界、另两入口因零旋转不能完成，完整成功产物分支仍未实测 |
@@ -112,7 +113,7 @@
 
 ## 下一步按缺口实施
 
-1. 当前两模式分别完成57/57、56/56复测；所有失败日志及原始数据不变证据保留。不等于完整数值资格、Adaptive实验成功或MATLAB像素等价完成。
+1. 当前两模式分别完成60/60、59/59复测；所有失败日志及原始数据不变证据保留。不等于完整数值资格、Adaptive实验成功或MATLAB像素等价完成。
 2. 三份illustration已有JSON/SVG入口、独立全网格参考和实际CLI/目视证据；保留sphere端点运行细节尚未验证及平面着色的明确边界，不用求解器九项归一化基函数替代插图。
-3. 三Adaptive真实进程的失败链已有证据；初始化第14帧acos越界、另外两入口第151帧零旋转均未产出完整MAT，成功路径仍未验证。45源、98 P和本表有限证据已映射，[数值汇总](../NUMERICAL_EQUIVALENCE.md)已建立；Bias注入、真实MAT73负例、plot/SVG导出记录及KvD/Session策略组合已补，继续领域构造不变量/其它策略职责/Adaptive装配合同及只读/预留前记录边界。数值策略变更不能由AI通过改测试自行批准。
+3. 三Adaptive真实进程的失败链已有证据；初始化第14帧acos越界、另外两入口第151帧零旋转均未产出完整MAT，真实科学成功路径仍未验证。三入口合成完整场景和八轮聚合只证明组合合同。45源、98 P和本表有限证据已映射，[数值汇总](../NUMERICAL_EQUIVALENCE.md)已建立；Bias/Adaptive已列明装配、真实MAT73负例、plot/SVG导出记录及KvD/Session策略已补，继续领域构造不变量/其它职责及只读/预留前记录边界。数值策略变更不能由AI通过改测试自行批准。
 4. 完整科学/L4实验、跨发行版资格、资源预算与正式审批不在本轮运行授权内；准备具体材料并在真正到达该边界时请求相应授权。无MATLAB/L1阻塞。

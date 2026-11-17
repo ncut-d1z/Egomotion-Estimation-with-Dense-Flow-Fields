@@ -6,7 +6,7 @@
 
 C++ 工程已有固定输入数学回归、原始 MAT 独立逐值复核、有限端到端运行及错误路径证据。**尚不能认定全部实验数值等价**：三个真实 Adaptive 入口没有完整成功产物，完整 Bias/L4、病态前向误差资格及正式容差尚未完成。CTest 通过包含规定失败、替身编排与 I/O 负例，不能将测试总数当作有效科学样本数。
 
-最新受测源码为 `0cd5439b7195cd6b7355deb5f7eb951a649be8b1`，分支 `dev-plan-P0-P1-mat-dictionary-probe`。SVG ON **59/59**、OFF **58/58**，全部实际运行、零失败/跳过/禁用。两配置先运行七项MAT测试，再分别运行剩余52/51项；本轮补Adaptive采样/噪声注入，各36088项组合检查通过，见 [证据](reviews/R6_ADAPTIVE_INJECTION_2026-11-18.md)。固定Step与默认/显式装配逐位自比较仅用于依赖/状态证据，不冒充独立数值Golden。原独立SH/单步L3、真实Session及其它数值回归保留；未改变公式或容差，随后的文档提交不代表重新构建。
+最新受测源码为 `74dbccd01afe23465d7914444917f7f357e69f9a`，分支 `dev-plan-P0-P1-mat-dictionary-probe`。SVG ON **60/60**、OFF **59/59**，全部实际运行、零失败/跳过/禁用。两配置先运行七项MAT测试，再分别运行剩余53/52项；本轮补Adaptive轨迹/运动学/球环境注入，各88121项组合检查通过，见 [证据](reviews/R6_ADAPTIVE_SCENE_2026-11-18.md)。三入口完整合成场景使用独立简单几何/整数期望，固定Step和内存Writer/Publisher只证明编排/聚合合同，不冒充真实求解Golden或科学实验成功。原独立SH/单步L3、真实Session及其它数值回归保留；未改变公式或容差，随后的文档提交不代表重新构建。
 
 实测环境仅 Ubuntu 24.04.5 / Linux 7.0.0-43-generic x86_64、GNU 16.2.0、C++17 Release、CMake/CTest 4.3.4、Eigen 3.4.0、matio 1.5.26、zlib 1.3、Sophus 1.24.6。其它 Debian/Ubuntu 版本和工具链**未验证**；构建耗时不作为性能预算。
 

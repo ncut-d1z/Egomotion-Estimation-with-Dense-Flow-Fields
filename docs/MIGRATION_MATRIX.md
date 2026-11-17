@@ -1,5 +1,7 @@
 # 源 MATLAB 文件到当前 C++ 实现的迁移矩阵（MIGRATION_MATRIX）
 
+> **2026-11-18 场景装配接续 `[AI-EDIT]`**：受测`74dbccd01afe23465d7914444917f7f357e69f9a`为ON60/60、OFF59/59。三Adaptive入口通过`AdaptiveScene`借用轨迹/运动学/球环境，原数学函数体不变；三入口合成完整场景与八轮聚合各88121项检查见 [实测](reviews/R6_ADAPTIVE_SCENE_2026-11-18.md)。下表45路径/50声明及算法身份不变；真实Adaptive仍Incomplete、无MAT。下方注记保留较早证据。
+
 > **2026-11-18 Adaptive装配接续 `[AI-EDIT]`**：受测`0cd5439b7195cd6b7355deb5f7eb951a649be8b1`为ON59/59、OFF58/58。三Adaptive入口现在通过`AdaptiveSampling`显式借用采样/噪声服务，默认级别/模型/3N顺序和Session路径保持，36088项组合验证见 [实测](reviews/R6_ADAPTIVE_INJECTION_2026-11-18.md)。下表45路径/50声明与原算法身份不变，完整真实实验仍未成功。
 
 > **2026-11-18 角度映射接续 `[AI-EDIT]`**：受测`cce0bf2c66506e32dd5400e22a6b8d95b5ae6929`为ON58/58、OFF57/57；新增源`winkelausvektor`的独立`sourceAnglesFromDirection`接口和1137项解析/边界检查，见 [实测](reviews/R6_SOURCE_ANGLES_2026-11-18.md)。原Cartesian基计算保持，45路径/50声明及REQ/TC义务不变。

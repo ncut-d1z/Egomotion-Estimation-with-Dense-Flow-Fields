@@ -1,6 +1,6 @@
 # 对象模型与生命周期合同（Object Model）
 
-> **2026-11-18 Adaptive注入追踪，候选/未冻结**：内存Runner现在借用`AdaptiveSampling`的采样/噪声服务，生产适配拥有默认Icosahedral/MeanMagnitude或借用外部服务；RNG仍由RunContext独占，Session每次compute新建。36088项组合/故障及双模式实测见 [记录](reviews/R6_ADAPTIVE_INJECTION_2026-11-18.md)。轨迹/环境等其余装配与领域构造不变量仍待落实，未把Result工厂决定扩大成全部领域值的批准。
+> **2026-11-18 Adaptive注入追踪，候选/未冻结**：内存Runner现在借用`AdaptiveSampling`和`AdaptiveScene`，生产适配拥有默认采样/噪声/轨迹/运动学/球环境或借用外部服务；RNG仍由RunContext独占，Session每次compute新建。新增场景三接口不持有跨帧系数，三入口合成完整场景、八轮状态重置/聚合及故障各88121项检查与双模式实测见 [记录](reviews/R6_ADAPTIVE_SCENE_2026-11-18.md)。已列明的装配源码缺口已补，领域构造不变量及其余职责/正式对象验收仍保留；未把Result工厂决定扩大成全部领域值的批准。
 
 > **2026-11-18 策略实现追踪，候选/未冻结**：KvD已组合引擎与平移规则，见 [实测](reviews/R6_KVD_STRATEGY_2026-11-18.md)；Adaptive Session现增加`ICoefficientUpdatePolicy`的Reset/Inherit/Periodic实现和显式注入，策略仅准备临时比较系数，Session仍独占持久主/基线状态，见 [实现与验证状态](reviews/R6_COEFFICIENT_POLICY_2026-11-18.md)。这不核销其它对象不变量/装配缺口或签署总体设计验收。
 

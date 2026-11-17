@@ -4,7 +4,7 @@ A planned **C++17 reimplementation that directly reads the original MATLAB MAT f
 
 > **Permanent evidence policy:** Running MATLAB/Octave or collecting original MATLAB L1 execution traces is **not required** for design, coding, verification, or release. The original scripts are read-only specifications; numerical evidence will use the preserved MAT results (L2), independently checked analytic/reference implementations (L3), and statistical comparisons (L4). See [No MATLAB Execution Policy](docs/golden/NO_MATLAB_EXECUTION_POLICY.md). This change does not authorize C++ builds/tests or imply any numerical acceptance.
 
-> **项目状态（2026-11-18）**：R6仍在验证。最新受测源码 `0cd5439b7195cd6b7355deb5f7eb951a649be8b1` 两模式构建无诊断，**SVG ON59/59、OFF58/58 CTest通过**；Adaptive采样/噪声显式注入及成功值边界校验已补，各36088项组合检查通过，见 [最新验证](docs/reviews/R6_ADAPTIVE_INJECTION_2026-11-18.md)。此前独立数值、Session/KvD、MAT/CLI回归保留。真实Adaptive三入口仍因初始化第14帧acos越界或第151帧零旋转返回Incomplete，无MAT；**错误处理通过不等于科学实验成功**。[数值证据汇总](docs/NUMERICAL_EQUIVALENCE.md)、[98项任务复核](docs/reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)及[66项TC映射](docs/reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)列明实际证据和剩余义务；原始资料哈希不变。
+> **项目状态（2026-11-18）**：R6仍在验证。最新受测源码 `74dbccd01afe23465d7914444917f7f357e69f9a` 两模式构建无诊断，**SVG ON60/60、OFF59/59 CTest通过**；Adaptive轨迹/运动学/球环境显式注入及返回值校验已补，三入口合成场景、完整八轮聚合及54个服务故障各88121项检查通过，见 [最新验证](docs/reviews/R6_ADAPTIVE_SCENE_2026-11-18.md)。此前独立数值、Session/KvD、MAT/CLI回归保留。真实Adaptive三入口仍因初始化第14帧acos越界或第151帧零旋转返回Incomplete，无MAT；**错误处理通过不等于科学实验成功**。[数值证据汇总](docs/NUMERICAL_EQUIVALENCE.md)、[98项任务复核](docs/reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)及[66项TC映射](docs/reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)列明实际证据和剩余义务；原始资料哈希不变。
 
 ## Original research and source material
 

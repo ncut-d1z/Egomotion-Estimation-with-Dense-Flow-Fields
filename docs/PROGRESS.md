@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 Adaptive场景注入与八轮合同（2026-11-18）
+
+`[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`74dbccd01afe23465d7914444917f7f357e69f9a`两模式构建无诊断，**SVG ON60/60、OFF59/59 CTest**；先MAT7项，零失败/跳过/禁用。内存Runner显式借用轨迹/运动学/球环境，生产默认装配及原数学函数体保持。各88121项检查覆盖三入口合成完整场景、Comparison八轮状态重置/固定分母/末轮比值、54个服务故障及第5轮失败不发布部分结果。RunId `r6-adaptive-scene-20261118-BLAFVtQC`，各720项输入摘要不变，见 [专项记录](reviews/R6_ADAPTIVE_SCENE_2026-11-18.md)。真实Adaptive仍按原数值行为Incomplete、无MAT；D3已列明的装配源码缺口已补，D1/D2/D4及完整实验/资格仍未完成，R6未结案。Issue #1/#2/#3开放、无PR。下方较早记录保留当时状态。
+
 ## 最新接续：R6 Adaptive采样/噪声注入（2026-11-18）
 
 `[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`0cd5439b7195cd6b7355deb5f7eb951a649be8b1`两模式构建无诊断，**SVG ON59/59、OFF58/58 CTest**；先MAT7项，零失败/跳过/禁用。内存Runner显式借用采样/噪声服务，生产默认装配及RunContext RNG保持；噪声success的形状、有限性和方向列在Session前检查。新测试各36088项，含24个服务故障和三个生产入口默认/显式逐位对照，真实数值回归保留。RunId `r6-adaptive-injection-20261118-o87077mF`，各719项输入摘要不变，见 [专项记录](reviews/R6_ADAPTIVE_INJECTION_2026-11-18.md)。Issue #1/#2/#3开放、无PR；D3其它轨迹/环境装配、D1/D2/D4及完整实验/资格未完成，R6未结案。
