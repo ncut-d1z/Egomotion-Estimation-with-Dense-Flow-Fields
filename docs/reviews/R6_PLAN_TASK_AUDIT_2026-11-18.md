@@ -1,6 +1,6 @@
 # R6：PLAN 的98项任务逐项复核
 
-> **接续实测**：`909fd57dbafa4ebf680e5edd5fa718adb30b4c51`构建无诊断，SVG ON54/54、OFF53/53 CTest；Bias求解/RNG注入的668项检查与既有真实回归通过，见 [专项记录](R6_BIAS_INJECTION_2026-11-18.md)。下文首次文档复核起点保留，P5.7/D3按新证据更新，其他未覆盖义务不变。
+> **接续实测**：`f1a7ab2aed7795877e070260ebfb1b30a89d6f33`构建无诊断，SVG ON55/55、OFF54/54 CTest；真实MAT73误分类已复现/修复，32场景/308项通过，见 [专项记录](R6_MAT73_REJECTION_2026-11-18.md)。此前Bias注入及668项检查仍通过。下文首次文档复核起点保留，P1.5/D5和P5.7/D3按新证据更新，其他未覆盖义务不变。
 
 `[AI-EDIT]`，2026-11-18。本表逐项保留 [PLAN](../PLAN.md) 的98个P编号和原义务，核对实际文件、现有测试及缺口；**不修改需求、验收门槛、批准或冻结状态，也不将“有代码/测试通过”改称“任务已验收”**。原始任务全文及REQ/TC/AC/依赖仍以PLAN为准；下列“核对对象”只是定位摘要，不替代它。
 
@@ -47,7 +47,7 @@
 | P1.2 | CLI与独立输出 | CLI、IO：解析/退出码/只读inspect、五实验及分析绘图 | 实测（有限） | inspect分派不调用求解器，不声称是独立最小二进制；schema冻结及日志缺口另列。 |
 | P1.3 | matio RAII | MAT、IO、CONTRACT：句柄/封存对象/失败释放 | 实测（有限） | 负例和fd计数是有限资源证据，不证明所有资源耗尽路径。 |
 | P1.4 | MAT维度/类型/列主序 | MAT：582文件/33340值独立按位对照及94载荷场景 | 实测（有限） | 首版v5/zlib二维密集实double，允许mxDOUBLE物理miINT32，不静默single升级。 |
-| P1.5 | 非目标类型拒绝 | MAT：Reader29场景与原始标签负例 | 部分 | cell/struct/sparse/complex/logical/高维及v4已有例；尚无真实v7.3负例，见D5，不以v4覆盖替代。 |
+| P1.5 | 非目标类型拒绝 | MAT、MAT73：Reader29场景、原始标签负例及版本32场景 | 实测（有限） | cell/struct/sparse/complex/logical/高维/v4及真实v7.3拒绝已有例；见D5，实际无HDF5工具链和正式资格未验证。 |
 | P1.6 | named与首变量读取 | MAT、SNAPSHOT：后缀、多变量、首变量与命名读取 | 实测（有限） | 保留两入口语义；不把任意未知MAT结构称兼容。 |
 | P1.7 | 新MAT写回读 | IO、RUN：七Bias文件和合成Adaptive产物、安全发布/回读 | 实测（有限） | 只在隔离沙箱；三个真实Adaptive无完整输出。 |
 | P1.8 | 探针与生产Reader分开核对 | DICTIONARY、MAT、SNAPSHOT：两者均实际执行 | 部分 | 存储复核已做；性能预算与人工字典验收仍未完成。 |
@@ -142,11 +142,11 @@
 - **D2：策略和纯数学职责（P4.9/P7.1/P7.10/P8.8/P8.9/P9.8）**。KvD使用共享函数及枚举，不存在IKvDTranslationRule/KvDIterationEngine类；Session使用三模式枚举，不存在ICoefficientUpdatePolicy。球谐用纯函数，winkelausvektor被笛卡尔基融合；实际一个AdaptiveExperimentRunner三个方法、一个MatResultAnalyzer四种分析。职责/数值已有有限证据，但命名及可替换策略结构未逐项核销。
 - **D3：编排依赖注入（P5.7/P10.9）**。首次发现Bias在compute内创建Franz/Original/Modified及RNG，与SRS附录A的**REQ-DC-EXPERIMENT-001“通过组合注入求解、RNG、采样和写入器”**存在差距。`909fd57`已补BiasEstimators三槽及RunContext RNG注入，保留采样/噪声/Writer接口、源两次reseed和求解顺序；[668项测试及真实回归](R6_BIAS_INJECTION_2026-11-18.md)验证该Bias缺口。Adaptive允许Step注入，但轨迹/环境/采样装配的其它候选替换边界仍需逐项核对，不能据此关闭总体OOP验收；不为凑类名添加无用途包装。
 - **D4：正式运行记录边界（P5.3/P8.9/P10.6）**。五生成入口已有开始/结束记录、真实身份、参数、环境与交付状态；inspect/analyze/JSON illustration为只读调用，不能未经合同核对就强制创建输出目录。plot/SVG illustration虽有RunId，尚无同等运行记录。解析失败、RunId预留失败、信号终止依赖外部执行者证据；产品层记录义务尚未完整实现，不能只用本次构建包装脚本关闭REQ-NF-LOG。
-- **D5：MAT v7.3拒绝缺真实用例（P1.5）**。Reader对matio识别的非v5数值读取返回UnsupportedClassOrType，版本名称包含v7.3；但当前测试目录没有MAT73/HDF5夹具，Reader边界测试仅创建v4及v5。读取原582文件（全部v5）和v4拒绝不能证明v7.3路径已运行。后续需补独立、隔离的版本负例，明确有/无matio HDF5能力时的识别与错误边界；不得因此把HDF5变成首版数值运行前提或扩大MAT支持范围。
+- **D5：MAT v7.3真实拒绝用例已补（P1.5）**。`f1fb7d3`生成并直接matio逐位核验真实合成夹具，`0d73ed1`复现后端先打开的错误分类（32场景中29失败），[Issue #1](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/1)登记后在`f1a7ab2`前移封存头预检。32场景/308项及两模式全量CTest通过，详见 [证据](R6_MAT73_REJECTION_2026-11-18.md)。v7.3拒绝不调用Mat_Open；普通构建/测试读取固定夹具，不新增HDF5依赖。后端不可用由确定性替身验证，实际无HDF5工具链未验证，元数据能力不扩大；不代签正式数据资格。
 
 ## 后续次序与权限边界
 
-1. D3的Bias求解/RNG缺口已补，继续D5版本负例、D4日志及D1–D2公共边界/候选设计差异，并核对Adaptive其它装配边界。保留原数值公式、输入只读和检查点顺序。P10.8仍缺可审查Draft PR，后续以实际范围与测试证据准备，不合并或发布。
+1. D3的Bias求解/RNG及D5的真实版本负例缺口已补，继续D4日志及D1–D2公共边界/候选设计差异，并核对Adaptive其它装配边界。保留原数值公式、输入只读和检查点顺序。P10.8仍缺可审查Draft PR，后续以实际范围与测试证据准备，不合并或发布。
 2. 三个Adaptive真实失败（初始化帧14acos越界，另外两入口帧151零旋转）及完整Bias/L4仍未解决；不可修改门限、跳帧或改分母以获得成功。具体结果与未执行成功分支见NUM。
 3. 容差、资源、跨环境、基线及发布的正式批准仍按TODO的既定延期状态处理；本表不擅自解锁、催办或代签。**没有MATLAB/Octave/L1阻塞。**
 4. 本次新增NUMERICAL_EQUIVALENCE补齐了P10.6缺失的汇总文件；P10.6以及R6整体仍未完成。

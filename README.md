@@ -4,7 +4,7 @@ A planned **C++17 reimplementation that directly reads the original MATLAB MAT f
 
 > **Permanent evidence policy:** Running MATLAB/Octave or collecting original MATLAB L1 execution traces is **not required** for design, coding, verification, or release. The original scripts are read-only specifications; numerical evidence will use the preserved MAT results (L2), independently checked analytic/reference implementations (L3), and statistical comparisons (L4). See [No MATLAB Execution Policy](docs/golden/NO_MATLAB_EXECUTION_POLICY.md). This change does not authorize C++ builds/tests or imply any numerical acceptance.
 
-> **项目状态（2026-11-18）**：R6仍在验证。最新受测源码 `909fd57dbafa4ebf680e5edd5fa718adb30b4c51` 两模式构建无诊断，**SVG ON 54/54、OFF 53/53 CTest通过**；Bias求解/RNG注入及668项隔离/失败检查通过，见 [最新验证](docs/reviews/R6_BIAS_INJECTION_2026-11-18.md)。真实Adaptive三入口仍因初始化第14帧acos越界或第151帧零旋转返回Incomplete，无MAT；**错误处理通过不等于科学实验成功**。[数值证据汇总](docs/NUMERICAL_EQUIVALENCE.md)、[98项任务复核](docs/reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)及[66项TC映射](docs/reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)列明实际证据和剩余义务；原始资料哈希不变。
+> **项目状态（2026-11-18）**：R6仍在验证。最新受测源码 `f1a7ab2aed7795877e070260ebfb1b30a89d6f33` 两模式构建无诊断，**SVG ON55/55、OFF54/54 CTest通过**；真实MAT v7.3误分类已修复，32场景/308项版本拒绝检查通过，见 [最新验证](docs/reviews/R6_MAT73_REJECTION_2026-11-18.md)。真实Adaptive三入口仍因初始化第14帧acos越界或第151帧零旋转返回Incomplete，无MAT；**错误处理通过不等于科学实验成功**。[数值证据汇总](docs/NUMERICAL_EQUIVALENCE.md)、[98项任务复核](docs/reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)及[66项TC映射](docs/reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)列明实际证据和剩余义务；原始资料哈希不变。
 
 ## Original research and source material
 

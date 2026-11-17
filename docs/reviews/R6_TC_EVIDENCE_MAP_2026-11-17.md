@@ -2,7 +2,7 @@
 
 `[AI-EDIT]` 事实索引，基于当前Git树、CMake登记、测试源码及实际日志。保留 [TEST_PLAN §3](../TEST_PLAN.md) 的66个TC/REQ/AC和 [PLAN](../PLAN.md) 的98项任务，不替换候选规范、改动阈值或签署验收。下表每个TC仅列一次；其REQ/AC采用相同后缀，正式义务仍以 [REQUIREMENTS](../REQUIREMENTS.md) 为准。
 
-**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面列出的具体程序/样本已有运行证据，不代表该TC全部条款已满足。最新受测源码 `909fd57dbafa4ebf680e5edd5fa718adb30b4c51` 为SVG ON54/54、OFF53/53，见 [Bias注入证据](R6_BIAS_INJECTION_2026-11-18.md)；既有 [运行记录](R6_EXECUTION_RECORDS_2026-11-17.md)、[探针输出](R6_DICTIONARY_OUTPUT_2026-11-17.md)、[输出流/信号](R6_CLI_STREAM_OUTPUT_2026-11-17.md)、[无绘图/链接](R6_HEADLESS_BUILD_2026-11-17.md)、[MAT身份](R6_MAT_SNAPSHOT_2026-11-17.md)证据保留。真实Adaptive三入口仍失败、无MAT，所有此前失败保留。正式容差/Golden资格、病态前向误差、环境预算及基线签署独立办理；不以这些审批尚未完成为理由停止已授权的源码/测试补足。
+**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面列出的具体程序/样本已有运行证据，不代表该TC全部条款已满足。最新受测源码 `f1a7ab2aed7795877e070260ebfb1b30a89d6f33` 为SVG ON55/55、OFF54/54，见 [MAT73版本拒绝证据](R6_MAT73_REJECTION_2026-11-18.md)；既有 [Bias注入](R6_BIAS_INJECTION_2026-11-18.md)、[运行记录](R6_EXECUTION_RECORDS_2026-11-17.md)、[探针输出](R6_DICTIONARY_OUTPUT_2026-11-17.md)、[输出流/信号](R6_CLI_STREAM_OUTPUT_2026-11-17.md)、[无绘图/链接](R6_HEADLESS_BUILD_2026-11-17.md)、[MAT身份](R6_MAT_SNAPSHOT_2026-11-17.md)证据保留。真实Adaptive三入口仍失败、无MAT，所有此前失败保留。正式容差/Golden资格、病态前向误差、环境预算及基线签署独立办理；不以这些审批尚未完成为理由停止已授权的源码/测试补足。
 
 ## 实际测试组及证据入口
 
@@ -10,6 +10,7 @@
 
 | 索引 | 实际CTest（完整名称） | 源码/证据 |
 |---|---|---|
+| MAT73 | `r06_mat73_version_rejection` | `tests/integration/test_r06_mat73.cpp`及固定合成v7.3夹具；32场景/308项，3入口在Mat_Open之前拒绝、EINTR/短读/EIO/后端替身/描述符/输入身份，见 [版本证据](R6_MAT73_REJECTION_2026-11-18.md)。无HDF5库实际构建未验证 |
 | BIAS-INJECT | `r06_bias_dependency_injection` | `tests/integration/test_r06_bias_injection.cpp`；668项两模式RNG/求解顺序、精确失败前缀、交错隔离及内存交付检查，见 [注入证据](R6_BIAS_INJECTION_2026-11-18.md)。替身不充当真实MAT或独立求解Golden |
 | CLI | `r01_cli_contract`, `r06_cli_process_contract`, `r06_cli_process_archive` | `tests/integration/test_r01_cli.cpp`, `test_r06_cli_process.cmake`；[CLI实测](R6_CLI_PROCESS_VALIDATION_2026-11-17.md) |
 | HEADLESS | 两种独立配置的完整CTest，OFF仅不登记`r06_svg_source_windows` | 实际无显示环境/后端缺席CLI、完整数值参考保留；14份有限MAT载荷和3份JSON跨模式相同，CMake/ELF/依赖审计见 [实测](R6_HEADLESS_BUILD_2026-11-17.md) |
@@ -43,7 +44,7 @@
 |---|---|---|
 | TC-F-CLI-001 | CLI、MAT | inspect元数据/缺字段/非法参数已覆盖；逐条CLI合同最终冻结另办 |
 | TC-F-MAT-001 | MAT、SNAPSHOT | 582文件/33340值独立逐位及固定SHA已测，返回摘要绑定实际解码的封存字节；不是所有MAT类型兼容承诺 |
-| TC-F-MAT-002 | MAT、CLI、DICTIONARY | 结构/类型拒绝与原文件枚举、独立探针582实际解码/报告及输出故障已测；尚无真实v7.3拒绝夹具，不能用v4负例替代，见 [任务复核D5](R6_PLAN_TASK_AUDIT_2026-11-18.md)。正式数据字典复核仍独立 |
+| TC-F-MAT-002 | MAT、MAT73、CLI、DICTIONARY | 结构/类型拒绝与原文件枚举、独立探针582解码/报告及输出故障已测；真实v7.3夹具已补，旧错误分类复现/修复、32场景通过，见 [任务复核D5](R6_PLAN_TASK_AUDIT_2026-11-18.md)。正式数据字典复核仍独立 |
 | TC-F-MAT-003 | MAT、SNAPSHOT | named/首变量/后缀/多变量及捕获后路径替换、同inode改写已有实测；复制期间可观察变化拒绝，范围限首版类型 |
 | TC-F-MAT-004 | IO、RUNNER | 合成写回读、no-overwrite、字段身份及故障链已测；完整五入口实验不在此证据内 |
 | TC-F-GEOM-001 | GEOM | 固定uniform顺序及耗尽已有例；不能等同随机统计资格 |
@@ -110,7 +111,7 @@
 
 ## 下一步按缺口实施
 
-1. 当前两模式分别完成54/54、53/53复测；所有失败日志及原始数据不变证据保留。不等于完整数值资格、Adaptive实验成功或MATLAB像素等价完成。
+1. 当前两模式分别完成55/55、54/54复测；所有失败日志及原始数据不变证据保留。不等于完整数值资格、Adaptive实验成功或MATLAB像素等价完成。
 2. 三份illustration已有JSON/SVG入口、独立全网格参考和实际CLI/目视证据；保留sphere端点运行细节尚未验证及平面着色的明确边界，不用求解器九项归一化基函数替代插图。
-3. 三Adaptive真实进程的失败链已有证据；初始化第14帧acos越界、另外两入口第151帧零旋转均未产出完整MAT，成功路径仍未验证。45源、98 P和本表的有限证据已映射，[数值汇总](../NUMERICAL_EQUIVALENCE.md)已建立；Bias求解/RNG注入已补，继续真实MAT v7.3负例、非生成入口/分配RunId前记录与公共对象/Adaptive装配合同。MAT封存摘要已绑定实际读取载荷，未知来源仍不伪造摘要。数值策略变更不能由AI通过改测试自行批准。
+3. 三Adaptive真实进程的失败链已有证据；初始化第14帧acos越界、另外两入口第151帧零旋转均未产出完整MAT，成功路径仍未验证。45源、98 P和本表的有限证据已映射，[数值汇总](../NUMERICAL_EQUIVALENCE.md)已建立；Bias注入及真实MAT73负例已补，继续非生成入口/分配RunId前记录与公共对象/Adaptive装配合同。MAT封存摘要已绑定实际读取载荷，未知来源仍不伪造摘要。数值策略变更不能由AI通过改测试自行批准。
 4. 完整科学/L4实验、跨发行版资格、资源预算与正式审批不在本轮运行授权内；准备具体材料并在真正到达该边界时请求相应授权。无MATLAB/L1阻塞。
