@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <array>
 #include <cerrno>
 #include <cstring>
 #include <limits>
@@ -127,6 +128,28 @@ MatVariableInfo describe(const matvar_t& value, const std::string& name) {
     return info;
 }
 
+Result<bool,MatErrorCode> hasMat73Header(int fd,const fs::path& path,std::string_view variable) {
+    // MAT v5/v7.3固定头：末四字节是uint16版本和IM/MI端序标志。
+    // 仅识别首版不支持的0x0200，不解析HDF5，也不把短头/v4误当v7.3。
+    constexpr std::size_t kHeaderBytes=128,kVersionOffset=124,kEndianOffset=126;
+    constexpr unsigned char kMat73VersionHighByte=2;
+    std::array<unsigned char,kHeaderBytes> header{};
+    std::size_t done=0;
+    while(done<header.size()) {
+        const auto count=::pread(fd,header.data()+done,header.size()-done,static_cast<off_t>(done));
+        if(count<0&&errno==EINTR)continue;
+        if(count<0)return fail<bool>(MatErrorCode::InvalidMatHeader,ErrorStage::Read,path,
+            "Cannot read sealed MAT version header",std::string(variable));
+        if(count==0)return Result<bool,MatErrorCode>::success(false);
+        done+=static_cast<std::size_t>(count);
+    }
+    const bool little=header[kEndianOffset]=='I'&&header[kEndianOffset+1]=='M';
+    const bool big=header[kEndianOffset]=='M'&&header[kEndianOffset+1]=='I';
+    return Result<bool,MatErrorCode>::success((little||big)&&
+        header[kVersionOffset+(little?0:1)]==0&&
+        header[kVersionOffset+(little?1:0)]==kMat73VersionHighByte);
+}
+
 Result<MatInput, MatErrorCode> openReadOnly(const fs::path& path,bool verify_container=false,
                                            std::string_view variable={}) {
     if (path.empty() || path.native().find('\0') != std::string::npos)
@@ -146,6 +169,12 @@ Result<MatInput, MatErrorCode> openReadOnly(const fs::path& path,bool verify_con
         if(!snapshot.hasValue())
             return Result<MatInput,MatErrorCode>::failure(std::move(snapshot).error());
         input.snapshot.emplace(std::move(snapshot).value());
+        auto unsupported=hasMat73Header(input.snapshot->fd(),path,variable);
+        if(!unsupported.hasValue())
+            return Result<MatInput,MatErrorCode>::failure(std::move(unsupported).error());
+        if(unsupported.value())
+            return fail<MatInput>(MatErrorCode::UnsupportedClassOrType,ErrorStage::Decode,path,
+                "Numeric MAT reader supports only MAT v5; MAT v7.3 is unsupported",std::string(variable));
     }
     const std::string read_path=verify_container?
         "/proc/self/fd/"+std::to_string(input.snapshot?input.snapshot->fd():-1):path.string();

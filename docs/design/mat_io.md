@@ -1,5 +1,7 @@
 # MAT I/O、路径安全与原始数据合同——详细设计草案
 
+> **2026-11-18 候选修复，未冻结**：数值named/compatible及VerifyDecoded在封存输入上预检128字节版本头；识别v7.3/0x0200后于Mat_Open之前返回UnsupportedClassOrType/Decode，保持首版v5-only范围。named保留请求变量，其它入口尚未枚举时变量为空；不为不支持的文件继续做变量选择。EINTR/短读重试，真实读取失败为InvalidMatHeader/Read；MetadataOnly继续原matio元数据边界。真实合成夹具及旧Reader失败见 [专项记录](../reviews/R6_MAT73_REJECTION_2026-11-18.md)，修复后测试结果另记；不声称另一个无HDF5工具链已实测。
+
 > **2026-11-17 实现候选，未冻结；实测事实 [AI-EDIT]**：完整读取新增匿名封存字节副本，校验、SHA-256和matio解码消费同一份副本；可观测到的复制期间改动明确失败。元数据inspect保持原边界。新增可选值字段 `DenseDoubleArray::source_mat_sha256`，无新Reader方法/错误枚举。`130a82ba0090e186fcf43bc28bb98c282e68c96c` 构建及48/48 CTest通过，含30种快照读取与582固定SHA核对，见 [快照实测](../reviews/R6_MAT_SNAPSHOT_2026-11-17.md)。后文旧“尚无可靠快照/摘要”限旧SHA，不代表DEC-008冻结或资源资格。
 
 > **2026-11-17 执行注记（[AI-EDIT]）**：`bc51fddca2a56d0dae988086824266b68ff995c2` 已通过29/29 CTest，含94个raw载荷、29个Reader边界及582 MAT/33,340值独立对照；见 [载荷修复](../reviews/R6_MAT_PAYLOAD_VALIDATION_2026-11-17.md)。下列旧“未实现/未运行”属于原设计时点，不覆盖此处固定SHA证据；更广类型、资源与正式验收/冻结仍未完成。

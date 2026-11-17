@@ -13,7 +13,8 @@ enum class ScanMode { MetadataOnly, VerifyDecoded };
 struct MatScanVariable {
     MatVariableInfo info;
     // MetadataOnly never asks matio for the numeric payload.
-    // VerifyDecoded preserves the historical dictionary READ_OK meaning.
+    // VerifyDecoded preserves the historical v5 dictionary READ_OK meaning;
+    // unsupported v7.3 is rejected before any backend opens its payload.
     std::string status;
 };
 struct MatFileScan {

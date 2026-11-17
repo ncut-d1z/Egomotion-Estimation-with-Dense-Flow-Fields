@@ -2,7 +2,7 @@
 
 ## 最新接续：R6 MAT v7.3拒绝（2026-11-18）
 
-`[HUMAN-EXECUTE/APPROVE]` 准备/夹具实测：检查点`f1fb7d3`已生成真实3408字节MAT73，直接matio版本/目录/六值逐位回读通过、原输入SHA不变。当前固定该合成夹具、添加3入口及版本/后端/读取故障回归，生产Reader尚未修复；待新远端检查点先记录基线失败，再补预检并双模式复测。不增加首版HDF5支持，不改原始资料，详见 [专项记录](reviews/R6_MAT73_REJECTION_2026-11-18.md)。
+`[HUMAN-EXECUTE/APPROVE]` 旧Reader基线`0d73ed1`构建成功，专项CTest **0/1、exit8、32场景中29失败**：真实HDF5无法解析匿名快照路径，错误返回InvalidMatHeader，另有后端不可用替身证据。输入SHA不变，失败记录保留，已登记 [Issue #1](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/1)。现补封存输入上的后端之前版本预检；新测试断言不变，待新远端检查点执行ON55/OFF54项全量验证。夹具在`f1fb7d3`生成、直接matio六值逐位核验通过，不增加首版HDF5支持，详见 [专项记录](reviews/R6_MAT73_REJECTION_2026-11-18.md)。
 
 ## 最新接续：R6 Bias依赖注入（2026-11-18）
 
