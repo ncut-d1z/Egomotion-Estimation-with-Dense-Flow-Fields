@@ -1,6 +1,6 @@
 # MAT 结果分析与可选绘图——详细设计草案
 
-> **2026-11-17 执行事实（[AI-EDIT]）**：`65d59fe2640aa59768d4bb86386886f1692874d6` 无诊断构建、37/37 CTest；Bias固定x/y范围、Comparison固定右轴及SVG裁剪已修复并取得103项几何及输入边界检查，分析值保持不变，见 [视窗证据](../reviews/R6_SVG_WINDOWS_2026-11-17.md)。此前独立非线性分析参考仍通过；三份illustration、后端默认刻度/图例完整视觉等价、原NaN归档及正式AC未因此完成。下段未执行描述保留为历史草案身份，不更改合同或冻结状态。
+> **2026-11-17 执行事实（[AI-EDIT]）**：`d68422cddc5de1b40baed5c1b5c57de5e4402074` 无诊断构建、43/43 CTest；历史Bias全曲线独立复核3323项通过，平滑辅助来源已落实到JSON/SVG并实测，见 [最新证据](../reviews/R6_BIAS_ARCHIVE_ANALYSIS_2026-11-17.md)。此前103项视窗检查及独立非线性分析参考仍通过；三份illustration、后端默认刻度/图例完整视觉等价、原NaN归档及正式AC未因此完成。下段未执行描述保留为历史草案身份，不更改合同或冻结状态。
 
 > **LLD v0.14草案（DEC-008-04完整ErrorFrame包装链已同步；未执行Analyzer/可视化程序）。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
 

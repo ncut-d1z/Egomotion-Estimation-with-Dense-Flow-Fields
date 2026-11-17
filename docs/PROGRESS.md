@@ -2,6 +2,8 @@
 
 ## 最新接续：R6 历史Bias全曲线与平滑来源（2026-11-17）
 
+**实测 `[HUMAN-EXECUTE/APPROVE]`：`d68422cddc5de1b40baed5c1b5c57de5e4402074` 无诊断构建、43/43 CTest（MAT5/5，其余38/38）。** 历史Bias3323项通过，400文件/10400值→26曲线/208对x-y与独立宽精度参考最大绝对差约2.64e-14；平滑来源JSON/SVG及原582文件测试均通过。RunId `r6-bias-archive-20261117-0q1aV120`，原始SHA不变，见 [验证记录](reviews/R6_BIAS_ARCHIVE_ANALYSIS_2026-11-17.md)。下一项为三份illustration及Adaptive真实生成CLI的剩余覆盖；完整科学/L4、数值/资源资格和正式验收仍未完成，R6未结案。
+
 **首轮准备 `[HUMAN-EXECUTE/APPROVE]`，尚未执行。** 新增两组40-run历史Bias的独立MAT标签/宽精度均值参考，覆盖全部26曲线/208对x-y及400份实际输入；将既有LLD的平滑辅助来源字段落实到曲线/JSON/SVG并补相关测试。43项CTest仅登记，待远程检查点后实测，见 [验证记录](reviews/R6_BIAS_ARCHIVE_ANALYSIS_2026-11-17.md)。原始资料只读，不运行完整科学实验、不改变正式数值阈值或冻结状态。
 
 ## 最新接续：R6 Session / RunContext 交替隔离（2026-11-17）
