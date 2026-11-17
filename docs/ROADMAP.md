@@ -1,5 +1,7 @@
 # C++ 实施路线图
 
+> **2026-11-18 逐项复核**：新增 [98项P任务证据表](reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md) 和 [数值证据汇总](NUMERICAL_EQUIVALENCE.md)，不改PLAN/AC义务、不签署验收。Bias内部创建求解器/RNG与REQ-DC-EXPERIMENT-001组合注入仍有实际差距，优先补该实现及替身隔离测试；其次处理非生成日志和公共边界/候选设计差异。此批只改文档，受测源码与结果仍以下列固定SHA为准。
+
 > **2026-11-17 最新执行授权**：用户已明确允许生产代码修改、构建/CTest 和方案文档修改。现进入 R6 原生验证及失败修复，旧批次的运行暂缓只作历史记录；每次运行前仍执行远程检查点规则。实际命令/结果见 [PROGRESS](PROGRESS.md)，本次授权不等于数值验收或冻结。
 
 > **最新结果（2026-11-18登记）**：`4c2973b19c148f640613b03309e8756006adb053` 两模式增量构建无诊断，SVG ON **53/53**、OFF **52/52** CTest；五实验运行参数/环境/seed及输出交付记录已实测，新增106项检查/12次调用，发布和发布后fsync故障、Complete产物保留及SIGPIPE边界通过，见 [运行记录实测](reviews/R6_EXECUTION_RECORDS_2026-11-17.md)。既有 [探针输出](reviews/R6_DICTIONARY_OUTPUT_2026-11-17.md)、[CLI输出故障](reviews/R6_CLI_STREAM_OUTPUT_2026-11-17.md)、[无绘图隔离](reviews/R6_HEADLESS_BUILD_2026-11-17.md)、[MAT身份绑定](reviews/R6_MAT_SNAPSHOT_2026-11-17.md) 回归保留，原582MAT摘要不变。真实Adaptive三入口仍因acos越界/零旋转明确失败、无MAT；[66 TC实际映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)已同步。[45源现行追踪](MIGRATION_MATRIX.md)已复核，继续非生成入口/分配RunId前的记录边界及P/TC覆盖复核；完整Adaptive成功、L4、病态数值资格、资源与正式验收仍待完成。错误处理通过不代表实验成功；后文旧未编译/0项通过均属历史SHA，R6未结案。

@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：98项P任务与数值证据汇总（2026-11-18）
+
+`[AI-EDIT]`：从本地/远端一致的`e24e759`继续，已将PLAN全部98项逐一对应当前实现、有限证据和未完成义务，新增 [任务复核](reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md) 与P10.6要求的 [NUMERICAL_EQUIVALENCE](NUMERICAL_EQUIVALENCE.md)。核对98个编号/顺序/唯一性、66 TC集合、两新报告65个文件引用及53/52项JUnit与CMake逐名映射；本轮只改文档，没有重跑构建/CTest。发现Bias内部创建求解器/RNG仍不满足REQ-DC-EXPERIMENT-001组合注入，另缺真实MAT v7.3拒绝用例；下一步优先补依赖注入与固定替身隔离测试、版本负例。其它候选结构差异、非生成日志、完整Adaptive/L4及正式资格继续保留。实测代码仍为`4c2973b`，R6未结案。
+
 ## 最新接续：R6 五实验运行记录（2026-11-18登记，11-17实测）
 
 `[HUMAN-EXECUTE/APPROVE]`：受测源码`4c2973b19c148f640613b03309e8756006adb053`两模式增量构建无诊断，**ON 53/53、OFF 52/52 CTest**，无跳过/禁用。五入口实际argv/Config/环境/seed/通道与条件退出记录已验证；新增106项检查/12次调用，发布及发布后fsync失败、Complete保留、拒覆盖和SIGPIPE缺结束记录均已测，原始输入SHA不变。RunId `r6-execution-records-20261117-C85CvSON`，见 [运行记录专项](reviews/R6_EXECUTION_RECORDS_2026-11-17.md)。继续非生成入口/分配RunId前的记录边界及P/TC核对；三Adaptive完整成功/L4/资源/正式资格仍未完成，R6未结案。

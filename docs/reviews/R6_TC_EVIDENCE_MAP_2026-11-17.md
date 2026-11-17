@@ -42,7 +42,7 @@
 |---|---|---|
 | TC-F-CLI-001 | CLI、MAT | inspect元数据/缺字段/非法参数已覆盖；逐条CLI合同最终冻结另办 |
 | TC-F-MAT-001 | MAT、SNAPSHOT | 582文件/33340值独立逐位及固定SHA已测，返回摘要绑定实际解码的封存字节；不是所有MAT类型兼容承诺 |
-| TC-F-MAT-002 | MAT、CLI、DICTIONARY | 结构/类型拒绝与原文件枚举、独立探针582实际解码/报告及输出故障已测；正式数据字典复核仍独立 |
+| TC-F-MAT-002 | MAT、CLI、DICTIONARY | 结构/类型拒绝与原文件枚举、独立探针582实际解码/报告及输出故障已测；尚无真实v7.3拒绝夹具，不能用v4负例替代，见 [任务复核D5](R6_PLAN_TASK_AUDIT_2026-11-18.md)。正式数据字典复核仍独立 |
 | TC-F-MAT-003 | MAT、SNAPSHOT | named/首变量/后缀/多变量及捕获后路径替换、同inode改写已有实测；复制期间可观察变化拒绝，范围限首版类型 |
 | TC-F-MAT-004 | IO、RUNNER | 合成写回读、no-overwrite、字段身份及故障链已测；完整五入口实验不在此证据内 |
 | TC-F-GEOM-001 | GEOM | 固定uniform顺序及耗尽已有例；不能等同随机统计资格 |
@@ -81,14 +81,14 @@
 | TC-DC-NOISE-001 | GEOM、RUNNER | 噪声接口两路径与错误上下文已有固定测试 |
 | TC-DC-KVD-001 | KVD | Original/Modified单独入口与差异化trace；两路径实际默认上限及其他退出条件已有独立参考实测 |
 | TC-DC-ADAPT-001 | STEP、SESSION | 单步和Session已独立测试；两个Session交替完整结果/系数/错误重试隔离已测，限固定输入 |
-| TC-DC-EXPERIMENT-001 | RUNNER、CONTRACT | 注入/编排/Writer/状态已有例；两RunContext交替RNG/错误链/计数/真实MAT及Manifest隔离已测，不等于全科学实验 |
+| TC-DC-EXPERIMENT-001 | RUNNER、CONTRACT | 两RunContext交替RNG/错误链/计数/真实MAT及Manifest隔离已测；但Bias仍在内部创建求解器/RNG，组合注入义务未满足，见 [98项复核D3](R6_PLAN_TASK_AUDIT_2026-11-18.md)。不等于全科学实验 |
 | TC-DC-ANALYSIS-001 | CLI、ANALYSIS、SVG、ILLUSTRATION | 无后端时纯数值成功、SVG明确不可用；三份插图JSON导出前后不变已实测，候选接口未冻结 |
 | TC-NF-PLATFORM-001 | ENV | 仅实际Ubuntu24.04.5，不能推断其它Debian/Ubuntu版本已测 |
 | TC-NF-DEPS-001 | ENV、CMake、HEADLESS | 两模式CMake实图无环、ELF/传递依赖已审计；无被禁止运行时/图形库。系统matio间接含HDF5等库，不扩大MAT支持范围；其它环境仍未验证 |
 | TC-NF-SAFETY-001 | IO、MAT、CLI、SNAPSHOT | 原SHA不变、RunId/路径/符号链接/拒覆盖及真实故障已有测试；捕获后源改写不改变解码/摘要，不承诺整个目录原子快照 |
 | TC-NF-NUM-001 | KVD、STEP、SH、GEOM | 独立固定参考存在；完整资格/DEC-005未批准，不宣称数值验收 |
 | TC-NF-NUM-002 | MAT、KVD、STEP、METRIC、RUNNER、SESSION、ADAPTIVE-CLI | 多类明确失败/病态条件已有固定测试；真实初始化cosine越界及另外两入口零旋转拒绝已有实际进程证据。未改变拒绝策略/阈值或宣称完整实验成功 |
-| TC-PROC-TRACE-001 | SOURCE及本文 | 66项证据索引、45源现行符号/有限测试及50声明去向已整理；98任务的逐义务关闭、全部分支资格与正式冻结仍未完成 |
+| TC-PROC-TRACE-001 | SOURCE、本文及 [98项P任务表](R6_PLAN_TASK_AUDIT_2026-11-18.md) | 66 TC、45源/50声明、98 P逐项实现/证据/缺口均有索引；已有表不等于逐义务关闭，全部分支资格与正式冻结仍未完成 |
 | TC-NF-RNG-001 | GEOM、RUNNER | 固定序列/两seed与失败数量保存；L4统计及全样本账本未完成 |
 | TC-NF-LOG-001 | CONTRACT、RUNNER、CLI、ADAPTIVE-CLI、RUNID、STREAM、DICTIONARY、EXECUTION | 五生成入口的命令/原参数/有效Config/环境/seed/身份及输出尝试与交付状态已测；记录失败与条件返回码可复核。非生成入口/分配RunId前记录边界仍需核对，未关闭整项义务；完整科学结果未生成 |
 | TC-NF-OOP-001 | CONTRACT、SH、SESSION | 局部/公共错误桥接与所有权已有用例；总体设计验收未签署 |
@@ -111,5 +111,5 @@
 
 1. 当前两模式分别完成53/53、52/52复测；所有失败日志及原始数据不变证据保留。不等于完整数值资格、Adaptive实验成功或MATLAB像素等价完成。
 2. 三份illustration已有JSON/SVG入口、独立全网格参考和实际CLI/目视证据；保留sphere端点运行细节尚未验证及平面着色的明确边界，不用求解器九项归一化基函数替代插图。
-3. 三Adaptive真实进程的失败链已有证据；初始化第14帧acos越界、另外两入口第151帧零旋转均未产出完整MAT，成功路径仍未验证。45源现行实现/测试映射、两模式依赖/可选绘图、egomotion及独立探针输出故障已复核，五生成入口的运行参数/环境/交付身份记录已测，继续非生成入口/分配RunId前记录边界及P/TC覆盖核对；MAT封存摘要已绑定实际读取载荷，未知来源仍不伪造摘要。数值策略变更不能由AI通过改测试自行批准。
+3. 三Adaptive真实进程的失败链已有证据；初始化第14帧acos越界、另外两入口第151帧零旋转均未产出完整MAT，成功路径仍未验证。45源、98 P和本表的有限证据已映射，[数值汇总](../NUMERICAL_EQUIVALENCE.md)已建立；优先补Bias求解/RNG注入，再核对非生成入口/分配RunId前记录边界与公共对象合同。MAT封存摘要已绑定实际读取载荷，未知来源仍不伪造摘要。数值策略变更不能由AI通过改测试自行批准。
 4. 完整科学/L4实验、跨发行版资格、资源预算与正式审批不在本轮运行授权内；准备具体材料并在真正到达该边界时请求相应授权。无MATLAB/L1阻塞。
