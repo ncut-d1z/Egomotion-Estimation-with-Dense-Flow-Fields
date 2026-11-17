@@ -89,10 +89,13 @@ std::string renderPanel(const std::string& panel,
     const bool xlog=curves.front()->x_scale=="log";
     const bool ylog=curves.front()->y_scale=="log";
     for(const auto* curve:curves){
-        if(curve->x.size()!=curve->y.size())
-            throw std::invalid_argument("An SVG curve has different X and Y lengths");
+        if(curve->x.empty()||curve->x.size()!=curve->y.size())
+            throw std::invalid_argument("An SVG curve is empty or has different X and Y lengths");
         const bool is_right=rightAxis(*curve);
         for(std::size_t i=0;i<curve->x.size();++i){
+            // 有限log零/负值可形成显示空隙；NaN/Inf不是合法空白图。
+            if(!std::isfinite(curve->x[i])||!std::isfinite(curve->y[i]))
+                throw std::invalid_argument("An SVG curve has non-finite input coordinates");
             const double x=transformed(curve->x[i],xlog);
             const double y=transformed(curve->y[i],curve->y_scale=="log");
             if(std::isfinite(x)&&std::isfinite(y)){

@@ -3,9 +3,11 @@
 #include "egomotion/analysis/dataset_json.hpp"
 #include <cstdlib>
 #include <cmath>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <regex>
 #include <sstream>
@@ -147,6 +149,42 @@ void automatic(const fs::path& root) {
     check(paths.size()==1,"UpdateRates retains zero on linear axis");
     if(paths.size()==1){point(paths[0],0,{95,630},"Linear zero");point(paths[0],1,{587.5,350},"Linear midpoint");}
 }
+bool identical(const std::vector<double>& a,const std::vector<double>& b) {
+    return a.size()==b.size()&&(a.empty()||std::memcmp(a.data(),b.data(),a.size()*sizeof(double))==0);
+}
+void invalidSeries(const fs::path& root) {
+    const double nan=std::numeric_limits<double>::quiet_NaN();
+    const double inf=std::numeric_limits<double>::infinity();
+    // 已知固定视窗和普通自动视窗均不能把无效数值过滤成成功。
+    for(const bool known:{false,true})for(int scenario=0;scenario<7;++scenario) {
+        AnalysisDataset data;data.source_analysis_blob=known?kBiasBlob:"unrecognized-source";
+        auto s=curve("invalid","bias-loglog",{100,1000},{1,10},true,true);
+        switch(scenario) {
+        case 0:s.x[0]=nan;break;
+        case 1:s.y[0]=nan;break;
+        case 2:s.x[0]=inf;break;
+        case 3:s.y[0]=-inf;break;
+        case 4:s.y={nan,nan};break;
+        case 5:s.x.clear();s.y.clear();break;
+        case 6:s.y.pop_back();break;
+        }
+        const std::string label=std::string(known?"fixed":"auto")+"-invalid-"+std::to_string(scenario);
+        data.curves.push_back(s);
+        Publisher publisher;analysis::SvgPlotExporter plotter;
+        const auto result=plotter.exportPlot(data,publisher);
+        check(!result.hasValue()&&result.error().code==PlotErrorCode::InvalidSeries&&
+              result.error().detail.stage==ErrorStage::Plot,label+" explicit InvalidSeries");
+        check(publisher.files.empty(),label+" publishes no file");
+        check(identical(data.curves[0].x,s.x)&&identical(data.curves[0].y,s.y),label+" preserves raw input bits");
+        std::ostringstream evidence;
+        evidence<<"source="<<data.source_analysis_blob<<"\nscenario="<<scenario<<"\nx=";
+        for(double v:s.x)evidence<<v<<' ';
+        evidence<<"\ny=";for(double v:s.y)evidence<<v<<' ';
+        evidence<<"\nresult="<<(result.hasValue()?"unexpected success":std::string(errorName(result.error().code)))
+                <<"\npublished="<<publisher.files.size()<<'\n';
+        save(root/(label+".txt"),evidence.str());
+    }
+}
 } // namespace
 int main(int argc,char** argv) {
     try {
@@ -157,7 +195,7 @@ int main(int argc,char** argv) {
         const fs::path root=pattern;
         save(root/"identity.txt",std::string("source_sha=")+argv[2]+"\nseed=none\nfixed synthetic SVG geometry\n");
         std::cout<<"RunId="<<root.filename()<<" evidence="<<root<<'\n';
-        bias(root);comparison(root,"rotation");comparison(root,"translation");automatic(root);
+        bias(root);comparison(root,"rotation");comparison(root,"translation");automatic(root);invalidSeries(root);
         std::cout<<"checks="<<checks<<" failures="<<failures<<'\n';
         return failures?1:0;
     }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

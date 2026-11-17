@@ -1,5 +1,7 @@
 # R6 原脚本视窗与 SVG 几何验证
 
+**补充边界检查中 `[HUMAN-EXECUTE/APPROVE]`**：37/37版本之后复核发现，固定视窗可能掩盖空数组/非有限坐标；现增加Exporter显式empty/NaN/Inf拒绝及已知/未知来源两组共14个负例，要求InvalidSeries/plot、零发布、输入位模式不变。合法全零Bias仍输出空图；不更改Analyzer已有非有限拒绝。此增量待新远程检查点复测，下段37/37仅对应其固定SHA。
+
 `[HUMAN-EXECUTE/APPROVE]`：生产修复、构建及CTest已授权。最终源码 `7fc83c1a828b84318b382ad2e052ba735e489ec4` 无诊断构建、37/37 CTest通过；首轮25处失败保留。关联P9.2/P9.4/P9.6、TC-F-BIAS-003、TC-F-CLI-005、TC-F-AN-002、TC-DC-ANALYSIS-001。此次修复既有源行为，不改变数值公式、CLI/JSON合同、容差或冻结状态。
 
 ## 最终复测（事实登记 `[AI-EDIT]`）
