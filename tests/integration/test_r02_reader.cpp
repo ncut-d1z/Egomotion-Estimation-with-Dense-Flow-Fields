@@ -26,8 +26,11 @@ int main(int argc, char** argv) {
     require(inspection.value().size() == 1, "single-variable archive changed");
     const auto& meta = inspection.value().front();
     require(meta.name == "xwerte", "MAT variable name changed");
-    require(meta.original_class_type == 6 && meta.original_data_type == 9,
-            "double class/data type changed");
+    require(meta.original_class_type == 6, "double array class changed");
+    // matio 1.5.26 的 MAT v5 info 接口保留 MAT_T_UNKNOWN/0 字节；
+    // double 类型与有效载荷长度必须在下面的完整解码结果上校验。
+    require(meta.original_data_type == 0 && meta.data_bytes == 0,
+            "metadata-only inspection must preserve matio's unknown payload fields");
     require(meta.dimensions == std::vector<std::size_t>({10, 1}),
             "first fixture dimensions changed");
 
@@ -42,9 +45,17 @@ int main(int argc, char** argv) {
             "full dictionary scan failed");
     require(data_scan.value().variables.front().status == "READ_OK",
             "legacy READ_OK full decode contract changed");
+    require(data_scan.value().variables.front().info.original_class_type == 6 &&
+            data_scan.value().variables.front().info.original_data_type == 9 &&
+            data_scan.value().variables.front().info.data_bytes == 80,
+            "decoded dictionary variable must remain double with its full byte count");
 
     auto named = reader.readNamed(source, "xwerte");
     require(named.hasValue(), "readNamed failed");
+    require(named.value().info.original_class_type == 6 &&
+            named.value().info.original_data_type == 9 &&
+            !named.value().info.is_complex && !named.value().info.is_logical,
+            "decoded business input must remain a real non-logical double");
     const auto before = named.value().values_column_major;
     require(named.value().info.dimensions == meta.dimensions, "metadata/value mismatch");
     require(before.size() == 10 && named.value().info.data_bytes == 80,

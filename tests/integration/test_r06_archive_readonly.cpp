@@ -52,16 +52,24 @@ int main(int argc,char** argv) {
                 "Each historical MAT must expose one decodable metadata variable: "+path.string());
         const auto& info=metadata.value()[0];
         require(info.dimensions.size()==2&&
-                info.original_class_type==6&&info.original_data_type==9&&
+                info.original_class_type==6&&
                 !info.is_complex&&!info.is_logical,
                 "Historical MAT metadata must be a real two-dimensional double: "+path.string());
+        // MAT v5 仅结构读取不填充数据类型/字节数，不能据 class 推造它们。
+        require(info.original_data_type==0&&info.data_bytes==0,
+                "Historical metadata must retain unknown payload fields: "+path.string());
         const auto decoded=reader.readFirstCompatible(path);
         require(decoded.hasValue()&&decoded.value().info.name==info.name&&
                 decoded.value().info.dimensions==info.dimensions,
                 "Single-variable MAT numerical decoding/metadata mismatch: "+path.string());
+        require(decoded.value().info.original_class_type==6&&
+                decoded.value().info.original_data_type==9&&
+                !decoded.value().info.is_complex&&!decoded.value().info.is_logical,
+                "Decoded historical MAT must be real non-logical double: "+path.string());
         const std::size_t rows=info.dimensions[0],cols=info.dimensions[1];
         require(rows>0&&cols>0&&
-                decoded.value().values_column_major.size()==rows*cols,
+                decoded.value().values_column_major.size()==rows*cols&&
+                decoded.value().info.data_bytes==rows*cols*sizeof(double),
                 "Archived values must own exactly rows*columns doubles: "+path.string());
         File source(path);
         require(source.fd>=0,"Historical MAT cannot be opened read-only: "+path.string());

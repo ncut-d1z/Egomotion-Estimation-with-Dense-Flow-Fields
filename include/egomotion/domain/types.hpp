@@ -27,13 +27,15 @@ struct MatVariableInfo {
     std::string name;
     std::vector<std::size_t> dimensions;
     int original_class_type = 0;
+    // matio 的字段快照：MAT v5 inspect 可为 0（MAT_T_UNKNOWN），
+    // 完整解码的内存类型另行严格校验；不凭 class 推造物理数据标签。
     int original_data_type = 0;
     bool is_complex = false;
     bool is_logical = false;
     // Optional diagnostic metadata populated by the R2 matio reader.
     bool is_global = false;
     bool is_compressed = false;
-    std::size_t data_bytes = 0;
+    std::size_t data_bytes = 0; // 仅元数据读取时 0 也可能表示尚未提供。
     std::string class_name;
     std::string data_type_name;
 };

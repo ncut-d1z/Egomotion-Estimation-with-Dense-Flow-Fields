@@ -10,7 +10,7 @@
 
 `r05_manifest_gate` 同时补上有状态 Publisher 替身：名称发布后不再允许覆盖，模拟已链接 `manifest.json` 但持久化未确认，验证没有成功 RunOutcome/内存 Complete，随后失败记录的 `OutputExists` 与原始 `ReadbackMismatch` 分别保留，已发布字节不被改写。此测试只覆盖 RunContext 合同，不能冒充真实 Linux fsync/unlink 故障注入或独立读取磁盘 Manifest 的最终资格协议。
 
-**实际执行中**：已完成三次配置（均 exit 0），编译均 exit 2，逐次定位并修复静态断言拼写、Bias Runner 声明依赖、Reader 测试注入对象 const 不匹配及两类编译警告。第三次 `53622346` 的生产可执行程序已链接，但全工程/CTest 尚未通过。全部失败日志保留，环境/命令/诊断见 [原生验证记录](reviews/R6_NATIVE_VALIDATION_2026-11-17.md)。本节开头“尚未运行”是准备时点，执行事实以此记录及后续复测为准。
+**实际执行中**：前三轮修复静态断言拼写、Bias Runner 声明依赖、Reader 测试注入对象 const 不匹配及编译警告。第四轮 `bd06d408` 全工程配置/编译 exit 0；MAT CTest 2/2 失败，已由现场只读诊断及 matio 上游源码定位为测试误用仅元数据阶段的未知 data_type/nbytes。现保留元数据真实未知状态，将严格 double/实数/non-logical/字节数检查放在完整解码结果，未降低原始文件数量或数值门限。剩余19项尚未执行；全部失败日志、命令与修正边界见 [原生验证记录](reviews/R6_NATIVE_VALIDATION_2026-11-17.md)。
 
 > 滚动证据登记 v0.6（截至E-DOC-069，2026-11-10），非正式基线批准。**这里的“本轮”是E-DOC-069历史数学批次，不是2026-11-11正在开展的全工程文档规范审计。** 该历史批次仅作理论推导和Wolfram验证，未实施生产C++；历史原生SH测试与数学运算的执行者、源码SHA及证据类型必须分开。本次文档审计最新状态见[AUDIT_PROGRESS.md](AUDIT_PROGRESS.md)，不得用本页旧97AF计数替代现行全工程审计的DOC/DAR口径；现行数字及延期分类只以[AUDIT_PROGRESS.md](AUDIT_PROGRESS.md)最新台账为准，历史9DAR属于旧批次而非当前总数。
 >

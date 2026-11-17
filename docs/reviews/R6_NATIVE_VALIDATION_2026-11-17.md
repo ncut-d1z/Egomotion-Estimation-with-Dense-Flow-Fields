@@ -53,3 +53,21 @@ RunId：`r6-20261117-Xc5pz93H`；源码 SHA：`5362234637ee0594b83b926ca0c4a759f
 | build | 15:14:53 / 15:16:17 | 2 | 生产可执行程序已链接；`test_r02_reader.cpp:75` 注入 const 指针不符合 Composition Root 参数类型；CTest 未开始 |
 
 `build.stderr` SHA-256：`0e6d8412556a514385dd12b74187e10eb9668548ed12acb7b5cb4b7a1e6cfb5a`。再次查询全部 Issue/PR 为空。修复测试 Reader 实例声明以匹配现有 `IResultReader*` 注入合同；Reader 的读取接口仍为 const，文件打开模式不变。另将 CLI 维度输出循环中的两个语句分行，消除 `-Wmisleading-indentation`，保留原输出和全部诊断选项。
+
+## 运行 4：编译通过，MAT 元数据测试的错误假设
+
+RunId：`r6-20261117-mdWkQyL8`；源码 SHA：`bd06d4085499b9669fdffe5c25e161fa0867cf30`（已核实远端）。复用运行 2 的构建目录，配置/编译命令同运行 3。
+
+| 步骤 | 开始/结束（UTC+08:00） | 退出码 | 结果 |
+|---|---|---:|---|
+| configure | 15:17:36 / 15:17:39 | 0 | 已记录新 SHA |
+| build | 15:17:39 / 15:18:49 | 0 | 全工程构建成功，本轮 stderr 为空 |
+| MAT CTest | 15:18:49 / 15:18:51 | 8 | 2/2 失败于 metadata data_type==9；剩余 19 项未执行 |
+
+CTest 命令为 `ctest --test-dir build/r6-20261117-AAjc8Xpe/cmake -C Release --verbose --no-tests=error --parallel 2 -R '^(r02_mat_reader|r06_historical_mat_readonly_schema)$' --output-junit <本RunId>/evidence/ctest-mat.xml`。原始 stdout/stderr/JUnit 和 Testing 快照已保留；stdout SHA-256 为 `0e2250f446c6b26647811439959a9e2df11869279ee23a1d19518d4c4ddf061e`。再次查询全部 Issue/PR 为空。
+
+在同一已推送 SHA 上进行一次只读诊断：15:20:37–15:20:38，`egomotion inspect-mat --file origin/egomotion_estimation_dense_flow_fields_matlab_scripts/bias_test/produced_data/occluded_regions/1/xwerte.mat`，exit 0。`inspect-reader.meta/.stdout/.stderr` 记录完整路径/命令及结果：`class=6 type=0 rank=2 dims=10x1 data_bytes=0 compressed=1`，无数据值输出。
+
+**证据支持的测试修正**：matio 1.5.26 [Mat_VarReadNextInfo5](https://github.com/tbeu/matio/blob/v1.5.26/src/mat5.c#L4923) 在这些 MAT v5 普通数值数组的结构读取阶段不填 data_type/nbytes；完整解码才设置内存类型与字节数。原测试将 `Mat_VarRead` 的预期用于 `Mat_VarReadInfo`，与已选 DEC-008-05“只读元数据、不解码数值”的职责冲突。现对元数据明确断言未知类型/未知字节数；把 double 类型/实数/non-logical 检查移至完整解码，并增加全量扫描/每文件解码字节数检查。没有删除 double 检查、减少 582 样本或改动数值容差，也没有让 inspect 为通过测试偷偷读取数值。
+
+**边界保留**：这些字段是 matio 返回的快照；解码后的 `data_type` 不是独立解析文件原始 packed data tag 的证据。所有 MAT 变种的原始物理类型、截断/损坏等严格拒绝能力仍需专门负例，元数据接口是否补充该信息仍是设计/实现缺口，不能由本轮 CTest 自动宣称完整覆盖。
