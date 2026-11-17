@@ -4,7 +4,7 @@ A planned **C++17 reimplementation that directly reads the original MATLAB MAT f
 
 > **Permanent evidence policy:** Running MATLAB/Octave or collecting original MATLAB L1 execution traces is **not required** for design, coding, verification, or release. The original scripts are read-only specifications; numerical evidence will use the preserved MAT results (L2), independently checked analytic/reference implementations (L3), and statistical comparisons (L4). See [No MATLAB Execution Policy](docs/golden/NO_MATLAB_EXECUTION_POLICY.md). This change does not authorize C++ builds/tests or imply any numerical acceptance.
 
-> **项目状态（2026-11-17）**：R6仍在验证。最新受测源码 `bcee2ca02ef100b569da3ee2a54137b6875bb0af` 增量构建无诊断、**39/39 CTest通过**。直接误差函数685项与KvD停止分支75080项检查通过；506次真实求解的停止行为与独立解析参考一致，原始资料哈希不变，见 [最新验证](docs/reviews/R6_MOTION_STOPPING_2026-11-17.md)。[66项TC证据映射](docs/reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)保留conditioning、状态隔离、acos舍入越界专例、三份illustration等缺口；完整科学实验/L4和正式验收未完成。
+> **项目状态（2026-11-17）**：R6仍在验证。最新受测源码 `07f37e2b4db3e34512715c69a805342f4e6e8add` 增量构建无诊断、**40/40 CTest通过**。新增conditioning1077项检查：12个运动阶段独立参考、12次完整投影拒绝与4个早期负例；原始资料哈希不变，见 [最新验证](docs/reviews/R6_ADAPTIVE_CONDITIONING_2026-11-17.md)。窄锥前向误差仅作诊断，不能以小残差声称准确。[66项TC证据映射](docs/reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)保留状态隔离、acos舍入越界、三份illustration等缺口；完整科学实验/L4和正式验收未完成。
 
 ## Original research and source material
 

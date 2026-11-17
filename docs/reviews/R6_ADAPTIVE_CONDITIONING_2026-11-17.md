@@ -2,7 +2,43 @@
 
 任务标签 `[HUMAN-EXECUTE/APPROVE]`。用户已授权生产代码、构建/CTest 及方案文档修改；本批仅固定输入，不执行完整科学实验、不安装依赖、不改原始数据或数值门限，不代签 DEC-005/008。
 
-## 首轮检查点准备
+## 最终复测
+
+源码 **`07f37e2b4db3e34512715c69a805342f4e6e8add`** 已正常推送并核实远端 SHA；分支 `dev-plan-P0-P1-mat-dictionary-probe`，RunId **`r6-conditioning-final-20261117-9wu1dzWw`**。CMake、增量构建、先 MAT **5/5**、再其余 **35/35** 全部退出 0，合计 **40/40 CTest**。构建无编译器诊断，所有 launcher stderr 均为 0 字节；测试子进程 stdout/stderr 由 CTest verbose/JUnit 保存。
+
+`r06_adaptive_conditioning_reference` **1077项、0失败**：十二个生产运动阶段与既有独立解析参考对照，同时十二次完整公共入口都因零投影通道返回明确失败，四个更早的定义域负例也分类正确。小正均值 `a=1e-100,omega=0` 的运动阶段仍可计算、矩阵条件数1，没有引入任意小均值拒绝门限。原39项测试均继续通过；此前失败日志保留。
+
+窄锥诊断如下，不作为正式前向误差验收：
+
+| h | 理论条件数 | 实际 double SVD 条件估计 | raw 解最大分量误差 | 后向残差 |
+|---:|---:|---:|---:|---:|
+| 0.1 | 1e4 | 9999.999999996338 | 1.6178725e-13 | 1.5812326e-17 |
+| 0.01 | 1e8 | 99999999.35367545 | 7.9317508e-10 | 9.7163944e-18 |
+| 0.001 | 1e12 | 1000008113129.1261 | 4.1634284e-6 | 2.3603063e-17 |
+
+有符号抵消 `a=1e-6,b=1` 的理论条件数约2.5e11，实际 raw 解最大分量误差6.94e-12；其行列式仍约0.08779，不能只凭行列式判为良态。理论条件与浮点实测均保留，不把小残差或有限输出当作正式数值资格。
+
+原始及记录的测试/参考输入 SHA-256 检查退出0，原始树保持 `70ee155131c24a50169346d0ffbaff0c01b1c547`。未安装依赖、未运行 MATLAB/Octave/完整科学实验，未改源资料/阈值/公共接口或审批状态。全状态 Issue/PR 检索为空，没有创建、关闭、合并或发布。R6-COND-001 覆盖事项已补足，R6整体仍未完成。
+
+### 命令、环境和证据
+
+实际环境：Ubuntu24.04.5 LTS / Linux7.0.0-43 x86_64、GCC16.2.0、C++17 Release、CMake/CTest4.3.4、Eigen3.4.0、Sophus1.24.6、matio1.5.26、zlib1.3。工作目录为仓库根，构建目录 `build/r6-20261117-KzjFHPDQ/cmake`。本专项没有 RNG；其余测试固定seed及OS RunId源记录在 `randomness-source.txt`。
+
+| 步骤 | 本地时间（2026-11-17，UTC+08:00） | 退出码/结果 |
+|---|---|---|
+| configure | 19:56:29–19:56:30 | 0 |
+| build | 19:56:30–19:57:47 | 0，无诊断 |
+| CTest MAT | 19:57:47–19:57:48 | 0，5/5，1.34s |
+| CTest 其余 | 19:57:49–19:57:53 | 0，35/35，4.07s |
+
+入口 `bash build/r6-conditioning-final-20261117-9wu1dzWw/run.sh 07f37e2b4db3e34512715c69a805342f4e6e8add`。配置 `cmake -S <repo> -B <build> -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DBUILD_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`；构建 `cmake --build <build> --parallel 4 -- -k`；CTest 使用 `-C Release --verbose --no-tests=error --output-junit <log>`，五项MAT精确名正则 `-R`/并行2，其余同正则 `-E`/并行4。展开参数与时间/退出码均在 `.meta`。
+
+日志目录 `build/r6-conditioning-final-20261117-9wu1dzWw/evidence/` 包含独立 stdout/stderr、JUnit、两份Testing快照、环境、输入blob/文件摘要、运行后完整性结果及全部数值诊断。关键stdout SHA-256：
+
+- `ctest-mat.stdout`：`c9cd859ea74f0642fe8a9b77380471ccf4ce0494bdd2827a183c546747b19f54`
+- `ctest-remaining.stdout`：`bf4c354b936db2f40ebc5ff7b342071ca7e91cc4667f4fb6f5533e633bf82858`
+
+## 首轮检查点准备（历史）
 
 新增 `tests/integration/test_r06_adaptive_conditioning.cpp`，注册 `r06_adaptive_conditioning_reference`；总计 40 项 CTest。**尚未构建或执行，40 项登记不能继承之前 39/39 的结果。** 提交、正常推送并核实远端 SHA 后，先运行五项 MAT 测试，再运行其余测试；日志保存在新的忽略目录。
 
@@ -35,6 +71,8 @@
 这是测试把“运动系统可解”误认成“完整单步可成功”，不是生产求解器故障。六轴及四锥视线都有 `x*y=0`，原 `koeff_aus_near.m` 对源 `(l=2,m=-2)` 通道逐项计算的 `sum(Y²)` 为零，原静态公式发生 `0/0`；已有 C++ 按合同返回 `SingularSystem`，保留叶子 `LowOrderHarmonicsErrorCode / ZeroProjectionNorm`。未运行 MATLAB，不能声称原运行时抛相同错误。全状态 Issue/PR 检索为空，本地覆盖事项记录为 `R6-COND-001`。
 
 现将原运动重建、归一、矩阵装配/求解及 near_new 阶段提取为内部 `detail::solveAdaptiveMotion` 与不同类型 `AdaptiveMotionResult`（头文件在 `src/estimators/adaptive_motion.hpp`）。生产公共 `AdaptiveMfaStepSolver::solve` 始终继续原投影，只有完整成功才产生公共 `AdaptiveStepResult`；Session 仍只接收该公共完整结果。表达式、运算顺序、FullPivLU、错误分类/消息与投影拒绝保持不变，内部阶段成功不能提交系数或宣称完整成功。
+
+内部数值阶段保留连续源码和 trace 对应关系；进一步拆分会传递大量中间 near/mean/矩阵/运动状态，因此保留原较长函数体，没有借本次测试重排算法。
 
 修订测试直接检查生产内部阶段的独立矩阵/运动参考，并逐一重新调用公共入口，要求十二例全部因零投影范数失败、错误链保留；原四负例仍通过公共入口检查。这样同时覆盖数学阶段与完整流程的失败义务，不删除场景、跳过失败或修改生产门限。等待新检查点复测；R6 未结案。
 

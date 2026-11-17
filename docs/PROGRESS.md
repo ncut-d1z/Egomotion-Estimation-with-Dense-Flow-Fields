@@ -2,6 +2,8 @@
 
 ## 最新接续：R6 Adaptive conditioning 参考（2026-11-17）
 
+**最终复测 `[HUMAN-EXECUTE/APPROVE]`：`07f37e2b4db3e34512715c69a805342f4e6e8add` 无诊断构建、40/40 CTest（MAT5/5，其余35/35）。** conditioning1077项通过：十二个内部运动阶段独立参考、十二次完整投影拒绝及四早期负例，未改生产门限。RunId `r6-conditioning-final-20261117-9wu1dzWw`，原始SHA不变、失败保留，见 [验证记录](reviews/R6_ADAPTIVE_CONDITIONING_2026-11-17.md)。窄锥h=0.001前向误差约4.16e-6只作诊断，不代表正式数值通过。下一项为交替Session/RunContext隔离；acos越界、其余分析/插图、完整科学/L4与正式验收仍未完成，R6未结案。
+
 **第二轮 `[HUMAN-EXECUTE/APPROVE]`：`7bbf8df` 无诊断构建、40/40 CTest；conditioning1077项通过。** 十二个运动阶段有独立参考，公共整步十二例仍拒绝零范数投影；四早期负例正确。h=0.001窄锥前向误差约4.16e-6仅作诊断，不当正式数值通过。静态检查另为内部未拟合系数补显式零占位，避免移动未初始化成员，待新检查点复测；见 [记录](reviews/R6_ADAPTIVE_CONDITIONING_2026-11-17.md)。
 
 **首轮实测 `[HUMAN-EXECUTE/APPROVE]`：`3ef34a2` 无诊断构建、39/40 CTest。** 十二个运动系统可解场景在最终SH投影因零通道范数拒绝，四个早期负例符合预期；测试错误地期待整步成功。现提取内部运动阶段以核对独立参考，同时保留公共整步十二例拒绝与完整错误链断言；源公式/门限不变、失败日志与原始SHA保留，见 [诊断记录](reviews/R6_ADAPTIVE_CONDITIONING_2026-11-17.md)。待新检查点复测。

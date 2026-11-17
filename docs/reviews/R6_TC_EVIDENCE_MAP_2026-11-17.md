@@ -2,7 +2,7 @@
 
 `[AI-EDIT]` 事实索引，基于当前Git树、CMake登记、测试源码及实际日志。保留 [TEST_PLAN §3](../TEST_PLAN.md) 的66个TC/REQ/AC和 [PLAN](../PLAN.md) 的98项任务，不替换候选规范、改动阈值或签署验收。下表每个TC仅列一次；其REQ/AC采用相同后缀，正式义务仍以 [REQUIREMENTS](../REQUIREMENTS.md) 为准。
 
-**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面列出的具体程序/样本已有运行证据，不代表该TC全部条款已满足。最新受测源码 `bcee2ca02ef100b569da3ee2a54137b6875bb0af` 为39/39；直接误差函数685项、KvD停止75080项检查通过，见 [专项证据](R6_MOTION_STOPPING_2026-11-17.md)。首轮覆盖不足及此前SVG失败保留。正式容差/Golden资格、环境预算及基线签署仍独立办理；不以这些审批尚未完成为理由停止已授权的源码/测试补足。
+**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面列出的具体程序/样本已有运行证据，不代表该TC全部条款已满足。最新受测源码 `07f37e2b4db3e34512715c69a805342f4e6e8add` 为40/40；新增conditioning1077项检查通过，见 [专项证据](R6_ADAPTIVE_CONDITIONING_2026-11-17.md)。原39项仍通过，首轮覆盖不足及此前失败保留。正式容差/Golden资格、病态前向误差、环境预算及基线签署仍独立办理；不以这些审批尚未完成为理由停止已授权的源码/测试补足。
 
 ## 实际测试组及证据入口
 
@@ -17,7 +17,7 @@
 | GEOM | `r06_sampling_flow_contract`, `r06_directions_all_ordered_l3`, `r06_trajectory_sphere_geometry` | `tests/integration/test_r06_sampling_flow.cpp`, `test_r06_direction_rows_l3.cpp`, `test_r06_trajectory_sphere.cpp`；`verification/geometry/` |
 | KVD | `r06_kvd_independent_l3`, `r06_kvd_stopping_reference` | `tests/integration/test_r06_kvd_l3.cpp`, `test_r06_kvd_stopping.cpp`；`verification/kvd/`；原逐节点参考及506次独立解析控制流参考，见 [停止分支](R6_MOTION_STOPPING_2026-11-17.md) |
 | METRIC | `r06_source_motion_errors` | `tests/integration/test_r06_motion_errors.cpp`；直接调用两个生产内部实现，解析几何/尺度/弦长恒等式/零/非有限/上溢/下溢；[685项实测](R6_MOTION_STOPPING_2026-11-17.md) |
-| STEP | `r06_adaptive_step_independent_l3` | `tests/integration/test_r06_adaptive_l3.cpp`；`verification/adaptive/asymmetric_signed_near_one_step.v1.json`，正/负有符号近度的固定九方向单步 |
+| STEP | `r06_adaptive_step_independent_l3`, `r06_adaptive_conditioning_reference` | `tests/integration/test_r06_adaptive_l3.cpp`, `test_r06_adaptive_conditioning.cpp`；正/负九方向完整单步，另12个解析运动阶段/完整投影拒绝及4个定义域负例，见 [conditioning实测](R6_ADAPTIVE_CONDITIONING_2026-11-17.md) |
 | SH | `low_order_harmonics`, `low_order_harmonics_archived_golden`, `low_order_harmonics_source_projection`, `r06_sh_argument_action`, `r06_sh_source_phase_reference`, `r06_sh_source_session_action` | `tests/unit/test_low_order*.cpp`, `tests/integration/test_r06_sh_adapter.cpp`, `test_r06_source_sh.cpp`；[源相位作用](R6_SH_SOURCE_ACTION_2026-11-17.md) |
 | SESSION | `r06_adaptive_session_transaction`, `r06_adaptive_periods_atomic_commit` | `tests/contracts/test_r06_session_contract.cpp`, `test_r06_adaptive_periods.cpp`；三模式失败原子性及1/5/11/21刷新 |
 | RUNNER | `r06_adaptive_runner_complete_contract`, `r06_adaptive_runner_incomplete_contract`, `r06_adaptive_default_undefined_contract`, `r06_bias_runner_contract`, `r06_bias_runner_publication` | `tests/integration/test_r06_adaptive_runner.cpp`, `test_r06_bias_runner.cpp`；[Adaptive](R6_ADAPTIVE_RUNNER_CONTRACT_2026-11-17.md)、[Bias](R6_BIAS_RUNNER_VALIDATION_2026-11-17.md)。Adaptive含单步替身，不等于完整真实求解实验 |
@@ -54,7 +54,7 @@
 | TC-F-TRAJ-001 | GEOM、RUNNER | 独立轨迹/运动/端点例；默认600帧的第151帧UndefinedAngle明确记录 |
 | TC-F-SH-001 | SH、STEP | 独立解析九基/布局/拟合与重建；最终Golden/容差资格另办 |
 | TC-F-SH-002 | SH | 源相位作用与物理旋转分别实测；不声称MATLAB运行轨迹相同 |
-| TC-F-ADAPT-001 | STEP、SH | 正/负近度固定单步；现有zero_mean_conditioning参考族尚未接入对应CTest |
+| TC-F-ADAPT-001 | STEP、SH | 正/负近度固定单步及zero_mean_conditioning解析族已接入；六轴/窄锥完整步骤因投影零范数拒绝，运动阶段可独立核对。病态前向误差未正式验收 |
 | TC-F-ADAPT-002 | SESSION、SH、RUNNER | 旋转→比较→主提交及失败回滚；仍需两个独立Session交替运行的直接断言 |
 | TC-F-ADAPT-003 | SESSION、RUNNER | 1/5/11/21刷新与弃置比较返回值已有替身断言；完整真实轨迹未成功 |
 | TC-F-EXP-001 | RUNNER | 初始化35帧编排/字段合同；单步替身结果不能当完整算法实验 |
@@ -79,7 +79,7 @@
 | TC-NF-DEPS-001 | ENV、CMake | 当前核心Eigen/matio与可选SVG，无Python/MATLAB/NPZ；完整交付链接审计仍待整理 |
 | TC-NF-SAFETY-001 | IO、MAT、CLI | 原SHA不变、RunId/路径/符号链接/拒覆盖及真实故障已有测试 |
 | TC-NF-NUM-001 | KVD、STEP、SH、GEOM | 独立固定参考存在；完整资格/DEC-005未批准，不宣称数值验收 |
-| TC-NF-NUM-002 | MAT、KVD、METRIC、RUNNER、SESSION | 多类明确失败及直接误差范数/非有限边界已有用例；acos舍入越界专例与conditioning族待补 |
+| TC-NF-NUM-002 | MAT、KVD、STEP、METRIC、RUNNER、SESSION | 多类明确失败、直接误差边界、零/抵消均值/纯旋转/重合视线/投影零范数已实测；acos舍入越界专例待补，未新增病态拒绝阈值 |
 | TC-PROC-TRACE-001 | SOURCE及本文 | 66项证据索引已整理；98任务/45源的逐义务关闭与正式冻结仍未完成 |
 | TC-NF-RNG-001 | GEOM、RUNNER | 固定序列/两seed与失败数量保存；L4统计及全样本账本未完成 |
 | TC-NF-LOG-001 | CONTRACT、RUNNER、CLI | 顶层家族/完整causes/Manifest与执行日志已测；完整科学运行未发生 |
@@ -101,7 +101,7 @@
 
 ## 下一步按缺口实施
 
-1. 原绘图视窗修复及误差/停止分支补足已完成39/39复测，失败日志及原始数据不变证据保留；不等于三份illustration或完整视觉等价完成。
-2. 为现有M级义务补Adaptive conditioning固定参考族、两个Session/RunContext交替隔离；误差函数另缺acos舍入越界专例。先读源/现有参考，不能用增加相似正常例代替。
+1. 原绘图视窗、误差/停止分支及conditioning参考接入已完成40/40复测，失败日志及原始数据不变证据保留；不等于完整数值资格、三份illustration或视觉等价完成。
+2. 为现有M级义务补两个Session/RunContext交替隔离；误差函数另缺acos舍入越界专例。先读源/现有参考，不能用增加相似正常例代替。
 3. 补足原历史Bias分析逐值独立重算、平滑来源身份；审查三份illustration真实数据和展示入口。若需要改动CLI/公共schema合同，先保留候选边界，不自行宣称冻结。
 4. 完整科学/L4实验、跨发行版资格、资源预算与正式审批不在本轮运行授权内；准备具体材料并在真正到达该边界时请求相应授权。无MATLAB/L1阻塞。
