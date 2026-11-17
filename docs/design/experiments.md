@@ -1,5 +1,7 @@
 # 实验 Runner 与结果写出——详细设计草案
 
+> **2026-11-17 执行事实（[AI-EDIT]）**：受测源码 `c2187539b8cb16fe9d53e770d231a48c2451c0b5` 构建无诊断、33/33 CTest通过；两种Bias在level0..2真实计算/七MAT发布及失败分类已验证，见 [Bias记录](../reviews/R6_BIAS_RUNNER_VALIDATION_2026-11-17.md)。Adaptive固定8组600行聚合/Session及原默认轨迹失败边界见 [Runner记录](../reviews/R6_ADAPTIVE_RUNNER_CONTRACT_2026-11-17.md)。下文旧未实现/未运行表述保留其历史语境，当前事实以上述固定SHA证据为准；未执行完整科学实验，不改变本LLD合同或冻结状态。
+
 > **长期参考边界**：本 Runner **不要求 MATLAB/Octave 运行或采集 L1**；原 .m 仅作只读源码依据，结果验收使用 L2 已存 MAT、L3 独立逐帧/逐轮参考与 L4 统计，参见 [长期政策](../golden/NO_MATLAB_EXECUTION_POLICY.md)。
 
 > **LLD v0.16草案（明确CompositionRoot装配合法Bias噪声策略、Runner负责实参门禁、底层只用NumericalErrorCode；未运行CTest）。** 来源：bias_test/data_generation 中 2 个入口；adaptive_matched_filter_test/data_generation 中 3 个入口。对应 P5、P8、REQ-F-BIAS、REQ-F-EXP、REQ-F-CLI 与 REQ-I-RESULT。

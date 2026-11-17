@@ -2,9 +2,11 @@
 
 ## 最新接续：R6 Bias Runner编排与发布（2026-11-17）
 
+**最终复测 `[HUMAN-EXECUTE/APPROVE]`：`c2187539b8cb16fe9d53e770d231a48c2451c0b5` 构建无诊断，33/33 CTest通过。** 先MAT5/5、再其余28/28；两种Bias真实level0..2编排17695项、发布5558项全部通过，R6-BIAS-001修复与复测闭合。RunId `r6-bias-fix-20261117-ZRqFNqCL`，原始输入SHA未变；完整命令/环境/时间/日志哈希见 [Bias验证](reviews/R6_BIAS_RUNNER_VALIDATION_2026-11-17.md)。此证据不替代40份level9或完整Adaptive/L4实验。下一具体覆盖缺口为真实CLI装配及历史MAT→Analyzer→JSON/SVG；其余L3/资源资格和正式批准仍待完成，R6未结案。
+
 **首轮实测 `[HUMAN-EXECUTE/APPROVE]`：`ff18a3a` 无诊断构建，32/33 CTest。** 两种Bias真实七MAT发布5558项通过；编排17693项仅2个外层分类失败，定位R6-BIAS-001。流生成/RNG误报SolverFailed，现按既有合同区分IncompleteRun；原数值与断言不变，待新检查点复测。原输入SHA不变，失败日志见 [Bias验证](reviews/R6_BIAS_RUNNER_VALIDATION_2026-11-17.md)。
 
-**[HUMAN-EXECUTE/APPROVE] 新增两项CTest，尚未运行。** 固定seed7/11和原合法level0..2，验证真实Bias全链的采样/噪声/RNG重置、六指标、七MAT发布/回读及失败状态，不替代完整40份论文实验。当前33项仅登记；31/31属于上批固定SHA。范围与后续证据见 [Bias验证](reviews/R6_BIAS_RUNNER_VALIDATION_2026-11-17.md)。
+**首轮准备（历史） `[HUMAN-EXECUTE/APPROVE]`：新增两项CTest，当时尚未运行。** 固定seed7/11和原合法level0..2，验证真实Bias全链的采样/噪声/RNG重置、六指标、七MAT发布/回读及失败状态，不替代完整40份论文实验。当时33项仅登记；31/31属于上批固定SHA。实际复测以本节首段为准。
 
 ## 最新接续：R6 原球谐动作与Session集成（2026-11-17）
 
