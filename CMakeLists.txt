@@ -556,6 +556,17 @@ if(BUILD_TESTING)
     target_link_libraries(r06_mat73_fixture_generator PRIVATE PkgConfig::MATIO)
     target_compile_features(r06_mat73_fixture_generator PRIVATE cxx_std_17)
     target_compile_options(r06_mat73_fixture_generator PRIVATE -Wall -Wextra -Wpedantic)
+    add_executable(test_r06_mat73 tests/integration/test_r06_mat73.cpp)
+    target_link_libraries(test_r06_mat73 PRIVATE egomotion_matio PkgConfig::MATIO)
+    foreach(symbol Mat_Open Mat_VarRead pread)
+        target_link_options(test_r06_mat73 PRIVATE "LINKER:--wrap=${symbol}")
+    endforeach()
+    target_compile_options(test_r06_mat73 PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_mat73_version_rejection COMMAND test_r06_mat73
+        "${CMAKE_CURRENT_SOURCE_DIR}/verification/mat/synthetic_v73_double.mat"
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_mat73")
+    set_tests_properties(r06_mat73_version_rejection PROPERTIES
+        LABELS "r06;mat;version;negative;synthetic-only;write-sandbox" TIMEOUT 60)
     add_executable(test_r06_mat_snapshot tests/integration/test_r06_mat_snapshot.cpp)
     target_link_libraries(test_r06_mat_snapshot PRIVATE egomotion_matio PkgConfig::MATIO)
     foreach(symbol memfd_create pread write fcntl Mat_VarRead)

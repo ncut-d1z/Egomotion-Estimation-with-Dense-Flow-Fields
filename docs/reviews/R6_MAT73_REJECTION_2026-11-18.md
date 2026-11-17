@@ -14,4 +14,6 @@
 
 ## 执行证据
 
-待执行。
+夹具生成检查点`f1fb7d377a2967304a5f718d3623bfab3ceb2604`已原子提交、推送并核对远端SHA；配置、仅构建生成器、生成及直接matio六值逐位回读均exit0，无编译诊断，原输入摘要检查exit0。RunId `r6-mat73-fixture-20261118-9lQv0oaJ`；日志在`build/r6-mat73-fixture-20261118-9lQv0oaJ/evidence/`，完成于2026-11-18 00:57:42 UTC+08:00。合成文件3408字节、SHA-256 `f6b703ff389c19c8a871009f299ffeb5fcb004273dc7f2b290479cf35e29b2a5`，来源和重建边界见 [夹具说明](../../verification/mat/SYNTHETIC_MAT73.md)。
+
+下一检查点固定夹具并增加`r06_mat73_version_rejection`：3个数值入口、正常/禁用Mat_Open、header短读/EINTR/EIO、大端头变体、兼容后缀、版本优先及v5正常控制。首先对尚未修改的生产Reader执行这个回归，保存真实不符合P1.5的证据；预期会因进入后端/错误分类而失败，不把新登记当通过。之后修复Reader并另行提交推送、复测；完整两模式结果待登记。禁用Mat_Open是确定性替身，不冒充另装的无HDF5库实测。
