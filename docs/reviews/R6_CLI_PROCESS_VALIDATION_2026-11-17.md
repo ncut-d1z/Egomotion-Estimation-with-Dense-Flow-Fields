@@ -2,6 +2,14 @@
 
 ## 首轮实测与修复候选
 
+**独立审计轮 `8fad2921ea4346a16492018f0320cb5170ba78b3`**：RunId `r6-cli-archive-audit-20261117-AGxqN2uB`，构建无诊断，34/35；5项MAT测试先通过，独立于matio的原始标签/列主序解码与生产结果仍逐位一致。全部六组输入的15次CLI进程均已执行；两种Bias与Initialization分析/绘图exit0，三个600帧Adaptive目录的analyze/plot均NonFiniteInput/exit5。原始哈希不变，原失败预期及日志均保留。
+
+独立原始字节事实：末轮 `occluded_regions/40/xwerte` 第3/10行为96/1572864，而 `proportional_error/40/xwerte` 为128/2097152。后者与当前生成源码的6·4^i不同，来源成因未确认；Analyzer忠实使用文件值，不能为迎合当前生成公式改写归档。归档共有7个旋转误差MAT含26个NaN、0个Inf：many_parameter的alleadaprotfehler/allemitrotfehler各8个（线性索引151,451,751,1051,1351,1651,1951,2251，即每列第151/451帧），with_errors的alleadaprotfehler/allemitrotfehler/alleohnerotfehler和without_errors的allemitrotfehler/alleohnerotfehler各2个（151,451）。这些是原始L2输入事实，不是本次C++生成的NaN，也不证明其历史计算原因。
+
+据此纠正**测试输入依据**，不改变生产数值或错误合同：两种历史Bias分别验证各自文件值；三个含NaN的历史目录继续实际执行analyze/plot，断言稳定NonFiniteInput、精确文件/变量和无输出目录增加。新生成Bias的96断言保留。原数据、非有限拒绝规则、样本数和任何阈值均不修改；负例通过不能声称这三个历史分析/图表成功。有限输入下Comparison/UpdateRates的真实进程成功路径仍须另用明确合成夹具验证；独立逐值分析L3亦未由本测试替代。
+
+独立MAT stdout SHA-256 `4842b9550317c77a684c1a8ed6ec1a85acc14fdae1d2323e30c4b9064df83bc2`，其余CTest stdout `259c75c027abf95341ba3f6f331f434cda45e08f53ae7268c909f1a407b6c544`；所有证据在该RunId的evidence目录。实际历史分析输出在构建目录 `r06_cli_process/CLI 中文 空格/archive_05b044381007e0ef5cbffa24/`；首轮修复复测的stdout SHA-256为 `33b9adf4ef66f399921827b525f57e2f528cb0369cbff02564e0783e1b175f38`。下一轮以纠正后的真实输入分类复测35项，尚未运行。
+
 **第二轮 `3986ed5f7958df9a8859b0ddc8109eb8dcd04f77`**：RunId `r6-cli-fix-20261117-2fVbZtmW`，构建无诊断，34/35通过。真实CLI合同42次调用全通过，帮助问题已修复；archive模式实际执行后，proportional历史横轴返回128/2097152，而测试误将当前生成脚本的96/1572864当历史文件预期；without_errors的allemitrotfehler被生产Reader/Analyzer报告非有限并退出5，后续JSON解析使其它归档未执行。先增加既有独立MAT解析器的事实输出，记录实际NaN/Inf位置及末轮xwerte，不以生产输出单独决定新预期，不修改原数据、Analyzer非有限拒绝合同或科学算法。测试仍保留当前失败预期，同时让失败输入返回后继续执行其它归档，以获取完整证据。
 
 源码 `3843a814b1b48bea6ba78765e25583d131098f01` 已提交/推送/远端核实；RunId `r6-cli-baseline-20261117-LPFe6rGv`，配置/编译exit0且无诊断，MAT先5/5、其余28/30，合计33/35。真实CLI合同执行41个进程，除八项子命令帮助错误退出2（每项另有stderr断言失败）外，解析/诊断、两种Bias生成/七MAT/Manifest来源/不覆盖、生成结果分析均通过。原始输入哈希未变。

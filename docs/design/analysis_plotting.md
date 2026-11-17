@@ -80,6 +80,8 @@ public:
 
 ## 5. 四种分析入口的可编码索引/统计算法合同
 
+**2026-11-17 实测输入补充（[AI-EDIT]，不改合同）**：独立MAT字节审计确认，历史proportional末轮 `xwerte` 的第3/10行实际是128/2097152，不能套用当前生成脚本的96/1572864；分析仍按下表读取末轮原值。三个600帧Adaptive归档目录的旋转误差含第151/451帧NaN（多更新率每列均有），真实CLI按既有NonFiniteInput规则拒绝analyze/plot，不产生曲线。具体原值、SHA和执行证据见 [CLI验证](../reviews/R6_CLI_PROCESS_VALIDATION_2026-11-17.md)；这不修改原始文件或误差/非有限通过阈值，也不宣称相应图表复现成功。
+
 | 来源分析函数 | MATLAB 索引与算法 | 结构化结果（建议） | 特别验证 |
 |---|---|---|---|
 | graphs_bias_test | 按 k=1..number_of_cores **每次覆盖 xwerte**、仅将 ywerte3…6 四组累加；循环后只对四组 y 除以运行数；取 anfang=3、ende=iterationnumber+1，参考线 y=100/sqrt(最后一个 k 的 xwerte) | 每个噪声系数、Original/Modified 平移/旋转的四组跨运行均值曲线；横轴与理论参考取末轮原 xwerte | **不能把 xwerte 求平均或替换成真实 N**；原四类 y 的分母固定 number_of_cores，最后 k 的 x 来源要可追踪；ywerte1/2 在原分析中被注释 |

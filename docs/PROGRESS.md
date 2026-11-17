@@ -2,6 +2,8 @@
 
 ## 最新接续：R6 真实CLI与历史分析集成（2026-11-17）
 
+**独立归档事实 `[HUMAN-EXECUTE/APPROVE]`：`8fad292` 构建无诊断，34/35。** 独立MAT字节解码确认历史proportional末轮xwerte为128…2097152，与当前生成脚本不同；7个旋转误差文件共26个NaN、0个Inf。六组历史输入均实际执行：两种Bias及Initialization成功，三个600帧Adaptive目录analyze/plot均按既有合同拒绝非有限值。现仅纠正测试的输入事实预期，继续严格验证失败且不生成伪造曲线；原文件/阈值/生产分析逻辑不变，待新检查点复测。
+
 **第二轮 `[HUMAN-EXECUTE/APPROVE]`：`3986ed5` 无诊断构建，34/35 CTest。** 帮助及真实CLI的42次调用通过；历史proportional横轴与当前生成公式不同，无噪声Adaptive被报告含非有限值。正在通过独立MAT解码记录原值/无定义位置，并补齐其余归档实测；不改变原文件或非有限拒绝规则。
 
 **首轮实测 `[HUMAN-EXECUTE/APPROVE]`：`3843a81` 无诊断构建，33/35 CTest。** 真实CLI的41次进程调用确认八个子命令帮助错误退出2；其余Bias发布/诊断通过。历史分析测试因新CMake脚本的变量名冲突在业务调用前退出，不能归因于Analyzer。现分别修复解析器与测试分派，原断言保留、待新检查点复测；证据见 [CLI验证](reviews/R6_CLI_PROCESS_VALIDATION_2026-11-17.md)。
