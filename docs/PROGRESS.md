@@ -133,6 +133,8 @@
 
 没有新原生运行、数值测试或PASS；未创建Issue/PR，未合并/发布，未改动origin。R6仍未完成，不新增R7；完整后续义务保持ROADMAP原范围。
 
+**同一复核的接续增量（基线2615b82）**：按实际`RunTextPublisher → RunContext → CLI`分支确认“linkat成功、目录fsync失败”时，最终Complete文本仍可见但API失败；随后同名Incomplete发布因OutputExists再次失败，CLI应保留两个独立事件。现有FakePublisher只模拟发布前失败，未覆盖此路径。已在上述复核文档§6给出三个Publisher合同场景、九类真实I/O故障场景、具体源blob与观察规则；全部为静态推演/候选，**没有故障注入执行或新增CTest登记**。未选择新schema/恢复协议，未改变Complete/非覆盖/验收义务，限定源码授权仍待回复。
+
 ## 1. 当前边界
 
 仓库 `ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields`，分支 `dev-plan-P0-P1-mat-dictionary-probe`；不合并main、不发布。`origin/**` 原45份.m与582份.mat只读；不要求执行MATLAB/Octave或获得L1。既有66REQ/66TC/98P、27条HLD设计边不变；数学子案例不新增正式TC。
