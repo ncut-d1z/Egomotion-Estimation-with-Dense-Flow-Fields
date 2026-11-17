@@ -526,6 +526,15 @@ if(BUILD_TESTING)
     set_tests_properties(r06_analysis_finite_cli PROPERTIES
         LABELS "r06;analysis;real-process;independent-polynomial;synthetic-only;write-sandbox" TIMEOUT 180)
 
+    add_executable(test_r06_svg_windows tests/integration/test_r06_svg_windows.cpp)
+    target_link_libraries(test_r06_svg_windows PRIVATE egomotion_plotting)
+    target_compile_features(test_r06_svg_windows PRIVATE cxx_std_17)
+    target_compile_options(test_r06_svg_windows PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_svg_source_windows COMMAND test_r06_svg_windows
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_svg_windows" "${EGOMOTION_BUILD_SOURCE_SHA}")
+    set_tests_properties(r06_svg_source_windows PROPERTIES
+        LABELS "r06;plot;source-limits;svg-geometry;synthetic-only;write-sandbox" TIMEOUT 60)
+
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")

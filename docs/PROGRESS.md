@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 原脚本绘图视窗（2026-11-17）
+
+**准备中 `[HUMAN-EXECUTE/APPROVE]`**：当前HEAD检查确认SVG未保留Bias固定x/y范围、Comparison固定右轴及viewport裁剪。新增第37项CTest，直接核对SVG几何、log零值断线与数据不变；尚未执行，见 [视窗验证](reviews/R6_SVG_WINDOWS_2026-11-17.md)。并核对既有66 TC的真实测试对应关系，R6不以测试数量替代完整验收。
+
 ## 最新接续：R6 有限MAT与非线性分析（2026-11-17）
 
 **最终复测 `[HUMAN-EXECUTE/APPROVE]`：`cecd19ada9e162701992960b0b7cb076e0deed3e` 构建无诊断，36/36 CTest通过（MAT5/5，其余31/31）。** Comparison/UpdateRates有限输入的32条曲线、5578对x/y、3460个完整平滑值与独立三次多项式参考精确一致；修复了UpdateRates纵轴，并验证4份SVG的轴标记/结构。原始及合成MAT摘要不变，首轮失败证据保留，见 [有限输入验证](reviews/R6_ANALYSIS_FINITE_VALIDATION_2026-11-17.md)。下一项为66 TC实际证据映射及源绘图视窗/三份illustration缺口核对；原始NaN、默认轨迹UndefinedAngle、剩余L3/L4与完整科学实验/正式验收仍未闭合，R6未结案。
