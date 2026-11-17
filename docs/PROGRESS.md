@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 Bias Runner编排与发布（2026-11-17）
+
+**[HUMAN-EXECUTE/APPROVE] 新增两项CTest，尚未运行。** 固定seed7/11和原合法level0..2，验证真实Bias全链的采样/噪声/RNG重置、六指标、七MAT发布/回读及失败状态，不替代完整40份论文实验。当前33项仅登记；31/31属于上批固定SHA。范围与后续证据见 [Bias验证](reviews/R6_BIAS_RUNNER_VALIDATION_2026-11-17.md)。
+
 ## 最新接续：R6 原球谐动作与Session集成（2026-11-17）
 
 **最终复测 `[HUMAN-EXECUTE/APPROVE]`：`632139bb0d9dd0d3afa7a11afdb0578224a47f59` 构建无诊断，31/31 CTest通过。** 先MAT5/5、再其余26/26；新源动作适配4886项、Session10006项检查均通过，最大绝对误差4.44e-16/6.66e-16，保留旧物理合同并恢复业务原系数动作。R6-SH-001修复/复测闭合；RunId `r6-sh-source-fix-20261117-IPXj1uHL`，原始输入SHA不变，完整证据见 [源动作验证](reviews/R6_SH_SOURCE_ACTION_2026-11-17.md)。本批补足限定源相位/动作与集成证据，剩余独立L3、完整真实Runner/L4、资源边界及正式验收仍未完成；默认第151帧UndefinedAngle未消失。

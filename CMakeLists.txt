@@ -492,6 +492,17 @@ if(BUILD_TESTING)
     set_tests_properties(r06_adaptive_default_undefined_contract PROPERTIES
         LABELS "r06;runner;source-trajectory;undefined-angle;synthetic-step;write-sandbox" TIMEOUT 180)
 
+    add_executable(test_r06_bias_runner tests/integration/test_r06_bias_runner.cpp)
+    target_link_libraries(test_r06_bias_runner PRIVATE egomotion_experiments egomotion_matio)
+    target_compile_features(test_r06_bias_runner PRIVATE cxx_std_17)
+    target_compile_options(test_r06_bias_runner PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_bias_runner_contract COMMAND test_r06_bias_runner contract)
+    add_test(NAME r06_bias_runner_publication COMMAND test_r06_bias_runner publication
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_bias_runner" "${EGOMOTION_BUILD_SOURCE_SHA}")
+    set_tests_properties(r06_bias_runner_contract r06_bias_runner_publication PROPERTIES
+        LABELS "r06;bias;runner;bounded-level-0-2;cpp-rng" TIMEOUT 180)
+    set_property(TEST r06_bias_runner_publication APPEND PROPERTY LABELS "write-sandbox")
+
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
