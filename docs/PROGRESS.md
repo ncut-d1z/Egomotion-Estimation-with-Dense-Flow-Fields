@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 误差函数与 KvD 停止分支（2026-11-17）
+
+**首轮准备 `[HUMAN-EXECUTE/APPROVE]`，尚未执行。** 提取内部原始误差函数并直接测解析几何/异常边界；新增独立标量降维参考，检查两种 KvD 的默认停止条件。39 项 CTest 仅登记，待远程检查点后真实构建与测试；见 [验证记录](reviews/R6_MOTION_STOPPING_2026-11-17.md)。不改变算法门限或正式验收义务，R6 未结案。
+
 ## 最新接续：R6 原脚本绘图视窗（2026-11-17）
 
 **最终补充复测 `[HUMAN-EXECUTE/APPROVE]`：`65d59fe2640aa59768d4bb86386886f1692874d6` 无诊断构建、37/37 CTest（MAT5/5，其余32/32）。** 六个有效SVG情境与14个直接Exporter负例共103项检查全部通过：合法全零图成功，empty/NaN/Inf明确InvalidSeries且零发布，输入不变。最终RunId `r6-svg-guard-20261117-zp9qajzR`，见 [视窗记录](reviews/R6_SVG_WINDOWS_2026-11-17.md)；原始SHA不变，未改变阈值/CLI/公共schema。后续缺口见 [66 TC映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)，R6仍未结案。

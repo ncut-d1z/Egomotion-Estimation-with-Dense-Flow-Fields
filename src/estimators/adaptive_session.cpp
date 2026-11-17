@@ -1,4 +1,5 @@
 #include "egomotion/estimators/adaptive_session.hpp"
+#include "../numerics/source_motion_errors.hpp"
 #include "egomotion/harmonics/adapter.hpp"
 
 #include <array>
@@ -35,38 +36,6 @@ Result<AdaptiveFrameResult,ExperimentErrorCode> propagate(
                   std::to_string(frame_index)+")";
     return Result<AdaptiveFrameResult,ExperimentErrorCode>::failure(
         wrapFailure(ExperimentErrorCode::SolverFailed,std::move(outer),child));
-}
-Result<Scalar,NumericalErrorCode> sourceDirectionErrorDegrees(
-    const Vector3& truth,const Vector3& estimated) {
-    const double reference_norm=std::sqrt(truth.dot(truth));
-    const double computed_norm=std::sqrt(estimated.dot(estimated));
-    ErrorDetail detail;
-    detail.stage=ErrorStage::Solve;
-    if (!std::isfinite(reference_norm)||!std::isfinite(computed_norm)) {
-        detail.message="normrelfehler input norm is non-finite";
-        return Result<Scalar,NumericalErrorCode>::failure(
-            {NumericalErrorCode::NonFiniteInput,std::move(detail)});
-    }
-    if (reference_norm==0.0||computed_norm==0.0) {
-        detail.message="normrelfehler angle is undefined for zero vector";
-        return Result<Scalar,NumericalErrorCode>::failure(
-            {NumericalErrorCode::UndefinedAngle,std::move(detail)});
-    }
-    const Vector3 u=truth/reference_norm,v=estimated/computed_norm;
-    const double cosine=u.dot(v);
-    if (!std::isfinite(cosine)||cosine < -1.0||cosine > 1.0) {
-        detail.message="normrelfehler acos argument outside [-1,1]";
-        return Result<Scalar,NumericalErrorCode>::failure(
-            {NumericalErrorCode::UndefinedAngle,std::move(detail)});
-    }
-    const double pi=std::acos(-1.0);
-    const double degrees=std::abs(std::acos(cosine)*(360.0/(pi*2.0)));
-    if (!std::isfinite(degrees)) {
-        detail.message="normrelfehler output is non-finite";
-        return Result<Scalar,NumericalErrorCode>::failure(
-            {NumericalErrorCode::NonFiniteResult,std::move(detail)});
-    }
-    return Result<Scalar,NumericalErrorCode>::success(degrees);
 }
 }  // namespace
 
@@ -144,13 +113,13 @@ AdaptiveMfaSession::processFrame(const AdaptiveFrameInput& frame) {
             // In initialization/comparison the returned coeff is local to this
             // frame only (source anzahlitfuerini=1).
             const MotionEstimate& motion=comparison.value().motion;
-            auto t_error=sourceDirectionErrorDegrees(
+            auto t_error=source_metrics::sourceDirectionErrorDegrees(
                 frame.truth.translation,motion.translation);
             if (!t_error.hasValue())
                 return propagate(t_error.error(),
                                  "Adaptive comparison translation angle undefined",
                                  frame.matlab_frame_index);
-            auto r_error=sourceDirectionErrorDegrees(
+            auto r_error=source_metrics::sourceDirectionErrorDegrees(
                 frame.truth.rotation,motion.rotation);
             if (!r_error.hasValue())
                 return propagate(r_error.error(),

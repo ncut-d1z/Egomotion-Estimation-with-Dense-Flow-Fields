@@ -535,6 +535,20 @@ if(BUILD_TESTING)
     set_tests_properties(r06_svg_source_windows PROPERTIES
         LABELS "r06;plot;source-limits;svg-geometry;synthetic-only;write-sandbox" TIMEOUT 60)
 
+    add_executable(test_r06_motion_errors tests/integration/test_r06_motion_errors.cpp)
+    target_include_directories(test_r06_motion_errors PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    target_link_libraries(test_r06_motion_errors PRIVATE egomotion_contracts)
+    target_compile_options(test_r06_motion_errors PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_source_motion_errors COMMAND test_r06_motion_errors)
+    set_tests_properties(r06_source_motion_errors PROPERTIES
+        LABELS "r06;metrics;analytic;boundaries" TIMEOUT 30)
+
+    add_executable(test_r06_kvd_stopping tests/integration/test_r06_kvd_stopping.cpp)
+    target_link_libraries(test_r06_kvd_stopping PRIVATE egomotion_estimators)
+    target_compile_options(test_r06_kvd_stopping PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_kvd_stopping_reference COMMAND test_r06_kvd_stopping)
+    set_tests_properties(r06_kvd_stopping_reference PROPERTIES
+        LABELS "r06;kvd;independent-reduced-reference;bounded-fixtures" TIMEOUT 60)
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")

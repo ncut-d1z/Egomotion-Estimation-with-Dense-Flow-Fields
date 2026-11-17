@@ -1,4 +1,5 @@
 #include "egomotion/experiments/bias_runner.hpp"
+#include "../numerics/source_motion_errors.hpp"
 
 #include "egomotion/estimators/franz_kvd.hpp"
 #include "egomotion/sampling/directions.hpp"
@@ -43,35 +44,6 @@ ErrorResult fromNumerical(const Result<T,NumericalErrorCode>& failed,
     outer.message+=")";
     return ErrorResult::failure(wrapFailure(
         outer_code, std::move(outer), failed.error()));
-}
-Result<Scalar,NumericalErrorCode> normalizedVectorError(
-    const Vector3& truth, const Vector3& estimate) {
-    const double nt=truth.norm(), ne=estimate.norm();
-    if (!std::isfinite(nt)||!std::isfinite(ne)) {
-        ErrorDetail detail;
-        detail.stage=ErrorStage::Solve;
-        detail.message="Source transfehler_div input norm is non-finite";
-        return Result<Scalar,NumericalErrorCode>::failure(
-            {NumericalErrorCode::NonFiniteInput,std::move(detail)});
-    }
-    // transfehler_div yields mathematical zero for zero truth and nonzero
-    // estimate, but that is NOT a valid error statistic; never count it.
-    if (nt==0 || ne==0) {
-        ErrorDetail detail;
-        detail.stage=ErrorStage::Solve;
-        detail.message="Source transfehler_div has undefined zero vector norm";
-        return Result<Scalar,NumericalErrorCode>::failure(
-            {NumericalErrorCode::ZeroNorm,std::move(detail)});
-    }
-    const double scaled=(truth-estimate*(nt/ne)).norm();
-    if (!std::isfinite(scaled)) {
-        ErrorDetail detail;
-        detail.stage=ErrorStage::Solve;
-        detail.message="Source-normalized motion error is non-finite";
-        return Result<Scalar,NumericalErrorCode>::failure(
-            {NumericalErrorCode::NonFiniteResult,std::move(detail)});
-    }
-    return Result<Scalar,NumericalErrorCode>::success(scaled);
 }
 
 ErrorResult computeImpl(const BiasExperimentConfig& config,
@@ -150,7 +122,7 @@ ErrorResult computeImpl(const BiasExperimentConfig& config,
                     {t,m.translation}, {w,m.rotation}
                 }};
                 for (std::size_t metric=0;metric<6;++metric) {
-                    auto err=normalizedVectorError(pairs[metric].first,
+                    auto err=source_metrics::normalizedVectorError(pairs[metric].first,
                                                    pairs[metric].second);
                     if (!err.hasValue())
                         return fromNumerical(err,ExperimentErrorCode::SolverFailed,
