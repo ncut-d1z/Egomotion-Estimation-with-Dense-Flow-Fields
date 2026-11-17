@@ -92,6 +92,12 @@ Result<Command, ExperimentErrorCode> parseCommand(
     else if (name == "plot") kind = CommandKind::Plot;
     else return invalid("Unknown command: " + name);
 
+    // 已知子命令的帮助不要求业务参数，也不进入Reader/Runner装配调用。
+    if (args.size() == 2 && args[1] == "--help") {
+        return Result<Command, ExperimentErrorCode>::success(
+            {CommandKind::Help, std::monostate{}});
+    }
+
     Options options;
     if (args.size() % 2 == 0) return invalid("Option requires a value");
     for (std::size_t i = 1; i < args.size(); i += 2) {

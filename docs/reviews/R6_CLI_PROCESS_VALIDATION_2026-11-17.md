@@ -1,6 +1,14 @@
 # R6 真实CLI与历史分析集成
 
-## 首轮准备：尚未执行
+## 首轮实测与修复候选
+
+源码 `3843a814b1b48bea6ba78765e25583d131098f01` 已提交/推送/远端核实；RunId `r6-cli-baseline-20261117-LPFe6rGv`，配置/编译exit0且无诊断，MAT先5/5、其余28/30，合计33/35。真实CLI合同执行41个进程，除八项子命令帮助错误退出2（每项另有stderr断言失败）外，解析/诊断、两种Bias生成/七MAT/Manifest来源/不覆盖、生成结果分析均通过。原始输入哈希未变。
+
+**本地缺陷R6-CLI-001**：生产解析器未处理已知子命令单独的 `--help`。修复在确认命令合法后、解析业务参数前返回Help；未知命令仍失败，不改变算法或运行参数。**测试自身缺陷R6-CLI-TEST-001**：CMake条件的未加引号 `archive` 被同名路径变量展开，导致archive模式在调用CLI前即拒绝；修正为带引号的显式字符串比较。不是历史MAT/Analyzer失败，不能声称六组分析已执行。
+
+保存证据后检索全部open/closed Issue/PR仍为空，未创建远端Issue。首轮证据在 `build/r6-cli-baseline-20261117-LPFe6rGv/evidence/`；其余CTest stdout SHA-256 `32bf963537354e5e9f7bf367dcf044fd89800576127d3c42650fa4083a7b67b7`。实际子进程证据与输出在构建目录 `r06_cli_process/CLI 中文 空格/contract_f24e95ff336e223c6806a5ce/`，均保留。原失败断言不变，待新检查点后复测全部35项。
+
+## 首轮准备（历史）：尚未执行
 
 **[HUMAN-EXECUTE/APPROVE]** 起点 `4b75c046980cde8b382b3725e879d3d8d95fff51` 本地/远端一致且工作区干净，关联任务仍要求继续R6，全部open/closed Issue/PR查询为空。前批33/33只属于 `c218753`；本批新增两项后登记35项，尚未构建或执行。执行前继续提交、推送并核实远端SHA，不执行MATLAB/Octave、完整科学实验或依赖安装。
 
