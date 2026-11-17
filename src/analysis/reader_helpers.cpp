@@ -44,14 +44,16 @@ ArrayResult load(IResultReader& reader,const std::filesystem::path& root,
         return ArrayResult::failure({
             AnalysisErrorCode::ShapeMismatch,
             ErrorDetail{std::nullopt,ErrorStage::Decode,
-                        "MAT variable name/type/shape mismatch",path.string(),name}});
+                        "MAT variable name/type/shape mismatch",path.string(),name,
+                        std::nullopt,{}}});
     const auto n=info.dimensions[0];
     const auto c=info.dimensions[1];
     if(!n||!c||c>std::numeric_limits<std::size_t>::max()/n||value.values_column_major.size()!=n*c)
         return ArrayResult::failure({
             AnalysisErrorCode::ShapeMismatch,
             ErrorDetail{std::nullopt,ErrorStage::Decode,
-                        "MAT column-major array length mismatch",path.string(),name}});
+                        "MAT column-major array length mismatch",path.string(),name,
+                        std::nullopt,{}}});
     for(double x:value.values_column_major)
         if(!std::isfinite(x)){
             ErrorDetail d;d.stage=ErrorStage::Analyze;d.source_path=path.string();

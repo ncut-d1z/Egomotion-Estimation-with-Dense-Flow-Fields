@@ -18,10 +18,10 @@ int main() {
     using OwnedResult = Result<std::unique_ptr<int>, NumericalErrorCode>;
     using UnitStatus = Status<MatErrorCode>;
 
-    static_require(!std::is_default_constructible<OwnedResult>::value);
-    static_require(!std::is_default_constructible<UnitStatus>::value);
-    static_require(!std::is_copy_assignable<OwnedResult>::value);
-    static_require(!std::is_move_assignable<UnitStatus>::value);
+    static_assert(!std::is_default_constructible<OwnedResult>::value);
+    static_assert(!std::is_default_constructible<UnitStatus>::value);
+    static_assert(!std::is_copy_assignable<OwnedResult>::value);
+    static_assert(!std::is_move_assignable<UnitStatus>::value);
 
     auto good = OwnedResult::success(std::make_unique<int>(7));
     require(good.hasValue());
