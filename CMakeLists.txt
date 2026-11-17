@@ -443,6 +443,15 @@ if(BUILD_TESTING)
     set_tests_properties(r06_mat_independent_storage_values PROPERTIES
         LABELS "r06;mat;readonly;independent-l2;storage-tags" TIMEOUT 180)
 
+    add_executable(test_r06_reader_negative tests/integration/test_r06_reader_negative.cpp)
+    target_link_libraries(test_r06_reader_negative PRIVATE egomotion_matio PkgConfig::MATIO)
+    target_compile_features(test_r06_reader_negative PRIVATE cxx_std_17)
+    target_compile_options(test_r06_reader_negative PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_mat_reader_boundaries COMMAND test_r06_reader_negative
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_reader_boundaries")
+    set_tests_properties(r06_mat_reader_boundaries PROPERTIES
+        LABELS "r06;mat;negative;synthetic-only;write-sandbox" TIMEOUT 60)
+
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")

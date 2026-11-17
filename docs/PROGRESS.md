@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 Reader 类型与损坏负例（2026-11-17）
+
+**[HUMAN-EXECUTE/APPROVE] 新增测试源码，尚未执行。** 新增压缩/普通MAT类型、形状、载荷损坏及多变量选择的合成沙箱测试；登记25项，实测结果暂仍为下节24/24。范围与待测证据见 [Reader边界记录](reviews/R6_READER_BOUNDARIES_2026-11-17.md)。不修改原始文件或扩大正式验收范围。
+
 ## 最新接续：R6 原始存储标签及独立 L2 Reader（2026-11-17）
 
 **[HUMAN-EXECUTE/APPROVE] 源码 `68a5f684cc9fb45ee33a7b87b70525ac0510c8fa` 已编译，24/24 CTest通过。** 独立C++/zlib解析582个MAT的33,340个数值，与生产Reader的列主序binary64值逐位一致，全部固定SHA匹配。实际实部标签为502 miDOUBLE/80 miINT32（Bias全部xwerte），均为double class，纠正旧报告将matio解码dtype当物理dtype的事实错误。运行前检查点已推送并核实；RunId `r6-mat-storage-20261117-83tbiC2N`，先MAT3/3再其余21/21，原始输入哈希不变，无编译诊断。不更改数值阈值或REQ/AC。执行证据、候选参考身份及未覆盖的严格Reader负例见 [存储验证](reviews/R6_MAT_STORAGE_VALIDATION_2026-11-17.md)。R6未结案。
