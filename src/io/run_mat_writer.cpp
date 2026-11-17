@@ -181,10 +181,12 @@ Status<MatErrorCode> RunMatWriter::saveNewVariable(
             return fail(MatErrorCode::WriteFailed,directory_,name,
                         "matio could not create MAT v5 on the owned staging inode");
         std::size_t dims[2]{payload.info.dimensions[0],payload.info.dimensions[1]};
-        // flags=0 -> matio copies values. It will own and free the copy.
+        // matio 的旧接口要求可写 void*；使用局部副本，不移除调用方的 const。
+        // flags=0 使 matio 再复制并拥有数据，避免依赖局部缓冲区的生命周期。
+        auto writable_values=payload.values_column_major;
         VarHandle variable(Mat_VarCreate(name.c_str(),MAT_C_DOUBLE,MAT_T_DOUBLE,
                              2,dims,
-                             payload.values_column_major.data(),0));
+                             writable_values.data(),0));
         if(!variable)
             return fail(MatErrorCode::WriteFailed,directory_,name,
                         "matio could not allocate the named double variable");

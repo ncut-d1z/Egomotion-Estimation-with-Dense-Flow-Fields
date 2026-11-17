@@ -1,5 +1,7 @@
 # Egomotion Estimation with Dense Flow Fields：MATLAB → C++ 源码审计与模块化移植计划
 
+> **2026-11-17 状态更新**：用户已明确授权生产代码修改、构建/CTest 和方案文档修改，当前按 [ROADMAP](ROADMAP.md) 执行 R6 原生验证。下文“纯文档阶段”等描述保留其历史语境；当前代码与运行证据以 [PROGRESS](PROGRESS.md) 最新批次为准。此更新不修改需求、验收阈值或正式冻结状态。
+
 > **WBS 草案 v0.8，未形成承诺基线。** 98 项 P 任务的证据要求与可执行进度以 [PROGRESS.md](PROGRESS.md) 为唯一滚动登记；本文件不保存动态 PASS/失败计数。
 
 > **HAR-2026-11-06-001 的可审查补充**：用户审批 JSON 的 H-01～H-16 已拆成 [审批后的设计修订与待审材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md)，包含 H-05 需求影响、H-06 冻结准备、H-07 历史 MAT 差异、H-08 SHA-256、H-09 Golden、H-13 异常、H-15 里程碑与 H-16 Draft PR 清单。该补充不是 SRS/LLD 冻结或 H-10 解除暂缓，P0～P10 的既有 REQ/TC/AC 义务与任务状态不变。

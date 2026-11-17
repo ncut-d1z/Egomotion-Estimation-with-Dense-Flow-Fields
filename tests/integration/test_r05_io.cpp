@@ -10,12 +10,25 @@
 #include <filesystem>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
 namespace {
 void require(bool condition,const char* why){
     if(!condition)throw std::runtime_error(why);
+}
+void requireUnchanged(const egomotion::DenseDoubleArray& actual,
+                      const egomotion::DenseDoubleArray& expected) {
+    const auto metadata=[](const egomotion::MatVariableInfo& info){
+        return std::tie(info.name,info.dimensions,info.original_class_type,
+                        info.original_data_type,info.is_complex,info.is_logical,
+                        info.is_global,info.is_compressed,info.data_bytes,
+                        info.class_name,info.data_type_name);
+    };
+    require(metadata(actual.info)==metadata(expected.info)&&
+            actual.values_column_major==expected.values_column_major,
+            "MAT Writer must leave the caller's const payload unchanged");
 }
 void requireNoStagingFiles(const std::filesystem::path& run_path) {
     for(const auto& entry:std::filesystem::directory_iterator(run_path)){
@@ -54,16 +67,21 @@ int main(int argc,char** argv){
             digest.value()=="2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
             "SHA256 of hello differs from published FIPS-180-4 reference");
 
-    DenseDoubleArray a;
-    a.info.name="xwerte";
-    a.info.original_class_type=6;
-    a.info.original_data_type=9;
-    a.info.dimensions={2,3};
-    a.info.data_bytes=6*sizeof(double);
-    a.values_column_major={1,2,3,4,5,6};
+    const DenseDoubleArray a=[] {
+        DenseDoubleArray value;
+        value.info.name="xwerte";
+        value.info.original_class_type=6;
+        value.info.original_data_type=9;
+        value.info.dimensions={2,3};
+        value.info.data_bytes=6*sizeof(double);
+        value.values_column_major={1,2,3,4,5,6};
+        return value;
+    }();
+    const auto original=a;
     io::RunMatWriter writer(*run);
     require(writer.saveNewVariable(run->runId(),"xwerte",a).hasValue(),
             "Synthetic MAT Writer cannot publish and read back 2x3 double");
+    requireUnchanged(a,original);
     const auto evidence=writer.fileEvidence();
     require(evidence.size()==1&&evidence[0].durably_confirmed&&
             evidence[0].sha256.size()==64,
@@ -71,8 +89,10 @@ int main(int argc,char** argv){
     auto already=writer.saveNewVariable(run->runId(),"xwerte",a);
     require(!already.hasValue()&&already.error().code==MatErrorCode::OutputExists,
             "MAT Writer must reject overwriting its own result");
+    requireUnchanged(a,original);
     auto unsafe=writer.saveNewVariable(run->runId(),"../origin/attack",a);
     require(!unsafe.hasValue(),"MAT Writer must reject invalid target basename");
+    requireUnchanged(a,original);
 
     io::MatResultReader reader;
     auto back=reader.readNamed(run->outputRoot()/run->runId().text/"xwerte.mat","xwerte");
