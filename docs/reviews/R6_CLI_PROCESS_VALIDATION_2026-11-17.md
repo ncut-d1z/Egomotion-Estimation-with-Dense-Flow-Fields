@@ -1,6 +1,33 @@
 # R6 真实CLI与历史分析集成
 
-## 首轮实测与修复候选
+## 最终复测：35/35 CTest通过
+
+**[HUMAN-EXECUTE/APPROVE] 受测源码 `c42f12f0be89646fd39b93dbb61a79a0ee28e05f` 配置/编译成功，35/35 CTest通过，构建无诊断。** 本段为 `[AI-EDIT]` 事实登记，不代签AC/DEC或冻结。每轮运行前均原子提交、正常推送，并通过GitHub分支API核实 `dev-plan-P0-P1-mat-dictionary-probe` 包含该轮SHA。生产修复为 `src/cli/command.cpp` 的已知子命令帮助；原失败的帮助断言保持且已通过。未修改原始文件、算法、数值阈值或非有限拒绝合同。
+
+RunId `r6-cli-final-20261117-sctymoQQ`，证据目录 `build/r6-cli-final-20261117-sctymoQQ/evidence/`；复用 `build/r6-20261117-KzjFHPDQ/cmake/` 并重新配置受测身份，属于增量构建。环境Ubuntu24.04.5、GCC16.2.0、CMake/CTest4.3.4、Eigen3.4.0、Sophus1.24.6、matio1.5.26、zlib1.3，C++17 Release。Bias固定seed7和level0..2；其余测试种子见 `randomness-source.txt`，RunId由独立OS随机源产生。没有依赖安装、MATLAB/Octave、完整科学实验或L4统计。
+
+| 步骤 | 开始/结束（2026-11-17 UTC+08:00） | 退出码 | 实际结果 |
+|---|---|---:|---|
+| configure | 18:34:01 / 18:34:03 | 0 | 正确固定构建源码SHA |
+| build | 18:34:03 / 18:34:31 | 0 | 全目标通过，无编译诊断 |
+| MAT CTest | 18:34:31 / 18:34:32 | 0 | 5/5，0.49秒 |
+| 其余CTest | 18:34:32 / 18:34:38 | 0 | 30/30，6.11秒 |
+| 输入完整性 | 18:34:38完成 | 0 | 原始资料、独立参考及测试源码SHA一致 |
+
+配置参数 `-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DBUILD_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`；构建 `cmake --build <build-dir> --parallel 4 -- -k`。CTest使用 `-C Release --verbose --no-tests=error --output-junit <evidence>.xml`；先 `--parallel 2 -R '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values|r06_mat_reader_boundaries|r06_mat_raw_payload_boundaries)$'`，再 `--parallel 4 -E` 同表达式，全部35项无遗漏。完整cwd/命令/参数/时间/退出码/stdout/stderr/JUnit/Testing快照均保留，launcher stderr均为空；测试中的预期拒绝诊断保存在各子进程stderr中。
+
+| 新增CTest | 实际进程数 | 结果与限定 |
+|---|---:|---|
+| `r06_cli_process_contract` | 42 | 全局/八子命令帮助、非法参数及JSON转义、真实Reader、两种有界Bias/七MAT/Manifest和文件SHA、重复RunId拒绝、生成Bias分析全部符合预期 |
+| `r06_cli_process_archive` | 15 | 六组原始输入均实际执行。两种Bias各13曲线与Initialization两曲线成功，发布3份SVG；三个600帧Adaptive目录的analyze/plot均NonFiniteInput/exit5，无伪造图像。正例及负例合同通过不等于六组全部科学分析成功 |
+
+子进程证据在构建目录 `r06_cli_process/CLI 中文 空格/contract_43f5efa1da48da3a83457f90/evidence/` 与 `archive_6e02e5c29e688be4d39f73d7/evidence/`。后者的 `coverage.txt` 明示每组成功/拒绝以及JSON输入摘要null数量；两组Bias各493、Initialization为2，合计988个贡献引用的摘要仍未知，不能声称JSON已携带原始MAT SHA。独立快照核验输入身份，Manifest中实际文件摘要则已全部核对。SVG只验证结构、曲线存在及来源，不宣称全部视觉坐标或独立分析数值复现。
+
+MAT stdout SHA-256 `d7f397f8abb76c7c9dd84f5760ca95968f9d97cebe1894224639c0f43ec7220f`；其余CTest stdout SHA-256 `40e4e7f1815b522c226e18d46e9238c8d85527abdff4ad16ed291451b3202345`。原 `origin` Git树仍为 `70ee155131c24a50169346d0ffbaff0c01b1c547`。四个代码/测试检查点依次为 `3843a814b1b48bea6ba78765e25583d131098f01`、`3986ed5f7958df9a8859b0ddc8109eb8dcd04f77`、`8fad2921ea4346a16492018f0320cb5170ba78b3`、`c42f12f0be89646fd39b93dbb61a79a0ee28e05f`；完整失败/诊断/纠正链保留。未创建/关闭Issue或PR，未合并/发布。
+
+**下一具体缺项**：以明确的有限合成MAT验证Comparison/UpdateRates真实CLI成功路径，并用非线性固定数据独立核对逐值分段/平滑；目前旧平滑测试主要使用线性序列，不能充分区分窗口内部均值错误。本批不把已知原始NaN改写或屏蔽成成功。其余独立L3/L4、完整科学实验、资源资格和正式验收保持未完成，R6未结案。
+
+## 首轮实测与修复候选（历史）
 
 **独立审计轮 `8fad2921ea4346a16492018f0320cb5170ba78b3`**：RunId `r6-cli-archive-audit-20261117-AGxqN2uB`，构建无诊断，34/35；5项MAT测试先通过，独立于matio的原始标签/列主序解码与生产结果仍逐位一致。全部六组输入的15次CLI进程均已执行；两种Bias与Initialization分析/绘图exit0，三个600帧Adaptive目录的analyze/plot均NonFiniteInput/exit5。原始哈希不变，原失败预期及日志均保留。
 
