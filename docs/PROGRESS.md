@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 Bias依赖注入（2026-11-18）
+
+`[HUMAN-EXECUTE/APPROVE]` 准备：接续`4039bfd`，Bias求解器通过三个独立槽注入，RNG使用RunContext实例并保留原两次重置。新增两模式事件/失败前缀/交错隔离及内存交付测试，既有真实数值与MAT发布断言保留；预期SVG ON54/OFF53项，尚未构建或执行，待提交推送核实后验证。见 [专项记录](reviews/R6_BIAS_INJECTION_2026-11-18.md)。其它R6缺口和正式验收状态不变。
+
 ## 最新接续：98项P任务与数值证据汇总（2026-11-18）
 
 `[AI-EDIT]`：从本地/远端一致的`e24e759`继续，已将PLAN全部98项逐一对应当前实现、有限证据和未完成义务，新增 [任务复核](reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md) 与P10.6要求的 [NUMERICAL_EQUIVALENCE](NUMERICAL_EQUIVALENCE.md)。核对98个编号/顺序/唯一性、66 TC集合、两新报告65个文件引用及53/52项JUnit与CMake逐名映射；本轮只改文档，没有重跑构建/CTest。发现Bias内部创建求解器/RNG仍不满足REQ-DC-EXPERIMENT-001组合注入，另缺真实MAT v7.3拒绝用例；下一步优先补依赖注入与固定替身隔离测试、版本负例。其它候选结构差异、非生成日志、完整Adaptive/L4及正式资格继续保留。实测代码仍为`4c2973b`，R6未结案。

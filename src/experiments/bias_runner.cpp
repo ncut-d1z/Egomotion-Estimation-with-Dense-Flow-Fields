@@ -1,9 +1,7 @@
 #include "egomotion/experiments/bias_runner.hpp"
 #include "../numerics/source_motion_errors.hpp"
 
-#include "egomotion/estimators/franz_kvd.hpp"
 #include "egomotion/sampling/directions.hpp"
-#include "egomotion/sampling/random.hpp"
 #include "egomotion/simulation/flow.hpp"
 
 #include <array>
@@ -27,8 +25,8 @@ ErrorResult invalid(std::string message) {
     detail.message=std::move(message);
     return ErrorResult::failure({ExperimentErrorCode::InvalidParameters, std::move(detail)});
 }
-template<class T>
-ErrorResult fromNumerical(const Result<T,NumericalErrorCode>& failed,
+template<class NumericalResult>
+ErrorResult fromNumerical(const NumericalResult& failed,
                        ExperimentErrorCode outer_code,
                        std::string message, std::size_t level,
                        std::optional<std::size_t> coefficient_column=std::nullopt) {
@@ -48,8 +46,10 @@ ErrorResult fromNumerical(const Result<T,NumericalErrorCode>& failed,
 
 ErrorResult computeImpl(const BiasExperimentConfig& config,
                         const IDirectionSampler& sampler,
-                    const IFlowNoiseModel& noise,
-                    const std::function<void()>& sample_completed) {
+                        const IFlowNoiseModel& noise,
+                        const BiasEstimators& estimators, IRandomSource& rng,
+                        const std::function<void()>& sample_completed) {
+    // 保留源脚本的单一嵌套循环及就地失败边界，避免拆分后传递真值/列/层/进度状态。
     // One sample for each (noise coefficient, subdivision level); source
     // uses 3 noise coefficients in this order, then levels 0..maximum.
     if (config.maximum_subdivision_level<0)
@@ -59,7 +59,9 @@ ErrorResult computeImpl(const BiasExperimentConfig& config,
     if (levels>std::numeric_limits<std::size_t>::max()/3)
         return invalid("Bias output shape overflows size_t");
     try {
-        sampling::Mt19937RandomSource rng(config.seed);
+        auto initialized=rng.reseed(config.seed);
+        if(!initialized.hasValue())return fromNumerical(initialized,ExperimentErrorCode::IncompleteRun,
+            "Bias initial RNG reseed failed",0);
         auto truth_t=sampling::randomUnitDirection(rng);
         if (!truth_t.hasValue()) return fromNumerical(truth_t,ExperimentErrorCode::IncompleteRun,
             "Bias truth translation RNG failed",0);
@@ -70,7 +72,9 @@ ErrorResult computeImpl(const BiasExperimentConfig& config,
 
         // The source calls RandStream.setDefaultStream(seed) a SECOND time
         // after drawing the two fixed truth directions.
-        rng.reseed(config.seed);
+        auto restarted=rng.reseed(config.seed);
+        if(!restarted.hasValue())return fromNumerical(restarted,ExperimentErrorCode::IncompleteRun,
+            "Bias post-truth RNG reseed failed",0);
         BiasRunData data;
         data.level_count=levels;
         data.xwerte.assign(levels,0.0);
@@ -78,9 +82,6 @@ ErrorResult computeImpl(const BiasExperimentConfig& config,
         // Caller/Composition Root owns the single injected sampler/noise pair.
         // No duplicate concrete model is created or selected in the Runner.
         const simulation::FlowSynthesizer synthesizer;
-        const estimators::FranzMatchedFilter franz;
-        const estimators::OriginalKvDEstimator original;
-        const estimators::ModifiedKvDEstimator modified;
         const estimators::KvDParameters kvd;
         // Both Bias scripts explicitly store 8*4^i*(6/8), EVEN when the
         // proportional experiment actually uses 8*4^i directions.
@@ -101,15 +102,15 @@ ErrorResult computeImpl(const BiasExperimentConfig& config,
                                          "Bias flow generation failed",level,v);
 
                 const FlowField& flow=scene.value().noisy;
-                auto franz_result=franz.estimate(flow);
+                auto franz_result=estimators.franz.estimate(flow);
                 if (!franz_result.hasValue())
                     return fromNumerical(franz_result,ExperimentErrorCode::SolverFailed,
                                          "Franz failed on Bias sample",level,v);
-                auto orig_result=original.estimate(flow,kvd);
+                auto orig_result=estimators.original.estimate(flow,kvd);
                 if (!orig_result.hasValue())
                     return fromNumerical(orig_result,ExperimentErrorCode::SolverFailed,
                                          "Original KvD failed on Bias sample",level,v);
-                auto mod_result=modified.estimate(flow,kvd);
+                auto mod_result=estimators.modified.estimate(flow,kvd);
                 if (!mod_result.hasValue())
                     return fromNumerical(mod_result,ExperimentErrorCode::SolverFailed,
                                          "Modified KvD failed on Bias sample",level,v);
@@ -167,9 +168,9 @@ ErrorResult computeImpl(const BiasExperimentConfig& config,
 }  // namespace
 
 Result<BiasRunData,ExperimentErrorCode> BiasExperimentRunner::compute(
-    const BiasExperimentConfig& config,
+    const BiasExperimentConfig& config, IRandomSource& random,
     const std::function<void()>& sample_completed) const {
-    return computeImpl(config,sampler_,noise_,sample_completed);
+    return computeImpl(config,sampler_,noise_,estimators_,random,sample_completed);
 }
 
 }  // namespace egomotion::experiments

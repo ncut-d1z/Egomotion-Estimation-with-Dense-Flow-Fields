@@ -606,6 +606,14 @@ if(BUILD_TESTING)
         LABELS "r06;bias;runner;bounded-level-0-2;cpp-rng" TIMEOUT 180)
     set_property(TEST r06_bias_runner_publication APPEND PROPERTY LABELS "write-sandbox")
 
+    add_executable(test_r06_bias_injection tests/integration/test_r06_bias_injection.cpp)
+    target_link_libraries(test_r06_bias_injection PRIVATE egomotion_experiments)
+    target_compile_features(test_r06_bias_injection PRIVATE cxx_std_17)
+    target_compile_options(test_r06_bias_injection PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_bias_dependency_injection COMMAND test_r06_bias_injection)
+    set_tests_properties(r06_bias_dependency_injection PROPERTIES
+        LABELS "r06;bias;runner;dependency-injection;fixed-solvers;memory-only" TIMEOUT 180)
+
     foreach(case IN ITEMS contract archive)
         add_test(NAME r06_cli_process_${case} COMMAND "${CMAKE_COMMAND}"
             "-DCLI=$<TARGET_FILE:egomotion>"

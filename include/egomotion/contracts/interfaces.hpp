@@ -2,8 +2,10 @@
 
 #include "egomotion/contracts/result.hpp"
 
+#include <cstdint>
 #include <filesystem>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace egomotion {
@@ -47,6 +49,14 @@ public:
     virtual ~IRandomSource() = default;
     virtual Result<Scalar, NumericalErrorCode> uniform() = 0;
     virtual Result<Scalar, NumericalErrorCode> normal() = 0;
+    // Bias源脚本在真值前及真值后各重置一次；其它调用者不应隐式重置。
+    // 不可重置的流须明确失败，不能悄悄继续消费或换用另一个具体RNG。
+    virtual Status<NumericalErrorCode> reseed(std::uint32_t) {
+        ErrorDetail detail; detail.stage=ErrorStage::Simulation;
+        detail.message="Injected random source does not support reseeding";
+        return Status<NumericalErrorCode>::failure(
+            {NumericalErrorCode::InvalidRandomSample,std::move(detail)});
+    }
 };
 
 class IDirectionSampler {

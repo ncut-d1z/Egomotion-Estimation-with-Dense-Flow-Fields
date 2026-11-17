@@ -65,21 +65,35 @@ struct KvDResult {
     std::vector<KvDIterationTrace> trace;
 };
 
-class FranzMatchedFilter {
+// 两种求解结果分别保留：Franz只返回运动，KvD还返回near/迭代trace。
+// 不把Adaptive单步强制塞入一个丢失其状态结果的通用求解器。
+class IFranzMatchedFilter {
 public:
-    Result<MotionEstimate,NumericalErrorCode> estimate(const FlowField& field) const;
+    virtual ~IFranzMatchedFilter() = default;
+    virtual Result<MotionEstimate,NumericalErrorCode> estimate(const FlowField&) const = 0;
+};
+class IKvDEstimator {
+public:
+    virtual ~IKvDEstimator() = default;
+    virtual Result<KvDResult,NumericalErrorCode> estimate(
+        const FlowField&, const KvDParameters&) const = 0;
+};
+
+class FranzMatchedFilter final : public IFranzMatchedFilter {
+public:
+    Result<MotionEstimate,NumericalErrorCode> estimate(const FlowField& field) const override;
     Result<FranzInitializationTrace,NumericalErrorCode>
     estimateWithTrace(const FlowField& field) const;
 };
-class OriginalKvDEstimator {
+class OriginalKvDEstimator final : public IKvDEstimator {
 public:
     Result<KvDResult,NumericalErrorCode> estimate(
-        const FlowField& field, const KvDParameters& parameters) const;
+        const FlowField& field, const KvDParameters& parameters) const override;
 };
-class ModifiedKvDEstimator {
+class ModifiedKvDEstimator final : public IKvDEstimator {
 public:
     Result<KvDResult,NumericalErrorCode> estimate(
-        const FlowField& field, const KvDParameters& parameters) const;
+        const FlowField& field, const KvDParameters& parameters) const override;
 };
 
 }  // namespace egomotion::estimators

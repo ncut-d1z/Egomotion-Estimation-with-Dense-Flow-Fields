@@ -139,13 +139,23 @@ double metric(const Vector3& truth,const Vector3& estimate) {
     const double angle=std::atan2(truth.cross(estimate).norm(),truth.dot(estimate));
     return 2*truth.norm()*std::sin(angle/2);
 }
+Result<BiasRunData,ExperimentErrorCode> computeReal(
+    const IDirectionSampler& sampler,const IFlowNoiseModel& noise,
+    const BiasExperimentConfig& config,const std::function<void()>& completed) {
+    const estimators::FranzMatchedFilter franz;
+    const estimators::OriginalKvDEstimator original;
+    const estimators::ModifiedKvDEstimator modified;
+    sampling::Mt19937RandomSource random(config.seed);
+    return experiments::BiasExperimentRunner(sampler,noise,{franz,original,modified})
+        .compute(config,random,completed);
+}
 BiasRunData observedCompute(ExperimentKind kind,std::uint32_t seed) {
     sampling::OccludedOctahedralSampler missing;sampling::OctahedralSampler full;
     simulation::MeanMagnitudeGaussianNoise mean;simulation::ComponentProportionalGaussianNoise component;
     ObservedSampler sampler(occluded(kind)?static_cast<const IDirectionSampler&>(missing):full);
     ObservedNoise noise(occluded(kind)?static_cast<const IFlowNoiseModel&>(mean):component,seed);
     std::size_t completed=0;
-    const auto result=experiments::BiasExperimentRunner(sampler,noise).compute(
+    const auto result=computeReal(sampler,noise,
         {seed,static_cast<int>(kLevels)-1},[&]{++completed;});
     if(!result.hasValue())throw std::runtime_error("Bounded real Bias compute failed: "+
         std::string(name(kind))+": "+result.error().detail.message);
@@ -189,7 +199,7 @@ void failureContracts() {
     for(const auto fail_call:{1u,5u}) {
         ObservedSampler sampler(full);ObservedNoise noise(component,7);noise.fail_call=fail_call;
         std::size_t completed=0;
-        const auto result=experiments::BiasExperimentRunner(sampler,noise).compute({7,2},[&]{++completed;});
+        const auto result=computeReal(sampler,noise,{7,2},[&]{++completed;});
         check(!result.hasValue(),"Injected normal failure must stop Bias");
         require(!result.hasValue(),"Cannot inspect a successful injected failure");
         check(result.error().code==ExperimentErrorCode::IncompleteRun,"Flow failure must not be SolverFailed");
@@ -209,12 +219,12 @@ void failureContracts() {
     }
     ObservedSampler sampler(full);ObservedNoise noise(component,7);
     std::size_t completed=0;
-    const auto invalid=experiments::BiasExperimentRunner(sampler,noise).compute({7,-1},[&]{++completed;});
+    const auto invalid=computeReal(sampler,noise,{7,-1},[&]{++completed;});
     check(!invalid.hasValue()&&invalid.error().code==ExperimentErrorCode::InvalidParameters&&
           sampler.levels.empty()&&noise.calls==0&&completed==0,"Negative level rejected before sampling");
     // 流生成成功但真实KvD初始化不可解，仍必须归类为SolverFailed。
     ZeroFlowNoise zero;completed=0;
-    const auto solver_failure=experiments::BiasExperimentRunner(full,zero).compute({7,0},[&]{++completed;});
+    const auto solver_failure=computeReal(full,zero,{7,0},[&]{++completed;});
     check(!solver_failure.hasValue()&&solver_failure.error().code==ExperimentErrorCode::SolverFailed&&completed==0,
           "Actual solver failure must retain SolverFailed and zero valid samples");
     bool zero_norm=false;

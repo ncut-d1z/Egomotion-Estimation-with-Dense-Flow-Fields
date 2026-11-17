@@ -93,9 +93,9 @@ Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runBiasOcclud
                       "Composition Root injected wrong Bias experiment kind");
     sampling::OccludedOctahedralSampler sampler;
     simulation::MeanMagnitudeGaussianNoise noise;
-    const BiasExperimentRunner calculator(sampler,noise);
+    const BiasExperimentRunner calculator(sampler,noise,biasEstimators());
     context.noteAttempt();
-    auto data=calculator.compute(config,[&context]() noexcept {
+    auto data=calculator.compute(config,context.randomSource(),[&context]() noexcept {
         context.noteValid();
     });
     if(data.hasValue())context.noteCompleted();
@@ -108,9 +108,9 @@ Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runBiasPropor
                       "Composition Root injected wrong Bias experiment kind");
     sampling::OctahedralSampler sampler;
     simulation::ComponentProportionalGaussianNoise noise;
-    const BiasExperimentRunner calculator(sampler,noise);
+    const BiasExperimentRunner calculator(sampler,noise,biasEstimators());
     context.noteAttempt();
-    auto data=calculator.compute(config,[&context]() noexcept {
+    auto data=calculator.compute(config,context.randomSource(),[&context]() noexcept {
         context.noteValid();
     });
     if(data.hasValue())context.noteCompleted();

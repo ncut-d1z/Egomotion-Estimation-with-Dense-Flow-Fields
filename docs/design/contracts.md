@@ -302,7 +302,8 @@ wrap(inner Failure<OldCode>, newCode, newStage, newMessage):
 - uniform 成功值为有限 [0,1)，normal 为有限 double；NaN/Inf 或超界 uniform 返回 InvalidRandomSample，保留调用位置及已知样本索引。
 - FixedSequenceRandomSource 输入耗尽返回 RandomSourceExhausted，不重复末尾样本、不补随机数、不自动重试。
 - 一旦失败，本次数值路径必须显式传播错误。**所有者已选定实验失败策略**：独立样本可记录失败并继续其他独立单位；Adaptive 失败步不提交无效主系数，无法安全恢复时终止当前连续序列；8 次聚合不以 7 次替代除数；Manifest 区分 Complete/Incomplete/Failed，并保留可追踪部分结果、不覆盖旧输出。详见 [experiments.md §6–8](experiments.md) 和 [adaptive_mfa.md §5.1](adaptive_mfa.md)；**策略已确定，具体实现及异常/状态回归测试尚未进行**，不声称原 MATLAB 异常行为已实测。
-- 原 Bias 的两次 seeding 由 RunContext 在相应阶段创建/重置随机源；须保持 motion 前的两组 uniform、reset 后的 N 次 uniform 与 3N 次 normal 的顺序。`nonpropfehler(...,0)` 仍须消费 3N 次 normal。
+- 原 Bias 的随机源由 RunContext 独占，Runner 在源规定的两个阶段调用注入流的 `reseed(seed)`；须保持 motion 前的两组 uniform、reset 后的 N 次 uniform 与 3N 次 normal 的顺序。`nonpropfehler(...,0)` 仍须消费 3N 次 normal。
+- 2026-11-18候选实现：`IRandomSource::reseed(uint32_t)` 返回 `Status<NumericalErrorCode>`，默认明确返回 `InvalidRandomSample`（不支持重置），Bias立即传播失败；Mt19937覆写重置引擎与uniform/normal缓存，不创建后备随机源。Adaptive不调用此方法，连续流不因此重置。接口未冻结，证据见 [Bias注入记录](../reviews/R6_BIAS_INJECTION_2026-11-18.md)。
 - 每 RunId 独占 RNG，FixedSequence 测试覆盖数值、调用计数、提前耗尽、越界/非有限值；结果性能和 ABI 仍待批准。
 
 ### 3.3 `ExperimentErrorCode::DataMismatch` 的候选触发边界

@@ -11,10 +11,11 @@ namespace egomotion::sampling {
 class Mt19937RandomSource final : public IRandomSource {
 public:
     explicit Mt19937RandomSource(std::uint32_t seed) : generator_(seed) {}
-    void reseed(std::uint32_t seed) {
+    Status<NumericalErrorCode> reseed(std::uint32_t seed) override {
         generator_.seed(seed);
         normal_distribution_.reset();
         uniform_distribution_.reset();
+        return Status<NumericalErrorCode>::success();
     }
     Result<Scalar, NumericalErrorCode> uniform() override;
     Result<Scalar, NumericalErrorCode> normal() override;
