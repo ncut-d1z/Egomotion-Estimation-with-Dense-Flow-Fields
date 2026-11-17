@@ -59,6 +59,8 @@ Original research references (retained):
 
 `egomotion` 检查终端/重定向输出的写入与刷新。普通输出流错误返回6；stderr也失效时无法保证诊断送达。计算可能已经成功保存MAT与Complete Manifest，而最后的stdout通知交付失败；请核对该RunId下的现有产物，不以通知失败覆盖或删除结果。失败审计在stderr通知前保存，默认SIGPIPE行为保持不变。实际范围见 [输出故障验证](docs/reviews/R6_CLI_STREAM_OUTPUT_2026-11-17.md)。
 
+五个 `run-*` 实验在同一RunId目录保存 `invocation.json`（命令、实际参数、seed、源码与环境）和 `execution.json`（输出尝试、完整交付状态与返回码规则）。结束记录确认发布后，程序返回 `exit_code_if_record_published`；记录自身写入/持久化失败返回6并报错，已有计算Manifest保持原状态。信号终止可能只有开始记录，不能据此认定完成。字段与验证范围见 [运行记录说明](docs/reviews/R6_EXECUTION_RECORDS_2026-11-17.md)。
+
 ## Minimal C++ MAT dictionary probe
 
 The first C++ utility is [src/mat_data_dict_probe.cpp](src/mat_data_dict_probe.cpp). It discovers all original MAT files, opens each file **read-only** using matio, enumerates names with Mat_GetDir, reads each variable using Mat_VarRead, and generates a Markdown data dictionary. Per-file output includes its location, size, FNV-1a 64-bit change-detection fingerprint, MAT version, variable name, class, decoded data type, dimensions, compression, flags and read status. **FNV is not a cryptographic hash.**

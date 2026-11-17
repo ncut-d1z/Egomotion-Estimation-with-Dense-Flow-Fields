@@ -81,6 +81,8 @@
 
 **实际输出交付证据 `[AI-EDIT]`，2026-11-17**：`5a2cedc` 对`egomotion`全部stdout成功输出及stderr诊断检查write/flush，普通流错误退出6；真实RunId保留，stderr不可用时不承诺诊断送达。失败Manifest先于stderr通知保存，默认SIGPIPE终止后审计仍保留；已发布成功产物不因stdout通知失败而重写。两模式50/50、49/49及848项流检查见 [实测](../reviews/R6_CLI_STREAM_OUTPUT_2026-11-17.md)。信号终止仍按系统行为处理，不声称返回6；这是既有输出失败义务的限定实现证据，不冻结候选合同。
 
+**五实验运行记录候选实现，未冻结（2026-11-18登记）**：`4c2973b`在`output/<RunId>/`增加`invocation.json`和`execution.json`，不修改MAT集合。开始记录确认后才调用Runner；有效Config/原参数、seed、源码/环境与输出尝试全文可复核。`execution.json`的`exit_code_if_record_published`仅在记录确认发布时为返回码，记录自身失败返回`exit_code_on_record_failure=6`并独立报错；不能仅凭文件存在判断持久性。输出尝试的全文不代表失败通道实际接收了全部字节；SIGPIPE等终止不伪造结束记录。正式schema冻结及其它入口边界仍待复核，53/53、52/52的限定证据见 [专项](../reviews/R6_EXECUTION_RECORDS_2026-11-17.md)。
+
 失败诊断最少包含稳定的 `error_code`、`exit_code`、`stage`、`message`；涉及 MAT 需附 `path` 与已知 `variable`，涉及实验需附 RunId、算法与样本下标。正常输出使用 stdout、错误使用 stderr，文件里仍保存原 MATLAB 兼容 MAT。**现行设计已选 JSONL 为结构化诊断格式**：一行一个UTF-8 JSON对象，至少有**顶层`error_domain`、`error_code`**、`stage`、`exit_code`、`message`及按`std::forward_list<ErrorFrame>`顺序序列化的`causes`数组（空链为`[]`），可选`run_id/path/variable/observation_index`；stage 由 `contracts.md` 的稳定 `ErrorStage` 枚举序列化，字符串须正确转义，非有限数值不得输出不合法 JSON。无需大型 JSON 依赖，可实现小型可靠序列化器。**当前只有方案，未创建程序或 JSONL 测试**。
 
 **最新项目所有者决定**：CLI 输出根选项已明确删除；固定 `output/<RunId>/`、独立 RunId、JSONL、稳定错误阶段和轻量封装 Result 为已选择的设计方向（见 [最新决定](../decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md)）。其余 CLI 具体错误码与完整 CTest identity 仍属于 P0.8/DEC-008 的未冻结接口细节；本轮不执行任何命令，也不能把候选接口称为已测试。

@@ -2,7 +2,7 @@
 
 > **2026-11-17 最新执行授权**：用户已明确允许生产代码修改、构建/CTest 和方案文档修改。现进入 R6 原生验证及失败修复，旧批次的运行暂缓只作历史记录；每次运行前仍执行远程检查点规则。实际命令/结果见 [PROGRESS](PROGRESS.md)，本次授权不等于数值验收或冻结。
 
-> **最新结果**：`56317e2215fca608b6afa2ffd1a144dd3444b4a6` 两模式增量构建无诊断，SVG ON 52/52、OFF 51/51 CTest；独立探针每模式165项检查/40次入口调用及17次真实进程通过，write/close故障实际命中，原582MAT摘要不变，见 [探针实测](reviews/R6_DICTIONARY_OUTPUT_2026-11-17.md)。既有 [CLI输出故障](reviews/R6_CLI_STREAM_OUTPUT_2026-11-17.md)、[无绘图隔离](reviews/R6_HEADLESS_BUILD_2026-11-17.md)、[MAT身份绑定](reviews/R6_MAT_SNAPSHOT_2026-11-17.md) 回归保留。真实Adaptive三入口仍因acos越界/零旋转明确失败、无MAT；[66 TC实际映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)已同步。[45源现行追踪](MIGRATION_MATRIX.md)已复核，继续正式运行参数/环境/交付身份记录及P/TC覆盖复核；完整Adaptive成功、L4、病态数值资格、资源与正式验收仍待完成。错误处理通过不代表实验成功；后文旧未编译/0项通过均属历史SHA，R6未结案。
+> **最新结果（2026-11-18登记）**：`4c2973b19c148f640613b03309e8756006adb053` 两模式增量构建无诊断，SVG ON **53/53**、OFF **52/52** CTest；五实验运行参数/环境/seed及输出交付记录已实测，新增106项检查/12次调用，发布和发布后fsync故障、Complete产物保留及SIGPIPE边界通过，见 [运行记录实测](reviews/R6_EXECUTION_RECORDS_2026-11-17.md)。既有 [探针输出](reviews/R6_DICTIONARY_OUTPUT_2026-11-17.md)、[CLI输出故障](reviews/R6_CLI_STREAM_OUTPUT_2026-11-17.md)、[无绘图隔离](reviews/R6_HEADLESS_BUILD_2026-11-17.md)、[MAT身份绑定](reviews/R6_MAT_SNAPSHOT_2026-11-17.md) 回归保留，原582MAT摘要不变。真实Adaptive三入口仍因acos越界/零旋转明确失败、无MAT；[66 TC实际映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)已同步。[45源现行追踪](MIGRATION_MATRIX.md)已复核，继续非生成入口/分配RunId前的记录边界及P/TC覆盖复核；完整Adaptive成功、L4、病态数值资格、资源与正式验收仍待完成。错误处理通过不代表实验成功；后文旧未编译/0项通过均属历史SHA，R6未结案。
 
 > **原则：先完成全部业务 C++ 代码，再统一构建、测试与验收。** R0–R5 **只实施代码/接口**，期间不安排 CMake 配置、编译、CTest、数学/数值测试或实验运行；测试源码与构建执行也集中在最后的 R6。源码提交和静态审阅不等于通过测试。H-10 编程已授权；H-11 原生运行与 MAT 写入权限仍须单独确认。现行证据见 [PROGRESS](PROGRESS.md)。
 

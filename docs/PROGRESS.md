@@ -1,8 +1,8 @@
 # 实施进度与证据登记（PROGRESS）
 
-## 最新接续：R6 五实验运行记录（2026-11-17）
+## 最新接续：R6 五实验运行记录（2026-11-18登记，11-17实测）
 
-`[HUMAN-EXECUTE/APPROVE]`：已定位正式运行仅保存SHA/seed、缺argv/Config/环境的实际缺口。新增开始与结束记录、输出尝试/交付状态、记录本身失败的条件返回码及故障测试，**尚未构建/运行**；预计ON 53/OFF 52项。候选实现和验证范围见 [运行记录专项](reviews/R6_EXECUTION_RECORDS_2026-11-17.md)。不修改算法/原MAT字段/数值阈值，R6未结案。
+`[HUMAN-EXECUTE/APPROVE]`：受测源码`4c2973b19c148f640613b03309e8756006adb053`两模式增量构建无诊断，**ON 53/53、OFF 52/52 CTest**，无跳过/禁用。五入口实际argv/Config/环境/seed/通道与条件退出记录已验证；新增106项检查/12次调用，发布及发布后fsync失败、Complete保留、拒覆盖和SIGPIPE缺结束记录均已测，原始输入SHA不变。RunId `r6-execution-records-20261117-C85CvSON`，见 [运行记录专项](reviews/R6_EXECUTION_RECORDS_2026-11-17.md)。继续非生成入口/分配RunId前的记录边界及P/TC核对；三Adaptive完整成功/L4/资源/正式资格仍未完成，R6未结案。
 
 ## 最新接续：R6 独立MAT探针输出（2026-11-17）
 

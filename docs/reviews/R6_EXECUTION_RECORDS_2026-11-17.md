@@ -6,7 +6,7 @@
 
 检查点`e1ebdf3e07ecb7872fb3c278a4ec81f6fc746458`工作区干净且远端相同。最新已受测源码`56317e2`的`SourceProvenance`只有repo/source blob SHA及seed，`runExperiment`未保存实际Config/argv/环境。实际上轮初始化失败目录`build/r6-20261117-KzjFHPDQ/cmake/r06_adaptive_cli/Adaptive 中文 空格/f75ecda42cc8f70c887ecbcb/output/initialization`只有`manifest.json`，其键无参数或环境。外部验证脚本日志完整，但不构成产品自动留证。全部状态Issue/PR检索为空；按本记录追踪`R6-EXECUTION-001`。
 
-## 已编写、尚未构建验证
+## 首个检查点实现（当时尚未构建验证）
 
 - 五个`run-*`入口在数值Runner前通过原`RunTextPublisher`独占发布`invocation.json`：实际RunId、构建源码/原.m blob SHA、命令及原始参数序列（不含argv[0]）、有效Config、真实seed及来源、当前工作目录/可执行文件路径、固定输出目录、UTC开始时间、运行内核/发行版与构建工具链/依赖。直接库dispatch没有argv时保存null；空Config以源码SHA追踪其固定常量。五实验输入由源码与RNG生成，不伪称读取了历史MAT。
 - 记录环境只读取`/etc/os-release`的ID/VERSION_ID/PRETTY_NAME和uname系统/内核/架构；不执行配置脚本、不收集完整环境变量或主机名。不可得信息标null，构建依赖版本与运行内核明确分层；不声称运行时动态库一定等同配置时版本。
@@ -18,6 +18,25 @@
 新增`r06_execution_record_contract`检查五入口/直接dispatch、准确参数、错误转义、启动前记录、发布及发布后fsync故障、结束记录拒覆盖和真实有限Bias Complete产物保留。现有真实CLI测试用CMake独立JSON解析器核对五入口的argv/config/seed/路径/时间/环境/实际返回状态；扩展真实`/dev/full`和SIGPIPE记录边界。原文件数量断言仅增加这两份明确命名的记录，MAT集合及原数值断言保留。
 
 预计SVG ON 53项、OFF 52项CTest；远端检查点确认后重新配置/增量构建，MAT六项优先，其余全部执行。所有新记录、生成MAT与日志只在隔离build沙箱，原`origin/**`只读。当前尚未执行新源码，不以测试登记或schema草案充当通过。
+
+## 固定源码验证结果
+
+受测源码 **`4c2973b19c148f640613b03309e8756006adb053`**，分支`dev-plan-P0-P1-mat-dictionary-probe`；执行前原子提交、正常推送、通过GitHub branch API核对同SHA及干净工作区。执行者为获授权的Codex；没有创建/关闭Issue或PR、合并或发布。证据于2026-11-18登记，实际运行全部发生在2026-11-17：
+
+| 配置 | 配置/增量构建 | MAT优先 | 其余CTest | 起止时间（UTC+08:00） |
+|---|---|---|---|---|
+| SVG ON | 退出0，无编译诊断 | 6/6 | 47/47，合计**53/53** | 11-17 23:55:21–23:57:46 |
+| SVG OFF | 退出0，无编译诊断 | 6/6 | 46/46，合计**52/52** | 11-17 23:58:07–23:59:38 |
+
+四份JUnit逐项核对0失败/跳过/禁用，所有case状态run；唯一配置差异仍为`r06_svg_source_windows`。每模式新增合同测试**106项检查/12次调用**，含五入口、无argv的直接dispatch、真实有限Bias和四种发布/发布后fsync故障；实际命中故障后验证开始记录未确认时Runner调用数为0、结束记录失败时保留原计算错误或Complete MAT、不覆盖旧记录。既有CLI流测试扩展到**856项/123次调用**，真实`/dev/full`和默认SIGPIPE边界通过。
+
+真实CLI的两种Bias成功和三种Adaptive规定失败均以CMake独立JSON解析器核对：实际参数序列、有效Config、真实RunId/seed/源SHA、路径、UTC时间、生成输入身份、运行系统、输出通道及条件退出码。三Adaptive仍为既有Incomplete、无MAT；记录补足不将算法失败改成成功。`version`现显示实际受测源码SHA。实际Bias记录中的Ubuntu24.04.5、Linux7.0.0-43-generic/x86_64、GNU16.2.0、CMake4.3.4、Release、libstdc++日期20260807、Eigen3.4.0/matio1.5.26/zlib1.3/Sophus1.24.6均与现场/构建身份对应；svg_enabled按配置分别记录。
+
+额外只读复核ON合同沙箱：21个开始/结束文件中20个通过独立`JSON.parse`，其中9条嵌套输出JSONL也逐条解析；剩余一个正是内容为`retained blocker`的拒覆盖夹具，未被程序改写。该复核属于读取现有产物，不增加CTest计数；逐文件记录在`build/r6-execution-records-20261117-C85CvSON/json-read-audit.json`。
+
+RunId **`r6-execution-records-20261117-C85CvSON`**；`build/`同名目录的`evidence-ON/`、`evidence-OFF/`保留逐步`.meta/.stdout/.stderr`、工具链、源码Git blob、输入SHA/后验结果、JUnit、`Testing`副本及ELF/链接记录，`run.sh`含完整命令。两个构建目录分别为`build/r6-20261117-KzjFHPDQ/cmake`、`build/r6-headless-20261117-Joe73gEd/cmake-off`，均为重新配置和增量构建。命令参数使用Release、BUILD_TESTING/EXPORT_COMPILE_COMMANDS=ON、SVG=ON/OFF、`--parallel 4 -- -k`；MAT六项`ctest --verbose --no-tests=error --parallel 2 -R ...`先行，其余`--parallel 4 -E ...`。没有依赖安装、完整科学/L4或性能实验；实际种子见每次invocation及既有固定测试源。
+
+两模式的输入前后SHA核验均退出0；628原文件/582MAT及原始Git树`70ee155131c24a50169346d0ffbaff0c01b1c547`不变。所有日志/运行记录/生成MAT保留在忽略目录，没有上传原始数据或本机运行路径。
 
 ## 尚未覆盖的边界
 
