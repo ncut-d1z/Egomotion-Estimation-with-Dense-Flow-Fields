@@ -1,0 +1,31 @@
+# R6 Adaptive 均值与矩阵条件参考接入
+
+任务标签 `[HUMAN-EXECUTE/APPROVE]`。用户已授权生产代码、构建/CTest 及方案文档修改；本批仅固定输入，不执行完整科学实验、不安装依赖、不改原始数据或数值门限，不代签 DEC-005/008。
+
+## 首轮检查点准备
+
+新增 `tests/integration/test_r06_adaptive_conditioning.cpp`，注册 `r06_adaptive_conditioning_reference`；总计 40 项 CTest。**尚未构建或执行，40 项登记不能继承之前 39/39 的结果。** 提交、正常推送并核实远端 SHA 后，先运行五项 MAT 测试，再运行其余测试；日志保存在新的忽略目录。
+
+## 独立依据与固定输入
+
+- 只读原源码 `oneit_adaptiv_matched_filter.m`，blob `48e51bcd52fb8f27cf35b3fce38b28507af36e55`。
+- 既有独立参考 [zero_mean_conditioning_evidence.v1.json](../../verification/adaptive/zero_mean_conditioning_evidence.v1.json)，blob `be9aa64cb454fb434b407814f8cfa1310a7c90b7`；其 Wolfram 生成器 blob `36eedaf6477d0255b7ab0f12572506970da6847c`。本批不重新运行 Wolfram，也不改该历史证据状态。
+- 理论推导见 [均值与条件数专题](../design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md)。测试独立用 `long double` 标量公式构造预期矩阵、右端和奇异值，不调用生产矩阵装配/流生成函数生成预期值。实际生产计算仍为 double；只在诊断/参考计算使用较高精度。
+
+十二个正常固定输入：
+
+1. 六轴均匀正近度，`a=1,0.1,0.001,0.000001`，真实平移 `e_x`、旋转 `(1/5,-1/7,1/11)`；预期 `M=(2/3)I6`、raw 平移 `a e_x`、条件数 1。另取 `a=1e-100,omega=0`，验证绝对小均值本身不会触发任意阈值拒绝；旋转置零避免把不可分辨的小平移叠加到有限旋转上。
+2. 六轴 `r=a+y`，同四个 a，CS 系数 `C00=a sqrt(4pi)`、`C1,-1=-sqrt(4pi/3)`；下左块为 `[e_y]_cross/(3a)`，两个对角块为 `(2/3)I3`。`a<1` 有负近度，明确是数学输入，不能声称全部是正深度场景。固定行列式不代表良态，条件数使用既有解析式 `((sqrt(gamma²+4)+gamma)/2)², gamma=1/(2a)`。
+3. 四条正深度窄锥视线，`h=0.1,0.01,0.001`、raw near=1；独立解析矩阵、右端与三对奇异值对应既有 `condition=h^-4`。保留真实平移/旋转及源公式，记录解的前向误差、后向残差和 double SVD 条件估计。
+
+另四个定义域负例：全部 near 为零、非零 near 正负抵消至均值零、纯旋转导致 raw 平移为零、四条重合视线导致奇异矩阵。分别要求既有 `InvalidNearness`、`InvalidNearness`、`ZeroNorm`、`SingularSystem`，stage 为 Solve；不推断 MATLAB 的异常/警告轨迹。
+
+## 断言与诊断边界
+
+沿用 `test_r06_adaptive_l3.cpp` 的回归 allowance `2e-8*(1+abs(expected))`，没有新增生产条件数阈值，也没有启用候选 IllConditionedSystem 分类。直接断言输入不变、raw mean 相对比例、raw/sign/normalized near、完整 6×6 矩阵和 RHS、奇异值的绝对/相对尺度、有限输出及归一平移、后向残差；轴向族另核 raw 解、最终运动、MSE 和含原 `1e-11` 分母的 near_new。
+
+窄锥族的**前向运动误差不作为本批数值资格通过项**，仅如实保存；病态问题的普通小残差不能证明运动准确。最小奇异值很小时，现有混合 allowance 只约束其绝对尺度，不能据此声称相对条件数精度达标。归档数学条件数与实际 double SVD 估计分开输出；正式误差/失败阈值仍需独立审查。
+
+## 实测结果
+
+等待检查点后真实执行；R6 未结案。

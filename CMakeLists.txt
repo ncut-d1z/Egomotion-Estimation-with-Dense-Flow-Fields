@@ -549,6 +549,13 @@ if(BUILD_TESTING)
     add_test(NAME r06_kvd_stopping_reference COMMAND test_r06_kvd_stopping)
     set_tests_properties(r06_kvd_stopping_reference PROPERTIES
         LABELS "r06;kvd;independent-reduced-reference;bounded-fixtures" TIMEOUT 60)
+
+    add_executable(test_r06_adaptive_conditioning tests/integration/test_r06_adaptive_conditioning.cpp)
+    target_link_libraries(test_r06_adaptive_conditioning PRIVATE egomotion_estimators)
+    target_compile_options(test_r06_adaptive_conditioning PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_adaptive_conditioning_reference COMMAND test_r06_adaptive_conditioning)
+    set_tests_properties(r06_adaptive_conditioning_reference PROPERTIES
+        LABELS "r06;adaptive;independent-analytic;conditioning;bounded-fixtures" TIMEOUT 60)
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")

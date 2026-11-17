@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 Adaptive conditioning 参考（2026-11-17）
+
+**首轮准备 `[HUMAN-EXECUTE/APPROVE]`，尚未执行。** 接入既有独立均值/条件数参考族，12个正常输入及4个定义域负例；保留完整矩阵/RHS与实际解诊断，不改生产门限。40项CTest仅登记，待远程检查点后构建/测试，见 [验证记录](reviews/R6_ADAPTIVE_CONDITIONING_2026-11-17.md)。窄锥前向误差仅诊断，不冒充正式数值资格；R6未结案。
+
 ## 最新接续：R6 误差函数与 KvD 停止分支（2026-11-17）
 
 **最终复测 `[HUMAN-EXECUTE/APPROVE]`：`bcee2ca02ef100b569da3ee2a54137b6875bb0af` 无诊断构建、39/39 CTest（MAT5/5，其余34/34）。** 误差函数685项、KvD75080项全部通过；506次真实KvD停止轮数/继续标志与独立解析降维参考一致，两算法均覆盖默认200轮上限、两类独立门限退出及最少6轮。RunId `r6-motion-stopping-fix-20261117-sQGrT7nI`，首轮失败保留、原始SHA不变，见 [验证记录](reviews/R6_MOTION_STOPPING_2026-11-17.md)。下一项为conditioning及交替Session/RunContext隔离，其余分析/插图、完整科学/L4与正式验收仍未完成；R6未结案。
