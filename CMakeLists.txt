@@ -603,8 +603,13 @@ if(BUILD_TESTING)
     add_executable(r06_adaptive_cli_values tests/integration/r06_adaptive_cli_values.cpp)
     target_link_libraries(r06_adaptive_cli_values PRIVATE egomotion_matio ZLIB::ZLIB)
     target_compile_options(r06_adaptive_cli_values PRIVATE -Wall -Wextra -Wpedantic)
+    add_executable(r06_adaptive_init_trace tests/integration/r06_adaptive_init_trace.cpp)
+    target_link_libraries(r06_adaptive_init_trace PRIVATE egomotion_experiments)
+    target_include_directories(r06_adaptive_init_trace PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    target_compile_options(r06_adaptive_init_trace PRIVATE -Wall -Wextra -Wpedantic)
     add_test(NAME r06_adaptive_real_cli COMMAND "${CMAKE_COMMAND}"
         "-DCLI=$<TARGET_FILE:egomotion>" "-DVALUE_PROBE=$<TARGET_FILE:r06_adaptive_cli_values>"
+        "-DINIT_TRACE=$<TARGET_FILE:r06_adaptive_init_trace>"
         "-DSOURCE_ROOT=${CMAKE_CURRENT_SOURCE_DIR}" "-DSOURCE_SHA=${EGOMOTION_BUILD_SOURCE_SHA}"
         "-DSANDBOX=${CMAKE_CURRENT_BINARY_DIR}/r06_adaptive_cli"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/test_r06_adaptive_cli.cmake")

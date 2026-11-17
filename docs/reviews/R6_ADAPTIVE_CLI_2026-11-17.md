@@ -22,3 +22,21 @@
 ## 后续判定
 
 仅实测可填写结果。三个入口通过合同测试不等于三种科学实验全部成功；原始无定义角度、有限精度拒绝及独立L2差异均须保留。R6剩余正式数值/L4、跨环境、资源与审批义务不因测试数量增长关闭。
+
+## 首轮实测：真实初始化提前拒绝
+
+检查点 `3e39a1421b11ae6144e9d95ecd8eb072581499c6` 已提交、正常推送、经GitHub分支API确认后运行。RunId `r6-adaptive-cli-20261117-MJnRT5Fg`，完整证据 `build/r6-adaptive-cli-20261117-MJnRT5Fg/evidence/`，工作目录仓库根，复用 `build/r6-20261117-KzjFHPDQ/cmake/`。Ubuntu24.04.5/Linux7.0.0-43、GCC16.2、CMake/CTest4.3.4、Eigen3.4、matio1.5.26、zlib1.3、Sophus1.24.6；Release配置、并行4构建，先MAT五项再其余41项。精确命令/参数、起止时间、退出码、stdout/stderr、JUnit、源Git blob及输入SHA全部保存。
+
+配置和编译退出0、无诊断；MAT5/5通过，其余40/41通过，总计 **45/46**，CTest退出8，输入摘要未改变。失败是新真实CLI测试的初始化成功预期；原45项仍通过。实际三个生成进程都已执行，输出位于构建目录 `r06_adaptive_cli/Adaptive 中文 空格/745d0faa6776ae3aae8b5918/`：
+
+| 入口 | 实际退出/Manifest | 有效前缀及原因 |
+|---|---|---|
+| initialization | 5 / Incomplete | 第14 MATLAB帧，已完成12内部帧；comparison translation角度报 `normrelfehler acos argument outside [-1,1]`；attempted1/completed0/failed1/undefined1，无MAT |
+| comparison，noise0 | 5 / Incomplete | 第151帧零旋转，149有效帧；expected_repetitions仍8，completed0，无部分MAT |
+| update-rates | 5 / Incomplete | 第151帧零旋转，149有效帧；expected_repetitions1，completed0，无部分MAT |
+
+初始化实际算法seed为2439300603（该模式未消费算法RNG）；其余入口实际seed和完整错误链在各Manifest，未以固定目录名代替。两个失败RunId的再次调用退出6且Manifest摘要不变。初始化四MAT/独立140值与L2差异工具**未执行**，不能因工具编译成功声称生成成功。
+
+**R6-ADAPTIVE-CLI-001（待独立复核）**：既有 [角度边界证据](R6_INTERLEAVING_2026-11-17.md#同批补充acos舍入端点) 已确认不钳制acos的合同会拒绝单位化后点积越界，原 `normrelfehler.m` blob `c9fecc37180ab13d854a144d333a2599e601a9a8` 直接使用acos。GitHub all-state Issue/PR检索为空；本次暂不能仅凭日志断言具体向量/超出量。新增记录装饰器，逐次委托真实生产Step并保存最后一轮输入系数、320×6观测、系统矩阵/RHS、解和真值；用独立标量double及long double重新计算cosine，并要求最后真实Step可按位重放。
+
+测试改为严格核对实测初始化的第14帧/12有效前缀/完整UndefinedAngle链/仅失败审计，并由新增真实Step诊断工具交叉验证边界；比较/更新率第151帧断言不变。原成功MAT核验分支保留，但当前未覆盖；若将来执行结果变为成功，本轮固定边界预期仍会报变化，成功产物也会完整核查。**这修正的是未经实测的初始化成功假设，不是修改生产公式/放宽门限或宣布算法成功**。待新检查点复测后才能确认原因；正式科学成功与鲁棒角度策略仍未闭合。
