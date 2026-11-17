@@ -10,6 +10,7 @@
 #include <new>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -67,7 +68,8 @@ void directPolicies() {
             require(result.hasValue(),"Periodic prepare succeeds");
             same(result.value().values,i%kAdaptiveUpdatePeriods[j]==0?primary.values:rotated.value().values,
                  "MATLAB modulo selects pre-solve primary or rotated baseline");
-            result.value().values.setZero(); // 返回自拥有候选，不修改传入值。
+            auto owned=std::move(result).value();
+            owned.values.setZero(); // 移出自拥有候选，不修改Result只读载荷或传入值。
         }
     }
     same(primary.values,coefficients(101).values,"Primary input remains unchanged");
@@ -109,9 +111,10 @@ struct ObservedPolicy final:ICoefficientUpdatePolicy {
                 NumericalErrorCode::InvalidNearness,std::move(outer),Failure<MatErrorCode>{MatErrorCode::InvalidShape,std::move(inner)}));
         }
         auto result=delegate.prepare(i,main,baseline,rotation);if(!result.hasValue())return result;
-        if(fault==Fault::NonFinite)result.value().values(0,0)=std::numeric_limits<double>::quiet_NaN();
-        result.value().values(0,0)+=offset;
-        return result;
+        auto candidate=std::move(result).value();
+        if(fault==Fault::NonFinite)candidate.values(0,0)=std::numeric_limits<double>::quiet_NaN();
+        candidate.values(0,0)+=offset;
+        return Result<HarmonicCoefficients,NumericalErrorCode>::success(std::move(candidate));
     }
 };
 struct Solver final:IAdaptiveStepSolver {

@@ -19,3 +19,9 @@ Session仍为唯一持久状态拥有者，原构造入口保持可用并拥有�
 预期SVG ON57、OFF56项CTest。按AGENTS先原子提交、正常推送并确认远端SHA，再分别配置/编译，先MAT7项、后全部其余测试，保存独立RunId/命令/环境/种子来源/退出码/stdout/stderr/输入SHA。当前不得把本段预期记为通过。未安装依赖、运行MATLAB/Octave、完整科学/L4或性能实验，原始资料保持只读。
 
 D1构造不变量、D2其它球谐/分析职责、D3 Adaptive装配及D4只读/预留前记录边界仍保留。真实Adaptive的acos越界/零旋转和完整产物缺口未由本轮改动消除；R6未完成，未冻结/签署/合并/发布。
+
+## 首轮构建失败与修复
+
+固定`4efcf0e395b05801e7a51a582b5f60794999a352`完成推送与远端核验后，SVG ON配置exit0、构建exit2；新增测试三处修改`Result::value() const &`的只读载荷，GNU报`discards qualifiers`/`assignment of read-only location`。生产策略已编译，CTest尚未执行，OFF未执行。RunId `r6-coefficient-policy-20261118-HxGMtusL`，其`evidence-ON/`完整meta/stdout/stderr与输入SHA保留；构建后另行只读SHA后验exit0，未覆盖日志。
+
+检索all-state与本地记录后登记 [Issue #3](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/3)。修正测试为`std::move(result).value()`移出自拥有候选，再修改局部值并重新构造成功Result；不修改生产Result接口、策略代码、阈值或断言范围。待新提交/推送/远端核验后双模式复测，Issue保持开放供复核。
