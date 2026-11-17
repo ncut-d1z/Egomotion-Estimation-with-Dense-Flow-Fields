@@ -131,7 +131,7 @@ void successfulArtifacts(const fs::path& root,const fs::path& fixture,Fault faul
             require(manifest.find("\"completeness\":\"Complete\"")!=std::string::npos,
                     "Response delivery failure must not rewrite durable computation evidence");
             std::size_t files=0;for(const auto& entry:fs::directory_iterator(directory)){(void)entry;++files;}
-            require(files==8,"All seven verified MAT files and Manifest preserved");
+            require(files==10,"Seven verified MAT files, Manifest and two execution records preserved");
         } else require(read(directory/"delivery-fixture.txt")=="Retained publication fixture\n","Published artifact preserved");
         require(fs::is_empty(repo/"origin"),"Original marker untouched");
     }
@@ -192,6 +192,8 @@ void brokenPipeAudit(const fs::path& root) {
     require(manifest.find("\"errors\":["+jsonFailure(expected,5)+"]")!=std::string::npos,
             "Original audit must be durable before fatal stderr delivery");
     require(manifest.find("\"completeness\":\"Failed\"")!=std::string::npos,"SIGPIPE cannot invent Complete");
+    require(fs::exists(root/"output/broken_pipe/invocation.json"),"SIGPIPE retains start identity");
+    require(!fs::exists(root/"output/broken_pipe/execution.json"),"Fatal signal must not invent a completed delivery record");
     std::cout<<"SIGPIPE child terminated; original Failed Manifest and complete chain preserved\n";
 }
 void verify(const fs::path& root) {

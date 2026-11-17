@@ -1,0 +1,31 @@
+#pragma once
+
+#include "egomotion/cli/command.hpp"
+#include "egomotion/experiments/run_context.hpp"
+
+#include <string>
+#include <vector>
+
+namespace egomotion::cli {
+
+struct ChannelDelivery {
+    std::string channel;
+    std::string attempted_text;
+    bool write_and_flush_succeeded = false;
+};
+struct CommandDelivery {
+    int exit_code = 0;
+    std::vector<ChannelDelivery> channels;
+};
+
+// argv来自本次cli::run，明确不含argv[0]。直接dispatch时留null，绝不反推伪造。
+std::string invocationRecord(const Command&, const std::vector<std::string>* argv,
+                             const RunContext&);
+std::string executionRecord(const RunId&, const CommandDelivery&, bool invocation_confirmed);
+// 日志记录每次尝试的全文及完整交付状态，失败时不捏造已送达字节数。
+CommandDelivery deliverRecorded(std::string stdout_text,
+                                const std::vector<std::string>& diagnostics,
+                                int computation_exit, const RunId&,
+                                std::ostream& out, std::ostream& err);
+
+}  // namespace egomotion::cli

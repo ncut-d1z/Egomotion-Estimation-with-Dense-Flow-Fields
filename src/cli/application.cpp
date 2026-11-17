@@ -1,6 +1,7 @@
 #include "egomotion/cli/command.hpp"
 #include "../run_diagnostics.hpp"
 #include "stream_output.hpp"
+#include "execution_record.hpp"
 
 #include "egomotion/analysis/dataset_json.hpp"
 #include "egomotion/contracts/diagnostics.hpp"
@@ -120,9 +121,58 @@ int failure(std::ostream& err,ExperimentErrorCode code,std::string message,int e
     ErrorDetail d;d.stage=ErrorStage::Simulation;d.message=std::move(message);
     return streams::report(err,Failure<ExperimentErrorCode>{code,std::move(d)},exit);
 }
+Status<MatErrorCode> startRecord(ITextPublisher& text,const Command& command,
+                                const std::vector<std::string>* args,const RunContext& context) {
+    try {
+        return text.publishNew("invocation.json",invocationRecord(command,args,context));
+    } catch(const std::exception& error) {
+        ErrorDetail detail;detail.stage=ErrorStage::Output;detail.run_id=context.runId();
+        detail.variable="invocation.json";detail.message=error.what();
+        return Status<MatErrorCode>::failure({MatErrorCode::WriteFailed,std::move(detail)});
+    }
+}
+int finishRecord(ITextPublisher& text,const RunId& id,const CommandDelivery& delivery,
+                 bool invocation_confirmed,std::ostream& err) {
+    try {
+        auto recorded=text.publishNew("execution.json",executionRecord(id,delivery,invocation_confirmed));
+        if(recorded.hasValue())return delivery.exit_code;
+        return streams::report(err,recorded.error(),6);
+    } catch(const std::exception& error) {
+        return streams::outputFailure(err,error.what(),&id);
+    }
+}
+Result<RunOutcome,ExperimentErrorCode> invokeExperiment(
+    const Command& command,IExperimentRunner& runner,RunContext& context) {
+    switch(command.kind){
+    case CommandKind::BiasOccluded:
+        return runner.runBiasOccluded(std::get<BiasArgs>(command.arguments).config,context);
+    case CommandKind::BiasProportional:
+        return runner.runBiasProportional(std::get<BiasArgs>(command.arguments).config,context);
+    case CommandKind::AdaptiveInitialization:
+        return runner.runAdaptiveInitialization(AdaptiveInitializationConfig{},context);
+    case CommandKind::AdaptiveComparison:
+        return runner.runAdaptiveComparison(std::get<AdaptiveComparisonArgs>(command.arguments).config,context);
+    case CommandKind::AdaptiveUpdateRates:
+        return runner.runAdaptiveUpdateRates(AdaptiveUpdateRatesConfig{},context);
+    default:throw std::logic_error("Experiment dispatch received non-experiment");
+    }
+}
+std::string outcomeResponse(const RunOutcome& state) {
+    std::ostringstream response;
+    response.imbue(std::locale::classic());
+    response.exceptions(std::ios::badbit|std::ios::failbit);
+    response<<"{\"run_id\":"<<jsonQuote(state.run_id.text)
+       <<",\"status\":\"Complete\",\"attempted\":"<<state.attempted
+       <<",\"completed\":"<<state.completed
+       <<",\"valid\":"<<state.valid
+       <<",\"failed\":"<<state.failed
+       <<",\"undefined\":"<<state.undefined<<"}\n";
+    return response.str();
+}
 int runExperiment(const Command& command,
                   const std::filesystem::path& trusted_root,
-                  IExperimentRunner& runner,std::ostream& out,std::ostream& err) {
+                  IExperimentRunner& runner,std::ostream& out,std::ostream& err,
+                  const std::vector<std::string>* args) {
     if(trusted_root.empty())
         return failure(err,ExperimentErrorCode::SourceUnavailable,
                        "No trusted repository checkout for output root",6);
@@ -150,25 +200,15 @@ int runExperiment(const Command& command,
     RunContext context(directory->runId(),std::move(random),writer,text,
                        directory->outputRoot(),std::move(provenance),
                        sourceKind(command.kind),expectedRuns(command.kind));
+    const auto invocation=startRecord(text,command,args,context);
     const auto result=[&]() -> Result<RunOutcome,ExperimentErrorCode> {
-        switch(command.kind){
-        case CommandKind::BiasOccluded:
-            return runner.runBiasOccluded(
-                std::get<BiasArgs>(command.arguments).config,context);
-        case CommandKind::BiasProportional:
-            return runner.runBiasProportional(
-                std::get<BiasArgs>(command.arguments).config,context);
-        case CommandKind::AdaptiveInitialization:
-            return runner.runAdaptiveInitialization(
-                AdaptiveInitializationConfig{},context);
-        case CommandKind::AdaptiveComparison:
-            return runner.runAdaptiveComparison(
-                std::get<AdaptiveComparisonArgs>(command.arguments).config,context);
-        case CommandKind::AdaptiveUpdateRates:
-            return runner.runAdaptiveUpdateRates(
-                AdaptiveUpdateRatesConfig{},context);
-        default:throw std::logic_error("Experiment dispatch received non-experiment");
+        if(!invocation.hasValue()) {
+            ErrorDetail detail;detail.stage=ErrorStage::Output;detail.run_id=context.runId();
+            detail.message="Cannot confirm invocation record; experiment was not started";
+            return Result<RunOutcome,ExperimentErrorCode>::failure(
+                wrapFailure(ExperimentErrorCode::OutputFailed,std::move(detail),invocation.error()));
         }
+        return invokeExperiment(command,runner,context);
     }();
     if(!result.hasValue()) {
         const int code=result.error().detail.stage==ErrorStage::Output?6:5;
@@ -177,22 +217,13 @@ int runExperiment(const Command& command,
         const auto error=detail::withRunIdIfMissing(result.error(),context.runId());
         // 先保存独立审计；stderr管道的SIGPIPE可能直接终止进程，无法用catch挽救。
         auto status=context.publishFailureRecord(error);
-        const int reported=streams::report(err,error,code);
-        if(!status.hasValue()&&!streams::diagnostic(err,status.error(),6))
-            return 6;
-        return reported;
+        std::vector<std::string> diagnostics{jsonFailure(error,code)+"\n"};
+        if(!status.hasValue())diagnostics.push_back(jsonFailure(status.error(),6)+"\n");
+        const auto delivery=deliverRecorded({},diagnostics,code,context.runId(),out,err);
+        return finishRecord(text,context.runId(),delivery,invocation.hasValue(),err);
     }
-    const auto& state=result.value();
-    std::ostringstream response;
-    response.imbue(std::locale::classic());
-    response.exceptions(std::ios::badbit|std::ios::failbit);
-    response<<"{\"run_id\":"<<jsonQuote(state.run_id.text)
-       <<",\"status\":\"Complete\",\"attempted\":"<<state.attempted
-       <<",\"completed\":"<<state.completed
-       <<",\"valid\":"<<state.valid
-       <<",\"failed\":"<<state.failed
-       <<",\"undefined\":"<<state.undefined<<"}\n";
-    return streams::success(out,err,response.str(),&state.run_id);
+    const auto delivery=deliverRecorded(outcomeResponse(result.value()),{},0,context.runId(),out,err);
+    return finishRecord(text,context.runId(),delivery,true,err);
 }
 int analyzeOrPlot(const Command& cmd,IAnalyzer& analyzer,
                   IPlotExporter* plotter,IResultReader& reader,
@@ -272,7 +303,8 @@ int illustrate(const IllustrationArgs& args,illustrations::IExporter* exporter,
 } // namespace
 
 int ApplicationCompositionRoot::dispatch(
-    const Command& command,std::ostream& out,std::ostream& err) const {
+    const Command& command,std::ostream& out,std::ostream& err,
+    const std::vector<std::string>* invocation_arguments) const {
     switch(command.kind){
     case CommandKind::Help:
         return streams::success(out,err,"Usage: egomotion <command> [--option VALUE]\n"
@@ -282,7 +314,7 @@ int ApplicationCompositionRoot::dispatch(
               "illustrate --kind circle|sinusoidal|harmonic [--format json|svg]\n"
               "  harmonic requires --degree N --order M; --run-id ID is SVG-only\n");
     case CommandKind::Version:
-        return streams::success(out,err,"egomotion 0.1.0 (R5 full-source bootstrap; native checks pending)\n");
+        return streams::success(out,err,"egomotion 0.1.0 (source " EGOMOTION_BUILD_SOURCE_SHA ")\n");
     case CommandKind::InspectMat: {
         if(!reader_)return unavailable(err,"read","MAT Reader");
         const auto& params=std::get<InspectMatArgs>(command.arguments);
@@ -327,7 +359,7 @@ int ApplicationCompositionRoot::dispatch(
         return illustrate(std::get<IllustrationArgs>(command.arguments),illustrator_,trusted_repo_,out,err);
     default:
         if(!runner_)return unavailable(err,"simulation","Experiment Runner");
-        return runExperiment(command,trusted_repo_,*runner_,out,err);
+        return runExperiment(command,trusted_repo_,*runner_,out,err,invocation_arguments);
     }
 }
 int run(const std::vector<std::string>& args,std::ostream& out,
@@ -337,7 +369,7 @@ int run(const std::vector<std::string>& args,std::ostream& out,
         if(!parsed.hasValue()){
             return streams::report(err,parsed.error(),2);
         }
-        return app.dispatch(parsed.value(),out,err);
+        return app.dispatch(parsed.value(),out,err,&args);
     }catch(const std::exception& e){
         return streams::outputFailure(err,e.what());
     }

@@ -73,7 +73,8 @@ public:
           plotter_(plotter), trusted_repo_(std::move(trusted_repo)), illustrator_(illustrator) {}
 
     int dispatch(const Command& command, std::ostream& out,
-                 std::ostream& err) const;
+                 std::ostream& err,
+                 const std::vector<std::string>* invocation_arguments = nullptr) const;
 
 private:
     IResultReader* reader_;

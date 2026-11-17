@@ -172,12 +172,22 @@ endif()
 add_library(egomotion_cli STATIC
     src/cli/command.cpp
     src/cli/application.cpp
+    src/cli/execution_record.cpp
 )
 add_library(egomotion::cli ALIAS egomotion_cli)
 target_link_libraries(egomotion_cli PUBLIC
     egomotion_experiments egomotion_analysis
     egomotion_matio egomotion_sampling egomotion_contracts egomotion_illustrations)
 target_compile_features(egomotion_cli PUBLIC cxx_std_17)
+if(EGOMOTION_ENABLE_SVG)
+    set(EGOMOTION_SVG_LITERAL true)
+else()
+    set(EGOMOTION_SVG_LITERAL false)
+endif()
+configure_file(src/cli/build_identity.hpp.in generated/build_identity.hpp @ONLY)
+target_include_directories(egomotion_cli PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")
+target_compile_definitions(egomotion_cli PRIVATE
+    "EGOMOTION_BUILD_CONFIGURATION=\"$<CONFIG>\"")
 
 # Fix executable provenance at CONFIGURE time, not by reading a potentially
 # changed runtime HEAD. A dirty/unversioned source tree cannot publish a
@@ -312,6 +322,15 @@ if(BUILD_TESTING)
         -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/test_r06_cli_streams.cmake")
     set_tests_properties(r06_cli_output_real_process PROPERTIES
         LABELS "r06;cli;diagnostics;write-sandbox;real-process;dev-full;bounded-bias" TIMEOUT 90)
+
+    add_executable(test_r06_execution_records tests/integration/test_r06_execution_records.cpp)
+    target_link_libraries(test_r06_execution_records PRIVATE egomotion_cli)
+    target_compile_options(test_r06_execution_records PRIVATE -Wall -Wextra -Wpedantic)
+    target_link_options(test_r06_execution_records PRIVATE -Wl,--wrap=linkat -Wl,--wrap=fsync)
+    add_test(NAME r06_execution_record_contract COMMAND test_r06_execution_records
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_execution_records")
+    set_tests_properties(r06_execution_record_contract PROPERTIES
+        LABELS "r06;cli;provenance;write-sandbox;publication-faults;bounded-bias" TIMEOUT 90)
 
     add_executable(test_r06_dictionary_streams tests/integration/test_r06_dictionary_streams.cpp)
     target_link_libraries(test_r06_dictionary_streams PRIVATE egomotion_dictionary_cli)
