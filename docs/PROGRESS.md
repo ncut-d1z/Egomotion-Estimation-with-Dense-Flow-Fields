@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 独立MAT探针输出（2026-11-17）
+
+`[HUMAN-EXECUTE/APPROVE]`：实际旧二进制在stderr写满时退出0，原四份MAT的SHA不变。已编写独立探针的状态交付检查、显式报告关闭和两项测试，**尚未编译或执行**；预计ON 52/OFF 51项，待远端检查点后验证。真实复现与边界见 [探针专项记录](reviews/R6_DICTIONARY_OUTPUT_2026-11-17.md)。正式运行身份记录及P/TC覆盖继续推进，R6未结案。
+
 ## 最新接续：R6 CLI 输出流故障（2026-11-17）
 
 **最终实测 `[HUMAN-EXECUTE/APPROVE]`：`5a2cedc47b59787f441aef377feea2f6c11c2f8c` 两模式无诊断构建，ON 50/50、OFF 49/49 CTest。** 各模式848项/123次装配调用、11次真实`/dev/full`调用及默认SIGPIPE子进程验证通过；失败链在stderr通知之前保存，成功产物不因通知失败而覆盖或删除。输入SHA不变，首轮夹具失败记录保留。RunId `r6-stream-sigpipe-20261117-dPSEjNjc`，见 [最终证据](reviews/R6_CLI_STREAM_OUTPUT_2026-11-17.md)。继续独立探针输出、运行身份记录及P/TC覆盖复核；三Adaptive完整成功/L4/资源/正式资格仍未完成，R6未结案。

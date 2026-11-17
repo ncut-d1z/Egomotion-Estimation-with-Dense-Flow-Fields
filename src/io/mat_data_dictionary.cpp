@@ -8,6 +8,7 @@
 #include <fstream>
 #include <iomanip>
 #include <limits>
+#include <locale>
 #include <map>
 #include <sstream>
 #include <stdexcept>
@@ -171,6 +172,8 @@ void emit(const Config& cfg, const std::vector<File>& data) {
     }
     const auto matio_version = MatResultReader::libraryVersion();
     std::ostringstream out;
+    out.imbue(std::locale::classic());
+    out.exceptions(std::ios::badbit | std::ios::failbit);
     out << kMarker << "\n# MATLAB MAT 数据字典（matio 读取结果）\n\n"
         << "> 原始数据均以 Mat_Open(...,MAT_ACC_RDONLY) 打开；逐变量通过 "
            "Mat_VarRead 完整解码，而非仅解析文件头。READ_OK 表示变量解码，"
@@ -224,7 +227,9 @@ void emit(const Config& cfg, const std::vector<File>& data) {
     file << out.str();
     file.flush();
     if (!file) throw std::runtime_error("Report write failure");
-
+    // fclose也可能失败；析构器不能把关闭失败传播给调用者。
+    file.close();
+    if (!file) throw std::runtime_error("Report close failure");
 }
 
 

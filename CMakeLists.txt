@@ -117,10 +117,14 @@ endif()
 
 # Historical command remains a separate thin executable; source location
 # and report CLI arguments are unchanged after the refactor.
+add_library(egomotion_dictionary_cli STATIC src/cli/mat_dictionary_command.cpp)
+target_link_libraries(egomotion_dictionary_cli PUBLIC egomotion_matio)
+target_compile_features(egomotion_dictionary_cli PUBLIC cxx_std_17)
 add_executable(mat_data_dict_probe src/mat_data_dict_probe.cpp)
-target_link_libraries(mat_data_dict_probe PRIVATE egomotion_matio)
+target_link_libraries(mat_data_dict_probe PRIVATE egomotion_dictionary_cli)
 target_compile_features(mat_data_dict_probe PRIVATE cxx_std_17)
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(egomotion_dictionary_cli PRIVATE -Wall -Wextra -Wpedantic)
     target_compile_options(mat_data_dict_probe PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
@@ -308,6 +312,26 @@ if(BUILD_TESTING)
         -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/test_r06_cli_streams.cmake")
     set_tests_properties(r06_cli_output_real_process PROPERTIES
         LABELS "r06;cli;diagnostics;write-sandbox;real-process;dev-full;bounded-bias" TIMEOUT 90)
+
+    add_executable(test_r06_dictionary_streams tests/integration/test_r06_dictionary_streams.cpp)
+    target_link_libraries(test_r06_dictionary_streams PRIVATE egomotion_dictionary_cli)
+    target_compile_options(test_r06_dictionary_streams PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_dictionary_output_streams COMMAND test_r06_dictionary_streams
+        "${CMAKE_CURRENT_SOURCE_DIR}/origin/egomotion_estimation_dense_flow_fields_matlab_scripts/adaptive_matched_filter_test/produced_data/initialization"
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_dictionary_streams")
+    set_tests_properties(r06_dictionary_output_streams PROPERTIES
+        LABELS "r06;mat;dictionary;write-sandbox;stream-faults" TIMEOUT 90)
+    add_library(r06_dictionary_file_faults SHARED tests/integration/r06_dictionary_file_faults.cpp)
+    target_link_libraries(r06_dictionary_file_faults PRIVATE ${CMAKE_DL_LIBS})
+    target_compile_options(r06_dictionary_file_faults PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_dictionary_real_process COMMAND "${CMAKE_COMMAND}"
+        "-DPROBE=$<TARGET_FILE:mat_data_dict_probe>"
+        "-DFAULT_LIBRARY=$<TARGET_FILE:r06_dictionary_file_faults>"
+        "-DSOURCE_ROOT=${CMAKE_CURRENT_SOURCE_DIR}" "-DSOURCE_SHA=${EGOMOTION_BUILD_SOURCE_SHA}"
+        "-DSANDBOX=${CMAKE_CURRENT_BINARY_DIR}/r06_dictionary_process"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/test_r06_dictionary_process.cmake")
+    set_tests_properties(r06_dictionary_real_process PROPERTIES
+        LABELS "r06;mat;dictionary;real-process;write-sandbox;file-faults" TIMEOUT 180)
 
     # R2 exclusively reads two repository fixtures. It never writes origin or reports.
     add_executable(test_r02_reader tests/integration/test_r02_reader.cpp)
