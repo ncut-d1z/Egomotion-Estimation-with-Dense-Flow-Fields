@@ -65,6 +65,37 @@ struct KvDResult {
     std::vector<KvDIterationTrace> trace;
 };
 
+struct KvDTranslationUpdate {
+    Vector3 mean_a = Vector3::Zero();
+    Vector3 mean_b = Vector3::Zero();
+    Vector3 mean_c = Vector3::Zero();
+    Vector3 raw_translation = Vector3::Zero();
+};
+class IKvDTranslationRule {
+public:
+    virtual ~IKvDTranslationRule() = default;
+    // near和旧运动均为本轮翻号后的快照；策略不得归一化或提交状态。
+    virtual Result<KvDTranslationUpdate,NumericalErrorCode> compute(
+        const FlowField&, const Eigen::VectorXd& nearness,
+        const MotionEstimate& old_motion) const = 0;
+};
+class OriginalKvDTranslationRule final : public IKvDTranslationRule {
+public:
+    Result<KvDTranslationUpdate,NumericalErrorCode> compute(
+        const FlowField&, const Eigen::VectorXd&, const MotionEstimate&) const override;
+};
+class ModifiedKvDTranslationRule final : public IKvDTranslationRule {
+public:
+    Result<KvDTranslationUpdate,NumericalErrorCode> compute(
+        const FlowField&, const Eigen::VectorXd&, const MotionEstimate&) const override;
+};
+class KvDIterationEngine {
+public:
+    // 每次调用仅借用策略，不保存流场、策略引用或跨调用迭代状态。
+    Result<KvDResult,NumericalErrorCode> estimate(
+        const FlowField&, const KvDParameters&, const IKvDTranslationRule&) const;
+};
+
 // 两种求解结果分别保留：Franz只返回运动，KvD还返回near/迭代trace。
 // 不把Adaptive单步强制塞入一个丢失其状态结果的通用求解器。
 class IFranzMatchedFilter {
@@ -89,11 +120,17 @@ class OriginalKvDEstimator final : public IKvDEstimator {
 public:
     Result<KvDResult,NumericalErrorCode> estimate(
         const FlowField& field, const KvDParameters& parameters) const override;
+private:
+    KvDIterationEngine engine_;
+    OriginalKvDTranslationRule translation_rule_;
 };
 class ModifiedKvDEstimator final : public IKvDEstimator {
 public:
     Result<KvDResult,NumericalErrorCode> estimate(
         const FlowField& field, const KvDParameters& parameters) const override;
+private:
+    KvDIterationEngine engine_;
+    ModifiedKvDTranslationRule translation_rule_;
 };
 
 }  // namespace egomotion::estimators

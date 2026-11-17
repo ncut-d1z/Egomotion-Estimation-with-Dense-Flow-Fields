@@ -418,6 +418,13 @@ if(BUILD_TESTING)
     set_tests_properties(r06_kvd_independent_l3 PROPERTIES
         LABELS "r06;kvd;franz;independent-l3-candidate" TIMEOUT 90)
 
+    add_executable(test_r06_kvd_strategy tests/integration/test_r06_kvd_strategy.cpp)
+    target_link_libraries(test_r06_kvd_strategy PRIVATE egomotion_estimators)
+    target_compile_options(test_r06_kvd_strategy PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_kvd_strategy_composition COMMAND test_r06_kvd_strategy)
+    set_tests_properties(r06_kvd_strategy_composition PROPERTIES
+        LABELS "r06;kvd;strategy;source-order;failure-injection" TIMEOUT 90)
+
     add_executable(test_r06_adaptive_l3 tests/integration/test_r06_adaptive_l3.cpp)
     target_link_libraries(test_r06_adaptive_l3 PRIVATE egomotion_estimators)
     target_compile_features(test_r06_adaptive_l3 PRIVATE cxx_std_17)

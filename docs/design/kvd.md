@@ -1,5 +1,7 @@
 # Franz / Original KvD / Modified KvD 详细设计草案
 
+> **2026-11-18 候选接口增量，未冻结**：现已编写P4.9的`estimators::KvDIterationEngine`和`IKvDTranslationRule::compute(const FlowField&,const Eigen::VectorXd&,const MotionEstimate&) const`，返回`Result<KvDTranslationUpdate,NumericalErrorCode>`，含mean_a/b/c及raw_translation；引擎`estimate(flow,parameters,rule) const`按调用借用规则，不保存跨调用状态。Original/Modified两个规则分别保留本节公式，两个Estimator各组合引擎及明确规则。归一、旋转、停止及末轮near尺度均由引擎处理；现行声明见 [公共头](../../include/egomotion/estimators/franz_kvd.hpp)，实际验证状态见 [专项记录](../reviews/R6_KVD_STRATEGY_2026-11-18.md)。此次布局变动需重编译依赖，不宣布ABI或正式设计验收。
+
 > **LLD v0.10（未冻结、无生产实现）**。原 MATLAB 的Franz/Original/Modified KvD公式和赋值次序已核对；§9.4/§9.5的固定方向夹具已用Wolfram精确算术分别验证**两组六方向4条×6轮、一次8方向翻号2条×6轮，共36次数学迭代**。其中精确轨迹覆盖near正均值、Original/Modified近度加权差异、首轮near翻号、RMS/delta/动态门限及最低六次停止；但不覆盖全部一般运动、200轮极端、生产C++/CTest与最终DEC-005。
 
 ## 1. 精确来源与函数合同
