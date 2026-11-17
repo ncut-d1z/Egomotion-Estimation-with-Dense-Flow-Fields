@@ -1,6 +1,6 @@
 # 实球谐、近度重建及系数旋转——详细设计
 
-> **2026-11-17 R6集成修复候选（[HUMAN-EXECUTE/APPROVE]）**：新增真实执行证据显示物理接口直接用于Session不能保持原 `transfor_koeff` 的一般旋转系数。保留本文§3物理叶子合同，业务增加显式源动作接口，见 [验证与修复](../reviews/R6_SH_SOURCE_ACTION_2026-11-17.md)。以下历史“业务未实现”不覆盖现有源码；本轮没有冻结LLD或改变DEC-005。
+> **2026-11-17 R6集成复测（[AI-EDIT]）**：`632139bb0d9dd0d3afa7a11afdb0578224a47f59` 构建无诊断、31/31 CTest通过。物理接口直接用于Session的原系数动作差异已修复：保留本文§3物理叶子合同，业务增加显式源接口，4886项适配/10006项Session检查通过，见 [验证与修复](../reviews/R6_SH_SOURCE_ACTION_2026-11-17.md)。以下历史“业务未实现”不覆盖固定SHA证据；本轮没有冻结LLD或改变DEC-005。
 
 > **LLD v0.16，未冻结、完整业务数值未验收。** 2026-11-09 用户仅开放低阶球谐 C++ 实现与 Wolfram 符号验证，`egomotion::harmonics::low_order` 叶子代码及专项测试已提交；九基直接/递推与 IR96/IR98、Choi1999 的**一般 SO(3) 精确符号验证已执行**。项目所有者又提供了固定 SHA `8eab5dd`、增强回归 `445ed151` 和624四元数/错态压力 `601c74de` 的 Ubuntu/GCC16.2/Eigen3.4 Release **各1/1 CTest Passed** 原生结果；真实最大绝对残差分别为8.8817841970012523e-16（矩阵/向量）、1.0658141036401503e-14（标量），回归比较阈值9.0949470177292824e-13。正式三类公共接口、离散拟合、全业务集成、独立全部边界和最终容差尚未完成。权限见[专项授权](../decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md)，证据见[三路报告](../reviews/LOW_ORDER_SH_THREE_ROUTE_VERIFICATION_2026-11-09.md)、[PROGRESS E-DOC-056/057/059](../PROGRESS.md)。
 
@@ -104,7 +104,7 @@ l=2的w对全部m精确为0，不求W；u=0先跳过辅助项再访问前阶数�
 
 这是**输入/基/系数约定的组合差异**，不据此宣称原实验全部无效，也不自动改写原`origin`或业务调用方。新实现以定义证明的明确合同为准，旧3×5仅通过保持同一场的转换接入。旧AN-G08 z90候选原样保留，它不能独自证明一般旋转。
 
-**R6业务适配（2026-11-17）**：前段指原受限叶子的物理合同，不能据此把原实验改成物理修正版。[专题LLD §3](SH_ROTATION_IVANIC_RUEDENBERG.md)要求业务保留原系数动作。`rotateCoefficients(C,A)`仍为物理源CS动作；新增 `rotateSourceCoefficients(C,r)=S rotateCoefficients(S C,r)`，等于原无CS块直接乘源系数。S只改变四个有效位置的符号，零阶和无效填充规则不变。Adaptive Comparison/UpdateRates显式调用后者，Initialization仍不旋转；输入 `source_coefficient_rotation` 是原上一帧Rodrigues矩阵。两接口不能互换，原文件始终只读。本段记录已授权修复的实现与待复测范围，不代替一般MATLAB运行时或完整科学实验的等价证明。
+**R6业务适配（2026-11-17）**：前段指原受限叶子的物理合同，不能据此把原实验改成物理修正版。[专题LLD §3](SH_ROTATION_IVANIC_RUEDENBERG.md)要求业务保留原系数动作。`rotateCoefficients(C,A)`仍为物理源CS动作；新增 `rotateSourceCoefficients(C,r)=S rotateCoefficients(S C,r)`，等于原无CS块直接乘源系数。S只改变四个有效位置的符号，零阶和无效填充规则不变。Adaptive Comparison/UpdateRates显式调用后者，Initialization仍不旋转；输入 `source_coefficient_rotation` 是原上一帧Rodrigues矩阵。两接口不能互换，原文件始终只读。本段记录已授权修复及固定SHA复测范围，不代替一般MATLAB运行时或完整科学实验的等价证明。
 
 ## 4. 已核出的论文印刷问题
 

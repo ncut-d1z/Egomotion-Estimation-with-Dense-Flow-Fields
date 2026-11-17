@@ -2,6 +2,8 @@
 
 ## 最新接续：R6 原球谐动作与Session集成（2026-11-17）
 
+**最终复测 `[HUMAN-EXECUTE/APPROVE]`：`632139bb0d9dd0d3afa7a11afdb0578224a47f59` 构建无诊断，31/31 CTest通过。** 先MAT5/5、再其余26/26；新源动作适配4886项、Session10006项检查均通过，最大绝对误差4.44e-16/6.66e-16，保留旧物理合同并恢复业务原系数动作。R6-SH-001修复/复测闭合；RunId `r6-sh-source-fix-20261117-IPXj1uHL`，原始输入SHA不变，完整证据见 [源动作验证](reviews/R6_SH_SOURCE_ACTION_2026-11-17.md)。本批补足限定源相位/动作与集成证据，剩余独立L3、完整真实Runner/L4、资源边界及正式验收仍未完成；默认第151帧UndefinedAngle未消失。
+
 **首轮实测 `[HUMAN-EXECUTE/APPROVE]`：`2d271ee` 构建成功但新替身Trace有未初始化警告；30/31 CTest通过。** 独立相位参考3302项通过，Session源动作10006项中1667失败，定位R6-SH-001：物理场适配器不能直接替代原 `transfor_koeff`。现保留物理叶子，增加命名明确的源系数适配并接入Session，初始化替身Trace；尚待新检查点后复测。失败记录见 [球谐源动作验证](reviews/R6_SH_SOURCE_ACTION_2026-11-17.md)。
 
 **[HUMAN-EXECUTE/APPROVE] 两项新CTest已编写，尚未执行。** 起点 `6fcc010` 已核实，31项登记不能冒充通过。以既有独立IR96显式表/源九基多项式核对相位、R0/R3/R5和一般旋转，再检查真实Session非交换跨帧状态与回滚；保持物理叶子合同，不以绕z特例代表原组合完全等价。范围及后续证据见 [球谐源动作验证](reviews/R6_SH_SOURCE_ACTION_2026-11-17.md)。

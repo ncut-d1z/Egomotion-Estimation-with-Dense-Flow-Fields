@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **2026-11-17 最新执行事实（[AI-EDIT]）**：源码 `bc51fddca2a56d0dae988086824266b68ff995c2` 构建无诊断、**29/29 CTest Passed**（先MAT5项，再其余24项），原始输入SHA不变。新增 `r06_mat_raw_payload_boundaries` 的94个独立字节场景，实际失败/修复/复测见 [载荷验证](reviews/R6_MAT_PAYLOAD_VALIDATION_2026-11-17.md)。Reader边界29场景、发布故障29场景、582 MAT/33,340值独立SHA/逐位对照及 [Runner合同](reviews/R6_ADAPTIVE_RUNNER_CONTRACT_2026-11-17.md) 仍通过。原默认轨迹第151帧失败仍存在，不以负例通过代替端到端科学成功。不改变下列66项TC/AC、阈值、优先级或冻结状态，29项通过不等于66项全部验收。
+> **2026-11-17 最新执行事实（[AI-EDIT]）**：源码 `632139bb0d9dd0d3afa7a11afdb0578224a47f59` 构建无诊断、**31/31 CTest Passed**（先MAT5项，再其余26项），原始输入SHA不变。新增 `r06_sh_source_phase_reference` 与 `r06_sh_source_session_action`，覆盖原l≤2系数动作/相位及真实Session非交换旋转，实际失败/修复/复测见 [源动作验证](reviews/R6_SH_SOURCE_ACTION_2026-11-17.md)。前批MAT载荷/边界/发布故障、582 MAT/33,340值独立SHA/逐位对照及 [Runner合同](reviews/R6_ADAPTIVE_RUNNER_CONTRACT_2026-11-17.md) 仍通过。原默认轨迹第151帧失败仍存在，不以负例通过代替端到端科学成功。不改变下列66项TC/AC、阈值、优先级或冻结状态，31项通过不等于66项全部验收。
 
 > **测试计划草案 v0.31，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
 

@@ -4,7 +4,7 @@ A planned **C++17 reimplementation that directly reads the original MATLAB MAT f
 
 > **Permanent evidence policy:** Running MATLAB/Octave or collecting original MATLAB L1 execution traces is **not required** for design, coding, verification, or release. The original scripts are read-only specifications; numerical evidence will use the preserved MAT results (L2), independently checked analytic/reference implementations (L3), and statistical comparisons (L4). See [No MATLAB Execution Policy](docs/golden/NO_MATLAB_EXECUTION_POLICY.md). This change does not authorize C++ builds/tests or imply any numerical acceptance.
 
-> **项目状态（2026-11-17）**：R0–R5生产源码已实现，R6仍在验证。最新受测源码 `bc51fddca2a56d0dae988086824266b68ff995c2` 增量构建无诊断、**29/29 CTest通过**；新增解码前MAT内部载荷/维度校验和94个独立字节场景，修复非法载荷被静默接受及错误分类。原582 MAT/33,340值独立SHA/逐位对照、Reader边界29场景、发布故障29场景及Adaptive合同仍通过，原始输入哈希不变。见 [最新验证](docs/reviews/R6_MAT_PAYLOAD_VALIDATION_2026-11-17.md) 和 [首次干净构建](docs/reviews/R6_NATIVE_VALIDATION_2026-11-17.md)。默认正弦轨迹在当前替身下第151帧中止的限制仍存在；通过负例及固定结果不等于完整科学实验成功。球谐源动作、剩余独立L3/L4、端到端Runner、广泛资源边界及正式验收尚未完成。
+> **项目状态（2026-11-17）**：R0–R5生产源码已实现，R6仍在验证。最新受测源码 `632139bb0d9dd0d3afa7a11afdb0578224a47f59` 增量构建无诊断、**31/31 CTest通过**；修复Adaptive将物理球谐动作误用为原系数动作的集成差异，4886项适配与10006项Session检查通过。原582 MAT/33,340值独立SHA/逐位对照、MAT载荷/Reader/发布故障及既有Adaptive合同仍通过，原始输入哈希不变。见 [最新验证](docs/reviews/R6_SH_SOURCE_ACTION_2026-11-17.md) 和 [首次干净构建](docs/reviews/R6_NATIVE_VALIDATION_2026-11-17.md)。默认正弦轨迹在当前替身下第151帧中止的限制仍存在；通过负例及固定结果不等于完整科学实验成功。剩余独立L3/L4、端到端真实Runner、广泛资源边界及正式验收尚未完成。
 
 ## Original research and source material
 
