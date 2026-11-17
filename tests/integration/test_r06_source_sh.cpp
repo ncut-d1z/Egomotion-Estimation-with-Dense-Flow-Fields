@@ -125,6 +125,9 @@ void verifyAdapter() {
             }
             const std::string label="rotation="+std::to_string(index)+" column="+std::to_string(column);
             const auto raw=sourceAction(old,r);
+            const auto source=harmonics::rotateSourceCoefficients(old,r);
+            if(!source.hasValue())throw std::runtime_error("Source adapter unexpectedly failed");
+            same(source.value(),raw,label+" original coefficients");
             const auto physical=harmonics::rotateCoefficients(old,r);
             if(!physical.hasValue())throw std::runtime_error("Physical adapter unexpectedly failed");
             same(physical.value(),phase(sourceAction(phase(old),r)),label+" physical phase");
@@ -148,6 +151,48 @@ void verifyAdapter() {
     std::cout<<"Independent source/physical counterexample: raw=1 physical=3\n";
 }
 
+void verifySourceCompositionAndErrors() {
+    const auto sample=asymmetric();
+    const Matrix3 x=rotations()[1],y=rotations()[2],mixed=rotations()[6];
+    const auto first=harmonics::rotateSourceCoefficients(sample,y);
+    if(!first.hasValue())throw std::runtime_error("Source composition first step failed");
+    const auto sequential=harmonics::rotateSourceCoefficients(first.value(),x);
+    const auto combined=harmonics::rotateSourceCoefficients(sample,x*y);
+    if(!sequential.hasValue()||!combined.hasValue())throw std::runtime_error("Source composition failed");
+    // 列系数的拉回作用反序：D(x*y)=D(y)D(x)，故先y后x对应y*x。
+    same(sequential.value(),sourceAction(sample,y*x),"noncommuting sequential");
+    same(combined.value(),sourceAction(sample,x*y),"noncommuting combined");
+    check((sequential.value().values-combined.value().values).norm()>0.1,
+          "Composition fixture distinguishes order");
+    const auto moved=harmonics::rotateSourceCoefficients(sample,mixed);
+    if(!moved.hasValue())throw std::runtime_error("Source rational step failed");
+    const auto restored=harmonics::rotateSourceCoefficients(moved.value(),mixed.transpose());
+    if(!restored.hasValue())throw std::runtime_error("Source inverse failed");
+    same(restored.value(),sample,"rational source inverse");
+    auto padded=sample;padded.values(0,4)=17;padded.values(1,4)=-23;
+    const auto old=padded;
+    const auto padding_result=harmonics::rotateSourceCoefficients(padded,x);
+    if(!padding_result.hasValue())throw std::runtime_error("Finite ignored padding rejected");
+    same(padding_result.value(),sourceAction(sample,x),"ignored finite padding");
+    same(padded,old,"const source coefficients remain unchanged");
+    for(int kind=0;kind<4;++kind) {
+        auto bad_coeff=sample;Matrix3 bad_rotation=Matrix3::Identity();
+        if(kind==0)bad_coeff.values(2,3)=std::numeric_limits<double>::infinity();
+        if(kind==1)bad_rotation(0,1)=std::numeric_limits<double>::quiet_NaN();
+        if(kind==2)bad_rotation(0,0)=-1;
+        if(kind==3)bad_rotation(0,0)=2;
+        const auto invalid=harmonics::rotateSourceCoefficients(bad_coeff,bad_rotation);
+        const auto expected=kind<2?NumericalErrorCode::NonFiniteInput:NumericalErrorCode::InvalidDirection;
+        check(!invalid.hasValue()&&invalid.error().code==expected,"Source adapter typed rejection");
+        if(!invalid.hasValue()) {
+            const auto& causes=invalid.error().detail.causes;
+            check(!causes.empty()&&causes.front().domain=="LowOrderHarmonicsErrorCode"&&
+                  causes.front().code==(kind<2?"NonFiniteInput":"NotProperRotation"),
+                  "Source adapter retains leaf error identity");
+        }
+    }
+}
+
 struct TraceSolver final:IAdaptiveStepSolver {
     mutable std::vector<HarmonicCoefficients> received;
     std::optional<std::size_t> fail_call;
@@ -163,13 +208,14 @@ struct TraceSolver final:IAdaptiveStepSolver {
         out.motion.translation=Vector3::UnitX();out.motion.rotation=Vector3::UnitY();
         out.error_mse=0;out.coefficients_next=old;
         out.coefficients_next.values+=asymmetric().values;
+        out.trace.coefficients_next=out.coefficients_next;
         return Result<AdaptiveStepResult,NumericalErrorCode>::success(std::move(out));
     }
 };
 AdaptiveFrameInput frame(std::size_t index) {
     AdaptiveFrameInput in;
     in.matlab_frame_index=index;
-    in.coefficient_argument_rotation=rotations()[(index-2)%rotations().size()];
+    in.source_coefficient_rotation=rotations()[(index-2)%rotations().size()];
     in.truth.translation=Vector3::UnitX();in.truth.rotation=Vector3::UnitY();
     in.observations.observations.resize(0,6);
     return in;
@@ -185,9 +231,9 @@ void successfulFrame(AdaptiveMfaSession& session,TraceSolver& solver,Model& mode
                      AdaptiveSessionMode mode,std::size_t index) {
     const auto input=frame(index);
     if(mode!=AdaptiveSessionMode::Initialization)
-        model.primary=sourceAction(model.primary,input.coefficient_argument_rotation);
+        model.primary=sourceAction(model.primary,input.source_coefficient_rotation);
     if(mode==AdaptiveSessionMode::UpdateRates)for(std::size_t j=0;j<kPeriods.size();++j) {
-        model.baselines[j]=sourceAction(model.baselines[j],input.coefficient_argument_rotation);
+        model.baselines[j]=sourceAction(model.baselines[j],input.source_coefficient_rotation);
         if(index%kPeriods[j]==0)model.baselines[j]=model.primary;
     }
     const std::size_t before=solver.received.size();
@@ -237,7 +283,7 @@ int main(int argc,char** argv) {
     try {
         if(argc!=2)throw std::runtime_error("Expected adapter or session mode");
         const std::string mode=argv[1];
-        if(mode=="adapter")verifyAdapter();
+        if(mode=="adapter") { verifyAdapter();verifySourceCompositionAndErrors(); }
         else if(mode=="session")verifySession();
         else throw std::runtime_error("Unknown mode");
         std::cout<<std::setprecision(17)<<"Source SH "<<mode<<" checks="<<checks

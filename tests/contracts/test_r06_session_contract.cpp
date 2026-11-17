@@ -34,7 +34,7 @@ void verifySessionRollback(estimators::AdaptiveSessionMode mode) {
 
     estimators::AdaptiveFrameInput frame;
     frame.matlab_frame_index=3;
-    frame.coefficient_argument_rotation=Matrix3::Identity();
+    frame.source_coefficient_rotation=Matrix3::Identity();
     frame.observations.observations.resize(0,6);
     frame.truth.translation=Vector3::UnitX();
     frame.truth.rotation=Vector3::UnitY();
@@ -44,7 +44,7 @@ void verifySessionRollback(estimators::AdaptiveSessionMode mode) {
             "Source frame three must not precede frame two");
 
     frame.matlab_frame_index=2;
-    frame.coefficient_argument_rotation(0,0)=
+    frame.source_coefficient_rotation(0,0)=
         std::numeric_limits<double>::quiet_NaN();
     auto nonfinite=session.processFrame(frame);
     require(!nonfinite.hasValue()&&
@@ -53,7 +53,7 @@ void verifySessionRollback(estimators::AdaptiveSessionMode mode) {
 
     // Rotation and periodic refresh are temporary until every required
     // comparison AND the primary solve succeed. Empty flow forces failure.
-    frame.coefficient_argument_rotation=Matrix3::Identity();
+    frame.source_coefficient_rotation=Matrix3::Identity();
     auto failed=session.processFrame(frame);
     require(!failed.hasValue()&&
             failed.error().code==ExperimentErrorCode::SolverFailed,

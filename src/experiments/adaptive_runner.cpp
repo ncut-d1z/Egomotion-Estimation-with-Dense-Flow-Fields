@@ -221,14 +221,12 @@ Output compute(Mode mode, double noise_scale, IRandomSource* rng,
                     if (!prev.hasValue())
                         return fromNumeric(prev,"previous-frame coefficient rotation",
                                            mode,run+1,matlab_i);
-                    // The adapter accepts the explicit harmonic-argument
-                    // rotation. Source SHRotate is NOT automatically identical
-                    // under a different CS phase convention; R6 checks this.
+                    // Session采用原transfor_koeff系数动作；此处不额外转置或改相位。
                     coefficient_rotation=prev.value();
                 }
                 estimators::AdaptiveFrameInput frame;
                 frame.matlab_frame_index=matlab_i;
-                frame.coefficient_argument_rotation=coefficient_rotation;
+                frame.source_coefficient_rotation=coefficient_rotation;
                 frame.observations=std::move(observations);
                 frame.truth.translation=frames[row].local_translation;
                 frame.truth.rotation=frames[row].relative_rotation;

@@ -167,7 +167,7 @@ Result<T,E>、FlowField、FrameMotionContext、状态枚举及构造注入方式
 - **当前这个入口没有调用 transfor_koeff 进行前一帧旋转**；不得因为其他两个入口有旋转就强行加入。
 
 **带/不带噪声对比入口** agent_in_sphere_adaptive_matched_filter_test.m（600 位置、等级 4、8 次运行）：
-- 每帧先按上一帧相对旋转执行 transfor_koeff(akkoeff, R)；然后设置 ohnekoeff/mitkoeff、分别执行单步，最后再更新主 akkoeff。
+- 每帧先按上一帧相对旋转执行 transfor_koeff(akkoeff, R)；然后设置 ohnekoeff/mitkoeff、分别执行单步，最后再更新主 akkoeff。R6集成显式采用 `rotateSourceCoefficients` 与帧输入 `source_coefficient_rotation` 保持原系数动作，不能直接调用物理场适配器；差异证据及待复测修正见 [源动作验证](../reviews/R6_SH_SOURCE_ACTION_2026-11-17.md)。
 - 先生成合成光流，再按 addederror 调用 nonpropfehler；保留无噪时参数为零仍会消耗随机调用的事实（需核对执行细节）。
 - 四个误差 MAT 为逐运行求和后除以 8；rottransratio 是循环内赋值的**最后一次运行值**，不在同样位置求八次平均。
 

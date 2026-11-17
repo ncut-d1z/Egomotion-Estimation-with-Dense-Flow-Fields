@@ -84,7 +84,7 @@ AdaptiveMfaSession::processFrame(const AdaptiveFrameInput& frame) {
                     "Adaptive frames must be processed in original consecutive "
                     "MATLAB 1-based order, starting with i=2 (expected i="+
                     std::to_string(expected_matlab_frame_index_)+")");
-    if (!frame.coefficient_argument_rotation.allFinite()||
+    if (!frame.source_coefficient_rotation.allFinite()||
         !frame.truth.translation.allFinite()||!frame.truth.rotation.allFinite())
         return fail(ExperimentErrorCode::InvalidParameters,
                     "Adaptive frame rotation/truth contains non-finite values");
@@ -94,8 +94,8 @@ AdaptiveMfaSession::processFrame(const AdaptiveFrameInput& frame) {
         HarmonicCoefficients next_primary=primary_;
         auto next_baselines=baselines_;
         if (mode_!=AdaptiveSessionMode::Initialization) {
-            auto rotated=harmonics::rotateCoefficients(
-                next_primary,frame.coefficient_argument_rotation);
+            auto rotated=harmonics::rotateSourceCoefficients(
+                next_primary,frame.source_coefficient_rotation);
             if (!rotated.hasValue())
                 return propagate(rotated.error(),
                                  "Adaptive primary coefficient rotation failed",
@@ -104,8 +104,8 @@ AdaptiveMfaSession::processFrame(const AdaptiveFrameInput& frame) {
         }
         if (mode_==AdaptiveSessionMode::UpdateRates) {
             for (std::size_t j=0;j<next_baselines.size();++j) {
-                auto rotated=harmonics::rotateCoefficients(
-                    next_baselines[j],frame.coefficient_argument_rotation);
+                auto rotated=harmonics::rotateSourceCoefficients(
+                    next_baselines[j],frame.source_coefficient_rotation);
                 if (!rotated.hasValue())
                     return propagate(rotated.error(),
                                      "Adaptive baseline rotation failed (period="+

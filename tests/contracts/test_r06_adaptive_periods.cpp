@@ -54,7 +54,7 @@ struct IncrementSolver final:IAdaptiveStepSolver {
 AdaptiveFrameInput input(std::size_t matlab_index) {
     AdaptiveFrameInput frame;
     frame.matlab_frame_index=matlab_index;
-    frame.coefficient_argument_rotation=Matrix3::Identity();
+    frame.source_coefficient_rotation=Matrix3::Identity();
     frame.truth.translation=Vector3::UnitX();
     frame.truth.rotation=Vector3::UnitY();
     // Deliberately empty: the injected step consumes coefficients only.

@@ -15,7 +15,9 @@ enum class AdaptiveSessionMode {
 };
 struct AdaptiveFrameInput {
     std::size_t matlab_frame_index=0; // original 1-based i (not C++ index)
-    Matrix3 coefficient_argument_rotation=Matrix3::Identity();
+    // 原 vordrehmatrix=rodrigues(reldrehvektoren(i-1,:))，直接交给源动作适配。
+    // 不把此输入误称为源CS近度函数的物理参数旋转。
+    Matrix3 source_coefficient_rotation=Matrix3::Identity();
     FlowField observations;
     MotionEstimate truth;
 };

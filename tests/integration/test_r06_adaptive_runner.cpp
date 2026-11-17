@@ -447,7 +447,7 @@ void fixedUpdateSession(const fs::path& root,const std::string& sha) {
     const Vector3 true_translation(1,2,3),true_rotation(1,-2,3);
     for(std::size_t row=1;row+1<kFrames;++row){
         estimators::AdaptiveFrameInput input;
-        input.matlab_frame_index=row+1;input.coefficient_argument_rotation=Matrix3::Identity();
+        input.matlab_frame_index=row+1;input.source_coefficient_rotation=Matrix3::Identity();
         input.truth={true_translation,true_rotation};
         input.observations.observations.setZero(kLevelTwoDirections,6);
         const auto frame=session.processFrame(input);
