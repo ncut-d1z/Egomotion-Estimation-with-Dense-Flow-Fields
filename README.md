@@ -4,7 +4,7 @@ A planned **C++17 reimplementation that directly reads the original MATLAB MAT f
 
 > **Permanent evidence policy:** Running MATLAB/Octave or collecting original MATLAB L1 execution traces is **not required** for design, coding, verification, or release. The original scripts are read-only specifications; numerical evidence will use the preserved MAT results (L2), independently checked analytic/reference implementations (L3), and statistical comparisons (L4). See [No MATLAB Execution Policy](docs/golden/NO_MATLAB_EXECUTION_POLICY.md). This change does not authorize C++ builds/tests or imply any numerical acceptance.
 
-> **项目状态（2026-11-17）**：R6仍在验证。最新受测源码 `9eb831531ce04f2bfab8bf813011c36a451ee409` 增量构建无诊断、**47/47 CTest通过**；补齐已分配RunId的失败诊断，见 [最新验证](docs/reviews/R6_RUNID_DIAGNOSTICS_2026-11-17.md)。真实Adaptive三入口仍因初始化第14帧acos越界或第151帧零旋转返回Incomplete，无MAT；**错误处理通过不等于科学实验成功**。[66项TC证据映射](docs/reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)列明剩余义务；原始资料哈希不变。
+> **项目状态（2026-11-17）**：R6仍在验证。最新受测源码 `130a82ba0090e186fcf43bc28bb98c282e68c96c` 增量构建无诊断、**48/48 CTest通过**；MAT封存副本的校验、解码和分析来源SHA-256已绑定，见 [最新验证](docs/reviews/R6_MAT_SNAPSHOT_2026-11-17.md)。真实Adaptive三入口仍因初始化第14帧acos越界或第151帧零旋转返回Incomplete，无MAT；**错误处理通过不等于科学实验成功**。[66项TC证据映射](docs/reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)列明剩余义务；原始资料哈希不变。
 
 ## Original research and source material
 

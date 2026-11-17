@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **2026-11-17 最新执行事实（[AI-EDIT]）**：源码 `9eb831531ce04f2bfab8bf813011c36a451ee409` 构建无诊断、**47/47 CTest Passed**（先MAT5项，再其余42项），原始输入SHA不变。已分配RunId的错误上下文及完整链、8次装配调用/真实Adaptive进程新增身份断言通过，见 [专项证据](reviews/R6_RUNID_DIAGNOSTICS_2026-11-17.md)。三个Adaptive生成入口仍Incomplete、无MAT，不能声称科学成功。[66 TC实际映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)已同步。未改下列66项TC/AC、阈值、优先级或冻结状态；47项通过不等于66项全部验收，完整成功/L4/科学实验及正式资格仍缺，旧描述保留历史语境。
+> **2026-11-17 最新执行事实（[AI-EDIT]）**：源码 `130a82ba0090e186fcf43bc28bb98c282e68c96c` 构建无诊断、**48/48 CTest Passed**（先MAT6项，再其余42项），原始输入SHA不变。封存读取256项检查/30数值场景、582固定SHA及历史/有限分析来源摘要通过，见 [专项证据](reviews/R6_MAT_SNAPSHOT_2026-11-17.md)。三个Adaptive生成入口仍Incomplete、无MAT，不能声称科学成功。[66 TC实际映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)已同步。未改下列66项TC/AC、阈值、优先级或冻结状态；48项通过不等于66项全部验收，完整成功/L4/科学实验及正式资格仍缺，旧描述保留历史语境。
 
 > **测试计划草案 v0.31，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
 

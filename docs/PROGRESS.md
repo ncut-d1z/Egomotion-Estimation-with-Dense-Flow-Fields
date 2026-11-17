@@ -2,6 +2,8 @@
 
 ## 最新接续：R6 MAT封存读取与摘要（2026-11-17）
 
+**实测 `[HUMAN-EXECUTE/APPROVE]`：`130a82ba0090e186fcf43bc28bb98c282e68c96c` 无诊断构建、48/48 CTest（MAT6/6，其余42/42）。** 快照256项检查/30数值场景及metadata通过；582固定SHA/33340逐位值、历史Bias986贡献身份、32条有限分析曲线的独立数值+SHA完整JSON通过。原始SHA不变，RunId `r6-mat-snapshot-20261117-wfxpgjMh`，见 [实测](reviews/R6_MAT_SNAPSHOT_2026-11-17.md)。MAT读取字节与分析来源摘要已绑定；下一项为45源现行映射，完整Adaptive成功/L4/资源/正式资格仍未完成，R6未结案。
+
 **准备 `[HUMAN-EXECUTE/APPROVE]`，尚未执行。** 完整数值Reader通过只读源fd捕获匿名封存副本，校验/摘要/解码使用同一字节；Analyzer从实际数组传递已有JSON摘要字段，合成未知来源保持空。新增30种named/compatible快照场景及metadata例，扩展582固定SHA、历史Bias与有限分析摘要核验，登记48项待远端检查点后构建/CTest。详见 [范围与准备](reviews/R6_MAT_SNAPSHOT_2026-11-17.md)，不改原MAT/数值策略或正式资格，R6未结案。
 
 ## 最新接续：R6 失败诊断的RunId（2026-11-17）
