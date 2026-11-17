@@ -1,10 +1,12 @@
 # R6：PLAN 的98项任务逐项复核
 
+> **接续实测**：`909fd57dbafa4ebf680e5edd5fa718adb30b4c51`构建无诊断，SVG ON54/54、OFF53/53 CTest；Bias求解/RNG注入的668项检查与既有真实回归通过，见 [专项记录](R6_BIAS_INJECTION_2026-11-18.md)。下文首次文档复核起点保留，P5.7/D3按新证据更新，其他未覆盖义务不变。
+
 `[AI-EDIT]`，2026-11-18。本表逐项保留 [PLAN](../PLAN.md) 的98个P编号和原义务，核对实际文件、现有测试及缺口；**不修改需求、验收门槛、批准或冻结状态，也不将“有代码/测试通过”改称“任务已验收”**。原始任务全文及REQ/TC/AC/依赖仍以PLAN为准；下列“核对对象”只是定位摘要，不替代它。
 
 起点本地与GitHub branch API均为 `e24e759e796ac18e11d57d56d12683231956f829`，工作区干净，分支 `dev-plan-P0-P1-mat-dictionary-probe`。关联任务“检查R5实现完成度”最新可见用户要求继续检查/实现R6，当前idle；未向其发消息。all-state Issue/PR查询为空。本轮只做源码/已有产物的只读复核及文档编辑，没有新CMake/CTest/程序运行或环境安装。
 
-最新受测源码 `4c2973b19c148f640613b03309e8756006adb053` 的四份JUnit逐名核对：SVG ON 6+47=53、OFF 6+46=52，全部status=run、无failure/skip/disabled；配置唯一测试差异为 `r06_svg_source_windows`。历史证据不能自动覆盖新源码；本轮起点与该SHA仅差文档。原树628文件/582MAT，`origin`树SHA `70ee155131c24a50169346d0ffbaff0c01b1c547`。
+首次复核所用受测源码 `4c2973b19c148f640613b03309e8756006adb053` 的四份JUnit逐名核对：SVG ON 6+47=53、OFF 6+46=52，全部status=run、无failure/skip/disabled；配置唯一测试差异为 `r06_svg_source_windows`。历史证据不能自动覆盖新源码；首次起点与该SHA仅差文档。原树628文件/582MAT，`origin`树SHA `70ee155131c24a50169346d0ffbaff0c01b1c547`。
 
 ## 如何阅读
 
@@ -85,7 +87,7 @@
 | P5.4 | 七MAT输出 | IO、RUN、CLI：xwerte及ywerte1…6变量/形状/值 | 实测（有限） | 拒覆盖与发布故障已测，限有界生成。 |
 | P5.5 | 40目录数值分析 | ANALYSIS：两组26曲线/208点独立复核 | 实测（有限） | 按源取末轮x、使用ywerte3…6，不修改历史128横值。 |
 | P5.6 | 560历史Bias对照 | MAT、ANALYSIS：560存储值，400实际分析输入 | 部分 | 160个ywerte1/2不贡献源曲线；未完成新40-run科学对照。 |
-| P5.7 | Bias组合与依赖替换 | RUN：采样/噪声注入、RunContext借用Writer | 部分 | Franz/KvD在compute内部构造，未提供求解器替身注入；见D3，不能称全注入设计完成。 |
+| P5.7 | Bias组合与依赖替换 | RUN、BIAS-INJECT：采样/噪声/三求解槽/RNG注入、RunContext借用Writer | 实测（有限） | 668项替身/调用/失败前缀/交错隔离及既有真实回归通过；见D3，不代签正式设计验收。 |
 | P6.1 | 方向旋转向量 | TRAJ：rotationVectorBetween与源eps/退化边界 | 实测（有限） | 近零、反向向量的显式状态；未采集原运行轨迹。 |
 | P6.2 | Sophus向量转矩阵 | TRAJ、BUILD：SO3d::exp及原小角分支 | 实测（有限） | 仅原实际向量→矩阵用途；逆向/Jacobian按既定范围未移植。 |
 | P6.3 | 圆轨迹 | TRAJ、ILLUSTRATION：circle纯数据 | 实测（有限） | 原N分母、半径/高度；绘图另层。 |
@@ -138,13 +140,13 @@
 
 - **D1：构造不变量（P2.1/P2.8/P10.9）**。实际FlowField、MotionEstimate、HarmonicCoefficients是Eigen成员的aggregate；当前在算法入口校验，并无“构造时验证全部维度/有限性/有效填充”的统一保证。已有寿命/失败测试不证明任意默认构造对象有效。下一步核对公共边界与既有DEC-008，定位需要强制的初始化/校验，不能用文档改词抹平义务。
 - **D2：策略和纯数学职责（P4.9/P7.1/P7.10/P8.8/P8.9/P9.8）**。KvD使用共享函数及枚举，不存在IKvDTranslationRule/KvDIterationEngine类；Session使用三模式枚举，不存在ICoefficientUpdatePolicy。球谐用纯函数，winkelausvektor被笛卡尔基融合；实际一个AdaptiveExperimentRunner三个方法、一个MatResultAnalyzer四种分析。职责/数值已有有限证据，但命名及可替换策略结构未逐项核销。
-- **D3：编排依赖注入（P5.7/P10.9）**。BiasExperimentRunner仅构造注入IDirectionSampler和IFlowNoiseModel，compute内具体构造Franz/Original/Modified，RNG按config建立；Writer通过RunContext借用。这与SRS附录A的**REQ-DC-EXPERIMENT-001“通过组合注入求解、RNG、采样和写入器”**存在实际差距，不能仅以类名变化解释。下一步优先补齐可替换依赖及两Bias固定替身隔离测试，同时保留源第二次reseed和采样/求解次序。Adaptive允许Step注入，但轨迹/环境/采样装配的其它候选替换边界仍需逐项核对；不为凑类名添加无用途包装。
+- **D3：编排依赖注入（P5.7/P10.9）**。首次发现Bias在compute内创建Franz/Original/Modified及RNG，与SRS附录A的**REQ-DC-EXPERIMENT-001“通过组合注入求解、RNG、采样和写入器”**存在差距。`909fd57`已补BiasEstimators三槽及RunContext RNG注入，保留采样/噪声/Writer接口、源两次reseed和求解顺序；[668项测试及真实回归](R6_BIAS_INJECTION_2026-11-18.md)验证该Bias缺口。Adaptive允许Step注入，但轨迹/环境/采样装配的其它候选替换边界仍需逐项核对，不能据此关闭总体OOP验收；不为凑类名添加无用途包装。
 - **D4：正式运行记录边界（P5.3/P8.9/P10.6）**。五生成入口已有开始/结束记录、真实身份、参数、环境与交付状态；inspect/analyze/JSON illustration为只读调用，不能未经合同核对就强制创建输出目录。plot/SVG illustration虽有RunId，尚无同等运行记录。解析失败、RunId预留失败、信号终止依赖外部执行者证据；产品层记录义务尚未完整实现，不能只用本次构建包装脚本关闭REQ-NF-LOG。
 - **D5：MAT v7.3拒绝缺真实用例（P1.5）**。Reader对matio识别的非v5数值读取返回UnsupportedClassOrType，版本名称包含v7.3；但当前测试目录没有MAT73/HDF5夹具，Reader边界测试仅创建v4及v5。读取原582文件（全部v5）和v4拒绝不能证明v7.3路径已运行。后续需补独立、隔离的版本负例，明确有/无matio HDF5能力时的识别与错误边界；不得因此把HDF5变成首版数值运行前提或扩大MAT支持范围。
 
 ## 后续次序与权限边界
 
-1. 优先补D3明确缺少的求解/RNG注入，并补D5版本负例；继续处理D4日志及D1–D2的公共边界/候选设计差异。保留原数值公式、输入只读和检查点顺序。P10.8仍缺可审查Draft PR，后续以实际范围与测试证据准备，不合并或发布。
+1. D3的Bias求解/RNG缺口已补，继续D5版本负例、D4日志及D1–D2公共边界/候选设计差异，并核对Adaptive其它装配边界。保留原数值公式、输入只读和检查点顺序。P10.8仍缺可审查Draft PR，后续以实际范围与测试证据准备，不合并或发布。
 2. 三个Adaptive真实失败（初始化帧14acos越界，另外两入口帧151零旋转）及完整Bias/L4仍未解决；不可修改门限、跳帧或改分母以获得成功。具体结果与未执行成功分支见NUM。
 3. 容差、资源、跨环境、基线及发布的正式批准仍按TODO的既定延期状态处理；本表不擅自解锁、催办或代签。**没有MATLAB/Octave/L1阻塞。**
 4. 本次新增NUMERICAL_EQUIVALENCE补齐了P10.6缺失的汇总文件；P10.6以及R6整体仍未完成。

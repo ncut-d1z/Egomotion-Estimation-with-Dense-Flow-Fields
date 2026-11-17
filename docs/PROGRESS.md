@@ -2,7 +2,7 @@
 
 ## 最新接续：R6 Bias依赖注入（2026-11-18）
 
-`[HUMAN-EXECUTE/APPROVE]` 准备：接续`4039bfd`，Bias求解器通过三个独立槽注入，RNG使用RunContext实例并保留原两次重置。新增两模式事件/失败前缀/交错隔离及内存交付测试，既有真实数值与MAT发布断言保留；预期SVG ON54/OFF53项，尚未构建或执行，待提交推送核实后验证。见 [专项记录](reviews/R6_BIAS_INJECTION_2026-11-18.md)。其它R6缺口和正式验收状态不变。
+`[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`909fd57dbafa4ebf680e5edd5fa718adb30b4c51`两模式构建无诊断、**SVG ON54/54、OFF53/53 CTest**，零跳过/禁用。Bias三个求解槽及RunContext RNG注入、两次重置、精确失败前缀/交错隔离/内存交付新增668项检查通过；既有真实Bias数值17695项与MAT发布5560项通过，最大残差6.6613381477509392e-16，输入SHA不变。RunId `r6-bias-injection-20261118-ptpZAp0s`，见 [专项记录](reviews/R6_BIAS_INJECTION_2026-11-18.md)。D3的Bias缺口已补；D5真实MAT v7.3负例、D4日志、D1/D2结构及Adaptive其它装配边界继续实施，完整实验/资格/冻结状态不变，R6未结案。
 
 ## 最新接续：98项P任务与数值证据汇总（2026-11-18）
 

@@ -2,7 +2,7 @@
 
 `[AI-EDIT]` 事实索引，基于当前Git树、CMake登记、测试源码及实际日志。保留 [TEST_PLAN §3](../TEST_PLAN.md) 的66个TC/REQ/AC和 [PLAN](../PLAN.md) 的98项任务，不替换候选规范、改动阈值或签署验收。下表每个TC仅列一次；其REQ/AC采用相同后缀，正式义务仍以 [REQUIREMENTS](../REQUIREMENTS.md) 为准。
 
-**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面列出的具体程序/样本已有运行证据，不代表该TC全部条款已满足。最新受测源码 `4c2973b19c148f640613b03309e8756006adb053` 为SVG ON 53/53、OFF 52/52，见 [五实验运行记录证据](R6_EXECUTION_RECORDS_2026-11-17.md)；既有 [独立探针输出](R6_DICTIONARY_OUTPUT_2026-11-17.md)、[输出流/信号](R6_CLI_STREAM_OUTPUT_2026-11-17.md)、[无绘图/链接](R6_HEADLESS_BUILD_2026-11-17.md)、[MAT身份](R6_MAT_SNAPSHOT_2026-11-17.md) 证据保留。真实Adaptive三入口仍失败、无MAT，全部此前失败保留。正式容差/Golden资格、病态前向误差、环境预算及基线签署仍独立办理；不以这些审批尚未完成为理由停止已授权的源码/测试补足。
+**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面列出的具体程序/样本已有运行证据，不代表该TC全部条款已满足。最新受测源码 `909fd57dbafa4ebf680e5edd5fa718adb30b4c51` 为SVG ON54/54、OFF53/53，见 [Bias注入证据](R6_BIAS_INJECTION_2026-11-18.md)；既有 [运行记录](R6_EXECUTION_RECORDS_2026-11-17.md)、[探针输出](R6_DICTIONARY_OUTPUT_2026-11-17.md)、[输出流/信号](R6_CLI_STREAM_OUTPUT_2026-11-17.md)、[无绘图/链接](R6_HEADLESS_BUILD_2026-11-17.md)、[MAT身份](R6_MAT_SNAPSHOT_2026-11-17.md)证据保留。真实Adaptive三入口仍失败、无MAT，所有此前失败保留。正式容差/Golden资格、病态前向误差、环境预算及基线签署独立办理；不以这些审批尚未完成为理由停止已授权的源码/测试补足。
 
 ## 实际测试组及证据入口
 
@@ -10,6 +10,7 @@
 
 | 索引 | 实际CTest（完整名称） | 源码/证据 |
 |---|---|---|
+| BIAS-INJECT | `r06_bias_dependency_injection` | `tests/integration/test_r06_bias_injection.cpp`；668项两模式RNG/求解顺序、精确失败前缀、交错隔离及内存交付检查，见 [注入证据](R6_BIAS_INJECTION_2026-11-18.md)。替身不充当真实MAT或独立求解Golden |
 | CLI | `r01_cli_contract`, `r06_cli_process_contract`, `r06_cli_process_archive` | `tests/integration/test_r01_cli.cpp`, `test_r06_cli_process.cmake`；[CLI实测](R6_CLI_PROCESS_VALIDATION_2026-11-17.md) |
 | HEADLESS | 两种独立配置的完整CTest，OFF仅不登记`r06_svg_source_windows` | 实际无显示环境/后端缺席CLI、完整数值参考保留；14份有限MAT载荷和3份JSON跨模式相同，CMake/ELF/依赖审计见 [实测](R6_HEADLESS_BUILD_2026-11-17.md) |
 | RUNID | `r06_runid_failure_context`（并扩展Manifest、Bias/Adaptive库及实际CLI用例） | `tests/integration/test_r06_runid_diagnostics.cpp`；63项检查/8次装配调用、真实预留与失败Manifest；[身份实测](R6_RUNID_DIAGNOSTICS_2026-11-17.md) |
@@ -56,8 +57,8 @@
 | TC-F-KVD-001 | KVD | 两路径逐轮固定L3；未批准最终数值门槛 |
 | TC-F-KVD-002 | KVD | 两算法实际默认200轮上限、单动态/单绝对退出及最少6轮已实测；506次停止行为与独立解析参考一致，限固定输入族 |
 | TC-F-ERROR-001 | METRIC、RUNNER、SESSION、ADAPTIVE-CLI | 解析边界及acos双端舍入越界已测；真实初始化第14帧有限非零向量的独立标量cosine=1+2^-52、最后真实Step按位重放已确认。限当前浮点环境，正式数值资格未批准 |
-| TC-F-BIAS-001 | GEOM、RUNNER、CLI | 有界level0…2、seed7/11、三噪声列、实际求解器/发布；不是40份level9实验 |
-| TC-F-BIAS-002 | GEOM、RUNNER、CLI | 同上，分量噪声路径独立核对；不是完整统计复现 |
+| TC-F-BIAS-001 | GEOM、RUNNER、BIAS-INJECT、CLI | 有界level0…2、seed7/11、三噪声列、实际求解器/发布；另有两次reset/三求解槽/精确失败前缀，非40份level9实验 |
+| TC-F-BIAS-002 | GEOM、RUNNER、BIAS-INJECT、CLI | 同上，分量噪声路径及两模式注入隔离独立核对；不是完整统计复现 |
 | TC-F-BIAS-003 | ANALYSIS、CLI、SVG | K=2区别性参考、两组40-run全部26曲线/208对x-y独立重算与986来源条目已实测；沿用回归余量，正式数值资格仍未批准 |
 | TC-F-TRAJ-001 | GEOM、RUNNER | 独立轨迹/运动/端点例；默认600帧的第151帧UndefinedAngle明确记录 |
 | TC-F-SH-001 | SH、STEP | 独立解析九基/布局/拟合与重建；最终Golden/容差资格另办 |
@@ -77,11 +78,11 @@
 | TC-D-MAT-003 | MAT、RUNNER、ANALYSIS | CurrentGenerated/HistoricalOnly及缺ratio已有证据；不推测额外字段历史成因 |
 | TC-DC-DOMAIN-001 | CONTRACT、SH | 显式Result工厂、move/lifetime/error链；对象模型正式审查另办 |
 | TC-DC-IO-001 | MAT、IO、CONTRACT、SNAPSHOT | 自拥有载荷、故障/权限与寿命、封存副本拒写/拒截断及30例fd释放已测；不凭测试数声称全资源状态证明 |
-| TC-DC-RNG-001 | GEOM、RUNNER | RNG注入/顺序/耗尽/seed分离；正式接口冻结未完成 |
+| TC-DC-RNG-001 | GEOM、RUNNER、BIAS-INJECT | RNG注入/顺序/耗尽/seed分离、两次reset/不支持reset/缓存重置已测；正式接口冻结未完成 |
 | TC-DC-NOISE-001 | GEOM、RUNNER | 噪声接口两路径与错误上下文已有固定测试 |
 | TC-DC-KVD-001 | KVD | Original/Modified单独入口与差异化trace；两路径实际默认上限及其他退出条件已有独立参考实测 |
 | TC-DC-ADAPT-001 | STEP、SESSION | 单步和Session已独立测试；两个Session交替完整结果/系数/错误重试隔离已测，限固定输入 |
-| TC-DC-EXPERIMENT-001 | RUNNER、CONTRACT | 两RunContext交替RNG/错误链/计数/真实MAT及Manifest隔离已测；但Bias仍在内部创建求解器/RNG，组合注入义务未满足，见 [98项复核D3](R6_PLAN_TASK_AUDIT_2026-11-18.md)。不等于全科学实验 |
+| TC-DC-EXPERIMENT-001 | RUNNER、BIAS-INJECT、CONTRACT | 两RunContext交替RNG/错误链/计数/真实MAT及Manifest隔离已测；Bias求解器和RunContext RNG注入已补并通过替身验证。Adaptive其它候选装配边界仍待核对，见 [98项复核D3](R6_PLAN_TASK_AUDIT_2026-11-18.md)；不等于总体设计验收或全科学实验 |
 | TC-DC-ANALYSIS-001 | CLI、ANALYSIS、SVG、ILLUSTRATION | 无后端时纯数值成功、SVG明确不可用；三份插图JSON导出前后不变已实测，候选接口未冻结 |
 | TC-NF-PLATFORM-001 | ENV | 仅实际Ubuntu24.04.5，不能推断其它Debian/Ubuntu版本已测 |
 | TC-NF-DEPS-001 | ENV、CMake、HEADLESS | 两模式CMake实图无环、ELF/传递依赖已审计；无被禁止运行时/图形库。系统matio间接含HDF5等库，不扩大MAT支持范围；其它环境仍未验证 |
@@ -96,7 +97,7 @@
 | TC-NF-RECOVERY-001 | IO、CONTRACT、RUNNER、ADAPTIVE-CLI、RUNID、STREAM、DICTIONARY、EXECUTION | 开始记录未确认时不调用Runner，结束记录失败保留计算Manifest/Complete MAT及原错误；失败Manifest先于stderr，SIGPIPE后保留开始记录和审计、不伪造结束。探针报告write/close失败退出2且保留现有内容，不声称报告fsync保证。三个Adaptive仍Incomplete、无MAT |
 | TC-NF-PORTABLE-001 | IO、MAT、CLI | 实际中文/空格路径；目标仅GNU/Linux，不推断其它平台 |
 | TC-NF-RUNTIME-001 | 无完整基准 | 未授权完整实验/性能测量，DEC-006预算未批准；编译耗时不能代替实验预算 |
-| TC-NF-SESSION-001 | SESSION、RUNNER | 两Session三模式独立/交替重放和两RunContext固定输入交替RNG/输出/失败隔离均已直接测试；不承诺单Session多线程，正式验收仍未签署 |
+| TC-NF-SESSION-001 | SESSION、RUNNER、BIAS-INJECT | 两Session三模式独立/交替重放、两RunContext交替RNG/输出/失败隔离及两Bias模式嵌套交错已测；不承诺单Session多线程，正式验收仍未签署 |
 | TC-NF-COPYRIGHT-001 | SOURCE | 根MIT与来源notice存在；不将MIT扩展至原MATLAB/MAT/论文，不以额外普通版权审批阻塞编码 |
 | TC-F-CLI-002 | CLI、RUNNER、EXECUTION | 两Bias真实进程、有界输出/seed/RunId及拒覆盖，开始/结束记录独立解析；完整规模未运行 |
 | TC-F-CLI-003 | CLI、RUNNER、ADAPTIVE-CLI、EXECUTION | 三入口实际失败链/计数/源身份/无MAT/拒覆盖及运行记录已测；默认初始化因acos越界、另两入口因零旋转不能完成，完整成功产物分支仍未实测 |
@@ -109,7 +110,7 @@
 
 ## 下一步按缺口实施
 
-1. 当前两模式分别完成53/53、52/52复测；所有失败日志及原始数据不变证据保留。不等于完整数值资格、Adaptive实验成功或MATLAB像素等价完成。
+1. 当前两模式分别完成54/54、53/53复测；所有失败日志及原始数据不变证据保留。不等于完整数值资格、Adaptive实验成功或MATLAB像素等价完成。
 2. 三份illustration已有JSON/SVG入口、独立全网格参考和实际CLI/目视证据；保留sphere端点运行细节尚未验证及平面着色的明确边界，不用求解器九项归一化基函数替代插图。
-3. 三Adaptive真实进程的失败链已有证据；初始化第14帧acos越界、另外两入口第151帧零旋转均未产出完整MAT，成功路径仍未验证。45源、98 P和本表的有限证据已映射，[数值汇总](../NUMERICAL_EQUIVALENCE.md)已建立；优先补Bias求解/RNG注入，再核对非生成入口/分配RunId前记录边界与公共对象合同。MAT封存摘要已绑定实际读取载荷，未知来源仍不伪造摘要。数值策略变更不能由AI通过改测试自行批准。
+3. 三Adaptive真实进程的失败链已有证据；初始化第14帧acos越界、另外两入口第151帧零旋转均未产出完整MAT，成功路径仍未验证。45源、98 P和本表的有限证据已映射，[数值汇总](../NUMERICAL_EQUIVALENCE.md)已建立；Bias求解/RNG注入已补，继续真实MAT v7.3负例、非生成入口/分配RunId前记录与公共对象/Adaptive装配合同。MAT封存摘要已绑定实际读取载荷，未知来源仍不伪造摘要。数值策略变更不能由AI通过改测试自行批准。
 4. 完整科学/L4实验、跨发行版资格、资源预算与正式审批不在本轮运行授权内；准备具体材料并在真正到达该边界时请求相应授权。无MATLAB/L1阻塞。
