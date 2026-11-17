@@ -1,6 +1,6 @@
 # 人类输入、已决定事项与无限期延期清单（TODO）
 
-> **2026-11-17 更新**：用户已明确允许生产代码修改、构建/CTest和方案文档修改；最新源码 `c42f12f0be89646fd39b93dbb61a79a0ee28e05f` 构建无诊断、**35/35 CTest**，见 [CLI验证](reviews/R6_CLI_PROCESS_VALIDATION_2026-11-17.md) 与 [PROGRESS](PROGRESS.md)。旧代码/运行限制不再阻挡本轮授权；57次实际CLI调用已验证成功/拒绝边界，但三个600帧Adaptive归档因原始NaN不能宣称分析/绘图成功。下一项为有限合成MAT的其余CLI成功路径及独立逐值平滑参考；原始NaN与默认轨迹UndefinedAngle限制、剩余L3/L4、完整实验、资源资格、DEC-005/006/008及正式验收仍未完成。
+> **2026-11-17 更新**：用户已明确允许生产代码修改、构建/CTest和方案文档修改；最新源码 `cecd19ada9e162701992960b0b7cb076e0deed3e` 构建无诊断、**36/36 CTest**，见 [有限输入验证](reviews/R6_ANALYSIS_FINITE_VALIDATION_2026-11-17.md) 与 [PROGRESS](PROGRESS.md)。有限MAT的Comparison/UpdateRates真实CLI已核对全部非线性曲线/平滑值，UpdateRates纵轴已修复。下一项为66 TC实际证据映射及源绘图视窗/三份illustration缺口核对；原始NaN与默认轨迹UndefinedAngle限制、剩余L3/L4、完整实验、资源资格、DEC-005/006/008及正式验收仍未完成。
 
 > **文档类型：项目管理/人类输入清单，不是基线签署。** 用户此前仅开放低阶球谐相关 C++ 实现与 Wolfram 验证，其它模块仍禁止开启代码实现。用户已在固定 `8eab5dd`、`445ed151`、`601c74de` 的旧版本分别报告1/1球谐CTest通过，并于最新固定 `5e5221988cf093dbfddb88f2f65f06632460f3a1` 在Ubuntu 24.04/GCC16.2上完成三个SH独立CTest **3/3 Passed、0失败**，覆盖源二阶逐系数投影。**当前卡点不是低阶SH首次编译，而是其它模块权限、公共ABI、扩大数值覆盖及DEC-005/006/008与正式批准**。代理未在用户VM执行或获得全工程授权；不写MAT、不合并/发布。见[专项授权](decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md)及[PROGRESS E-DOC-062](PROGRESS.md)。
 

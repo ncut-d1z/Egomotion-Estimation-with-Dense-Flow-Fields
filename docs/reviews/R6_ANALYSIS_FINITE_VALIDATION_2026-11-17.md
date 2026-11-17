@@ -1,6 +1,24 @@
 # R6 有限 MAT 与非线性分析参考（2026-11-17）
 
-状态：`[HUMAN-EXECUTE/APPROVE]`，用户已授权生产修复及构建/CTest。首轮已编译、35/36 CTest，失败定位于纵轴设置；修复待新检查点复测，不宣称正式冻结。关联 R6、P9.1/9.2/9.3 分析复现、TC-F-AN-001/002、TC-I-ANALYSIS-001、DEC-004/005/008；不改变需求和容差。
+状态：`[HUMAN-EXECUTE/APPROVE]`，用户已授权生产修复及构建/CTest。最终源码 `cecd19ada9e162701992960b0b7cb076e0deed3e` 编译无诊断、36/36 CTest通过；本记录是 `[AI-EDIT]` 实际证据登记，不宣称正式冻结。关联 R6、P9.1/9.2/9.3 分析复现、TC-F-AN-001/002、TC-I-ANALYSIS-001、DEC-004/005/008；不改变需求和容差。
+
+## 最终复测
+
+RunId `r6-analysis-final-20261117-bcfCdpEh`，源码SHA如上，运行前正常提交/推送并核实远端分支 `dev-plan-P0-P1-mat-dictionary-probe`。工作目录仓库根，源外增量构建目录 `build/r6-20261117-KzjFHPDQ/cmake`，日志 `build/<RunId>/evidence/`。环境沿用下面首轮记录：Ubuntu24.04.5/GCC16.2.0/CMake4.3.4/Eigen3.4.0/matio1.5.26，C++17 Release，无依赖安装。
+
+| 步骤（2026-11-17 UTC+08:00） | 起止 | 退出码/结果 |
+|---|---|---|
+| configure | 18:52:38…18:52:40 | 0 |
+| build | 18:52:40…18:53:43 | 0，无编译诊断 |
+| MAT CTest | 18:53:43…18:53:44 | 0，5/5，0.58秒 |
+| 其余 CTest | 18:53:44…18:53:47 | 0，31/31，3.01秒 |
+| 输入完整性 | 18:53:47完成 | 0，原始资料/参考/测试源码摘要一致 |
+
+配置命令为 `cmake -S <repo> -B <build-dir> -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DBUILD_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`，构建为 `cmake --build <build-dir> --parallel 4 -- -k`。CTest使用 `--test-dir <build-dir> -C Release --verbose --no-tests=error --output-junit <evidence>.xml`，先以 `--parallel 2 -R '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values|r06_mat_reader_boundaries|r06_mat_raw_payload_boundaries)$'` 执行5项MAT测试，再以 `--parallel 4 -E` 同表达式执行其余31项。完整命令/环境/种子登记/输入Git blob与SHA-256/时间/stdout/stderr/退出码/JUnit/Testing副本均保留；四步launcher stderr为空。此处未重跑首次clean build。
+
+MAT stdout SHA-256 `f3df87eead8663282f85d75860de137d4493eea4fafafe22239437fbc7725c09`；其余stdout `938db5f900d22c9a709222cf2643b2428c1e7d223cc4ca85587198f65ad792de`。`origin` Git树仍为 `70ee155131c24a50169346d0ffbaff0c01b1c547`。
+
+新CTest `r06_analysis_finite_cli` 用时1.28秒，夹具程序及4次真实CLI均exit0。32曲线全部JSON字段精确相等，合计5578对x/y与3460个完整平滑值；4份SVG结构、来源、linear/log轴标记通过。8个合成MAT前后摘要一致。子进程 `.meta/.stdout/.stderr`、实际/预期JSON、MAT摘要及coverage位于 `build/r6-20261117-KzjFHPDQ/cmake/r06_analysis_finite/有限输入 中文/5e3c4992cec4701223656208/evidence/`。输入无算法随机数；隔离目录使用独立随机名。原35项回归仍通过，包括原始NaN的明确拒绝；这些拒绝不是历史科学图像复现成功。R6-ANALYSIS-001在当前范围已修复并复测。
 
 ## 固定输入与独立参考
 
@@ -38,3 +56,5 @@ RunId `r6-analysis-baseline-20261117-MKiE6lji`，完整记录 `build/<RunId>/evi
 ## 证据边界
 
 这是独立解析L3固定输入的分析验证，不是原MATLAB运行记录，不是完整Runner/论文实验或L4统计复现。已有历史MAT的26个NaN继续按既有合同拒绝，原始数据只读；不借有限合成样本宣称这些历史目录分析成功。正式数值、性能与冻结签字仍由人类决定。
+
+静态接续检查另见两项具体绘图差异，当前测试没有覆盖：`svg_plot.cpp` 自动按数据极值取视窗，尚未落实原Bias `xlim([100 3000000]) / ylim([0.06 200])` 或Comparison右轴 `[0.01 100]`；生产树未见三份illustration展示入口（REQ-F-AN-002/P9.6…P9.8）。后续应先把既有66项TC映射到真实测试/证据，再按已批准范围补足这些源行为及平滑脚本来源身份；不能用36项CTest或本次SVG结构测试宣布全部R6已完成。输入摘要绑定能力目前仍明确未知。原始NaN/默认轨迹UndefinedAngle限制、其他独立L3与L4/完整科学实验、资源资格和正式验收仍待处理。

@@ -2,6 +2,8 @@
 
 ## 最新接续：R6 有限MAT与非线性分析（2026-11-17）
 
+**最终复测 `[HUMAN-EXECUTE/APPROVE]`：`cecd19ada9e162701992960b0b7cb076e0deed3e` 构建无诊断，36/36 CTest通过（MAT5/5，其余31/31）。** Comparison/UpdateRates有限输入的32条曲线、5578对x/y、3460个完整平滑值与独立三次多项式参考精确一致；修复了UpdateRates纵轴，并验证4份SVG的轴标记/结构。原始及合成MAT摘要不变，首轮失败证据保留，见 [有限输入验证](reviews/R6_ANALYSIS_FINITE_VALIDATION_2026-11-17.md)。下一项为66 TC实际证据映射及源绘图视窗/三份illustration缺口核对；原始NaN、默认轨迹UndefinedAngle、剩余L3/L4与完整科学实验/正式验收仍未闭合，R6未结案。
+
 **首轮实测 `[HUMAN-EXECUTE/APPROVE]`**：`29e965c4e234dabe7cc40e55c51734ae559b2032` 构建无诊断，35/36 CTest。独立多项式参考确认两个有限MAT入口的32曲线/5578对x-y/3460个完整平滑值一致，但UpdateRates20条曲线的y_scale错误为log。已保留失败，现修复为原脚本linear并加SVG轴标记检查，待新远程检查点复测。范围、推导、固定边界及R6-ANALYSIS-001证据见 [有限输入验证](reviews/R6_ANALYSIS_FINITE_VALIDATION_2026-11-17.md)。原始数据只读，R6未结案。
 
 ## 最新接续：R6 真实CLI与历史分析集成（2026-11-17）

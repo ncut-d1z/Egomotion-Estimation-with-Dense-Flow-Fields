@@ -4,7 +4,7 @@ A planned **C++17 reimplementation that directly reads the original MATLAB MAT f
 
 > **Permanent evidence policy:** Running MATLAB/Octave or collecting original MATLAB L1 execution traces is **not required** for design, coding, verification, or release. The original scripts are read-only specifications; numerical evidence will use the preserved MAT results (L2), independently checked analytic/reference implementations (L3), and statistical comparisons (L4). See [No MATLAB Execution Policy](docs/golden/NO_MATLAB_EXECUTION_POLICY.md). This change does not authorize C++ builds/tests or imply any numerical acceptance.
 
-> **项目状态（2026-11-17）**：R0–R5生产源码已实现，R6仍在验证。最新受测源码 `c42f12f0be89646fd39b93dbb61a79a0ee28e05f` 增量构建无诊断、**35/35 CTest通过**，包括57次真实CLI调用，修复了子命令帮助。两种Bias及Initialization历史分析/绘图成功；另三组Adaptive归档因原始NaN按合同拒绝，不能把负例通过当作图表复现成功。原582 MAT/33,340值、MAT安全、源SH及Runner回归仍通过，原始输入哈希不变。见 [最新验证](docs/reviews/R6_CLI_PROCESS_VALIDATION_2026-11-17.md) 和 [首次干净构建](docs/reviews/R6_NATIVE_VALIDATION_2026-11-17.md)。尚需有限合成输入下的其余CLI分析成功路径、独立逐值分析参考、完整科学实验/L4及正式验收。
+> **项目状态（2026-11-17）**：R6仍在验证。最新受测源码 `cecd19ada9e162701992960b0b7cb076e0deed3e` 增量构建无诊断、**36/36 CTest通过**。新增有限MAT下Comparison/UpdateRates真实CLI验证：32曲线与独立非线性参考一致，修复了UpdateRates纵轴。原35项仍通过，原始输入哈希不变；三个Adaptive归档因原始NaN按合同拒绝，不能把负例通过当作图表复现成功。见 [最新验证](docs/reviews/R6_ANALYSIS_FINITE_VALIDATION_2026-11-17.md) 和 [首次干净构建](docs/reviews/R6_NATIVE_VALIDATION_2026-11-17.md)。尚需核对66 TC实际覆盖及源绘图视窗/三份illustration缺口，完成其余独立参考、科学实验/L4及正式验收。
 
 ## Original research and source material
 

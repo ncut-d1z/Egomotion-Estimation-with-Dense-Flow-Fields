@@ -1,5 +1,7 @@
 # MAT 结果分析与可选绘图——详细设计草案
 
+> **2026-11-17 执行事实（[AI-EDIT]）**：`cecd19ada9e162701992960b0b7cb076e0deed3e` 无诊断构建、36/36 CTest；新有限输入测试以独立多项式均值精确核对Comparison/UpdateRates全部曲线与完整平滑值，并修复UpdateRates应为linear的纵轴，见 [证据](../reviews/R6_ANALYSIS_FINITE_VALIDATION_2026-11-17.md)。这不证明原绘图视窗、三份illustration、原NaN归档及正式AC均已完成。下段未执行描述保留为历史草案身份，不更改合同或冻结状态。
+
 > **LLD v0.14草案（DEC-008-04完整ErrorFrame包装链已同步；未执行Analyzer/可视化程序）。** 来源：bias_test/data_analysis/graphs_bias_test.m、adaptive_matched_filter_test/data_analysis/ 下三份 graph_*.m、help_functions/kurveglaetten.m、illustrations/ 下三份 .m。对应 P5.5、P9、REQ-F-BIAS-003、REQ-F-AN-001/002。
 
 ## 1. 只读分析合同
