@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 CLI 输出流故障（2026-11-17）
+
+**准备 `[HUMAN-EXECUTE/APPROVE]`，新代码尚未执行。** 旧二进制向`/dev/full`写help/插图JSON仍返回0，真实复现已保存；现补write/flush/ostream异常检查及独立失败Manifest保存。新增流故障矩阵与实际`/dev/full`进程测试，预期ON 50项、OFF 49项，待远端检查点后验证；见 [缺陷与准备](reviews/R6_CLI_STREAM_OUTPUT_2026-11-17.md)。不改变原始数据、数值判据、持久化计算结果或正式资格，R6未结案。
+
 ## 最新接续：R6 可选 SVG 独立构建（2026-11-17）
 
 **实测 `[HUMAN-EXECUTE/APPROVE]`：`f3398b099c70233e55e150ecf41c2dd90f282c00` 两种配置无诊断构建、ON 48/48及OFF 47/47 CTest。** OFF使用全新构建目录，唯一缺席项为SVG专用画幅测试；真实CLI9次合法绘图请求明确拒绝且不预留输出。14份有限Bias MAT载荷和3类插图JSON跨模式一致；输入SHA不变，依赖图无环、OFF实际二进制无SVG实现。RunId `r6-headless-20261117-Joe73gEd`，见 [证据](reviews/R6_HEADLESS_BUILD_2026-11-17.md)。继续日志/输出合同及P/TC覆盖复核；三Adaptive完整成功、L4/资源/正式资格仍未完成，R6未结案。

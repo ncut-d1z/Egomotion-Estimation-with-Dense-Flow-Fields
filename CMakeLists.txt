@@ -294,6 +294,21 @@ if(BUILD_TESTING)
     set_tests_properties(r06_runid_failure_context PROPERTIES
         LABELS "r06;cli;diagnostics;write-sandbox;synthetic-only" TIMEOUT 30)
 
+    add_executable(test_r06_cli_streams tests/integration/test_r06_cli_streams.cpp)
+    target_link_libraries(test_r06_cli_streams PRIVATE egomotion_cli)
+    target_compile_options(test_r06_cli_streams PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_cli_output_streams COMMAND test_r06_cli_streams
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_cli_streams")
+    set_tests_properties(r06_cli_output_streams PROPERTIES
+        LABELS "r06;cli;diagnostics;write-sandbox;stream-faults;bounded-bias" TIMEOUT 90)
+    add_test(NAME r06_cli_output_real_process COMMAND "${CMAKE_COMMAND}"
+        "-DCLI=$<TARGET_FILE:egomotion>" "-DSOURCE_SHA=${EGOMOTION_BUILD_SOURCE_SHA}"
+        "-DSANDBOX=${CMAKE_CURRENT_BINARY_DIR}/r06_cli_streams_process"
+        "-DSVG_ENABLED=${EGOMOTION_ENABLE_SVG}"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/test_r06_cli_streams.cmake")
+    set_tests_properties(r06_cli_output_real_process PROPERTIES
+        LABELS "r06;cli;diagnostics;write-sandbox;real-process;dev-full;bounded-bias" TIMEOUT 90)
+
     # R2 exclusively reads two repository fixtures. It never writes origin or reports.
     add_executable(test_r02_reader tests/integration/test_r02_reader.cpp)
     target_link_libraries(test_r02_reader PRIVATE egomotion_cli egomotion_matio)

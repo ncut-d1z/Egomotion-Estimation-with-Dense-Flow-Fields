@@ -1,5 +1,6 @@
 #include "egomotion/cli/command.hpp"
 #include "../run_diagnostics.hpp"
+#include "stream_output.hpp"
 
 #include "egomotion/analysis/dataset_json.hpp"
 #include "egomotion/contracts/diagnostics.hpp"
@@ -14,8 +15,10 @@
 #include <cstdint>
 #include <filesystem>
 #include <iostream>
+#include <locale>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -60,10 +63,10 @@ int plotExit(PlotErrorCode code) {
     }
     return 5;
 }
-void unavailable(std::ostream& err,std::string_view stage,
+int unavailable(std::ostream& err,std::string_view stage,
                  std::string_view component,int code=5) {
-    err<<jsonBackendUnavailable(stage,
-        std::string(component)+" backend is not connected",code)<<"\n";
+    return streams::writeAndFlush(err,jsonBackendUnavailable(stage,
+        std::string(component)+" backend is not connected",code)+"\n")?code:6;
 }
 bool randomSeed(std::uint32_t& seed) {
     auto* bytes=reinterpret_cast<unsigned char*>(&seed);
@@ -115,8 +118,7 @@ std::size_t expectedRuns(CommandKind kind) {
 }
 int failure(std::ostream& err,ExperimentErrorCode code,std::string message,int exit=5){
     ErrorDetail d;d.stage=ErrorStage::Simulation;d.message=std::move(message);
-    err<<jsonFailure(Failure<ExperimentErrorCode>{code,std::move(d)},exit)<<"\n";
-    return exit;
+    return streams::report(err,Failure<ExperimentErrorCode>{code,std::move(d)},exit);
 }
 int runExperiment(const Command& command,
                   const std::filesystem::path& trusted_root,
@@ -135,8 +137,7 @@ int runExperiment(const Command& command,
     auto reservation=io::RunDirectory::create(trusted_root,runIdOption(command));
     if(!reservation.hasValue()){
         const auto exit=matExit(reservation.error().code);
-        err<<jsonFailure(reservation.error(),exit)<<"\n";
-        return exit;
+        return streams::report(err,reservation.error(),exit);
     }
     auto directory=std::move(reservation).value();
     io::RunMatWriter writer(*directory);
@@ -174,19 +175,24 @@ int runExperiment(const Command& command,
         // The computational failure and an independent Manifest failure are
         // distinct events: never fake a common causal chain for both.
         const auto error=detail::withRunIdIfMissing(result.error(),context.runId());
-        err<<jsonFailure(error,code)<<"\n";
+        const int reported=streams::report(err,error,code);
+        // stderr失败不阻止独立Manifest通道保存原始计算失败。
         auto status=context.publishFailureRecord(error);
-        if(!status.hasValue())err<<jsonFailure(status.error(),6)<<"\n";
-        return code;
+        if(!status.hasValue()&&!streams::diagnostic(err,status.error(),6))
+            return 6;
+        return reported;
     }
     const auto& state=result.value();
-    out<<"{\"run_id\":"<<jsonQuote(state.run_id.text)
+    std::ostringstream response;
+    response.imbue(std::locale::classic());
+    response.exceptions(std::ios::badbit|std::ios::failbit);
+    response<<"{\"run_id\":"<<jsonQuote(state.run_id.text)
        <<",\"status\":\"Complete\",\"attempted\":"<<state.attempted
        <<",\"completed\":"<<state.completed
        <<",\"valid\":"<<state.valid
        <<",\"failed\":"<<state.failed
        <<",\"undefined\":"<<state.undefined<<"}\n";
-    return 0;
+    return streams::success(out,err,response.str(),&state.run_id);
 }
 int analyzeOrPlot(const Command& cmd,IAnalyzer& analyzer,
                   IPlotExporter* plotter,IResultReader& reader,
@@ -196,68 +202,72 @@ int analyzeOrPlot(const Command& cmd,IAnalyzer& analyzer,
     auto result=analyzer.analyze(args.kind,args.input_root,reader);
     if(!result.hasValue()){
         const int code=analysisExit(result.error().code);
-        err<<jsonFailure(result.error(),code)<<"\n";return code;
+        return streams::report(err,result.error(),code);
     }
     if(cmd.kind==CommandKind::Analyze){
         auto json=analysis::datasetJson(result.value());
         if(!json.hasValue()){
             const int code=analysisExit(json.error().code);
-            err<<jsonFailure(json.error(),code)<<"\n";return code;
+            return streams::report(err,json.error(),code);
         }
-        out<<json.value();
-        return 0;
+        return streams::success(out,err,json.value());
     }
     if(!plotter){
-        unavailable(err,"plot","Optional SVG exporter",7);return 7;
+        return unavailable(err,"plot","Optional SVG exporter",7);
     }
     auto reserved=io::RunDirectory::create(repository_root,args.run_id);
     if(!reserved.hasValue()){
         const auto code=matExit(reserved.error().code);
-        err<<jsonFailure(reserved.error(),code)<<"\n";return code;
+        return streams::report(err,reserved.error(),code);
     }
     auto dir=std::move(reserved).value();
     io::RunTextPublisher publisher(*dir);
     auto exported=plotter->exportPlot(result.value(),publisher);
     if(!exported.hasValue()){
         const auto code=plotExit(exported.error().code);
-        err<<jsonFailure(detail::withRunIdIfMissing(exported.error(),dir->runId()),code)
-           <<"\n";return code;
+        return streams::report(err,detail::withRunIdIfMissing(exported.error(),dir->runId()),code);
     }
-    out<<"{\"run_id\":"<<jsonQuote(dir->runId().text)<<",\"plot_files\":[";
+    std::ostringstream response;
+    response.imbue(std::locale::classic());
+    response.exceptions(std::ios::badbit|std::ios::failbit);
+    response<<"{\"run_id\":"<<jsonQuote(dir->runId().text)<<",\"plot_files\":[";
     bool first=true;
     for(const auto& file:exported.value()){
-        if(!first)out<<",";
-        first=false;out<<jsonQuote(file);
+        if(!first)response<<",";
+        first=false;response<<jsonQuote(file);
     }
-    out<<"]}\n";
-    return 0;
+    response<<"]}\n";
+    return streams::success(out,err,response.str(),&dir->runId());
 }
 int illustrate(const IllustrationArgs& args,illustrations::IExporter* exporter,
                const std::filesystem::path& repository_root,std::ostream& out,std::ostream& err) {
     auto data=illustrations::generate(args.config);
-    if(!data.hasValue()){err<<jsonFailure(data.error(),5)<<'\n';return 5;}
+    if(!data.hasValue())return streams::report(err,data.error(),5);
     if(!args.svg) {
         auto json=illustrations::dataJson(data.value());
-        if(!json.hasValue()){err<<jsonFailure(json.error(),5)<<'\n';return 5;}
-        out<<json.value();return 0;
+        if(!json.hasValue())return streams::report(err,json.error(),5);
+        return streams::success(out,err,json.value());
     }
-    if(!exporter){unavailable(err,"plot","Optional illustration SVG exporter",7);return 7;}
+    if(!exporter)return unavailable(err,"plot","Optional illustration SVG exporter",7);
     auto reserved=io::RunDirectory::create(repository_root,args.run_id);
     if(!reserved.hasValue()) {
         const auto code=matExit(reserved.error().code);
-        err<<jsonFailure(reserved.error(),code)<<'\n';return code;
+        return streams::report(err,reserved.error(),code);
     }
     auto directory=std::move(reserved).value();
     io::RunTextPublisher publisher(*directory);
     auto files=exporter->exportSvg(data.value(),publisher);
     if(!files.hasValue()) {
         const auto code=plotExit(files.error().code);
-        err<<jsonFailure(detail::withRunIdIfMissing(files.error(),directory->runId()),code)
-           <<'\n';return code;
+        return streams::report(err,detail::withRunIdIfMissing(files.error(),directory->runId()),code);
     }
-    out<<"{\"run_id\":"<<jsonQuote(directory->runId().text)<<",\"plot_files\":[";
-    for(std::size_t i=0;i<files.value().size();++i){if(i)out<<',';out<<jsonQuote(files.value()[i]);}
-    out<<"]}\n";return 0;
+    std::ostringstream response;
+    response.imbue(std::locale::classic());
+    response.exceptions(std::ios::badbit|std::ios::failbit);
+    response<<"{\"run_id\":"<<jsonQuote(directory->runId().text)<<",\"plot_files\":[";
+    for(std::size_t i=0;i<files.value().size();++i){if(i)response<<',';response<<jsonQuote(files.value()[i]);}
+    response<<"]}\n";
+    return streams::success(out,err,response.str(),&directory->runId());
 }
 } // namespace
 
@@ -265,36 +275,37 @@ int ApplicationCompositionRoot::dispatch(
     const Command& command,std::ostream& out,std::ostream& err) const {
     switch(command.kind){
     case CommandKind::Help:
-        out<<"Usage: egomotion <command> [--option VALUE]\n"
+        return streams::success(out,err,"Usage: egomotion <command> [--option VALUE]\n"
               "Commands: inspect-mat, run-bias-occluded, run-bias-proportional,\n"
               "  run-adaptive-init, run-adaptive-comparison,\n"
               "  run-adaptive-update-rates, analyze, plot, illustrate, help, version\n"
               "illustrate --kind circle|sinusoidal|harmonic [--format json|svg]\n"
-              "  harmonic requires --degree N --order M; --run-id ID is SVG-only\n";
-        return 0;
+              "  harmonic requires --degree N --order M; --run-id ID is SVG-only\n");
     case CommandKind::Version:
-        out<<"egomotion 0.1.0 (R5 full-source bootstrap; native checks pending)\n";
-        return 0;
+        return streams::success(out,err,"egomotion 0.1.0 (R5 full-source bootstrap; native checks pending)\n");
     case CommandKind::InspectMat: {
-        if(!reader_){unavailable(err,"read","MAT Reader");return 5;}
+        if(!reader_)return unavailable(err,"read","MAT Reader");
         const auto& params=std::get<InspectMatArgs>(command.arguments);
         auto inspected=reader_->inspect(params.source);
         if(!inspected.hasValue()){
             const int code=matExit(inspected.error().code);
-            err<<jsonFailure(inspected.error(),code)<<"\n";return code;
+            return streams::report(err,inspected.error(),code);
         }
         bool matched=false;
+        std::ostringstream response;
+        response.imbue(std::locale::classic());
+        response.exceptions(std::ios::badbit|std::ios::failbit);
         for(const auto& v:inspected.value()){
             if(params.variable&&v.name!=*params.variable)continue;
             matched=true;
-            out<<"variable="<<v.name<<" class="<<v.original_class_type
+            response<<"variable="<<v.name<<" class="<<v.original_class_type
                <<" type="<<v.original_data_type
                <<" rank="<<v.dimensions.size()<<" dims=";
             for(std::size_t i=0;i<v.dimensions.size();++i){
-                if(i)out<<'x';
-                out<<v.dimensions[i];
+                if(i)response<<'x';
+                response<<v.dimensions[i];
             }
-            out<<" data_bytes="<<v.data_bytes<<" compressed="<<v.is_compressed
+            response<<" data_bytes="<<v.data_bytes<<" compressed="<<v.is_compressed
                <<" complex="<<v.is_complex<<" logical="<<v.is_logical
                <<" global="<<v.is_global<<"\n";
         }
@@ -302,21 +313,20 @@ int ApplicationCompositionRoot::dispatch(
             ErrorDetail d;d.stage=ErrorStage::Read;
             d.message="MAT variable not found";
             d.source_path=params.source.string();d.variable=*params.variable;
-            err<<jsonFailure(Failure<MatErrorCode>{
-                MatErrorCode::MissingVariable,std::move(d)},3)<<"\n";
-            return 3;
+            return streams::report(err,Failure<MatErrorCode>{
+                MatErrorCode::MissingVariable,std::move(d)},3);
         }
-        return 0;
+        return streams::success(out,err,response.str());
     }
     case CommandKind::Analyze:
     case CommandKind::Plot:
-        if(!reader_||!analyzer_){unavailable(err,"analyze","Analyzer/Reader");return 5;}
+        if(!reader_||!analyzer_)return unavailable(err,"analyze","Analyzer/Reader");
         return analyzeOrPlot(command,*analyzer_,plotter_,*reader_,
                              trusted_repo_,out,err);
     case CommandKind::Illustrate:
         return illustrate(std::get<IllustrationArgs>(command.arguments),illustrator_,trusted_repo_,out,err);
     default:
-        if(!runner_){unavailable(err,"simulation","Experiment Runner");return 5;}
+        if(!runner_)return unavailable(err,"simulation","Experiment Runner");
         return runExperiment(command,trusted_repo_,*runner_,out,err);
     }
 }
@@ -325,15 +335,11 @@ int run(const std::vector<std::string>& args,std::ostream& out,
     try{
         auto parsed=parseCommand(args);
         if(!parsed.hasValue()){
-            err<<jsonFailure(parsed.error(),2)<<"\n";return 2;
+            return streams::report(err,parsed.error(),2);
         }
         return app.dispatch(parsed.value(),out,err);
     }catch(const std::exception& e){
-        ErrorDetail d;d.stage=ErrorStage::Output;
-        d.message=std::string("Application composition failed: ")+e.what();
-        err<<jsonFailure(Failure<ExperimentErrorCode>{
-            ExperimentErrorCode::OutputFailed,std::move(d)},6)<<"\n";
-        return 6;
+        return streams::outputFailure(err,e.what());
     }
 }
 } // namespace egomotion::cli
