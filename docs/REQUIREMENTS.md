@@ -146,7 +146,7 @@
 ## 5. MAT 数据字典与结果契约
 
 - `setofpoints` 是 N×6（前三列单位视线，后三列三维切向光流）；系数布局为 3×5（1+3+5 个有效项）；Adaptive 线性系统为 6×6。MATLAB 的列主序、1-based 索引意义、数值精度不能被静默改变。
-- **已实测的归档数据合同**：`occluded_regions` 40×7=280、`proportional_error` 40×7=280；Adaptive 的 initialization 4、without_errors 5、with_errors 7、many_parameter 6，共 **582 个文件，582 个变量**。matio 1.5.26 实际读取均成功：**582/582 MAT v5、582/582 MATLAB class=double、data_type=double、zlib 压缩，flags 为 `-`，失败 0**。该批源文件无 MAT v7.3、cell、struct、sparse、complex、single 或整数存储变量；所以**不需要为现存 582 文件引入 HDF5 或其他 MAT class 读取支持**。详见 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md)。
+- **已实测的归档数据合同**：`occluded_regions` 40×7=280、`proportional_error` 40×7=280；Adaptive 的 initialization 4、without_errors 5、with_errors 7、many_parameter 6，共 **582 个文件，582 个变量**。matio 1.5.26 实际读取均成功：**582/582 MAT v5、582/582 MATLAB class=double、完整解码内存data_type=double、zlib 压缩，flags 为 `-`，失败 0**。该批源文件无 MAT v7.3、cell、struct、sparse、complex、single 或整数MATLAB class变量；物理实部存储则为502个miDOUBLE、80个miINT32，后者仍属于double class。**不需要为现存 582 文件引入 HDF5 或其他 MAT class 读取支持**。详见保留原样的 [历史探针字典](MAT_DATA_SCHEMA.md) 及 [独立存储验证](reviews/R6_MAT_STORAGE_VALIDATION_2026-11-17.md)；此处纠正数据来源事实，不改变支持范围或验收义务。
 - **变量尺寸（真实 MAT 内容，不再是由 MATLAB `zeros` 推测）**：`10×3` 480 个、`10×1` 80 个、`35×1` 4 个、`600×1` 14 个、`600×4` 4 个。582/582 的变量名与同名 `.mat` 文件 basename 一致，且 `data_bytes = 8 × 元素数`。该证据只覆盖原作者已保存的历史结果，不证明新 C++ 算法或输出的数值正确。
 - Bias 的 xwerte、ywerte1…6 及 Adaptive 的 allemit*/alleohne*/rottransratio 等，应以原 MAT 实测变量名与 shape 为准。按 [DEC-004](decisions/DEC-004_HISTORICAL_MAT_FIELDS.md) 区分当前有效 `save`（`CurrentGenerated`）、历史专属字段（`HistoricalOnly`，只读）与尚无依据判定的字段（`Unknown`）；另记录分析必需字段。**历史成因未知无需先归因**，新 Runner 仅保存现行字段；分析必需字段缺失时返回明确错误，禁止补造。
 - 噪声参数 `[0.6, 2.4, 9.6]` 在原代码中直接乘以 randn，不能因为注释写 variance 而自行开平方。

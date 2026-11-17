@@ -1,5 +1,29 @@
 # R6 MAT内部载荷与维度边界验证
 
+## 最终复测：29/29 CTest通过
+
+**[HUMAN-EXECUTE/APPROVE] 受测源码 `bc51fddca2a56d0dae988086824266b68ff995c2` 已配置/编译成功，全部29项CTest通过。** 本段结果登记为 `[AI-EDIT]`，不代签AC/DEC或冻结；每次执行前均原子提交、正常推送并核实远端分支 `dev-plan-P0-P1-mat-dictionary-probe` 包含SHA。修改为私有 `src/io/mat_payload_validation.{hpp,cpp}`、`mat_container_validation.{hpp,cpp}`、两份Reader测试及CMake；没有改动数值算法或原始资料，没有新建/关闭Issue或PR、没有合并/发布。
+
+RunId `r6-mat-payload-final-20261117-Rkq8pvHK`，证据目录 `build/r6-mat-payload-final-20261117-Rkq8pvHK/evidence/`，保存每步命令/参数/cwd、环境、stdout/stderr、退出码、来源Git blob、原始输入/参考/测试SHA、JUnit和Testing快照。复用 `build/r6-20261117-KzjFHPDQ/cmake/` 并重新配置SHA，属于增量构建。环境Ubuntu24.04.5、GCC16.2.0、CMake/CTest4.3.4、Eigen3.4.0、Sophus1.24.6、matio1.5.26、zlib1.3，C++17 Release；没有安装依赖。夹具完全确定，无随机算法种子；RunId用独立OS随机源。
+
+| 步骤 | 开始/结束（2026-11-17 UTC+08:00） | 退出码 | 实际结果 |
+|---|---|---:|---|
+| configure | 17:27:16 / 17:27:18 | 0 | 受测SHA正确 |
+| build | 17:27:18 / 17:27:46 | 0 | 全目标通过，无编译诊断 |
+| MAT CTest | 17:27:46 / 17:27:47 | 0 | 5/5，通过时间0.73秒 |
+| 其余CTest | 17:27:47 / 17:27:48 | 0 | 24/24，通过时间0.95秒 |
+| 输入身份 | 17:27:48完成 | 0 | 所有受控原始输入/参考/测试SHA未变 |
+
+配置参数 `-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DBUILD_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`；编译 `cmake --build <build-dir> --parallel 4 -- -k`。CTest采用 `-C Release --verbose --no-tests=error --output-junit <evidence>.xml`，先 `--parallel 2 -R '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values|r06_mat_reader_boundaries|r06_mat_raw_payload_boundaries)$'`，再 `--parallel 4 -E` 同表达式，覆盖所有登记项。
+
+`Raw MAT payload scenarios=94 failed=0`（32个合法编码/流式正例、4个混合文件选择、58个非法载荷）；非法载荷均在测试所包装的matio数值读取API前拒绝，信号/超时不算通过。`Reader boundary scenarios=29 failed=0`，合法UTF8 char明确报UnsupportedClassOrType，错误根长度char由独立夹具继续拒绝。原始582 MAT/33,340值、502 miDOUBLE/80 miINT32逐位/SHA完全一致，Linux发布故障29场景及前批Adaptive合同仍通过。所有步骤stderr为空。
+
+MAT日志SHA-256 `10373cafdf7db17987dab908ea6ca54988d56fe7bfd27e8fbb1ccadc795b9dc2`；其余CTest日志SHA-256 `a56b1869301e843bf19e8aba4e09d5228d84e6deb41bf1195218c5e47d9c0a27`。本地R6-MAT-002取得修复/复测证据，原失败日志和夹具均保留；Node仅用于一次只读夹具诊断，未成为构建/运行依赖。同步纠正MAT LLD/SRS里遗留的“物理元素均8字节/没有整数存储”事实描述，仍区分double class、解码内存与物理miINT32，不改变支持范围或验收义务。
+
+**剩余边界**：不宣称任意恶意嵌套struct/cell/object、并发原地写同一inode、所有资源耗尽或全部MAT格式均已验证；更广物理存储允许集合和性能预算未冻结。R6还需源SHRotate动作/相位限定、剩余独立L3、完整Runner/L4与正式验收；默认Adaptive轨迹的UndefinedAngle限制未被本批改变。没有执行MATLAB/Octave或完整科学实验。
+
+## 首轮准备（历史）
+
 **[HUMAN-EXECUTE/APPROVE] 测试源码已编写，尚未执行。** 起点本地/远端 `88e68407a4516dd823e1ee82913895a5f0bfd5e8` 一致且工作区干净，关联任务最新要求继续R6代码；用户已授权生产修改及构建/CTest。前批受测 `a5336b3` 为28/28通过，不能继承为本批结果。已核查全部open/closed Issue/PR（空）及Reader已有缺陷记录。
 
 本批继续 [MAT LLD §8–9](../design/mat_io.md) 的TC-F-MAT-001/002、TC-D-MAT-002、TC-DC-IO-001：顶层/zlib完整不等于内部miMATRIX长度、dims乘积与实部载荷一致；matio完整解码后的dtype/nbytes不能独立证明物理tag。新 `tests/integration/test_r06_mat_payload.cpp` 不通过生产解析器或matio生成输入，而按文件格式构造字节，压缩仅使用zlib。新增CTest `r06_mat_raw_payload_boundaries`，合计登记29项。

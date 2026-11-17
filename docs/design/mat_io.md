@@ -1,5 +1,7 @@
 # MAT I/O、路径安全与原始数据合同——详细设计草案
 
+> **2026-11-17 执行注记（[AI-EDIT]）**：`bc51fddca2a56d0dae988086824266b68ff995c2` 已通过29/29 CTest，含94个raw载荷、29个Reader边界及582 MAT/33,340值独立对照；见 [载荷修复](../reviews/R6_MAT_PAYLOAD_VALIDATION_2026-11-17.md)。下列旧“未实现/未运行”属于原设计时点，不覆盖此处固定SHA证据；更广类型、资源与正式验收/冻结仍未完成。
+
 > **LLD v0.16 候选草案（DEC-008-04完整错误包装链与05仅结构元数据检查已同步；仍未实现/运行）。独立 matio 只读探针已实现并在 Ubuntu 24.04 上完成 582 文件全量变量读取；正式业务 Reader/Writer、负例、写回读及 L2 逐值/L3 独立参考验证仍未完成。** 依据 getflowfield.m、MATLAB 的 load/save 调用、原始归档样本文件头和 AGENTS.md。需求：REQ-F-MAT-001/002/003/004、REQ-D-MAT-001/002/003、REQ-I-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001；任务 P0.5–P0.6、P1.3–P1.10。
 
 ## 1. 原始行为、文件身份和支持版本
@@ -10,18 +12,18 @@
 - **旧脚本兼容读取**：按原脚本的路径/后缀解析规则取得数据，多变量场景须依据静态格式说明和独立 L3 例子核验枚举/冲突规则；若顺序无法确定则明确返回 AmbiguousVariable，**不要求运行 MATLAB 再冻结现有单变量归档合同**。不能随意以名称字典排序代替原行为。
 - **inspect**：列出全部变量元数据而不读取成算法领域类型或更改文件。
 
-**归档实测事实（2026-11-17纠正，[AI-EDIT]）**：历史探针以 `Mat_VarRead` 完整解码582个MAT，得到的class和内存data_type均为double；该data_type不能代表物理存储标签。独立字节解析表明502个实部为 `miDOUBLE`、80个为 `miINT32`（Bias `xwerte.mat`），MATLAB class均为double，仍是v5/zlib、单变量、原有五种shape。见 [存储验证](../reviews/R6_MAT_STORAGE_VALIDATION_2026-11-17.md) 和保留原样的 [历史字典](../MAT_DATA_SCHEMA.md)。此处纠正来源事实，不擅自扩大到single/struct等类型或宣布严格Reader/设计已验收；raw tag拒绝策略仍须单独实现和验证。当前数据不需要HDF5。
+**归档实测事实（2026-11-17纠正，[AI-EDIT]）**：历史探针以 `Mat_VarRead` 完整解码582个MAT，得到的class和内存data_type均为double；该data_type不能代表物理存储标签。独立字节解析表明502个实部为 `miDOUBLE`、80个为 `miINT32`（Bias `xwerte.mat`），MATLAB class均为double，仍是v5/zlib、单变量、原有五种shape。见 [存储验证](../reviews/R6_MAT_STORAGE_VALIDATION_2026-11-17.md) 和保留原样的 [历史字典](../MAT_DATA_SCHEMA.md)。此处纠正来源事实，不擅自扩大到single/struct等类型或宣布严格Reader/设计已验收；当前raw tag/长度/dims拒绝证据见本页执行注记，更广物理存储允许集合仍未冻结。当前数据不需要HDF5。
 
 ### 1.1 已确认的数据类型支持边界（基于 582/582 实测）
 
-| MATLAB class / MAT dtype | 实测变量数 | 业务读取决定 |
+| MATLAB class / 完整解码dtype | 实测变量数 | 业务读取决定 |
 |---|---:|---|
 | double / double（实数、压缩 MAT v5） | **582** | **当前必需**：保留变量名、rank/dims、列主序和 double 数值，实测探针已读；生产接口与数值 copy/Map 仍待验收 |
 | single/int8…uint64/logical | 0 | **不是本归档必需输入**；遇到新输入须显式类型化读取或报 UnsupportedClassOrType，不允许偷偷转 double |
 | cell/struct/object/char/sparse/complex | 0 | **不是本归档必需输入**；未实现的类型必须拒绝，不能伪称兼容 |
 | MAT v7.3 / HDF5 | 0 | **当前不需要引入**；只在将来出现真实 v7.3 输入时走变更审批 |
 
-目前已观察到的五种变量形状仅为 **10×1（80）、10×3（480）、35×1（4）、600×1（14）、600×4（4）**。每个文件恰有一个与 `.mat` basename 相同的变量；数据物理字节数均为元素数×8。此结论只覆盖当前归档，不是对未来任意 MAT 类型支持的承诺。
+目前已观察到的五种变量形状仅为 **10×1（80）、10×3（480）、35×1（4）、600×1（14）、600×4（4）**。每个文件恰有一个与 `.mat` basename 相同的变量；完整解码的double内存字节数为元素数×8，解压后的物理实部载荷则按miDOUBLE/miINT32分别为元素数×8/×4，不能与压缩文件总长度混同。此结论只覆盖当前归档，不是对未来任意 MAT 类型支持的承诺。
 
 ## 2. 候选 C++17 类接口与资源所有权
 

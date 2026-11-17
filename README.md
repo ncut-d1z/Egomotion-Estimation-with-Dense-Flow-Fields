@@ -4,7 +4,7 @@ A planned **C++17 reimplementation that directly reads the original MATLAB MAT f
 
 > **Permanent evidence policy:** Running MATLAB/Octave or collecting original MATLAB L1 execution traces is **not required** for design, coding, verification, or release. The original scripts are read-only specifications; numerical evidence will use the preserved MAT results (L2), independently checked analytic/reference implementations (L3), and statistical comparisons (L4). See [No MATLAB Execution Policy](docs/golden/NO_MATLAB_EXECUTION_POLICY.md). This change does not authorize C++ builds/tests or imply any numerical acceptance.
 
-> **项目状态（2026-11-17）**：R0–R5生产源码已实现，R6仍在验证。最新受测源码 `a5336b3e9072be16dcf296b927a24de3e39cdc06` 增量构建无诊断、**28/28 CTest通过**；新增固定8组600行聚合、600帧合成Session及默认轨迹无定义角负例，修复undefined漏计与噪声失败分类。原582 MAT/33,340值独立SHA/逐位对照、Reader边界29场景及发布故障29场景仍通过，原始输入哈希不变。见 [最新验证](docs/reviews/R6_ADAPTIVE_RUNNER_CONTRACT_2026-11-17.md) 和 [首次干净构建](docs/reviews/R6_NATIVE_VALIDATION_2026-11-17.md)。默认正弦轨迹在当前替身下第151帧中止的限制仍存在；通过负例及固定结果不等于完整科学实验成功。其它raw tag/资源负例、剩余L3/L4、端到端Runner及正式验收尚未完成。
+> **项目状态（2026-11-17）**：R0–R5生产源码已实现，R6仍在验证。最新受测源码 `bc51fddca2a56d0dae988086824266b68ff995c2` 增量构建无诊断、**29/29 CTest通过**；新增解码前MAT内部载荷/维度校验和94个独立字节场景，修复非法载荷被静默接受及错误分类。原582 MAT/33,340值独立SHA/逐位对照、Reader边界29场景、发布故障29场景及Adaptive合同仍通过，原始输入哈希不变。见 [最新验证](docs/reviews/R6_MAT_PAYLOAD_VALIDATION_2026-11-17.md) 和 [首次干净构建](docs/reviews/R6_NATIVE_VALIDATION_2026-11-17.md)。默认正弦轨迹在当前替身下第151帧中止的限制仍存在；通过负例及固定结果不等于完整科学实验成功。球谐源动作、剩余独立L3/L4、端到端Runner、广泛资源边界及正式验收尚未完成。
 
 ## Original research and source material
 

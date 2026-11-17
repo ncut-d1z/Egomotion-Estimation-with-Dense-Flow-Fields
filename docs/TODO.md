@@ -1,6 +1,6 @@
 # 人类输入、已决定事项与无限期延期清单（TODO）
 
-> **2026-11-17 更新**：用户已明确允许生产代码修改、构建/CTest和方案文档修改；最新源码 `a5336b3e9072be16dcf296b927a24de3e39cdc06` 构建无诊断、**28/28 CTest**，见 [Runner验证](reviews/R6_ADAPTIVE_RUNNER_CONTRACT_2026-11-17.md) 与 [PROGRESS](PROGRESS.md)。旧代码/运行限制保留历史含义，不再阻挡本轮授权。默认轨迹零旋转导致的UndefinedAngle仍存在，不能把固定替身或负例通过视为完整科学成功；其它MAT资源负例、剩余独立L3/L4、端到端科学结果、DEC-005/006/008和正式验收仍未全部完成。
+> **2026-11-17 更新**：用户已明确允许生产代码修改、构建/CTest和方案文档修改；最新源码 `bc51fddca2a56d0dae988086824266b68ff995c2` 构建无诊断、**29/29 CTest**，见 [MAT载荷验证](reviews/R6_MAT_PAYLOAD_VALIDATION_2026-11-17.md) 与 [PROGRESS](PROGRESS.md)。旧代码/运行限制保留历史含义，不再阻挡本轮授权。默认轨迹零旋转导致的UndefinedAngle仍存在，不能把固定替身或负例通过视为完整科学成功；球谐源动作、剩余独立L3/L4、端到端科学结果、广泛MAT资源边界、DEC-005/006/008和正式验收仍未全部完成。
 
 > **文档类型：项目管理/人类输入清单，不是基线签署。** 用户此前仅开放低阶球谐相关 C++ 实现与 Wolfram 验证，其它模块仍禁止开启代码实现。用户已在固定 `8eab5dd`、`445ed151`、`601c74de` 的旧版本分别报告1/1球谐CTest通过，并于最新固定 `5e5221988cf093dbfddb88f2f65f06632460f3a1` 在Ubuntu 24.04/GCC16.2上完成三个SH独立CTest **3/3 Passed、0失败**，覆盖源二阶逐系数投影。**当前卡点不是低阶SH首次编译，而是其它模块权限、公共ABI、扩大数值覆盖及DEC-005/006/008与正式批准**。代理未在用户VM执行或获得全工程授权；不写MAT、不合并/发布。见[专项授权](decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md)及[PROGRESS E-DOC-062](PROGRESS.md)。
 
