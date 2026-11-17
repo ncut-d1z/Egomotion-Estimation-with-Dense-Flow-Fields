@@ -1,6 +1,6 @@
 # C++ 实施路线图
 
-> **2026-11-18 最新结果**：`5318cd817aa781345c159bd4ba22ee00fe926ee2`构建无诊断，**SVG ON57/57、OFF56/56 CTest**，先MAT7项，零失败/跳过/禁用。P8.8已实现Session的Reset/Inherit/Periodic可替换策略，各48523项策略检查、原独立数值与真实Session交错回归通过，见 [策略证据](reviews/R6_COEFFICIENT_POLICY_2026-11-18.md)。新增测试首轮只读Result编译错误和次轮未初始化trace警告已修复，Issue #3保持开放；此前KvD/Bias/记录/MAT回归保留。[98项P复核](reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)同步，继续D1、D2其它球谐/分析职责、Adaptive装配和只读/预留前记录边界；未改PLAN/AC、数值阈值或正式资格，R6未结案。
+> **2026-11-18 最新结果**：`cce0bf2c66506e32dd5400e22a6b8d95b5ae6929`构建无诊断，**SVG ON58/58、OFF57/57 CTest**，先MAT7项，零失败/跳过/禁用。P7.1源角度接口各1137项解析/边界检查通过，现有球谐路径及此前Session/KvD策略回归保留，见 [角度证据](reviews/R6_SOURCE_ANGLES_2026-11-18.md)。[98项P复核](reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)同步，继续D1、D2其余球谐/分析职责、Adaptive装配和只读/预留前记录边界；未改PLAN/AC、数值阈值或正式资格，Issue #1/#2/#3仍开放，R6未结案。
 
 > **2026-11-17 最新执行授权**：用户已明确允许生产代码修改、构建/CTest 和方案文档修改。现进入 R6 原生验证及失败修复，旧批次的运行暂缓只作历史记录；每次运行前仍执行远程检查点规则。实际命令/结果见 [PROGRESS](PROGRESS.md)，本次授权不等于数值验收或冻结。
 

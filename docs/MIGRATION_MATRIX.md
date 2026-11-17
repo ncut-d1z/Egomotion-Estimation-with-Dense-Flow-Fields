@@ -1,5 +1,7 @@
 # 源 MATLAB 文件到当前 C++ 实现的迁移矩阵（MIGRATION_MATRIX）
 
+> **2026-11-18 角度映射接续 `[AI-EDIT]`**：受测`cce0bf2c66506e32dd5400e22a6b8d95b5ae6929`为ON58/58、OFF57/57；新增源`winkelausvektor`的独立`sourceAnglesFromDirection`接口和1137项解析/边界检查，见 [实测](reviews/R6_SOURCE_ANGLES_2026-11-18.md)。原Cartesian基计算保持，45路径/50声明及REQ/TC义务不变。
+
 > **2026-11-18 Session策略接续 `[AI-EDIT]`**：受测`5318cd817aa781345c159bd4ba22ee00fe926ee2`为ON57/57、OFF56/56；三Adaptive生成入口仍通过Session，Session现组合Reset/Inherit/Periodic系数策略，见 [策略公共头](../include/egomotion/estimators/coefficient_update.hpp)与 [48523项策略及真实回归](reviews/R6_COEFFICIENT_POLICY_2026-11-18.md)。下表三个入口和原状态语义保持，真实完整实验仍未成功；此前映射身份保留。
 
 > **2026-11-18 KvD映射更新 `[AI-EDIT]`**：`df511f9924b75ded66b437fd533ca888918420c1`将共享函数/枚举替换为`KvDIterationEngine`与两种`IKvDTranslationRule`，下表两个入口已同步；两模式CTest为ON56/56、OFF55/55，见 [策略验证](reviews/R6_KVD_STRATEGY_2026-11-18.md)。保留45份源/50个函数范围与既有REQ/TC义务，未冻结或正式验收；下段为首次现行映射复核身份。
@@ -58,7 +60,7 @@
 | `help_functions/trajektorie_aus_punkten.m` | 1 | `trajectory::TrajectoryKinematics::fromPoints`；[kinematics.cpp](../src/trajectory/kinematics.cpp) | GEOM、ADAPTIVE-CLI | 源i=2…N-1、局部转置作用/前帧关系；首尾零并标无效，真实轨迹后续零旋转误差拒绝。 |
 | `help_functions/transfehler_div.m` | 1 | 内部 `source_metrics::normalizedVectorError`；[source_motion_errors.hpp](../src/numerics/source_motion_errors.hpp) | METRIC、RUNNER | 先按真值范数缩放估计再取距离；独立弦长/尺度参考，零真值亦显式拒绝计数，不伪称原返回行为相同。 |
 | `help_functions/transfor_koeff.m` | 1 | `harmonics::rotateSourceCoefficients` → 相位包裹 `rotateCoefficients`；[adapter.cpp](../src/harmonics/adapter.cpp) | SH、SESSION | 独立源phase参考及Session实际动作；源CS系数直接乘无CS块，不用物理参数旋转替代。 |
-| `help_functions/winkelausvektor.m` | 1 | 作用被l≤2笛卡尔基 `low_order::basisDirect/basisRecurrence` 融合；[low_order_basis.cpp](../src/harmonics/low_order_basis.cpp) | SH、STEP | 没有独立theta/phi API；单位方向基值及两极有参考，不声称atan2/acos中间轨迹等价。 |
+| `help_functions/winkelausvektor.m` | 1 | `low_order::sourceAnglesFromDirection`独立返回极角/方位角；[low_order_basis.cpp](../src/harmonics/low_order_basis.cpp)，既有Cartesian基路径保留 | SH、STEP | 18个解析方向及单位/非有限/acos域/带符号零边界；不归一化或裁剪，不声称MATLAB运行时全域等价。 |
 | `help_functions/zellendefinieren.m` | 1 | `FranzMatchedFilter::estimateWithTrace` 内三轴单位向量循环；[franz_kvd.cpp](../src/estimators/franz_kvd.cpp) | KVD | 替代3×10工作表的三轴累加器；响应/分母逐项有参考，3/轴数=1。 |
 | `illustrations/circle_curve_in_the_sphere.m` | 1 | `illustrations::generate(CircleConfig)` + `SvgExporter::exportSvg`；[geometry](../src/illustrations/geometry.cpp)、[svg](../src/illustrations/svg.cpp) | ILLUSTRATION | 600点圆、sphere(50)、z-only遮罩及画幅/实际CLI；未声称sphere端点运行舍入或Phong像素等价。 |
 | `illustrations/sinosodial_curve_in_the_sphere.m` | 1 | `illustrations::generate(SinusoidalConfig)` + `SvgExporter::exportSvg`；[geometry](../src/illustrations/geometry.cpp)、[svg](../src/illustrations/svg.cpp) | ILLUSTRATION | 600点正弦与遮罩独立参考；保留原错误圆轨迹标题，视觉边界同上。 |
@@ -82,7 +84,7 @@
 ## 调用范围与不应误报为实现完成的分支
 
 1. [rodrigues.m](../origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/rodrigues.m) 在第177行return之前确有向量/矩阵输入和Jacobian计算。当前业务调用只取旋转向量的单个矩阵输出；选定Sophus实现保留原eps分支。矩阵→向量、Jacobian没有C++对应，也无测试资格；177行后的检查示例不构成生产调用。此处记录既有范围，不新增或删除验收义务。
-2. 原 `kugelflfunc2/near_aus_koeff/koeff_aus_near` 可表达不同阶数，但当前求解器HarmonicCoefficients为3×5、九个有效系数，Adaptive固定二阶。其笛卡尔基融合了 `winkelausvektor` 的作用，不提供角度中间输出。插图未归一化勒让德是独立通用阶数路径，不能用其测试证明求解器高阶支持。
+2. 原 `kugelflfunc2/near_aus_koeff/koeff_aus_near` 可表达不同阶数，但当前求解器HarmonicCoefficients为3×5、九个有效系数，Adaptive固定二阶。其笛卡尔基融合了 `winkelausvektor` 的作用；新增独立角度API供中间量核对，求解器仍用原Cartesian基路径。插图未归一化勒让德是独立通用阶数路径，不能用其测试证明求解器高阶支持。
 3. 原脚本的图形副作用与数据生成分离到分析/插图JSON及可选SVG；不承诺MATLAB灯光、默认图例或逐像素一致。源球面端点舍入边界仍按插图报告记录。
 4. 错误策略（零范数、未定义角度、非有限结果、历史缺字段拒绝）已在当前合同和测试显式处理。三Adaptive实际入口未成功；替身的Complete合同与真实失败合同均不能代替完整产物/L2对照。未知RNG运行序列不冒充MATLAB同序列。
 

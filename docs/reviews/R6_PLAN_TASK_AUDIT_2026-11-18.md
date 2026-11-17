@@ -1,6 +1,6 @@
 # R6：PLAN 的98项任务逐项复核
 
-> **接续实测**：`5318cd817aa781345c159bd4ba22ee00fe926ee2`构建无诊断，SVG ON57/57、OFF56/56 CTest；Session系数更新策略各48523项、真实Session交错及独立数值回归通过，见 [专项记录](R6_COEFFICIENT_POLICY_2026-11-18.md)。首轮测试编译错误/次轮trace警告已修复并保留证据，Issue #3仍开放；此前各专项回归保留。下文首次文档复核起点保留，P8.8/D2按新证据更新，其他未覆盖义务不变。
+> **接续实测**：`cce0bf2c66506e32dd5400e22a6b8d95b5ae6929`构建无诊断，SVG ON58/58、OFF57/57 CTest；P7.1源角度接口各1137项解析/边界检查及原数值回归通过，见 [专项记录](R6_SOURCE_ANGLES_2026-11-18.md)。此前Session/KvD策略与Issue修复证据保留，Issue #1/#2/#3仍开放。下文首次文档复核起点保留，P7.1/D2按新证据更新，其他未覆盖义务不变。
 
 `[AI-EDIT]`，2026-11-18。本表逐项保留 [PLAN](../PLAN.md) 的98个P编号和原义务，核对实际文件、现有测试及缺口；**不修改需求、验收门槛、批准或冻结状态，也不将“有代码/测试通过”改称“任务已验收”**。原始任务全文及REQ/TC/AC/依赖仍以PLAN为准；下列“核对对象”只是定位摘要，不替代它。
 
@@ -17,7 +17,7 @@
 | 本表索引 | 真实文件与对应证据 |
 |---|---|
 | SRC | [SOURCE_INVENTORY](../SOURCE_INVENTORY.md)、[MAT_DATA_SCHEMA](../MAT_DATA_SCHEMA.md)、[MIGRATION_MATRIX](../MIGRATION_MATRIX.md)、[45源复核](R6_SOURCE_IMPLEMENTATION_MAP_2026-11-17.md)；对应SOURCE |
-| BUILD | [CMakeLists](../../CMakeLists.txt)、[README](../../README.md)、[无绘图构建](R6_HEADLESS_BUILD_2026-11-17.md)、[最新双模式证据](R6_COEFFICIENT_POLICY_2026-11-18.md)；对应ENV/HEADLESS |
+| BUILD | [CMakeLists](../../CMakeLists.txt)、[README](../../README.md)、[无绘图构建](R6_HEADLESS_BUILD_2026-11-17.md)、[最新双模式证据](R6_SOURCE_ANGLES_2026-11-18.md)；对应ENV/HEADLESS |
 | DESIGN | [OBJECT_MODEL](../OBJECT_MODEL.md)、[ARCHITECTURE](../ARCHITECTURE.md)、[contracts](../design/contracts.md)，均为候选；实际 [领域类型](../../include/egomotion/domain/types.hpp)、[窄接口](../../include/egomotion/contracts/interfaces.hpp) |
 | GEO | [方向采样](../../src/sampling/directions.cpp)、[随机源](../../src/sampling/random.cpp)；对应GEOM |
 | FLOW | [光流及噪声](../../src/simulation/flow.cpp)、[接口](../../include/egomotion/simulation/flow.hpp)；对应GEOM/RUNNER |
@@ -95,7 +95,7 @@
 | P6.5 | 局部运动与端点 | TRAJ：TrajectoryKinematics::fromPoints | 实测（有限） | 首尾未填状态显式；源R转置和前帧关系独立核对。 |
 | P6.6 | 已知轨迹/球内输入 | TRAJ、GEO：解析参考与非法输入 | 实测（有限） | 不等于完整Adaptive运动误差成功。 |
 | P6.7 | 三类职责与状态 | TRAJ、SESSION、ILLUSTRATION | 实测（有限） | 轨迹无绘图副作用；Session独立性有固定重放证据。 |
-| P7.1 | 角约定 | SH：winkelausvektor作用融入低阶笛卡尔基 | 部分 | 无独立theta/phi返回API或中间角度轨迹；源需求的最终基函数作用已测，见D2。 |
+| P7.1 | 角约定 | SH：sourceAnglesFromDirection独立返回弧度极角/方位角，原Cartesian基路径保留 | 实测（有限） | 18解析方向及1137项检查；单位输入、acos越界与C++带符号零边界明确，不声称MATLAB运行时全域等价；见D2。 |
 | P7.2 | l≤2实基 | SH：direct/recurrence和MATLAB布局 | 实测（有限） | 九基/CS相位/正负m已核，非通用任意阶求解器。 |
 | P7.3 | 近度重建 | SH：reconstructNear、3×5有效布局 | 实测（有限） | 填充与非法输入拒绝；九项场值固定参考。 |
 | P7.4 | 逐项投影 | SH、STEP：fitSourceNear/source projection | 实测（有限） | sum(Y·near)/sum(Y²)及归一顺序；零通道拒绝，不冒充联合最小二乘。 |
@@ -139,14 +139,14 @@
 下列差别是本次源码审计事实，**不是AI批准的新设计**。P任务中明确的结构义务不能因算法回归通过而静默删除；是否通过最小改动补齐结构或修订候选设计，需保持原职责、可替换性、生命周期和算法次序。未冻结的候选类名称也不能被报告成已经存在的生产API。
 
 - **D1：构造不变量（P2.1/P2.8/P10.9）**。实际FlowField、MotionEstimate、HarmonicCoefficients是Eigen成员的aggregate；当前在算法入口校验，并无“构造时验证全部维度/有限性/有效填充”的统一保证。已有寿命/失败测试不证明任意默认构造对象有效。DEC-008-03的工厂/不可变决定针对Result/Status，不能扩称已批准所有领域值同样改造；继续落实候选公共边界的实际不变量，不能用文档改词抹平义务。
-- **D2：策略和纯数学职责（P4.9/P7.1/P7.10/P8.8/P8.9/P9.8）**。`df511f9`已补KvD引擎/平移规则，`5318cd8`已补Session的ICoefficientUpdatePolicy及Reset/Inherit/Periodic默认组合和显式注入；48523项策略检查及既有真实Session/独立数值回归通过，见 [Session证据](R6_COEFFICIENT_POLICY_2026-11-18.md)，P4.9/P8.8结构缺口已补。其余保留：球谐用纯函数，winkelausvektor被笛卡尔基融合；实际一个AdaptiveExperimentRunner三个方法、一个MatResultAnalyzer四种分析。职责/数值已有有限证据，尚未逐项核销或冻结。
+- **D2：策略和纯数学职责（P4.9/P7.1/P7.10/P8.8/P8.9/P9.8）**。`df511f9`已补KvD引擎/平移规则，`5318cd8`已补Session的ICoefficientUpdatePolicy及Reset/Inherit/Periodic默认组合和显式注入；48523项策略检查及既有真实Session/独立数值回归通过，见 [Session证据](R6_COEFFICIENT_POLICY_2026-11-18.md)，P4.9/P8.8结构缺口已补。`cce0bf2`另补P7.1的独立源角度接口，1137项解析/边界检查见 [角度证据](R6_SOURCE_ANGLES_2026-11-18.md)，不改变已有Cartesian基路径。其余保留：球谐职责仍用纯函数，实际一个AdaptiveExperimentRunner三个方法、一个MatResultAnalyzer四种分析。职责/数值已有有限证据，尚未逐项核销或冻结。
 - **D3：编排依赖注入（P5.7/P10.9）**。首次发现Bias在compute内创建Franz/Original/Modified及RNG，与SRS附录A的**REQ-DC-EXPERIMENT-001“通过组合注入求解、RNG、采样和写入器”**存在差距。`909fd57`已补BiasEstimators三槽及RunContext RNG注入，保留采样/噪声/Writer接口、源两次reseed和求解顺序；[668项测试及真实回归](R6_BIAS_INJECTION_2026-11-18.md)验证该Bias缺口。Adaptive允许Step注入，但轨迹/环境/采样装配的其它候选替换边界仍需逐项核对，不能据此关闭总体OOP验收；不为凑类名添加无用途包装。
 - **D4：正式运行记录边界（P5.3/P8.9/P10.6）**。五生成入口已有开始/结束记录；`00d1742`补齐plot/SVG在分配RunId后的导出记录，394项/38次调用及真实进程检查通过，见 [证据](R6_ARTIFACT_RECORDS_2026-11-18.md)。来源摘要沿用读取快照，未使用的RNG/计算Manifest明确为null；记录失败保留已有产物。inspect/analyze/JSON illustration继续只读，解析/分析/几何/RunId预留失败及信号终止仍依赖外部证据；不将这一有限补足等同整个REQ-NF-LOG验收。
 - **D5：MAT v7.3真实拒绝用例已补（P1.5）**。`f1fb7d3`生成并直接matio逐位核验真实合成夹具，`0d73ed1`复现后端先打开的错误分类（32场景中29失败），[Issue #1](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/1)登记后在`f1a7ab2`前移封存头预检。32场景/308项及两模式全量CTest通过，详见 [证据](R6_MAT73_REJECTION_2026-11-18.md)。v7.3拒绝不调用Mat_Open；普通构建/测试读取固定夹具，不新增HDF5依赖。后端不可用由确定性替身验证，实际无HDF5工具链未验证，元数据能力不扩大；不代签正式数据资格。
 
 ## 后续次序与权限边界
 
-1. D3的Bias求解/RNG、D5真实版本负例、D4的已分配RunId导出记录及D2的KvD/Session策略已补。继续D1构造不变量、D2球谐/分析职责、Adaptive其它装配和只读/预留前记录范围，保留原数值公式、输入只读和检查点顺序。P10.8仍缺可审查Draft PR，后续以实际范围与测试证据准备，不合并或发布。
+1. D3的Bias求解/RNG、D5真实版本负例、D4的已分配RunId导出记录及D2的KvD/Session策略、P7.1角度接口已补。继续D1构造不变量、D2球谐/分析职责、Adaptive其它装配和只读/预留前记录范围，保留原数值公式、输入只读和检查点顺序。P10.8仍缺可审查Draft PR，后续以实际范围与测试证据准备，不合并或发布。
 2. 三个Adaptive真实失败（初始化帧14acos越界，另外两入口帧151零旋转）及完整Bias/L4仍未解决；不可修改门限、跳帧或改分母以获得成功。具体结果与未执行成功分支见NUM。
 3. 容差、资源、跨环境、基线及发布的正式批准仍按TODO的既定延期状态处理；本表不擅自解锁、催办或代签。**没有MATLAB/Octave/L1阻塞。**
 4. 本次新增NUMERICAL_EQUIVALENCE补齐了P10.6缺失的汇总文件；P10.6以及R6整体仍未完成。

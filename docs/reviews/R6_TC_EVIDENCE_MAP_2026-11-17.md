@@ -2,7 +2,7 @@
 
 `[AI-EDIT]` 事实索引，基于当前Git树、CMake登记、测试源码及实际日志。保留 [TEST_PLAN §3](../TEST_PLAN.md) 的66个TC/REQ/AC和 [PLAN](../PLAN.md) 的98项任务，不替换候选规范、改动阈值或签署验收。下表每个TC仅列一次；其REQ/AC采用相同后缀，正式义务仍以 [REQUIREMENTS](../REQUIREMENTS.md) 为准。
 
-**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面具体程序/样本已有运行证据。最新受测源码 `5318cd817aa781345c159bd4ba22ee00fe926ee2` 为SVG ON57/57、OFF56/56，见 [Session策略证据](R6_COEFFICIENT_POLICY_2026-11-18.md)；此前各专项回归保留。新增测试编译失败/警告已修复，Issue #3和失败日志保持开放供复核。真实Adaptive三入口仍失败、无完整MAT。正式数值/环境/基线资格独立办理，不以尚未签署为理由停止已授权的源码/测试补足。
+**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面具体程序/样本已有运行证据。最新受测源码 `cce0bf2c66506e32dd5400e22a6b8d95b5ae6929` 为SVG ON58/58、OFF57/57，见 [源角度证据](R6_SOURCE_ANGLES_2026-11-18.md)；此前各专项回归保留。Issue #1/#2/#3和旧失败日志保持开放供复核。真实Adaptive三入口仍失败、无完整MAT。正式数值/环境/基线资格独立办理，不以尚未签署为理由停止已授权的源码/测试补足。
 
 ## 实际测试组及证据入口
 
@@ -27,7 +27,7 @@
 | KVD | `r06_kvd_independent_l3`, `r06_kvd_stopping_reference`, `r06_kvd_strategy_composition` | `tests/integration/test_r06_kvd_l3.cpp`, `test_r06_kvd_stopping.cpp`, `test_r06_kvd_strategy.cpp`；`verification/kvd/`；原逐节点参考及506次独立解析控制流参考见 [停止分支](R6_MOTION_STOPPING_2026-11-17.md)，新增2712项标量/策略替换/顺序/故障/隔离检查见 [策略组合](R6_KVD_STRATEGY_2026-11-18.md) |
 | METRIC | `r06_source_motion_errors` | `tests/integration/test_r06_motion_errors.cpp`；直接调用两个生产内部实现，解析几何/尺度/弦长恒等式/零/非有限/上溢/下溢，含acos双端舍入越界共703项；[基础实测](R6_MOTION_STOPPING_2026-11-17.md)、[端点补充](R6_INTERLEAVING_2026-11-17.md#最终复测) |
 | STEP | `r06_adaptive_step_independent_l3`, `r06_adaptive_conditioning_reference` | `tests/integration/test_r06_adaptive_l3.cpp`, `test_r06_adaptive_conditioning.cpp`；正/负九方向完整单步，另12个解析运动阶段/完整投影拒绝及4个定义域负例，见 [conditioning实测](R6_ADAPTIVE_CONDITIONING_2026-11-17.md) |
-| SH | `low_order_harmonics`, `low_order_harmonics_archived_golden`, `low_order_harmonics_source_projection`, `r06_sh_argument_action`, `r06_sh_source_phase_reference`, `r06_sh_source_session_action` | `tests/unit/test_low_order*.cpp`, `tests/integration/test_r06_sh_adapter.cpp`, `test_r06_source_sh.cpp`；[源相位作用](R6_SH_SOURCE_ACTION_2026-11-17.md) |
+| SH | `low_order_harmonics`, `low_order_harmonics_archived_golden`, `low_order_harmonics_source_projection`, `r06_sh_argument_action`, `r06_sh_source_phase_reference`, `r06_sh_source_session_action`, `r06_source_spherical_angles` | `tests/unit/test_low_order*.cpp`, `tests/integration/test_r06_sh_adapter.cpp`, `test_r06_source_sh.cpp`；[源相位作用](R6_SH_SOURCE_ACTION_2026-11-17.md)、`tests/unit/test_r06_source_angles.cpp`及 [角度接口](R6_SOURCE_ANGLES_2026-11-18.md) |
 | SESSION | `r06_adaptive_session_transaction`, `r06_adaptive_periods_atomic_commit`, `r06_real_session_interleaving`, `r06_coefficient_policy_composition` | `tests/contracts/test_r06_session_contract.cpp`, `test_r06_adaptive_periods.cpp`, `tests/integration/test_r06_session_interleaving.cpp`；三模式原子性/1/5/11/21刷新，真实单步交错9579项见 [隔离实测](R6_INTERLEAVING_2026-11-17.md)；新增`tests/contracts/test_r06_coefficient_policies.cpp`的策略组合/失败/重试48523项见 [策略实测](R6_COEFFICIENT_POLICY_2026-11-18.md) |
 | RUNNER | `r06_adaptive_runner_complete_contract`, `r06_adaptive_runner_incomplete_contract`, `r06_adaptive_default_undefined_contract`, `r06_bias_runner_contract`, `r06_bias_runner_publication`, `r06_run_context_interleaving` | `tests/integration/test_r06_adaptive_runner.cpp`, `test_r06_bias_runner.cpp`, `test_r06_run_context_interleaving.cpp`；[Adaptive](R6_ADAPTIVE_RUNNER_CONTRACT_2026-11-17.md)、[Bias](R6_BIAS_RUNNER_VALIDATION_2026-11-17.md)、[RunContext隔离](R6_INTERLEAVING_2026-11-17.md)。Adaptive Runner含单步替身；隔离fixture使用真实RNG/MAT/Manifest，均不等于完整真实求解实验 |
 | ANALYSIS | `r05_analysis_source_contract`, `r06_analysis_segments_smoothing`, `r06_analysis_finite_cli`, `r06_bias_archive_independent_curves`（另复用CLI archive） | `tests/integration/test_r05_analysis.cpp`, `test_r06_analysis_segments.cpp`, `test_r06_analysis_finite.cmake`, `r06_analysis_fixture.cpp`, `test_r06_bias_archive.cpp`；[有限输入](R6_ANALYSIS_FINITE_VALIDATION_2026-11-17.md)、[历史Bias及辅助来源](R6_BIAS_ARCHIVE_ANALYSIS_2026-11-17.md) |
@@ -62,7 +62,7 @@
 | TC-F-BIAS-002 | GEOM、RUNNER、BIAS-INJECT、CLI | 同上，分量噪声路径及两模式注入隔离独立核对；不是完整统计复现 |
 | TC-F-BIAS-003 | ANALYSIS、CLI、SVG | K=2区别性参考、两组40-run全部26曲线/208对x-y独立重算与986来源条目已实测；沿用回归余量，正式数值资格仍未批准 |
 | TC-F-TRAJ-001 | GEOM、RUNNER | 独立轨迹/运动/端点例；默认600帧的第151帧UndefinedAngle明确记录 |
-| TC-F-SH-001 | SH、STEP | 独立解析九基/布局/拟合与重建；最终Golden/容差资格另办 |
+| TC-F-SH-001 | SH、STEP | 独立解析九基/布局/拟合与重建，源角度18解析方向及边界；最终Golden/容差资格另办 |
 | TC-F-SH-002 | SH | 源相位作用与物理旋转分别实测；不声称MATLAB运行轨迹相同 |
 | TC-F-ADAPT-001 | STEP、SH | 正/负近度固定单步及zero_mean_conditioning解析族已接入；六轴/窄锥完整步骤因投影零范数拒绝，运动阶段可独立核对。病态前向误差未正式验收 |
 | TC-F-ADAPT-002 | SESSION、SH、RUNNER | 旋转→比较→主提交、失败回滚及两Session三模式交替独立性已有真实单步实测；调度一致性不是独立数值Golden |
