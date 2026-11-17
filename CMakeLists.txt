@@ -41,6 +41,9 @@ add_library(egomotion_harmonics STATIC
     src/harmonics/low_order_choi.cpp
     src/harmonics/low_order_source_projection.cpp
     src/harmonics/adapter.cpp
+    src/harmonics/real_spherical_harmonics.cpp
+    src/harmonics/harmonic_fitter.cpp
+    src/harmonics/harmonic_rotator.cpp
 )
 add_library(egomotion::harmonics ALIAS egomotion_harmonics)
 
@@ -454,6 +457,13 @@ if(BUILD_TESTING)
     add_test(NAME r06_sh_argument_action COMMAND test_r06_sh_adapter)
     set_tests_properties(r06_sh_argument_action PROPERTIES
         LABELS "r06;sh;so3;argument-action" TIMEOUT 60)
+
+    add_executable(test_r06_harmonic_services tests/integration/test_r06_harmonic_services.cpp)
+    target_link_libraries(test_r06_harmonic_services PRIVATE egomotion_harmonics)
+    target_compile_options(test_r06_harmonic_services PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_harmonic_service_contract COMMAND test_r06_harmonic_services)
+    set_tests_properties(r06_harmonic_service_contract PROPERTIES
+        LABELS "r06;sh;services;analytic-reference" TIMEOUT 60)
 
     add_executable(test_r06_source_angles tests/unit/test_r06_source_angles.cpp)
     target_link_libraries(test_r06_source_angles PRIVATE egomotion_harmonics)

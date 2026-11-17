@@ -1,6 +1,6 @@
 #include "egomotion/estimators/adaptive_session.hpp"
 #include "../numerics/source_motion_errors.hpp"
-#include "egomotion/harmonics/adapter.hpp"
+#include "egomotion/harmonics/services.hpp"
 
 #include <array>
 #include <cmath>
@@ -81,7 +81,8 @@ AdaptiveMfaSession::processFrame(const AdaptiveFrameInput& frame) {
         HarmonicCoefficients next_primary=primary_;
         auto next_baselines=baselines_;
         if (mode_!=AdaptiveSessionMode::Initialization) {
-            auto rotated=harmonics::rotateSourceCoefficients(
+            const harmonics::HarmonicRotator rotator;
+            auto rotated=rotator.rotateSourceCoefficients(
                 next_primary,frame.source_coefficient_rotation);
             if (!rotated.hasValue())
                 return propagate(rotated.error(),

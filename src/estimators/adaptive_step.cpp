@@ -1,5 +1,5 @@
 #include "adaptive_motion.hpp"
-#include "egomotion/harmonics/adapter.hpp"
+#include "egomotion/harmonics/services.hpp"
 
 #include <Eigen/Geometry>
 #include <Eigen/LU>
@@ -72,9 +72,10 @@ Result<AdaptiveMotionResult,NumericalErrorCode> solveAdaptiveMotion(
         trace.coefficients_next.values.setZero();
         trace.near_raw.resize(count);
         double raw_sum=0.0;
+        const harmonics::RealSphericalHarmonics basis;
         for (Eigen::Index i=0;i<count;++i) {
             const Vector3 d=direction(observations,i);
-            auto near=harmonics::reconstructNear(old,d);
+            auto near=basis.reconstructNear(old,d);
             if (!near.hasValue())
                 return propagate<AdaptiveMotionResult>(
                     near.error(),"Adaptive near_aus_koeff failed",
@@ -193,7 +194,8 @@ Result<AdaptiveStepResult,NumericalErrorCode> AdaptiveMfaStepSolver::solve(
         return Result<AdaptiveStepResult,NumericalErrorCode>::failure(std::move(motion).error());
     try {
         auto phase=std::move(motion).value();
-        auto fitted=harmonics::fitSourceNear(phase.trace.recomputed_near,observations);
+        const harmonics::HarmonicFitter fitter;
+        auto fitted=fitter.fitSourceNear(phase.trace.recomputed_near,observations);
         if (!fitted.hasValue())
             return propagate<AdaptiveStepResult>(
                 fitted.error(),"Adaptive koeff_aus_near projection failed");

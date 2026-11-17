@@ -1,5 +1,5 @@
 #include "egomotion/estimators/coefficient_update.hpp"
-#include "egomotion/harmonics/adapter.hpp"
+#include "egomotion/harmonics/services.hpp"
 
 #include <utility>
 
@@ -42,7 +42,8 @@ Result<HarmonicCoefficients,NumericalErrorCode> PeriodicCoefficientUpdatePolicy:
     if(period_==0)
         return fail(NumericalErrorCode::InvalidShape,"Coefficient update period must be positive");
     // 原many_parameter先旋转所有旧基线，即使本帧随后刷新也不能跳过。
-    auto rotated=harmonics::rotateSourceCoefficients(baseline,rotation);
+    const harmonics::HarmonicRotator rotator;
+    auto rotated=rotator.rotateSourceCoefficients(baseline,rotation);
     if(!rotated.hasValue())return rotated;
     if(frame%period_==0)return inherit(primary);
     return rotated;

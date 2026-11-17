@@ -1,6 +1,6 @@
 #pragma once
 
-#include "egomotion/contracts/result.hpp"
+#include "egomotion/harmonics/services.hpp"
 
 #include <Eigen/Core>
 
