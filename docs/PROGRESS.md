@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 Adaptive采样/噪声注入（2026-11-18）
+
+`[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`0cd5439b7195cd6b7355deb5f7eb951a649be8b1`两模式构建无诊断，**SVG ON59/59、OFF58/58 CTest**；先MAT7项，零失败/跳过/禁用。内存Runner显式借用采样/噪声服务，生产默认装配及RunContext RNG保持；噪声success的形状、有限性和方向列在Session前检查。新测试各36088项，含24个服务故障和三个生产入口默认/显式逐位对照，真实数值回归保留。RunId `r6-adaptive-injection-20261118-o87077mF`，各719项输入摘要不变，见 [专项记录](reviews/R6_ADAPTIVE_INJECTION_2026-11-18.md)。Issue #1/#2/#3开放、无PR；D3其它轨迹/环境装配、D1/D2/D4及完整实验/资格未完成，R6未结案。
+
 ## 最新接续：R6源球面角度接口（2026-11-18）
 
 `[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`cce0bf2c66506e32dd5400e22a6b8d95b5ae6929`两模式构建无诊断，**SVG ON58/58、OFF57/57 CTest**；先MAT7项，零失败/跳过/禁用。P7.1新增`sourceAnglesFromDirection`，保留atan2/acos顺序、轴及弧度约定，不归一化/裁剪，现有Cartesian球谐路径不变。18个解析方向及边界共1137项，最大绝对残差1.3877787807814457e-16；此前SH/Session/KvD/MAT/CLI回归保留。RunId `r6-source-angles-20261118-ksdFXz5p`，各718项输入摘要不变，见 [专项记录](reviews/R6_SOURCE_ANGLES_2026-11-18.md)。Issue #1/#2/#3仍开放、无PR；其它职责/不变量/装配/记录范围、完整实验及正式资格未完成，R6未结案。

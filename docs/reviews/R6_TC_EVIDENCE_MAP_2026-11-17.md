@@ -2,7 +2,7 @@
 
 `[AI-EDIT]` 事实索引，基于当前Git树、CMake登记、测试源码及实际日志。保留 [TEST_PLAN §3](../TEST_PLAN.md) 的66个TC/REQ/AC和 [PLAN](../PLAN.md) 的98项任务，不替换候选规范、改动阈值或签署验收。下表每个TC仅列一次；其REQ/AC采用相同后缀，正式义务仍以 [REQUIREMENTS](../REQUIREMENTS.md) 为准。
 
-**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面具体程序/样本已有运行证据。最新受测源码 `cce0bf2c66506e32dd5400e22a6b8d95b5ae6929` 为SVG ON58/58、OFF57/57，见 [源角度证据](R6_SOURCE_ANGLES_2026-11-18.md)；此前各专项回归保留。Issue #1/#2/#3和旧失败日志保持开放供复核。真实Adaptive三入口仍失败、无完整MAT。正式数值/环境/基线资格独立办理，不以尚未签署为理由停止已授权的源码/测试补足。
+**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面具体程序/样本已有运行证据。最新受测源码 `0cd5439b7195cd6b7355deb5f7eb951a649be8b1` 为SVG ON59/59、OFF58/58，见 [Adaptive注入证据](R6_ADAPTIVE_INJECTION_2026-11-18.md)；此前各专项回归保留。Issue #1/#2/#3和旧失败日志保持开放供复核。真实Adaptive三入口仍失败、无完整MAT。正式数值/环境/基线资格独立办理，不以尚未签署为理由停止已授权的源码/测试补足。
 
 ## 实际测试组及证据入口
 
@@ -11,6 +11,7 @@
 | 索引 | 实际CTest（完整名称） | 源码/证据 |
 |---|---|---|
 | MAT73 | `r06_mat73_version_rejection` | `tests/integration/test_r06_mat73.cpp`及固定合成v7.3夹具；32场景/308项，3入口在Mat_Open之前拒绝、EINTR/短读/EIO/后端替身/描述符/输入身份，见 [版本证据](R6_MAT73_REJECTION_2026-11-18.md)。无HDF5库实际构建未验证 |
+| ADAPT-INJECT | `r06_adaptive_dependency_injection` | `tests/integration/test_r06_adaptive_injection.cpp`；36088项路由/重放、24服务故障及三生产默认/显式装配，见 [证据](R6_ADAPTIVE_INJECTION_2026-11-18.md)；固定Step只作合同替身 |
 | BIAS-INJECT | `r06_bias_dependency_injection` | `tests/integration/test_r06_bias_injection.cpp`；668项两模式RNG/求解顺序、精确失败前缀、交错隔离及内存交付检查，见 [注入证据](R6_BIAS_INJECTION_2026-11-18.md)。替身不充当真实MAT或独立求解Golden |
 | CLI | `r01_cli_contract`, `r06_cli_process_contract`, `r06_cli_process_archive` | `tests/integration/test_r01_cli.cpp`, `test_r06_cli_process.cmake`；[CLI实测](R6_CLI_PROCESS_VALIDATION_2026-11-17.md) |
 | HEADLESS | 两种独立配置的完整CTest，OFF仅不登记`r06_svg_source_windows` | 实际无显示环境/后端缺席CLI、完整数值参考保留；14份有限MAT载荷和3份JSON跨模式相同，CMake/ELF/依赖审计见 [实测](R6_HEADLESS_BUILD_2026-11-17.md) |
@@ -80,10 +81,10 @@
 | TC-DC-DOMAIN-001 | CONTRACT、SH | 显式Result工厂、move/lifetime/error链；对象模型正式审查另办 |
 | TC-DC-IO-001 | MAT、IO、CONTRACT、SNAPSHOT | 自拥有载荷、故障/权限与寿命、封存副本拒写/拒截断及30例fd释放已测；不凭测试数声称全资源状态证明 |
 | TC-DC-RNG-001 | GEOM、RUNNER、BIAS-INJECT | RNG注入/顺序/耗尽/seed分离、两次reset/不支持reset/缓存重置已测；正式接口冻结未完成 |
-| TC-DC-NOISE-001 | GEOM、RUNNER | 噪声接口两路径与错误上下文已有固定测试 |
+| TC-DC-NOISE-001 | GEOM、RUNNER、ADAPT-INJECT | 噪声接口两路径、Adaptive显式coefficient/零值仍3N抽样、非法success拒绝及错误上下文已有固定测试 |
 | TC-DC-KVD-001 | KVD | 两具名入口组合KvDIterationEngine与各自IKvDTranslationRule实现，策略替换/交错复用/完整故障链/翻号后旧运动顺序均已测；两路径停止条件保留独立参考。候选接口未冻结 |
 | TC-DC-ADAPT-001 | STEP、SESSION | 单步/Session/系数策略已分离；显式策略替换、所有准备先于求解、借用对象/状态隔离已测，真实Session交错回归保留，候选接口未冻结 |
-| TC-DC-EXPERIMENT-001 | RUNNER、BIAS-INJECT、CONTRACT | 两RunContext交替RNG/错误链/计数/真实MAT及Manifest隔离已测；Bias求解器和RunContext RNG注入已补并通过替身验证。Adaptive其它候选装配边界仍待核对，见 [98项复核D3](R6_PLAN_TASK_AUDIT_2026-11-18.md)；不等于总体设计验收或全科学实验 |
+| TC-DC-EXPERIMENT-001 | RUNNER、BIAS-INJECT、ADAPT-INJECT、CONTRACT | 两RunContext交替RNG/错误链/计数/真实MAT及Manifest隔离已测；Bias求解器和RunContext RNG注入已补并通过替身验证。Adaptive采样/噪声注入与success边界、默认/显式对照已测；轨迹/环境等其它装配仍待核对，见 [98项复核D3](R6_PLAN_TASK_AUDIT_2026-11-18.md)；不等于总体设计验收或全科学实验 |
 | TC-DC-ANALYSIS-001 | CLI、ANALYSIS、SVG、ILLUSTRATION | 无后端时纯数值成功、SVG明确不可用；三份插图JSON导出前后不变已实测，候选接口未冻结 |
 | TC-NF-PLATFORM-001 | ENV | 仅实际Ubuntu24.04.5，不能推断其它Debian/Ubuntu版本已测 |
 | TC-NF-DEPS-001 | ENV、CMake、HEADLESS | 两模式CMake实图无环、ELF/传递依赖已审计；无被禁止运行时/图形库。系统matio间接含HDF5等库，不扩大MAT支持范围；其它环境仍未验证 |
@@ -98,7 +99,7 @@
 | TC-NF-RECOVERY-001 | IO、CONTRACT、RUNNER、ADAPTIVE-CLI、RUNID、STREAM、DICTIONARY、EXECUTION | 开始记录未确认不调用Runner/导出器，结束记录失败保留已有Manifest/MAT/导出产物和原错误；失败Manifest先于stderr，SIGPIPE保留开始记录和审计、不伪造结束。探针报告write/close失败退出2并保留内容，不声称报告fsync保证；三Adaptive仍Incomplete、无MAT |
 | TC-NF-PORTABLE-001 | IO、MAT、CLI | 实际中文/空格路径；目标仅GNU/Linux，不推断其它平台 |
 | TC-NF-RUNTIME-001 | 无完整基准 | 未授权完整实验/性能测量，DEC-006预算未批准；编译耗时不能代替实验预算 |
-| TC-NF-SESSION-001 | SESSION、RUNNER、BIAS-INJECT | 两Session三模式独立/交替重放、两RunContext交替RNG/输出/失败隔离及两Bias模式嵌套交错已测；不承诺单Session多线程，正式验收仍未签署 |
+| TC-NF-SESSION-001 | SESSION、RUNNER、BIAS-INJECT、ADAPT-INJECT | 两Session三模式独立/交替重放、两RunContext交替RNG/输出/失败隔离及两Bias模式嵌套交错、同Adaptive Runner重放的主/比较首帧状态重置已测；不承诺单Session多线程，正式验收仍未签署 |
 | TC-NF-COPYRIGHT-001 | SOURCE | 根MIT与来源notice存在；不将MIT扩展至原MATLAB/MAT/论文，不以额外普通版权审批阻塞编码 |
 | TC-F-CLI-002 | CLI、RUNNER、EXECUTION | 两Bias真实进程、有界输出/seed/RunId及拒覆盖，开始/结束记录独立解析；完整规模未运行 |
 | TC-F-CLI-003 | CLI、RUNNER、ADAPTIVE-CLI、EXECUTION | 三入口实际失败链/计数/源身份/无MAT/拒覆盖及运行记录已测；默认初始化因acos越界、另两入口因零旋转不能完成，完整成功产物分支仍未实测 |

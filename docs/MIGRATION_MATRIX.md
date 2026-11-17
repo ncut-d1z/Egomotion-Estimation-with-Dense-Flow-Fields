@@ -1,5 +1,7 @@
 # 源 MATLAB 文件到当前 C++ 实现的迁移矩阵（MIGRATION_MATRIX）
 
+> **2026-11-18 Adaptive装配接续 `[AI-EDIT]`**：受测`0cd5439b7195cd6b7355deb5f7eb951a649be8b1`为ON59/59、OFF58/58。三Adaptive入口现在通过`AdaptiveSampling`显式借用采样/噪声服务，默认级别/模型/3N顺序和Session路径保持，36088项组合验证见 [实测](reviews/R6_ADAPTIVE_INJECTION_2026-11-18.md)。下表45路径/50声明与原算法身份不变，完整真实实验仍未成功。
+
 > **2026-11-18 角度映射接续 `[AI-EDIT]`**：受测`cce0bf2c66506e32dd5400e22a6b8d95b5ae6929`为ON58/58、OFF57/57；新增源`winkelausvektor`的独立`sourceAnglesFromDirection`接口和1137项解析/边界检查，见 [实测](reviews/R6_SOURCE_ANGLES_2026-11-18.md)。原Cartesian基计算保持，45路径/50声明及REQ/TC义务不变。
 
 > **2026-11-18 Session策略接续 `[AI-EDIT]`**：受测`5318cd817aa781345c159bd4ba22ee00fe926ee2`为ON57/57、OFF56/56；三Adaptive生成入口仍通过Session，Session现组合Reset/Inherit/Periodic系数策略，见 [策略公共头](../include/egomotion/estimators/coefficient_update.hpp)与 [48523项策略及真实回归](reviews/R6_COEFFICIENT_POLICY_2026-11-18.md)。下表三个入口和原状态语义保持，真实完整实验仍未成功；此前映射身份保留。

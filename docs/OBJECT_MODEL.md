@@ -1,5 +1,7 @@
 # 对象模型与生命周期合同（Object Model）
 
+> **2026-11-18 Adaptive注入追踪，候选/未冻结**：内存Runner现在借用`AdaptiveSampling`的采样/噪声服务，生产适配拥有默认Icosahedral/MeanMagnitude或借用外部服务；RNG仍由RunContext独占，Session每次compute新建。36088项组合/故障及双模式实测见 [记录](reviews/R6_ADAPTIVE_INJECTION_2026-11-18.md)。轨迹/环境等其余装配与领域构造不变量仍待落实，未把Result工厂决定扩大成全部领域值的批准。
+
 > **2026-11-18 策略实现追踪，候选/未冻结**：KvD已组合引擎与平移规则，见 [实测](reviews/R6_KVD_STRATEGY_2026-11-18.md)；Adaptive Session现增加`ICoefficientUpdatePolicy`的Reset/Inherit/Periodic实现和显式注入，策略仅准备临时比较系数，Session仍独占持久主/基线状态，见 [实现与验证状态](reviews/R6_COEFFICIENT_POLICY_2026-11-18.md)。这不核销其它对象不变量/装配缺口或签署总体设计验收。
 
 > **2026-11-17 当前实现追踪 `[AI-EDIT]`**：45份源文件及50个声明的实际承接位置、融合实现和范围见 [迁移矩阵](MIGRATION_MATRIX.md)；§7保留候选设计分配，不用其旧“未创建”文字否定现有实现。实际四分析入口使用MatResultAnalyzer，三Adaptive入口使用AdaptiveExperimentRunner，低阶球谐采用自由函数/适配层；这些名称差别不代表已批准对象模型冻结。受测代码130a82的48/48及剩余边界见 [复核记录](reviews/R6_SOURCE_IMPLEMENTATION_MAP_2026-11-17.md)。
