@@ -600,6 +600,16 @@ if(BUILD_TESTING)
         -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/test_r06_illustrations_cli.cmake")
     set_tests_properties(r06_illustrations_real_cli PROPERTIES
         LABELS "r06;illustrations;real-process;write-sandbox" TIMEOUT 90)
+    add_executable(r06_adaptive_cli_values tests/integration/r06_adaptive_cli_values.cpp)
+    target_link_libraries(r06_adaptive_cli_values PRIVATE egomotion_matio ZLIB::ZLIB)
+    target_compile_options(r06_adaptive_cli_values PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_adaptive_real_cli COMMAND "${CMAKE_COMMAND}"
+        "-DCLI=$<TARGET_FILE:egomotion>" "-DVALUE_PROBE=$<TARGET_FILE:r06_adaptive_cli_values>"
+        "-DSOURCE_ROOT=${CMAKE_CURRENT_SOURCE_DIR}" "-DSOURCE_SHA=${EGOMOTION_BUILD_SOURCE_SHA}"
+        "-DSANDBOX=${CMAKE_CURRENT_BINARY_DIR}/r06_adaptive_cli"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/test_r06_adaptive_cli.cmake")
+    set_tests_properties(r06_adaptive_real_cli PROPERTIES
+        LABELS "r06;adaptive;real-process;real-step;write-sandbox;readonly-l2-diagnostic" TIMEOUT 420)
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
