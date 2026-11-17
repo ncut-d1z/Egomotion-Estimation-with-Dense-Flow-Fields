@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
     if (argc != 3) throw std::invalid_argument("Expected two read-only MAT fixtures");
     const std::filesystem::path source(argv[1]);
     const std::filesystem::path matrix_source(argv[2]);
-    const io::MatResultReader reader;
+    io::MatResultReader reader;
 
     auto inspection = reader.inspect(source);
     require(inspection.hasValue(), "metadata-only inspection failed");

@@ -42,3 +42,14 @@ RunId：`r6-20261117-AAjc8Xpe`；源码 SHA：`cfcc9d8ac7cc3f3174700dedb49e4c16b
 运行 1 的 `static_require` 错误及四条初始化警告均已消失。此轮 `build.stderr` SHA-256：`efcc8d2f19411e2788c3c6b35a57301c40e1a92ea334bcaf08ac1841c07b9930`。重新查询远端全部 Issue/PR 仍为空。
 
 诊断：函数已在 `sampling/directions.hpp` 声明、`directions.cpp` 定义，Bias Runner 仅包含 `sampling/random.hpp`。补充正确头文件，保持调用、随机数顺序及计算公式不变。下一次可复用此构建缓存并重新配置新 SHA，但采用独立 RunId/证据目录，保留本次失败日志；缓存复用不算一次全新干净构建。
+
+## 运行 3：Reader 测试的注入对象 const 不匹配
+
+RunId：`r6-20261117-Xc5pz93H`；源码 SHA：`5362234637ee0594b83b926ca0c4a759f46e3ddf`（已核实远端）。复用运行 2 的构建目录，重新配置；证据另存于本 RunId。构建参数为 `cmake --build build/r6-20261117-AAjc8Xpe/cmake --parallel 4 -- -k`，GNU Make 的 `-k` 收集独立目标错误，任何失败仍返回非零且阻止启动 CTest。
+
+| 步骤 | 开始/结束（UTC+08:00） | 退出码 | 结果 |
+|---|---|---:|---|
+| configure | 15:14:49 / 15:14:53 | 0 | 构建源 SHA 已更新 |
+| build | 15:14:53 / 15:16:17 | 2 | 生产可执行程序已链接；`test_r02_reader.cpp:75` 注入 const 指针不符合 Composition Root 参数类型；CTest 未开始 |
+
+`build.stderr` SHA-256：`0e6d8412556a514385dd12b74187e10eb9668548ed12acb7b5cb4b7a1e6cfb5a`。再次查询全部 Issue/PR 为空。修复测试 Reader 实例声明以匹配现有 `IResultReader*` 注入合同；Reader 的读取接口仍为 const，文件打开模式不变。另将 CLI 维度输出循环中的两个语句分行，消除 `-Wmisleading-indentation`，保留原输出和全部诊断选项。

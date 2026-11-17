@@ -259,7 +259,8 @@ int ApplicationCompositionRoot::dispatch(
                <<" type="<<v.original_data_type
                <<" rank="<<v.dimensions.size()<<" dims=";
             for(std::size_t i=0;i<v.dimensions.size();++i){
-                if(i)out<<'x';out<<v.dimensions[i];
+                if(i)out<<'x';
+                out<<v.dimensions[i];
             }
             out<<" data_bytes="<<v.data_bytes<<" compressed="<<v.is_compressed
                <<" complex="<<v.is_complex<<" logical="<<v.is_logical
