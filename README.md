@@ -85,7 +85,9 @@ ctest --test-dir "$build_dir" --verbose --no-tests=error \
 
 构建产物包含 `egomotion` 和 `mat_data_dict_probe`。探针生成新报告时应指定新的隔离输出文件；下列已提交的数据字典保留其原始来源，不因新 Reader 测试通过而自动重新生成。逐步骤 stdout/stderr、退出码及工具链身份须按仓库规则另行保存，本次实际命令与日志索引见验证记录。
 
-The utility returns exit code 0 only if all **582 expected MAT files** are found and each variable is actually read successfully. It writes diagnostics and returns nonzero otherwise. It refuses to write inside the original source data tree; any existing generated report can only be replaced using the explicit --replace-generated option and a matching generator marker.
+The default expected count is **582 MAT files**, adjustable with `--expected-count`. Exit code 0 requires the expected count, successful reads, report write/close, and status delivery; 1 indicates a count or read failure; 2 indicates a parameter, execution, report, or status-delivery failure. Diagnostics use stderr. It refuses to write inside the original source data tree; any existing generated report can only be replaced using the explicit --replace-generated option and a matching generator marker.
+
+探针通知失败时保留已有报告；写入失败可能留下部分报告，不能仅凭文件存在认定成功。实际`/dev/full`及报告write/close负例见 [探针验证](docs/reviews/R6_DICTIONARY_OUTPUT_2026-11-17.md)。
 
 The checked-in [docs/MAT_DATA_SCHEMA.md](docs/MAT_DATA_SCHEMA.md) is now the **actual matio-generated report**, identified by its `generated-by` marker, matio version and `READ_OK` records. Its FNV-1a64 per-file fingerprints are **not cryptographic SHA-256 hashes**. Successful source-file decoding is distinct from numerical equivalence, reader/writer contract tests, corrupted-input tests, or a successful solver build.
 
