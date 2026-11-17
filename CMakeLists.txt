@@ -503,6 +503,17 @@ if(BUILD_TESTING)
         LABELS "r06;bias;runner;bounded-level-0-2;cpp-rng" TIMEOUT 180)
     set_property(TEST r06_bias_runner_publication APPEND PROPERTY LABELS "write-sandbox")
 
+    foreach(case IN ITEMS contract archive)
+        add_test(NAME r06_cli_process_${case} COMMAND "${CMAKE_COMMAND}"
+            "-DCLI=$<TARGET_FILE:egomotion>"
+            "-DSOURCE_ROOT=${CMAKE_CURRENT_SOURCE_DIR}"
+            "-DSANDBOX=${CMAKE_CURRENT_BINARY_DIR}/r06_cli_process"
+            "-DSOURCE_SHA=${EGOMOTION_BUILD_SOURCE_SHA}" "-DCASE=${case}"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/test_r06_cli_process.cmake")
+        set_tests_properties(r06_cli_process_${case} PROPERTIES
+            LABELS "r06;cli;real-process;write-sandbox;bounded-bias;readonly-archive" TIMEOUT 180)
+    endforeach()
+
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
