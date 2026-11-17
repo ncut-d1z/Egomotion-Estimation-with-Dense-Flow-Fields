@@ -454,6 +454,15 @@ if(BUILD_TESTING)
     set_tests_properties(r06_mat_reader_boundaries PROPERTIES
         LABELS "r06;mat;negative;synthetic-only;write-sandbox" TIMEOUT 60)
 
+    add_executable(test_r06_mat_payload tests/integration/test_r06_mat_payload.cpp)
+    target_link_libraries(test_r06_mat_payload PRIVATE egomotion_matio ZLIB::ZLIB)
+    target_compile_features(test_r06_mat_payload PRIVATE cxx_std_17)
+    target_compile_options(test_r06_mat_payload PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_mat_raw_payload_boundaries COMMAND test_r06_mat_payload
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_mat_raw_payload")
+    set_tests_properties(r06_mat_raw_payload_boundaries PROPERTIES
+        LABELS "r06;mat;raw-payload;negative;synthetic-only;write-sandbox" TIMEOUT 180)
+
     add_executable(test_r06_adaptive_runner tests/integration/test_r06_adaptive_runner.cpp)
     target_link_libraries(test_r06_adaptive_runner PRIVATE egomotion_experiments egomotion_matio)
     target_include_directories(test_r06_adaptive_runner PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/experiments")

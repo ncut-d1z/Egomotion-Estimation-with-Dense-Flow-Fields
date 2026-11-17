@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 MAT内部载荷边界（2026-11-17）
+
+**[HUMAN-EXECUTE/APPROVE] 新增70场景原始字节夹具与1项CTest，尚未执行。** 当前登记29项，既有28/28仅对应 `a5336b3`。将独立核对MAT内部实部长度/dims/溢出及single存储，不以matio返回的内存dtype冒充物理tag验证；子进程资源隔离、所有文件在build新RunId，原始数据只读。范围与后续失败证据见 [MAT载荷验证](reviews/R6_MAT_PAYLOAD_VALIDATION_2026-11-17.md)。
+
 ## 最新接续：R6 Adaptive Runner 跨帧合同（2026-11-17）
 
 **最终复测 `[HUMAN-EXECUTE/APPROVE]`：源码 `a5336b3e9072be16dcf296b927a24de3e39cdc06` 构建无诊断，28/28 CTest通过。** 先MAT4/4，再其余24/24，原始输入SHA不变；RunId `r6-adaptive-errors-20261117-BxUi6ya8`。新增固定8组600行聚合/真实发布、完整600帧合成真值Session、各缺样本前缀及默认轨迹无定义失败；修复undefined漏计及噪声失败外层分类。**默认Comparison/UpdateRates在当前替身下第151帧中止仍存在，不把负例通过或固定结果当端到端科学成功。** 完整修改、命令/环境/日志哈希与剩余范围见 [Runner合同验证](reviews/R6_ADAPTIVE_RUNNER_CONTRACT_2026-11-17.md)。下面的25/27与构建失败是保留的历史证据；R6未结案。
