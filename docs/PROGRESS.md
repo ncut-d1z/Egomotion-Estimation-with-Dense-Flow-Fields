@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 Session / RunContext 交替隔离（2026-11-17）
+
+**首轮准备 `[HUMAN-EXECUTE/APPROVE]`，尚未执行。** 新增真实三模式Session的独立/交替重放、失败回滚与不同步帧时钟；两个RunContext使用独立RNG和真实MAT/Manifest，检查一方写失败不污染另一方。42项CTest仅登记，待远程检查点后构建/测试，见 [验证记录](reviews/R6_INTERLEAVING_2026-11-17.md)。合成合同数据不代表科学实验，同进程交替不代表同实例多线程资格；R6未结案。
+
 ## 最新接续：R6 Adaptive conditioning 参考（2026-11-17）
 
 **最终复测 `[HUMAN-EXECUTE/APPROVE]`：`07f37e2b4db3e34512715c69a805342f4e6e8add` 无诊断构建、40/40 CTest（MAT5/5，其余35/35）。** conditioning1077项通过：十二个内部运动阶段独立参考、十二次完整投影拒绝及四早期负例，未改生产门限。RunId `r6-conditioning-final-20261117-9wu1dzWw`，原始SHA不变、失败保留，见 [验证记录](reviews/R6_ADAPTIVE_CONDITIONING_2026-11-17.md)。窄锥h=0.001前向误差约4.16e-6只作诊断，不代表正式数值通过。下一项为交替Session/RunContext隔离；acos越界、其余分析/插图、完整科学/L4与正式验收仍未完成，R6未结案。

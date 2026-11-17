@@ -557,6 +557,21 @@ if(BUILD_TESTING)
     add_test(NAME r06_adaptive_conditioning_reference COMMAND test_r06_adaptive_conditioning)
     set_tests_properties(r06_adaptive_conditioning_reference PROPERTIES
         LABELS "r06;adaptive;independent-analytic;conditioning;bounded-fixtures" TIMEOUT 60)
+
+    add_executable(test_r06_session_interleaving tests/integration/test_r06_session_interleaving.cpp)
+    target_link_libraries(test_r06_session_interleaving PRIVATE egomotion_estimators)
+    target_compile_options(test_r06_session_interleaving PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_real_session_interleaving COMMAND test_r06_session_interleaving)
+    set_tests_properties(r06_real_session_interleaving PROPERTIES
+        LABELS "r06;session;real-step;interleaving;bounded-fixtures" TIMEOUT 60)
+
+    add_executable(test_r06_run_context_interleaving tests/integration/test_r06_run_context_interleaving.cpp)
+    target_link_libraries(test_r06_run_context_interleaving PRIVATE egomotion_experiments egomotion_matio)
+    target_compile_options(test_r06_run_context_interleaving PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_run_context_interleaving COMMAND test_r06_run_context_interleaving
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_run_context_interleaving" "${EGOMOTION_BUILD_SOURCE_SHA}")
+    set_tests_properties(r06_run_context_interleaving PROPERTIES
+        LABELS "r06;run-context;interleaving;real-io;write-sandbox;synthetic-only" TIMEOUT 60)
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
