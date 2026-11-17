@@ -2,6 +2,8 @@
 
 ## 最新接续：R6 CLI 输出流故障（2026-11-17）
 
+**首轮实测 `[HUMAN-EXECUTE/APPROVE]`：`7c444ec` 无诊断构建、SVG ON 49/50 CTest。** 11次真实`/dev/full`调用通过；唯一失败是最后第二诊断场景的夹具将阻塞目录放错层级，未触发Manifest失败。现补真实RunId路径并保留所有断言，待新检查点复测；失败/输入SHA证据保留，见 [诊断记录](reviews/R6_CLI_STREAM_OUTPUT_2026-11-17.md)。
+
 **准备 `[HUMAN-EXECUTE/APPROVE]`，新代码尚未执行。** 旧二进制向`/dev/full`写help/插图JSON仍返回0，真实复现已保存；现补write/flush/ostream异常检查及独立失败Manifest保存。新增流故障矩阵与实际`/dev/full`进程测试，预期ON 50项、OFF 49项，待远端检查点后验证；见 [缺陷与准备](reviews/R6_CLI_STREAM_OUTPUT_2026-11-17.md)。不改变原始数据、数值判据、持久化计算结果或正式资格，R6未结案。
 
 ## 最新接续：R6 可选 SVG 独立构建（2026-11-17）

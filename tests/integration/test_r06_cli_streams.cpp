@@ -69,7 +69,8 @@ class FailedRunner final:public IExperimentRunner {
 public:
     bool block_manifest=false;
     Result<RunOutcome,ExperimentErrorCode> fail(RunContext& context) {
-        if(block_manifest)fs::create_directory(context.approvedOutputRoot()/"manifest.json");
+        if(block_manifest)
+            fs::create_directory(context.approvedOutputRoot()/context.runId().text/"manifest.json");
         return Result<RunOutcome,ExperimentErrorCode>::failure(failedCalculation());
     }
     Result<RunOutcome,ExperimentErrorCode> runBiasOccluded(const BiasExperimentConfig&,RunContext& c) override {return fail(c);}
