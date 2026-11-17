@@ -221,6 +221,8 @@ DatasetResult adaptive(AnalysisKind kind,const std::filesystem::path& root,
                 "rotation_period_"+std::to_string(col+1)+"_segment_"+
                     std::to_string(z+1),"rotation",from,to,plotted);
             curve.inputs.push_back(provenance(root,"rottransratio",1,"segment_threshold"));
+            // many_parameter.m 使用 plot；只有 Comparison/Initialization 为 log-y。
+            curve.y_scale="linear";
             curve.smoothing_half_window=half;
             curve.smoothing_full=smoothed;
             out.curves.push_back(std::move(curve));
@@ -233,6 +235,7 @@ DatasetResult adaptive(AnalysisKind kind,const std::filesystem::path& root,
         auto curve=makeCurve(root,"allemittransfehler",
             "translation_period_"+std::to_string(col+1),
             "translation",50,550,select(smoothed,50,550));
+        curve.y_scale="linear";
         curve.smoothing_half_window=half;
         curve.smoothing_full=smoothed;
         out.curves.push_back(std::move(curve));

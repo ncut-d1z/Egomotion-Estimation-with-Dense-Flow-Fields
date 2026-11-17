@@ -2,7 +2,7 @@
 
 ## 最新接续：R6 有限MAT与非线性分析（2026-11-17）
 
-**准备中 `[HUMAN-EXECUTE/APPROVE]`**：新增独立多项式参考及真实 Comparison/UpdateRates CLI 成功路径，登记第36项CTest，尚未运行。静态发现UpdateRates错误共用log纵轴；测试依据原脚本要求linear，先取得失败证据再修复。范围、推导、固定边界见 [有限输入验证](reviews/R6_ANALYSIS_FINITE_VALIDATION_2026-11-17.md)。原始数据只读，R6未结案。
+**首轮实测 `[HUMAN-EXECUTE/APPROVE]`**：`29e965c4e234dabe7cc40e55c51734ae559b2032` 构建无诊断，35/36 CTest。独立多项式参考确认两个有限MAT入口的32曲线/5578对x-y/3460个完整平滑值一致，但UpdateRates20条曲线的y_scale错误为log。已保留失败，现修复为原脚本linear并加SVG轴标记检查，待新远程检查点复测。范围、推导、固定边界及R6-ANALYSIS-001证据见 [有限输入验证](reviews/R6_ANALYSIS_FINITE_VALIDATION_2026-11-17.md)。原始数据只读，R6未结案。
 
 ## 最新接续：R6 真实CLI与历史分析集成（2026-11-17）
 
