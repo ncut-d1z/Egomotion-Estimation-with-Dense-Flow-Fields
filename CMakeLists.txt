@@ -13,6 +13,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+option(EGOMOTION_ENABLE_SVG "构建可选 SVG 导出器；关闭后保留全部数值入口" ON)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(Sophus CONFIG REQUIRED)
@@ -150,15 +151,19 @@ target_link_libraries(egomotion_analysis PUBLIC
     egomotion_domain egomotion_contracts)
 
 # Plotting consumes only immutable numerical curves, never a MAT reader.
-add_library(egomotion_plotting STATIC src/analysis/svg_plot.cpp)
-add_library(egomotion::plotting ALIAS egomotion_plotting)
-target_link_libraries(egomotion_plotting PUBLIC egomotion_analysis egomotion_contracts)
+if(EGOMOTION_ENABLE_SVG)
+    add_library(egomotion_plotting STATIC src/analysis/svg_plot.cpp)
+    add_library(egomotion::plotting ALIAS egomotion_plotting)
+    target_link_libraries(egomotion_plotting PUBLIC egomotion_analysis egomotion_contracts)
+endif()
 
 add_library(egomotion_illustrations STATIC src/illustrations/geometry.cpp src/illustrations/data_json.cpp)
 target_link_libraries(egomotion_illustrations PUBLIC egomotion_domain egomotion_contracts
     PRIVATE egomotion_simulation)
-add_library(egomotion_illustration_svg STATIC src/illustrations/svg.cpp)
-target_link_libraries(egomotion_illustration_svg PUBLIC egomotion_illustrations)
+if(EGOMOTION_ENABLE_SVG)
+    add_library(egomotion_illustration_svg STATIC src/illustrations/svg.cpp)
+    target_link_libraries(egomotion_illustration_svg PUBLIC egomotion_illustrations)
+endif()
 
 add_library(egomotion_cli STATIC
     src/cli/command.cpp
@@ -166,7 +171,7 @@ add_library(egomotion_cli STATIC
 )
 add_library(egomotion::cli ALIAS egomotion_cli)
 target_link_libraries(egomotion_cli PUBLIC
-    egomotion_experiments egomotion_analysis egomotion_plotting
+    egomotion_experiments egomotion_analysis
     egomotion_matio egomotion_sampling egomotion_contracts egomotion_illustrations)
 target_compile_features(egomotion_cli PUBLIC cxx_std_17)
 
@@ -202,7 +207,11 @@ target_compile_definitions(egomotion_cli PRIVATE
 message(STATUS "Executable source commit: ${EGOMOTION_BUILD_SOURCE_SHA}")
 
 add_executable(egomotion src/cli/main.cpp)
-target_link_libraries(egomotion PRIVATE egomotion_cli egomotion_illustration_svg)
+target_link_libraries(egomotion PRIVATE egomotion_cli)
+target_compile_definitions(egomotion PRIVATE "EGOMOTION_ENABLE_SVG=$<BOOL:${EGOMOTION_ENABLE_SVG}>")
+if(EGOMOTION_ENABLE_SVG)
+    target_link_libraries(egomotion PRIVATE egomotion_plotting egomotion_illustration_svg)
+endif()
 target_compile_features(egomotion PRIVATE cxx_std_17)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
@@ -210,7 +219,9 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
             egomotion_sampling egomotion_simulation egomotion_estimators
             egomotion_matio egomotion_experiments egomotion_analysis
             egomotion_plotting egomotion_illustrations egomotion_illustration_svg egomotion_cli egomotion)
-        target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
+        if(TARGET ${target})
+            target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
+        endif()
     endforeach()
 endif()
 
@@ -543,6 +554,7 @@ if(BUILD_TESTING)
             "-DSOURCE_ROOT=${CMAKE_CURRENT_SOURCE_DIR}"
             "-DSANDBOX=${CMAKE_CURRENT_BINARY_DIR}/r06_cli_process"
             "-DSOURCE_SHA=${EGOMOTION_BUILD_SOURCE_SHA}" "-DCASE=${case}"
+            "-DSVG_ENABLED=${EGOMOTION_ENABLE_SVG}"
             -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/test_r06_cli_process.cmake")
         set_tests_properties(r06_cli_process_${case} PROPERTIES
             LABELS "r06;cli;real-process;write-sandbox;bounded-bias;readonly-archive" TIMEOUT 180)
@@ -556,18 +568,21 @@ if(BUILD_TESTING)
         "-DCLI=$<TARGET_FILE:egomotion>" "-DFIXTURE=$<TARGET_FILE:r06_analysis_fixture>"
         "-DSANDBOX=${CMAKE_CURRENT_BINARY_DIR}/r06_analysis_finite"
         "-DSOURCE_SHA=${EGOMOTION_BUILD_SOURCE_SHA}"
+        "-DSVG_ENABLED=${EGOMOTION_ENABLE_SVG}"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/test_r06_analysis_finite.cmake")
     set_tests_properties(r06_analysis_finite_cli PROPERTIES
         LABELS "r06;analysis;real-process;independent-polynomial;synthetic-only;write-sandbox" TIMEOUT 180)
 
-    add_executable(test_r06_svg_windows tests/integration/test_r06_svg_windows.cpp)
-    target_link_libraries(test_r06_svg_windows PRIVATE egomotion_plotting)
-    target_compile_features(test_r06_svg_windows PRIVATE cxx_std_17)
-    target_compile_options(test_r06_svg_windows PRIVATE -Wall -Wextra -Wpedantic)
-    add_test(NAME r06_svg_source_windows COMMAND test_r06_svg_windows
-        "${CMAKE_CURRENT_BINARY_DIR}/r06_svg_windows" "${EGOMOTION_BUILD_SOURCE_SHA}")
-    set_tests_properties(r06_svg_source_windows PROPERTIES
-        LABELS "r06;plot;source-limits;svg-geometry;synthetic-only;write-sandbox" TIMEOUT 60)
+    if(EGOMOTION_ENABLE_SVG)
+        add_executable(test_r06_svg_windows tests/integration/test_r06_svg_windows.cpp)
+        target_link_libraries(test_r06_svg_windows PRIVATE egomotion_plotting)
+        target_compile_features(test_r06_svg_windows PRIVATE cxx_std_17)
+        target_compile_options(test_r06_svg_windows PRIVATE -Wall -Wextra -Wpedantic)
+        add_test(NAME r06_svg_source_windows COMMAND test_r06_svg_windows
+            "${CMAKE_CURRENT_BINARY_DIR}/r06_svg_windows" "${EGOMOTION_BUILD_SOURCE_SHA}")
+        set_tests_properties(r06_svg_source_windows PROPERTIES
+            LABELS "r06;plot;source-limits;svg-geometry;synthetic-only;write-sandbox" TIMEOUT 60)
+    endif()
 
     add_executable(test_r06_motion_errors tests/integration/test_r06_motion_errors.cpp)
     target_include_directories(test_r06_motion_errors PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -607,7 +622,11 @@ if(BUILD_TESTING)
     set_tests_properties(r06_run_context_interleaving PROPERTIES
         LABELS "r06;run-context;interleaving;real-io;write-sandbox;synthetic-only" TIMEOUT 60)
     add_executable(test_r06_illustrations tests/integration/test_r06_illustrations.cpp)
-    target_link_libraries(test_r06_illustrations PRIVATE egomotion_cli egomotion_illustration_svg)
+    target_link_libraries(test_r06_illustrations PRIVATE egomotion_cli)
+    target_compile_definitions(test_r06_illustrations PRIVATE "EGOMOTION_ENABLE_SVG=$<BOOL:${EGOMOTION_ENABLE_SVG}>")
+    if(EGOMOTION_ENABLE_SVG)
+        target_link_libraries(test_r06_illustrations PRIVATE egomotion_illustration_svg)
+    endif()
     target_compile_options(test_r06_illustrations PRIVATE -Wall -Wextra -Wpedantic)
     add_test(NAME r06_illustrations_independent_geometry COMMAND test_r06_illustrations)
     set_tests_properties(r06_illustrations_independent_geometry PROPERTIES
@@ -615,6 +634,7 @@ if(BUILD_TESTING)
     add_test(NAME r06_illustrations_real_cli COMMAND "${CMAKE_COMMAND}"
         "-DCLI=$<TARGET_FILE:egomotion>" "-DSOURCE_SHA=${EGOMOTION_BUILD_SOURCE_SHA}"
         "-DSANDBOX=${CMAKE_CURRENT_BINARY_DIR}/r06_illustrations_cli"
+        "-DSVG_ENABLED=${EGOMOTION_ENABLE_SVG}"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/test_r06_illustrations_cli.cmake")
     set_tests_properties(r06_illustrations_real_cli PROPERTIES
         LABELS "r06;illustrations;real-process;write-sandbox" TIMEOUT 90)
@@ -633,6 +653,11 @@ if(BUILD_TESTING)
         -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/test_r06_adaptive_cli.cmake")
     set_tests_properties(r06_adaptive_real_cli PROPERTIES
         LABELS "r06;adaptive;real-process;real-step;write-sandbox;readonly-l2-diagnostic" TIMEOUT 420)
+
+    # 所有测试在无显示服务的子进程环境运行；不修改调用者的环境。
+    get_property(egomotion_tests DIRECTORY PROPERTY TESTS)
+    set_tests_properties(${egomotion_tests} PROPERTIES
+        ENVIRONMENT_MODIFICATION "DISPLAY=unset:;WAYLAND_DISPLAY=unset:")
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
@@ -640,3 +665,4 @@ message(STATUS "C++ standard: C++${CMAKE_CXX_STANDARD}")
 message(STATUS "Eigen: ${Eigen3_VERSION}")
 message(STATUS "Scope: R0-R5 compiled source targets; R6 config/build/tests require separate H-11 authorization")
 message(STATUS "BUILD_TESTING=${BUILD_TESTING} (not a test result)")
+message(STATUS "EGOMOTION_ENABLE_SVG=${EGOMOTION_ENABLE_SVG}")

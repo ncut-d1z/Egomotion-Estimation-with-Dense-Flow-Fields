@@ -27,6 +27,7 @@ void close(double actual,long double expected,const std::string& why) {
     // 工程回归阈值；不是DEC-005正式验收或MATLAB运行证据。
     check(std::isfinite(actual)&&difference<=1e-9L*(1+std::abs(expected)),why);
 }
+#if EGOMOTION_ENABLE_SVG
 std::size_t occurrences(const std::string& text,const std::string& needle) {
     std::size_t count=0,pos=0;
     while((pos=text.find(needle,pos))!=std::string::npos){++count;pos+=needle.size();}
@@ -46,6 +47,7 @@ struct Publisher final:ITextPublisher {
         return Status<MatErrorCode>::success();
     }
 };
+#endif
 ill::Data generated(const ill::Config& config) {
     auto result=ill::generate(config);require(result.hasValue(),"Geometry generation failed");
     return std::move(result).value();
@@ -121,6 +123,7 @@ void harmonic(int degree,int order) {
     if(degree==0)for(double radius:data.rho)check(radius==8,"Constant harmonic radius eight");
     if(degree==1&&order==1)close(data.unnormalized_yy[20],-1,"Condon-Shortley odd-order sign");
 }
+#if EGOMOTION_ENABLE_SVG
 void drawing(const ill::Config& config) {
     const auto data=generated(config);
     const auto before=ill::dataJson(data);require(before.hasValue(),"Valid numeric JSON");
@@ -159,12 +162,15 @@ void drawing(const ill::Config& config) {
         check(failed.files.size()==1&&failed.files.at("illustration.json")==before.value(),"First file preserved after second failure");
     }
 }
+#endif
 void rejectedData(const ill::Data& data) {
     check(!ill::dataJson(data).hasValue(),"Invalid numeric data rejected");
+#if EGOMOTION_ENABLE_SVG
     Publisher publisher;ill::SvgExporter exporter;
     auto result=exporter.exportSvg(data,publisher);
     check(!result.hasValue()&&result.error().code==PlotErrorCode::InvalidSeries,"Invalid drawing classified");
     check(publisher.calls==0,"Invalid drawing never publishes partial file");
+#endif
 }
 void negative() {
     for(auto config:{ill::HarmonicConfig{-1,0},ill::HarmonicConfig{2,-1},ill::HarmonicConfig{1,2}}) {
@@ -200,8 +206,10 @@ int main() {
     try {
         trajectory(false);trajectory(true);
         for(int degree=0;degree<=8;++degree)for(int order=0;order<=degree;++order)harmonic(degree,order);
+#if EGOMOTION_ENABLE_SVG
         drawing(ill::CircleConfig{});drawing(ill::SinusoidalConfig{});
         drawing(ill::HarmonicConfig{0,0});drawing(ill::HarmonicConfig{3,2});
+#endif
         negative();optionalBackend();
         std::cout<<std::setprecision(21)<<"checks="<<checks<<" failures="<<failures
                  <<" max_absolute="<<max_absolute<<" max_scaled="<<max_scaled<<'\n';

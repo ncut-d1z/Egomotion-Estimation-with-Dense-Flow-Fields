@@ -18,13 +18,19 @@ int main(int argc,char** argv) {
     // changing the configured plot backend must not affect analyze.
     egomotion::io::MatResultReader reader;
     egomotion::analysis::MatResultAnalyzer analyzer;
-    egomotion::analysis::SvgPlotExporter plotter;
-    egomotion::illustrations::SvgExporter illustrator;
+    egomotion::IPlotExporter* plotter=nullptr;
+    egomotion::illustrations::IExporter* illustrator=nullptr;
+#if EGOMOTION_ENABLE_SVG
+    egomotion::analysis::SvgPlotExporter svg_plotter;
+    egomotion::illustrations::SvgExporter svg_illustrator;
+    plotter=&svg_plotter;
+    illustrator=&svg_illustrator;
+#endif
     egomotion::experiments::ProductionExperimentRunner runner;
     // The application must start from the trusted repository checkout,
     // identified by the presence of origin/; no output-root CLI argument.
     const egomotion::cli::ApplicationCompositionRoot app(
         &reader,
-        &runner,&analyzer,&plotter,std::filesystem::current_path(),&illustrator);
+        &runner,&analyzer,plotter,std::filesystem::current_path(),illustrator);
     return egomotion::cli::run(args,std::cout,std::cerr,app);
 }

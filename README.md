@@ -74,10 +74,12 @@ build_dir="build/r6-$(date -u +%Y%m%dT%H%M%SZ)-$$"
 cmake -S . -B "$build_dir" -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
 cmake --build "$build_dir" --parallel 4
 ctest --test-dir "$build_dir" --verbose --no-tests=error \
-    -R '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values|r06_mat_reader_boundaries|r06_mat_raw_payload_boundaries)$'
+    -R '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values|r06_mat_reader_boundaries|r06_mat_raw_payload_boundaries|r06_mat_snapshot_identity)$'
 ctest --test-dir "$build_dir" --verbose --no-tests=error \
-    -E '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values|r06_mat_reader_boundaries|r06_mat_raw_payload_boundaries)$'
+    -E '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values|r06_mat_reader_boundaries|r06_mat_raw_payload_boundaries|r06_mat_snapshot_identity)$'
 ~~~
+
+`EGOMOTION_ENABLE_SVG` 默认 `ON`。需要完全不编译/链接 SVG 导出器时，在新的构建目录配置 `-DEGOMOTION_ENABLE_SVG=OFF`，其余构建和测试命令相同。两种模式都保留 `inspect-mat`、实验 Runner、`analyze` 和 `illustrate` 的默认 JSON；关闭 SVG 后，合法数值输入的 `plot` / `illustrate --format svg` 返回 `BackendUnavailable`（退出码7），不预留输出目录。数值输入自身的失败仍先按原合同报告。CTest 在两种模式都移除子进程的 `DISPLAY` / `WAYLAND_DISPLAY`；仅 SVG 专用画幅测试及混合测试中的 SVG 导出断言随关闭而缺席，全部原数值测试保留。准备/实测状态见 [无绘图构建记录](docs/reviews/R6_HEADLESS_BUILD_2026-11-17.md)。
 
 构建产物包含 `egomotion` 和 `mat_data_dict_probe`。探针生成新报告时应指定新的隔离输出文件；下列已提交的数据字典保留其原始来源，不因新 Reader 测试通过而自动重新生成。逐步骤 stdout/stderr、退出码及工具链身份须按仓库规则另行保存，本次实际命令与日志索引见验证记录。
 
