@@ -23,3 +23,9 @@
 `7c444ecce56ebcdf4ec92fa2ea81ed93c4665afe` 提交、正常推送并核实远端后，SVG ON配置/编译退出0且无编译诊断；MAT6/6、其余43/44，合计**49/50**。真实`/dev/full`的11次调用全部通过。唯一失败在`r06_cli_output_streams`最后的第二诊断场景：夹具把`manifest.json`目录放到`approvedOutputRoot()`下，而该接口表示`output/`，应再追加真实RunId。实际`output/two_events/manifest.json`成功保存，因而没有第二次失败诊断，测试期望6而实际返回原计算失败5。故障位置和文件身份已由源码/实际目录复核，未将该夹具错误归因于生产算法。
 
 现只修正夹具的RunId路径，**保留全部原断言**；生产修复不变，待新远端检查点复测。首轮原日志、JUnit、沙箱和输入SHA核验均保留于RunId `r6-stream-output-20261117-j7wXeMCQ` 的`evidence-ON/`及其中引用的测试目录；原始输入完整性核验退出0。首轮尚未运行OFF配置，不将其计为通过。
+
+## 第二轮与真实管道边界
+
+`a24ac9176ab8cb9e609dd1b966ef3f19b56facb6` 在远端确认后，两模式配置/增量构建无诊断，ON 50/50、OFF 49/49 CTest通过；各模式流测试841项/122次装配调用、真实`/dev/full`11次调用通过。RunId `r6-stream-output-final-20261117-LgpGa2o3`，两份输入SHA前后核验均退出0，实际记录保留。
+
+后续静态复核发现普通ostream错误之外的边界：默认SIGPIPE可在stderr写入时直接终止进程，因此catch不能替代先保存独立审计。现将失败Manifest保存移到stderr通知之前，仍按原计算失败→独立Manifest失败的顺序发送两条诊断；不改变用户进程的信号策略。新增子进程关闭stderr管道唯一读端、显式使用默认SIGPIPE的测试，要求信号终止后原Failed Manifest及完整链已经保存。**该新增边界尚未复测**；SIGPIPE仍由信号终止，不能把它宣称为常规I/O错误退出6。

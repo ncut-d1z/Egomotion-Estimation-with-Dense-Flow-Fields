@@ -175,9 +175,9 @@ int runExperiment(const Command& command,
         // The computational failure and an independent Manifest failure are
         // distinct events: never fake a common causal chain for both.
         const auto error=detail::withRunIdIfMissing(result.error(),context.runId());
-        const int reported=streams::report(err,error,code);
-        // stderr失败不阻止独立Manifest通道保存原始计算失败。
+        // 先保存独立审计；stderr管道的SIGPIPE可能直接终止进程，无法用catch挽救。
         auto status=context.publishFailureRecord(error);
+        const int reported=streams::report(err,error,code);
         if(!status.hasValue()&&!streams::diagnostic(err,status.error(),6))
             return 6;
         return reported;

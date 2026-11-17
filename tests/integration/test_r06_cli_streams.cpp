@@ -7,6 +7,8 @@
 #include "egomotion/io/mat_result_reader.hpp"
 
 #include <cstdlib>
+#include <cerrno>
+#include <csignal>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -14,6 +16,8 @@
 #include <map>
 #include <sstream>
 #include <stdexcept>
+#include <sys/wait.h>
+#include <unistd.h>
 
 namespace {
 using namespace egomotion;
@@ -163,6 +167,33 @@ void secondDiagnostic(const fs::path& root) {
     require(buffer.str()==jsonFailure(expected,5)+"\n","First diagnostic preserved with original exit and chain");
     require(fs::is_directory(root/"output/two_events/manifest.json"),"Failed Manifest publication must not overwrite blocker");
 }
+void brokenPipeAudit(const fs::path& root) {
+    fs::create_directories(root/"origin");FailedRunner runner;
+    cli::ApplicationCompositionRoot app(nullptr,&runner,nullptr,nullptr,root);
+    int descriptors[2];require(::pipe(descriptors)==0,"Cannot create stderr pipe");
+    // fork之前关闭唯一读端，避免子进程写入与父进程关闭之间的竞态。
+    require(::close(descriptors[0])==0,"Cannot close pipe reader");
+    std::cout.flush();
+    const auto child=::fork();require(child>=0,"Cannot fork isolated signal test");
+    if(child==0) {
+        if(::dup2(descriptors[1],STDERR_FILENO)<0)::_exit(90);
+        ::close(descriptors[1]);
+        if(std::signal(SIGPIPE,SIG_DFL)==SIG_ERR)::_exit(91);
+        const int code=cli::run({"run-bias-occluded","--seed","7","--level","0","--run-id","broken_pipe"},
+                                std::cout,std::cerr,app);
+        ::_exit(code);
+    }
+    ++calls;::close(descriptors[1]);int status=0;pid_t waited;
+    do {waited=::waitpid(child,&status,0);}while(waited<0&&errno==EINTR);
+    require(waited==child&&WIFSIGNALED(status)&&WTERMSIG(status)==SIGPIPE,
+            "Default SIGPIPE behavior must remain unchanged");
+    auto expected=failedCalculation();expected.detail.run_id=RunId{"broken_pipe"};
+    const auto manifest=read(root/"output/broken_pipe/manifest.json");
+    require(manifest.find("\"errors\":["+jsonFailure(expected,5)+"]")!=std::string::npos,
+            "Original audit must be durable before fatal stderr delivery");
+    require(manifest.find("\"completeness\":\"Failed\"")!=std::string::npos,"SIGPIPE cannot invent Complete");
+    std::cout<<"SIGPIPE child terminated; original Failed Manifest and complete chain preserved\n";
+}
 void verify(const fs::path& root) {
     const auto repo=root/"baseline";fs::create_directories(repo/"origin");
     io::MatResultReader reader;analysis::MatResultAnalyzer analyzer;experiments::ProductionExperimentRunner runner;
@@ -183,6 +214,7 @@ void verify(const fs::path& root) {
             failedDiagnostics(base/"failed",fault,throws);
         }
     secondDiagnostic(root/"second_diagnostic");
+    brokenPipeAudit(root/"broken_pipe");
     for(const auto& entry:before)require(read(entry.first)==entry.second,"Read-only analysis/inspect changed fixture");
 }
 } // namespace
