@@ -3,6 +3,7 @@
 #include "egomotion/analysis/analyzer.hpp"
 #include "egomotion/analysis/plot.hpp"
 #include "egomotion/experiments/runner.hpp"
+#include "egomotion/illustrations/illustration.hpp"
 
 #include <cstdint>
 #include <filesystem>
@@ -19,7 +20,7 @@ enum class CommandKind {
     Help, Version, InspectMat,
     BiasOccluded, BiasProportional,
     AdaptiveInitialization, AdaptiveComparison, AdaptiveUpdateRates,
-    Analyze, Plot
+    Analyze, Plot, Illustrate
 };
 
 struct InspectMatArgs {
@@ -41,10 +42,15 @@ struct AnalysisArgs {
     std::filesystem::path input_root;
     std::optional<RunId> run_id;
 };
+struct IllustrationArgs {
+    illustrations::Config config;
+    bool svg=false;
+    std::optional<RunId> run_id;
+};
 
 using CommandArguments = std::variant<
     std::monostate, InspectMatArgs, BiasArgs, AdaptiveInitArgs,
-    AdaptiveComparisonArgs, AdaptiveRatesArgs, AnalysisArgs>;
+    AdaptiveComparisonArgs, AdaptiveRatesArgs, AnalysisArgs, IllustrationArgs>;
 struct Command {
     CommandKind kind;
     CommandArguments arguments;
@@ -61,9 +67,10 @@ public:
                                         IExperimentRunner* runner = nullptr,
                                         IAnalyzer* analyzer = nullptr,
                                         IPlotExporter* plotter = nullptr,
-                                        std::filesystem::path trusted_repo = {})
+                                        std::filesystem::path trusted_repo = {},
+                                        illustrations::IExporter* illustrator = nullptr)
         : reader_(reader), runner_(runner), analyzer_(analyzer),
-          plotter_(plotter), trusted_repo_(std::move(trusted_repo)) {}
+          plotter_(plotter), trusted_repo_(std::move(trusted_repo)), illustrator_(illustrator) {}
 
     int dispatch(const Command& command, std::ostream& out,
                  std::ostream& err) const;
@@ -74,6 +81,7 @@ private:
     IAnalyzer* analyzer_;
     IPlotExporter* plotter_;
     std::filesystem::path trusted_repo_;
+    illustrations::IExporter* illustrator_;
 };
 
 int run(const std::vector<std::string>& args, std::ostream& out,

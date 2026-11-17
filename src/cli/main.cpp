@@ -19,11 +19,12 @@ int main(int argc,char** argv) {
     egomotion::io::MatResultReader reader;
     egomotion::analysis::MatResultAnalyzer analyzer;
     egomotion::analysis::SvgPlotExporter plotter;
+    egomotion::illustrations::SvgExporter illustrator;
     egomotion::experiments::ProductionExperimentRunner runner;
     // The application must start from the trusted repository checkout,
     // identified by the presence of origin/; no output-root CLI argument.
     const egomotion::cli::ApplicationCompositionRoot app(
         &reader,
-        &runner,&analyzer,&plotter,std::filesystem::current_path());
+        &runner,&analyzer,&plotter,std::filesystem::current_path(),&illustrator);
     return egomotion::cli::run(args,std::cout,std::cerr,app);
 }

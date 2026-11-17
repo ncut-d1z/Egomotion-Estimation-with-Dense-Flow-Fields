@@ -229,6 +229,32 @@ int analyzeOrPlot(const Command& cmd,IAnalyzer& analyzer,
     out<<"]}\n";
     return 0;
 }
+int illustrate(const IllustrationArgs& args,illustrations::IExporter* exporter,
+               const std::filesystem::path& repository_root,std::ostream& out,std::ostream& err) {
+    auto data=illustrations::generate(args.config);
+    if(!data.hasValue()){err<<jsonFailure(data.error(),5)<<'\n';return 5;}
+    if(!args.svg) {
+        auto json=illustrations::dataJson(data.value());
+        if(!json.hasValue()){err<<jsonFailure(json.error(),5)<<'\n';return 5;}
+        out<<json.value();return 0;
+    }
+    if(!exporter){unavailable(err,"plot","Optional illustration SVG exporter",7);return 7;}
+    auto reserved=io::RunDirectory::create(repository_root,args.run_id);
+    if(!reserved.hasValue()) {
+        const auto code=matExit(reserved.error().code);
+        err<<jsonFailure(reserved.error(),code)<<'\n';return code;
+    }
+    auto directory=std::move(reserved).value();
+    io::RunTextPublisher publisher(*directory);
+    auto files=exporter->exportSvg(data.value(),publisher);
+    if(!files.hasValue()) {
+        const auto code=plotExit(files.error().code);
+        err<<jsonFailure(files.error(),code)<<'\n';return code;
+    }
+    out<<"{\"run_id\":"<<jsonQuote(directory->runId().text)<<",\"plot_files\":[";
+    for(std::size_t i=0;i<files.value().size();++i){if(i)out<<',';out<<jsonQuote(files.value()[i]);}
+    out<<"]}\n";return 0;
+}
 } // namespace
 
 int ApplicationCompositionRoot::dispatch(
@@ -238,7 +264,9 @@ int ApplicationCompositionRoot::dispatch(
         out<<"Usage: egomotion <command> [--option VALUE]\n"
               "Commands: inspect-mat, run-bias-occluded, run-bias-proportional,\n"
               "  run-adaptive-init, run-adaptive-comparison,\n"
-              "  run-adaptive-update-rates, analyze, plot, help, version\n";
+              "  run-adaptive-update-rates, analyze, plot, illustrate, help, version\n"
+              "illustrate --kind circle|sinusoidal|harmonic [--format json|svg]\n"
+              "  harmonic requires --degree N --order M; --run-id ID is SVG-only\n";
         return 0;
     case CommandKind::Version:
         out<<"egomotion 0.1.0 (R5 full-source bootstrap; native checks pending)\n";
@@ -281,6 +309,8 @@ int ApplicationCompositionRoot::dispatch(
         if(!reader_||!analyzer_){unavailable(err,"analyze","Analyzer/Reader");return 5;}
         return analyzeOrPlot(command,*analyzer_,plotter_,*reader_,
                              trusted_repo_,out,err);
+    case CommandKind::Illustrate:
+        return illustrate(std::get<IllustrationArgs>(command.arguments),illustrator_,trusted_repo_,out,err);
     default:
         if(!runner_){unavailable(err,"simulation","Experiment Runner");return 5;}
         return runExperiment(command,trusted_repo_,*runner_,out,err);

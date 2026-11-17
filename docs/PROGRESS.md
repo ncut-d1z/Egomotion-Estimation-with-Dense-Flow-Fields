@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 三份插图（2026-11-17）
+
+**首轮准备 `[HUMAN-EXECUTE/APPROVE]`，尚未执行。** 三份原插图接入纯数值JSON与可选SVG，保留600点轨迹、z-only球面遮罩及未归一化勒让德径向面；新增独立Rodrigues全网格和真实CLI两项CTest，登记45项不等于通过。候选CLI/schema未冻结，原始资料只读、端点/灯光差异显式记录，见 [专项记录](reviews/R6_ILLUSTRATIONS_2026-11-17.md)。待远程检查点后构建/CTest；Adaptive真实生成CLI、完整科学/L4、数值/资源资格与正式验收仍未完成，R6未结案。
+
 ## 最新接续：R6 历史Bias全曲线与平滑来源（2026-11-17）
 
 **实测 `[HUMAN-EXECUTE/APPROVE]`：`d68422cddc5de1b40baed5c1b5c57de5e4402074` 无诊断构建、43/43 CTest（MAT5/5，其余38/38）。** 历史Bias3323项通过，400文件/10400值→26曲线/208对x-y与独立宽精度参考最大绝对差约2.64e-14；平滑来源JSON/SVG及原582文件测试均通过。RunId `r6-bias-archive-20261117-0q1aV120`，原始SHA不变，见 [验证记录](reviews/R6_BIAS_ARCHIVE_ANALYSIS_2026-11-17.md)。下一项为三份illustration及Adaptive真实生成CLI的剩余覆盖；完整科学/L4、数值/资源资格和正式验收仍未完成，R6未结案。

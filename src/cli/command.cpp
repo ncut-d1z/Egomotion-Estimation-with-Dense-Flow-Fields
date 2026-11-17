@@ -90,6 +90,7 @@ Result<Command, ExperimentErrorCode> parseCommand(
     else if (name == "run-adaptive-update-rates") kind = CommandKind::AdaptiveUpdateRates;
     else if (name == "analyze") kind = CommandKind::Analyze;
     else if (name == "plot") kind = CommandKind::Plot;
+    else if (name == "illustrate") kind = CommandKind::Illustrate;
     else return invalid("Unknown command: " + name);
 
     // 已知子命令的帮助不要求业务参数，也不进入Reader/Runner装配调用。
@@ -111,6 +112,32 @@ Result<Command, ExperimentErrorCode> parseCommand(
     if (has(options, "--run-id") && !safeRunId(options.at("--run-id")))
         return invalid("Invalid RunId: use 1-64 ASCII letters, digits, _ or -");
     const auto id = requestedRunId(options);
+    if(kind==CommandKind::Illustrate) {
+        if(!validKeys(options,{"--kind","--format","--degree","--order","--run-id"})||
+           !has(options,"--kind"))return invalid("illustrate requires --kind circle/sinusoidal/harmonic");
+        const auto format=has(options,"--format")?options.at("--format"):"json";
+        if(format!="json"&&format!="svg")return invalid("Illustration --format must be json or svg");
+        if(format=="json"&&id)return invalid("Numeric illustration JSON does not accept --run-id");
+        const auto& picture=options.at("--kind");
+        illustrations::Config config;
+        if(picture=="harmonic") {
+            if(!has(options,"--degree")||!has(options,"--order"))
+                return invalid("Harmonic illustration requires --degree and --order");
+            std::uint64_t degree=0,order=0;
+            if(!unsignedDecimal(options.at("--degree"),std::numeric_limits<int>::max(),degree)||
+               !unsignedDecimal(options.at("--order"),std::numeric_limits<int>::max(),order)||order>degree)
+                return invalid("Harmonic illustration needs decimal 0 <= order <= degree <= INT_MAX");
+            config=illustrations::HarmonicConfig{static_cast<int>(degree),static_cast<int>(order)};
+        }else {
+            if(has(options,"--degree")||has(options,"--order"))
+                return invalid("Trajectory illustration has no degree/order parameters");
+            if(picture=="circle")config=illustrations::CircleConfig{};
+            else if(picture=="sinusoidal")config=illustrations::SinusoidalConfig{};
+            else return invalid("Unknown illustration kind: "+picture);
+        }
+        return Result<Command,ExperimentErrorCode>::success(
+            {kind,IllustrationArgs{std::move(config),format=="svg",id}});
+    }
     if (kind == CommandKind::InspectMat) {
         if (!validKeys(options, {"--file", "--variable"}) ||
             !has(options, "--file") || !safePath(options.at("--file")) ||

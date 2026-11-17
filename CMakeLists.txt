@@ -153,6 +153,12 @@ add_library(egomotion_plotting STATIC src/analysis/svg_plot.cpp)
 add_library(egomotion::plotting ALIAS egomotion_plotting)
 target_link_libraries(egomotion_plotting PUBLIC egomotion_analysis egomotion_contracts)
 
+add_library(egomotion_illustrations STATIC src/illustrations/geometry.cpp src/illustrations/data_json.cpp)
+target_link_libraries(egomotion_illustrations PUBLIC egomotion_domain egomotion_contracts
+    PRIVATE egomotion_simulation)
+add_library(egomotion_illustration_svg STATIC src/illustrations/svg.cpp)
+target_link_libraries(egomotion_illustration_svg PUBLIC egomotion_illustrations)
+
 add_library(egomotion_cli STATIC
     src/cli/command.cpp
     src/cli/application.cpp
@@ -160,7 +166,7 @@ add_library(egomotion_cli STATIC
 add_library(egomotion::cli ALIAS egomotion_cli)
 target_link_libraries(egomotion_cli PUBLIC
     egomotion_experiments egomotion_analysis egomotion_plotting
-    egomotion_matio egomotion_sampling egomotion_contracts)
+    egomotion_matio egomotion_sampling egomotion_contracts egomotion_illustrations)
 target_compile_features(egomotion_cli PUBLIC cxx_std_17)
 
 # Fix executable provenance at CONFIGURE time, not by reading a potentially
@@ -195,14 +201,14 @@ target_compile_definitions(egomotion_cli PRIVATE
 message(STATUS "Executable source commit: ${EGOMOTION_BUILD_SOURCE_SHA}")
 
 add_executable(egomotion src/cli/main.cpp)
-target_link_libraries(egomotion PRIVATE egomotion_cli)
+target_link_libraries(egomotion PRIVATE egomotion_cli egomotion_illustration_svg)
 target_compile_features(egomotion PRIVATE cxx_std_17)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     foreach(target IN ITEMS
             egomotion_sampling egomotion_simulation egomotion_estimators
             egomotion_matio egomotion_experiments egomotion_analysis
-            egomotion_plotting egomotion_cli egomotion)
+            egomotion_plotting egomotion_illustrations egomotion_illustration_svg egomotion_cli egomotion)
         target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
     endforeach()
 endif()
@@ -582,6 +588,18 @@ if(BUILD_TESTING)
         "${CMAKE_CURRENT_BINARY_DIR}/r06_run_context_interleaving" "${EGOMOTION_BUILD_SOURCE_SHA}")
     set_tests_properties(r06_run_context_interleaving PROPERTIES
         LABELS "r06;run-context;interleaving;real-io;write-sandbox;synthetic-only" TIMEOUT 60)
+    add_executable(test_r06_illustrations tests/integration/test_r06_illustrations.cpp)
+    target_link_libraries(test_r06_illustrations PRIVATE egomotion_cli egomotion_illustration_svg)
+    target_compile_options(test_r06_illustrations PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_illustrations_independent_geometry COMMAND test_r06_illustrations)
+    set_tests_properties(r06_illustrations_independent_geometry PROPERTIES
+        LABELS "r06;illustrations;independent-rodrigues;optional-svg" TIMEOUT 60)
+    add_test(NAME r06_illustrations_real_cli COMMAND "${CMAKE_COMMAND}"
+        "-DCLI=$<TARGET_FILE:egomotion>" "-DSOURCE_SHA=${EGOMOTION_BUILD_SOURCE_SHA}"
+        "-DSANDBOX=${CMAKE_CURRENT_BINARY_DIR}/r06_illustrations_cli"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/test_r06_illustrations_cli.cmake")
+    set_tests_properties(r06_illustrations_real_cli PROPERTIES
+        LABELS "r06;illustrations;real-process;write-sandbox" TIMEOUT 90)
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")

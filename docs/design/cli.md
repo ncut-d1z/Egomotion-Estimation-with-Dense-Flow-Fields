@@ -14,6 +14,8 @@
 
 ## 2. 命令级输入合同
 
+**2026-11-17 插图增量 `[AI-DRAFT + HUMAN-APPROVE]`（候选、未冻结）**：新增 `illustrate --kind circle|sinusoidal|harmonic [--format json|svg]`，默认JSON数值stdout、无RunId；harmonic要求 `--degree N --order M`（完整非负十进制，0≤M≤N≤INT_MAX），轨迹拒绝阶数选项。SVG允许 `--run-id ID` 并复用固定输出根/OS独立随机RunId，只发布 `illustration.json` 与 `illustration.svg`；不接受输出根或更改原固定轨迹参数。数据schema、错误复用与端点/渲染边界见 [插图实现记录](../reviews/R6_ILLUSTRATIONS_2026-11-17.md)。此候选入口落实原P9.7展示范围，未改变数值AC或DEC-008批准状态，待真实构建/CTest。
+
 | 命令 | 必需选项 | 可选选项 | 已知输出、选择与来源边界 |
 |---|---|---|---|
 | `inspect-mat` | `--file PATH` | `--variable NAME`（可选，仅筛选结构元数据） | **只调用`MatResultReader::inspect(file)`取得结构元数据**：变量名、class/type、rank/dims、元素数等；有NAME只筛选该名称的元数据，不解码、不显示数值元素。未知变量返回MissingVariable。`--mode strict/compat`、`--format`、`--rows/cols/precision`、`--all`不属于该命令参数；无RunId、只读且绝不修改MAT。 |
