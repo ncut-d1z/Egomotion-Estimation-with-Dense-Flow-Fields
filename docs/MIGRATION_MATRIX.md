@@ -1,5 +1,7 @@
 # 源 MATLAB 文件到当前 C++ 实现的迁移矩阵（MIGRATION_MATRIX）
 
+> **2026-11-18 P7.10职责映射接续 `[AI-EDIT]`**：受测`a19d2d82ab9b7b27f9b77061e9f4880c8d8944bf`为ON61/61、OFF60/60。基值/重建、逐项拟合、系数旋转分别由三个无状态组件承接，原自由函数兼容转发，实际Adaptive已接入；482项检查见 [实测](reviews/R6_HARMONIC_SERVICES_2026-11-18.md)。下表45路径/50声明及算法身份不变，更新四行实际代码去向，不扩大阶数或宣称原MATLAB运行时等价。
+
 > **2026-11-18 场景装配接续 `[AI-EDIT]`**：受测`74dbccd01afe23465d7914444917f7f357e69f9a`为ON60/60、OFF59/59。三Adaptive入口通过`AdaptiveScene`借用轨迹/运动学/球环境，原数学函数体不变；三入口合成完整场景与八轮聚合各88121项检查见 [实测](reviews/R6_ADAPTIVE_SCENE_2026-11-18.md)。下表45路径/50声明及算法身份不变；真实Adaptive仍Incomplete、无MAT。下方注记保留较早证据。
 
 > **2026-11-18 Adaptive装配接续 `[AI-EDIT]`**：受测`0cd5439b7195cd6b7355deb5f7eb951a649be8b1`为ON59/59、OFF58/58。三Adaptive入口现在通过`AdaptiveSampling`显式借用采样/噪声服务，默认级别/模型/3N顺序和Session路径保持，36088项组合验证见 [实测](reviews/R6_ADAPTIVE_INJECTION_2026-11-18.md)。下表45路径/50声明与原算法身份不变，完整真实实验仍未成功。
@@ -45,13 +47,13 @@
 | `help_functions/getflowfield.m` | 1 | `io::MatResultReader::readFirstCompatible`；[mat_result_reader.cpp](../src/io/mat_result_reader.cpp) | MAT、SNAPSHOT、CLI | 后缀/首变量/多变量边界及封存读取已测，首版二维密集实double；非任意MAT结构承诺。 |
 | `help_functions/getnear_in_kugel_Drehung.m` | 1 | `trajectory::SphereEnvironment::nearnessInUnitSphere`；[sphere.cpp](../src/trajectory/sphere.cpp) | GEOM | 旋转射线、球内交点/正距离解析参考与负例；不接受球外相机。 |
 | `help_functions/getvektor.m` | 1 | `sampling::randomUnitDirection(IRandomSource&)`；[directions.cpp](../src/sampling/directions.cpp) | GEOM、RUNNER | 两次uniform顺序及固定方向，耗尽链；统计分布/L4不由两点样本证明。 |
-| `help_functions/koeff_aus_near.m` | 1 | `harmonics::fitSourceNear` → `low_order::projectSourceCoefficientsOrderTwo`；[adapter](../src/harmonics/adapter.cpp)、[projection](../src/harmonics/low_order_source_projection.cpp) | SH、STEP | l≤2逐通道sum(Y·near)/sum(Y²)，保留源缩放顺序；不是联合最小二乘，零通道范数拒绝。 |
+| `help_functions/koeff_aus_near.m` | 1 | `HarmonicFitter::fitSourceNear` → `low_order::projectSourceCoefficientsOrderTwo`；[fitter](../src/harmonics/harmonic_fitter.cpp)、[projection](../src/harmonics/low_order_source_projection.cpp) | SH、STEP | l≤2逐通道sum(Y·near)/sum(Y²)，保留源缩放顺序；不是联合最小二乘，零通道范数拒绝。 |
 | `help_functions/kreis_trajektorie.m` | 1 | `trajectory::TrajectoryGenerator::circle`；[trajectory.cpp](../src/trajectory/trajectory.cpp) | GEOM、ILLUSTRATION | 分母N、圆半径/高度与600点独立例；line绘图副作用移至插图层。 |
 | `help_functions/kreuzprodukt.m` | 1 | Eigen `Vector3::cross`，如 [flow.cpp](../src/simulation/flow.cpp)、[franz_kvd.cpp](../src/estimators/franz_kvd.cpp)、[adaptive_step.cpp](../src/estimators/adaptive_step.cpp) | GEOM、KVD、STEP | 三维向量运算内联复用；通过含符号的独立业务参考核对，没有同名包装API。 |
-| `help_functions/kugelflfunc2.m` | 1 | `low_order::basisDirect/basisRecurrence` + MATLAB布局相位转换；[low_order_basis.cpp](../src/harmonics/low_order_basis.cpp) | SH | 求解器实际九基l≤2；CS相位/顺序经布局及投影处理，不是任意l,m角参数API。插图非归一化基另实现。 |
+| `help_functions/kugelflfunc2.m` | 1 | `RealSphericalHarmonics::sourceBasis` → `low_order::basisDirect` + MATLAB布局相位转换；[component](../src/harmonics/real_spherical_harmonics.cpp)、[leaf](../src/harmonics/low_order_basis.cpp) | SH | 求解器实际九基l≤2；源3×5及CS相位/顺序有独立参考，不是任意l,m角参数API。插图非归一化基另实现。 |
 | `help_functions/kurveglaetten.m` | 1 | 内部 `analysis::detail::smoothSource`；[adaptive.cpp](../src/analysis/adaptive.cpp) | ANALYSIS、SNAPSHOT | 窗口半宽2/5/10、头尾零、先分段/全列两种调用次序；有限参考逐值，辅助源blob有追踪。 |
 | `help_functions/mue_norm_koenderink_iteration.m` | 1 | `estimators::ModifiedKvDEstimator::estimate` → `KvDIterationEngine::estimate` + `ModifiedKvDTranslationRule::compute`；[franz_kvd.cpp](../src/estimators/franz_kvd.cpp) | KVD、RUNNER | 独立规则保留Modified公式；逐轮节点、默认停止控制流及策略替换有实测，不把两算法合并成同公式。 |
-| `help_functions/near_aus_koeff.m` | 1 | `harmonics::reconstructNear` → `low_order::reconstruct`；[adapter](../src/harmonics/adapter.cpp)、[basis](../src/harmonics/low_order_basis.cpp) | SH、STEP | 逐方向重建九项，调用者遍历N行；l≤2，浮点求和与角度中间值不宣称逐位同源。 |
+| `help_functions/near_aus_koeff.m` | 1 | `RealSphericalHarmonics::reconstructNear` → `low_order::reconstruct`；[component](../src/harmonics/real_spherical_harmonics.cpp)、[basis](../src/harmonics/low_order_basis.cpp) | SH、STEP | 逐方向重建九项，调用者遍历N行；l≤2，浮点求和与角度中间值不宣称逐位同源。 |
 | `help_functions/nonpropfehler.m` | 1 | `simulation::MeanMagnitudeGaussianNoise::apply` → 内部 `noiseApply(false)`；[flow.cpp](../src/simulation/flow.cpp) | GEOM、RUNNER | 均总流模长加噪、xyz抽样与切向投影；相消流/零系数仍抽样，NoNoise是独立模式。 |
 | `help_functions/norm_koenderink_iteration.m` | 1 | `estimators::OriginalKvDEstimator::estimate` → `KvDIterationEngine::estimate` + `OriginalKvDTranslationRule::compute`；[franz_kvd.cpp](../src/estimators/franz_kvd.cpp) | KVD、RUNNER | 源初始化、near翻号、末轮旧near尺度、最少6/默认最多200轮；506次两路径停止参考及策略组合，正式容差待审。 |
 | `help_functions/normrelfehler.m` | 1 | 内部 `source_metrics::sourceDirectionErrorDegrees`；[source_motion_errors.hpp](../src/numerics/source_motion_errors.hpp) | METRIC、SESSION、ADAPTIVE-CLI | 角度单位degree，acos不钳制；零范数/越界拒绝。真实初始化第14帧cosine=1+2^-52已有诊断。 |
@@ -63,7 +65,7 @@
 | `help_functions/skalarprodukt.m` | 1 | Eigen `Vector3::dot`，如 [flow.cpp](../src/simulation/flow.cpp)、[kinematics.cpp](../src/trajectory/kinematics.cpp)、[source_motion_errors.hpp](../src/numerics/source_motion_errors.hpp) | GEOM、KVD、STEP、METRIC | 三维点积在业务公式中直接使用；独立数值参考非所有浮点归约顺序逐位证明。 |
 | `help_functions/trajektorie_aus_punkten.m` | 1 | `trajectory::TrajectoryKinematics::fromPoints`；[kinematics.cpp](../src/trajectory/kinematics.cpp) | GEOM、ADAPTIVE-CLI | 源i=2…N-1、局部转置作用/前帧关系；首尾零并标无效，真实轨迹后续零旋转误差拒绝。 |
 | `help_functions/transfehler_div.m` | 1 | 内部 `source_metrics::normalizedVectorError`；[source_motion_errors.hpp](../src/numerics/source_motion_errors.hpp) | METRIC、RUNNER | 先按真值范数缩放估计再取距离；独立弦长/尺度参考，零真值亦显式拒绝计数，不伪称原返回行为相同。 |
-| `help_functions/transfor_koeff.m` | 1 | `harmonics::rotateSourceCoefficients` → 相位包裹 `rotateCoefficients`；[adapter.cpp](../src/harmonics/adapter.cpp) | SH、SESSION | 独立源phase参考及Session实际动作；源CS系数直接乘无CS块，不用物理参数旋转替代。 |
+| `help_functions/transfor_koeff.m` | 1 | `HarmonicRotator::rotateSourceCoefficients` → 相位包裹`rotateCoefficients`；[rotator](../src/harmonics/harmonic_rotator.cpp) | SH、SESSION | 独立源phase参考及Session实际动作；源CS系数直接乘无CS块，不用物理参数旋转替代。 |
 | `help_functions/winkelausvektor.m` | 1 | `low_order::sourceAnglesFromDirection`独立返回极角/方位角；[low_order_basis.cpp](../src/harmonics/low_order_basis.cpp)，既有Cartesian基路径保留 | SH、STEP | 18个解析方向及单位/非有限/acos域/带符号零边界；不归一化或裁剪，不声称MATLAB运行时全域等价。 |
 | `help_functions/zellendefinieren.m` | 1 | `FranzMatchedFilter::estimateWithTrace` 内三轴单位向量循环；[franz_kvd.cpp](../src/estimators/franz_kvd.cpp) | KVD | 替代3×10工作表的三轴累加器；响应/分母逐项有参考，3/轴数=1。 |
 | `illustrations/circle_curve_in_the_sphere.m` | 1 | `illustrations::generate(CircleConfig)` + `SvgExporter::exportSvg`；[geometry](../src/illustrations/geometry.cpp)、[svg](../src/illustrations/svg.cpp) | ILLUSTRATION | 600点圆、sphere(50)、z-only遮罩及画幅/实际CLI；未声称sphere端点运行舍入或Phong像素等价。 |

@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 P7.10球谐职责分离（2026-11-18）
+
+`[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`a19d2d82ab9b7b27f9b77061e9f4880c8d8944bf`两模式构建无诊断，**SVG ON61/61、OFF60/60 CTest**；先MAT7项，零失败/跳过/禁用。RealSphericalHarmonics/HarmonicFitter/HarmonicRotator分别拥有源基值/重建、逐项拟合及两种旋转动作，实际单步/Session/策略已接入；9个迁移函数体仅改辅助命名空间限定，叶子公式不变。新测试各482项，最大绝对差1.7763568394002505e-15；完整原回归保留。RunId `r6-harmonic-services-20261118-e9E0GmUL`，各721项输入摘要不变，见 [专项记录](reviews/R6_HARMONIC_SERVICES_2026-11-18.md)。P7.10源码缺口已补，D1、D2其余Runner/Analyzer职责、D4记录范围和完整实验/资格仍未完成，R6未结案；Issue #1/#2/#3开放、无PR。
+
 ## 最新接续：R6 Adaptive场景注入与八轮合同（2026-11-18）
 
 `[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`74dbccd01afe23465d7914444917f7f357e69f9a`两模式构建无诊断，**SVG ON60/60、OFF59/59 CTest**；先MAT7项，零失败/跳过/禁用。内存Runner显式借用轨迹/运动学/球环境，生产默认装配及原数学函数体保持。各88121项检查覆盖三入口合成完整场景、Comparison八轮状态重置/固定分母/末轮比值、54个服务故障及第5轮失败不发布部分结果。RunId `r6-adaptive-scene-20261118-BLAFVtQC`，各720项输入摘要不变，见 [专项记录](reviews/R6_ADAPTIVE_SCENE_2026-11-18.md)。真实Adaptive仍按原数值行为Incomplete、无MAT；D3已列明的装配源码缺口已补，D1/D2/D4及完整实验/资格仍未完成，R6未结案。Issue #1/#2/#3开放、无PR。下方较早记录保留当时状态。
