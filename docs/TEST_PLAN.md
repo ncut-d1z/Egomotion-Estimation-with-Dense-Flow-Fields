@@ -1,5 +1,7 @@
 # 测试设计与验收计划（TEST PLAN）
 
+> **2026-11-17 最新执行事实（[AI-EDIT]）**：在已授权的 R6 批次，源码 `84c86624954406b31e8a82d5e145c7f6ae30ee93` 完成干净全工程 Release 构建，现有 **21/21 CTest Passed**（先 MAT 2 项，再其余19项），编译无警告/错误，原始数据哈希不变。完整命令、失败修复、环境、日志哈希与测试名称见 [原生验证记录](reviews/R6_NATIVE_VALIDATION_2026-11-17.md)。本次不修改下列66项 TC/AC、数值阈值、优先级或冻结状态；21项通过不等于66项验收全部通过。
+
 > **测试计划草案 v0.31，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
 
 > **候选核对材料**：见 [HAR-2026-11-06-001 材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md)；历史提出的 MAT 类型/安全、Golden/容差仍要逐项执行。当前参考等级为 L2/L3/L4，不要求 MATLAB/Octave/L1；`atol=0.01`/`rtol=0.1` 仅首轮探索筛查。**低阶球谐已在 `8eab5dd`、`445ed151`、含624非零四元数/错误码检查的 `601c74de` 三个固定提交获得用户报告的 1/1 CTest Passed**，其他模块与完整验收未因此批准。

@@ -71,3 +71,57 @@ CTest 命令为 `ctest --test-dir build/r6-20261117-AAjc8Xpe/cmake -C Release --
 **证据支持的测试修正**：matio 1.5.26 [Mat_VarReadNextInfo5](https://github.com/tbeu/matio/blob/v1.5.26/src/mat5.c#L4923) 在这些 MAT v5 普通数值数组的结构读取阶段不填 data_type/nbytes；完整解码才设置内存类型与字节数。原测试将 `Mat_VarRead` 的预期用于 `Mat_VarReadInfo`，与已选 DEC-008-05“只读元数据、不解码数值”的职责冲突。现对元数据明确断言未知类型/未知字节数；把 double 类型/实数/non-logical 检查移至完整解码，并增加全量扫描/每文件解码字节数检查。没有删除 double 检查、减少 582 样本或改动数值容差，也没有让 inspect 为通过测试偷偷读取数值。
 
 **边界保留**：这些字段是 matio 返回的快照；解码后的 `data_type` 不是独立解析文件原始 packed data tag 的证据。所有 MAT 变种的原始物理类型、截断/损坏等严格拒绝能力仍需专门负例，元数据接口是否补充该信息仍是设计/实现缺口，不能由本轮 CTest 自动宣称完整覆盖。
+
+## 运行 5：干净全工程构建及 21/21 CTest 通过
+
+RunId：`r6-20261117-KzjFHPDQ`；源码 SHA：`84c86624954406b31e8a82d5e145c7f6ae30ee93`（运行前已核实远端）。新建空目录 `build/r6-20261117-KzjFHPDQ/cmake/`，没有复用旧编译缓存。完整执行包装保存为本 RunId 的 `run.sh`。
+
+```bash
+run_dir="$PWD/build/r6-20261117-KzjFHPDQ"
+cmake -S "$PWD" -B "$run_dir/cmake" -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DBUILD_TESTING=ON \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+cmake --build "$run_dir/cmake" --parallel 4 -- -k
+ctest --test-dir "$run_dir/cmake" -C Release --verbose --no-tests=error \
+  --parallel 2 -R '^(r02_mat_reader|r06_historical_mat_readonly_schema)$' \
+  --output-junit "$run_dir/evidence/ctest-mat.xml"
+ctest --test-dir "$run_dir/cmake" -C Release --verbose --no-tests=error \
+  --parallel 4 -E '^(r02_mat_reader|r06_historical_mat_readonly_schema)$' \
+  --output-junit "$run_dir/evidence/ctest-remaining.xml"
+```
+
+| 步骤 | 开始/结束（UTC+08:00） | 退出码 | 实际结果 |
+|---|---|---:|---|
+| configure | 15:23:20 / 15:23:24 | 0 | 全工程目标生成成功 |
+| build | 15:23:24 / 15:26:13 | 0 | 全部生产库、两个工具及测试程序成功编译链接；无编译警告/错误 |
+| MAT CTest | 15:26:13 / 15:26:14 | 0 | 2/2 Passed，0 failed，0.52 秒 |
+| 其余 CTest | 15:26:14 / 15:26:14 | 0 | 19/19 Passed，0 failed，0.44 秒 |
+| 输入完整性复核 | 15:26:15 完成 | 0 | 全部本轮输入 SHA-256 一致；另核对本轮最初保存的全部 628 个 origin 文件也一致 |
+
+两组 CTest 名称互斥，合计覆盖当前全部 **21 项**，没有跳过或降低阈值。配置、构建和两组 CTest 的独立 stderr 均为 0 字节；详细断言输出及 JUnit/Testing 快照保留在 evidence。
+
+| 覆盖组 | 本次通过的 CTest |
+|---|---|
+| 球谐 | `low_order_harmonics`、`low_order_harmonics_archived_golden`、`low_order_harmonics_source_projection` |
+| 基础/入口/读取 | `r01_contracts`、`r01_cli_contract`、`r02_mat_reader`、`r06_historical_mat_readonly_schema` |
+| 发布/安全/生命周期 | `r05_manifest_gate`、`r05_anchored_io`、`r06_io_symlink_and_runid_safety`、`r06_result_lifetimes_error_frames` |
+| 采样/数值/轨迹 | `r06_sampling_flow_contract`、`r06_kvd_independent_l3`、`r06_adaptive_step_independent_l3`、`r06_sh_argument_action`、`r06_directions_all_ordered_l3`、`r06_trajectory_sphere_geometry` |
+| 状态/分析 | `r06_adaptive_session_transaction`、`r06_adaptive_periods_atomic_commit`、`r05_analysis_source_contract`、`r06_analysis_segments_smoothing` |
+
+归档测试读取 **582/582 MAT**，核对五类 shape、完整解码类型/字节数及逐文件 SHA 计算；并非独立预期值逐元素比对。球谐三个测试分别完成 53,532/176/76 次内部检查，最大残差分别为矩阵/向量 `8.8817841970012523e-16`、标量 `1.0658141036401503e-14`；归档候选 `8.8817841970012523e-16`；源投影 `1.7763568394002505e-15`。沿用专项回归阈值 `9.0949470177292824e-13`，未批准新的 DEC-005 门限。
+
+关键本地证据 SHA-256（`build/r6-20261117-KzjFHPDQ/evidence/`）：
+
+| 文件 | SHA-256 |
+|---|---|
+| `build.stdout` | `09a8441fa3cd62d985a283bf817407a0d29fdd4302d2a9f3977fded94a8b09d2` |
+| `ctest-mat.stdout` | `3da74d08b1696eecf477c39ce446de6e28a28329dae9a923a72692d5679196d8` |
+| `ctest-remaining.stdout` | `c29d77d268f81390f99f2bf329bfc660ba4f560c54071cda04ba9d6f813a04a7` |
+| `inputs.sha256` | `4b4f00d6e8fe3f4d68420d73475ffc5b238a29be2ea05700eaae33fa640dfd11` |
+
+## 交接与剩余范围
+
+- 本轮提交链：`12c4482` Writer const 适配/输入不变；`52ed768` Manifest 发布后失败合同；`cfcc9d8` 静态断言与初始化；`5362234` Bias include；`bd06d40` Reader 注入与 CLI 警告；`84c8662` 元数据/解码测试修正。均正常推送同一开发分支。
+- 实际源码改动：`src/io/run_mat_writer.cpp`、`src/analysis/reader_helpers.cpp`、`src/experiments/bias_runner.cpp`、`src/cli/application.cpp` 及领域类型注释。回归改动：R01 合同、R02 Reader、R05 Manifest/Writer、R06 归档测试；相关授权/进度/测试/构建文档同步。
+- 本次未创建/修改/关闭 Issue 或 PR，未合并、发布或冻结。最后的文档提交只登记已验证 SHA，不冒称该后续文档 SHA 重新构建。
+- **R6 尚不能结案**：仍需独立 L2 文件身份/逐值参考、剩余 L3 多轮/多帧和完整 Runner/八轮行为、必要 L4 统计、真实发布后 fsync/unlink 故障注入、MAT 原始 packed tag/损坏等负例及 SHRotate 差异限定；最终 DEC-005/006/008 与人类验收独立办理。没有 MATLAB/Octave/L1 阻塞，也没有为通过测试改变数值门限或删除断言。

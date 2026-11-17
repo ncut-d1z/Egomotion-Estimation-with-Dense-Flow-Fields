@@ -2,15 +2,15 @@
 
 ## 最新执行批次：R6 原生验证（2026-11-17）
 
-**[HUMAN-EXECUTE/APPROVE] 已获本轮执行授权，尚未运行。** 用户直接允许生产代码修改、构建/CTest 和方案文档修改，覆盖本页历史批次的 H-11 暂缓。已核实工作区/远端均在 `5fa2e65b09dcfad15a0e467383e14c185bf0e540`，全状态 Issue/PR 查询为空；沿用专用分支 `dev-plan-P0-P1-mat-dictionary-probe`。不改写历史审批或代签验收。
+**[HUMAN-EXECUTE/APPROVE] 本轮已执行：干净全工程构建成功，21/21 CTest 通过。** 已验证源码 SHA 为 `84c86624954406b31e8a82d5e145c7f6ae30ee93`，RunId 为 `r6-20261117-KzjFHPDQ`。用户直接允许生产代码修改、构建/CTest 和方案文档修改，覆盖本页历史批次的 H-11 暂缓。起点工作区/远端为 `5fa2e65b09dcfad15a0e467383e14c185bf0e540`，全状态 Issue/PR 查询为空；沿用专用分支 `dev-plan-P0-P1-mat-dictionary-probe`。不改写历史审批或代签验收。
 
 首个修复是 `RunMatWriter` 对 matio 1.5.26 可写 `void*` 形参的适配：保留公共 const 输入，复制局部可写缓冲区并继续使用 matio 复制所有权；现有 `r05_anchored_io` 增加真正 const 输入及成功/重复写/非法路径调用后元数据与数值不变的回归检查。预计额外一份 double 数组内存，未改变数值精度、类型、列主序或阈值。
 
-执行顺序：提交/推送/核实检查点后，在独立 `build/<RunId>/` 配置及编译，先运行 MAT Reader 相关测试，再运行其余登记 CTest；保存环境、输入身份、命令、时间、退出码及分离的 stdout/stderr。原始 `origin/**` 只读，合成 MAT 仅写测试沙箱。实际结果随后登记；21 项已注册并不代表已通过，R6 的 L2/L3/L4 科学验收及 DEC-005/006 仍单独保留。
+实际执行顺序：每次提交/推送/核实检查点后配置及编译，先运行 MAT Reader 相关测试，再运行其余登记 CTest；保存环境、输入身份、命令、时间、退出码及分离的 stdout/stderr。最后一次使用全新空构建目录，全部步骤 exit 0。原始 `origin/**` 只读，合成 MAT 仅写测试沙箱；全部 628 个受控原始文件与本轮最初 SHA-256 一致。R6 的 L2/L3/L4 科学验收及 DEC-005/006 仍单独保留。
 
 `r05_manifest_gate` 同时补上有状态 Publisher 替身：名称发布后不再允许覆盖，模拟已链接 `manifest.json` 但持久化未确认，验证没有成功 RunOutcome/内存 Complete，随后失败记录的 `OutputExists` 与原始 `ReadbackMismatch` 分别保留，已发布字节不被改写。此测试只覆盖 RunContext 合同，不能冒充真实 Linux fsync/unlink 故障注入或独立读取磁盘 Manifest 的最终资格协议。
 
-**实际执行中**：前三轮修复静态断言拼写、Bias Runner 声明依赖、Reader 测试注入对象 const 不匹配及编译警告。第四轮 `bd06d408` 全工程配置/编译 exit 0；MAT CTest 2/2 失败，已由现场只读诊断及 matio 上游源码定位为测试误用仅元数据阶段的未知 data_type/nbytes。现保留元数据真实未知状态，将严格 double/实数/non-logical/字节数检查放在完整解码结果，未降低原始文件数量或数值门限。剩余19项尚未执行；全部失败日志、命令与修正边界见 [原生验证记录](reviews/R6_NATIVE_VALIDATION_2026-11-17.md)。
+**失败修复与复测**：前三轮修复静态断言拼写、Bias Runner 声明依赖、Reader 测试注入对象 const 不匹配及编译警告。第四轮 MAT CTest 失败已定位为元数据字段错误假设，保留真实未知字段并在完整解码结果上校验 double/实数/non-logical/字节数。第五轮在 Ubuntu 24.04.5、GCC 16.2.0、CMake 4.3.4、Eigen 3.4.0、Sophus 1.24.6、matio 1.5.26、zlib 1.3 上无诊断构建成功；MAT 2/2（0.52 秒）、其余19/19（0.44 秒）全部通过。582 MAT 均读取，未减少样本或改变数值门限。全部成功/失败日志、哈希、命令、实际源码文件/提交及未覆盖范围见 [原生验证记录](reviews/R6_NATIVE_VALIDATION_2026-11-17.md)。**这是本轮工程验证完成，不是 R6 科学验收结案。**
 
 > 滚动证据登记 v0.6（截至E-DOC-069，2026-11-10），非正式基线批准。**这里的“本轮”是E-DOC-069历史数学批次，不是2026-11-11正在开展的全工程文档规范审计。** 该历史批次仅作理论推导和Wolfram验证，未实施生产C++；历史原生SH测试与数学运算的执行者、源码SHA及证据类型必须分开。本次文档审计最新状态见[AUDIT_PROGRESS.md](AUDIT_PROGRESS.md)，不得用本页旧97AF计数替代现行全工程审计的DOC/DAR口径；现行数字及延期分类只以[AUDIT_PROGRESS.md](AUDIT_PROGRESS.md)最新台账为准，历史9DAR属于旧批次而非当前总数。
 >
