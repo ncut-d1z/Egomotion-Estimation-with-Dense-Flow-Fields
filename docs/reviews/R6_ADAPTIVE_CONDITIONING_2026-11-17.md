@@ -12,7 +12,7 @@
 - 既有独立参考 [zero_mean_conditioning_evidence.v1.json](../../verification/adaptive/zero_mean_conditioning_evidence.v1.json)，blob `be9aa64cb454fb434b407814f8cfa1310a7c90b7`；其 Wolfram 生成器 blob `36eedaf6477d0255b7ab0f12572506970da6847c`。本批不重新运行 Wolfram，也不改该历史证据状态。
 - 理论推导见 [均值与条件数专题](../design/ADAPTIVE_MEAN_ZERO_CONDITIONING.md)。测试独立用 `long double` 标量公式构造预期矩阵、右端和奇异值，不调用生产矩阵装配/流生成函数生成预期值。实际生产计算仍为 double；只在诊断/参考计算使用较高精度。
 
-十二个正常固定输入：
+十二个运动系统可解的固定输入（完整投影另有定义域约束，见实测记录）：
 
 1. 六轴均匀正近度，`a=1,0.1,0.001,0.000001`，真实平移 `e_x`、旋转 `(1/5,-1/7,1/11)`；预期 `M=(2/3)I6`、raw 平移 `a e_x`、条件数 1。另取 `a=1e-100,omega=0`，验证绝对小均值本身不会触发任意阈值拒绝；旋转置零避免把不可分辨的小平移叠加到有限旋转上。
 2. 六轴 `r=a+y`，同四个 a，CS 系数 `C00=a sqrt(4pi)`、`C1,-1=-sqrt(4pi/3)`；下左块为 `[e_y]_cross/(3a)`，两个对角块为 `(2/3)I3`。`a<1` 有负近度，明确是数学输入，不能声称全部是正深度场景。固定行列式不代表良态，条件数使用既有解析式 `((sqrt(gamma²+4)+gamma)/2)², gamma=1/(2a)`。
@@ -28,4 +28,12 @@
 
 ## 实测结果
 
-等待检查点后真实执行；R6 未结案。
+首轮 `3ef34a20aef074af997a5110e7530b44274c7647`，RunId `r6-conditioning-20261117-XX2hlboO`，无诊断构建，MAT 5/5、其余 34/35，合计 **39/40**。新测试36项中12项失败，均是上述运动系统可解输入在完整单步末尾被 `koeff_aus_near` 拒绝；四个早期定义域负例符合预期。输入 SHA 保持不变，日志/失败完整保留。
+
+### 首轮诊断与修订 R6-COND-001
+
+这是测试把“运动系统可解”误认成“完整单步可成功”，不是生产求解器故障。六轴及四锥视线都有 `x*y=0`，原 `koeff_aus_near.m` 对源 `(l=2,m=-2)` 通道逐项计算的 `sum(Y²)` 为零，原静态公式发生 `0/0`；已有 C++ 按合同返回 `SingularSystem`，保留叶子 `LowOrderHarmonicsErrorCode / ZeroProjectionNorm`。未运行 MATLAB，不能声称原运行时抛相同错误。全状态 Issue/PR 检索为空，本地覆盖事项记录为 `R6-COND-001`。
+
+现将原运动重建、归一、矩阵装配/求解及 near_new 阶段提取为内部 `detail::solveAdaptiveMotion` 与不同类型 `AdaptiveMotionResult`（头文件在 `src/estimators/adaptive_motion.hpp`）。生产公共 `AdaptiveMfaStepSolver::solve` 始终继续原投影，只有完整成功才产生公共 `AdaptiveStepResult`；Session 仍只接收该公共完整结果。表达式、运算顺序、FullPivLU、错误分类/消息与投影拒绝保持不变，内部阶段成功不能提交系数或宣称完整成功。
+
+修订测试直接检查生产内部阶段的独立矩阵/运动参考，并逐一重新调用公共入口，要求十二例全部因零投影范数失败、错误链保留；原四负例仍通过公共入口检查。这样同时覆盖数学阶段与完整流程的失败义务，不删除场景、跳过失败或修改生产门限。等待新检查点复测；R6 未结案。

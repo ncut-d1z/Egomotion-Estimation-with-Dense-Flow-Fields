@@ -551,6 +551,7 @@ if(BUILD_TESTING)
         LABELS "r06;kvd;independent-reduced-reference;bounded-fixtures" TIMEOUT 60)
 
     add_executable(test_r06_adaptive_conditioning tests/integration/test_r06_adaptive_conditioning.cpp)
+    target_include_directories(test_r06_adaptive_conditioning PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
     target_link_libraries(test_r06_adaptive_conditioning PRIVATE egomotion_estimators)
     target_compile_options(test_r06_adaptive_conditioning PRIVATE -Wall -Wextra -Wpedantic)
     add_test(NAME r06_adaptive_conditioning_reference COMMAND test_r06_adaptive_conditioning)

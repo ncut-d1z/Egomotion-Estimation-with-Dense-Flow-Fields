@@ -1,6 +1,7 @@
 // 参考：verification/adaptive/zero_mean_conditioning_evidence.v1.json
 // blob be9aa64cb454fb434b407814f8cfa1310a7c90b7；独立 Wolfram 解析式，非 MATLAB 执行。
 #include "egomotion/estimators/adaptive_step.hpp"
+#include "estimators/adaptive_motion.hpp"
 
 #include <Eigen/LU>
 #include <Eigen/SVD>
@@ -117,7 +118,7 @@ Fixture cone(double h) {
     f.check_forward_solution=false;
     return f;
 }
-void inspectSystem(const Fixture& f,const AdaptiveStepResult& result) {
+void inspectSystem(const Fixture& f,const detail::AdaptiveMotionResult& result) {
     const auto& t=result.trace;
     near(t.original_near_mean/f.mean,1,f.name+": relative raw mean");
     for (std::size_t row=0;row<f.raw_near.size();++row) {
@@ -169,7 +170,7 @@ void inspectSystem(const Fixture& f,const AdaptiveStepResult& result) {
 void verify(const Fixture& fixture) {
     const FlowField field=flow(fixture),saved_field=field;
     const HarmonicCoefficients saved_coeff=fixture.coefficients;
-    const auto actual=AdaptiveMfaStepSolver{}.solve(fixture.coefficients,field);
+    const auto actual=detail::solveAdaptiveMotion(fixture.coefficients,field);
     check(actual.hasValue(),fixture.name+": unexpected failure");
     check(std::memcmp(field.observations.data(),saved_field.observations.data(),
                       static_cast<std::size_t>(field.observations.size())*sizeof(double))==0&&
@@ -180,7 +181,7 @@ void verify(const Fixture& fixture) {
     inspectSystem(fixture,result);
     near(result.motion.translation.norm(),1,fixture.name+": unit translation");
     check(result.motion.translation.allFinite()&&result.motion.rotation.allFinite()&&
-          result.coefficients_next.values.allFinite()&&std::isfinite(result.error_mse),
+          result.trace.recomputed_near.allFinite()&&std::isfinite(result.error_mse),
           fixture.name+": nonfinite result");
     check(result.error_mse>=0,fixture.name+": negative MSE");
     if (fixture.check_forward_solution) {
@@ -193,6 +194,17 @@ void verify(const Fixture& fixture) {
         for (std::size_t i=0;i<6;++i)
             near(result.trace.recomputed_near[static_cast<Eigen::Index>(i)],
                  i<2?0:fixture.raw_near[i]/(1+kNearDenominatorEpsilon),fixture.name+": recomputed near");
+    }
+    // 所有固定场的 xy 源通道均为零：运动阶段成功不等于完整投影成功。
+    const auto complete=AdaptiveMfaStepSolver{}.solve(fixture.coefficients,field);
+    check(!complete.hasValue(),fixture.name+": full step must reject zero projection norm");
+    if (!complete.hasValue()) {
+        check(complete.error().code==NumericalErrorCode::SingularSystem&&
+              complete.error().detail.stage==ErrorStage::Solve,fixture.name+": projection classification");
+        bool projection_cause=false;
+        for (const auto& cause:complete.error().detail.causes)
+            projection_cause|=cause.domain=="LowOrderHarmonicsErrorCode"&&cause.code=="ZeroProjectionNorm";
+        check(projection_cause,fixture.name+": missing projection cause");
     }
 }
 void negativeCases() {

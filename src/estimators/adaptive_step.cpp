@@ -1,4 +1,4 @@
-#include "egomotion/estimators/adaptive_step.hpp"
+#include "adaptive_motion.hpp"
 #include "egomotion/harmonics/adapter.hpp"
 
 #include <Eigen/Geometry>
@@ -48,24 +48,25 @@ Vector3 opticFlow(const FlowField& f,Eigen::Index i) {
 }
 }  // namespace
 
-Result<AdaptiveStepResult,NumericalErrorCode> AdaptiveMfaStepSolver::solve(
-    const HarmonicCoefficients& old, const FlowField& observations) const {
+namespace detail {
+Result<AdaptiveMotionResult,NumericalErrorCode> solveAdaptiveMotion(
+    const HarmonicCoefficients& old, const FlowField& observations) {
     const Eigen::Index count=observations.observations.rows();
     if (count==0)
-        return fail<AdaptiveStepResult>(NumericalErrorCode::EmptyInput,
+        return fail<AdaptiveMotionResult>(NumericalErrorCode::EmptyInput,
                                          "Adaptive step requires at least one flow observation");
     if (!old.values.allFinite()||!observations.observations.allFinite())
-        return fail<AdaptiveStepResult>(NumericalErrorCode::NonFiniteInput,
+        return fail<AdaptiveMotionResult>(NumericalErrorCode::NonFiniteInput,
                                          "Adaptive coefficients/flow must be finite");
     for (Eigen::Index i=0;i<count;++i) {
         const Vector3 d=direction(observations,i);
         if (std::abs(d.squaredNorm()-1.0)>1e-8)
-            return fail<AdaptiveStepResult>(NumericalErrorCode::InvalidDirection,
+            return fail<AdaptiveMotionResult>(NumericalErrorCode::InvalidDirection,
                                              "Adaptive observation direction is not unit length",
                                              static_cast<std::size_t>(i));
     }
     try {
-        AdaptiveStepResult result;
+        AdaptiveMotionResult result;
         auto& trace=result.trace;
         trace.near_raw.resize(count);
         double raw_sum=0.0;
@@ -73,7 +74,7 @@ Result<AdaptiveStepResult,NumericalErrorCode> AdaptiveMfaStepSolver::solve(
             const Vector3 d=direction(observations,i);
             auto near=harmonics::reconstructNear(old,d);
             if (!near.hasValue())
-                return propagate<AdaptiveStepResult>(
+                return propagate<AdaptiveMotionResult>(
                     near.error(),"Adaptive near_aus_koeff failed",
                     static_cast<std::size_t>(i));
             trace.near_raw[i]=near.value();
@@ -82,7 +83,7 @@ Result<AdaptiveStepResult,NumericalErrorCode> AdaptiveMfaStepSolver::solve(
         const double sample_count=static_cast<double>(count);
         const double mean=raw_sum/sample_count;
         if (!std::isfinite(mean)||mean==0.0)
-            return fail<AdaptiveStepResult>(NumericalErrorCode::InvalidNearness,
+            return fail<AdaptiveMotionResult>(NumericalErrorCode::InvalidNearness,
                                              "Adaptive initial nearness mean is zero or non-finite");
         trace.original_near_mean=mean;
         // Source: save s; if s<0: near=-near; then near=near/s.
@@ -91,7 +92,7 @@ Result<AdaptiveStepResult,NumericalErrorCode> AdaptiveMfaStepSolver::solve(
         if (mean<0.0) trace.near_after_sign=-trace.near_after_sign;
         trace.near_normalized=trace.near_after_sign/mean;
         if (!trace.near_normalized.allFinite())
-            return fail<AdaptiveStepResult>(NumericalErrorCode::NonFiniteResult,
+            return fail<AdaptiveMotionResult>(NumericalErrorCode::NonFiniteResult,
                                              "Adaptive normalized nearness is non-finite");
         Vector3 sum_direction=Vector3::Zero();
         Vector3 sum_near_direction=Vector3::Zero();
@@ -121,23 +122,23 @@ Result<AdaptiveStepResult,NumericalErrorCode> AdaptiveMfaStepSolver::solve(
         trace.system_matrix.bottomLeftCorner<3,3>()=trace.m3;
         trace.system_matrix.bottomRightCorner<3,3>()=trace.m4;
         if (!trace.system_matrix.allFinite()||!trace.rhs.allFinite())
-            return fail<AdaptiveStepResult>(NumericalErrorCode::NonFiniteResult,
+            return fail<AdaptiveMotionResult>(NumericalErrorCode::NonFiniteResult,
                                              "Adaptive 6x6 system assembly is non-finite");
 
         // Original: real(inv(M))*b. FullPivLU handles a GENERAL, potentially
         // nonsymmetric matrix; never replace with symmetric LDLT.
         const Eigen::FullPivLU<Matrix6> lu(trace.system_matrix);
         if (!lu.isInvertible())
-            return fail<AdaptiveStepResult>(NumericalErrorCode::SingularSystem,
+            return fail<AdaptiveMotionResult>(NumericalErrorCode::SingularSystem,
                                              "Adaptive full-pivot 6x6 system is singular");
         trace.solved_motion=lu.solve(trace.rhs);
         trace.translation_raw=trace.solved_motion.head<3>();
         const double translation_norm=trace.translation_raw.norm();
         if (!std::isfinite(translation_norm)||!trace.solved_motion.allFinite())
-            return fail<AdaptiveStepResult>(NumericalErrorCode::NonFiniteResult,
+            return fail<AdaptiveMotionResult>(NumericalErrorCode::NonFiniteResult,
                                              "Adaptive motion solve produced non-finite values");
         if (translation_norm==0)
-            return fail<AdaptiveStepResult>(NumericalErrorCode::ZeroNorm,
+            return fail<AdaptiveMotionResult>(NumericalErrorCode::ZeroNorm,
                                              "Adaptive raw translation has zero norm");
         result.motion.translation=trace.translation_raw/translation_norm;
         result.motion.rotation=trace.solved_motion.tail<3>();
@@ -154,30 +155,53 @@ Result<AdaptiveStepResult,NumericalErrorCode> AdaptiveMfaStepSolver::solve(
             constexpr double adaptive_denominator_epsilon=1e-11;
             const double denominator=1.0-proj*proj+adaptive_denominator_epsilon;
             if (!std::isfinite(denominator)||denominator<=0.0)
-                return fail<AdaptiveStepResult>(NumericalErrorCode::SingularSystem,
+                return fail<AdaptiveMotionResult>(NumericalErrorCode::SingularSystem,
                                                  "Adaptive new near denominator is invalid",
                                                  static_cast<std::size_t>(i));
             trace.recomputed_near[i]=
                 -result.motion.translation.dot(p-d.cross(result.motion.rotation))/
                 denominator;
             if (!std::isfinite(trace.recomputed_near[i]))
-                return fail<AdaptiveStepResult>(NumericalErrorCode::NonFiniteResult,
+                return fail<AdaptiveMotionResult>(NumericalErrorCode::NonFiniteResult,
                                                  "Adaptive recomputed near is non-finite",
                                                  static_cast<std::size_t>(i));
         }
         result.error_mse=error_sum/sample_count;
         trace.error_mse=result.error_mse;
         if (!std::isfinite(result.error_mse))
-            return fail<AdaptiveStepResult>(NumericalErrorCode::NonFiniteResult,
+            return fail<AdaptiveMotionResult>(NumericalErrorCode::NonFiniteResult,
                                              "Adaptive MSE is non-finite");
-        auto fitted=harmonics::fitSourceNear(trace.recomputed_near,observations);
+        return Result<AdaptiveMotionResult,NumericalErrorCode>::success(
+            std::move(result));
+    } catch (const std::bad_alloc&) {
+        return fail<AdaptiveMotionResult>(NumericalErrorCode::ResourceLimitExceeded,
+                                         "Adaptive step allocation failed");
+    } catch (const std::length_error&) {
+        return fail<AdaptiveMotionResult>(NumericalErrorCode::ResourceLimitExceeded,
+                                         "Adaptive step exceeds container capacity");
+    }
+}
+
+}  // namespace detail
+
+Result<AdaptiveStepResult,NumericalErrorCode> AdaptiveMfaStepSolver::solve(
+    const HarmonicCoefficients& old,const FlowField& observations) const {
+    auto motion=detail::solveAdaptiveMotion(old,observations);
+    if (!motion.hasValue())
+        return Result<AdaptiveStepResult,NumericalErrorCode>::failure(std::move(motion).error());
+    try {
+        auto phase=std::move(motion).value();
+        auto fitted=harmonics::fitSourceNear(phase.trace.recomputed_near,observations);
         if (!fitted.hasValue())
             return propagate<AdaptiveStepResult>(
                 fitted.error(),"Adaptive koeff_aus_near projection failed");
+        AdaptiveStepResult result;
+        result.motion=phase.motion;
+        result.error_mse=phase.error_mse;
+        result.trace=std::move(phase.trace);
         result.coefficients_next=std::move(fitted).value();
-        trace.coefficients_next=result.coefficients_next;
-        return Result<AdaptiveStepResult,NumericalErrorCode>::success(
-            std::move(result));
+        result.trace.coefficients_next=result.coefficients_next;
+        return Result<AdaptiveStepResult,NumericalErrorCode>::success(std::move(result));
     } catch (const std::bad_alloc&) {
         return fail<AdaptiveStepResult>(NumericalErrorCode::ResourceLimitExceeded,
                                          "Adaptive step allocation failed");
