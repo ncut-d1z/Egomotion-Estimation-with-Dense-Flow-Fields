@@ -27,4 +27,22 @@
 
 ## 实测记录
 
-待首轮检查点后填写；R6仍未结案。
+源码检查点 `412f6aba63ee08b5390604008b01728819ea2300` 已正常提交/推送并通过GitHub分支API核实，然后配置、增量构建和42/42 CTest全部通过。分支为 `dev-plan-P0-P1-mat-dictionary-probe`；RunId `r6-interleaving-20261117-xIQZ6xzO`，独立日志为 `build/r6-interleaving-20261117-xIQZ6xzO/evidence/`，复用构建缓存 `build/r6-20261117-KzjFHPDQ/cmake/`。工作目录为仓库根，所有合成输出保留在构建沙箱中。
+
+| 操作 | 时间（UTC+08:00） | 退出码/结果 |
+|---|---|---|
+| CMake配置 | 2026-11-17 20:14:04–20:14:06 | 0 |
+| 增量构建 | 20:14:06–20:14:27 | 0，无诊断 |
+| 五项MAT CTest | 20:14:27–20:14:28 | 0，5/5 |
+| 其余CTest | 20:14:28–20:14:31 | 0，37/37 |
+| 输入摘要复核 | 结束20:14:31 | 0，未改变 |
+
+环境为Ubuntu24.04.5、Linux7.0.0-43、GCC16.2.0、CMake/CTest4.3.4、Eigen3.4.0、matio1.5.26、zlib1.3及已有Sophus1.24.6。配置为Release/C++17、`BUILD_TESTING=ON`，构建并行4；先按MAT五项正则并行2运行，再排除该正则并行4运行其余。完整命令/参数、开始结束时间、退出码分别在四个`.meta`，环境在`environment.txt`；stdout/stderr和JUnit单独保存，全部stderr为0字节。输入Git blob在`input-git-blobs.txt`，运行前后文件SHA-256在`inputs.sha256`和`inputs-after.txt`；没有安装依赖或运行统计实验。
+
+实测Session **9579项检查、252次成功调用、12次拒绝、0失败**；三模式各42次独立成功、42次交替成功及4次拒绝。RunContext **282项检查、96个RNG样本、2540个真实MAT回读值、0失败**。A的RunId为`run_84975c6a91ecf9d8c1c8aa69f5944fd7`（seed7），B为`run_fc6527554cff2c0714f9f7fedbeffad3`（seed11）；输出位于上述缓存的`r06_run_context_interleaving/交替 实例/output/`。对应Manifest SHA-256分别为`8b3753459651641194c75f0e842fe4ff2d5e1e164852ced027b09cb2067f399f`与`8e0f174d8de2cd32c28bf864101d13cdc36f70081c26ecb49b9282bf212001f3`。
+
+CTest stdout SHA-256：MAT `20bd60e70104e954df003e9c6a4c76d84c6f0b9a7ef8ae89f9894e777a2d50b3`；其余 `0789126fda27e2233ac4a5dda5d40d0be421201bfd42baba7bab507be0548c4e`。原始628文件/582MAT的Git树仍为`70ee155131c24a50169346d0ffbaff0c01b1c547`。R6仍未结案。
+
+## 同批补充：acos舍入端点（尚未执行）
+
+沿用`TC-F-ERROR-001`和`TC-NF-NUM-002`，在现有`r06_source_motion_errors`追加固定向量`(1,1,1)`及其反向。独立标量binary64计算应略越过`+1/-1`，测试显式核对该前提，并要求真实角度函数返回`UndefinedAngle`且诊断命中`acos argument outside [-1,1]`；同一输入的尺度对齐距离仍为解析值0或`2*sqrt(3)`。保留输入字节和既有回归容差，无钳制/新生产门限，也不把C++拒绝行为宣称为MATLAB运行结果。待新检查点后复测42项。

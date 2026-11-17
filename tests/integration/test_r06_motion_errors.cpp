@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <cstring>
+#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <string>
@@ -102,11 +103,41 @@ void exceptionalCases() {
     const auto angle=sourceDirectionErrorDegrees(1e154*x,-1e154*x);
     check(angle.hasValue()&&angle.value()==180,"angle remains defined despite distance overflow");
 }
+void acosRoundoffCases() {
+    // binary64 的 1/sqrt(3) 平方求和会略越过单位端点。
+    // 固定有限输入验证既有 C++ 安全拒绝；不声称 MATLAB 运行时行为相同。
+    const Vector3 truth(1,1,1);
+    const double unit_component=1/std::sqrt(3.0);
+    const double component_square=unit_component*unit_component;
+    const double rounded_unit_square=(component_square+component_square)+component_square;
+    for (double sign : {-1.0,1.0}) {
+        const Vector3 estimate=sign*truth;
+        const Vector3 original_truth=truth,original_estimate=estimate;
+        const double cosine=sign*rounded_unit_square;
+        const std::string label=sign>0?"acos upper roundoff":"acos lower roundoff";
+        check(sign>0?cosine>1:cosine< -1,label+": fixed input does not cross endpoint");
+        const auto angle=sourceDirectionErrorDegrees(truth,estimate);
+        checkFailure(angle,NumericalErrorCode::UndefinedAngle,label);
+        if (!angle.hasValue())
+            check(angle.error().detail.message=="normrelfehler acos argument outside [-1,1]",
+                  label+": wrong failure branch");
+        const auto distance=normalizedVectorError(truth,estimate);
+        check(distance.hasValue(),label+": distance should remain defined");
+        if (distance.hasValue())
+            check(std::abs(distance.value()-(sign>0?0:2*std::sqrt(3.0)))<=
+                  kRegressionTolerance,label+": analytic distance differs");
+        check(std::memcmp(truth.data(),original_truth.data(),sizeof(double)*3)==0&&
+              std::memcmp(estimate.data(),original_estimate.data(),sizeof(double)*3)==0,
+              label+": input bytes changed");
+        std::cout<<label<<" scalar_cosine="<<std::setprecision(17)<<cosine<<'\n';
+    }
+}
 }  // namespace
 
 int main() {
     analyticCases();
     exceptionalCases();
+    acosRoundoffCases();
     std::cout<<"Motion error checks="<<checks<<" failures="<<failures<<'\n';
     return failures==0?0:1;
 }

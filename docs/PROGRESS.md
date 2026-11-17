@@ -2,6 +2,8 @@
 
 ## 最新接续：R6 Session / RunContext 交替隔离（2026-11-17）
 
+**首轮实测 `[HUMAN-EXECUTE/APPROVE]`：`412f6aba63ee08b5390604008b01728819ea2300` 无诊断构建、42/42 CTest（MAT5/5，其余37/37）。** 真实三模式Session的9579项检查、252成功/12拒绝与两个RunContext的282项检查、96个RNG样本/2540个MAT回读值全部通过；原始输入SHA不变，见 [验证记录](reviews/R6_INTERLEAVING_2026-11-17.md)。另补固定`(1,1,1)`正/反方向的acos舍入越界负例，生产公式/阈值不变，待新远程检查点复测。交替隔离不是同实例多线程资格，完整科学/L4与正式验收未完成；R6未结案。
+
 **首轮准备 `[HUMAN-EXECUTE/APPROVE]`，尚未执行。** 新增真实三模式Session的独立/交替重放、失败回滚与不同步帧时钟；两个RunContext使用独立RNG和真实MAT/Manifest，检查一方写失败不污染另一方。42项CTest仅登记，待远程检查点后构建/测试，见 [验证记录](reviews/R6_INTERLEAVING_2026-11-17.md)。合成合同数据不代表科学实验，同进程交替不代表同实例多线程资格；R6未结案。
 
 ## 最新接续：R6 Adaptive conditioning 参考（2026-11-17）
