@@ -93,6 +93,7 @@ struct ScriptedStep final:estimators::IAdaptiveStepSolver {
         // 比较调用的假 dumi 与主状态明显不同，错误提交会在下一调用被检出。
         result.coefficients_next.values(0,0)=slot==mode.comparisons?
             static_cast<double>(frame):10000.0+static_cast<double>(frame);
+        result.trace.coefficients_next=result.coefficients_next;
         return Result<estimators::AdaptiveStepResult,NumericalErrorCode>::success(std::move(result));
     }
 };
@@ -238,7 +239,11 @@ void checkOutput(const Sandbox& sandbox,const Mode& mode) {
                     require(std::isfinite(actual)&&error<=kContractAngleTolerance,"Eight-run mean or output column differs from independent angles");
                 }
             }
-        const auto& receipt=receipts[field];
+        const auto found=std::find_if(receipts.begin(),receipts.end(),[&](const FileEvidence& item){
+            return item.variable==name;
+        });
+        require(found!=receipts.end(),"Writer receipt missing expected variable identity");
+        const auto& receipt=*found;
         const auto hash=digest(file);
         require(receipt.variable==name&&receipt.filename==name+".mat"&&receipt.durably_confirmed&&
                 receipt.size_bytes==fs::file_size(file)&&receipt.sha256==hash&&manifest.find(hash)!=std::string::npos,
@@ -280,6 +285,11 @@ void incompleteCase(const fs::path& root,const std::string& sha,bool rng_failure
     const auto result=execute(runner,kComparison,*sandbox.context);
     require(!result.hasValue()&&result.error().code==ExperimentErrorCode::SolverFailed,"Partial run returned successful mean");
     const auto& draft=sandbox.context->manifestDraft();
+    const auto diagnostic=jsonFailure(result.error(),5);
+    std::cout<<"Observed failure: attempted="<<draft.attempted<<" completed="<<draft.completed
+             <<" valid="<<draft.valid<<" steps="<<step.calls<<" draws="<<counts.normal<<'\n'<<diagnostic;
+    require(sandbox.publisher->publishNew("failure-diagnostic.jsonl",diagnostic).hasValue(),
+            "Cannot retain actual failure diagnosis");
     require(draft.completed==(rng_failure?0:kRuns-1)&&draft.valid==(rng_failure?0:prior_frames)&&
             draft.attempted==(rng_failure?1:kRuns)&&draft.status!=RunStatus::Complete,"Partial progress counts were lost or promoted");
     require(step.calls==(rng_failure?0:step.fail_on_call)&&
@@ -288,7 +298,6 @@ void incompleteCase(const fs::path& root,const std::string& sha,bool rng_failure
     require(sandbox.writer->fileEvidence().empty()&&!fs::exists(sandbox.path/"manifest.json"),
             "Incomplete eight-run data reached Writer or Complete Manifest");
     require(!sandbox.context->publishCompleteOutcome().hasValue(),"Missing eighth sample passed Complete gate");
-    const auto diagnostic=jsonFailure(result.error(),5);
     require(diagnostic.find(rng_failure?"InvalidRandomSample":"SingularSystem")!=std::string::npos&&
             diagnostic.find(rng_failure?"run_matlab_1_based=1":"run_matlab_1_based=8")!=std::string::npos&&
             diagnostic.find("frame_matlab_1_based=2")!=std::string::npos,"Error lost numerical cause or run/frame identity");
@@ -307,12 +316,19 @@ int main(int argc,char** argv) {
         const fs::path root=fs::absolute(argv[1])/"跨帧 合同";
         const std::string sha=argv[2],mode=argv[3];
         require(sha.size()==40,"Expected verified build SHA");
+        std::size_t failures=0;
+        const auto record=[&](const std::string& label,auto test){
+            try{test();}
+            catch(const std::exception& error){++failures;std::cerr<<"FAIL "<<label<<": "<<error.what()<<'\n';}
+        };
         if(mode=="complete"){
-            for(const auto& selected:{kInitialization,kComparison,kUpdateRates})completeCase(root,sha,selected);
+            for(const auto& selected:{kInitialization,kComparison,kUpdateRates})
+                record(selected.name,[&]{completeCase(root,sha,selected);});
         }else{
             require(mode=="incomplete","Unknown test mode");
-            incompleteCase(root,sha,false);incompleteCase(root,sha,true);
+            record("eighth-run-failure",[&]{incompleteCase(root,sha,false);});
+            record("RNG-failure",[&]{incompleteCase(root,sha,true);});
         }
-        return 0;
+        return failures==0?0:1;
     }catch(const std::exception& error){std::cerr<<"FAIL Adaptive Runner contract: "<<error.what()<<'\n';return 1;}
 }

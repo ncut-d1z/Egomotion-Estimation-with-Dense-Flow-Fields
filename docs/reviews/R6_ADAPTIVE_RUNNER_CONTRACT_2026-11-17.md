@@ -1,6 +1,6 @@
 # R6 Adaptive Runner 跨帧与发布合同验证
 
-**[HUMAN-EXECUTE/APPROVE] 新增源码，尚未编译/执行。** 起点 `3383b0c4075dc7f5abf214a851c1369a73cc7965`，关联任务最新要求继续R6代码与验证；用户已允许源码、构建/CTest和方案文档。首次读取的本地/远端SHA一致、工作区干净，GitHub全状态Issue/PR为空。上一批受测源码为 `dffddf3b6a62b906a5b20eba365a2087e9c86662`，25/25 CTest通过；本批新增2项，登记27项但未据此宣称通过。
+**[HUMAN-EXECUTE/APPROVE] 首次构建成功，27项中25通过、2失败；正在定位/修正。** 起点 `3383b0c4075dc7f5abf214a851c1369a73cc7965`，关联任务最新要求继续R6代码与验证；用户已允许源码、构建/CTest和方案文档。首次读取的本地/远端SHA一致、工作区干净，GitHub全状态Issue/PR为空。上一批受测源码为 `dffddf3b6a62b906a5b20eba365a2087e9c86662`，25/25 CTest通过；新增2项没有通过证据。
 
 ## 范围及不变量
 
@@ -20,3 +20,9 @@
 ## 待执行及剩余项
 
 待新源码检查点后运行配置/编译、MAT4项及其余23项CTest。原日志保留，不把上批25/25继承为新HEAD结果。完整真实Runner的科学实验、全部L3/L4、原始SHRotate动作限定、其它Reader raw tag/资源负例、最终数值/性能和人类验收仍未完成。
+
+## 首次运行与诊断
+
+源码 `e77eb402ddcd9d4c8fa607999f6ff514cbe97a54` 已提交/推送/远端核实；RunId `r6-adaptive-contract-20261117-O6jKrbJC`，证据在同名build目录的 `evidence/`。构建exit0，但替身 `AdaptiveStepTrace::coefficients_next` 未初始化产生 `-Wmaybe-uninitialized`；修正为复制已构造的替身输出，不关闭诊断。MAT4/4通过，其余21/23通过（exit8），原始输入及参考/测试文件哈希核对exit0。
+
+成功合同用例在Initialization输出检查中失败：测试把 `fileEvidence()` 的vector索引当保存顺序，而真实Writer以变量名map导出；公开合同不要求回执枚举顺序，修正为按变量身份查找，保留所有SHA/字节数/持久化/Manifest断言。第八轮故障用例在预定注入之前已经收到SolverFailed，原输出未保存底层错误；本轮先新增诊断与真实部分计数落盘，并独立收集全部模式，**该原因尚未定位，不猜测为求解器问题或改变断言**。失败日志SHA-256 `8776e862c3b07184f358b30b213bc5804b0921a10eef5f2495693896078dcfd7`。失败后检索全部open/closed Issue为空，未新建Issue；已生成的沙箱保留。

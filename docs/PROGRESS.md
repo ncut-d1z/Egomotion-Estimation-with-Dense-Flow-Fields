@@ -2,7 +2,7 @@
 
 ## 最新接续：R6 Adaptive Runner 跨帧合同（2026-11-17）
 
-**[HUMAN-EXECUTE/APPROVE] 新增源码尚未运行。** 增加已有StepSolver的借用注入，默认生产路径不变；新增三模式全帧/全重复的Runner→Session→真实Writer/Manifest合同测试及第8次失败/RNG失败用例。保留35/600帧、级别2/4及8次重复，不将替身结果称作科学实验。CTest登记27项，当前实测仍是下节固定SHA的25/25。完整范围和证据边界见 [Runner合同验证](reviews/R6_ADAPTIVE_RUNNER_CONTRACT_2026-11-17.md)。
+**[HUMAN-EXECUTE/APPROVE] 首次27项中25通过、2失败，待修正复测。** `e77eb402` 构建成功但替身Trace有未初始化警告；回执检查错误假定枚举顺序，已改为变量身份核对。第八轮故障用例在预定注入前遇到SolverFailed，原因待更完整诊断；不放宽任何断言或科学阈值。保持35/600帧、级别2/4及8次重复，真实Writer输出与失败记录均保留；不将替身称为科学实验。日志、修改和边界见 [Runner合同验证](reviews/R6_ADAPTIVE_RUNNER_CONTRACT_2026-11-17.md)。
 
 ## 最新接续：R6 Reader 类型与损坏负例（2026-11-17）
 
