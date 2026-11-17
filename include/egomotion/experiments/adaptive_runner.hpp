@@ -25,13 +25,20 @@ struct AdaptiveRunData {
 enum class AdaptiveProgressEvent { RunStarted, FrameCompleted, RunCompleted };
 using AdaptiveProgress = std::function<void(AdaptiveProgressEvent)>;
 
+// 借用服务的生命周期须覆盖Runner；Comparison之外不调用噪声模型。
+// 生产装配使用IcosahedralSampler + MeanMagnitudeGaussianNoise，不能从接口猜类型。
+struct AdaptiveSampling {
+    const IDirectionSampler& sampler;
+    const IFlowNoiseModel& comparison_noise;
+};
+
 class AdaptiveExperimentRunner {
 public:
     // 可选借用同一求解器做跨帧合同测试；调用者须保证其生命周期。
-    // 空指针保留真实 StepSolver，不改变生产帧数、采样或八次重复。
-    explicit AdaptiveExperimentRunner(
+    // 空指针保留真实 StepSolver，不改变生产帧数、采样级别或八次重复。
+    AdaptiveExperimentRunner(AdaptiveSampling sampling,
         const estimators::IAdaptiveStepSolver* injected_solver=nullptr)
-        : injected_solver_(injected_solver) {}
+        : sampling_(sampling), injected_solver_(injected_solver) {}
     Result<AdaptiveRunData,ExperimentErrorCode> computeInitialization(
         const AdaptiveInitializationConfig& config = {},
         const AdaptiveProgress& progress = {}) const;
@@ -46,6 +53,7 @@ public:
         const AdaptiveUpdateRatesConfig& config = {},
         const AdaptiveProgress& progress = {}) const;
 private:
+    AdaptiveSampling sampling_;
     const estimators::IAdaptiveStepSolver* injected_solver_;
 };
 

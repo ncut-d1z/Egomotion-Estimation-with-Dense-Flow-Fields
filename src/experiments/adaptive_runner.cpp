@@ -2,7 +2,6 @@
 #include "adaptive_aggregation.hpp"
 
 #include "egomotion/estimators/adaptive_session.hpp"
-#include "egomotion/sampling/directions.hpp"
 #include "egomotion/simulation/flow.hpp"
 #include "egomotion/trajectory/trajectory.hpp"
 
@@ -125,7 +124,8 @@ void write(AdaptiveRunData& data,const std::string& field,
 }
 Output compute(Mode mode, double noise_scale, IRandomSource* rng,
                const AdaptiveProgress& progress,
-               const estimators::IAdaptiveStepSolver* injected_solver) {
+               const estimators::IAdaptiveStepSolver* injected_solver,
+               AdaptiveSampling sampling) {
     if (mode==Mode::Comparison &&
         (!std::isfinite(noise_scale)||rng==nullptr))
         return fail(ExperimentErrorCode::InvalidParameters,
@@ -135,9 +135,7 @@ Output compute(Mode mode, double noise_scale, IRandomSource* rng,
         const trajectory::TrajectoryGenerator generator;
         const trajectory::TrajectoryKinematics kinematics;
         const trajectory::SphereEnvironment sphere;
-        const sampling::IcosahedralSampler sampler;
         const simulation::FlowSynthesizer flow_synthesizer;
-        const simulation::MeanMagnitudeGaussianNoise noise_model;
 
         Result<trajectory::TrajectoryPoints,NumericalErrorCode> points=
             mode==Mode::Initialization
@@ -150,7 +148,7 @@ Output compute(Mode mode, double noise_scale, IRandomSource* rng,
             return fromNumeric(motions,"trajectory kinematics",mode,1);
 
         const int level=mode==Mode::Comparison?4:2;
-        auto sampled=sampler.sample(level);
+        auto sampled=sampling.sampler.sample(level);
         if (!sampled.hasValue())
             return fromNumeric(sampled,"icosahedral sampling",mode,1);
         const DirectionSet& directions=sampled.value();
@@ -205,10 +203,18 @@ Output compute(Mode mode, double noise_scale, IRandomSource* rng,
                     if (!std::isfinite(ratio))
                         return fail(ExperimentErrorCode::SolverFailed,
                                     "Comparison ideal component ratio overflow");
-                    auto noisy=noise_model.apply(observations,noise_scale,*rng);
+                    auto noisy=sampling.comparison_noise.apply(observations,noise_scale,*rng);
                     if (!noisy.hasValue())
                         return fromNumeric(noisy,"nonpropfehler",mode,
                                            run+1,matlab_i,ExperimentErrorCode::IncompleteRun);
+                    // 窄接口可替换不等于信任任意success；保持与Bias相同的拥有值边界。
+                    const auto& candidate=noisy.value().observations;
+                    if(candidate.rows()!=observations.observations.rows() ||
+                       !candidate.allFinite() ||
+                       !(candidate.leftCols<3>().array()==
+                         observations.observations.leftCols<3>().array()).all())
+                        return fail(ExperimentErrorCode::DataMismatch,
+                                    "Adaptive noise changed shape/directions or returned non-finite flow");
                     observations=std::move(noisy).value();
                     write(current,"rottransratio",row,0,ratio);
                 }
@@ -289,18 +295,18 @@ Output compute(Mode mode, double noise_scale, IRandomSource* rng,
 Result<AdaptiveRunData,ExperimentErrorCode>
 AdaptiveExperimentRunner::computeInitialization(
     const AdaptiveInitializationConfig&,const AdaptiveProgress& progress) const {
-    return compute(Mode::Initialization,0.0,nullptr,progress,injected_solver_);
+    return compute(Mode::Initialization,0.0,nullptr,progress,injected_solver_,sampling_);
 }
 Result<AdaptiveRunData,ExperimentErrorCode>
 AdaptiveExperimentRunner::computeComparison(
     const AdaptiveComparisonConfig& config,IRandomSource& rng,
     const AdaptiveProgress& progress) const {
-    return compute(Mode::Comparison,config.noise_scale,&rng,progress,injected_solver_);
+    return compute(Mode::Comparison,config.noise_scale,&rng,progress,injected_solver_,sampling_);
 }
 Result<AdaptiveRunData,ExperimentErrorCode>
 AdaptiveExperimentRunner::computeUpdateRates(
     const AdaptiveUpdateRatesConfig&,const AdaptiveProgress& progress) const {
-    return compute(Mode::UpdateRates,0.0,nullptr,progress,injected_solver_);
+    return compute(Mode::UpdateRates,0.0,nullptr,progress,injected_solver_,sampling_);
 }
 
 }  // namespace egomotion::experiments

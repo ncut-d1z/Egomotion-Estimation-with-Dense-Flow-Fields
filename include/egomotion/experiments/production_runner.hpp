@@ -2,6 +2,9 @@
 
 #include "egomotion/experiments/runner.hpp"
 #include "egomotion/experiments/bias_runner.hpp"
+#include "egomotion/experiments/adaptive_runner.hpp"
+#include "egomotion/sampling/directions.hpp"
+#include "egomotion/simulation/flow.hpp"
 
 #include <optional>
 
@@ -21,6 +24,9 @@ public:
     explicit ProductionExperimentRunner(BiasEstimators bias_estimators,
         const estimators::IAdaptiveStepSolver* injected_solver=nullptr)
         : injected_solver_(injected_solver), injected_bias_(bias_estimators) {}
+    explicit ProductionExperimentRunner(AdaptiveSampling adaptive_sampling,
+        const estimators::IAdaptiveStepSolver* injected_solver=nullptr)
+        : injected_solver_(injected_solver), injected_sampling_(adaptive_sampling) {}
     Result<RunOutcome,ExperimentErrorCode> runBiasOccluded(
         const BiasExperimentConfig&,RunContext&) override;
     Result<RunOutcome,ExperimentErrorCode> runBiasProportional(
@@ -36,11 +42,18 @@ private:
         if(injected_bias_)return *injected_bias_;
         return {franz_,original_,modified_};
     }
+    AdaptiveSampling adaptiveSampling() const noexcept {
+        if(injected_sampling_)return *injected_sampling_;
+        return {adaptive_sampler_,adaptive_noise_};
+    }
     const estimators::IAdaptiveStepSolver* injected_solver_;
     std::optional<BiasEstimators> injected_bias_;
+    std::optional<AdaptiveSampling> injected_sampling_;
     estimators::FranzMatchedFilter franz_;
     estimators::OriginalKvDEstimator original_;
     estimators::ModifiedKvDEstimator modified_;
+    sampling::IcosahedralSampler adaptive_sampler_;
+    simulation::MeanMagnitudeGaussianNoise adaptive_noise_;
 };
 
 }  // namespace egomotion::experiments

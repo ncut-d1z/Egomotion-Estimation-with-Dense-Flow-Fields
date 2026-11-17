@@ -1,5 +1,7 @@
 #include "egomotion/estimators/adaptive_session.hpp"
 #include "egomotion/experiments/adaptive_runner.hpp"
+#include "egomotion/sampling/directions.hpp"
+#include "egomotion/simulation/flow.hpp"
 
 #include <cmath>
 #include <cstddef>
@@ -76,7 +78,9 @@ void verifySessionRollback(estimators::AdaptiveSessionMode mode) {
             "A failed frame must not advance the expected source frame index");
 }
 void verifyInvalidComparisonHasNoRngSideEffect() {
-    experiments::AdaptiveExperimentRunner runner;
+    sampling::IcosahedralSampler sampler;
+    simulation::MeanMagnitudeGaussianNoise noise;
+    experiments::AdaptiveExperimentRunner runner({sampler,noise});
     CountRandom random;
     AdaptiveComparisonConfig bad{
         std::numeric_limits<double>::quiet_NaN()};

@@ -1,6 +1,8 @@
 // 真实初始化失败取证：装饰器只记录并委托生产Step，不替换其数值结果。
 #include "egomotion/experiments/adaptive_runner.hpp"
 #include "egomotion/estimators/adaptive_step.hpp"
+#include "egomotion/sampling/directions.hpp"
+#include "egomotion/simulation/flow.hpp"
 #include "egomotion/trajectory/trajectory.hpp"
 #include "egomotion/contracts/diagnostics.hpp"
 #include "numerics/source_motion_errors.hpp"
@@ -56,7 +58,10 @@ int main(int argc,char** argv) {
     try {
         require(argc==2,"Expected new trace CSV path");
         const fs::path report=argv[1];require(!fs::exists(report),"Refuse to overwrite trace evidence");
-        RecordingStep recorded;experiments::AdaptiveExperimentRunner runner(&recorded);
+        RecordingStep recorded;
+        sampling::IcosahedralSampler sampler;
+        simulation::MeanMagnitudeGaussianNoise noise;
+        experiments::AdaptiveExperimentRunner runner({sampler,noise},&recorded);
         std::size_t started=0,valid=0,completed=0;
         const auto result=runner.computeInitialization({},[&](experiments::AdaptiveProgressEvent event) {
             if(event==experiments::AdaptiveProgressEvent::RunStarted)++started;

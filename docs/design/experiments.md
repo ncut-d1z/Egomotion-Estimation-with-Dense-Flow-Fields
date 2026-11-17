@@ -1,5 +1,7 @@
 # 实验 Runner 与结果写出——详细设计草案
 
+> **2026-11-18 Adaptive装配候选增量，未冻结**：内存`AdaptiveExperimentRunner`显式借用`AdaptiveSampling{IDirectionSampler&,IFlowNoiseModel&}`；ProductionExperimentRunner拥有默认Icosahedral/MeanMagnitude服务或借用外部同接口服务，RNG仍从各RunContext取得。Comparison才调用噪声，即便系数0也保留原3N次normal；Initialization/UpdateRates不调用。成功噪声输出仍须通过行数、方向列不变及有限性检查才进入Session；接口不能识别任意替身的具体类型。生产级别2/4/2、35/600/600帧、8次聚合及公式不变，见 [实现/验证记录](../reviews/R6_ADAPTIVE_INJECTION_2026-11-18.md)。旧无参数的内存Runner构造已替换，生产适配的默认构造仍可用；不承诺未冻结API的二进制兼容。
+
 > **2026-11-18 候选实现补充（未冻结）**：BiasExperimentRunner构造借用`IDirectionSampler`、`IFlowNoiseModel`及`BiasEstimators`（Franz/Original/Modified独立槽）；compute借用`IRandomSource&`，生产适配传入RunContext的独占实例。Franz使用`IFranzMatchedFilter`返回MotionEstimate，两个KvD使用`IKvDEstimator`保留KvDResult。ProductionExperimentRunner拥有默认真实求解服务或借用外部替身，调用者保证借用服务生命周期；固定入口仍只装配各自唯一采样/噪声。原两次seed重置及求解顺序不变，参见 [实现/验证记录](../reviews/R6_BIAS_INJECTION_2026-11-18.md)。
 
 > **2026-11-17 执行事实（[AI-EDIT]）**：受测源码 `c2187539b8cb16fe9d53e770d231a48c2451c0b5` 构建无诊断、33/33 CTest通过；两种Bias在level0..2真实计算/七MAT发布及失败分类已验证，见 [Bias记录](../reviews/R6_BIAS_RUNNER_VALIDATION_2026-11-17.md)。Adaptive固定8组600行聚合/Session及原默认轨迹失败边界见 [Runner记录](../reviews/R6_ADAPTIVE_RUNNER_CONTRACT_2026-11-17.md)。下文旧未实现/未运行表述保留其历史语境，当前事实以上述固定SHA证据为准；未执行完整科学实验，不改变本LLD合同或冻结状态。
