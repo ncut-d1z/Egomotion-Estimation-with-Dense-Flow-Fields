@@ -39,3 +39,15 @@ SVG采用正交等比例投影、面片深度排序和面法线平面着色；�
 ## 剩余范围
 
 本批证据未执行前不能宣称插图通过。R6还需Adaptive真实生成CLI的剩余覆盖；完整科学/L4、病态数值资格、资源与正式验收不因插图实现自动完成，继续按既有边界处理。
+
+## 首轮实测与画幅修正
+
+检查点 `80a1ce2417946f9ced72318f3585f9c1d6ccfbd9` 已提交、正常推送、由GitHub分支API确认SHA后执行。RunId `r6-illustrations-20261117-MepeASNK`，日志 `build/r6-illustrations-20261117-MepeASNK/evidence/`，构建缓存 `build/r6-20261117-KzjFHPDQ/cmake/`，工作目录仓库根，执行者为本轮获授权Codex。Ubuntu24.04.5/Linux7.0.0-43、GCC16.2/C++17、CMake/CTest4.3.4、Eigen3.4、matio1.5.26、zlib1.3、Sophus1.24.6。
+
+2026-11-17 UTC+08:00：配置20:58:06–08、Release增量构建20:58:08–20:59:22，退出均0、无诊断；MAT20:59:22–23（5/5、0.90秒），其余20:59:23–31（40/40、7.57秒），全部45/45通过，原始及其他输入SHA复核退出0。配置使用Release、/usr/bin/g++、BUILD_TESTING、导出编译命令；编译并行4/`-- -k`，先五项MAT正则-R并行2，再-E并行4，均verbose/JUnit/no-tests=error。精确命令/参数、开始结束、stdout/stderr/退出码、JUnit和原输入Git blob/文件SHA均在上述evidence，各stderr为空。固定几何无算法随机种子；测试目录/自动RunId随机身份独立记录。
+
+新独立几何测试492946项、0失败；45组全网格YY/坐标的最大绝对差 `5.73129455005982890725e-09`、最大 `abs(diff)/(1+abs(reference))` 为 `2.18014586343682713417e-10`。绝对差不能单独当作小量附近误差；工程回归使用前述固定缩放规则，不是正式DEC-005资格。真实CLI28次进程全部符合预期，输出在构建目录 `r06_illustrations_cli/插图 中文 空格/c8ae493a7f47e14b278e0149/`；JSON/SVG一致及防覆盖均通过。CTest日志SHA-256：MAT `4b9b9831c458ddc4ae9731a4e8ee58acf8fb0001f118cb3fbf611f530861faca`，其余 `b4c191031fda1711a4b8942069edcdde62ee23ae793a87552fe316fc51c31556`。
+
+**R6-ILLUSTRATION-001：目视发现径向面被SVG画幅裁剪。** 初次测试仅验证面片数量和数值未变，没有断言全部投影点位于画幅。使用预装Node18.19.1/Sharp0.35.5/librsvg2.63.2离线栅格化实际三份SVG（仅QA工具，不是工程依赖，未安装软件），圆/正弦轨迹可见，degree3/order2的径向面上下边缘被裁掉。原SVG/PNG、render.cjs、输入SHA、stdout/stderr/时间/退出码均保留在首轮目录，不覆盖。GitHub all-state Issue/PR检索为空，仓库无已有对应插图问题；不把辅助浏览器超时或REPL模块加载限制当作源码问题。
+
+现仅调整径向面SVG基础像素半径，从290改210，保留源camera_zoom=1.5及全部数值几何。补独立的SVG每三角形三顶点画幅边界检查，另覆盖degree0/order0的完整半径8球面；固定轨迹画幅不变。新源码待下一远程检查点后构建/CTest和目视复核，不因首轮45/45而宣称此修正已验证。

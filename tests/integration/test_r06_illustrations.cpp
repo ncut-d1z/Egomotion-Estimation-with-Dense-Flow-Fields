@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <limits>
 #include <map>
+#include <regex>
 #include <sstream>
 #include <stdexcept>
 
@@ -137,6 +138,17 @@ void drawing(const ill::Config& config) {
         check(svg.find(blob)!=std::string::npos,"Helper source in SVG metadata");
     check(svg.find("clip-path=\"url(#scene)\"")!=std::string::npos,"Scene clipping");
     check(svg.find("nan")==std::string::npos&&svg.find("inf")==std::string::npos,"No nonfinite SVG coordinates");
+    const std::regex polygon("<polygon [^>]*points=\"([^\"]+)\"");
+    for(std::sregex_iterator it(svg.begin(),svg.end(),polygon),end;it!=end;++it) {
+        std::istringstream coordinates((*it)[1].str());double x=0,y=0;char comma=0;
+        std::size_t vertices=0;
+        while(coordinates>>x>>comma>>y) {
+            ++vertices;
+            check(comma==','&&x>=30&&x<=870&&y>=80&&y<=760,
+                  "Entire source mesh fits SVG scene after original zoom");
+        }
+        check(vertices==3,"Each emitted polygon has three vertices");
+    }
     check(occurrences(before.value(),"null")== (data.harmonic?0:1426),"JSON null only source z mask and absent harmonic");
     for(const auto code:{MatErrorCode::WriteFailed,MatErrorCode::OutputExists,MatErrorCode::OutputPathForbidden}) {
         Publisher failed;failed.fail_at=2;failed.code=code;
@@ -188,7 +200,8 @@ int main() {
     try {
         trajectory(false);trajectory(true);
         for(int degree=0;degree<=8;++degree)for(int order=0;order<=degree;++order)harmonic(degree,order);
-        drawing(ill::CircleConfig{});drawing(ill::SinusoidalConfig{});drawing(ill::HarmonicConfig{3,2});
+        drawing(ill::CircleConfig{});drawing(ill::SinusoidalConfig{});
+        drawing(ill::HarmonicConfig{0,0});drawing(ill::HarmonicConfig{3,2});
         negative();optionalBackend();
         std::cout<<std::setprecision(21)<<"checks="<<checks<<" failures="<<failures
                  <<" max_absolute="<<max_absolute<<" max_scaled="<<max_scaled<<'\n';

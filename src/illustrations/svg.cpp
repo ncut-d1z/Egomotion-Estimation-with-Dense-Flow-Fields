@@ -42,8 +42,10 @@ Camera camera(const Data& data) {
         if(!data.surface.z_masked[i])radius=std::max(radius,data.surface.vertices[i].norm());
     for(const auto& p:data.trajectory)radius=std::max(radius,p.norm());
     if(!(radius>0)||!std::isfinite(radius))throw std::invalid_argument("Invalid illustration display extent");
-    constexpr double kViewportRadius=290; // SVG显示尺寸，不改变源数值几何。
-    out.scale=kViewportRadius*data.camera_zoom/radius;
+    // 径向面需给原camzoom(1.5)预留画幅；像素尺寸不改变源数值几何。
+    constexpr double kTrajectoryViewportRadius=290,kHarmonicViewportRadius=210;
+    const double viewport_radius=data.harmonic?kHarmonicViewportRadius:kTrajectoryViewportRadius;
+    out.scale=viewport_radius*data.camera_zoom/radius;
     if(!std::isfinite(out.scale))throw std::invalid_argument("Illustration projection scale overflow");
     return out;
 }
