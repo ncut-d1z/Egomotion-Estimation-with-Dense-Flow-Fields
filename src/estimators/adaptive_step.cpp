@@ -68,6 +68,8 @@ Result<AdaptiveMotionResult,NumericalErrorCode> solveAdaptiveMotion(
     try {
         AdaptiveMotionResult result;
         auto& trace=result.trace;
+        // 内部阶段尚未投影；显式占位，避免移动 trace 时读取未初始化的 Eigen 系数。
+        trace.coefficients_next.values.setZero();
         trace.near_raw.resize(count);
         double raw_sum=0.0;
         for (Eigen::Index i=0;i<count;++i) {
