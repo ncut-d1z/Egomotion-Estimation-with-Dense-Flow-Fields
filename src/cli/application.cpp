@@ -1,4 +1,5 @@
 #include "egomotion/cli/command.hpp"
+#include "../run_diagnostics.hpp"
 
 #include "egomotion/analysis/dataset_json.hpp"
 #include "egomotion/contracts/diagnostics.hpp"
@@ -172,8 +173,9 @@ int runExperiment(const Command& command,
         const int code=result.error().detail.stage==ErrorStage::Output?6:5;
         // The computational failure and an independent Manifest failure are
         // distinct events: never fake a common causal chain for both.
-        err<<jsonFailure(result.error(),code)<<"\n";
-        auto status=context.publishFailureRecord(result.error());
+        const auto error=detail::withRunIdIfMissing(result.error(),context.runId());
+        err<<jsonFailure(error,code)<<"\n";
+        auto status=context.publishFailureRecord(error);
         if(!status.hasValue())err<<jsonFailure(status.error(),6)<<"\n";
         return code;
     }
@@ -218,7 +220,8 @@ int analyzeOrPlot(const Command& cmd,IAnalyzer& analyzer,
     auto exported=plotter->exportPlot(result.value(),publisher);
     if(!exported.hasValue()){
         const auto code=plotExit(exported.error().code);
-        err<<jsonFailure(exported.error(),code)<<"\n";return code;
+        err<<jsonFailure(detail::withRunIdIfMissing(exported.error(),dir->runId()),code)
+           <<"\n";return code;
     }
     out<<"{\"run_id\":"<<jsonQuote(dir->runId().text)<<",\"plot_files\":[";
     bool first=true;
@@ -249,7 +252,8 @@ int illustrate(const IllustrationArgs& args,illustrations::IExporter* exporter,
     auto files=exporter->exportSvg(data.value(),publisher);
     if(!files.hasValue()) {
         const auto code=plotExit(files.error().code);
-        err<<jsonFailure(files.error(),code)<<'\n';return code;
+        err<<jsonFailure(detail::withRunIdIfMissing(files.error(),directory->runId()),code)
+           <<'\n';return code;
     }
     out<<"{\"run_id\":"<<jsonQuote(directory->runId().text)<<",\"plot_files\":[";
     for(std::size_t i=0;i<files.value().size();++i){if(i)out<<',';out<<jsonQuote(files.value()[i]);}

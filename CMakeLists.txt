@@ -275,6 +275,13 @@ if(BUILD_TESTING)
     add_test(NAME r01_cli_contract COMMAND test_r01_cli)
     set_tests_properties(r01_cli_contract PROPERTIES LABELS "r01;cli" TIMEOUT 30)
 
+    add_executable(test_r06_runid_diagnostics tests/integration/test_r06_runid_diagnostics.cpp)
+    target_link_libraries(test_r06_runid_diagnostics PRIVATE egomotion_cli)
+    add_test(NAME r06_runid_failure_context COMMAND test_r06_runid_diagnostics
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_runid_diagnostics")
+    set_tests_properties(r06_runid_failure_context PROPERTIES
+        LABELS "r06;cli;diagnostics;write-sandbox;synthetic-only" TIMEOUT 30)
+
     # R2 exclusively reads two repository fixtures. It never writes origin or reports.
     add_executable(test_r02_reader tests/integration/test_r02_reader.cpp)
     target_link_libraries(test_r02_reader PRIVATE egomotion_cli egomotion_matio)

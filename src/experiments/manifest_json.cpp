@@ -12,9 +12,10 @@
 namespace egomotion::experiments {
 namespace {
 template<class T>
-Result<T,ExperimentErrorCode> fail(std::string why) {
+Result<T,ExperimentErrorCode> fail(const RunContext& run,std::string why) {
     ErrorDetail detail;
     detail.stage=ErrorStage::Output;
+    detail.run_id=run.runId();
     detail.message=std::move(why);
     return Result<T,ExperimentErrorCode>::failure(
         {ExperimentErrorCode::OutputFailed,std::move(detail)});
@@ -47,31 +48,31 @@ Result<std::string,ExperimentErrorCode> makeCompleteManifestJson(
        !std::all_of(build_commit.begin(),build_commit.end(),[](char c){
            return (c>='0'&&c<='9')||(c>='a'&&c<='f');
        }))
-        return fail<std::string>("Build source commit identity is not a verified 40-hex SHA");
+        return fail<std::string>(run,"Build source commit identity is not a verified 40-hex SHA");
     if(planned.empty()||published.size()!=planned.size()||
        draft.files_writer_confirmed.size()!=planned.size()||
        draft.expected_repetitions==0||
        draft.completed!=draft.expected_repetitions||
        draft.attempted!=draft.expected_repetitions||
        draft.failed!=0||draft.undefined!=0||!draft.errors.empty())
-        return fail<std::string>("Incomplete run cannot be serialized as Complete");
+        return fail<std::string>(run,"Incomplete run cannot be serialized as Complete");
     try{
         std::map<std::string,FileEvidence> by_name;
         for(const auto& file:published)
             if(!by_name.emplace(file.variable,file).second)
-                return fail<std::string>("Duplicate evidence for MAT output variable");
+                return fail<std::string>(run,"Duplicate evidence for MAT output variable");
         for(const auto& name:planned){
             if(std::find(draft.files_writer_confirmed.begin(),
                          draft.files_writer_confirmed.end(),name)==
                draft.files_writer_confirmed.end())
-                return fail<std::string>("Writer did not confirm every expected save name");
+                return fail<std::string>(run,"Writer did not confirm every expected save name");
             const auto found=by_name.find(name);
             if(found==by_name.end()||
                found->second.filename!=name+".mat"||
                !validSha256(found->second.sha256)||
                !found->second.durably_confirmed||
                found->second.size_bytes==0)
-                return fail<std::string>("Missing or unconfirmed MAT file evidence");
+                return fail<std::string>(run,"Missing or unconfirmed MAT file evidence");
         }
         std::string json="{\"schema\":\"egomotion-run-manifest-v1\"";
         json+=",\"run_id\":"+jsonQuote(run.runId().text);
@@ -103,9 +104,9 @@ Result<std::string,ExperimentErrorCode> makeCompleteManifestJson(
         json+="]}\n";
         return Result<std::string,ExperimentErrorCode>::success(std::move(json));
     }catch(const std::bad_alloc&){
-        return fail<std::string>("Manifest JSON allocation failed");
+        return fail<std::string>(run,"Manifest JSON allocation failed");
     }catch(const std::length_error&){
-        return fail<std::string>("Manifest JSON exceeds container limits");
+        return fail<std::string>(run,"Manifest JSON exceeds container limits");
     }
 }
 
@@ -113,7 +114,7 @@ Result<std::string,ExperimentErrorCode> makeFailureManifestJson(
     const RunContext& run,const std::vector<FileEvidence>& published) {
     const auto& d=run.manifestDraft();
     if(d.errors.empty())
-        return fail<std::string>("Cannot publish failure Manifest without error event");
+        return fail<std::string>(run,"Cannot publish failure Manifest without error event");
     try{
         const bool has_partial=
             d.completed>0||d.valid>0||!published.empty();
@@ -159,9 +160,9 @@ Result<std::string,ExperimentErrorCode> makeFailureManifestJson(
         json+="]}\n";
         return Result<std::string,ExperimentErrorCode>::success(std::move(json));
     }catch(const std::bad_alloc&){
-        return fail<std::string>("Cannot allocate failure Manifest JSON");
+        return fail<std::string>(run,"Cannot allocate failure Manifest JSON");
     }catch(const std::length_error&){
-        return fail<std::string>("Failure Manifest JSON exceeds container limits");
+        return fail<std::string>(run,"Failure Manifest JSON exceeds container limits");
     }
 }
 

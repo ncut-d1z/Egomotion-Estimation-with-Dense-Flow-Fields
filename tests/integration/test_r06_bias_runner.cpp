@@ -321,6 +321,9 @@ void publication(const fs::path& root,const std::string& sha) {
               "Partial publication Manifest must be Incomplete");
         Sandbox invalid(root,sha,kind);const auto rejected=run(kind,*invalid.context,-1);
         require(!rejected.hasValue(),"Negative production level accepted");
+        check(rejected.error().detail.run_id&&
+              rejected.error().detail.run_id->text==invalid.context->runId().text,
+              "Production Bias failure lost allocated RunId");
         check(rejected.error().code==ExperimentErrorCode::InvalidParameters&&invalid.writer->fileEvidence().empty(),"Invalid request writes no MAT");
         require(invalid.context->publishFailureRecord(rejected.error()).hasValue(),"Persist invalid request");
         check(invalid.context->manifestDraft().status==RunStatus::Failed&&invalid.context->manifestDraft().valid==0,

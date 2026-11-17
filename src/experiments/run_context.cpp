@@ -1,5 +1,6 @@
 #include "egomotion/experiments/run_context.hpp"
 #include "egomotion/experiments/manifest_json.hpp"
+#include "../run_diagnostics.hpp"
 
 #include <cstddef>
 #include <new>
@@ -59,7 +60,8 @@ Status<ExperimentErrorCode> RunContext::writeCurrentResults(
     }
     auto validated=experiments::validateCurrentOutput(kind_,outputs);
     if (!validated.hasValue())
-        return validated;
+        return Status<ExperimentErrorCode>::failure(
+            detail::withRunIdIfMissing(std::move(validated).error(),run_id_));
     write_started_=true;
 
     // Plan all strings/vector capacity BEFORE the first Writer operation.
@@ -203,7 +205,7 @@ Status<ExperimentErrorCode> RunContext::publishFailureRecord(
 
 void RunContext::recordFailure(Failure<ExperimentErrorCode> failure) {
     // ErrorDetail.causes is kept whole; do not collapse to root code.
-    draft_.errors.push_back(std::move(failure));
+    draft_.errors.push_back(detail::withRunIdIfMissing(std::move(failure),run_id_));
 }
 
 }  // namespace egomotion

@@ -1,6 +1,7 @@
 #include "egomotion/experiments/run_context.hpp"
 #include "egomotion/experiments/manifest_json.hpp"
 #include "egomotion/experiments/output_contract.hpp"
+#include "egomotion/contracts/diagnostics.hpp"
 
 #include <cstddef>
 #include <filesystem>
@@ -107,6 +108,31 @@ bool hasMatCause(const Failure<ExperimentErrorCode>& failure,const char* code) {
         if(cause.domain=="MatErrorCode"&&cause.code==code)return true;
     return false;
 }
+void checkFailureRunIdentity() {
+    ErrorDetail root;root.stage=ErrorStage::Read;
+    root.source_path="只读 输入.mat";root.variable="xwerte";root.observation_index=7;
+    root.run_id=RunId{"retained_inner_identity"};root.message="Root read failure";
+    ErrorDetail outer;outer.stage=ErrorStage::Simulation;outer.message="Outer failure";
+    const auto original=wrapFailure(ExperimentErrorCode::SourceUnavailable,std::move(outer),
+        Failure<MatErrorCode>{MatErrorCode::MissingFile,std::move(root)});
+    const auto before=jsonFailure(original,5);
+    for(const std::string id:{"identity_a","identity_b","identity_known"}) {
+        FakeWriter writer;FakePublisher publisher;
+        RunContext run(RunId{id},std::make_unique<FixedRandom>(),writer,publisher,
+            "/R5-UNIT-ONLY",provenance(),experiments::ExperimentKind::AdaptiveInitialization,1);
+        auto submitted=original;
+        if(id=="identity_known")submitted.detail.run_id=RunId{"retained_outer_identity"};
+        auto expected=submitted;
+        if(!expected.detail.run_id)expected.detail.run_id=run.runId();
+        require(run.publishFailureRecord(submitted).hasValue(),"Publish contextual failure");
+        require(run.manifestDraft().errors.size()==1&&
+                jsonFailure(run.manifestDraft().errors.front(),5)==jsonFailure(expected,5),
+                "Fill only missing outer RunId; preserve every original error field and cause");
+        require(publisher.contents.find("\"errors\":["+jsonFailure(expected,5)+"]")!=std::string::npos,
+                "Manifest must persist the same contextual error");
+        require(jsonFailure(original,5)==before,"Annotating a copy must not mutate shared source failure");
+    }
+}
 void checkPublishedButUnconfirmedManifest() {
     using egomotion::experiments::ExperimentKind;
     FakeWriter writer;
@@ -150,6 +176,7 @@ void checkPublishedButUnconfirmedManifest() {
 int main() {
     using namespace egomotion;
     using egomotion::experiments::ExperimentKind;
+    checkFailureRunIdentity();
     checkPublishedButUnconfirmedManifest();
     FakeWriter writer;
     FakePublisher publisher;
@@ -198,7 +225,9 @@ int main() {
         ExperimentKind::AdaptiveUpdateRates,1);
     auto output=fields(ExperimentKind::AdaptiveUpdateRates);
     output.emplace("rottransratio",matrix("rottransratio",600,1)); // HistoricalOnly
-    require(!rates.writeCurrentResults(output).hasValue(),
+    const auto invalid_fields=rates.writeCurrentResults(output);
+    require(!invalid_fields.hasValue()&&invalid_fields.error().detail.run_id&&
+            invalid_fields.error().detail.run_id->text==rates.runId().text,
             "UpdateRates must refuse HistoricalOnly fields before MAT IO");
     require(rates_writer.calls==0,"Illegal save set must not reach Writer");
 
@@ -275,4 +304,6 @@ int main() {
     auto blocked=dirty.publishCompleteOutcome();
     require(!blocked.hasValue()&&dirty_publisher.name.empty(),
             "Unverified executable source identity must block Complete Manifest");
+    require(blocked.error().detail.run_id&&blocked.error().detail.run_id->text==dirty.runId().text,
+            "Manifest serialization failure must retain allocated RunId");
 }

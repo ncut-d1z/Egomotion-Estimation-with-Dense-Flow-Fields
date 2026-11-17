@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 失败诊断的RunId（2026-11-17）
+
+**准备 `[HUMAN-EXECUTE/APPROVE]`，未执行本轮修改。** 真实Adaptive失败日志缺少已分配RunId，现补生产Runner、CLI、RunContext与Manifest序列化的既有身份字段；保留内层错误链和已有身份，不伪造未预留RunId。新增8次装配调用的故障合同测试，扩展真实Adaptive CLI及库层断言，CTest登记47项待远端检查点后运行，见 [缺陷/修复记录](reviews/R6_RUNID_DIAGNOSTICS_2026-11-17.md)。R6未结案，原数值边界与完整科学成功缺口不改变。
+
 ## 最新接续：R6 Adaptive真实CLI（2026-11-17）
 
 **最终复测 `[HUMAN-EXECUTE/APPROVE]`：`2438a8039a905c7f3d8ab74aba1faeaa9a2387cf` 无诊断构建、46/46 CTest（MAT5/5，其余41/41）。** 6次CLI及1次真实Step诊断通过；初始化第14帧独立标量cosine为1+2^-52，38次真实求解/最后输入按位重放确认现有acos越界拒绝。比较/更新率第151帧零旋转拒绝，三者都只发布Incomplete审计、没有MAT；**通过的是错误合同，不是科学结果成功**。原始SHA不变，RunId `r6-adaptive-cli-trace-20261117-Ks76fbQ0`，见 [记录](reviews/R6_ADAPTIVE_CLI_2026-11-17.md)。继续源码/追踪及可独立证据复核；完整Adaptive成功、L4/资源/正式数值验收仍未完成，R6未结案。

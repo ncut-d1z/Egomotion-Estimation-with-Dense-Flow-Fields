@@ -274,6 +274,9 @@ void sourceFailureCase(const fs::path& root,const std::string& sha,const Mode& m
     const auto expected_code=rng_failure?ExperimentErrorCode::IncompleteRun:ExperimentErrorCode::SolverFailed;
     require(!result.hasValue()&&result.error().code==expected_code,
             "Partial run returned successful mean or mislabeled simulation failure as solver failure");
+    require(result.error().detail.run_id&&
+            result.error().detail.run_id->text==sandbox.context->runId().text,
+            "Production failure must retain the allocated RunId before CLI serialization");
     const auto& draft=sandbox.context->manifestDraft();
     const auto diagnostic=jsonFailure(result.error(),5);
     std::cout<<"Observed failure: attempted="<<draft.attempted<<" completed="<<draft.completed
