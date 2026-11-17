@@ -107,7 +107,7 @@ Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runAdaptiveIn
     if(context.experimentKind()!=ExperimentKind::AdaptiveInitialization)
         return failed(ExperimentErrorCode::InvalidParameters,
                       "Composition Root injected wrong Adaptive kind");
-    const AdaptiveExperimentRunner calculator;
+    const AdaptiveExperimentRunner calculator(injected_solver_);
     return finishAdaptive(calculator.computeInitialization(config,progressFor(context)),context,
                           ExperimentKind::AdaptiveInitialization);
 }
@@ -116,7 +116,7 @@ Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runAdaptiveCo
     if(context.experimentKind()!=ExperimentKind::AdaptiveComparison)
         return failed(ExperimentErrorCode::InvalidParameters,
                       "Composition Root injected wrong Adaptive kind");
-    const AdaptiveExperimentRunner calculator;
+    const AdaptiveExperimentRunner calculator(injected_solver_);
     return finishAdaptive(calculator.computeComparison(
                               config,context.randomSource(),progressFor(context)),
                           context,ExperimentKind::AdaptiveComparison);
@@ -126,7 +126,7 @@ Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runAdaptiveUp
     if(context.experimentKind()!=ExperimentKind::AdaptiveUpdateRates)
         return failed(ExperimentErrorCode::InvalidParameters,
                       "Composition Root injected wrong Adaptive kind");
-    const AdaptiveExperimentRunner calculator;
+    const AdaptiveExperimentRunner calculator(injected_solver_);
     return finishAdaptive(calculator.computeUpdateRates(config,progressFor(context)),context,
                           ExperimentKind::AdaptiveUpdateRates);
 }

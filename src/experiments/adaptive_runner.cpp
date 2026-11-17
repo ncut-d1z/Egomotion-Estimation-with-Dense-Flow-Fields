@@ -147,7 +147,8 @@ void divideComparisonErrors(AdaptiveRunData& data) {
     }
 }
 Output compute(Mode mode, double noise_scale, IRandomSource* rng,
-               const AdaptiveProgress& progress) {
+               const AdaptiveProgress& progress,
+               const estimators::IAdaptiveStepSolver* injected_solver) {
     if (mode==Mode::Comparison &&
         (!std::isfinite(noise_scale)||rng==nullptr))
         return fail(ExperimentErrorCode::InvalidParameters,
@@ -190,7 +191,7 @@ Output compute(Mode mode, double noise_scale, IRandomSource* rng,
                 ? estimators::AdaptiveSessionMode::Initialization
                 : (mode==Mode::Comparison
                     ? estimators::AdaptiveSessionMode::Comparison
-                    : estimators::AdaptiveSessionMode::UpdateRates));
+                    : estimators::AdaptiveSessionMode::UpdateRates),injected_solver);
             // MATLAB i=2..N-1 corresponds to C++ j=1..N-2. Row zero and the
             // last row MUST remain original preallocated zeros, not estimates.
             for (std::size_t row=1;row+1<n;++row) {
@@ -319,18 +320,18 @@ Output compute(Mode mode, double noise_scale, IRandomSource* rng,
 Result<AdaptiveRunData,ExperimentErrorCode>
 AdaptiveExperimentRunner::computeInitialization(
     const AdaptiveInitializationConfig&,const AdaptiveProgress& progress) const {
-    return compute(Mode::Initialization,0.0,nullptr,progress);
+    return compute(Mode::Initialization,0.0,nullptr,progress,injected_solver_);
 }
 Result<AdaptiveRunData,ExperimentErrorCode>
 AdaptiveExperimentRunner::computeComparison(
     const AdaptiveComparisonConfig& config,IRandomSource& rng,
     const AdaptiveProgress& progress) const {
-    return compute(Mode::Comparison,config.noise_scale,&rng,progress);
+    return compute(Mode::Comparison,config.noise_scale,&rng,progress,injected_solver_);
 }
 Result<AdaptiveRunData,ExperimentErrorCode>
 AdaptiveExperimentRunner::computeUpdateRates(
     const AdaptiveUpdateRatesConfig&,const AdaptiveProgress& progress) const {
-    return compute(Mode::UpdateRates,0.0,nullptr,progress);
+    return compute(Mode::UpdateRates,0.0,nullptr,progress,injected_solver_);
 }
 
 }  // namespace egomotion::experiments

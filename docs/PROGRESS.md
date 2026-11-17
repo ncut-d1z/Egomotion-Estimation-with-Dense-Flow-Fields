@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 Adaptive Runner 跨帧合同（2026-11-17）
+
+**[HUMAN-EXECUTE/APPROVE] 新增源码尚未运行。** 增加已有StepSolver的借用注入，默认生产路径不变；新增三模式全帧/全重复的Runner→Session→真实Writer/Manifest合同测试及第8次失败/RNG失败用例。保留35/600帧、级别2/4及8次重复，不将替身结果称作科学实验。CTest登记27项，当前实测仍是下节固定SHA的25/25。完整范围和证据边界见 [Runner合同验证](reviews/R6_ADAPTIVE_RUNNER_CONTRACT_2026-11-17.md)。
+
 ## 最新接续：R6 Reader 类型与损坏负例（2026-11-17）
 
 **[HUMAN-EXECUTE/APPROVE] 已修复并通过25/25 CTest，受测源码 `dffddf3b6a62b906a5b20eba365a2087e9c86662`。** 首次 `05a46c6` 的29个Reader边界场景中3失败：普通/压缩截断及zlib校验和损坏被错误接受。新增顶层长度/完整zlib校验并固定源fd，保持metadata-only路径和原失败断言；复测29/29场景通过，原始582 MAT/33,340值独立对照及其余21项全部通过。RunId `r6-reader-fix-20261117-USlbrReS`，原始输入哈希不变、编译无诊断。失败和成功证据均保留，本地缺陷R6-MAT-001的诊断/修复/复测见 [Reader边界记录](reviews/R6_READER_BOUNDARIES_2026-11-17.md)。R6尚有raw tag、完整Runner、剩余L3/L4与正式验收，未结案。

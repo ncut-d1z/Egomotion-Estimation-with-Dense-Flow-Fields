@@ -453,6 +453,17 @@ if(BUILD_TESTING)
     set_tests_properties(r06_mat_reader_boundaries PROPERTIES
         LABELS "r06;mat;negative;synthetic-only;write-sandbox" TIMEOUT 60)
 
+    add_executable(test_r06_adaptive_runner tests/integration/test_r06_adaptive_runner.cpp)
+    target_link_libraries(test_r06_adaptive_runner PRIVATE egomotion_experiments egomotion_matio)
+    target_compile_features(test_r06_adaptive_runner PRIVATE cxx_std_17)
+    target_compile_options(test_r06_adaptive_runner PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_adaptive_runner_complete_contract COMMAND test_r06_adaptive_runner
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_runner_complete" "${EGOMOTION_BUILD_SOURCE_SHA}" complete)
+    add_test(NAME r06_adaptive_runner_incomplete_contract COMMAND test_r06_adaptive_runner
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_runner_incomplete" "${EGOMOTION_BUILD_SOURCE_SHA}" incomplete)
+    set_tests_properties(r06_adaptive_runner_complete_contract r06_adaptive_runner_incomplete_contract PROPERTIES
+        LABELS "r06;runner;full-frame-contract;synthetic-step;write-sandbox" TIMEOUT 180)
+
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")

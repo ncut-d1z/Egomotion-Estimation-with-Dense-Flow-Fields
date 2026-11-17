@@ -8,6 +8,8 @@
 #include <map>
 #include <string>
 
+namespace egomotion::estimators { class IAdaptiveStepSolver; }
+
 namespace egomotion::experiments {
 
 // The memory-only R4 result contains exactly the current MATLAB 'save'
@@ -25,6 +27,11 @@ using AdaptiveProgress = std::function<void(AdaptiveProgressEvent)>;
 
 class AdaptiveExperimentRunner {
 public:
+    // 可选借用同一求解器做跨帧合同测试；调用者须保证其生命周期。
+    // 空指针保留真实 StepSolver，不改变生产帧数、采样或八次重复。
+    explicit AdaptiveExperimentRunner(
+        const estimators::IAdaptiveStepSolver* injected_solver=nullptr)
+        : injected_solver_(injected_solver) {}
     Result<AdaptiveRunData,ExperimentErrorCode> computeInitialization(
         const AdaptiveInitializationConfig& config = {},
         const AdaptiveProgress& progress = {}) const;
@@ -38,6 +45,8 @@ public:
     Result<AdaptiveRunData,ExperimentErrorCode> computeUpdateRates(
         const AdaptiveUpdateRatesConfig& config = {},
         const AdaptiveProgress& progress = {}) const;
+private:
+    const estimators::IAdaptiveStepSolver* injected_solver_;
 };
 
 }  // namespace egomotion::experiments
