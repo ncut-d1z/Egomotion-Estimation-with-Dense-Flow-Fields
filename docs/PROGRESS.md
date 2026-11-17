@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 MAT v7.3拒绝（2026-11-18）
+
+`[HUMAN-EXECUTE/APPROVE]` 准备：从`e32cbc1`接续D5，当前Reader的版本拒绝依赖matio先成功打开文件。先补独立合成v7.3夹具生成器，待远端检查点后生成并逐位核验，随后固定夹具身份、补后端之前的版本拒绝及两模式CTest；不增加首版HDF5支持，不改原始资料。当前未执行新代码，详见 [专项记录](reviews/R6_MAT73_REJECTION_2026-11-18.md)。
+
 ## 最新接续：R6 Bias依赖注入（2026-11-18）
 
 `[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`909fd57dbafa4ebf680e5edd5fa718adb30b4c51`两模式构建无诊断、**SVG ON54/54、OFF53/53 CTest**，零跳过/禁用。Bias三个求解槽及RunContext RNG注入、两次重置、精确失败前缀/交错隔离/内存交付新增668项检查通过；既有真实Bias数值17695项与MAT发布5560项通过，最大残差6.6613381477509392e-16，输入SHA不变。RunId `r6-bias-injection-20261118-ptpZAp0s`，见 [专项记录](reviews/R6_BIAS_INJECTION_2026-11-18.md)。D3的Bias缺口已补；D5真实MAT v7.3负例、D4日志、D1/D2结构及Adaptive其它装配边界继续实施，完整实验/资格/冻结状态不变，R6未结案。

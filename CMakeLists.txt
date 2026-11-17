@@ -551,6 +551,11 @@ if(BUILD_TESTING)
         LABELS "r06;analysis;bias;readonly-archive;independent-l2-l3" TIMEOUT 180)
 
     add_executable(test_r06_reader_negative tests/integration/test_r06_reader_negative.cpp)
+    # 仅重建合成版本负例时显式构建；普通构建/CTest不要求matio具备HDF5写能力。
+    add_executable(r06_mat73_fixture_generator EXCLUDE_FROM_ALL tests/support/generate_mat73_fixture.cpp)
+    target_link_libraries(r06_mat73_fixture_generator PRIVATE PkgConfig::MATIO)
+    target_compile_features(r06_mat73_fixture_generator PRIVATE cxx_std_17)
+    target_compile_options(r06_mat73_fixture_generator PRIVATE -Wall -Wextra -Wpedantic)
     add_executable(test_r06_mat_snapshot tests/integration/test_r06_mat_snapshot.cpp)
     target_link_libraries(test_r06_mat_snapshot PRIVATE egomotion_matio PkgConfig::MATIO)
     foreach(symbol memfd_create pread write fcntl Mat_VarRead)
