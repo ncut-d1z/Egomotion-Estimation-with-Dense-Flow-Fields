@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **2026-11-17 最新执行事实（[AI-EDIT]）**：源码 `07f37e2b4db3e34512715c69a805342f4e6e8add` 构建无诊断、**40/40 CTest Passed**（先MAT5项，再其余35项），原始输入SHA不变。conditioning1077项通过，十二个运动阶段与独立解析参考对照，十二次完整投影拒绝和四个早期负例另行断言，见 [专项证据](reviews/R6_ADAPTIVE_CONDITIONING_2026-11-17.md)。窄锥前向误差只作诊断，不代表正式数值资格。[66 TC实际映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)已同步，保留状态隔离、acos越界及插图等不足。未改下列66项TC/AC、阈值、优先级或冻结状态；40项通过不等于66项全部验收，L4/完整实验与正式签署仍缺，旧描述保留历史语境。
+> **2026-11-17 最新执行事实（[AI-EDIT]）**：源码 `b05a28b42a9e499f2c67c91af67a1c482f2f730e` 构建无诊断、**42/42 CTest Passed**（先MAT5项，再其余37项），原始输入SHA不变。真实Session交替9579项、RunContext交替282项、含acos双端舍入越界的误差703项检查均通过，见 [专项证据](reviews/R6_INTERLEAVING_2026-11-17.md)。[66 TC实际映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)已同步，仍有历史Bias独立重算、平滑来源、插图等缺口。未改下列66项TC/AC、阈值、优先级或冻结状态；42项通过不等于66项全部验收，病态前向误差、L4/完整实验与正式签署仍缺，旧描述保留历史语境。
 
 > **测试计划草案 v0.31，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
 
