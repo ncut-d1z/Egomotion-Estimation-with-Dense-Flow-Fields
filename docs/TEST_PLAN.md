@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **2026-11-17 最新执行事实（[AI-EDIT]）**：源码 `68a5f684cc9fb45ee33a7b87b70525ac0510c8fa` 增量构建成功、**24/24 CTest Passed**（MAT3项、其余21项），无编译诊断、原始输入SHA不变。新增真实发布故障29场景及原始582 MAT/33,340个数值的独立SHA/列主序逐位对照；命令、环境、结果与限制见 [MAT验证](reviews/R6_MAT_STORAGE_VALIDATION_2026-11-17.md)、[故障验证](reviews/R6_IO_FAULT_VALIDATION_2026-11-17.md)。首次干净全工程构建的SHA/日志另见 [原生验证记录](reviews/R6_NATIVE_VALIDATION_2026-11-17.md)。本次不修改下列66项TC/AC、数值阈值、优先级或冻结状态；24项通过不等于66项验收全部通过。
+> **2026-11-17 最新执行事实（[AI-EDIT]）**：源码 `dffddf3b6a62b906a5b20eba365a2087e9c86662` 增量构建成功、**25/25 CTest Passed**（MAT4项、其余21项），无编译诊断、原始输入SHA不变。Reader边界29场景包含已修复的3个损坏输入失败，另有发布故障29场景及原始582 MAT/33,340值的独立SHA/逐位对照；见 [Reader验证](reviews/R6_READER_BOUNDARIES_2026-11-17.md)、[MAT对照](reviews/R6_MAT_STORAGE_VALIDATION_2026-11-17.md)、[发布故障](reviews/R6_IO_FAULT_VALIDATION_2026-11-17.md)。首次干净构建见 [原生验证记录](reviews/R6_NATIVE_VALIDATION_2026-11-17.md)。不修改下列66项TC/AC、阈值、优先级或冻结状态；25项通过不等于66项验收全部通过。
 
 > **测试计划草案 v0.31，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
 

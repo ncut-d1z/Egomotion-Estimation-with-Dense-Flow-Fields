@@ -4,7 +4,7 @@ A planned **C++17 reimplementation that directly reads the original MATLAB MAT f
 
 > **Permanent evidence policy:** Running MATLAB/Octave or collecting original MATLAB L1 execution traces is **not required** for design, coding, verification, or release. The original scripts are read-only specifications; numerical evidence will use the preserved MAT results (L2), independently checked analytic/reference implementations (L3), and statistical comparisons (L4). See [No MATLAB Execution Policy](docs/golden/NO_MATLAB_EXECUTION_POLICY.md). This change does not authorize C++ builds/tests or imply any numerical acceptance.
 
-> **项目状态（2026-11-17）**：R0–R5生产源码已实现，R6仍在验证。最新受测源码 `68a5f684cc9fb45ee33a7b87b70525ac0510c8fa` 增量构建成功、**24/24 CTest通过**，包含原始582个MAT/33,340个数值的独立SHA及逐位读取对照、29个真实发布故障场景；`origin/`哈希保持不变。首次干净全工程构建及修复见 [原生记录](docs/reviews/R6_NATIVE_VALIDATION_2026-11-17.md)，最新证据见 [独立MAT](docs/reviews/R6_MAT_STORAGE_VALIDATION_2026-11-17.md) 与 [I/O故障](docs/reviews/R6_IO_FAULT_VALIDATION_2026-11-17.md)。严格Reader异常输入、全部L3/L4科学复现、完整Runner及正式验收尚未完成，不能宣称MATLAB/C++全部行为等价。
+> **项目状态（2026-11-17）**：R0–R5生产源码已实现，R6仍在验证。最新受测源码 `dffddf3b6a62b906a5b20eba365a2087e9c86662` 增量构建成功、**25/25 CTest通过**；已修复Reader错误接受截断及校验和损坏MAT的问题，29个Reader边界场景通过。原始582 MAT/33,340值独立SHA/逐位对照、29个发布故障场景均通过，原始文件哈希不变。首次干净构建见 [原生记录](docs/reviews/R6_NATIVE_VALIDATION_2026-11-17.md)，最新修复与证据见 [Reader验证](docs/reviews/R6_READER_BOUNDARIES_2026-11-17.md)。其它raw tag/资源负例、全部L3/L4科学复现、完整Runner及正式验收尚未完成，不能宣称MATLAB/C++全部行为等价。
 
 ## Original research and source material
 
@@ -74,9 +74,9 @@ build_dir="build/r6-$(date -u +%Y%m%dT%H%M%SZ)-$$"
 cmake -S . -B "$build_dir" -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
 cmake --build "$build_dir" --parallel 4
 ctest --test-dir "$build_dir" --verbose --no-tests=error \
-    -R '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values)$'
+    -R '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values|r06_mat_reader_boundaries)$'
 ctest --test-dir "$build_dir" --verbose --no-tests=error \
-    -E '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values)$'
+    -E '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values|r06_mat_reader_boundaries)$'
 ~~~
 
 构建产物包含 `egomotion` 和 `mat_data_dict_probe`。探针生成新报告时应指定新的隔离输出文件；下列已提交的数据字典保留其原始来源，不因新 Reader 测试通过而自动重新生成。逐步骤 stdout/stderr、退出码及工具链身份须按仓库规则另行保存，本次实际命令与日志索引见验证记录。

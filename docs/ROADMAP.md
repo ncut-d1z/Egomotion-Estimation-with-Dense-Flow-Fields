@@ -2,7 +2,7 @@
 
 > **2026-11-17 最新执行授权**：用户已明确允许生产代码修改、构建/CTest 和方案文档修改。现进入 R6 原生验证及失败修复，旧批次的运行暂缓只作历史记录；每次运行前仍执行远程检查点规则。实际命令/结果见 [PROGRESS](PROGRESS.md)，本次授权不等于数值验收或冻结。
 
-> **最新结果**：`68a5f684cc9fb45ee33a7b87b70525ac0510c8fa` 增量构建和24/24 CTest通过；首次干净构建为 `84c86624954406b31e8a82d5e145c7f6ae30ee93`。新增真实发布故障29场景，以及582个MAT/33,340个数值的独立L2 Reader逐位及固定SHA对照；见 [发布故障](reviews/R6_IO_FAULT_VALIDATION_2026-11-17.md)、[独立MAT对照](reviews/R6_MAT_STORAGE_VALIDATION_2026-11-17.md)。后文旧“未编译/0项通过”仅对应历史SHA。R6仍需严格Reader损坏/异型负例、剩余L3/L4、完整Runner与正式验收，不能据24项通过结案。
+> **最新结果**：`dffddf3b6a62b906a5b20eba365a2087e9c86662` 增量构建和25/25 CTest通过；首次干净构建为 `84c86624954406b31e8a82d5e145c7f6ae30ee93`。覆盖真实发布故障29场景、Reader边界29场景及582 MAT/33,340值独立逐位/SHA对照；已修复截断和zlib校验和损坏被错误接受的问题。证据见 [Reader修复](reviews/R6_READER_BOUNDARIES_2026-11-17.md)、[发布故障](reviews/R6_IO_FAULT_VALIDATION_2026-11-17.md)、[独立MAT](reviews/R6_MAT_STORAGE_VALIDATION_2026-11-17.md)。后文旧“未编译/0项通过”仅对应历史SHA。其它raw tag/资源负例、剩余L3/L4、完整Runner与正式验收仍待完成，R6未结案。
 
 > **原则：先完成全部业务 C++ 代码，再统一构建、测试与验收。** R0–R5 **只实施代码/接口**，期间不安排 CMake 配置、编译、CTest、数学/数值测试或实验运行；测试源码与构建执行也集中在最后的 R6。源码提交和静态审阅不等于通过测试。H-10 编程已授权；H-11 原生运行与 MAT 写入权限仍须单独确认。现行证据见 [PROGRESS](PROGRESS.md)。
 

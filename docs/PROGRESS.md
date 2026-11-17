@@ -2,7 +2,7 @@
 
 ## 最新接续：R6 Reader 类型与损坏负例（2026-11-17）
 
-**[HUMAN-EXECUTE/APPROVE] 首次Reader负例运行发现3个真实失败，修正待复测。** `05a46c6c172fa59249b1ccdfe518e704094bd578` 构建成功，MAT4项中3通过，新增边界测试29场景中3失败：普通/压缩截断及zlib校验和损坏被错误接受。日志和合成文件已保留，原始输入哈希不变。登记本地缺陷R6-MAT-001并新增顶层长度/完整zlib校验，保持metadata-only路径和原失败断言；新修正尚未运行。见 [Reader边界记录](reviews/R6_READER_BOUNDARIES_2026-11-17.md)。25项全通过尚未发生，下节24/24仅为历史固定SHA结果。
+**[HUMAN-EXECUTE/APPROVE] 已修复并通过25/25 CTest，受测源码 `dffddf3b6a62b906a5b20eba365a2087e9c86662`。** 首次 `05a46c6` 的29个Reader边界场景中3失败：普通/压缩截断及zlib校验和损坏被错误接受。新增顶层长度/完整zlib校验并固定源fd，保持metadata-only路径和原失败断言；复测29/29场景通过，原始582 MAT/33,340值独立对照及其余21项全部通过。RunId `r6-reader-fix-20261117-USlbrReS`，原始输入哈希不变、编译无诊断。失败和成功证据均保留，本地缺陷R6-MAT-001的诊断/修复/复测见 [Reader边界记录](reviews/R6_READER_BOUNDARIES_2026-11-17.md)。R6尚有raw tag、完整Runner、剩余L3/L4与正式验收，未结案。
 
 ## 最新接续：R6 原始存储标签及独立 L2 Reader（2026-11-17）
 
