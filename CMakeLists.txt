@@ -514,6 +514,18 @@ if(BUILD_TESTING)
             LABELS "r06;cli;real-process;write-sandbox;bounded-bias;readonly-archive" TIMEOUT 180)
     endforeach()
 
+    add_executable(r06_analysis_fixture tests/integration/r06_analysis_fixture.cpp)
+    target_link_libraries(r06_analysis_fixture PRIVATE egomotion_matio PkgConfig::MATIO)
+    target_compile_features(r06_analysis_fixture PRIVATE cxx_std_17)
+    target_compile_options(r06_analysis_fixture PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_analysis_finite_cli COMMAND "${CMAKE_COMMAND}"
+        "-DCLI=$<TARGET_FILE:egomotion>" "-DFIXTURE=$<TARGET_FILE:r06_analysis_fixture>"
+        "-DSANDBOX=${CMAKE_CURRENT_BINARY_DIR}/r06_analysis_finite"
+        "-DSOURCE_SHA=${EGOMOTION_BUILD_SOURCE_SHA}"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/test_r06_analysis_finite.cmake")
+    set_tests_properties(r06_analysis_finite_cli PROPERTIES
+        LABELS "r06;analysis;real-process;independent-polynomial;synthetic-only;write-sandbox" TIMEOUT 180)
+
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")

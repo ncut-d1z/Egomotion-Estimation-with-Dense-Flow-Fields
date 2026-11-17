@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 有限MAT与非线性分析（2026-11-17）
+
+**准备中 `[HUMAN-EXECUTE/APPROVE]`**：新增独立多项式参考及真实 Comparison/UpdateRates CLI 成功路径，登记第36项CTest，尚未运行。静态发现UpdateRates错误共用log纵轴；测试依据原脚本要求linear，先取得失败证据再修复。范围、推导、固定边界见 [有限输入验证](reviews/R6_ANALYSIS_FINITE_VALIDATION_2026-11-17.md)。原始数据只读，R6未结案。
+
 ## 最新接续：R6 真实CLI与历史分析集成（2026-11-17）
 
 **最终复测 `[HUMAN-EXECUTE/APPROVE]`：`c42f12f0be89646fd39b93dbb61a79a0ee28e05f` 构建无诊断，35/35 CTest通过。** 先MAT5/5，再其余30/30；新增实际CLI合同42次进程、六组历史输入15次进程。两种Bias及Initialization输出28条曲线/3份SVG，另外三组因独立确认的原始NaN按合同拒绝且不发布图像；该负例通过不代表科学结果成功。原始输入SHA不变，完整证据见 [CLI验证](reviews/R6_CLI_PROCESS_VALIDATION_2026-11-17.md)。下一项为有限合成MAT下Comparison/UpdateRates真实CLI成功路径及非线性独立平滑参考；原始NaN限制、其余L3/L4、完整实验与正式验收仍待处理。
