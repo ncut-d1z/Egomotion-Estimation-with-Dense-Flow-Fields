@@ -2,6 +2,8 @@
 
 ## 最新接续：R6 失败诊断的RunId（2026-11-17）
 
+**实测 `[HUMAN-EXECUTE/APPROVE]`：`9eb831531ce04f2bfab8bf813011c36a451ee409` 无诊断构建、47/47 CTest（MAT5/5，其余42/42）。** 8次装配调用/63项检查、独立RunContext和真实Adaptive失败身份断言通过；stderr与Manifest保留完整错误链及真实RunId。三个Adaptive仍因既有数值边界Incomplete且无MAT，原始输入SHA不变。RunId `r6-runid-diagnostics-20261117-ccfLwnss`，见 [实测记录](reviews/R6_RUNID_DIAGNOSTICS_2026-11-17.md)。继续45源当前映射与MAT输入稳定摘要等独立工作；R6未结案。
+
 **准备 `[HUMAN-EXECUTE/APPROVE]`，未执行本轮修改。** 真实Adaptive失败日志缺少已分配RunId，现补生产Runner、CLI、RunContext与Manifest序列化的既有身份字段；保留内层错误链和已有身份，不伪造未预留RunId。新增8次装配调用的故障合同测试，扩展真实Adaptive CLI及库层断言，CTest登记47项待远端检查点后运行，见 [缺陷/修复记录](reviews/R6_RUNID_DIAGNOSTICS_2026-11-17.md)。R6未结案，原数值边界与完整科学成功缺口不改变。
 
 ## 最新接续：R6 Adaptive真实CLI（2026-11-17）

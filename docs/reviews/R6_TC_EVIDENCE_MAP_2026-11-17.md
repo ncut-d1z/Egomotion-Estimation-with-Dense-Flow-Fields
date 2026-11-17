@@ -2,7 +2,7 @@
 
 `[AI-EDIT]` 事实索引，基于当前Git树、CMake登记、测试源码及实际日志。保留 [TEST_PLAN §3](../TEST_PLAN.md) 的66个TC/REQ/AC和 [PLAN](../PLAN.md) 的98项任务，不替换候选规范、改动阈值或签署验收。下表每个TC仅列一次；其REQ/AC采用相同后缀，正式义务仍以 [REQUIREMENTS](../REQUIREMENTS.md) 为准。
 
-**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面列出的具体程序/样本已有运行证据，不代表该TC全部条款已满足。最新受测源码 `2438a8039a905c7f3d8ab74aba1faeaa9a2387cf` 为46/46；真实Adaptive三入口均失败、无MAT，错误合同与初始化acos取证通过，见 [专项证据](R6_ADAPTIVE_CLI_2026-11-17.md)。原45项仍通过，全部此前失败保留。正式容差/Golden资格、病态前向误差、环境预算及基线签署仍独立办理；不以这些审批尚未完成为理由停止已授权的源码/测试补足。
+**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面列出的具体程序/样本已有运行证据，不代表该TC全部条款已满足。最新受测源码 `9eb831531ce04f2bfab8bf813011c36a451ee409` 为47/47；补齐已分配RunId的错误上下文，见 [专项证据](R6_RUNID_DIAGNOSTICS_2026-11-17.md)。真实Adaptive三入口仍失败、无MAT，全部此前失败保留。正式容差/Golden资格、病态前向误差、环境预算及基线签署仍独立办理；不以这些审批尚未完成为理由停止已授权的源码/测试补足。
 
 ## 实际测试组及证据入口
 
@@ -11,6 +11,7 @@
 | 索引 | 实际CTest（完整名称） | 源码/证据 |
 |---|---|---|
 | CLI | `r01_cli_contract`, `r06_cli_process_contract`, `r06_cli_process_archive` | `tests/integration/test_r01_cli.cpp`, `test_r06_cli_process.cmake`；[CLI实测](R6_CLI_PROCESS_VALIDATION_2026-11-17.md) |
+| RUNID | `r06_runid_failure_context`（并扩展Manifest、Bias/Adaptive库及实际CLI用例） | `tests/integration/test_r06_runid_diagnostics.cpp`；63项检查/8次装配调用、真实预留与失败Manifest；[身份实测](R6_RUNID_DIAGNOSTICS_2026-11-17.md) |
 | ADAPTIVE-CLI | `r06_adaptive_real_cli` | `tests/integration/test_r06_adaptive_cli.cmake`、`r06_adaptive_init_trace.cpp`；6次实际CLI和1次真实Step记录进程，三种生成均Incomplete，无MAT，见 [实测](R6_ADAPTIVE_CLI_2026-11-17.md)。`r06_adaptive_cli_values.cpp`仅编译，成功产物/L2分支未执行 |
 | MAT | `r02_mat_reader`, `r06_historical_mat_readonly_schema`, `r06_mat_independent_storage_values`, `r06_mat_reader_boundaries`, `r06_mat_raw_payload_boundaries` | `tests/integration/test_r02_reader.cpp`, `test_r06_archive_readonly.cpp`, `test_r06_mat_independent.cpp`, `test_r06_reader_negative.cpp`, `test_r06_mat_payload.cpp`；[L2](R6_MAT_STORAGE_VALIDATION_2026-11-17.md)、[边界](R6_READER_BOUNDARIES_2026-11-17.md)、[载荷](R6_MAT_PAYLOAD_VALIDATION_2026-11-17.md) |
 | IO | `r05_anchored_io`, `r06_io_symlink_and_runid_safety`, `r06_linux_writer_faults`, `r06_real_manifest_faults` | `tests/integration/test_r05_io.cpp`, `test_r06_io_safety.cpp`, `test_r06_io_faults.cpp`；[发布故障](R6_IO_FAULT_VALIDATION_2026-11-17.md) |
@@ -84,10 +85,10 @@
 | TC-NF-NUM-002 | MAT、KVD、STEP、METRIC、RUNNER、SESSION、ADAPTIVE-CLI | 多类明确失败/病态条件已有固定测试；真实初始化cosine越界及另外两入口零旋转拒绝已有实际进程证据。未改变拒绝策略/阈值或宣称完整实验成功 |
 | TC-PROC-TRACE-001 | SOURCE及本文 | 66项证据索引已整理；98任务/45源的逐义务关闭与正式冻结仍未完成 |
 | TC-NF-RNG-001 | GEOM、RUNNER | 固定序列/两seed与失败数量保存；L4统计及全样本账本未完成 |
-| TC-NF-LOG-001 | CONTRACT、RUNNER、CLI、ADAPTIVE-CLI | 顶层家族/完整causes/Manifest与执行日志已测，三个真实失败入口的stdout/stderr/种子/计数与Manifest一致；完整科学结果未生成 |
+| TC-NF-LOG-001 | CONTRACT、RUNNER、CLI、ADAPTIVE-CLI、RUNID | 已分配RunId的顶层身份补全、内层原身份/完整causes保留、stderr与Manifest一致已有实测；未分配时不虚构。完整科学结果未生成 |
 | TC-NF-OOP-001 | CONTRACT、SH、SESSION | 局部/公共错误桥接与所有权已有用例；总体设计验收未签署 |
 | TC-NF-HEADLESS-001 | CLI、ANALYSIS、ENV | 当前SVG零外部图形依赖；无后端注入例通过，非独立禁用绘图构建资格 |
-| TC-NF-RECOVERY-001 | IO、CONTRACT、RUNNER、ADAPTIVE-CLI | Failed/Incomplete/Complete合同、持久化故障已有实测；三个真实Adaptive的Incomplete/无MAT及重复RunId拒覆盖已测 |
+| TC-NF-RECOVERY-001 | IO、CONTRACT、RUNNER、ADAPTIVE-CLI、RUNID | Failed/Incomplete/Complete、持久化故障及真实失败RunId/错误链已有实测；三个Adaptive仍Incomplete、无MAT，拒覆盖已测 |
 | TC-NF-PORTABLE-001 | IO、MAT、CLI | 实际中文/空格路径；目标仅GNU/Linux，不推断其它平台 |
 | TC-NF-RUNTIME-001 | 无完整基准 | 未授权完整实验/性能测量，DEC-006预算未批准；编译耗时不能代替实验预算 |
 | TC-NF-SESSION-001 | SESSION、RUNNER | 两Session三模式独立/交替重放和两RunContext固定输入交替RNG/输出/失败隔离均已直接测试；不承诺单Session多线程，正式验收仍未签署 |
@@ -103,7 +104,7 @@
 
 ## 下一步按缺口实施
 
-1. 原45项及新增Adaptive真实CLI失败取证已完成46/46复测；所有失败日志及原始数据不变证据保留。不等于完整数值资格、Adaptive实验成功或MATLAB像素等价完成。
+1. 原46项及新增RunId失败上下文已完成47/47复测；所有失败日志及原始数据不变证据保留。不等于完整数值资格、Adaptive实验成功或MATLAB像素等价完成。
 2. 三份illustration已有JSON/SVG入口、独立全网格参考和实际CLI/目视证据；保留sphere端点运行细节尚未验证及平面着色的明确边界，不用求解器九项归一化基函数替代插图。
 3. 三Adaptive真实进程的失败链已有证据；初始化第14帧acos越界、另外两入口第151帧零旋转均未产出完整MAT，成功路径仍未验证。继续当前源码/45源映射、日志与输出合同和可独立证据的逐项复核；MAT稳定快照摘要未绑定时继续明确未知。数值策略变更不能由AI通过改测试自行批准。
 4. 完整科学/L4实验、跨发行版资格、资源预算与正式审批不在本轮运行授权内；准备具体材料并在真正到达该边界时请求相应授权。无MATLAB/L1阻塞。
