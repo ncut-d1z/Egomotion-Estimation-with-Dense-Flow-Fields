@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **2026-11-17 最新执行事实（[AI-EDIT]）**：源码 `cecd19ada9e162701992960b0b7cb076e0deed3e` 构建无诊断、**36/36 CTest Passed**（先MAT5项，再其余31项），原始输入SHA不变。新增 `r06_analysis_finite_cli`，实际4次CLI对32条有限输入曲线精确核对5578对x/y和3460个完整平滑值，修复UpdateRates纵轴，见 [有限输入验证](reviews/R6_ANALYSIS_FINITE_VALIDATION_2026-11-17.md)。原35项仍通过；历史NaN拒绝不代表科学分析成功。下一项为66 TC实际证据映射及源绘图视窗/三份illustration缺口核对；剩余L3/L4、完整实验及正式验收未完成。不改变下列66项TC/AC、阈值、优先级或冻结状态，36项通过不等于66项全部验收；后文早期未实现/未运行描述保留其历史语境。
+> **2026-11-17 最新执行事实（[AI-EDIT]）**：源码 `7fc83c1a828b84318b382ad2e052ba735e489ec4` 构建无诊断、**37/37 CTest Passed**（先MAT5项，再其余32项），原始输入SHA不变。新 `r06_svg_source_windows` 六情境61项几何检查通过，恢复源固定视窗/裁剪且数值不变，见 [视窗证据](reviews/R6_SVG_WINDOWS_2026-11-17.md)。原36项仍通过。新增 [66 TC实际证据映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)，保留各项不足；后续补误差/退出/conditioning/状态隔离与插图等。未改动下列66项TC/AC、阈值、优先级或冻结状态；37项通过不等于66项全部验收，L4/完整实验与正式签署仍缺，旧未实现/未运行描述保留其历史语境。
 
 > **测试计划草案 v0.31，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
 

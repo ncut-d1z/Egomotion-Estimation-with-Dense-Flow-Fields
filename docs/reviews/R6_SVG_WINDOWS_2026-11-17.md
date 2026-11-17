@@ -1,6 +1,24 @@
 # R6 原脚本视窗与 SVG 几何验证
 
-`[HUMAN-EXECUTE/APPROVE]`：生产修复、构建及CTest已授权；首轮已编译，36/37 CTest通过，新测试确认25处几何/裁剪断言失败；修复待新检查点复测。关联P9.2/P9.4/P9.6、TC-F-BIAS-003、TC-F-CLI-005、TC-F-AN-002、TC-DC-ANALYSIS-001。此次修复既有源行为，不改变数值公式、CLI/JSON合同、容差或冻结状态。
+`[HUMAN-EXECUTE/APPROVE]`：生产修复、构建及CTest已授权。最终源码 `7fc83c1a828b84318b382ad2e052ba735e489ec4` 无诊断构建、37/37 CTest通过；首轮25处失败保留。关联P9.2/P9.4/P9.6、TC-F-BIAS-003、TC-F-CLI-005、TC-F-AN-002、TC-DC-ANALYSIS-001。此次修复既有源行为，不改变数值公式、CLI/JSON合同、容差或冻结状态。
+
+## 最终复测（事实登记 `[AI-EDIT]`）
+
+上述SHA提交/推送及远端分支核实后执行，RunId `r6-svg-final-20261117-p2M56Yrq`，日志 `build/<RunId>/evidence/`，工作目录仓库根；源外增量构建目录及环境同首轮。固定合成SVG数据无算法随机数；其余测试的固定seed见 `randomness-source.txt`，目录名独立随机。没有安装依赖、运行MATLAB/Octave、完整科学实验或性能基准。
+
+| 步骤（2026-11-17 UTC+08:00） | 起止 | 退出码/结果 |
+|---|---|---|
+| configure | 19:07:00…19:07:01 | 0 |
+| build | 19:07:01…19:07:54 | 0，无编译诊断 |
+| MAT CTest | 19:07:54…19:07:55 | 0，5/5，0.75秒 |
+| 其余 CTest | 19:07:55…19:07:58 | 0，32/32，3.22秒 |
+| 输入完整性 | 19:07:58完成 | 0，原始资料/参考/测试源码SHA不变 |
+
+配置 `cmake -S <repo> -B <build-dir> -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DBUILD_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`，构建 `cmake --build <build-dir> --parallel 4 -- -k`。CTest公共参数 `--test-dir <build-dir> -C Release --verbose --no-tests=error --output-junit <evidence>.xml`，先 `--parallel 2 -R '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values|r06_mat_reader_boundaries|r06_mat_raw_payload_boundaries)$'`，再 `--parallel 4 -E` 同表达式；37项无遗漏。完整命令/环境/源码及输入身份/退出码/分离stdout-stderr/JUnit/Testing快照保留；四步launcher stderr均为空。
+
+MAT stdout SHA-256 `8ecd68e5372b609caa781ec1d4ee0b3b6a33b31bab8b92a22a510f8b9c639cab`；其余stdout `f012fcfe8c37bfeedc4770b339f488ec0fa239164439aee8d6c28f0617bd9dac`。新测试61项检查、0失败，用时0.01秒；六个情境的before/after JSON与实际SVG保存在 `build/r6-20261117-KzjFHPDQ/cmake/r06_svg_windows/svg-windows-LnSkr9/`。现在全零Bias成功产生空曲线图，因此比首轮多执行一项文件数检查；未删除失败断言或改动预期坐标。
+
+R6-SVG-001本轮范围已修复复测；原36项（包括真实CLI、非线性分析及原始NaN拒绝）仍通过。仍不声明MATLAB默认刻度/字体/图例和插图完整视觉等价。全部TC的证据边界与接续工作见 [66项映射](R6_TC_EVIDENCE_MAP_2026-11-17.md)。
 
 ## 来源与缺口
 
