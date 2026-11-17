@@ -217,7 +217,7 @@ Response artifact(const fs::path& root,TrackingExporter& exporter,bool plot,cons
     io::MatResultReader reader;FixedAnalyzer analyzer;
     cli::ApplicationCompositionRoot app(&reader,nullptr,&analyzer,&exporter,root,&exporter);
     auto args=plot?std::vector<std::string>{"plot","--experiment","bias","--input-root","missing"}:
-        std::vector<std::string>{"illustrate","--kind","harmonic","--degree","3","--order","-2","--format","svg"};
+        std::vector<std::string>{"illustrate","--kind","harmonic","--degree","3","--order","2","--format","svg"};
     args.insert(args.end(),{"--run-id",id});
     exporter.directory=root/"output"/id;
     FlushFailure out_buffer,err_buffer;
@@ -225,7 +225,9 @@ Response artifact(const fs::path& root,TrackingExporter& exporter,bool plot,cons
     std::ostream failed_out(&out_buffer),failed_err(&err_buffer);
     std::ostream& out=bad_out?failed_out:good_out;
     std::ostream& err=bad_err?failed_err:good_err;
-    const auto code=direct?app.dispatch(cli::parseCommand(args).value(),out,err):cli::run(args,out,err,app);
+    auto parsed=cli::parseCommand(args);
+    require(parsed.hasValue(),"Artifact fixture must satisfy established CLI contract");
+    const auto code=direct?app.dispatch(parsed.value(),out,err):cli::run(args,out,err,app);
     return {code,bad_out?out_buffer.str():good_out.str(),bad_err?err_buffer.str():good_err.str()};
 }
 void artifactSuccess(const fs::path& root,bool plot) {
@@ -247,7 +249,7 @@ void artifactSuccess(const fs::path& root,bool plot) {
         contains(start,"\"matlab_run_ordinal\":7","Keep 1-based source ordinal");
         contains(start,"\"path\":"+jsonQuote("missing/中文 引号\".mat"),"Escaped original path");
         contains(start,"fixture-helper","Retain source helper");
-    } else contains(start,"\"kind\":\"harmonic\",\"degree\":3,\"order\":-2","Actual signed harmonic config");
+    } else contains(start,"\"kind\":\"harmonic\",\"degree\":3,\"order\":2","Actual harmonic config");
 }
 void artifactRecordFaults(const fs::path& root,bool plot) {
     for(const auto kind:{Fault::StartLink,Fault::StartSync,Fault::FinishLink,Fault::FinishSync}) {
