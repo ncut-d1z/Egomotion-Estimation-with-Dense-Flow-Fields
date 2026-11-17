@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 原始存储标签及独立 L2 Reader（2026-11-17）
+
+**[HUMAN-EXECUTE/APPROVE] 新增源码尚未运行。** 已独立只读解析582个MAT，发现全部为double class，但实际实部标签为502 miDOUBLE/80 miINT32（Bias全部xwerte），纠正旧报告将matio解码dtype当物理dtype的事实错误。新增独立固定SHA/存储身份清单、C++/zlib逐位解析对照CTest；不更改原始文件、数值阈值或REQ/AC。实际诊断、证据来源及未覆盖的严格Reader负例见 [存储验证](reviews/R6_MAT_STORAGE_VALIDATION_2026-11-17.md)。本批登记24项，最新已运行结果仍为下节23/23，R6未结案。
+
 ## 最新接续：R6 Linux 发布故障测试（2026-11-17）
 
 **[HUMAN-EXECUTE/APPROVE] 已验证源码 `1e15b9c32342c96e2e553325a8870c0a276b31a4`：构建及23/23 CTest通过。** 新增仅测试链接的系统调用故障包装，直接验证真实 MAT/Text Writer 的23个场景及真实 RunContext/Manifest 的6个场景；覆盖指定 fd/阶段的同步、发布竞争和暂存清理失败，并检查精确调用次数、最终 inode/字节、未确认回执及独立错误链。使用构建目录内中文/空格合成沙箱，不写原始数据。复用缓存重新配置、无编译诊断，MAT2/2及其余21/21均通过，输入哈希不变。RunId `r6-io-faults-20261117-sm6Ovszn`；完整证据与剩余边界见 [发布故障验证](reviews/R6_IO_FAULT_VALIDATION_2026-11-17.md)。R6仍未结案。

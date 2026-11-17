@@ -10,7 +10,7 @@
 - **旧脚本兼容读取**：按原脚本的路径/后缀解析规则取得数据，多变量场景须依据静态格式说明和独立 L3 例子核验枚举/冲突规则；若顺序无法确定则明确返回 AmbiguousVariable，**不要求运行 MATLAB 再冻结现有单变量归档合同**。不能随意以名称字典排序代替原行为。
 - **inspect**：列出全部变量元数据而不读取成算法领域类型或更改文件。
 
-**现有归档的格式已经实测**：`src/mat_data_dict_probe.cpp` 在 Ubuntu 24.04/matio 1.5.26 以 `Mat_Open(..., MAT_ACC_RDONLY)` 和 `Mat_VarRead` 读取全部 582 MAT/582 变量，失败 0；每个源 MAT 是 v5/zlib 压缩、单变量 class=double/data_type=double，flags 均为 `-`。详见 [MAT_DATA_SCHEMA.md](../MAT_DATA_SCHEMA.md)。当前数据不需要 HDF5；未来若扩展到 v7.3 应单独审查。
+**归档实测事实（2026-11-17纠正，[AI-EDIT]）**：历史探针以 `Mat_VarRead` 完整解码582个MAT，得到的class和内存data_type均为double；该data_type不能代表物理存储标签。独立字节解析表明502个实部为 `miDOUBLE`、80个为 `miINT32`（Bias `xwerte.mat`），MATLAB class均为double，仍是v5/zlib、单变量、原有五种shape。见 [存储验证](../reviews/R6_MAT_STORAGE_VALIDATION_2026-11-17.md) 和保留原样的 [历史字典](../MAT_DATA_SCHEMA.md)。此处纠正来源事实，不擅自扩大到single/struct等类型或宣布严格Reader/设计已验收；raw tag拒绝策略仍须单独实现和验证。当前数据不需要HDF5。
 
 ### 1.1 已确认的数据类型支持边界（基于 582/582 实测）
 
@@ -140,7 +140,7 @@ C++17 的无值操作采用 contracts.md 中的 Status<E> 候选，具体实现�
 |---|---|---|
 | 相对路径、文件字节数与 FNV64（报告） | 已由探针生成 | **582/582 已记录；FNV 不是 Git SHA/密码学 SHA-256** |
 | MAT 版本、压缩、只读加载 | Mat_GetVersion、Mat_VarRead | **582/582 MAT v5+zlib，READ_OK** |
-| 变量名、MAT class、物理 data_type、rank/dims | Mat_VarRead 后读取 matvar_t 元数据 | **582/582 double/double，五种 shape** |
+| 变量名、MAT class、解码后的 data_type、rank/dims | Mat_VarRead 后读取 matvar_t 元数据 | **582/582 double class/解码double，五种shape；物理标签另为502 miDOUBLE/80 miINT32** |
 | 数值范围、NaN/Inf、逐元素 L2 MAT 原值/独立 SHA-256 | 生产 Reader 按值遍历及独立对照 | **尚未验证**；探针成功读取不能替代数值等价 |
 | 严格/兼容读取策略、分析依赖 | 源 load/getflowfield 和数据字典映射 | 待冻结 |
 | 解码状态与错误码 | 成功/失败/不支持/只读权限拒绝 | 待验证；一般版权审查不是 MAT 读取/开发阻塞项 |

@@ -203,7 +203,7 @@
 | ID | 待决问题 | 状态与决定方 |
 |---|---|---|
 | DEC-001 | 582 份现有归档的 MAT 格式与首版 Reader 范围 | **已有数据事实**：历史 582/582 MAT 为 v5 + zlib；无需按这些归档引入 v7.3/HDF5。**项目所有者已经选定首版只支持二维、密集、实数、非 logical 的 double 数组**，不默默转换 sparse/complex/logical/其它类型。**这只是范围决定，不代表正式 Reader/Writer/负例已实现或最终需求基线已批准**；L2 原值及来源 SHA-256 仍待独立核验。具体类型与错误合同见 [mat_io.md](design/mat_io.md)。 |
-| DEC-002 | 现有 MAT 变量 class/data_type/dims | **类型与形状事实已证实**：582 个 double/double；`10×1` 80、`10×3` 480、`35×1` 4、`600×1` 14、`600×4` 4；无其他 class，数据字典待独立复核 |
+| DEC-002 | 现有 MAT 变量 class/data_type/dims | **来源事实纠正（2026-11-17，[AI-EDIT]）**：582个double class/解码double；物理实部标签为502个miDOUBLE、80个miINT32，见[独立存储核查](reviews/R6_MAT_STORAGE_VALIDATION_2026-11-17.md)。`10×1` 80、`10×3` 480、`35×1` 4、`600×1` 14、`600×4` 4；此事实更正不改变原REQ/AC或宣布DEC冻结 |
 | DEC-003 | 旋转实现来源与许可证 | 项目自有代码 MIT 已由所有者确定；Don Williamson 仅作参考、Eigen 独立重写且不依赖 sdla；标准来源/现有第三方 notice 记录即可，普通版权审批**不再阻塞开发** |
 | DEC-004 | 现行生成脚本与历史 MAT 额外字段差异 | **项目所有者已选择处理原则**：新 C++ Runner 只输出当前有效 save 字段；历史 MAT 全部只读保留，额外字段标 `HistoricalOnly`；分析必需字段缺失则报告，不伪造、不从别的字段推导假值；历史成因不明**不阻塞开发**。见 [正式决定](decisions/DEC-004_HISTORICAL_MAT_FIELDS.md)；代码/测试仍未实施 |
 | DEC-005 | 固定输入容差和统计噪声验收方法 | **首轮宽松筛查** `atol=0.01, rtol=0.1` 已由所有者选定，结构/几何/状态另设严格检查；**最终逐模块 PASS 门槛**仍待独立 L3 与真实 C++ 误差证据核准 |
@@ -465,7 +465,7 @@
 ### 9.5 matio 读取证据与未完成需求的边界
 
 - **已运行**：`src/mat_data_dict_probe.cpp` 在 Ubuntu 24.04、matio 1.5.26 上运行；正式字典记录源参数 SHA `48c590ba2564e4bdd293d2cbecd2eef83b291452`，582 个文件/变量均 `READ_OK`，状态见 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md)。
-- **已核对**：MAT class/dtype、rank/dims、压缩状态、变量名/文件名及逐文件物理长度一致（当前全部为 double），这不是固定输入浮点数值与 MATLAB 逐元素一致的证明。正式报告采用 FNV-1a 64 位指纹用于变更检测，**不是 SHA-256**。
+- **已核对**：MAT class/解码dtype、rank/dims、压缩状态、变量名/文件名及逐文件物理长度；当前MATLAB class/内存dtype均为double，不能推断物理存储标签均为miDOUBLE（实际502 miDOUBLE/80 miINT32，见上述来源纠正）。这不是实验求解与MATLAB逐元素等价的证明。历史生成报告的FNV-1a 64位指纹**不是SHA-256**，新增独立SHA身份清单仍为候选参考，不代替正式验收。
 - **仍未验证**：正式业务 Reader 的严格/兼容加载、读取后生命周期、错误负例、原始数据前后加密哈希、RunMatWriter、历史数据与 MATLAB save 的语义对应、Golden 和数值容差。项目 SRS/HLD/LLD 均保留“草案/待批准”状态。
 
 ### 9.6 第一轮冻结前合同身份核对（AF-037，部分文档工作）

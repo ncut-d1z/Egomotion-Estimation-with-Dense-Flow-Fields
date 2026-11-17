@@ -433,6 +433,16 @@ if(BUILD_TESTING)
     set_tests_properties(r06_linux_writer_faults r06_real_manifest_faults PROPERTIES
         LABELS "r06;io;fault-injection;synthetic-only;write-sandbox" TIMEOUT 60)
 
+    add_executable(test_r06_mat_independent tests/integration/test_r06_mat_independent.cpp)
+    target_link_libraries(test_r06_mat_independent PRIVATE egomotion_matio ZLIB::ZLIB)
+    target_compile_features(test_r06_mat_independent PRIVATE cxx_std_17)
+    target_compile_options(test_r06_mat_independent PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_mat_independent_storage_values COMMAND test_r06_mat_independent
+        "${CMAKE_CURRENT_SOURCE_DIR}/origin/egomotion_estimation_dense_flow_fields_matlab_scripts"
+        "${CMAKE_CURRENT_SOURCE_DIR}/verification/mat/archive_storage_identity.v1.tsv")
+    set_tests_properties(r06_mat_independent_storage_values PROPERTIES
+        LABELS "r06;mat;readonly;independent-l2;storage-tags" TIMEOUT 180)
+
 endif()
 
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
