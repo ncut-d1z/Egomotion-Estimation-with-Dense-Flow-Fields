@@ -95,6 +95,7 @@ find_package(ZLIB REQUIRED)
 add_library(egomotion_matio STATIC
     src/io/mat_result_reader.cpp
     src/io/mat_container_validation.cpp
+    src/io/mat_payload_validation.cpp
     src/io/mat_data_dictionary.cpp
     src/io/sha256.cpp
     src/io/run_directory.cpp
@@ -455,7 +456,8 @@ if(BUILD_TESTING)
         LABELS "r06;mat;negative;synthetic-only;write-sandbox" TIMEOUT 60)
 
     add_executable(test_r06_mat_payload tests/integration/test_r06_mat_payload.cpp)
-    target_link_libraries(test_r06_mat_payload PRIVATE egomotion_matio ZLIB::ZLIB)
+    target_link_libraries(test_r06_mat_payload PRIVATE egomotion_matio ZLIB::ZLIB PkgConfig::MATIO)
+    target_link_options(test_r06_mat_payload PRIVATE "-Wl,--wrap=Mat_VarRead")
     target_compile_features(test_r06_mat_payload PRIVATE cxx_std_17)
     target_compile_options(test_r06_mat_payload PRIVATE -Wall -Wextra -Wpedantic)
     add_test(NAME r06_mat_raw_payload_boundaries COMMAND test_r06_mat_payload

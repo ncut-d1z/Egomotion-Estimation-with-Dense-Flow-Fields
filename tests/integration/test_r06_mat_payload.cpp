@@ -3,6 +3,7 @@
 #include "egomotion/io/run_directory.hpp"
 #include "egomotion/io/sha256.hpp"
 
+#include <matio.h>
 #include <zlib.h>
 #include <fcntl.h>
 #include <sys/resource.h>
@@ -22,6 +23,12 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+namespace {std::size_t numeric_read_calls=0;}
+extern "C" matvar_t* __real_Mat_VarRead(mat_t*,const char*);
+extern "C" matvar_t* __wrap_Mat_VarRead(mat_t* file,const char* name){
+    ++numeric_read_calls;return __real_Mat_VarRead(file,name);
+}
 
 namespace {
 using namespace egomotion;
@@ -68,6 +75,7 @@ struct Fixture {
     std::vector<double> values=kValues;
     std::uint32_t storage=kDouble;
     bool small_name=false,small_real=false;
+    bool single_neighbor=false;
     std::optional<MatErrorCode> rejected;
     std::string mutation;
 };
@@ -106,6 +114,11 @@ Bytes fileBytes(const Fixture& fixture,bool little,bool compressed){
         packed.resize(size);word(out,kCompressed,4,little);word(out,packed.size(),4,little);
         out.insert(out.end(),packed.begin(),packed.end()); // miCOMPRESSED后没有8字节补齐。
     }else out.insert(out.end(),raw.begin(),raw.end());
+    if(fixture.single_neighbor){
+        Fixture other;other.name="other";other.storage=kSingle;
+        const auto encoded=fileBytes(other,little,compressed);
+        out.insert(out.end(),encoded.begin()+kHeaderBytes,encoded.end());
+    }
     return out;
 }
 void save(const fs::path& path,const Bytes& bytes){
@@ -124,7 +137,9 @@ void check(const fs::path& path,const Fixture& fixture){
     io::MatResultReader reader;
     for(const bool compatible:{false,true}){
         const auto result=compatible?reader.readFirstCompatible(path):reader.readNamed(path,fixture.name);
-        if(fixture.rejected){
+        if(compatible&&fixture.single_neighbor){
+            require(!result.hasValue(),"Compatible reader guessed a value from a mixed file");
+        }else if(fixture.rejected){
             require(!result.hasValue(),"Malformed/unsupported payload was silently accepted");
             require(result.error().code==*fixture.rejected,
                     "Wrong error: "+std::string(errorName(result.error().code))+" "+result.error().detail.message);
@@ -139,6 +154,11 @@ void check(const fs::path& path,const Fixture& fixture){
                     "Raw fixture value/order/negative zero changed");
         }
     }
+    const auto scan=reader.scanFile(path,io::ScanMode::VerifyDecoded);
+    require((fixture.rejected||fixture.single_neighbor)?!scan.hasValue():scan.hasValue(),
+            "Full dictionary scan disagrees with raw payload validity");
+    const std::size_t expected_reads=fixture.rejected?0:(fixture.single_neighbor?1:3);
+    require(numeric_read_calls==expected_reads,"Invalid storage reached matio numeric allocation/decoding");
 }
 bool isolatedCheck(const fs::path& path,const Fixture& fixture){
     std::cout.flush();std::cerr.flush();
@@ -162,9 +182,20 @@ bool isolatedCheck(const fs::path& path,const Fixture& fixture){
 std::vector<Fixture> fixtures(){
     std::vector<Fixture> out;
     Fixture base;base.label="double";out.push_back(base);
+    base.label="named-selection-with-single-neighbor";base.single_neighbor=true;out.push_back(base);
+    base.single_neighbor=false;
     base.label="small-name";base.name="v";base.small_name=true;out.push_back(base);
     base=Fixture{};base.label="int32-packed-double";base.storage=kInt32;base.values={1,-2,3,-4,5,6};out.push_back(base);
     base.label="small-int32-real";base.dims={1,1};base.values={-7};base.small_real=true;out.push_back(base);
+    // 总解压长度在8KiB边界前/等于/后；另用固定置换值跨越输入与输出多个缓冲块。
+    constexpr std::uint32_t kFixturePermutation=2654435761U;
+    for(const std::size_t count:{1015U,1016U,1017U,4096U}){
+        Fixture stream;stream.label="stream-boundary-"+std::to_string(count);
+        stream.dims={1,static_cast<std::uint32_t>(count)};stream.values.resize(count);
+        for(std::size_t i=0;i<count;++i)
+            stream.values[i]=static_cast<double>(static_cast<std::uint32_t>(i)*kFixturePermutation)+0.25;
+        out.push_back(std::move(stream));
+    }
     const auto add=[&](const std::string& label,MatErrorCode code,std::string mutation){
         Fixture value;value.label=label;value.rejected=code;value.mutation=std::move(mutation);out.push_back(value);
     };
