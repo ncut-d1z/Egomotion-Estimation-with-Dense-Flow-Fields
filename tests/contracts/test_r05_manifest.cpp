@@ -49,8 +49,15 @@ struct FakePublisher final:ITextPublisher{
     std::string name;
     std::string contents;
     bool fail=false;
+    bool fail_after_publication=false;
     Status<MatErrorCode> publishNew(
         std::string_view filename,std::string_view data) override {
+        if(!name.empty()){
+            ErrorDetail detail;detail.stage=ErrorStage::Output;
+            detail.message="Manifest name already exists; no overwrite";
+            return Status<MatErrorCode>::failure(
+                {MatErrorCode::OutputExists,std::move(detail)});
+        }
         if(fail){
             ErrorDetail detail;detail.stage=ErrorStage::Output;
             detail.message="Injected Manifest publication failure";
@@ -59,6 +66,12 @@ struct FakePublisher final:ITextPublisher{
         }
         name=std::string(filename);
         contents=std::string(data);
+        if(fail_after_publication){
+            ErrorDetail detail;detail.stage=ErrorStage::Output;
+            detail.message="Manifest linked but directory durability unconfirmed";
+            return Status<MatErrorCode>::failure(
+                {MatErrorCode::ReadbackMismatch,std::move(detail)});
+        }
         return Status<MatErrorCode>::success();
     }
 };
@@ -89,11 +102,55 @@ SourceProvenance provenance() {
     p.rng_seed=13;
     return p;
 }
+bool hasMatCause(const Failure<ExperimentErrorCode>& failure,const char* code) {
+    for(const auto& cause:failure.detail.causes)
+        if(cause.domain=="MatErrorCode"&&cause.code==code)return true;
+    return false;
+}
+void checkPublishedButUnconfirmedManifest() {
+    using egomotion::experiments::ExperimentKind;
+    FakeWriter writer;
+    FakePublisher publisher;
+    publisher.fail_after_publication=true;
+    RunContext run(RunId{"test_manifest_postpublication"},
+        std::make_unique<FixedRandom>(),writer,publisher,
+        std::filesystem::path("/R5-UNIT-ONLY"),provenance(),
+        ExperimentKind::AdaptiveInitialization,1);
+    require(run.noteCompletedMemory(1,33).hasValue()&&
+            run.writeCurrentResults(fields(ExperimentKind::AdaptiveInitialization)).hasValue(),
+            "Synthetic scientific/Writer inputs must be complete");
+
+    // 模拟 link 成功后 fsync 失败：目录中已有文件，但调用者没有成功回执。
+    const auto outcome=run.publishCompleteOutcome();
+    require(!outcome.hasValue()&&outcome.error().code==ExperimentErrorCode::OutputFailed&&
+            hasMatCause(outcome.error(),"ReadbackMismatch"),
+            "Unconfirmed durability must preserve the cause and reject success");
+    require(run.manifestDraft().status!=RunStatus::Complete,
+            "Visible Manifest bytes alone cannot commit the in-memory Complete state");
+    require(publisher.name=="manifest.json"&&
+            publisher.contents.find("\"completeness\":\"Complete\"")!=std::string::npos,
+            "Post-publication failure fixture must retain the already linked bytes");
+    const auto visible_contents=publisher.contents;
+
+    publisher.fail_after_publication=false;
+    const auto audit=run.publishFailureRecord(outcome.error());
+    require(!audit.hasValue()&&audit.error().code==ExperimentErrorCode::OutputFailed&&
+            hasMatCause(audit.error(),"OutputExists"),
+            "An existing Manifest must cause a separate failure-record error");
+    require(publisher.contents==visible_contents&&
+            run.manifestDraft().status==RunStatus::Incomplete&&
+            run.manifestDraft().errors.size()==1&&
+            hasMatCause(run.manifestDraft().errors.front(),"ReadbackMismatch"),
+            "Preserve published evidence and the original error without claiming recovery");
+    require(!run.publishCompleteOutcome().hasValue()&&publisher.contents==visible_contents,
+            "Retrying Complete must neither overwrite evidence nor return success");
+}
 }
 
 int main() {
     using namespace egomotion;
     using egomotion::experiments::ExperimentKind;
+    checkPublishedButUnconfirmedManifest();
     FakeWriter writer;
     FakePublisher publisher;
     RunContext run(RunId{"test_complete"},std::make_unique<FixedRandom>(),

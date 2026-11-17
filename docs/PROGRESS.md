@@ -8,6 +8,8 @@
 
 执行顺序：提交/推送/核实检查点后，在独立 `build/<RunId>/` 配置及编译，先运行 MAT Reader 相关测试，再运行其余登记 CTest；保存环境、输入身份、命令、时间、退出码及分离的 stdout/stderr。原始 `origin/**` 只读，合成 MAT 仅写测试沙箱。实际结果随后登记；21 项已注册并不代表已通过，R6 的 L2/L3/L4 科学验收及 DEC-005/006 仍单独保留。
 
+`r05_manifest_gate` 同时补上有状态 Publisher 替身：名称发布后不再允许覆盖，模拟已链接 `manifest.json` 但持久化未确认，验证没有成功 RunOutcome/内存 Complete，随后失败记录的 `OutputExists` 与原始 `ReadbackMismatch` 分别保留，已发布字节不被改写。此测试只覆盖 RunContext 合同，不能冒充真实 Linux fsync/unlink 故障注入或独立读取磁盘 Manifest 的最终资格协议。
+
 > 滚动证据登记 v0.6（截至E-DOC-069，2026-11-10），非正式基线批准。**这里的“本轮”是E-DOC-069历史数学批次，不是2026-11-11正在开展的全工程文档规范审计。** 该历史批次仅作理论推导和Wolfram验证，未实施生产C++；历史原生SH测试与数学运算的执行者、源码SHA及证据类型必须分开。本次文档审计最新状态见[AUDIT_PROGRESS.md](AUDIT_PROGRESS.md)，不得用本页旧97AF计数替代现行全工程审计的DOC/DAR口径；现行数字及延期分类只以[AUDIT_PROGRESS.md](AUDIT_PROGRESS.md)最新台账为准，历史9DAR属于旧批次而非当前总数。
 >
 > 为消除旧NOT_RUN、旧授权与动态计数反复堆叠，既有E-DOC-054～067详细记录完整保存在[9825375固定PROGRESS](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/982537556be1ac5a414af368a0082806a9179d32/docs/PROGRESS.md)。更早E-DATA-001、E-DOC-001～053保存在[98e95e2固定历史](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/blob/98e95e2f867dc7142fa0d5ac0f1c79f5d6429ed1/docs/PROGRESS.md)。未改写任何Git历史或历史审批；下表保留定位和关键事实，E-DOC-068为上一轮、最新证据为§5的E-DOC-069。
