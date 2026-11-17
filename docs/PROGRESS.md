@@ -10,7 +10,7 @@
 
 `r05_manifest_gate` 同时补上有状态 Publisher 替身：名称发布后不再允许覆盖，模拟已链接 `manifest.json` 但持久化未确认，验证没有成功 RunOutcome/内存 Complete，随后失败记录的 `OutputExists` 与原始 `ReadbackMismatch` 分别保留，已发布字节不被改写。此测试只覆盖 RunContext 合同，不能冒充真实 Linux fsync/unlink 故障注入或独立读取磁盘 Manifest 的最终资格协议。
 
-**首次实际结果**：已在 `52ed76831fe5cdf867b2374fee96a39a8750ff7d` 执行全工程配置（exit 0）与编译（exit 2），CTest 尚未开始。发现 `test_r01_contracts.cpp` 的四处 `static_require` 拼写错误并改为 `static_assert`，保留断言；同步显式初始化 Analyzer 错误详情的空字段以修复编译警告。失败日志完整保留于 RunId `r6-20261117-LNjYbhF5`，环境/命令/诊断见 [原生验证记录](reviews/R6_NATIVE_VALIDATION_2026-11-17.md)。本节开头“尚未运行”是准备时点，执行事实以此记录及后续复测为准。
+**实际执行中**：首次 `52ed7683` 配置 exit 0、编译 exit 2，已修复四处 `static_require` 拼写及 Analyzer 空字段初始化警告。第二次 `cfcc9d8a` 配置 exit 0、编译 exit 2，发现 Bias Runner 漏包含 `sampling/directions.hpp`，现补齐声明依赖；CTest 尚未开始。两次失败日志完整保留，环境/命令/诊断见 [原生验证记录](reviews/R6_NATIVE_VALIDATION_2026-11-17.md)。本节开头“尚未运行”是准备时点，执行事实以此记录及后续复测为准。
 
 > 滚动证据登记 v0.6（截至E-DOC-069，2026-11-10），非正式基线批准。**这里的“本轮”是E-DOC-069历史数学批次，不是2026-11-11正在开展的全工程文档规范审计。** 该历史批次仅作理论推导和Wolfram验证，未实施生产C++；历史原生SH测试与数学运算的执行者、源码SHA及证据类型必须分开。本次文档审计最新状态见[AUDIT_PROGRESS.md](AUDIT_PROGRESS.md)，不得用本页旧97AF计数替代现行全工程审计的DOC/DAR口径；现行数字及延期分类只以[AUDIT_PROGRESS.md](AUDIT_PROGRESS.md)最新台账为准，历史9DAR属于旧批次而非当前总数。
 >

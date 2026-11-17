@@ -1,6 +1,7 @@
 #include "egomotion/experiments/bias_runner.hpp"
 
 #include "egomotion/estimators/franz_kvd.hpp"
+#include "egomotion/sampling/directions.hpp"
 #include "egomotion/sampling/random.hpp"
 #include "egomotion/simulation/flow.hpp"
 
