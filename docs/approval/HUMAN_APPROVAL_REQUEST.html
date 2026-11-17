@@ -22,6 +22,12 @@
 </style></head><body>
 <header><h1>审批意见 · 简明版</h1><p>记录你对 16 项事项的决定。可以只填一部分就保存；未填的保持“待决定”。</p></header>
 <main>
+<details class="panel" id="r6-writer-source-scope"><summary>本轮候选：只修正 R5 Writer 的 const 接口与测试源码</summary>
+<p><strong>[HUMAN-EXECUTE/APPROVE] · 待人类决定，未授权执行。</strong>本轮用户直接提供的 AGENTS.md 限定仅审阅与方案文档；本项只申请下面明确的源码范围，不恢复 H-11。</p>
+<p>源代码审查版本：<code>eeb30135a48f27b3eb9c6c289709e9e792770ec8</code>；分支 <code>dev-plan-P0-P1-mat-dictionary-probe</code>。关联 H-10、P1.7/P1.9、REQ-F-MAT-004、REQ-DC-IO-001、REQ-NF-SAFETY-001 及对应 TC/AC；不改变 DEC-005/008、数值阈值或冻结状态。</p>
+<p>候选：在 <code>src/io/run_mat_writer.cpp</code> 中创建可变局部值副本，以适配 matio 1.5.26 的 <code>void*</code> 参数，同时保留公开 const 输入及 matio 复制所有权。在 <code>tests/integration/test_r05_io.cpp</code> 中补真正 const 输入、调用前后数据不变及现有列主序回读断言。额外副本有内存成本，细节见 <a href="../reviews/R6_READINESS_eeb30135.md">固定版本审查与修正方案</a>。</p>
+<p>可单独决定：批准仅这两个源码文件及相应进度记录的修改/提交/正常推送，或保留文档阶段。本项<strong>不申请</strong> CMake配置、编译、CTest、MAT读写、依赖安装、性能运行、合并、发布或验收签字。若采用此范围，可在 H-10 具体意见中写明上述内容；页面各权限默认值及批准人字段未代填，源对象变化后重新核对适用范围。</p>
+</details>
 <div class="notice"><strong>可以直接保存空白表，也可以只决定几项。</strong> 其他项目保持“待决定”，不会阻止保存。保存 JSON 只记录你的意见，不运行代码、不自动关闭决策或宣布验收。</div>
 <div class="panel"><div class="bar"><strong id="counts">未决定 16 · 已批准 0 · 已批准缺信息 0 · 其他 0</strong><span class="grow"></span><span id="progressText" class="small">已决定 0 / 16</span></div><div class="progress" role="progressbar" aria-label="审批进度" aria-valuemin="0" aria-valuemax="16" aria-valuenow="0" id="progress"><div id="progressFill"></div></div><p class="muted">每项已有专门的可选决定和可修改的参考意见。选“批准”后，请明确确认所采用的文字；如有【请填写】标记，还需补全真实数值、版本或执行范围。</p></div>
 <details class="panel" open id="registration"><summary>一、申请登记（先看这里）</summary><div class="grid" style="margin-top:13px">

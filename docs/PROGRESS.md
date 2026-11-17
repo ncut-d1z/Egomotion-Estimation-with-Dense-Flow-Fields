@@ -125,6 +125,14 @@
 
 **状态变化**：CTest登记**20→21（+1）**，并在原测试内扩展2类断言。R6生产代码发生2文件实质安全修复。此处只是源码静态完成工作记录，**本分支原生CMake/编译/CTest实际执行0项、通过0项（非失败0项）**；没有L2/L3/L4新数值实验或原MAT写入。H-11仍待人类明确授权，历史SH固定SHA的3/3、旧582/582探针不迁移为本轮PASS。R6尚未完成，真实运行/测试发现错误时重开代码；后续需真正编译、I/O安全竞态与回读验证、独立L2/L3/L4、源SHRotate方向/相位证据及DEC-005/006批准，不启动无定义的R7。
 
+## 0.9 恢复当前分支后的 R5/R6 静态复核
+
+**标签 `[AI-DRAFT + HUMAN-APPROVE]`；固定对象 `eeb30135a48f27b3eb9c6c289709e9e792770ec8`。** 已恢复本地落后的389个提交并核查当前ROADMAP及真实源码。59个src/tests CPP都出现在根CMake文本中、引用路径缺失0；21个测试名称无重复，**此为静态核对，未执行CMake/CTest**。
+
+发现 `RunMatWriter` 将 const payload 的 `const double*` 传入本机matio 1.5.26声明为 `void*` 的 `Mat_VarCreate` 参数；应重开R5该项源码修复，不能继续将“源码闭合”解释为已可编译。局部可变副本及保持const输入的回归方案、发布后Manifest失败与真实暂存故障覆盖缺口、独立L2预期摘要缺口均记于 [R6接续复核](reviews/R6_READINESS_eeb30135.md)。本轮按用户最新直接提供的审阅/方案文档边界，不修改生产C++、测试或CMake，不将仓库旧代码许可扩张为本轮执行许可；H-11及延期的最终审批不变。
+
+没有新原生运行、数值测试或PASS；未创建Issue/PR，未合并/发布，未改动origin。R6仍未完成，不新增R7；完整后续义务保持ROADMAP原范围。
+
 ## 1. 当前边界
 
 仓库 `ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields`，分支 `dev-plan-P0-P1-mat-dictionary-probe`；不合并main、不发布。`origin/**` 原45份.m与582份.mat只读；不要求执行MATLAB/Octave或获得L1。既有66REQ/66TC/98P、27条HLD设计边不变；数学子案例不新增正式TC。
