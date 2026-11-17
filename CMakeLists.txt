@@ -455,6 +455,13 @@ if(BUILD_TESTING)
     set_tests_properties(r06_sh_argument_action PROPERTIES
         LABELS "r06;sh;so3;argument-action" TIMEOUT 60)
 
+    add_executable(test_r06_source_angles tests/unit/test_r06_source_angles.cpp)
+    target_link_libraries(test_r06_source_angles PRIVATE egomotion_harmonics)
+    target_compile_options(test_r06_source_angles PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_source_spherical_angles COMMAND test_r06_source_angles)
+    set_tests_properties(r06_source_spherical_angles PROPERTIES
+        LABELS "r06;sh;source-angles;analytic-reference" TIMEOUT 60)
+
     add_executable(test_r06_source_sh tests/integration/test_r06_source_sh.cpp)
     target_link_libraries(test_r06_source_sh PRIVATE egomotion_estimators)
     target_compile_features(test_r06_source_sh PRIVATE cxx_std_17)

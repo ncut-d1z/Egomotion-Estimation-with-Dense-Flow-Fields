@@ -25,6 +25,20 @@ Result<RotationBlocks> selectedRotation(const Matrix3& rotation, RotationMethod 
 
 } // namespace
 
+Result<SphericalAngles> sourceAnglesFromDirection(const Direction& direction) {
+    if (const auto error = detail::validateDirection(direction)) {
+        return Result<SphericalAngles>::failure(*error);
+    }
+    const double phi = std::atan2(direction.y(), direction.x());
+    const double theta = std::acos(direction.z());
+    // 单位范数的舍入余量不能把acos的实数定义域扩大到[-1,1]以外。
+    if (!std::isfinite(theta) || !std::isfinite(phi)) {
+        return Result<SphericalAngles>::failure(
+            {ErrorCode::NonFiniteResult, "non-finite source spherical angle"});
+    }
+    return Result<SphericalAngles>::success({theta, phi});
+}
+
 Result<BasisValues> basisDirect(const Direction& direction) {
     if (const auto error = detail::validateDirection(direction)) {
         return Result<BasisValues>::failure(*error);

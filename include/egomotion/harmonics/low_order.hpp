@@ -62,6 +62,17 @@ struct RotationBlocks {
 
 enum class RotationMethod { TensorDirect, Ivanic1996, Choi1999 };
 
+struct SphericalAngles {
+    double theta_radians; // 极角，从 +z 轴起算。
+    double phi_radians;   // 方位角，从 +x 轴朝 +y 轴起算。
+};
+
+// winkelausvektor.m：phi=atan2(y,x)，theta=acos(z)，不归一化或裁剪。
+// 接受与基函数相同的有限单位方向；z超出[-1,1]时返回NonFiniteResult。
+// 两极的方位角没有几何唯一值，本接口保留C++ atan2的带符号零约定。
+// 这是独立中间量接口，不替换下面已验证的Cartesian基函数计算路径。
+Result<SphericalAngles> sourceAnglesFromDirection(const Direction& direction);
+
 // 输入必须为有限单位方向；不静默归一化。计算范围固定 l=0,1,2。
 Result<BasisValues> basisDirect(const Direction& direction);
 Result<BasisValues> basisRecurrence(const Direction& direction);

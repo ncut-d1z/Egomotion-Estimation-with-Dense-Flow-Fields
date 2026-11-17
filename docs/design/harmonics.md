@@ -1,5 +1,7 @@
 # 实球谐、近度重建及系数旋转——详细设计
 
+> **2026-11-18 P7.1候选增量，未冻结**：低阶叶子新增`SphericalAngles{theta_radians,phi_radians}`及`sourceAnglesFromDirection`，保持原`winkelausvektor.m`的`atan2(y,x)`后`acos(z)`顺序与弧度轴约定。沿用现有单位方向校验；不归一化或裁剪，范数舍入余量内但z越界仍以`NonFiniteResult`失败。两极方位角不具几何唯一性，C++带符号零行为单独登记，不能推断原MATLAB运行轨迹。现有Cartesian基/拟合/旋转路径不变；实现与验证状态见 [角度记录](../reviews/R6_SOURCE_ANGLES_2026-11-18.md)。不新增跨模块错误码或将此叶子接口冒充已冻结的公共ABI。
+
 > **2026-11-17 R6集成复测（[AI-EDIT]）**：`632139bb0d9dd0d3afa7a11afdb0578224a47f59` 构建无诊断、31/31 CTest通过。物理接口直接用于Session的原系数动作差异已修复：保留本文§3物理叶子合同，业务增加显式源接口，4886项适配/10006项Session检查通过，见 [验证与修复](../reviews/R6_SH_SOURCE_ACTION_2026-11-17.md)。以下历史“业务未实现”不覆盖固定SHA证据；本轮没有冻结LLD或改变DEC-005。
 
 > **LLD v0.16，未冻结、完整业务数值未验收。** 2026-11-09 用户仅开放低阶球谐 C++ 实现与 Wolfram 符号验证，`egomotion::harmonics::low_order` 叶子代码及专项测试已提交；九基直接/递推与 IR96/IR98、Choi1999 的**一般 SO(3) 精确符号验证已执行**。项目所有者又提供了固定 SHA `8eab5dd`、增强回归 `445ed151` 和624四元数/错态压力 `601c74de` 的 Ubuntu/GCC16.2/Eigen3.4 Release **各1/1 CTest Passed** 原生结果；真实最大绝对残差分别为8.8817841970012523e-16（矩阵/向量）、1.0658141036401503e-14（标量），回归比较阈值9.0949470177292824e-13。正式三类公共接口、离散拟合、全业务集成、独立全部边界和最终容差尚未完成。权限见[专项授权](../decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md)，证据见[三路报告](../reviews/LOW_ORDER_SH_THREE_ROUTE_VERIFICATION_2026-11-09.md)、[PROGRESS E-DOC-056/057/059](../PROGRESS.md)。
