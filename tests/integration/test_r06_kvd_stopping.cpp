@@ -35,6 +35,7 @@ Triple normalize(Triple value) {
 struct Scene {
     Triple mu;
     double scale;
+    double tangent_bias=0;
 };
 struct ReferenceStep {
     long double rms,delta,threshold;
@@ -42,9 +43,15 @@ struct ReferenceStep {
 };
 std::vector<ReferenceStep> independentReference(const Scene& scene,bool modified) {
     const Triple truth{{scene.scale,2*scene.scale,3*scene.scale}};
+    std::array<Triple,3> speed{};
+    for (std::size_t axis=0;axis<3;++axis)
+        for (std::size_t i=0;i<3;++i)
+            if (i!=axis) speed[axis][i]=scene.mu[axis]*truth[i];
+    // x 对跖视线的 y 分量加入相同切向扰动，保留旋转项的成对相消。
+    speed[0][1]+=scene.tangent_bias*scene.scale;
     Triple t{};
     for (std::size_t i=0;i<3;++i)
-        t[i]=truth[i]*(scene.mu[(i+1)%3]+scene.mu[(i+2)%3])/2;
+        t[i]=(speed[(i+1)%3][i]+speed[(i+2)%3][i])/2;
     t=normalize(t);
     long double previous=0;
     std::vector<ReferenceStep> result;
@@ -53,16 +60,16 @@ std::vector<ReferenceStep> independentReference(const Scene& scene,bool modified
         for (std::size_t axis=0;axis<3;++axis) {
             long double transverse_dot=0;
             for (std::size_t i=0;i<3;++i)
-                if (i!=axis) transverse_dot+=t[i]*truth[i];
-            near[axis]=scene.mu[axis]*transverse_dot/(1-t[axis]*t[axis]+kEpsilon);
+                if (i!=axis) transverse_dot+=t[i]*speed[axis][i];
+            near[axis]=transverse_dot/(1-t[axis]*t[axis]+kEpsilon);
         }
         // 对跖视线使所有旋转交叉和为零；omega 保持其精确 Franz 初值。
         // 每轴两条视线的合并除数为 3，与生产逐条累加的实现相互独立。
         for (std::size_t i=0;i<3;++i) {
             long double transverse_sum=0;
             for (std::size_t j=0;j<3;++j)
-                if (j!=i) transverse_sum+=scene.mu[j]*(modified?1:near[j]);
-            candidate[i]=(truth[i]*transverse_sum+
+                if (j!=i) transverse_sum+=speed[j][i]*(modified?1:near[j]);
+            candidate[i]=(transverse_sum+
                           t[i]*near[i]*(modified?1:near[i]))/3;
         }
         t=normalize(candidate);
@@ -70,7 +77,7 @@ std::vector<ReferenceStep> independentReference(const Scene& scene,bool modified
         for (std::size_t axis=0;axis<3;++axis)
             for (std::size_t i=0;i<3;++i)
                 if (i!=axis) {
-                    const long double difference=near[axis]*t[i]-scene.mu[axis]*truth[i];
+                    const long double difference=near[axis]*t[i]-speed[axis][i];
                     squared_error+=difference*difference;
                 }
         const long double rms=std::sqrt(squared_error/3);
@@ -100,7 +107,8 @@ FlowField makeField(const Scene& scene) {
                 if ((i+2)%3==axis) cross=rotation[(i+1)%3]*sign;
                 if ((i+1)%3==axis) cross=-rotation[(i+2)%3]*sign;
                 field.observations(row,static_cast<Eigen::Index>(i+3))=
-                    (i==axis?0:-static_cast<double>(scene.mu[axis])*translation[i])-cross;
+                    (i==axis?0:-static_cast<double>(scene.mu[axis])*translation[i])-cross-
+                    (axis==0&&i==1?scene.tangent_bias*scene.scale:0);
             }
         }
     }
@@ -120,7 +128,8 @@ void inspect(const Scene& scene,bool modified,Coverage& coverage) {
                                OriginalKvDEstimator{}.estimate(field,parameters);
     const std::string label=modified?"Modified":"Original";
     std::cout<<label<<" mu="<<scene.mu[0]<<','<<scene.mu[1]<<','<<scene.mu[2]
-             <<" scale="<<scene.scale<<" reference_iterations="<<expected.size();
+             <<" scale="<<scene.scale<<" tangent_bias="<<scene.tangent_bias
+             <<" reference_iterations="<<expected.size();
     check(actual.hasValue(),label+": solver failed");
     if (!actual.hasValue()) { std::cout<<" FAILED "<<actual.error().detail.message<<'\n'; return; }
     const auto& value=actual.value();
@@ -160,6 +169,9 @@ int main() {
     for (auto a:near_values) for (auto b:near_values) for (auto c:near_values)
         for (double scale:{1.0,1e-12}) for (std::size_t method=0;method<2;++method)
             inspect({{{a,b,c}},scale},method==1,coverage[method]);
+    // 物理一致的无噪声族可能直接收敛至零；明确固定扰动提供非零残差地板。
+    for (double bias:{1.0,4.0,16.0}) for (std::size_t method=0;method<2;++method)
+        inspect({{{1,4,16}},1.0,bias},method==1,coverage[method]);
     for (std::size_t method=0;method<2;++method) {
         const auto& counts=coverage[method];
         std::cout<<(method==0?"Original":"Modified")<<" cap="<<counts.cap

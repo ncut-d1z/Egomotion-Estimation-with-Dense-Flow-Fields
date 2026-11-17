@@ -30,6 +30,7 @@ void checkFailure(const MetricResult& value,NumericalErrorCode expected,
 }
 void geometry(const Vector3& truth,const Vector3& estimate,
               double distance,double degrees,const std::string& label) {
+    const Vector3 original_truth=truth,original_estimate=estimate;
     const auto actual_distance=normalizedVectorError(truth,estimate);
     const auto actual_angle=sourceDirectionErrorDegrees(truth,estimate);
     check(actual_distance.hasValue()&&actual_angle.hasValue(),label+": invalid");
@@ -39,6 +40,13 @@ void geometry(const Vector3& truth,const Vector3& estimate,
     if (actual_angle.hasValue())
         check(std::abs(actual_angle.value()-degrees)<=kRegressionTolerance,
               label+": angle differs from analytic geometry");
+    if (actual_distance.hasValue()&&actual_angle.hasValue())
+        check(std::abs(actual_distance.value()-2*truth.norm()*
+              std::sin(std::acos(-1.0)*actual_angle.value()/360))<=kRegressionTolerance,
+              label+": chord-angle identity failed");
+    check(std::memcmp(truth.data(),original_truth.data(),sizeof(double)*3)==0&&
+          std::memcmp(estimate.data(),original_estimate.data(),sizeof(double)*3)==0,
+          label+": input bytes changed");
 }
 void invalidPair(const Vector3& truth,const Vector3& estimate,
                  NumericalErrorCode distance_code,NumericalErrorCode angle_code,
