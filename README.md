@@ -57,6 +57,8 @@ Original research references (retained):
 
 **CLI output convention:** There is **no user-provided output-root flag**. New results always use the repository's fixed `output/<RunId>/`. The optional `--run-id` accepts a safe unique ID; if omitted, the app uses an OS-generated random ID independent of the experiment RNG. Existing output directories/files are never overwritten.
 
+`egomotion` 检查终端/重定向输出的写入与刷新。普通输出流错误返回6；stderr也失效时无法保证诊断送达。计算可能已经成功保存MAT与Complete Manifest，而最后的stdout通知交付失败；请核对该RunId下的现有产物，不以通知失败覆盖或删除结果。失败审计在stderr通知前保存，默认SIGPIPE行为保持不变。实际范围见 [输出故障验证](docs/reviews/R6_CLI_STREAM_OUTPUT_2026-11-17.md)。
+
 ## Minimal C++ MAT dictionary probe
 
 The first C++ utility is [src/mat_data_dict_probe.cpp](src/mat_data_dict_probe.cpp). It discovers all original MAT files, opens each file **read-only** using matio, enumerates names with Mat_GetDir, reads each variable using Mat_VarRead, and generates a Markdown data dictionary. Per-file output includes its location, size, FNV-1a 64-bit change-detection fingerprint, MAT version, variable name, class, decoded data type, dimensions, compression, flags and read status. **FNV is not a cryptographic hash.**

@@ -2,6 +2,8 @@
 
 ## 最新接续：R6 CLI 输出流故障（2026-11-17）
 
+**最终实测 `[HUMAN-EXECUTE/APPROVE]`：`5a2cedc47b59787f441aef377feea2f6c11c2f8c` 两模式无诊断构建，ON 50/50、OFF 49/49 CTest。** 各模式848项/123次装配调用、11次真实`/dev/full`调用及默认SIGPIPE子进程验证通过；失败链在stderr通知之前保存，成功产物不因通知失败而覆盖或删除。输入SHA不变，首轮夹具失败记录保留。RunId `r6-stream-sigpipe-20261117-dPSEjNjc`，见 [最终证据](reviews/R6_CLI_STREAM_OUTPUT_2026-11-17.md)。继续独立探针输出、运行身份记录及P/TC覆盖复核；三Adaptive完整成功/L4/资源/正式资格仍未完成，R6未结案。
+
 **第二轮 `[HUMAN-EXECUTE/APPROVE]`：`a24ac91` 无诊断构建、ON 50/50、OFF 49/49 CTest。** 各模式841项/122次装配及11次真实进程调用通过。再补默认SIGPIPE下先保存失败Manifest的顺序和子进程负例，待新检查点复测；不改变信号策略，见 [证据及边界](reviews/R6_CLI_STREAM_OUTPUT_2026-11-17.md)。
 
 **首轮实测 `[HUMAN-EXECUTE/APPROVE]`：`7c444ec` 无诊断构建、SVG ON 49/50 CTest。** 11次真实`/dev/full`调用通过；唯一失败是最后第二诊断场景的夹具将阻塞目录放错层级，未触发Manifest失败。现补真实RunId路径并保留所有断言，待新检查点复测；失败/输入SHA证据保留，见 [诊断记录](reviews/R6_CLI_STREAM_OUTPUT_2026-11-17.md)。

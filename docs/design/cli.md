@@ -79,6 +79,8 @@
 
 阶段检查顺序为 **parse（2）→ input/read（3）→ decode/schema（4）→ output safety（6）→ solve/analyze（5）→ plot capability（7）**。如果一个请求包含多个问题，报告实际先触发的失败，保留原始错误码及上下文。具体错误枚举映射直接引用 [contracts.md §3.1](contracts.md) 的候选表，待 P0.8/P1.2 人类批准后冻结。
 
+**实际输出交付证据 `[AI-EDIT]`，2026-11-17**：`5a2cedc` 对`egomotion`全部stdout成功输出及stderr诊断检查write/flush，普通流错误退出6；真实RunId保留，stderr不可用时不承诺诊断送达。失败Manifest先于stderr通知保存，默认SIGPIPE终止后审计仍保留；已发布成功产物不因stdout通知失败而重写。两模式50/50、49/49及848项流检查见 [实测](../reviews/R6_CLI_STREAM_OUTPUT_2026-11-17.md)。信号终止仍按系统行为处理，不声称返回6；这是既有输出失败义务的限定实现证据，不冻结候选合同。
+
 失败诊断最少包含稳定的 `error_code`、`exit_code`、`stage`、`message`；涉及 MAT 需附 `path` 与已知 `variable`，涉及实验需附 RunId、算法与样本下标。正常输出使用 stdout、错误使用 stderr，文件里仍保存原 MATLAB 兼容 MAT。**现行设计已选 JSONL 为结构化诊断格式**：一行一个UTF-8 JSON对象，至少有**顶层`error_domain`、`error_code`**、`stage`、`exit_code`、`message`及按`std::forward_list<ErrorFrame>`顺序序列化的`causes`数组（空链为`[]`），可选`run_id/path/variable/observation_index`；stage 由 `contracts.md` 的稳定 `ErrorStage` 枚举序列化，字符串须正确转义，非有限数值不得输出不合法 JSON。无需大型 JSON 依赖，可实现小型可靠序列化器。**当前只有方案，未创建程序或 JSONL 测试**。
 
 **最新项目所有者决定**：CLI 输出根选项已明确删除；固定 `output/<RunId>/`、独立 RunId、JSONL、稳定错误阶段和轻量封装 Result 为已选择的设计方向（见 [最新决定](../decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md)）。其余 CLI 具体错误码与完整 CTest identity 仍属于 P0.8/DEC-008 的未冻结接口细节；本轮不执行任何命令，也不能把候选接口称为已测试。

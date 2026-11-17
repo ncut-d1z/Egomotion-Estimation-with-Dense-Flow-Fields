@@ -2,7 +2,7 @@
 
 > **2026-11-17 最新执行授权**：用户已明确允许生产代码修改、构建/CTest 和方案文档修改。现进入 R6 原生验证及失败修复，旧批次的运行暂缓只作历史记录；每次运行前仍执行远程检查点规则。实际命令/结果见 [PROGRESS](PROGRESS.md)，本次授权不等于数值验收或冻结。
 
-> **最新结果**：`f3398b099c70233e55e150ecf41c2dd90f282c00` 两种配置构建无诊断，SVG ON 48/48、全新SVG OFF 47/47 CTest；仅SVG专用测试有配置差异，依赖图/实际二进制及14份MAT载荷、3份JSON跨模式一致性见 [无绘图实测](reviews/R6_HEADLESS_BUILD_2026-11-17.md)。MAT封存读取与Analyzer输入SHA已绑定，见 [专项验证](reviews/R6_MAT_SNAPSHOT_2026-11-17.md)。真实Adaptive三入口仍因acos越界/零旋转明确失败、无MAT；[66 TC实际映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)已同步。[45源现行实现追踪](MIGRATION_MATRIX.md)已复核，继续日志/输出合同及P/TC覆盖复核；完整Adaptive成功、L4、病态数值资格、资源与正式验收仍待完成。错误处理通过不代表实验成功；后文旧未编译/0项通过均属历史SHA，R6未结案。
+> **最新结果**：`5a2cedc47b59787f441aef377feea2f6c11c2f8c` 两模式增量构建无诊断，SVG ON 50/50、OFF 49/49 CTest；各模式848项流检查、123次装配/子进程调用和11次真实`/dev/full`验证通过，见 [输出故障实测](reviews/R6_CLI_STREAM_OUTPUT_2026-11-17.md)。可选绘图隔离与历史全新OFF构建见 [无绘图实测](reviews/R6_HEADLESS_BUILD_2026-11-17.md)；MAT读取与Analyzer来源SHA已绑定，见 [专项验证](reviews/R6_MAT_SNAPSHOT_2026-11-17.md)。真实Adaptive三入口仍因acos越界/零旋转明确失败、无MAT；[66 TC实际映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)已同步。[45源现行追踪](MIGRATION_MATRIX.md)已复核，继续独立探针输出、运行身份记录及P/TC覆盖复核；完整Adaptive成功、L4、病态数值资格、资源与正式验收仍待完成。错误处理通过不代表实验成功；后文旧未编译/0项通过均属历史SHA，R6未结案。
 
 > **原则：先完成全部业务 C++ 代码，再统一构建、测试与验收。** R0–R5 **只实施代码/接口**，期间不安排 CMake 配置、编译、CTest、数学/数值测试或实验运行；测试源码与构建执行也集中在最后的 R6。源码提交和静态审阅不等于通过测试。H-10 编程已授权；H-11 原生运行与 MAT 写入权限仍须单独确认。现行证据见 [PROGRESS](PROGRESS.md)。
 
