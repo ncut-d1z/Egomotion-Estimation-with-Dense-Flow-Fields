@@ -2,6 +2,8 @@
 
 ## 最新接续：R6 三份插图（2026-11-17）
 
+**最终复测 `[HUMAN-EXECUTE/APPROVE]`：`8c808be58e25de16da7b3d0c66ce3c0764e74e76` 无诊断构建、45/45 CTest通过（MAT5/5，其余40/40）。** 插图536225项检查、真实CLI28次调用通过；原始SHA不变。实际SVG目视确认径向面不再裁剪、两轨迹图不变，首轮图像/日志保留；RunId `r6-illustrations-fit-20261117-mxoyaHiL`，见 [验证记录](reviews/R6_ILLUSTRATIONS_2026-11-17.md)。三份展示入口已实现；下一项为Adaptive真实生成CLI剩余覆盖，完整科学/L4、病态数值资格、资源及正式验收仍未完成，R6未结案。
+
 **首轮实测 `[HUMAN-EXECUTE/APPROVE]`：`80a1ce2` 无诊断构建、45/45 CTest通过。** 独立几何492946项、真实CLI28次调用通过，原始SHA不变；但目视发现径向面上下裁剪，正在调整SVG基础画幅并补全部投影面片边界测试。源缩放1.5、几何与阈值不变，首轮图像/日志保留，见 [记录](reviews/R6_ILLUSTRATIONS_2026-11-17.md)。修正待新检查点复测，R6未结案。
 
 **首轮准备 `[HUMAN-EXECUTE/APPROVE]`，尚未执行。** 三份原插图接入纯数值JSON与可选SVG，保留600点轨迹、z-only球面遮罩及未归一化勒让德径向面；新增独立Rodrigues全网格和真实CLI两项CTest，登记45项不等于通过。候选CLI/schema未冻结，原始资料只读、端点/灯光差异显式记录，见 [专项记录](reviews/R6_ILLUSTRATIONS_2026-11-17.md)。待远程检查点后构建/CTest；Adaptive真实生成CLI、完整科学/L4、数值/资源资格与正式验收仍未完成，R6未结案。

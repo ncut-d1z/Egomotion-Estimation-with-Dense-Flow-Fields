@@ -51,3 +51,21 @@ SVG采用正交等比例投影、面片深度排序和面法线平面着色；�
 **R6-ILLUSTRATION-001：目视发现径向面被SVG画幅裁剪。** 初次测试仅验证面片数量和数值未变，没有断言全部投影点位于画幅。使用预装Node18.19.1/Sharp0.35.5/librsvg2.63.2离线栅格化实际三份SVG（仅QA工具，不是工程依赖，未安装软件），圆/正弦轨迹可见，degree3/order2的径向面上下边缘被裁掉。原SVG/PNG、render.cjs、输入SHA、stdout/stderr/时间/退出码均保留在首轮目录，不覆盖。GitHub all-state Issue/PR检索为空，仓库无已有对应插图问题；不把辅助浏览器超时或REPL模块加载限制当作源码问题。
 
 现仅调整径向面SVG基础像素半径，从290改210，保留源camera_zoom=1.5及全部数值几何。补独立的SVG每三角形三顶点画幅边界检查，另覆盖degree0/order0的完整半径8球面；固定轨迹画幅不变。新源码待下一远程检查点后构建/CTest和目视复核，不因首轮45/45而宣称此修正已验证。
+
+## 最终复测
+
+修正检查点 `8c808be58e25de16da7b3d0c66ce3c0764e74e76` 已提交、正常推送并由远端分支API确认。RunId `r6-illustrations-fit-20261117-mxoyaHiL`，完整日志及栅格化预览在 `build/r6-illustrations-fit-20261117-mxoyaHiL/evidence/`，构建缓存、环境与上轮相同。所有命令/参数、输入身份、种子说明、起止、退出码、stdout/stderr和JUnit均独立保存。
+
+| 操作 | 2026-11-17 UTC+08:00 | 结果 |
+|---|---|---|
+| CMake配置 | 21:04:01–02 | exit0 |
+| Release增量构建 | 21:04:02–21:05:28 | exit0，无诊断 |
+| 五项MAT CTest | 21:05:28 | exit0，5/5，real0.78秒 |
+| 其余CTest | 21:05:29–34 | exit0，40/40，real5.79秒 |
+| 全输入SHA复核 | 结束21:05:34 | exit0，未改变 |
+
+**45/45 CTest通过。** 插图独立几何及SVG边界共 **536225项检查、0失败**，最大绝对/缩放误差与首轮相同；真实CLI仍28次调用通过，产物在构建目录 `r06_illustrations_cli/插图 中文 空格/72e7dff2f4e847628f37feda/`。第二次栅格化exit0，径向面与标题完整可见、不再上下裁剪；圆/正弦SVG哈希与首轮完全相同。实际径向SVG SHA-256为 `bdb720e71678966d3ee08d07e505db520738ff5c258b601cb5d0b0c1c09f9ebc`。R6-ILLUSTRATION-001修复及有限回归闭合，不声称原MATLAB灯光/像素相同，首轮裁剪图保留。
+
+CTest stdout SHA-256：MAT `5c59cab351347214a4ccc4d58d52b3158da1bae9c7fc1e03fa699c06b6b52bd6`，其余 `74f96d787ecda2fb6371319d221b889a12b6b7a49931523ce0a555ada5f5db6a`。各launcher stderr为空，子进程预期失败诊断另在CLI evidence内；不能把这类负例的通过当作科学算法成功。
+
+生产文件为 `include/egomotion/illustrations/illustration.hpp`、`src/illustrations/{detail.hpp,geometry.cpp,data_json.cpp,svg.cpp}`、CLI公共头/解析/装配/main及CMake；测试为 `tests/integration/test_r06_illustrations.cpp`、`test_r06_illustrations_cli.cmake`。来源归档树与所有原始文件未改动；没有新GitHub Issue/PR、没有合并/发布。三份展示入口已实现并取得限定数值/CLI/SVG证据；Adaptive真实生成CLI剩余覆盖、完整科学/L4、跨平台/资源/正式数值验收仍未完成，R6不结案。

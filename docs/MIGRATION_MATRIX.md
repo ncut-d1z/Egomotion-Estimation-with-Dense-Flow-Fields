@@ -1,5 +1,7 @@
 # 源 MATLAB 文件到 C++ 模块的候选迁移矩阵（MIGRATION_MATRIX）
 
+> **2026-11-17 实施事实 `[AI-EDIT]`**：本轮更新下表三份illustration为实际实现及固定SHA证据。其余行保留早期设计快照，其“未实现/未测试”不能替代当前 [PROGRESS](PROGRESS.md) 和 [66 TC证据映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)。实际符号与设计分配不同处须区分；本文不冻结接口或宣布45文件全部验收。
+
 > **文件级及函数声明级设计分配、未冻结、未编码**。从 [OBJECT_MODEL §7](OBJECT_MODEL.md) 的现行职责表和 [SOURCE_INVENTORY](SOURCE_INVENTORY.md) 的真实 45 个 .m 路径建立；不把“一文件对应一个责任”解释为全部内部函数已审计/移植，也不创建任何生产类或头文件。
 
 - 当前设计采用组合而非一个全能求解器：无状态点积/叉积等保留自由函数；有状态 Adaptive Session 与单步求解分开；MAT I/O 保持独立；原作者 `origin/**` 不写入。
@@ -50,9 +52,9 @@
 | `help_functions/transfor_koeff.m` | 1 | `egomotion::harmonics::HarmonicRotator::rotate`；接口声明见 [球谐专题 LLD §3](design/SH_ROTATION_IVANIC_RUEDENBERG.md) | 仅设计映射；未实现/未测试 |
 | `help_functions/winkelausvektor.m` | 1 | math::directionToAngles | 仅设计映射；未实现/未测试 |
 | `help_functions/zellendefinieren.m` | 1 | FranzMatchedFilter::axisTemplates | 仅设计映射；未实现/未测试 |
-| `illustrations/circle_curve_in_the_sphere.m` | 1 | IPlotExporter::drawCircleInSphere (可选) | 仅设计映射；未实现/未测试 |
-| `illustrations/sinosodial_curve_in_the_sphere.m` | 1 | IPlotExporter::drawSineInSphere (可选) | 仅设计映射；未实现/未测试 |
-| `illustrations/spherical_harmonic_illustration.m` | 1 | IPlotExporter::drawHarmonic (可选) | 仅设计映射；未实现/未测试 |
+| `illustrations/circle_curve_in_the_sphere.m` | 1 | 实际 `illustrations::generate(CircleConfig)` + 可选 `SvgExporter::exportSvg` | `8c808be` 数值/CLI/SVG实测；[边界及证据](reviews/R6_ILLUSTRATIONS_2026-11-17.md)，未正式验收 |
+| `illustrations/sinosodial_curve_in_the_sphere.m` | 1 | 实际 `illustrations::generate(SinusoidalConfig)` + 可选 `SvgExporter::exportSvg` | 同上；保留原错误圆轨迹标题 |
+| `illustrations/spherical_harmonic_illustration.m` | 1 | 实际 `illustrations::generate(HarmonicConfig)` + 可选 `SvgExporter::exportSvg` | 同上；未归一化关联勒让德，与求解器九基分离 |
 
 ## 函数声明级补充（AF-072：50 定义、仅静态声明）
 

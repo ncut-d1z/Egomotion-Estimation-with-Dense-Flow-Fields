@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **2026-11-17 最新执行事实（[AI-EDIT]）**：源码 `d68422cddc5de1b40baed5c1b5c57de5e4402074` 构建无诊断、**43/43 CTest Passed**（先MAT5项，再其余38项），原始输入SHA不变。历史Bias3323项检查覆盖两组40-run的26曲线/208对x-y与来源，平滑来源JSON/SVG及独立多项式参考通过，见 [专项证据](reviews/R6_BIAS_ARCHIVE_ANALYSIS_2026-11-17.md)。[66 TC实际映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)已同步，仍有插图、Adaptive真实生成CLI等缺口。未改下列66项TC/AC、阈值、优先级或冻结状态；43项通过不等于66项全部验收，病态前向误差、L4/完整实验与正式签署仍缺，旧描述保留历史语境。
+> **2026-11-17 最新执行事实（[AI-EDIT]）**：源码 `8c808be58e25de16da7b3d0c66ce3c0764e74e76` 构建无诊断、**45/45 CTest Passed**（先MAT5项，再其余40项），原始输入SHA不变。插图536225项检查及28次真实CLI通过，见 [专项证据](reviews/R6_ILLUSTRATIONS_2026-11-17.md)。[66 TC实际映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)已同步，仍有Adaptive真实生成CLI等缺口。未改下列66项TC/AC、阈值、优先级或冻结状态；45项通过不等于66项全部验收，病态前向误差、L4/完整实验与正式签署仍缺，旧描述保留历史语境。
 
 > **测试计划草案 v0.31，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
 
@@ -447,6 +447,8 @@ regression_tolerance=9.0949470177292824e-13
 这里的类型、阶段和退出码只按**DEC-008已决定的错误合同**设计静态测试；实际可选绘图后端、JSONL、权限失败注入、真实CTest与文件系统安全验证尚未执行，不能凭测试方案宣布验收通过。图形能力缺失不能阻碍核心数值验收。
 
 ### 2.18 三份原始 illustration 的数值与显示忠实性（AF-090/091，候选未执行）
+
+**2026-11-17 实测补充 `[AI-EDIT]`**：原候选下的几何/可选SVG/CLI现已实现，固定SHA `8c808be` 的45/45 CTest包含独立Rodrigues全网格、轨迹/遮罩、投影边界及真实CLI；详见 [证据与限制](reviews/R6_ILLUSTRATIONS_2026-11-17.md)。不把有限工程回归提升为正式阈值批准或MATLAB像素等价；下表是原候选要求，正式AC状态不变。
 
 原 `illustrations/spherical_harmonic_illustration.m:10–30` 与核心求解用 `help_functions/kugelflfunc2.m` **不能共享“同一归一化球谐图”断言**。以下只在现有 `TC-F-AN-002/AC-F-AN-002` 下新增静态核对资格，不新增 TC、C++/绘图产物或运行证据。唯一显示算法候选合同在 [分析 LLD §3.1](design/analysis_plotting.md)。
 

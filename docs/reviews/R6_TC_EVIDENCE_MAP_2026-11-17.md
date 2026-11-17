@@ -2,7 +2,7 @@
 
 `[AI-EDIT]` 事实索引，基于当前Git树、CMake登记、测试源码及实际日志。保留 [TEST_PLAN §3](../TEST_PLAN.md) 的66个TC/REQ/AC和 [PLAN](../PLAN.md) 的98项任务，不替换候选规范、改动阈值或签署验收。下表每个TC仅列一次；其REQ/AC采用相同后缀，正式义务仍以 [REQUIREMENTS](../REQUIREMENTS.md) 为准。
 
-**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面列出的具体程序/样本已有运行证据，不代表该TC全部条款已满足。最新受测源码 `d68422cddc5de1b40baed5c1b5c57de5e4402074` 为43/43；历史Bias全部曲线独立逐值复核及平滑来源JSON/SVG已测，见 [专项证据](R6_BIAS_ARCHIVE_ANALYSIS_2026-11-17.md)。原42项仍通过，全部此前失败保留。正式容差/Golden资格、病态前向误差、环境预算及基线签署仍独立办理；不以这些审批尚未完成为理由停止已授权的源码/测试补足。
+**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面列出的具体程序/样本已有运行证据，不代表该TC全部条款已满足。最新受测源码 `8c808be58e25de16da7b3d0c66ce3c0764e74e76` 为45/45；三份插图的独立几何/实际CLI和SVG画幅已测，见 [专项证据](R6_ILLUSTRATIONS_2026-11-17.md)。原43项仍通过，全部此前失败保留。正式容差/Golden资格、病态前向误差、环境预算及基线签署仍独立办理；不以这些审批尚未完成为理由停止已授权的源码/测试补足。
 
 ## 实际测试组及证据入口
 
@@ -23,6 +23,7 @@
 | RUNNER | `r06_adaptive_runner_complete_contract`, `r06_adaptive_runner_incomplete_contract`, `r06_adaptive_default_undefined_contract`, `r06_bias_runner_contract`, `r06_bias_runner_publication`, `r06_run_context_interleaving` | `tests/integration/test_r06_adaptive_runner.cpp`, `test_r06_bias_runner.cpp`, `test_r06_run_context_interleaving.cpp`；[Adaptive](R6_ADAPTIVE_RUNNER_CONTRACT_2026-11-17.md)、[Bias](R6_BIAS_RUNNER_VALIDATION_2026-11-17.md)、[RunContext隔离](R6_INTERLEAVING_2026-11-17.md)。Adaptive Runner含单步替身；隔离fixture使用真实RNG/MAT/Manifest，均不等于完整真实求解实验 |
 | ANALYSIS | `r05_analysis_source_contract`, `r06_analysis_segments_smoothing`, `r06_analysis_finite_cli`, `r06_bias_archive_independent_curves`（另复用CLI archive） | `tests/integration/test_r05_analysis.cpp`, `test_r06_analysis_segments.cpp`, `test_r06_analysis_finite.cmake`, `r06_analysis_fixture.cpp`, `test_r06_bias_archive.cpp`；[有限输入](R6_ANALYSIS_FINITE_VALIDATION_2026-11-17.md)、[历史Bias及辅助来源](R6_BIAS_ARCHIVE_ANALYSIS_2026-11-17.md) |
 | SVG | `r06_svg_source_windows` | `tests/integration/test_r06_svg_windows.cpp`；[视窗实测](R6_SVG_WINDOWS_2026-11-17.md)，状态以该报告为准 |
+| ILLUSTRATION | `r06_illustrations_independent_geometry`, `r06_illustrations_real_cli` | `tests/integration/test_r06_illustrations.cpp`, `test_r06_illustrations_cli.cmake`；536225项独立Rodrigues/轨迹/遮罩/画幅检查，28次真实CLI，三种JSON/SVG与实际目视，见 [插图实测](R6_ILLUSTRATIONS_2026-11-17.md) |
 | SOURCE | 无独立CTest代表全部人工来源验收 | `SOURCE_INVENTORY.md`, `MIGRATION_MATRIX.md`, `MAT_DATA_SCHEMA.md`, `verification/mat/archive_storage_identity.v1.tsv`, `LICENSE`及原始Git树；MAT实测可提供资料身份的一部分证据 |
 | ENV | 配置/构建及CLI实测，不是跨发行版资格测试 | [原生环境](R6_NATIVE_VALIDATION_2026-11-17.md)及后续每轮 `environment.txt`、CMake链接图；实际仅Ubuntu24.04.5/GCC16.2.0 |
 
@@ -61,7 +62,7 @@
 | TC-F-EXP-002 | RUNNER | 固定600帧/8次聚合及失败分母；原默认无定义角度不能记成功 |
 | TC-F-EXP-003 | RUNNER、ANALYSIS | 更新率/现行save集合/缺ratio明确错误；未完成完整真实算法实验 |
 | TC-F-AN-001 | ANALYSIS、CLI | 32条有限曲线独立逐值与初始化区间；平滑辅助源Git blob已逐曲线记录并验证JSON/SVG，未使用者为空。原NaN明确拒绝，生产MAT摘要未绑定时仍明确null |
-| TC-F-AN-002 | CLI、ANALYSIS、SVG | 数值/绘图隔离及窗口测试；三份illustration生产展示入口缺失 |
+| TC-F-AN-002 | CLI、ANALYSIS、SVG、ILLUSTRATION | 三份插图生产入口、独立数值/绘图隔离及画幅已有实测；sphere端点运行细节与MATLAB灯光/像素等价未验证 |
 | TC-D-SOURCE-001 | SOURCE、MAT | 628原文件Git树与582MAT固定身份有证据；正式冻结未签署 |
 | TC-D-SOURCE-002 | SOURCE、SH | 论文/资料/重写来源可定位；不是所有来源人工验收已签字 |
 | TC-D-MAT-001 | MAT、SOURCE | 582实际读取/独立值与SHA；P10.4数据字典正式复核未完成 |
@@ -74,7 +75,7 @@
 | TC-DC-KVD-001 | KVD | Original/Modified单独入口与差异化trace；两路径实际默认上限及其他退出条件已有独立参考实测 |
 | TC-DC-ADAPT-001 | STEP、SESSION | 单步和Session已独立测试；两个Session交替完整结果/系数/错误重试隔离已测，限固定输入 |
 | TC-DC-EXPERIMENT-001 | RUNNER、CONTRACT | 注入/编排/Writer/状态已有例；两RunContext交替RNG/错误链/计数/真实MAT及Manifest隔离已测，不等于全科学实验 |
-| TC-DC-ANALYSIS-001 | CLI、ANALYSIS、SVG | 无后端替身与纯数值/绘图数据不变；三份illustration未完成 |
+| TC-DC-ANALYSIS-001 | CLI、ANALYSIS、SVG、ILLUSTRATION | 无后端时纯数值成功、SVG明确不可用；三份插图JSON导出前后不变已实测，候选接口未冻结 |
 | TC-NF-PLATFORM-001 | ENV | 仅实际Ubuntu24.04.5，不能推断其它Debian/Ubuntu版本已测 |
 | TC-NF-DEPS-001 | ENV、CMake | 当前核心Eigen/matio与可选SVG，无Python/MATLAB/NPZ；完整交付链接审计仍待整理 |
 | TC-NF-SAFETY-001 | IO、MAT、CLI | 原SHA不变、RunId/路径/符号链接/拒覆盖及真实故障已有测试 |
@@ -93,7 +94,7 @@
 | TC-F-CLI-002 | CLI、RUNNER | 两Bias真实进程、有界输出/seed/RunId及拒覆盖；完整规模未运行 |
 | TC-F-CLI-003 | CLI、RUNNER部分 | 帮助/非法参数与Runner内部合同；三Adaptive真实生成进程的成功/失败链尚未全覆盖 |
 | TC-F-CLI-004 | CLI、ANALYSIS | 四分析类型实际进程：历史3组成功/3组NaN拒绝、有限两入口成功；历史Bias全部数值另用真实Reader/Analyzer独立复核，辅助来源在CLI已测，不假称所有归档成功 |
-| TC-F-CLI-005 | CLI、SVG部分 | plot实际发布/无后端错误/几何；插图入口和完整视觉等价未完成 |
+| TC-F-CLI-005 | CLI、SVG、ILLUSTRATION | plot与三份插图实际发布/无后端错误/几何/拒覆盖已测；CLI增量未冻结，不承诺MATLAB像素等价 |
 | TC-I-CLI-001 | CLI | 已知子命令帮助、JSONL、拒自定义输出根等；DEC-008冻结未签署 |
 | TC-I-MAT-001 | MAT、IO | 严格/兼容读取与安全写回读；首版类型边界明确 |
 | TC-I-RESULT-001 | IO、CONTRACT、RUNNER、CLI | 当前save、Manifest/错误链/固定目录已有实测；五入口完整真实实验不能由替身覆盖 |
@@ -101,7 +102,7 @@
 
 ## 下一步按缺口实施
 
-1. 原绘图视窗、误差/停止分支、conditioning、交替隔离/acos双端越界及历史Bias全曲线/平滑来源已完成43/43复测；失败日志及原始数据不变证据保留。不等于完整数值资格或视觉等价完成。
-2. 继续实现三份illustration数据与展示入口，按已有LLD分别保留两种600点轨迹、sphere(50)的z-only遮罩及未归一化勒让德径向面；不得用求解器九项归一化基函数替代插图。
+1. 原绘图视窗、误差/停止分支、conditioning、交替隔离/acos双端越界、历史Bias/平滑来源及三份illustration已完成45/45复测；失败日志及原始数据不变证据保留。不等于完整数值资格或MATLAB像素等价完成。
+2. 三份illustration已有JSON/SVG入口、独立全网格参考和实际CLI/目视证据；保留sphere端点运行细节尚未验证及平面着色的明确边界，不用求解器九项归一化基函数替代插图。
 3. 补三Adaptive生成CLI的实际进程成功/失败覆盖。涉及CLI/公共schema时保留候选与未冻结状态，不以AI实现代替人类签署；MAT稳定读取快照摘要尚未绑定时继续明确未知，不伪造来源。
 4. 完整科学/L4实验、跨发行版资格、资源预算与正式审批不在本轮运行授权内；准备具体材料并在真正到达该边界时请求相应授权。无MATLAB/L1阻塞。

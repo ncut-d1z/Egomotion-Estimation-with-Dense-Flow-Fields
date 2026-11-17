@@ -58,6 +58,8 @@ public:
 
 ### 3.1 插图专用数学/显示合同与源异常（AF-090/091，未冻结）
 
+**最终实测 `[AI-EDIT]`**：`8c808be58e25de16da7b3d0c66ce3c0764e74e76` 无诊断构建、45/45 CTest，包括536225项插图检查及28次实际CLI；SVG裁剪问题已修复并目视复核，详见下述专项记录。数值/像素/端点证据边界及未冻结状态保持。
+
 **2026-11-17 实施接续 `[HUMAN-EXECUTE/APPROVE]`**：已编写独立几何/可选SVG模块及候选 `illustrate` 入口；source/blob、sphere接缝/极点零值选择、未归一化递推、JSON和显示限制见 [实施与验证记录](../reviews/R6_ILLUSTRATIONS_2026-11-17.md)。代码和测试源码存在不代表已编译、已通过或合同冻结；下文“未来/未执行”保留为原候选设计语境。
 
 本段只审查原作者 **`illustrations/`** 下三份可选展示脚本；它们与 `help_functions/kugelflfunc2.m` 的数值球谐计算、`near_aus_koeff.m` 的重建、轨迹数据生成以及 `AnalysisDataset` 的只读分析是**不同的职责**。不得以插图公式反向更改核心数学模块，亦不得因绘图依赖不可用阻塞不含绘图的 `analyze`。以下源行是**只读静态证据**，不是实际 MATLAB 运行或独立 L3。

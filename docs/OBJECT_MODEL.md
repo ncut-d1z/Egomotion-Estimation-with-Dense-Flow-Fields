@@ -1,5 +1,7 @@
 # 对象模型与生命周期合同（Object Model）
 
+> **2026-11-17 插图实现事实 `[AI-EDIT]`**：实际公共头 `include/egomotion/illustrations/illustration.hpp` 提供三个独立Config、值对象Data/SurfaceGrid和可选IExporter；generate/dataJson为纯数值函数，SvgExporter消费const Data及ITextPublisher。没有在分析IPlotExporter中新增draw*方法；§7三行映射已据实更新。固定 `8c808be` 的45/45 CTest及限制见 [记录](reviews/R6_ILLUSTRATIONS_2026-11-17.md)，不替代对象模型整体冻结/验收；其余旧“未创建”描述须结合当前PROGRESS读取。
+
 > **对象模型草案 v1.2（修复IFlowNoiseModel图示漏coefficient及Bias模式装配职责）；P0.7/P0.8 待评审，未冻结，拟议业务类与跨模块公共ABI尚未建立。受限低阶球谐叶子C++已独立实现并在固定SHA获得用户原生3/3 CTest证据，不能将其归入下列未创建的公共类。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入；各文档当前版本、固定 SHA 和冻结状态统一由 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记，运行结果以 [PROGRESS](PROGRESS.md) 为准。
 
 ## 1. 对象职责和约定
@@ -247,9 +249,9 @@ stateDiagram-v2
 | `help_functions/transfor_koeff.m` | `egomotion::harmonics::HarmonicRotator::rotate`；接口声明见 [球谐专题 LLD §3](design/SH_ROTATION_IVANIC_RUEDENBERG.md) | 已定位 / 仅声明草案，待 P0.8 审阅；没有实现 |
 | `help_functions/winkelausvektor.m` | math::directionToAngles | 已定位 / 合同待 P0 核验 |
 | `help_functions/zellendefinieren.m` | FranzMatchedFilter::axisTemplates | 已定位 / 合同待 P0 核验 |
-| `illustrations/circle_curve_in_the_sphere.m` | IPlotExporter::drawCircleInSphere (可选) | 已定位 / 合同待 P0 核验 |
-| `illustrations/sinosodial_curve_in_the_sphere.m` | IPlotExporter::drawSineInSphere (可选) | 已定位 / 合同待 P0 核验 |
-| `illustrations/spherical_harmonic_illustration.m` | IPlotExporter::drawHarmonic (可选) | 已定位 / 合同待 P0 核验 |
+| `illustrations/circle_curve_in_the_sphere.m` | 实际 `illustrations::generate(CircleConfig)` + 可选 `SvgExporter::exportSvg` | `8c808be` 数值/CLI/SVG已测；正式合同未冻结 |
+| `illustrations/sinosodial_curve_in_the_sphere.m` | 实际 `illustrations::generate(SinusoidalConfig)` + 可选 `SvgExporter::exportSvg` | 同上；原错误标题保留 |
+| `illustrations/spherical_harmonic_illustration.m` | 实际 `illustrations::generate(HarmonicConfig)` + 可选 `SvgExporter::exportSvg` | 同上；未归一化径向插图，与核心九基分离 |
 
 - 无状态的点积、叉积、采样递归、误差公式优先使用自由函数，**不要为了“45/45 面向对象”而强行创建 45 个类**。
 - 实验入口统一由 Runner 调度，但必须保留各自独立的参数和存储合同。历史 MAT 结果的分析与绘图不反向依赖求解器。

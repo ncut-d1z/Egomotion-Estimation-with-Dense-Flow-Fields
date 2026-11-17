@@ -1,5 +1,7 @@
 # CLI 参数、退出码与诊断协议：详细设计草案
 
+> **2026-11-17 插图实测 `[AI-EDIT]`**：候选illustrate入口已在 `8c808be58e25de16da7b3d0c66ce3c0764e74e76` 实际测试，28次进程及全套45/45 CTest通过。JSON/SVG、错误码、路径防覆盖证据见 [记录](../reviews/R6_ILLUSTRATIONS_2026-11-17.md)。本文下方“待构建/未执行”是此前准备状态，CLI/schema正式冻结仍未发生。
+
 > **2026-11-17 执行事实（[AI-EDIT]）**：受测源码 `c42f12f0be89646fd39b93dbb61a79a0ee28e05f` 无诊断构建、35/35 CTest通过，包含57次真实CLI进程；已恢复本LLD规定的八个已知子命令 `--help`，未知命令及混合额外参数仍拒绝。历史分析3组成功、3组因原始NaN拒绝，见 [实际证据与限制](../reviews/R6_CLI_PROCESS_VALIDATION_2026-11-17.md)。后文“未创建/未测试”是历史状态，不替代该固定SHA证据；未改变CLI合同或冻结状态。
 
 > **CLI LLD v0.12（顶层JSONL error_domain与完整causes双重来源校验；仍未创建CLI或运行CTest）。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。

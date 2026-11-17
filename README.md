@@ -4,7 +4,7 @@ A planned **C++17 reimplementation that directly reads the original MATLAB MAT f
 
 > **Permanent evidence policy:** Running MATLAB/Octave or collecting original MATLAB L1 execution traces is **not required** for design, coding, verification, or release. The original scripts are read-only specifications; numerical evidence will use the preserved MAT results (L2), independently checked analytic/reference implementations (L3), and statistical comparisons (L4). See [No MATLAB Execution Policy](docs/golden/NO_MATLAB_EXECUTION_POLICY.md). This change does not authorize C++ builds/tests or imply any numerical acceptance.
 
-> **项目状态（2026-11-17）**：R6仍在验证。最新受测源码 `d68422cddc5de1b40baed5c1b5c57de5e4402074` 增量构建无诊断、**43/43 CTest通过**。历史Bias全部26条曲线已独立逐值复核，平滑来源已落实到JSON/SVG并测试；原始资料哈希不变，见 [最新验证](docs/reviews/R6_BIAS_ARCHIVE_ANALYSIS_2026-11-17.md)。[66项TC证据映射](docs/reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)仍列明三份illustration、Adaptive真实生成CLI等缺口；病态前向误差、完整科学实验/L4和正式验收未完成。
+> **项目状态（2026-11-17）**：R6仍在验证。最新受测源码 `8c808be58e25de16da7b3d0c66ce3c0764e74e76` 增量构建无诊断、**45/45 CTest通过**。三份插图的数值JSON/可选SVG入口及独立几何、实际CLI已测试；原始资料哈希不变，见 [最新验证](docs/reviews/R6_ILLUSTRATIONS_2026-11-17.md)。[66项TC证据映射](docs/reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)仍列明Adaptive真实生成CLI等缺口；病态前向误差、完整科学实验/L4和正式验收未完成。
 
 ## Original research and source material
 
@@ -74,9 +74,9 @@ build_dir="build/r6-$(date -u +%Y%m%dT%H%M%SZ)-$$"
 cmake -S . -B "$build_dir" -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
 cmake --build "$build_dir" --parallel 4
 ctest --test-dir "$build_dir" --verbose --no-tests=error \
-    -R '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values|r06_mat_reader_boundaries)$'
+    -R '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values|r06_mat_reader_boundaries|r06_mat_raw_payload_boundaries)$'
 ctest --test-dir "$build_dir" --verbose --no-tests=error \
-    -E '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values|r06_mat_reader_boundaries)$'
+    -E '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values|r06_mat_reader_boundaries|r06_mat_raw_payload_boundaries)$'
 ~~~
 
 构建产物包含 `egomotion` 和 `mat_data_dict_probe`。探针生成新报告时应指定新的隔离输出文件；下列已提交的数据字典保留其原始来源，不因新 Reader 测试通过而自动重新生成。逐步骤 stdout/stderr、退出码及工具链身份须按仓库规则另行保存，本次实际命令与日志索引见验证记录。
@@ -99,7 +99,19 @@ The checked-in [docs/MAT_DATA_SCHEMA.md](docs/MAT_DATA_SCHEMA.md) is now the **a
 
 This dataset requires **MAT v5 + zlib + dense real double support**, and no source file in this collection requires MAT v7.3/HDF5, cell, struct, sparse or complex data handling. This finding applies **only to the current 582 archived files**. The historical MAT files remain read-only; future inputs with additional types need separate requirements and error handling.
 
-**本轮已验证：** 582/582 原始 MAT 只读解码、输入文件前后 SHA-256、合成 MAT 写回读和部分严格/兼容 Reader 合同。**仍未完成：** 独立 L2 逐值、全部 L3/L4 和论文实验复现、完整 MAT 类型/损坏/竞态负例；不能把本轮21项CTest替代这些验收义务。
+**当前已验证：** 582/582 原始 MAT 只读解码、33340值独立逐位对照、输入前后 SHA-256、合成 MAT 写回读及限定类型/损坏/竞态负例，见 [存储验证](docs/reviews/R6_MAT_STORAGE_VALIDATION_2026-11-17.md) 与 [66 TC证据映射](docs/reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)。**仍未完成：** 全部L3/L4、论文实验复现和正式验收；不声称支持全部MAT类型或完整输入域。
+
+## 原始插图入口
+
+从仓库根使用本次构建的 `egomotion`。以下候选CLI已在固定SHA测试，合同未冻结；默认JSON只输出数值，SVG结果固定写入新的 `output/<RunId>/`。两轨迹均600点；径向面使用未归一化关联勒让德函数，独立于求解器球谐模块。
+
+~~~bash
+"$build_dir/egomotion" illustrate --kind circle
+"$build_dir/egomotion" illustrate --kind sinusoidal --format svg
+"$build_dir/egomotion" illustrate --kind harmonic --degree 3 --order 2 --format svg
+~~~
+
+SVG同时保存同一 `illustration.json`；不允许自定义输出根或覆盖RunId。保持原正弦脚本的圆轨迹标题，用kind区分。球面端点/遮罩及显示灯光的已知边界见 [插图验证](docs/reviews/R6_ILLUSTRATIONS_2026-11-17.md)，不承诺MATLAB逐像素等价。
 
 ## Citation
 
