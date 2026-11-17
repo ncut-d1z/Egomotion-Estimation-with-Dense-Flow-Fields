@@ -1,82 +1,89 @@
-# 源 MATLAB 文件到 C++ 模块的候选迁移矩阵（MIGRATION_MATRIX）
+# 源 MATLAB 文件到当前 C++ 实现的迁移矩阵（MIGRATION_MATRIX）
 
-> **2026-11-17 实施事实 `[AI-EDIT]`**：本轮更新下表三份illustration为实际实现及固定SHA证据。其余行保留早期设计快照，其“未实现/未测试”不能替代当前 [PROGRESS](PROGRESS.md) 和 [66 TC证据映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)。实际符号与设计分配不同处须区分；本文不冻结接口或宣布45文件全部验收。
+> **2026-11-17 事实复核 `[AI-EDIT]`，未冻结/未正式验收。** 检查文档HEAD `b3cc6eda6168f10102dd54e559222dca23c237c5`，生产/测试代码仍为受测 `130a82ba0090e186fcf43bc28bb98c282e68c96c`。本轮把早期候选分配更新为实际符号、文件和有限证据；不修改SRS义务、算法、阈值或设计批准状态。候选类职责仍见 [OBJECT_MODEL §7](OBJECT_MODEL.md)，不要将其中名称当成现有C++ API。
 
-> **文件级及函数声明级设计分配、未冻结、未编码**。从 [OBJECT_MODEL §7](OBJECT_MODEL.md) 的现行职责表和 [SOURCE_INVENTORY](SOURCE_INVENTORY.md) 的真实 45 个 .m 路径建立；不把“一文件对应一个责任”解释为全部内部函数已审计/移植，也不创建任何生产类或头文件。
+原归档45份.m、50个函数声明均保留；源Git blob/字节/REQ/TC的单一身份清单见 [SOURCE_INVENTORY](SOURCE_INVENTORY.md)。下表“测试组”引用 [66 TC证据映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md#实际测试组及证据入口) 的完整CTest名称、测试源码及报告；同组有关联不表示该文件全部输入域已测。最新48/48实测及原MAT不变证据见 [封存读取记录](reviews/R6_MAT_SNAPSHOT_2026-11-17.md)。
 
-- 当前设计采用组合而非一个全能求解器：无状态点积/叉积等保留自由函数；有状态 Adaptive Session 与单步求解分开；MAT I/O 保持独立；原作者 `origin/**` 不写入。
-- 物理向量转旋转矩阵已选 Sophus；球谐 l≤2 按 Ivanic–Ruedenberg 1996 原文/1998 勘误，**Eigen-only、禁 sdla**；Don Williamson 仅参考，不以本表宣称论文已读取或递推已实现。
-- 源文件 Git blob SHA、字节与 REQ/TC 的单一来源见 [SOURCE_INVENTORY](SOURCE_INVENTORY.md) 和 SRS §9.2，避免在本矩阵复制会频繁变化的源码身份；真实类签名、错误/生命周期、TC→实体见模块 LLD 与 TEST_PLAN。
+- 当前实现以组合复用、Eigen向量运算和内部辅助函数承接源职责，不要求45个同名类或50个公开函数。
+- “有对应实现”与“原数值实验完整成功”分开；三Adaptive生成入口仍失败，完整科学/L4、正式容差/资源/基线验收仍未完成。
+- 源脚本只读静态审查；没有运行MATLAB/Octave/L1，也不将其列为后续前置条件。
 
-| 原源相对路径 | 函数声明数 | 预定 C++ 模块/方法（候选） | 当前状态 |
-|---|---:|---|---|
-| `adaptive_matched_filter_test/data_analysis/graph_agent_in_sphere_adaptive_matched_filter_many_parameter.m` | 1 | AdaptiveResultAnalyzer::updateRates | 仅设计映射；未实现/未测试 |
-| `adaptive_matched_filter_test/data_analysis/graph_agent_in_sphere_adaptive_matched_filter_test.m` | 1 | AdaptiveResultAnalyzer::comparison | 仅设计映射；未实现/未测试 |
-| `adaptive_matched_filter_test/data_analysis/graph_agent_in_sphere_initialization_test.m` | 1 | AdaptiveResultAnalyzer::initialization | 仅设计映射；未实现/未测试 |
-| `adaptive_matched_filter_test/data_generation/agent_in_sphere_adaptive_matched_filter_many_parameter.m` | 1 | UpdateRateRunner::run | 仅设计映射；未实现/未测试 |
-| `adaptive_matched_filter_test/data_generation/agent_in_sphere_adaptive_matched_filter_test.m` | 1 | AdaptiveComparisonRunner::run | 仅设计映射；未实现/未测试 |
-| `adaptive_matched_filter_test/data_generation/agent_in_sphere_initialization_test.m` | 1 | InitializationRunner::run | 仅设计映射；未实现/未测试 |
-| `bias_test/data_analysis/graphs_bias_test.m` | 1 | BiasResultAnalyzer::aggregate | 仅设计映射；未实现/未测试 |
-| `bias_test/data_generation/bias_test_nonspherical.m` | 1 | BiasExperimentRunner::runOccluded | 仅设计映射；未实现/未测试 |
-| `bias_test/data_generation/bias_test_spherical_prop_error.m` | 1 | BiasExperimentRunner::runProportional | 仅设计映射；未实现/未测试 |
-| `help_functions/drehvektor_aus_zwei_vektoren.m` | 1 | math::rotationVectorBetween (自由函数) | 仅设计映射；未实现/未测试 |
-| `help_functions/erzeugeflussausnear.m` | 1 | FlowSynthesizer::synthesize | 仅设计映射；未实现/未测试 |
-| `help_functions/erzeugekreuzproduktmatrix.m` | 1 | math::crossMatrix (自由函数) | 仅设计映射；未实现/未测试 |
-| `help_functions/erzeugerichtungsvektoren_loch.m` | 1 | OccludedOctahedralSampler::sample | 仅设计映射；未实现/未测试 |
-| `help_functions/erzeugerichtungsvektoren.m` | 1 | OctahedralSampler::sample | 仅设计映射；未实现/未测试 |
-| `help_functions/findeDreiecke.m` | 1 | sampling::subdivideTriangle (私有自由函数) | 仅设计映射；未实现/未测试 |
-| `help_functions/fixed_kugel_symmetric_perfectpoints_randomnear.m` | 1 | BiasExperimentRunner::synthesizeOccludedInput（组合采样、FlowSynthesizer、噪声策略） | 仅设计映射；未实现/未测试 |
-| `help_functions/fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m` | 1 | BiasExperimentRunner::synthesizeProportionalInput（组合采样、FlowSynthesizer、噪声策略） | 仅设计映射；未实现/未测试 |
-| `help_functions/franzeigen.m` | 1 | FranzMatchedFilter::estimate | 仅设计映射；未实现/未测试 |
-| `help_functions/getflowfield.m` | 1 | MatResultReader::readFirstCompatible | 仅设计映射；未实现/未测试 |
-| `help_functions/getnear_in_kugel_Drehung.m` | 1 | SphereEnvironment::nearness | 仅设计映射；未实现/未测试 |
-| `help_functions/getvektor.m` | 1 | sampling::randomUnitDirection(IRandomSource&)（无状态自由函数） | 仅设计映射；未实现/未测试 |
-| `help_functions/koeff_aus_near.m` | 1 | HarmonicFitter::fit | 仅设计映射；未实现/未测试 |
-| `help_functions/kreis_trajektorie.m` | 1 | TrajectoryGenerator::circle | 仅设计映射；未实现/未测试 |
-| `help_functions/kreuzprodukt.m` | 1 | math::cross (自由函数) | 仅设计映射；未实现/未测试 |
-| `help_functions/kugelflfunc2.m` | 1 | RealSphericalHarmonics::evaluate | 仅设计映射；未实现/未测试 |
-| `help_functions/kurveglaetten.m` | 1 | analysis::windowMean (自由函数) | 仅设计映射；未实现/未测试 |
-| `help_functions/mue_norm_koenderink_iteration.m` | 1 | ModifiedKvDEstimator::estimate | 仅设计映射；未实现/未测试 |
-| `help_functions/near_aus_koeff.m` | 1 | RealSphericalHarmonics::reconstruct | 仅设计映射；未实现/未测试 |
-| `help_functions/nonpropfehler.m` | 1 | MeanMagnitudeGaussianNoise::apply | 仅设计映射；未实现/未测试 |
-| `help_functions/norm_koenderink_iteration.m` | 1 | OriginalKvDEstimator::estimate | 仅设计映射；未实现/未测试 |
-| `help_functions/normrelfehler.m` | 1 | metrics::directionAngleDeg | 仅设计映射；未实现/未测试 |
-| `help_functions/oneit_adaptiv_matched_filter.m` | 1 | AdaptiveMfaStepSolver::solve | 仅设计映射；未实现/未测试 |
-| `help_functions/richtungsvektoren_icosahedron.m` | 1 | IcosahedralSampler::sample | 仅设计映射；未实现/未测试 |
-| `help_functions/rodrigues.m` | 1 | math::rotationVectorToMatrix，内层规划调用 Sophus::SO3d::exp()（仅实际使用的向量→矩阵分支） | 仅设计映射；未实现/未测试 |
-| `help_functions/SHRotate.m` | 6 | `egomotion::harmonics::HarmonicRotator::blocks(const Eigen::Matrix3d&) const`；通过 [球谐专题 LLD §3](design/SH_ROTATION_IVANIC_RUEDENBERG.md) 的唯一声明生成 R3/R5（R0=1 不存可变成员）；按 Ivanic–Ruedenberg 1996 原文及 1998 勘误 **纯 Eigen 重写**，Don Williamson 仅供参考、禁止 sdla | 仅设计映射；未实现/未测试 |
-| `help_functions/sinuskurve_trajektorie.m` | 1 | TrajectoryGenerator::sine | 仅设计映射；未实现/未测试 |
-| `help_functions/skalarprodukt.m` | 1 | math::dot (自由函数) | 仅设计映射；未实现/未测试 |
-| `help_functions/trajektorie_aus_punkten.m` | 1 | TrajectoryKinematics::fromPoints | 仅设计映射；未实现/未测试 |
-| `help_functions/transfehler_div.m` | 1 | metrics::scaleAlignedVectorError | 仅设计映射；未实现/未测试 |
-| `help_functions/transfor_koeff.m` | 1 | `egomotion::harmonics::HarmonicRotator::rotate`；接口声明见 [球谐专题 LLD §3](design/SH_ROTATION_IVANIC_RUEDENBERG.md) | 仅设计映射；未实现/未测试 |
-| `help_functions/winkelausvektor.m` | 1 | math::directionToAngles | 仅设计映射；未实现/未测试 |
-| `help_functions/zellendefinieren.m` | 1 | FranzMatchedFilter::axisTemplates | 仅设计映射；未实现/未测试 |
-| `illustrations/circle_curve_in_the_sphere.m` | 1 | 实际 `illustrations::generate(CircleConfig)` + 可选 `SvgExporter::exportSvg` | `8c808be` 数值/CLI/SVG实测；[边界及证据](reviews/R6_ILLUSTRATIONS_2026-11-17.md)，未正式验收 |
-| `illustrations/sinosodial_curve_in_the_sphere.m` | 1 | 实际 `illustrations::generate(SinusoidalConfig)` + 可选 `SvgExporter::exportSvg` | 同上；保留原错误圆轨迹标题 |
-| `illustrations/spherical_harmonic_illustration.m` | 1 | 实际 `illustrations::generate(HarmonicConfig)` + 可选 `SvgExporter::exportSvg` | 同上；未归一化关联勒让德，与求解器九基分离 |
+## 45份源文件的现行对应
 
-## 函数声明级补充（AF-072：50 定义、仅静态声明）
+路径均相对 `origin/egomotion_estimation_dense_flow_fields_matlab_scripts/`；函数数按真实声明行，命名空间以链接源码为准。全部行均未正式验收。
 
-对来源目录下 **45 个 `.m` 逐文件只读查看 `function` 声明**：44 份文件各有一个与文件名对应的主函数，`help_functions/SHRotate.m` 则有 **1 个入口 + 5 个文件内子函数**，合计 **50 个函数定义**。表格的「函数声明数」严格按实际代码声明行计数，不推断函数分支、输出已被验证，更不能折算 C++ 类/接口数。
+| 原源相对路径 | 函数声明数 | 当前C++符号及文件 | 测试组 | 已有证据与边界 |
+|---|---:|---|---|---|
+| `adaptive_matched_filter_test/data_analysis/graph_agent_in_sphere_adaptive_matched_filter_many_parameter.m` | 1 | `MatResultAnalyzer::analyze` → `detail::adaptive(UpdateRates)`；[adaptive.cpp](../src/analysis/adaptive.cpp) | ANALYSIS、CLI、SNAPSHOT、SVG | 四段阈值0.02、窗口0/2/5/10与600行先平滑后截取已测；缺ratio/NaN拒绝，历史归档不保证分析成功。 |
+| `adaptive_matched_filter_test/data_analysis/graph_agent_in_sphere_adaptive_matched_filter_test.m` | 1 | `MatResultAnalyzer::analyze` → `detail::adaptive(Comparison)`；[adaptive.cpp](../src/analysis/adaptive.cpp) | ANALYSIS、CLI、SNAPSHOT、SVG | 50:550、阈值0.01、四段及双纵轴数据已测；有限合成参考与历史NaN拒绝分别记录。 |
+| `adaptive_matched_filter_test/data_analysis/graph_agent_in_sphere_initialization_test.m` | 1 | `MatResultAnalyzer::analyze` → `detail::adaptive(Initialization)`；[adaptive.cpp](../src/analysis/adaptive.cpp) | ANALYSIS、CLI、SNAPSHOT | 读取四字段，绘制mittrans 1:13、mitrot 1:35；历史实际进程成功，非新生成实验成功证据。 |
+| `adaptive_matched_filter_test/data_generation/agent_in_sphere_adaptive_matched_filter_many_parameter.m` | 1 | `ProductionExperimentRunner::runAdaptiveUpdateRates` → `AdaptiveExperimentRunner::computeUpdateRates` → `AdaptiveMfaSession::processFrame`；[runner](../src/experiments/adaptive_runner.cpp)、[session](../src/estimators/adaptive_session.cpp) | RUNNER、SESSION、ADAPTIVE-CLI | 1/5/11/21刷新/现行save合同有例；真实第151帧零旋转拒绝、valid149、Incomplete，无完整MAT。 |
+| `adaptive_matched_filter_test/data_generation/agent_in_sphere_adaptive_matched_filter_test.m` | 1 | `ProductionExperimentRunner::runAdaptiveComparison` → `AdaptiveExperimentRunner::computeComparison` → `AdaptiveMfaSession::processFrame`；[runner](../src/experiments/adaptive_runner.cpp)、[session](../src/estimators/adaptive_session.cpp) | RUNNER、SESSION、ADAPTIVE-CLI | 600帧/8次聚合/失败不改分母有例；真实noise0第151帧拒绝、valid149，未完成8轮。 |
+| `adaptive_matched_filter_test/data_generation/agent_in_sphere_initialization_test.m` | 1 | `ProductionExperimentRunner::runAdaptiveInitialization` → `AdaptiveExperimentRunner::computeInitialization` → `AdaptiveMfaSession::processFrame`；[runner](../src/experiments/adaptive_runner.cpp)、[session](../src/estimators/adaptive_session.cpp) | RUNNER、SESSION、ADAPTIVE-CLI | 35帧编排有替身合同；真实第14帧acos越界、valid12、Incomplete，成功产物分支未实测。 |
+| `bias_test/data_analysis/graphs_bias_test.m` | 1 | `MatResultAnalyzer::analyze` → `detail::bias`；[bias.cpp](../src/analysis/bias.cpp) | ANALYSIS、CLI、SNAPSHOT、SVG | 四个y跨run均值、最后x、3:end及100/sqrt(x)；两组40-run的26曲线/208对x-y独立复核，986来源摘要已测。 |
+| `bias_test/data_generation/bias_test_nonspherical.m` | 1 | `ProductionExperimentRunner::runBiasOccluded` → `BiasExperimentRunner::compute`；[装配](../src/experiments/production_runner.cpp)、[计算](../src/experiments/bias_runner.cpp) | RUNNER、CLI、GEOM、KVD、METRIC | 缺损采样+均模长噪声；level0…2/seed7、11有界真实求解与发布，未重跑40份level9统计实验。 |
+| `bias_test/data_generation/bias_test_spherical_prop_error.m` | 1 | `ProductionExperimentRunner::runBiasProportional` → `BiasExperimentRunner::compute`；[装配](../src/experiments/production_runner.cpp)、[计算](../src/experiments/bias_runner.cpp) | RUNNER、CLI、GEOM、KVD、METRIC | 完整采样+分量噪声；实际8×4^level视线但源xwerte仍6×4^level，有界测试保留该差别；L4未完成。 |
+| `help_functions/drehvektor_aus_zwei_vektoren.m` | 1 | `trajectory::sourceRotationBetween`；[kinematics.cpp](../src/trajectory/kinematics.cpp) | GEOM、SH | 未归一叉积阈值1e-11、acos不钳制；精确反向、零/非有限向量明确失败，非所有原异常运行行为等价。 |
+| `help_functions/erzeugeflussausnear.m` | 1 | `simulation::FlowSynthesizer::synthesize`；[flow.cpp](../src/simulation/flow.cpp) | GEOM、RUNNER | 切向平移/旋转流、各自均模长及相消固定例已测；限定合法单位方向和正近度。 |
+| `help_functions/erzeugekreuzproduktmatrix.m` | 1 | 内部自由函数 `crossMatrix`；[adaptive_step.cpp](../src/estimators/adaptive_step.cpp) | STEP | 叉乘矩阵参与M1…M4；独立单步逐块参考覆盖符号，不新增公开math类。 |
+| `help_functions/erzeugerichtungsvektoren_loch.m` | 1 | `sampling::OccludedOctahedralSampler::sample`；[directions.cpp](../src/sampling/directions.cpp) | GEOM | 保留源面2/3/5/6/7/8及深度优先次序；level0…2逐行独立参考。 |
+| `help_functions/erzeugerichtungsvektoren.m` | 1 | `sampling::OctahedralSampler::sample`；[directions.cpp](../src/sampling/directions.cpp) | GEOM | 8×4^level、有序叶节点；level0…2逐行独立参考，不据此承诺任意规模资源。 |
+| `help_functions/findeDreiecke.m` | 1 | 内部 `sampling::emitFace`（匿名命名空间）及 `normalizeSource`；[directions.cpp](../src/sampling/directions.cpp) | GEOM | 四子面顺序、归一化中点和叶中心；通过三类sampler间接逐行核对，不暴露独立递归API。 |
+| `help_functions/fixed_kugel_symmetric_perfectpoints_randomnear.m` | 1 | `simulation::generateBiasFlow` + `OccludedOctahedralSampler` + `MeanMagnitudeGaussianNoise`；[flow.cpp](../src/simulation/flow.cpp) | GEOM、RUNNER | N个uniform后3N个normal、距离1…4/均值2.5、末个near与均流长；源未使用参数未转成假功能。 |
+| `help_functions/fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m` | 1 | `simulation::generateBiasFlow` + `OctahedralSampler` + `ComponentProportionalGaussianNoise`；[flow.cpp](../src/simulation/flow.cpp) | GEOM、RUNNER | 单个xyz分量比例加噪后切平面投影；零系数仍3N抽样；不等于MATLAB RNG同序列。 |
+| `help_functions/franzeigen.m` | 1 | `estimators::FranzMatchedFilter::estimate/estimateWithTrace`；[franz_kvd.cpp](../src/estimators/franz_kvd.cpp) | KVD、RUNNER | 三轴平移/旋转响应及各自分母，固定输入独立参考；零分母明确失败。 |
+| `help_functions/getflowfield.m` | 1 | `io::MatResultReader::readFirstCompatible`；[mat_result_reader.cpp](../src/io/mat_result_reader.cpp) | MAT、SNAPSHOT、CLI | 后缀/首变量/多变量边界及封存读取已测，首版二维密集实double；非任意MAT结构承诺。 |
+| `help_functions/getnear_in_kugel_Drehung.m` | 1 | `trajectory::SphereEnvironment::nearnessInUnitSphere`；[sphere.cpp](../src/trajectory/sphere.cpp) | GEOM | 旋转射线、球内交点/正距离解析参考与负例；不接受球外相机。 |
+| `help_functions/getvektor.m` | 1 | `sampling::randomUnitDirection(IRandomSource&)`；[directions.cpp](../src/sampling/directions.cpp) | GEOM、RUNNER | 两次uniform顺序及固定方向，耗尽链；统计分布/L4不由两点样本证明。 |
+| `help_functions/koeff_aus_near.m` | 1 | `harmonics::fitSourceNear` → `low_order::projectSourceCoefficientsOrderTwo`；[adapter](../src/harmonics/adapter.cpp)、[projection](../src/harmonics/low_order_source_projection.cpp) | SH、STEP | l≤2逐通道sum(Y·near)/sum(Y²)，保留源缩放顺序；不是联合最小二乘，零通道范数拒绝。 |
+| `help_functions/kreis_trajektorie.m` | 1 | `trajectory::TrajectoryGenerator::circle`；[trajectory.cpp](../src/trajectory/trajectory.cpp) | GEOM、ILLUSTRATION | 分母N、圆半径/高度与600点独立例；line绘图副作用移至插图层。 |
+| `help_functions/kreuzprodukt.m` | 1 | Eigen `Vector3::cross`，如 [flow.cpp](../src/simulation/flow.cpp)、[franz_kvd.cpp](../src/estimators/franz_kvd.cpp)、[adaptive_step.cpp](../src/estimators/adaptive_step.cpp) | GEOM、KVD、STEP | 三维向量运算内联复用；通过含符号的独立业务参考核对，没有同名包装API。 |
+| `help_functions/kugelflfunc2.m` | 1 | `low_order::basisDirect/basisRecurrence` + MATLAB布局相位转换；[low_order_basis.cpp](../src/harmonics/low_order_basis.cpp) | SH | 求解器实际九基l≤2；CS相位/顺序经布局及投影处理，不是任意l,m角参数API。插图非归一化基另实现。 |
+| `help_functions/kurveglaetten.m` | 1 | 内部 `analysis::detail::smoothSource`；[adaptive.cpp](../src/analysis/adaptive.cpp) | ANALYSIS、SNAPSHOT | 窗口半宽2/5/10、头尾零、先分段/全列两种调用次序；有限参考逐值，辅助源blob有追踪。 |
+| `help_functions/mue_norm_koenderink_iteration.m` | 1 | `estimators::ModifiedKvDEstimator::estimate` → 内部 `estimateKvD(TranslationRule::Modified)`；[franz_kvd.cpp](../src/estimators/franz_kvd.cpp) | KVD、RUNNER | 共享骨架中保留Modified公式分支；逐轮节点与默认停止控制流独立参考，非把两算法合并成同公式。 |
+| `help_functions/near_aus_koeff.m` | 1 | `harmonics::reconstructNear` → `low_order::reconstruct`；[adapter](../src/harmonics/adapter.cpp)、[basis](../src/harmonics/low_order_basis.cpp) | SH、STEP | 逐方向重建九项，调用者遍历N行；l≤2，浮点求和与角度中间值不宣称逐位同源。 |
+| `help_functions/nonpropfehler.m` | 1 | `simulation::MeanMagnitudeGaussianNoise::apply` → 内部 `noiseApply(false)`；[flow.cpp](../src/simulation/flow.cpp) | GEOM、RUNNER | 均总流模长加噪、xyz抽样与切向投影；相消流/零系数仍抽样，NoNoise是独立模式。 |
+| `help_functions/norm_koenderink_iteration.m` | 1 | `estimators::OriginalKvDEstimator::estimate` → 内部 `estimateKvD(TranslationRule::Original)`；[franz_kvd.cpp](../src/estimators/franz_kvd.cpp) | KVD、RUNNER | 源初始化、near翻号、末轮旧near尺度、最少6/默认最多200轮；506次两路径停止参考，正式容差待审。 |
+| `help_functions/normrelfehler.m` | 1 | 内部 `source_metrics::sourceDirectionErrorDegrees`；[source_motion_errors.hpp](../src/numerics/source_motion_errors.hpp) | METRIC、SESSION、ADAPTIVE-CLI | 角度单位degree，acos不钳制；零范数/越界拒绝。真实初始化第14帧cosine=1+2^-52已有诊断。 |
+| `help_functions/oneit_adaptiv_matched_filter.m` | 1 | `estimators::AdaptiveMfaStepSolver::solve` → 内部 `detail::solveAdaptiveMotion` → `fitSourceNear`；[adaptive_step.cpp](../src/estimators/adaptive_step.cpp) | STEP、SH | 正/负均值、6×6系统、MSE、新near/系数逐节点；12条件数场景仅运动阶段可解，整步零投影拒绝。 |
+| `help_functions/richtungsvektoren_icosahedron.m` | 1 | `sampling::IcosahedralSampler::sample`；[directions.cpp](../src/sampling/directions.cpp) | GEOM | 原12顶点/20面/索引和叶顺序；level0…2独立逐行，真实Comparison另用level4。 |
+| `help_functions/rodrigues.m` | 1 | `trajectory::rotationMatrixFromVector` → `Sophus::SO3d::exp`；[kinematics.cpp](../src/trajectory/kinematics.cpp) | GEOM、SH | 仅生产实际调用的向量→矩阵及源eps分支；不实现反向矩阵输入、Jacobian或return后示例，见下节。 |
+| `help_functions/SHRotate.m` | 6 | `low_order::rotationIvanic` + 内部 `irDegreeOne/irDegreeTwo/auxiliaryP/auxiliaryV`；[low_order_rotation.cpp](../src/harmonics/low_order_rotation.cpp) | SH | 原论文/勘误Eigen重写，仅R0/R3/R5；源组合由phase适配另承接，W的零权重与通用高阶边界见下节。 |
+| `help_functions/sinuskurve_trajektorie.m` | 1 | `trajectory::TrajectoryGenerator::sinusoidal`；[trajectory.cpp](../src/trajectory/trajectory.cpp) | GEOM、ILLUSTRATION | 源分母N、不补重复终点；600点独立几何已测，后续角度误差零旋转限制仍存在。 |
+| `help_functions/skalarprodukt.m` | 1 | Eigen `Vector3::dot`，如 [flow.cpp](../src/simulation/flow.cpp)、[kinematics.cpp](../src/trajectory/kinematics.cpp)、[source_motion_errors.hpp](../src/numerics/source_motion_errors.hpp) | GEOM、KVD、STEP、METRIC | 三维点积在业务公式中直接使用；独立数值参考非所有浮点归约顺序逐位证明。 |
+| `help_functions/trajektorie_aus_punkten.m` | 1 | `trajectory::TrajectoryKinematics::fromPoints`；[kinematics.cpp](../src/trajectory/kinematics.cpp) | GEOM、ADAPTIVE-CLI | 源i=2…N-1、局部转置作用/前帧关系；首尾零并标无效，真实轨迹后续零旋转误差拒绝。 |
+| `help_functions/transfehler_div.m` | 1 | 内部 `source_metrics::normalizedVectorError`；[source_motion_errors.hpp](../src/numerics/source_motion_errors.hpp) | METRIC、RUNNER | 先按真值范数缩放估计再取距离；独立弦长/尺度参考，零真值亦显式拒绝计数，不伪称原返回行为相同。 |
+| `help_functions/transfor_koeff.m` | 1 | `harmonics::rotateSourceCoefficients` → 相位包裹 `rotateCoefficients`；[adapter.cpp](../src/harmonics/adapter.cpp) | SH、SESSION | 独立源phase参考及Session实际动作；源CS系数直接乘无CS块，不用物理参数旋转替代。 |
+| `help_functions/winkelausvektor.m` | 1 | 作用被l≤2笛卡尔基 `low_order::basisDirect/basisRecurrence` 融合；[low_order_basis.cpp](../src/harmonics/low_order_basis.cpp) | SH、STEP | 没有独立theta/phi API；单位方向基值及两极有参考，不声称atan2/acos中间轨迹等价。 |
+| `help_functions/zellendefinieren.m` | 1 | `FranzMatchedFilter::estimateWithTrace` 内三轴单位向量循环；[franz_kvd.cpp](../src/estimators/franz_kvd.cpp) | KVD | 替代3×10工作表的三轴累加器；响应/分母逐项有参考，3/轴数=1。 |
+| `illustrations/circle_curve_in_the_sphere.m` | 1 | `illustrations::generate(CircleConfig)` + `SvgExporter::exportSvg`；[geometry](../src/illustrations/geometry.cpp)、[svg](../src/illustrations/svg.cpp) | ILLUSTRATION | 600点圆、sphere(50)、z-only遮罩及画幅/实际CLI；未声称sphere端点运行舍入或Phong像素等价。 |
+| `illustrations/sinosodial_curve_in_the_sphere.m` | 1 | `illustrations::generate(SinusoidalConfig)` + `SvgExporter::exportSvg`；[geometry](../src/illustrations/geometry.cpp)、[svg](../src/illustrations/svg.cpp) | ILLUSTRATION | 600点正弦与遮罩独立参考；保留原错误圆轨迹标题，视觉边界同上。 |
+| `illustrations/spherical_harmonic_illustration.m` | 1 | `illustrations::generate(HarmonicConfig)` + `SvgExporter::exportSvg`；[geometry](../src/illustrations/geometry.cpp)、[svg](../src/illustrations/svg.cpp) | ILLUSTRATION | 未归一化关联勒让德，不限求解器l≤2；degree0…8的45组独立全网格，degree200溢出拒绝，不承诺任意阶资源。 |
 
-| 原源文件与行（1-based） | 声明 | 迁移审计责任（未实现） |
+## SHRotate的六个声明与实际低阶实现
+
+原源文件 [SHRotate.m](../origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/SHRotate.m) 为入口加M/U/P/V/W；不能按声明数推断高阶递推已实现。
+
+| 原声明/1-based行 | 当前承接位置 | 有限范围 |
 |---|---|---|
-| `SHRotate.m:17` | `SHRotate(r,degree)` | `HarmonicRotator::blocks` 的设计主入口；R0/R3/R5 |
-| `SHRotate.m:58` | `M(l,m,n,R)` | band 递推的 U/V/W 加权组合，检查 u/v/w 边界和零系数条件 |
-| `SHRotate.m:87` | `U(l,m,n,R)` | 从 P 构造 U 分量，保持源索引语义 |
-| `SHRotate.m:91` | `P(i,l,a,b,R)` | 根据 b=±l 或内部 m 选择前一阶旋转块，检查边界行列索引 |
-| `SHRotate.m:108` | `V(l,m,n,R)` | m=0、m>0、m<0 的分段公式和符号 |
-| `SHRotate.m:127` | `W(l,m,n,R)` | m≠0 的两路分段及 P 符号 |
+| `SHRotate(r,degree):17` | `rotationIvanic` → `irDegreeOne/irDegreeTwo`；R0在系数旋转时直接保留 | 固定l≤2，无通用degree参数；源唯一生产调用 `transfor_koeff(...)` 固定degree=2 |
+| `M(l,m,n,R):58` | `irDegreeTwo` 的u/v加权组合 | m,n=-2…2；u=0先分支，避免无效前阶索引 |
+| `U(l,m,n,R):87` | 内联为 `auxiliaryP(block,0,m,n)` | 没有单独公开U方法 |
+| `P(i,l,a,b,R):91` | `auxiliaryP` | n=-2、2及内部三列；前阶l=1 |
+| `V(l,m,n,R):108` | `auxiliaryV` | m=0、正、负及delta分支；注释保留IR98表与公式的符号复核依据 |
+| `W(l,m,n,R):127` | **没有W函数**；`irDegreeTwo` 显式说明w恒为0而省略 | l=2时m=0因(1-d)=0，abs(m)=1/2因乘积含0；原M亦仅w≠0才调用W。不是遗漏有效低阶项，也不是高阶W已移植 |
 
-这些内部子函数可在将来以 **私有辅助函数/内部实现**承担，不要求增加五个公开 C++ 方法；实际实现必须依据 Ivanic–Ruedenberg **1996 原文＋1998 勘误**，纯 Eigen 独立重写、禁 sdla，禁止以源 MATLAB 对 Don Williamson 的转述替代论文逐式审查。独立 L3 的 R3(9)/R5(25)、相位/方向、近零/复合旋转和真实 CTest 全部未完成。另见 [球谐 LLD](design/harmonics.md)、[专题声明](design/SH_ROTATION_IVANIC_RUEDENBERG.md)。
+数学重写依据为1996原论文及1998勘误，生产只依赖Eigen、不含sdla。TensorDirect/Choi为现有独立对照路径，实际适配选择Ivanic。原 `transfor_koeff` 的CS系数与无CS旋转块组合由 `rotateSourceCoefficients` 的相位变换承接；`rotateCoefficients` 则具有显式物理参数作用合同，两者不能互换。[源phase及Session实测](reviews/R6_SH_SOURCE_ACTION_2026-11-17.md) 和三个low_order CTest提供有限独立证据；不等于MATLAB运行轨迹逐位一致或任意l资格。
 
-**一个例外**：`help_functions/rodrigues.m` 的 `return;` 位于第 **177 行**；其后的 Jacobian/随机旋转检查例子不再构成新的函数声明，且不是调用这个函数时会自动运行的生产路径。不得把这些示例当成项目原算法的运行条件或已经通过的测试。对原函数实际使用的“向量→矩阵”分支仍以已选 Sophus `SO3d::exp` 方案及原 epsilon 判据为准。
+## 调用范围与不应误报为实现完成的分支
 
-## 后续需要完成但**不由本矩阵宣称已完成**
+1. [rodrigues.m](../origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/rodrigues.m) 在第177行return之前确有向量/矩阵输入和Jacobian计算。当前业务调用只取旋转向量的单个矩阵输出；选定Sophus实现保留原eps分支。矩阵→向量、Jacobian没有C++对应，也无测试资格；177行后的检查示例不构成生产调用。此处记录既有范围，不新增或删除验收义务。
+2. 原 `kugelflfunc2/near_aus_koeff/koeff_aus_near` 可表达不同阶数，但当前求解器HarmonicCoefficients为3×5、九个有效系数，Adaptive固定二阶。其笛卡尔基融合了 `winkelausvektor` 的作用，不提供角度中间输出。插图未归一化勒让德是独立通用阶数路径，不能用其测试证明求解器高阶支持。
+3. 原脚本的图形副作用与数据生成分离到分析/插图JSON及可选SVG；不承诺MATLAB灯光、默认图例或逐像素一致。源球面端点舍入边界仍按插图报告记录。
+4. 错误策略（零范数、未定义角度、非有限结果、历史缺字段拒绝）已在当前合同和测试显式处理。三Adaptive实际入口未成功；替身的Complete合同与真实失败合同均不能代替完整产物/L2对照。未知RNG运行序列不冒充MATLAB同序列。
 
-- 已列出 45 个文件中全部 **50 个函数声明**；仍须逐项审查各函数内部全部数学分支、调用图、错误/非有限路径、状态、输出及 MAT 读写。声明清点≠数学等价或实现完成。
-- HLD/LLD 以真实可编译 C++17 接口、Result/Status、RAII、RNG 注入、Session 状态、Writer 路径安全逐模块冻结；实际代码、CMake target 和 CTest 均不存在完整业务验收证据。
-- 使用 L2 原作者 MAT（只读逐值及独立 SHA-256）、L3 独立逐节点/一般与退化输入、必要 L4 统计；不要求运行 MATLAB/Octave 或采集 L1。DEC-005/006/008、H-10/H-11 及人类签署仍按 [TODO](TODO.md) 处理。
+## 静态核查与下一步
 
-**文件级静态核对：45/45；声明级静态清点：50/50（含 SHRotate 内部 5 个）；数学逐式/实际代码/CTest 验收：未进行。**
+本轮集合、文件身份、函数数、链接及测试证据核对见 [复核记录](reviews/R6_SOURCE_IMPLEMENTATION_MAP_2026-11-17.md)。**45/45路径有当前实现或明确融合/范围说明，50/50声明有去向说明；这不是50个函数分支全部验证，也不等于45份实验全部成功。** 本轮只更新文档，未重跑CMake/CTest；代码与测试沿用固定130a82的48/48证据。
+
+继续逐项处理 [TC映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md) 的剩余义务，先核实交付依赖/可选绘图与日志、输出合同，再准备真实完整实验、病态数值/资源及正式验收材料；具体授权仍按 [TODO](TODO.md)。不因审批延期停止可独立完成的工作，不通过改门槛把现有失败改成成功。

@@ -1,5 +1,7 @@
 # Egomotion Estimation with Dense Flow Fields：软件需求规格说明书（SRS）
 
+> **2026-11-17 实现追踪事实 `[AI-EDIT]`**：§9.2的45源路径/REQ/TC关系不变，实现状态改为当前有限证据，详见 [迁移矩阵](MIGRATION_MATRIX.md)。代码130a82构建与48/48 CTest已实测；下列旧“未构建/未实现”属于早期草案时点，不能覆盖固定SHA的运行事实。需求义务、优先级、数值阈值及未冻结/未验收状态均不改变。
+
 > **状态：草案 v0.25（补Bias噪声模型coefficient必需参数、CompositionRoot唯一注入及错误类型分层，仍未构建/验收）。** 本文档规定系统的可验证义务，版本及基线身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)；[PLAN.md](PLAN.md) 负责实现架构、P0–P10 任务及依赖；[AGENTS.md](../AGENTS.md) 负责开发与 Git 安全规则。需求依据被确认不代表程序已实现。
 
 ## 1. 目的、范围与约束
@@ -399,61 +401,61 @@
 | P10.9 | REQ-PROC-TRACE-001, REQ-NF-OOP-001, REQ-NF-SESSION-001 |
 | P10.10 | REQ-PROC-TRACE-001, REQ-NF-OOP-001 |
 
-### 9.2 原始 MATLAB 45 文件逐文件追踪（清单已核实，代码未移植）
+### 9.2 原始 MATLAB 45 文件逐文件追踪（现行实现证据另列）
 
-每行列出在原始 `origin/egomotion_estimation_dense_flow_fields_matlab_scripts/` 下的**真实相对路径**。相关 TC ID 与 REQ 的后缀一一对应，详见 TEST_PLAN；部分文件出现在多个原实验中，列出首要需求及直接相关需求。文件存在不代表 C++ 已移植或 MATLAB 已运行。
+每行列出在原始 `origin/egomotion_estimation_dense_flow_fields_matlab_scripts/` 下的**真实相对路径**。相关 TC ID 与 REQ 的后缀一一对应，详见 TEST_PLAN；部分文件出现在多个原实验中，列出首要需求及直接相关需求。文件存在不代表C++已移植。2026-11-17 `[AI-EDIT]` 仅更新本表实现状态；实际符号、源码、测试及限制统一见 [MIGRATION_MATRIX](MIGRATION_MATRIX.md)，最新受测代码130a82为48/48 CTest，所有行均未正式验收。不改变下列REQ/TC关联或任何AC义务，不要求MATLAB运行。
 
 | 原始 MATLAB 文件 | 对应 REQ | 主要计划 TC | 源码状态/实现状态 |
 |---|---|---|---|
-| `adaptive_matched_filter_test/data_analysis/graph_agent_in_sphere_adaptive_matched_filter_many_parameter.m` | REQ-F-AN-001, REQ-F-CLI-004 | TC-F-AN-001 | 已定位 / 未移植、未测试 |
-| `adaptive_matched_filter_test/data_analysis/graph_agent_in_sphere_adaptive_matched_filter_test.m` | REQ-F-AN-001, REQ-F-CLI-004 | TC-F-AN-001 | 已定位 / 未移植、未测试 |
-| `adaptive_matched_filter_test/data_analysis/graph_agent_in_sphere_initialization_test.m` | REQ-F-AN-001, REQ-F-CLI-004 | TC-F-AN-001 | 已定位 / 未移植、未测试 |
-| `adaptive_matched_filter_test/data_generation/agent_in_sphere_adaptive_matched_filter_many_parameter.m` | REQ-F-EXP-003, REQ-F-CLI-003 | TC-F-EXP-003 | 已定位 / 未移植、未测试 |
-| `adaptive_matched_filter_test/data_generation/agent_in_sphere_adaptive_matched_filter_test.m` | REQ-F-EXP-002, REQ-F-CLI-003 | TC-F-EXP-002 | 已定位 / 未移植、未测试 |
-| `adaptive_matched_filter_test/data_generation/agent_in_sphere_initialization_test.m` | REQ-F-EXP-001, REQ-F-CLI-003 | TC-F-EXP-001 | 已定位 / 未移植、未测试 |
-| `bias_test/data_analysis/graphs_bias_test.m` | REQ-F-BIAS-003, REQ-F-CLI-004 | TC-F-BIAS-003 | 已定位 / 未移植、未测试 |
-| `bias_test/data_generation/bias_test_nonspherical.m` | REQ-F-BIAS-001, REQ-F-CLI-002 | TC-F-BIAS-001 | 已定位 / 未移植、未测试 |
-| `bias_test/data_generation/bias_test_spherical_prop_error.m` | REQ-F-BIAS-002, REQ-F-CLI-002 | TC-F-BIAS-002 | 已定位 / 未移植、未测试 |
-| `help_functions/SHRotate.m` | REQ-F-SH-002 | TC-F-SH-002 | 已定位 / 未移植、未测试 |
-| `help_functions/drehvektor_aus_zwei_vektoren.m` | REQ-F-TRAJ-001 | TC-F-TRAJ-001 | 已定位 / 未移植、未测试 |
-| `help_functions/erzeugeflussausnear.m` | REQ-F-FLOW-001 | TC-F-FLOW-001 | 已定位 / 未移植、未测试 |
-| `help_functions/erzeugekreuzproduktmatrix.m` | REQ-F-GEOM-001 | TC-F-GEOM-001 | 已定位 / 未移植、未测试 |
-| `help_functions/erzeugerichtungsvektoren.m` | REQ-F-GEOM-002 | TC-F-GEOM-002 | 已定位 / 未移植、未测试 |
-| `help_functions/erzeugerichtungsvektoren_loch.m` | REQ-F-GEOM-002 | TC-F-GEOM-002 | 已定位 / 未移植、未测试 |
-| `help_functions/findeDreiecke.m` | REQ-F-GEOM-002, REQ-F-GEOM-003 | TC-F-GEOM-002 | 已定位 / 未移植、未测试 |
-| `help_functions/fixed_kugel_symmetric_perfectpoints_randomnear.m` | REQ-F-FLOW-002, REQ-F-FLOW-003 | TC-F-FLOW-002 | 已定位 / 未移植、未测试 |
-| `help_functions/fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m` | REQ-F-FLOW-002, REQ-F-FLOW-003 | TC-F-FLOW-002 | 已定位 / 未移植、未测试 |
-| `help_functions/franzeigen.m` | REQ-F-FILTER-001 | TC-F-FILTER-001 | 已定位 / 未移植、未测试 |
-| `help_functions/getflowfield.m` | REQ-F-MAT-003, REQ-I-MAT-001 | TC-F-MAT-003 | 已定位 / 未移植、未测试 |
-| `help_functions/getnear_in_kugel_Drehung.m` | REQ-F-FLOW-004 | TC-F-FLOW-004 | 已定位 / 未移植、未测试 |
-| `help_functions/getvektor.m` | REQ-DC-RNG-001 | TC-DC-RNG-001 | 已定位 / 未移植、未测试 |
-| `help_functions/koeff_aus_near.m` | REQ-F-SH-001 | TC-F-SH-001 | 已定位 / 未移植、未测试 |
-| `help_functions/kreis_trajektorie.m` | REQ-F-TRAJ-001 | TC-F-TRAJ-001 | 已定位 / 未移植、未测试 |
-| `help_functions/kreuzprodukt.m` | REQ-F-GEOM-001 | TC-F-GEOM-001 | 已定位 / 未移植、未测试 |
-| `help_functions/kugelflfunc2.m` | REQ-F-SH-001 | TC-F-SH-001 | 已定位 / 未移植、未测试 |
-| `help_functions/kurveglaetten.m` | REQ-F-AN-001 | TC-F-AN-001 | 已定位 / 未移植、未测试 |
-| `help_functions/mue_norm_koenderink_iteration.m` | REQ-F-KVD-001 | TC-F-KVD-001 | 已定位 / 未移植、未测试 |
-| `help_functions/near_aus_koeff.m` | REQ-F-SH-001 | TC-F-SH-001 | 已定位 / 未移植、未测试 |
-| `help_functions/nonpropfehler.m` | REQ-F-FLOW-003 | TC-F-FLOW-003 | 已定位 / 未移植、未测试 |
-| `help_functions/norm_koenderink_iteration.m` | REQ-F-KVD-001 | TC-F-KVD-001 | 已定位 / 未移植、未测试 |
-| `help_functions/normrelfehler.m` | REQ-F-ERROR-001 | TC-F-ERROR-001 | 已定位 / 未移植、未测试 |
-| `help_functions/oneit_adaptiv_matched_filter.m` | REQ-F-ADAPT-001 | TC-F-ADAPT-001 | 已定位 / 未移植、未测试 |
-| `help_functions/richtungsvektoren_icosahedron.m` | REQ-F-GEOM-003 | TC-F-GEOM-003 | 已定位 / 未移植、未测试 |
-| `help_functions/rodrigues.m` | REQ-F-TRAJ-001, REQ-F-SH-002 | TC-F-TRAJ-001 | 已定位 / 未移植、未测试 |
-| `help_functions/sinuskurve_trajektorie.m` | REQ-F-TRAJ-001 | TC-F-TRAJ-001 | 已定位 / 未移植、未测试 |
-| `help_functions/skalarprodukt.m` | REQ-F-GEOM-001 | TC-F-GEOM-001 | 已定位 / 未移植、未测试 |
-| `help_functions/trajektorie_aus_punkten.m` | REQ-F-TRAJ-001 | TC-F-TRAJ-001 | 已定位 / 未移植、未测试 |
-| `help_functions/transfehler_div.m` | REQ-F-ERROR-001 | TC-F-ERROR-001 | 已定位 / 未移植、未测试 |
-| `help_functions/transfor_koeff.m` | REQ-F-SH-002 | TC-F-SH-002 | 已定位 / 未移植、未测试 |
-| `help_functions/winkelausvektor.m` | REQ-F-SH-001 | TC-F-SH-001 | 已定位 / 未移植、未测试 |
-| `help_functions/zellendefinieren.m` | REQ-F-FILTER-001 | TC-F-FILTER-001 | 已定位 / 未移植、未测试 |
-| `illustrations/circle_curve_in_the_sphere.m` | REQ-F-AN-002 | TC-F-AN-002 | 已定位 / 未移植、未测试 |
-| `illustrations/sinosodial_curve_in_the_sphere.m` | REQ-F-AN-002 | TC-F-AN-002 | 已定位 / 未移植、未测试 |
-| `illustrations/spherical_harmonic_illustration.m` | REQ-F-AN-002 | TC-F-AN-002 | 已定位 / 未移植、未测试 |
+| `adaptive_matched_filter_test/data_analysis/graph_agent_in_sphere_adaptive_matched_filter_many_parameter.m` | REQ-F-AN-001, REQ-F-CLI-004 | TC-F-AN-001 | 有现行对应及有限测试；见迁移矩阵 |
+| `adaptive_matched_filter_test/data_analysis/graph_agent_in_sphere_adaptive_matched_filter_test.m` | REQ-F-AN-001, REQ-F-CLI-004 | TC-F-AN-001 | 有现行对应及有限测试；见迁移矩阵 |
+| `adaptive_matched_filter_test/data_analysis/graph_agent_in_sphere_initialization_test.m` | REQ-F-AN-001, REQ-F-CLI-004 | TC-F-AN-001 | 有现行对应及有限测试；见迁移矩阵 |
+| `adaptive_matched_filter_test/data_generation/agent_in_sphere_adaptive_matched_filter_many_parameter.m` | REQ-F-EXP-003, REQ-F-CLI-003 | TC-F-EXP-003 | 有实现；真实入口Incomplete，无完整MAT |
+| `adaptive_matched_filter_test/data_generation/agent_in_sphere_adaptive_matched_filter_test.m` | REQ-F-EXP-002, REQ-F-CLI-003 | TC-F-EXP-002 | 有实现；真实入口Incomplete，无完整MAT |
+| `adaptive_matched_filter_test/data_generation/agent_in_sphere_initialization_test.m` | REQ-F-EXP-001, REQ-F-CLI-003 | TC-F-EXP-001 | 有实现；真实入口Incomplete，无完整MAT |
+| `bias_test/data_analysis/graphs_bias_test.m` | REQ-F-BIAS-003, REQ-F-CLI-004 | TC-F-BIAS-003 | 有现行对应及有限测试；见迁移矩阵 |
+| `bias_test/data_generation/bias_test_nonspherical.m` | REQ-F-BIAS-001, REQ-F-CLI-002 | TC-F-BIAS-001 | 有现行对应及有限测试；见迁移矩阵 |
+| `bias_test/data_generation/bias_test_spherical_prop_error.m` | REQ-F-BIAS-002, REQ-F-CLI-002 | TC-F-BIAS-002 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/SHRotate.m` | REQ-F-SH-002 | TC-F-SH-002 | 仅l≤2；W零权重不求值，非通用高阶 |
+| `help_functions/drehvektor_aus_zwei_vektoren.m` | REQ-F-TRAJ-001 | TC-F-TRAJ-001 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/erzeugeflussausnear.m` | REQ-F-FLOW-001 | TC-F-FLOW-001 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/erzeugekreuzproduktmatrix.m` | REQ-F-GEOM-001 | TC-F-GEOM-001 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/erzeugerichtungsvektoren.m` | REQ-F-GEOM-002 | TC-F-GEOM-002 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/erzeugerichtungsvektoren_loch.m` | REQ-F-GEOM-002 | TC-F-GEOM-002 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/findeDreiecke.m` | REQ-F-GEOM-002, REQ-F-GEOM-003 | TC-F-GEOM-002 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/fixed_kugel_symmetric_perfectpoints_randomnear.m` | REQ-F-FLOW-002, REQ-F-FLOW-003 | TC-F-FLOW-002 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/fixed_propfehler_kugel_symmetric_perfectpoints_randomnear.m` | REQ-F-FLOW-002, REQ-F-FLOW-003 | TC-F-FLOW-002 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/franzeigen.m` | REQ-F-FILTER-001 | TC-F-FILTER-001 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/getflowfield.m` | REQ-F-MAT-003, REQ-I-MAT-001 | TC-F-MAT-003 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/getnear_in_kugel_Drehung.m` | REQ-F-FLOW-004 | TC-F-FLOW-004 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/getvektor.m` | REQ-DC-RNG-001 | TC-DC-RNG-001 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/koeff_aus_near.m` | REQ-F-SH-001 | TC-F-SH-001 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/kreis_trajektorie.m` | REQ-F-TRAJ-001 | TC-F-TRAJ-001 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/kreuzprodukt.m` | REQ-F-GEOM-001 | TC-F-GEOM-001 | Eigen运算融合；业务独立参考间接验证 |
+| `help_functions/kugelflfunc2.m` | REQ-F-SH-001 | TC-F-SH-001 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/kurveglaetten.m` | REQ-F-AN-001 | TC-F-AN-001 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/mue_norm_koenderink_iteration.m` | REQ-F-KVD-001 | TC-F-KVD-001 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/near_aus_koeff.m` | REQ-F-SH-001 | TC-F-SH-001 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/nonpropfehler.m` | REQ-F-FLOW-003 | TC-F-FLOW-003 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/norm_koenderink_iteration.m` | REQ-F-KVD-001 | TC-F-KVD-001 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/normrelfehler.m` | REQ-F-ERROR-001 | TC-F-ERROR-001 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/oneit_adaptiv_matched_filter.m` | REQ-F-ADAPT-001 | TC-F-ADAPT-001 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/richtungsvektoren_icosahedron.m` | REQ-F-GEOM-003 | TC-F-GEOM-003 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/rodrigues.m` | REQ-F-TRAJ-001, REQ-F-SH-002 | TC-F-TRAJ-001 | 实际向量→矩阵分支已测；反向/Jacobian未实现 |
+| `help_functions/sinuskurve_trajektorie.m` | REQ-F-TRAJ-001 | TC-F-TRAJ-001 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/skalarprodukt.m` | REQ-F-GEOM-001 | TC-F-GEOM-001 | Eigen运算融合；业务独立参考间接验证 |
+| `help_functions/trajektorie_aus_punkten.m` | REQ-F-TRAJ-001 | TC-F-TRAJ-001 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/transfehler_div.m` | REQ-F-ERROR-001 | TC-F-ERROR-001 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/transfor_koeff.m` | REQ-F-SH-002 | TC-F-SH-002 | 有现行对应及有限测试；见迁移矩阵 |
+| `help_functions/winkelausvektor.m` | REQ-F-SH-001 | TC-F-SH-001 | 作用融入低阶基；无角度输出API |
+| `help_functions/zellendefinieren.m` | REQ-F-FILTER-001 | TC-F-FILTER-001 | 有现行对应及有限测试；见迁移矩阵 |
+| `illustrations/circle_curve_in_the_sphere.m` | REQ-F-AN-002 | TC-F-AN-002 | 有现行对应及有限测试；见迁移矩阵 |
+| `illustrations/sinosodial_curve_in_the_sphere.m` | REQ-F-AN-002 | TC-F-AN-002 | 有现行对应及有限测试；见迁移矩阵 |
+| `illustrations/spherical_harmonic_illustration.m` | REQ-F-AN-002 | TC-F-AN-002 | 有现行对应及有限测试；见迁移矩阵 |
 
 ### 9.3 实际测试实体追踪
 
-[TEST_PLAN.md](TEST_PLAN.md) 中给出全部需求的候选测试源文件、CTest 前缀与人工验收方式；这些候选实体尚未创建，真实源文件路径、测试函数、Golden SHA、执行命令与通过状态须由 P1–P10 逐步回填。不允许用 TC 编号存在代替测试已实现。
+[TEST_PLAN.md](TEST_PLAN.md) 保留66项TC/AC及候选验收实体；真实CTest名称、源文件、固定SHA与覆盖限制见 [66 TC证据映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)，实际命令/结果见 [PROGRESS](PROGRESS.md)。候选实体名称不应冒充已建目标，48项实际CTest通过也不能代替66项TC全部义务验收。
 
 ### 9.4 待冻结的参数化验收合同（增强说明）
 

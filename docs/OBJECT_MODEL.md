@@ -1,5 +1,7 @@
 # 对象模型与生命周期合同（Object Model）
 
+> **2026-11-17 当前实现追踪 `[AI-EDIT]`**：45份源文件及50个声明的实际承接位置、融合实现和范围见 [迁移矩阵](MIGRATION_MATRIX.md)；§7保留候选设计分配，不用其旧“未创建”文字否定现有实现。实际四分析入口使用MatResultAnalyzer，三Adaptive入口使用AdaptiveExperimentRunner，低阶球谐采用自由函数/适配层；这些名称差别不代表已批准对象模型冻结。受测代码130a82的48/48及剩余边界见 [复核记录](reviews/R6_SOURCE_IMPLEMENTATION_MAP_2026-11-17.md)。
+
 > **2026-11-17 插图实现事实 `[AI-EDIT]`**：实际公共头 `include/egomotion/illustrations/illustration.hpp` 提供三个独立Config、值对象Data/SurfaceGrid和可选IExporter；generate/dataJson为纯数值函数，SvgExporter消费const Data及ITextPublisher。没有在分析IPlotExporter中新增draw*方法；§7三行映射已据实更新。固定 `8c808be` 的45/45 CTest及限制见 [记录](reviews/R6_ILLUSTRATIONS_2026-11-17.md)，不替代对象模型整体冻结/验收；其余旧“未创建”描述须结合当前PROGRESS读取。
 
 > **对象模型草案 v1.2（修复IFlowNoiseModel图示漏coefficient及Bias模式装配职责）；P0.7/P0.8 待评审，未冻结，拟议业务类与跨模块公共ABI尚未建立。受限低阶球谐叶子C++已独立实现并在固定SHA获得用户原生3/3 CTest证据，不能将其归入下列未创建的公共类。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入；各文档当前版本、固定 SHA 和冻结状态统一由 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记，运行结果以 [PROGRESS](PROGRESS.md) 为准。
@@ -203,7 +205,7 @@ stateDiagram-v2
 
 ## 7. 原 MATLAB 45 文件 → 预定 C++ 类方法/自由函数映射（P0.7）
 
-**这是设计分配表，不是实现清单。** MATLAB 文件名和路径已在源树核对；右列只是拟定责任归属与能力名称，未创建 C++ 类、方法或测试。具体函数签名、参数、source SHA 与对应 REQ/TC 见 SRS §9.2 及模块 LLD，后续要逐项冻结。
+**这是候选设计分配表，保留原草案名称。** MATLAB 文件名和路径已在源树核对；当前真实C++类/自由函数、与旧候选的差别及测试证据以 [MIGRATION_MATRIX](MIGRATION_MATRIX.md) 为准，不能由本表旧状态判断当前实现不存在。具体合同和对应REQ/TC见SRS §9.2及模块LLD，正式冻结仍未完成。
 
 | 原始文件（相对于 origin 数据根目录） | 拟定拥有职责的类/函数 | 设计/验证状态 |
 |---|---|---|

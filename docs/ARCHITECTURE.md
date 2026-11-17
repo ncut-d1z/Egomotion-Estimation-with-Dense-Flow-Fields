@@ -1,5 +1,7 @@
 # 系统概要设计（HLD）— MATLAB 自运动估计 C++ 移植
 
+> **2026-11-17 实际符号索引 `[AI-EDIT]`**：原45源当前对应统一见 [MIGRATION_MATRIX](MIGRATION_MATRIX.md)，包括四类分析由MatResultAnalyzer分派、三Adaptive由AdaptiveExperimentRunner分模式计算、两Bias共享注入式计算，以及SH低阶自由函数/源phase适配。下文候选类/target名称不是源码符号证明；本次只登记事实，不改变依赖/所有权合同或冻结状态。
+
 > **2026-11-17 实际target补充 `[AI-EDIT]`**：CMake增加 `egomotion_illustrations`（几何/JSON，链接领域/合同并私有复用simulation轨迹）与独立 `egomotion_illustration_svg`（仅消费插图Data）。CLI库仅需要数值模块，实际可执行程序装配SVG导出器；没有新增外部绘图库。固定 `8c808be` 构建及45/45 CTest有 [证据](reviews/R6_ILLUSTRATIONS_2026-11-17.md)。这是实现事实，下面拟议target图的正式评审/冻结状态不变。
 
 > **状态：HLD v0.10 评审草案，未冻结。** 当前统一文档版本与冻结状态见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，实际 matio 探针/构建/CTest/数值证据仅见 [PROGRESS.md](PROGRESS.md)；此处只定义稳定架构边界，不以历史探针代替架构验收。 来源是已核对的 MATLAB 源码和原 PLAN §3/4/6。需求依据见 [REQUIREMENTS.md](REQUIREMENTS.md)，类职责附件见 [OBJECT_MODEL.md](OBJECT_MODEL.md)，详细设计待定见 [design/README.md](design/README.md)，执行安排见 [PLAN.md](PLAN.md)。以 [AGENTS.md](../AGENTS.md) 和项目所有者批准为准。

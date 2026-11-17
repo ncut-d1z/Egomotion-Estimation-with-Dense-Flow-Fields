@@ -5,7 +5,7 @@
 - 来源目录：`origin/egomotion_estimation_dense_flow_fields_matlab_scripts/`；固定输入仓库提交：`e6d4e7af6eaba109e189fb647429bc691be22ea9`；来源目录 tree SHA：`459f9172df05a4cbcc966e8f5a3da7e86b992be9`。
 - **实际集合**：45 个 `.m`（按函数声明共 50 个：44 个单函数文件＋`SHRotate.m` 的主函数及 M/U/P/V/W 五个内部子函数）、582 个 `.mat`、1 个原始 `readme`（Git blob `e349e4ba44ec9d0e687ed130961ce5c8be87e33c`）。源脚本分组：`adaptive_matched_filter_test` 6；`bias_test` 3；`help_functions` 33；`illustrations` 3。
 - **身份差别**：下表 Git blob SHA 是 Git 对象 ID，**不是**文件内容的独立 SHA-256，更不是原 matio 探针记录的 FNV64。582 MAT 的变量/dims/dtype/FNV/读取报告统一见 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md)，此处不重复 582 条。
-- C++ 候选方法的**唯一职责分配**见 [MIGRATION_MATRIX.md](MIGRATION_MATRIX.md)；正式数学、实现接口/所有权与测试证据分别在 [对象模型](OBJECT_MODEL.md)、[LLD 索引](design/README.md)、[TEST_PLAN](TEST_PLAN.md)、[PROGRESS](PROGRESS.md)。
+- 当前C++符号、融合实现、低阶/调用范围及有限证据见 [MIGRATION_MATRIX.md](MIGRATION_MATRIX.md)；候选职责与正式数学/接口仍见 [对象模型](OBJECT_MODEL.md)、[LLD 索引](design/README.md)，规范测试与真实执行分别见 [TEST_PLAN](TEST_PLAN.md)、[PROGRESS](PROGRESS.md)。本身份表不因实现状态更新而重新定义源blob或正式批准。
 
 | 原源相对路径（相对来源目录） | Git blob SHA | 字节 | 主要 REQ | 计划 TC |
 |---|---|---:|---|---|
