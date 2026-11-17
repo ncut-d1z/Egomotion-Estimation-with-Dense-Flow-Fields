@@ -34,7 +34,7 @@ namespace {
 using namespace egomotion;
 namespace fs=std::filesystem;
 using Bytes=std::vector<unsigned char>;
-constexpr std::uint32_t kInt8=1,kInt32=5,kUint32=6,kSingle=7,kDouble=9,kMatrix=14,kCompressed=15;
+constexpr std::uint32_t kInt8=1,kInt32=5,kUint32=6,kSingle=7,kDouble=9,kMatrix=14,kCompressed=15,kUtf8=16;
 constexpr std::size_t kHeaderBytes=128,kTagBytes=8;
 const std::vector<double> kValues{1.0,-0.0,-3.5,4.0,0.25,6.0};
 void require(bool condition,const std::string& message){if(!condition)throw std::runtime_error(message);}
@@ -65,7 +65,8 @@ Bytes numbers(const std::vector<double>& values,std::uint32_t type,bool little){
         else if(type==kSingle){
             const float narrowed=static_cast<float>(value);std::uint32_t bits;
             std::memcpy(&bits,&narrowed,sizeof(bits));word(out,bits,4,little);
-        }else word(out,static_cast<std::uint32_t>(static_cast<std::int32_t>(value)),4,little);
+        }else if(type==kUtf8)word(out,static_cast<unsigned char>(value),1,little);
+        else word(out,static_cast<std::uint32_t>(static_cast<std::int32_t>(value)),4,little);
     }
     return out;
 }
@@ -74,6 +75,7 @@ struct Fixture {
     std::vector<std::uint32_t> dims{2,3};
     std::vector<double> values=kValues;
     std::uint32_t storage=kDouble;
+    std::uint32_t class_type=6;
     bool small_name=false,small_real=false;
     bool single_neighbor=false;
     std::optional<MatErrorCode> rejected;
@@ -81,7 +83,7 @@ struct Fixture {
 };
 Bytes matrix(const Fixture& fixture,bool little){
     Bytes body,flags,dims;
-    word(flags,6,4,little);word(flags,0,4,little); // mxDOUBLE_CLASS，非logical/complex。
+    word(flags,fixture.class_type,4,little);word(flags,0,4,little); // 非logical/complex。
     element(body,kUint32,flags,little);
     for(auto value:fixture.dims)word(dims,value,4,little);
     element(body,kInt32,dims,little);
@@ -212,6 +214,8 @@ std::vector<Fixture> fixtures(){
     add("unknown-storage",MatErrorCode::UnsupportedClassOrType,"unknown-storage");
     add("root-short",MatErrorCode::CorruptCompressedData,"root-short");
     add("root-long",MatErrorCode::CorruptCompressedData,"root-long");
+    add("char-root-long",MatErrorCode::CorruptCompressedData,"root-long");
+    out.back().class_type=4;out.back().storage=kUtf8;out.back().values={'a','b','c','d','e','f'};
     // 压缩流内必须只有一份miMATRIX，不能忽略剩余解压元素。
     add("extra-element",MatErrorCode::CorruptCompressedData,"extra-element");
     return out;

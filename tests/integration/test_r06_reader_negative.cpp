@@ -59,7 +59,9 @@ std::vector<Fixture> fixtures() {
     out.push_back({"int32",numeric("value",MAT_C_INT32,MAT_T_INT32,integers.data()),false});
     out.push_back({"logical",numeric("value",MAT_C_UINT8,MAT_T_UINT8,logical.data(),{2,3},MAT_F_LOGICAL),false});
     out.push_back({"complex",numeric("value",MAT_C_DOUBLE,MAT_T_DOUBLE,&complex,{2,3},MAT_F_COMPLEX),false});
-    out.push_back({"char",numeric("value",MAT_C_CHAR,MAT_T_UINT8,chars.data()),false});
+    // 明示实际字符编码；matio1.5.26把UINT8 char写成压缩UTF8时会高估根长度。
+    // 错误根长度另由独立raw夹具检查，不混入“合法但不支持的char”场景。
+    out.push_back({"char",numeric("value",MAT_C_CHAR,MAT_T_UTF8,chars.data()),false});
     out.push_back({"rank3",numeric("value",MAT_C_DOUBLE,MAT_T_DOUBLE,doubles.data(),{2,1,3}),false,MatErrorCode::InvalidShape});
     out.push_back({"empty",numeric("value",MAT_C_DOUBLE,MAT_T_DOUBLE,nullptr,{0,3}),false,MatErrorCode::InvalidShape});
 
@@ -118,7 +120,8 @@ void checkFixture(const fs::path& path,const Fixture& fixture) {
                     "Supported fixture values/negative zero changed");
         }else{
             require(!result.hasValue(),"Reader silently accepted unsupported fixture");
-            require(result.error().code==fixture.error,"Wrong typed error for unsupported fixture");
+            require(result.error().code==fixture.error,"Wrong typed error for unsupported fixture: "+
+                    std::string(errorName(result.error().code))+" "+result.error().detail.message);
             require(result.error().detail.stage==ErrorStage::Decode&&
                     result.error().detail.source_path==path.string()&&
                     result.error().detail.variable=="value","Reader error lost source/stage/variable");

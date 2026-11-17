@@ -21,3 +21,11 @@
 候选修正为私有 `mat_payload_validation.{hpp,cpp}`：在任何`Mat_VarRead`前，以固定缓冲流式检查每个miMATRIX的flags、signed dims及乘法/解码字节溢出、普通/small字段边界、实际数值元素宽度×数量、根长度、完整压缩结束和剩余字节；仍由matio拥有实际数值解码。保留同一fd身份，支持原582个double及miINT32 packed原文件，不自行转换新数值。double class下single载荷明确拒绝；具名读取仍可选择另一个合法变量，不会仅因无关变量使用single存储就拒绝所选值。struct/cell/sparse仅检查当前层边界，**不宣称递归类型支持/全部恶意结构安全，也未设生产资源预算**。inspect路径保持metadata-only。
 
 修正回归保留原70场景，增加4个混合文件具名选择、16个流式跨块正例，合计90场景；新增仅测试链接的 `--wrap=Mat_VarRead` 计数，要求每个非法载荷在调用matio数值读取前拒绝，并验证完整字典扫描同样拒绝。更广raw存储集合的正式冻结、嵌套恶意对象与性能/资源资格仍待后续，不以本批代替完整R6。
+
+## 第二轮：90个raw场景通过，定位旧char夹具错误
+
+`926f07871dbc524f2630879a5a59d994fa80d44a`，RunId `r6-mat-payload-fix-20261117-oRRxVQOE`：配置/编译exit0且无诊断，新增90/90场景全部通过，582 MAT/33,340值仍精确一致；MAT5项中4通过，旧29场景的 `zlib-char` 错误分类断言失败。输入SHA核对exit0，日志SHA-256另由该批 `evidence/` 保留；未执行其余24项。
+
+已实际只读检查失败文件字节（审计RunId `r6-char-layout-20261117-QUuz0FOI`，Node18.19.1内置fs/zlib，无安装、无生产Node依赖）：plain-char解压长度72、root声明64，结束位置72正确；zlib-char解压长度同为72，却root声明72、结束位置80。两者均class4、shape2×3、UTF8 type16、6字符abcdef。后者是**matio 1.5.26生成器对UINT8 char压缩根长度高估8字节的夹具问题**，新校验拒绝该不一致符合合同。静态源码的 `GetTypeBufSize` 与 `WriteCompressedCharData` 路径支持此诊断；不修改第三方代码或放宽生产根长度检查。
+
+把旧“合法但不支持的char”夹具输入编码明确为 `MAT_T_UTF8`，保留相同字符/shape、UnsupportedClassOrType及metadata断言；另由独立字节构造器增加4个同样错误的char-root-long负例，要求在matio读取前拒绝，**不删除失败语义或忽略原损坏文件**。raw场景因此90→94，旧边界仍29。诊断和历史生成文件均保留，接续待新检查点后全量复测。
