@@ -1,5 +1,7 @@
 # CLI 参数、退出码与诊断协议：详细设计草案
 
+> **2026-11-17 Adaptive实测 `[AI-EDIT]`**：`2438a8039a905c7f3d8ab74aba1faeaa9a2387cf` 构建及46/46 CTest通过；三个实际生成入口均exit5/Incomplete，无MAT。初始化第14帧acos越界、比较/更新率第151帧零旋转，完整错误链/计数/拒覆盖已有 [证据](../reviews/R6_ADAPTIVE_CLI_2026-11-17.md)。这是失败合同验证，成功产物分支未执行，CLI及数值验收状态不改变。
+
 > **2026-11-17 插图实测 `[AI-EDIT]`**：候选illustrate入口已在 `8c808be58e25de16da7b3d0c66ce3c0764e74e76` 实际测试，28次进程及全套45/45 CTest通过。JSON/SVG、错误码、路径防覆盖证据见 [记录](../reviews/R6_ILLUSTRATIONS_2026-11-17.md)。本文下方“待构建/未执行”是此前准备状态，CLI/schema正式冻结仍未发生。
 
 > **2026-11-17 执行事实（[AI-EDIT]）**：受测源码 `c42f12f0be89646fd39b93dbb61a79a0ee28e05f` 无诊断构建、35/35 CTest通过，包含57次真实CLI进程；已恢复本LLD规定的八个已知子命令 `--help`，未知命令及混合额外参数仍拒绝。历史分析3组成功、3组因原始NaN拒绝，见 [实际证据与限制](../reviews/R6_CLI_PROCESS_VALIDATION_2026-11-17.md)。后文“未创建/未测试”是历史状态，不替代该固定SHA证据；未改变CLI合同或冻结状态。

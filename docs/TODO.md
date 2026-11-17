@@ -1,6 +1,6 @@
 # 人类输入、已决定事项与无限期延期清单（TODO）
 
-> **2026-11-17 更新**：用户已明确允许生产代码修改、构建/CTest和方案文档修改；最新受测源码 `8c808be58e25de16da7b3d0c66ce3c0764e74e76` 构建无诊断、**45/45 CTest**，见 [插图验证](reviews/R6_ILLUSTRATIONS_2026-11-17.md) 与 [PROGRESS](PROGRESS.md)。三份illustration的JSON/SVG入口、独立几何及真实CLI已验证；[剩余工作](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)包括Adaptive真实生成CLI剩余覆盖及其它独立参考。原始NaN/UndefinedAngle限制、病态数值资格、L4/完整实验、资源、DEC-005/006/008及正式验收仍未完成。
+> **2026-11-17 更新**：用户已明确允许生产代码修改、构建/CTest和方案文档修改；最新受测源码 `2438a8039a905c7f3d8ab74aba1faeaa9a2387cf` 构建无诊断、**46/46 CTest**，见 [Adaptive真实CLI验证](reviews/R6_ADAPTIVE_CLI_2026-11-17.md) 与 [PROGRESS](PROGRESS.md)。三入口实际均为Incomplete：初始化第14帧acos越界、比较/更新率第151帧零旋转，没有完整MAT。失败合同验证不等于科学成功；继续 [剩余工作](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md) 的源码/追踪及独立证据复核。完整成功、病态数值资格、L4/完整实验、资源、DEC-005/006/008及正式验收仍未完成，不擅改角度策略或重复催办延期审批。
 
 > **文档类型：项目管理/人类输入清单，不是基线签署。** 用户此前仅开放低阶球谐相关 C++ 实现与 Wolfram 验证，其它模块仍禁止开启代码实现。用户已在固定 `8eab5dd`、`445ed151`、`601c74de` 的旧版本分别报告1/1球谐CTest通过，并于最新固定 `5e5221988cf093dbfddb88f2f65f06632460f3a1` 在Ubuntu 24.04/GCC16.2上完成三个SH独立CTest **3/3 Passed、0失败**，覆盖源二阶逐系数投影。**当前卡点不是低阶SH首次编译，而是其它模块权限、公共ABI、扩大数值覆盖及DEC-005/006/008与正式批准**。代理未在用户VM执行或获得全工程授权；不写MAT、不合并/发布。见[专项授权](decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md)及[PROGRESS E-DOC-062](PROGRESS.md)。
 

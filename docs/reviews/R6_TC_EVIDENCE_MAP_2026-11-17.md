@@ -2,7 +2,7 @@
 
 `[AI-EDIT]` 事实索引，基于当前Git树、CMake登记、测试源码及实际日志。保留 [TEST_PLAN §3](../TEST_PLAN.md) 的66个TC/REQ/AC和 [PLAN](../PLAN.md) 的98项任务，不替换候选规范、改动阈值或签署验收。下表每个TC仅列一次；其REQ/AC采用相同后缀，正式义务仍以 [REQUIREMENTS](../REQUIREMENTS.md) 为准。
 
-**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面列出的具体程序/样本已有运行证据，不代表该TC全部条款已满足。最新受测源码 `8c808be58e25de16da7b3d0c66ce3c0764e74e76` 为45/45；三份插图的独立几何/实际CLI和SVG画幅已测，见 [专项证据](R6_ILLUSTRATIONS_2026-11-17.md)。原43项仍通过，全部此前失败保留。正式容差/Golden资格、病态前向误差、环境预算及基线签署仍独立办理；不以这些审批尚未完成为理由停止已授权的源码/测试补足。
+**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面列出的具体程序/样本已有运行证据，不代表该TC全部条款已满足。最新受测源码 `2438a8039a905c7f3d8ab74aba1faeaa9a2387cf` 为46/46；真实Adaptive三入口均失败、无MAT，错误合同与初始化acos取证通过，见 [专项证据](R6_ADAPTIVE_CLI_2026-11-17.md)。原45项仍通过，全部此前失败保留。正式容差/Golden资格、病态前向误差、环境预算及基线签署仍独立办理；不以这些审批尚未完成为理由停止已授权的源码/测试补足。
 
 ## 实际测试组及证据入口
 
@@ -11,6 +11,7 @@
 | 索引 | 实际CTest（完整名称） | 源码/证据 |
 |---|---|---|
 | CLI | `r01_cli_contract`, `r06_cli_process_contract`, `r06_cli_process_archive` | `tests/integration/test_r01_cli.cpp`, `test_r06_cli_process.cmake`；[CLI实测](R6_CLI_PROCESS_VALIDATION_2026-11-17.md) |
+| ADAPTIVE-CLI | `r06_adaptive_real_cli` | `tests/integration/test_r06_adaptive_cli.cmake`、`r06_adaptive_init_trace.cpp`；6次实际CLI和1次真实Step记录进程，三种生成均Incomplete，无MAT，见 [实测](R6_ADAPTIVE_CLI_2026-11-17.md)。`r06_adaptive_cli_values.cpp`仅编译，成功产物/L2分支未执行 |
 | MAT | `r02_mat_reader`, `r06_historical_mat_readonly_schema`, `r06_mat_independent_storage_values`, `r06_mat_reader_boundaries`, `r06_mat_raw_payload_boundaries` | `tests/integration/test_r02_reader.cpp`, `test_r06_archive_readonly.cpp`, `test_r06_mat_independent.cpp`, `test_r06_reader_negative.cpp`, `test_r06_mat_payload.cpp`；[L2](R6_MAT_STORAGE_VALIDATION_2026-11-17.md)、[边界](R6_READER_BOUNDARIES_2026-11-17.md)、[载荷](R6_MAT_PAYLOAD_VALIDATION_2026-11-17.md) |
 | IO | `r05_anchored_io`, `r06_io_symlink_and_runid_safety`, `r06_linux_writer_faults`, `r06_real_manifest_faults` | `tests/integration/test_r05_io.cpp`, `test_r06_io_safety.cpp`, `test_r06_io_faults.cpp`；[发布故障](R6_IO_FAULT_VALIDATION_2026-11-17.md) |
 | CONTRACT | `r01_contracts`, `r05_manifest_gate`, `r06_result_lifetimes_error_frames` | `tests/contracts/test_r01_contracts.cpp`, `test_r05_manifest.cpp`, `test_r06_result_lifetimes.cpp`；[原生记录](R6_NATIVE_VALIDATION_2026-11-17.md) |
@@ -48,7 +49,7 @@
 | TC-F-FILTER-001 | KVD、RUNNER | Franz独立固定输入及奇异响应；覆盖不等于全输入域证明 |
 | TC-F-KVD-001 | KVD | 两路径逐轮固定L3；未批准最终数值门槛 |
 | TC-F-KVD-002 | KVD | 两算法实际默认200轮上限、单动态/单绝对退出及最少6轮已实测；506次停止行为与独立解析参考一致，限固定输入族 |
-| TC-F-ERROR-001 | METRIC、RUNNER、SESSION | 正交/反向/尺度/任一零/非有限/范数边界及acos双端舍入越界直接实测；两指标及弦长恒等式区分。限当前浮点环境，正式数值资格未批准 |
+| TC-F-ERROR-001 | METRIC、RUNNER、SESSION、ADAPTIVE-CLI | 解析边界及acos双端舍入越界已测；真实初始化第14帧有限非零向量的独立标量cosine=1+2^-52、最后真实Step按位重放已确认。限当前浮点环境，正式数值资格未批准 |
 | TC-F-BIAS-001 | GEOM、RUNNER、CLI | 有界level0…2、seed7/11、三噪声列、实际求解器/发布；不是40份level9实验 |
 | TC-F-BIAS-002 | GEOM、RUNNER、CLI | 同上，分量噪声路径独立核对；不是完整统计复现 |
 | TC-F-BIAS-003 | ANALYSIS、CLI、SVG | K=2区别性参考、两组40-run全部26曲线/208对x-y独立重算与986来源条目已实测；沿用回归余量，正式数值资格仍未批准 |
@@ -58,9 +59,9 @@
 | TC-F-ADAPT-001 | STEP、SH | 正/负近度固定单步及zero_mean_conditioning解析族已接入；六轴/窄锥完整步骤因投影零范数拒绝，运动阶段可独立核对。病态前向误差未正式验收 |
 | TC-F-ADAPT-002 | SESSION、SH、RUNNER | 旋转→比较→主提交、失败回滚及两Session三模式交替独立性已有真实单步实测；调度一致性不是独立数值Golden |
 | TC-F-ADAPT-003 | SESSION、RUNNER | 1/5/11/21刷新与弃置比较返回值已有替身断言；完整真实轨迹未成功 |
-| TC-F-EXP-001 | RUNNER | 初始化35帧编排/字段合同；单步替身结果不能当完整算法实验 |
-| TC-F-EXP-002 | RUNNER | 固定600帧/8次聚合及失败分母；原默认无定义角度不能记成功 |
-| TC-F-EXP-003 | RUNNER、ANALYSIS | 更新率/现行save集合/缺ratio明确错误；未完成完整真实算法实验 |
+| TC-F-EXP-001 | RUNNER、ADAPTIVE-CLI | 35帧编排/字段替身合同；真实入口第14帧acos越界终止、valid12，无完整四MAT/L2对照成功证据 |
+| TC-F-EXP-002 | RUNNER、ADAPTIVE-CLI | 固定600帧/8次聚合及失败分母；真实noise0入口第151帧零旋转拒绝、valid149、计划8不变，未完成8轮 |
+| TC-F-EXP-003 | RUNNER、ANALYSIS、ADAPTIVE-CLI | 更新率/现行save集合/缺ratio合同；真实入口第151帧零旋转拒绝、valid149，无MAT，未完成完整真实算法实验 |
 | TC-F-AN-001 | ANALYSIS、CLI | 32条有限曲线独立逐值与初始化区间；平滑辅助源Git blob已逐曲线记录并验证JSON/SVG，未使用者为空。原NaN明确拒绝，生产MAT摘要未绑定时仍明确null |
 | TC-F-AN-002 | CLI、ANALYSIS、SVG、ILLUSTRATION | 三份插图生产入口、独立数值/绘图隔离及画幅已有实测；sphere端点运行细节与MATLAB灯光/像素等价未验证 |
 | TC-D-SOURCE-001 | SOURCE、MAT | 628原文件Git树与582MAT固定身份有证据；正式冻结未签署 |
@@ -80,29 +81,29 @@
 | TC-NF-DEPS-001 | ENV、CMake | 当前核心Eigen/matio与可选SVG，无Python/MATLAB/NPZ；完整交付链接审计仍待整理 |
 | TC-NF-SAFETY-001 | IO、MAT、CLI | 原SHA不变、RunId/路径/符号链接/拒覆盖及真实故障已有测试 |
 | TC-NF-NUM-001 | KVD、STEP、SH、GEOM | 独立固定参考存在；完整资格/DEC-005未批准，不宣称数值验收 |
-| TC-NF-NUM-002 | MAT、KVD、STEP、METRIC、RUNNER、SESSION | 多类明确失败、直接误差边界、acos双端舍入越界、零/抵消均值/纯旋转/重合视线/投影零范数已实测；未新增病态拒绝阈值或宣称全数值资格 |
+| TC-NF-NUM-002 | MAT、KVD、STEP、METRIC、RUNNER、SESSION、ADAPTIVE-CLI | 多类明确失败/病态条件已有固定测试；真实初始化cosine越界及另外两入口零旋转拒绝已有实际进程证据。未改变拒绝策略/阈值或宣称完整实验成功 |
 | TC-PROC-TRACE-001 | SOURCE及本文 | 66项证据索引已整理；98任务/45源的逐义务关闭与正式冻结仍未完成 |
 | TC-NF-RNG-001 | GEOM、RUNNER | 固定序列/两seed与失败数量保存；L4统计及全样本账本未完成 |
-| TC-NF-LOG-001 | CONTRACT、RUNNER、CLI | 顶层家族/完整causes/Manifest与执行日志已测；完整科学运行未发生 |
+| TC-NF-LOG-001 | CONTRACT、RUNNER、CLI、ADAPTIVE-CLI | 顶层家族/完整causes/Manifest与执行日志已测，三个真实失败入口的stdout/stderr/种子/计数与Manifest一致；完整科学结果未生成 |
 | TC-NF-OOP-001 | CONTRACT、SH、SESSION | 局部/公共错误桥接与所有权已有用例；总体设计验收未签署 |
 | TC-NF-HEADLESS-001 | CLI、ANALYSIS、ENV | 当前SVG零外部图形依赖；无后端注入例通过，非独立禁用绘图构建资格 |
-| TC-NF-RECOVERY-001 | IO、CONTRACT、RUNNER | Failed/Incomplete/Complete、失败日志/不覆盖、持久化故障已有实测 |
+| TC-NF-RECOVERY-001 | IO、CONTRACT、RUNNER、ADAPTIVE-CLI | Failed/Incomplete/Complete合同、持久化故障已有实测；三个真实Adaptive的Incomplete/无MAT及重复RunId拒覆盖已测 |
 | TC-NF-PORTABLE-001 | IO、MAT、CLI | 实际中文/空格路径；目标仅GNU/Linux，不推断其它平台 |
 | TC-NF-RUNTIME-001 | 无完整基准 | 未授权完整实验/性能测量，DEC-006预算未批准；编译耗时不能代替实验预算 |
 | TC-NF-SESSION-001 | SESSION、RUNNER | 两Session三模式独立/交替重放和两RunContext固定输入交替RNG/输出/失败隔离均已直接测试；不承诺单Session多线程，正式验收仍未签署 |
 | TC-NF-COPYRIGHT-001 | SOURCE | 根MIT与来源notice存在；不将MIT扩展至原MATLAB/MAT/论文，不以额外普通版权审批阻塞编码 |
 | TC-F-CLI-002 | CLI、RUNNER | 两Bias真实进程、有界输出/seed/RunId及拒覆盖；完整规模未运行 |
-| TC-F-CLI-003 | CLI、RUNNER部分 | 帮助/非法参数与Runner内部合同；三Adaptive真实生成进程的成功/失败链尚未全覆盖 |
+| TC-F-CLI-003 | CLI、RUNNER、ADAPTIVE-CLI | 三入口实际失败链/计数/源身份/无MAT/拒覆盖已测；默认初始化因acos越界、另两入口因零旋转不能完成，完整成功产物分支仍未实测 |
 | TC-F-CLI-004 | CLI、ANALYSIS | 四分析类型实际进程：历史3组成功/3组NaN拒绝、有限两入口成功；历史Bias全部数值另用真实Reader/Analyzer独立复核，辅助来源在CLI已测，不假称所有归档成功 |
 | TC-F-CLI-005 | CLI、SVG、ILLUSTRATION | plot与三份插图实际发布/无后端错误/几何/拒覆盖已测；CLI增量未冻结，不承诺MATLAB像素等价 |
 | TC-I-CLI-001 | CLI | 已知子命令帮助、JSONL、拒自定义输出根等；DEC-008冻结未签署 |
 | TC-I-MAT-001 | MAT、IO | 严格/兼容读取与安全写回读；首版类型边界明确 |
-| TC-I-RESULT-001 | IO、CONTRACT、RUNNER、CLI | 当前save、Manifest/错误链/固定目录已有实测；五入口完整真实实验不能由替身覆盖 |
+| TC-I-RESULT-001 | IO、CONTRACT、RUNNER、CLI、ADAPTIVE-CLI | 当前save合同和真实三个失败审计/固定目录已有实测；五入口完整真实成功不能由替身或失败合同通过覆盖 |
 | TC-I-ANALYSIS-001 | ANALYSIS、CLI | 原数据不变/全部分析类型成功或规定失败、历史Bias全曲线及逐曲线平滑来源有证据；原NaN与未知生产输入摘要如实保留 |
 
 ## 下一步按缺口实施
 
-1. 原绘图视窗、误差/停止分支、conditioning、交替隔离/acos双端越界、历史Bias/平滑来源及三份illustration已完成45/45复测；失败日志及原始数据不变证据保留。不等于完整数值资格或MATLAB像素等价完成。
+1. 原45项及新增Adaptive真实CLI失败取证已完成46/46复测；所有失败日志及原始数据不变证据保留。不等于完整数值资格、Adaptive实验成功或MATLAB像素等价完成。
 2. 三份illustration已有JSON/SVG入口、独立全网格参考和实际CLI/目视证据；保留sphere端点运行细节尚未验证及平面着色的明确边界，不用求解器九项归一化基函数替代插图。
-3. 补三Adaptive生成CLI的实际进程成功/失败覆盖。涉及CLI/公共schema时保留候选与未冻结状态，不以AI实现代替人类签署；MAT稳定读取快照摘要尚未绑定时继续明确未知，不伪造来源。
+3. 三Adaptive真实进程的失败链已有证据；初始化第14帧acos越界、另外两入口第151帧零旋转均未产出完整MAT，成功路径仍未验证。继续当前源码/45源映射、日志与输出合同和可独立证据的逐项复核；MAT稳定快照摘要未绑定时继续明确未知。数值策略变更不能由AI通过改测试自行批准。
 4. 完整科学/L4实验、跨发行版资格、资源预算与正式审批不在本轮运行授权内；准备具体材料并在真正到达该边界时请求相应授权。无MATLAB/L1阻塞。
