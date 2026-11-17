@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 原球谐动作与Session集成（2026-11-17）
+
+**[HUMAN-EXECUTE/APPROVE] 两项新CTest已编写，尚未执行。** 起点 `6fcc010` 已核实，31项登记不能冒充通过。以既有独立IR96显式表/源九基多项式核对相位、R0/R3/R5和一般旋转，再检查真实Session非交换跨帧状态与回滚；保持物理叶子合同，不以绕z特例代表原组合完全等价。范围及后续证据见 [球谐源动作验证](reviews/R6_SH_SOURCE_ACTION_2026-11-17.md)。
+
 ## 最新接续：R6 MAT内部载荷边界（2026-11-17）
 
 **最终复测 `[HUMAN-EXECUTE/APPROVE]`：`bc51fddca2a56d0dae988086824266b68ff995c2` 构建无诊断，29/29 CTest通过。** MAT先5/5、其余24/24；94个raw载荷场景全部通过、旧29个Reader边界及582 MAT/33,340值精确对照仍通过。生产增加解码前固定缓冲校验，修复静默接受非法存储/长度及错误分类；独立查明旧char夹具根长度高估并保留对应损坏负例。RunId `r6-mat-payload-final-20261117-Rkq8pvHK`，输入SHA不变，失败与成功记录见 [MAT载荷验证](reviews/R6_MAT_PAYLOAD_VALIDATION_2026-11-17.md)。本地R6-MAT-002已有复测证据；原算法/原始数据不变，R6仍需球谐源动作、剩余L3/L4、完整Runner与正式验收。

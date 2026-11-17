@@ -364,6 +364,17 @@ if(BUILD_TESTING)
     set_tests_properties(r06_sh_argument_action PROPERTIES
         LABELS "r06;sh;so3;argument-action" TIMEOUT 60)
 
+    add_executable(test_r06_source_sh tests/integration/test_r06_source_sh.cpp)
+    target_link_libraries(test_r06_source_sh PRIVATE egomotion_estimators)
+    target_compile_features(test_r06_source_sh PRIVATE cxx_std_17)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(test_r06_source_sh PRIVATE -Wall -Wextra -Wpedantic)
+    endif()
+    add_test(NAME r06_sh_source_phase_reference COMMAND test_r06_source_sh adapter)
+    add_test(NAME r06_sh_source_session_action COMMAND test_r06_source_sh session)
+    set_tests_properties(r06_sh_source_phase_reference r06_sh_source_session_action PROPERTIES
+        LABELS "r06;sh;source-action;independent-l3-candidate;synthetic-step" TIMEOUT 60)
+
     # R6 complete ordered source sampling: 714 rows / 2142 coordinates from
     # the pre-existing independent geometry reference (unapproved L3).
     add_executable(test_r06_direction_rows_l3
