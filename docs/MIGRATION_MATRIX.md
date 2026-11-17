@@ -1,8 +1,10 @@
 # 源 MATLAB 文件到当前 C++ 实现的迁移矩阵（MIGRATION_MATRIX）
 
+> **2026-11-18 KvD映射更新 `[AI-EDIT]`**：`df511f9924b75ded66b437fd533ca888918420c1`将共享函数/枚举替换为`KvDIterationEngine`与两种`IKvDTranslationRule`，下表两个入口已同步；两模式CTest为ON56/56、OFF55/55，见 [策略验证](reviews/R6_KVD_STRATEGY_2026-11-18.md)。保留45份源/50个函数范围与既有REQ/TC义务，未冻结或正式验收；下段为首次现行映射复核身份。
+
 > **2026-11-17 事实复核 `[AI-EDIT]`，未冻结/未正式验收。** 检查文档HEAD `b3cc6eda6168f10102dd54e559222dca23c237c5`，生产/测试代码仍为受测 `130a82ba0090e186fcf43bc28bb98c282e68c96c`。本轮把早期候选分配更新为实际符号、文件和有限证据；不修改SRS义务、算法、阈值或设计批准状态。候选类职责仍见 [OBJECT_MODEL §7](OBJECT_MODEL.md)，不要将其中名称当成现有C++ API。
 
-原归档45份.m、50个函数声明均保留；源Git blob/字节/REQ/TC的单一身份清单见 [SOURCE_INVENTORY](SOURCE_INVENTORY.md)。下表“测试组”引用 [66 TC证据映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md#实际测试组及证据入口) 的完整CTest名称、测试源码及报告；同组有关联不表示该文件全部输入域已测。最新48/48实测及原MAT不变证据见 [封存读取记录](reviews/R6_MAT_SNAPSHOT_2026-11-17.md)。
+原归档45份.m、50个函数声明均保留；源Git blob/字节/REQ/TC的单一身份清单见 [SOURCE_INVENTORY](SOURCE_INVENTORY.md)。下表“测试组”引用 [66 TC证据映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md#实际测试组及证据入口) 的完整CTest名称、测试源码及报告；同组有关联不表示该文件全部输入域已测。首次48/48实测及原MAT不变证据见 [封存读取记录](reviews/R6_MAT_SNAPSHOT_2026-11-17.md)，后续实测按上方固定SHA记录。
 
 - 当前实现以组合复用、Eigen向量运算和内部辅助函数承接源职责，不要求45个同名类或50个公开函数。
 - “有对应实现”与“原数值实验完整成功”分开；三Adaptive生成入口仍失败，完整科学/L4、正式容差/资源/基线验收仍未完成。
@@ -40,10 +42,10 @@
 | `help_functions/kreuzprodukt.m` | 1 | Eigen `Vector3::cross`，如 [flow.cpp](../src/simulation/flow.cpp)、[franz_kvd.cpp](../src/estimators/franz_kvd.cpp)、[adaptive_step.cpp](../src/estimators/adaptive_step.cpp) | GEOM、KVD、STEP | 三维向量运算内联复用；通过含符号的独立业务参考核对，没有同名包装API。 |
 | `help_functions/kugelflfunc2.m` | 1 | `low_order::basisDirect/basisRecurrence` + MATLAB布局相位转换；[low_order_basis.cpp](../src/harmonics/low_order_basis.cpp) | SH | 求解器实际九基l≤2；CS相位/顺序经布局及投影处理，不是任意l,m角参数API。插图非归一化基另实现。 |
 | `help_functions/kurveglaetten.m` | 1 | 内部 `analysis::detail::smoothSource`；[adaptive.cpp](../src/analysis/adaptive.cpp) | ANALYSIS、SNAPSHOT | 窗口半宽2/5/10、头尾零、先分段/全列两种调用次序；有限参考逐值，辅助源blob有追踪。 |
-| `help_functions/mue_norm_koenderink_iteration.m` | 1 | `estimators::ModifiedKvDEstimator::estimate` → 内部 `estimateKvD(TranslationRule::Modified)`；[franz_kvd.cpp](../src/estimators/franz_kvd.cpp) | KVD、RUNNER | 共享骨架中保留Modified公式分支；逐轮节点与默认停止控制流独立参考，非把两算法合并成同公式。 |
+| `help_functions/mue_norm_koenderink_iteration.m` | 1 | `estimators::ModifiedKvDEstimator::estimate` → `KvDIterationEngine::estimate` + `ModifiedKvDTranslationRule::compute`；[franz_kvd.cpp](../src/estimators/franz_kvd.cpp) | KVD、RUNNER | 独立规则保留Modified公式；逐轮节点、默认停止控制流及策略替换有实测，不把两算法合并成同公式。 |
 | `help_functions/near_aus_koeff.m` | 1 | `harmonics::reconstructNear` → `low_order::reconstruct`；[adapter](../src/harmonics/adapter.cpp)、[basis](../src/harmonics/low_order_basis.cpp) | SH、STEP | 逐方向重建九项，调用者遍历N行；l≤2，浮点求和与角度中间值不宣称逐位同源。 |
 | `help_functions/nonpropfehler.m` | 1 | `simulation::MeanMagnitudeGaussianNoise::apply` → 内部 `noiseApply(false)`；[flow.cpp](../src/simulation/flow.cpp) | GEOM、RUNNER | 均总流模长加噪、xyz抽样与切向投影；相消流/零系数仍抽样，NoNoise是独立模式。 |
-| `help_functions/norm_koenderink_iteration.m` | 1 | `estimators::OriginalKvDEstimator::estimate` → 内部 `estimateKvD(TranslationRule::Original)`；[franz_kvd.cpp](../src/estimators/franz_kvd.cpp) | KVD、RUNNER | 源初始化、near翻号、末轮旧near尺度、最少6/默认最多200轮；506次两路径停止参考，正式容差待审。 |
+| `help_functions/norm_koenderink_iteration.m` | 1 | `estimators::OriginalKvDEstimator::estimate` → `KvDIterationEngine::estimate` + `OriginalKvDTranslationRule::compute`；[franz_kvd.cpp](../src/estimators/franz_kvd.cpp) | KVD、RUNNER | 源初始化、near翻号、末轮旧near尺度、最少6/默认最多200轮；506次两路径停止参考及策略组合，正式容差待审。 |
 | `help_functions/normrelfehler.m` | 1 | 内部 `source_metrics::sourceDirectionErrorDegrees`；[source_motion_errors.hpp](../src/numerics/source_motion_errors.hpp) | METRIC、SESSION、ADAPTIVE-CLI | 角度单位degree，acos不钳制；零范数/越界拒绝。真实初始化第14帧cosine=1+2^-52已有诊断。 |
 | `help_functions/oneit_adaptiv_matched_filter.m` | 1 | `estimators::AdaptiveMfaStepSolver::solve` → 内部 `detail::solveAdaptiveMotion` → `fitSourceNear`；[adaptive_step.cpp](../src/estimators/adaptive_step.cpp) | STEP、SH | 正/负均值、6×6系统、MSE、新near/系数逐节点；12条件数场景仅运动阶段可解，整步零投影拒绝。 |
 | `help_functions/richtungsvektoren_icosahedron.m` | 1 | `sampling::IcosahedralSampler::sample`；[directions.cpp](../src/sampling/directions.cpp) | GEOM | 原12顶点/20面/索引和叶顺序；level0…2独立逐行，真实Comparison另用level4。 |

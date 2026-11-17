@@ -2,7 +2,7 @@
 
 `[AI-EDIT]` 事实索引，基于当前Git树、CMake登记、测试源码及实际日志。保留 [TEST_PLAN §3](../TEST_PLAN.md) 的66个TC/REQ/AC和 [PLAN](../PLAN.md) 的98项任务，不替换候选规范、改动阈值或签署验收。下表每个TC仅列一次；其REQ/AC采用相同后缀，正式义务仍以 [REQUIREMENTS](../REQUIREMENTS.md) 为准。
 
-**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面具体程序/样本已有运行证据。最新受测源码 `00d174258f502d6c458fb26b8e0727d148b98672` 为SVG ON55/55、OFF54/54，见 [导出记录证据](R6_ARTIFACT_RECORDS_2026-11-18.md)；此前MAT73、Bias注入、五实验记录和其它专项证据保留。真实Adaptive三入口仍失败、无MAT，全部失败日志保留。正式数值/环境/基线资格独立办理，不以尚未签署为理由停止已授权的源码/测试补足。
+**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面具体程序/样本已有运行证据。最新受测源码 `df511f9924b75ded66b437fd533ca888918420c1` 为SVG ON56/56、OFF55/55，见 [KvD策略证据](R6_KVD_STRATEGY_2026-11-18.md)；此前导出记录、MAT73、Bias注入、五实验记录和其它专项证据保留。真实Adaptive三入口仍失败、无MAT，全部失败日志保留。正式数值/环境/基线资格独立办理，不以尚未签署为理由停止已授权的源码/测试补足。
 
 ## 实际测试组及证据入口
 
@@ -24,7 +24,7 @@
 | IO | `r05_anchored_io`, `r06_io_symlink_and_runid_safety`, `r06_linux_writer_faults`, `r06_real_manifest_faults` | `tests/integration/test_r05_io.cpp`, `test_r06_io_safety.cpp`, `test_r06_io_faults.cpp`；[发布故障](R6_IO_FAULT_VALIDATION_2026-11-17.md) |
 | CONTRACT | `r01_contracts`, `r05_manifest_gate`, `r06_result_lifetimes_error_frames` | `tests/contracts/test_r01_contracts.cpp`, `test_r05_manifest.cpp`, `test_r06_result_lifetimes.cpp`；[原生记录](R6_NATIVE_VALIDATION_2026-11-17.md) |
 | GEOM | `r06_sampling_flow_contract`, `r06_directions_all_ordered_l3`, `r06_trajectory_sphere_geometry` | `tests/integration/test_r06_sampling_flow.cpp`, `test_r06_direction_rows_l3.cpp`, `test_r06_trajectory_sphere.cpp`；`verification/geometry/` |
-| KVD | `r06_kvd_independent_l3`, `r06_kvd_stopping_reference` | `tests/integration/test_r06_kvd_l3.cpp`, `test_r06_kvd_stopping.cpp`；`verification/kvd/`；原逐节点参考及506次独立解析控制流参考，见 [停止分支](R6_MOTION_STOPPING_2026-11-17.md) |
+| KVD | `r06_kvd_independent_l3`, `r06_kvd_stopping_reference`, `r06_kvd_strategy_composition` | `tests/integration/test_r06_kvd_l3.cpp`, `test_r06_kvd_stopping.cpp`, `test_r06_kvd_strategy.cpp`；`verification/kvd/`；原逐节点参考及506次独立解析控制流参考见 [停止分支](R6_MOTION_STOPPING_2026-11-17.md)，新增2712项标量/策略替换/顺序/故障/隔离检查见 [策略组合](R6_KVD_STRATEGY_2026-11-18.md) |
 | METRIC | `r06_source_motion_errors` | `tests/integration/test_r06_motion_errors.cpp`；直接调用两个生产内部实现，解析几何/尺度/弦长恒等式/零/非有限/上溢/下溢，含acos双端舍入越界共703项；[基础实测](R6_MOTION_STOPPING_2026-11-17.md)、[端点补充](R6_INTERLEAVING_2026-11-17.md#最终复测) |
 | STEP | `r06_adaptive_step_independent_l3`, `r06_adaptive_conditioning_reference` | `tests/integration/test_r06_adaptive_l3.cpp`, `test_r06_adaptive_conditioning.cpp`；正/负九方向完整单步，另12个解析运动阶段/完整投影拒绝及4个定义域负例，见 [conditioning实测](R6_ADAPTIVE_CONDITIONING_2026-11-17.md) |
 | SH | `low_order_harmonics`, `low_order_harmonics_archived_golden`, `low_order_harmonics_source_projection`, `r06_sh_argument_action`, `r06_sh_source_phase_reference`, `r06_sh_source_session_action` | `tests/unit/test_low_order*.cpp`, `tests/integration/test_r06_sh_adapter.cpp`, `test_r06_source_sh.cpp`；[源相位作用](R6_SH_SOURCE_ACTION_2026-11-17.md) |
@@ -81,7 +81,7 @@
 | TC-DC-IO-001 | MAT、IO、CONTRACT、SNAPSHOT | 自拥有载荷、故障/权限与寿命、封存副本拒写/拒截断及30例fd释放已测；不凭测试数声称全资源状态证明 |
 | TC-DC-RNG-001 | GEOM、RUNNER、BIAS-INJECT | RNG注入/顺序/耗尽/seed分离、两次reset/不支持reset/缓存重置已测；正式接口冻结未完成 |
 | TC-DC-NOISE-001 | GEOM、RUNNER | 噪声接口两路径与错误上下文已有固定测试 |
-| TC-DC-KVD-001 | KVD | Original/Modified单独入口与差异化trace；两路径实际默认上限及其他退出条件已有独立参考实测 |
+| TC-DC-KVD-001 | KVD | 两具名入口组合KvDIterationEngine与各自IKvDTranslationRule实现，策略替换/交错复用/完整故障链/翻号后旧运动顺序均已测；两路径停止条件保留独立参考。候选接口未冻结 |
 | TC-DC-ADAPT-001 | STEP、SESSION | 单步和Session已独立测试；两个Session交替完整结果/系数/错误重试隔离已测，限固定输入 |
 | TC-DC-EXPERIMENT-001 | RUNNER、BIAS-INJECT、CONTRACT | 两RunContext交替RNG/错误链/计数/真实MAT及Manifest隔离已测；Bias求解器和RunContext RNG注入已补并通过替身验证。Adaptive其它候选装配边界仍待核对，见 [98项复核D3](R6_PLAN_TASK_AUDIT_2026-11-18.md)；不等于总体设计验收或全科学实验 |
 | TC-DC-ANALYSIS-001 | CLI、ANALYSIS、SVG、ILLUSTRATION | 无后端时纯数值成功、SVG明确不可用；三份插图JSON导出前后不变已实测，候选接口未冻结 |
@@ -111,7 +111,7 @@
 
 ## 下一步按缺口实施
 
-1. 当前两模式分别完成55/55、54/54复测；所有失败日志及原始数据不变证据保留。不等于完整数值资格、Adaptive实验成功或MATLAB像素等价完成。
+1. 当前两模式分别完成56/56、55/55复测；所有失败日志及原始数据不变证据保留。不等于完整数值资格、Adaptive实验成功或MATLAB像素等价完成。
 2. 三份illustration已有JSON/SVG入口、独立全网格参考和实际CLI/目视证据；保留sphere端点运行细节尚未验证及平面着色的明确边界，不用求解器九项归一化基函数替代插图。
-3. 三Adaptive真实进程的失败链已有证据；初始化第14帧acos越界、另外两入口第151帧零旋转均未产出完整MAT，成功路径仍未验证。45源、98 P和本表有限证据已映射，[数值汇总](../NUMERICAL_EQUIVALENCE.md)已建立；Bias注入、真实MAT73负例和plot/SVG导出记录已补，继续公共对象/Adaptive装配合同及只读/预留前记录边界。数值策略变更不能由AI通过改测试自行批准。
+3. 三Adaptive真实进程的失败链已有证据；初始化第14帧acos越界、另外两入口第151帧零旋转均未产出完整MAT，成功路径仍未验证。45源、98 P和本表有限证据已映射，[数值汇总](../NUMERICAL_EQUIVALENCE.md)已建立；Bias注入、真实MAT73负例、plot/SVG导出记录及KvD策略组合已补，继续领域构造不变量/其它策略职责/Adaptive装配合同及只读/预留前记录边界。数值策略变更不能由AI通过改测试自行批准。
 4. 完整科学/L4实验、跨发行版资格、资源预算与正式审批不在本轮运行授权内；准备具体材料并在真正到达该边界时请求相应授权。无MATLAB/L1阻塞。
