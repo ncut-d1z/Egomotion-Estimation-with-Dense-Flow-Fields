@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 Session系数更新策略（2026-11-18）
+
+`[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`5318cd817aa781345c159bd4ba22ee00fe926ee2`两模式构建无诊断、**SVG ON57/57、OFF56/56 CTest**，先MAT7项，零失败/跳过/禁用。P8.8已实现Reset/Inherit/Periodic的`ICoefficientUpdatePolicy`及Session注入，主/基线状态仍由Session原子提交；策略测试各48523项、真实Session交错9579项及既有回归通过。首轮测试修改Result只读载荷编译失败、第二轮trace未初始化警告均已修复，失败证据及 [Issue #3](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/3)保持开放供复核。RunId `r6-coefficient-final-20261118-A1AX7yeP`，见 [专项记录](reviews/R6_COEFFICIENT_POLICY_2026-11-18.md)。输入SHA不变；D2的Session策略缺口已补，其它D1/D2/D3/D4与完整实验/资格仍未完成，R6未结案。
+
 ## 最新接续：R6 KvD引擎与平移策略（2026-11-18）
 
 `[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`df511f9924b75ded66b437fd533ca888918420c1`两模式构建无诊断、**SVG ON56/56、OFF55/55 CTest**，先MAT7项，零失败/跳过/禁用。P4.9的`KvDIterationEngine`与`IKvDTranslationRule`已实现，两具名入口组合各自规则；保持原公式、旧运动更新次序与停止条件。新增策略测试各2712项，独立L3/完整trace、506次停止参考及真实Bias回归通过。RunId `r6-kvd-strategy-20261118-iQclVtbH`，见 [专项记录](reviews/R6_KVD_STRATEGY_2026-11-18.md)。输入SHA不变；D2的KvD结构缺口已补，其它D1/D2、Adaptive装配与只读/预留前记录边界仍保留。Issue #1/#2仍开放、无PR；完整实验/资格/冻结未完成，R6未结案。

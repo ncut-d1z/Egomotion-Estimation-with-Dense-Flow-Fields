@@ -1,5 +1,7 @@
 # 源 MATLAB 文件到当前 C++ 实现的迁移矩阵（MIGRATION_MATRIX）
 
+> **2026-11-18 Session策略接续 `[AI-EDIT]`**：受测`5318cd817aa781345c159bd4ba22ee00fe926ee2`为ON57/57、OFF56/56；三Adaptive生成入口仍通过Session，Session现组合Reset/Inherit/Periodic系数策略，见 [策略公共头](../include/egomotion/estimators/coefficient_update.hpp)与 [48523项策略及真实回归](reviews/R6_COEFFICIENT_POLICY_2026-11-18.md)。下表三个入口和原状态语义保持，真实完整实验仍未成功；此前映射身份保留。
+
 > **2026-11-18 KvD映射更新 `[AI-EDIT]`**：`df511f9924b75ded66b437fd533ca888918420c1`将共享函数/枚举替换为`KvDIterationEngine`与两种`IKvDTranslationRule`，下表两个入口已同步；两模式CTest为ON56/56、OFF55/55，见 [策略验证](reviews/R6_KVD_STRATEGY_2026-11-18.md)。保留45份源/50个函数范围与既有REQ/TC义务，未冻结或正式验收；下段为首次现行映射复核身份。
 
 > **2026-11-17 事实复核 `[AI-EDIT]`，未冻结/未正式验收。** 检查文档HEAD `b3cc6eda6168f10102dd54e559222dca23c237c5`，生产/测试代码仍为受测 `130a82ba0090e186fcf43bc28bb98c282e68c96c`。本轮把早期候选分配更新为实际符号、文件和有限证据；不修改SRS义务、算法、阈值或设计批准状态。候选类职责仍见 [OBJECT_MODEL §7](OBJECT_MODEL.md)，不要将其中名称当成现有C++ API。

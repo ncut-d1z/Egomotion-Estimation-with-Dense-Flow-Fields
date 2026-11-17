@@ -1,6 +1,6 @@
 # R6：PLAN 的98项任务逐项复核
 
-> **接续实测**：`df511f9924b75ded66b437fd533ca888918420c1`构建无诊断，SVG ON56/56、OFF55/55 CTest；KvD引擎/平移策略组合各2712项通过，独立L3/停止/Bias回归保留，见 [专项记录](R6_KVD_STRATEGY_2026-11-18.md)。此前导出记录、Bias注入与MAT73证据保留。下文首次文档复核起点保留，P4.3/P4.9/D2按新证据更新，其他未覆盖义务不变。
+> **接续实测**：`5318cd817aa781345c159bd4ba22ee00fe926ee2`构建无诊断，SVG ON57/57、OFF56/56 CTest；Session系数更新策略各48523项、真实Session交错及独立数值回归通过，见 [专项记录](R6_COEFFICIENT_POLICY_2026-11-18.md)。首轮测试编译错误/次轮trace警告已修复并保留证据，Issue #3仍开放；此前各专项回归保留。下文首次文档复核起点保留，P8.8/D2按新证据更新，其他未覆盖义务不变。
 
 `[AI-EDIT]`，2026-11-18。本表逐项保留 [PLAN](../PLAN.md) 的98个P编号和原义务，核对实际文件、现有测试及缺口；**不修改需求、验收门槛、批准或冻结状态，也不将“有代码/测试通过”改称“任务已验收”**。原始任务全文及REQ/TC/AC/依赖仍以PLAN为准；下列“核对对象”只是定位摘要，不替代它。
 
@@ -17,7 +17,7 @@
 | 本表索引 | 真实文件与对应证据 |
 |---|---|
 | SRC | [SOURCE_INVENTORY](../SOURCE_INVENTORY.md)、[MAT_DATA_SCHEMA](../MAT_DATA_SCHEMA.md)、[MIGRATION_MATRIX](../MIGRATION_MATRIX.md)、[45源复核](R6_SOURCE_IMPLEMENTATION_MAP_2026-11-17.md)；对应SOURCE |
-| BUILD | [CMakeLists](../../CMakeLists.txt)、[README](../../README.md)、[无绘图构建](R6_HEADLESS_BUILD_2026-11-17.md)、[最新双模式证据](R6_KVD_STRATEGY_2026-11-18.md)；对应ENV/HEADLESS |
+| BUILD | [CMakeLists](../../CMakeLists.txt)、[README](../../README.md)、[无绘图构建](R6_HEADLESS_BUILD_2026-11-17.md)、[最新双模式证据](R6_COEFFICIENT_POLICY_2026-11-18.md)；对应ENV/HEADLESS |
 | DESIGN | [OBJECT_MODEL](../OBJECT_MODEL.md)、[ARCHITECTURE](../ARCHITECTURE.md)、[contracts](../design/contracts.md)，均为候选；实际 [领域类型](../../include/egomotion/domain/types.hpp)、[窄接口](../../include/egomotion/contracts/interfaces.hpp) |
 | GEO | [方向采样](../../src/sampling/directions.cpp)、[随机源](../../src/sampling/random.cpp)；对应GEOM |
 | FLOW | [光流及噪声](../../src/simulation/flow.cpp)、[接口](../../include/egomotion/simulation/flow.hpp)；对应GEOM/RUNNER |
@@ -113,7 +113,7 @@
 | P8.5 | 更新率1/5/11/21 | SESSION、RUN：冻结基线、旋转与周期刷新 | 部分 | 状态规则有证据；真实帧151失败，无完整曲线。 |
 | P8.6 | 独立baseline与主状态 | SESSION：比较返回dumi弃置、主akkoeff提交 | 实测（有限） | 真实Step短序列及替身周期规则已有；完整实验保存仍缺。 |
 | P8.7 | 历史额外字段 | MAT、RUN、ANALYSIS：HistoricalOnly与缺ratio拒绝 | 实测（有限） | 不伪造当前Runner字段，不猜测历史成因。 |
-| P8.8 | Session与更新策略 | SESSION：Session唯一主状态、三模式枚举 | 部分 | 未实现ICoefficientUpdatePolicy接口；测试Step替身不等于策略可替换，见D2。 |
+| P8.8 | Session与更新策略 | SESSION：唯一持久状态、ICoefficientUpdatePolicy及Reset/Inherit/Periodic | 实测（有限） | 策略可替换、全部准备先于求解、失败原子性/同帧重试/隔离48523项通过；默认源周期/旋转与真实Session回归保留，候选接口未冻结。 |
 | P8.9 | 独立Runner上下文 | RUN、SESSION：每次RunContext/新Session，交替隔离 | 部分 | 实际一个AdaptiveExperimentRunner三方法，无三个命名Runner类；结构审查及完整重复仍未完成。 |
 | P9.1 | 初始化抽取/范围 | ANALYSIS、SVG、CLI：历史与固定数值 | 实测（有限） | 对数轴与取样区间已核，不声称全部MATLAB视觉细节相同。 |
 | P9.2 | 轨迹Comparison分析 | ANALYSIS、SVG：ratio分段阈值0.01、双轴 | 实测（有限） | 历史NaN明确失败，有限多项式参考不能代替历史成功。 |
@@ -125,7 +125,7 @@
 | P9.8 | 分析与导出分层 | ANALYSIS、SVG：MatResultAnalyzer/IAnalyzer/IPlotExporter | 部分 | 候选两个Analyzer类未照名实现；数据只读、导出不改值有证据，见D2。 |
 | P10.1 | README及直接MAT入口 | SRC、CLI、BUILD：README现行命令/两DOI/构建说明 | 已有材料 | 实际运行范围和失败限制明确；不是全平台支持承诺。 |
 | P10.2 | 45源最终追踪 | SRC：45路径/50声明现行映射 | 部分 | 已定位实现与非使用范围；最终人工验收/全部分支资格未完成。 |
-| P10.3 | 逐层构建测试 | BUILD及全部TC证据组：ON56/OFF55 | 实测（有限） | 每次固定SHA/日志，未把失败合同算实验成功；全部失败历史保留。 |
+| P10.3 | 逐层构建测试 | BUILD及全部TC证据组：ON57/OFF56 | 实测（有限） | 每次固定SHA/日志，未把失败合同算实验成功；全部失败历史保留。 |
 | P10.4 | 560+22结果合同 | MAT、ANALYSIS、RUN：582独立值、历史字段/NaN | 部分 | 数据与合同复核已有；三个Adaptive新完整产物及正式人工复核缺失。 |
 | P10.5 | 论文数值图表复现 | NUM、RUN、ANALYSIS | 未完成 | 历史曲线分析/有限回归不等于完整Bias、初始化、轨迹、更新频率及L4。 |
 | P10.6 | 证据汇总及平台 | NUM、PROGRESS、BUILD：本轮新增NUMERICAL_EQUIVALENCE | 部分 | 实际仅一个Ubuntu/GCC环境；完整实验/性能/资源预算仍缺。 |
@@ -139,14 +139,14 @@
 下列差别是本次源码审计事实，**不是AI批准的新设计**。P任务中明确的结构义务不能因算法回归通过而静默删除；是否通过最小改动补齐结构或修订候选设计，需保持原职责、可替换性、生命周期和算法次序。未冻结的候选类名称也不能被报告成已经存在的生产API。
 
 - **D1：构造不变量（P2.1/P2.8/P10.9）**。实际FlowField、MotionEstimate、HarmonicCoefficients是Eigen成员的aggregate；当前在算法入口校验，并无“构造时验证全部维度/有限性/有效填充”的统一保证。已有寿命/失败测试不证明任意默认构造对象有效。DEC-008-03的工厂/不可变决定针对Result/Status，不能扩称已批准所有领域值同样改造；继续落实候选公共边界的实际不变量，不能用文档改词抹平义务。
-- **D2：策略和纯数学职责（P4.9/P7.1/P7.10/P8.8/P8.9/P9.8）**。`df511f9`已实现IKvDTranslationRule/KvDIterationEngine及两具名入口组合，2712项策略检查和既有独立数值参考均通过，P4.9结构缺口已补，见 [证据](R6_KVD_STRATEGY_2026-11-18.md)。其余部分保留：Session使用三模式枚举，不存在ICoefficientUpdatePolicy；球谐用纯函数，winkelausvektor被笛卡尔基融合；实际一个AdaptiveExperimentRunner三个方法、一个MatResultAnalyzer四种分析。职责/数值已有有限证据，尚未逐项核销或冻结。
+- **D2：策略和纯数学职责（P4.9/P7.1/P7.10/P8.8/P8.9/P9.8）**。`df511f9`已补KvD引擎/平移规则，`5318cd8`已补Session的ICoefficientUpdatePolicy及Reset/Inherit/Periodic默认组合和显式注入；48523项策略检查及既有真实Session/独立数值回归通过，见 [Session证据](R6_COEFFICIENT_POLICY_2026-11-18.md)，P4.9/P8.8结构缺口已补。其余保留：球谐用纯函数，winkelausvektor被笛卡尔基融合；实际一个AdaptiveExperimentRunner三个方法、一个MatResultAnalyzer四种分析。职责/数值已有有限证据，尚未逐项核销或冻结。
 - **D3：编排依赖注入（P5.7/P10.9）**。首次发现Bias在compute内创建Franz/Original/Modified及RNG，与SRS附录A的**REQ-DC-EXPERIMENT-001“通过组合注入求解、RNG、采样和写入器”**存在差距。`909fd57`已补BiasEstimators三槽及RunContext RNG注入，保留采样/噪声/Writer接口、源两次reseed和求解顺序；[668项测试及真实回归](R6_BIAS_INJECTION_2026-11-18.md)验证该Bias缺口。Adaptive允许Step注入，但轨迹/环境/采样装配的其它候选替换边界仍需逐项核对，不能据此关闭总体OOP验收；不为凑类名添加无用途包装。
 - **D4：正式运行记录边界（P5.3/P8.9/P10.6）**。五生成入口已有开始/结束记录；`00d1742`补齐plot/SVG在分配RunId后的导出记录，394项/38次调用及真实进程检查通过，见 [证据](R6_ARTIFACT_RECORDS_2026-11-18.md)。来源摘要沿用读取快照，未使用的RNG/计算Manifest明确为null；记录失败保留已有产物。inspect/analyze/JSON illustration继续只读，解析/分析/几何/RunId预留失败及信号终止仍依赖外部证据；不将这一有限补足等同整个REQ-NF-LOG验收。
 - **D5：MAT v7.3真实拒绝用例已补（P1.5）**。`f1fb7d3`生成并直接matio逐位核验真实合成夹具，`0d73ed1`复现后端先打开的错误分类（32场景中29失败），[Issue #1](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/1)登记后在`f1a7ab2`前移封存头预检。32场景/308项及两模式全量CTest通过，详见 [证据](R6_MAT73_REJECTION_2026-11-18.md)。v7.3拒绝不调用Mat_Open；普通构建/测试读取固定夹具，不新增HDF5依赖。后端不可用由确定性替身验证，实际无HDF5工具链未验证，元数据能力不扩大；不代签正式数据资格。
 
 ## 后续次序与权限边界
 
-1. D3的Bias求解/RNG、D5真实版本负例、D4的已分配RunId导出记录及D2的KvD引擎/策略已补。继续D1构造不变量、D2 Session/球谐/分析职责、Adaptive其它装配和只读/预留前记录范围，保留原数值公式、输入只读和检查点顺序。P10.8仍缺可审查Draft PR，后续以实际范围与测试证据准备，不合并或发布。
+1. D3的Bias求解/RNG、D5真实版本负例、D4的已分配RunId导出记录及D2的KvD/Session策略已补。继续D1构造不变量、D2球谐/分析职责、Adaptive其它装配和只读/预留前记录范围，保留原数值公式、输入只读和检查点顺序。P10.8仍缺可审查Draft PR，后续以实际范围与测试证据准备，不合并或发布。
 2. 三个Adaptive真实失败（初始化帧14acos越界，另外两入口帧151零旋转）及完整Bias/L4仍未解决；不可修改门限、跳帧或改分母以获得成功。具体结果与未执行成功分支见NUM。
 3. 容差、资源、跨环境、基线及发布的正式批准仍按TODO的既定延期状态处理；本表不擅自解锁、催办或代签。**没有MATLAB/Octave/L1阻塞。**
 4. 本次新增NUMERICAL_EQUIVALENCE补齐了P10.6缺失的汇总文件；P10.6以及R6整体仍未完成。

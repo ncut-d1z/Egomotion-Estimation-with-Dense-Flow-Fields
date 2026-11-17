@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **2026-11-18 最新证据登记（[AI-EDIT]）**：受测源码 `df511f9924b75ded66b437fd533ca888918420c1` 两模式构建无诊断，**SVG ON56/56、OFF55/55 CTest Passed**（先MAT7项，再49/48项），原始输入SHA不变。新增`r06_kvd_strategy_composition`两模式各2712项检查，独立L3/完整trace/停止/Bias回归通过，见 [双模式证据](reviews/R6_KVD_STRATEGY_2026-11-18.md)。[66 TC映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)、[98项P复核](reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)及 [数值汇总](NUMERICAL_EQUIVALENCE.md)同步。未改下列66项TC/AC、阈值、优先级或冻结状态；完整实验/L4及正式资格仍缺，三个真实Adaptive仍Incomplete、无MAT，旧描述保留历史语境。
+> **2026-11-18 最新证据登记（[AI-EDIT]）**：受测源码 `5318cd817aa781345c159bd4ba22ee00fe926ee2` 两模式构建无诊断，**SVG ON57/57、OFF56/56 CTest Passed**（先MAT7项，再50/49项），原始输入SHA不变。新增`r06_coefficient_policy_composition`两模式各48523项检查，独立SH/单步L3、真实Session交错与其它回归通过；首轮构建失败和次轮警告的修复链保留，见 [双模式证据](reviews/R6_COEFFICIENT_POLICY_2026-11-18.md)。[66 TC映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)、[98项P复核](reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)及 [数值汇总](NUMERICAL_EQUIVALENCE.md)同步。未改下列66项TC/AC、阈值、优先级或冻结状态；完整实验/L4及正式资格仍缺，三个真实Adaptive仍Incomplete、无MAT，旧描述保留历史语境。
 
 > **测试计划草案 v0.31，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
 

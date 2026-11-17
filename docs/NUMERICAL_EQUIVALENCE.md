@@ -6,7 +6,7 @@
 
 C++ 工程已有固定输入数学回归、原始 MAT 独立逐值复核、有限端到端运行及错误路径证据。**尚不能认定全部实验数值等价**：三个真实 Adaptive 入口没有完整成功产物，完整 Bias/L4、病态前向误差资格及正式容差尚未完成。CTest 通过包含规定失败、替身编排与 I/O 负例，不能将测试总数当作有效科学样本数。
 
-最新受测源码为 `df511f9924b75ded66b437fd533ca888918420c1`，分支 `dev-plan-P0-P1-mat-dictionary-probe`。SVG ON **56/56**、OFF **55/55**，全部实际运行、零失败/跳过/禁用。两配置先运行七项MAT测试，再分别运行剩余49/48项；本轮落实KvD引擎/平移规则组合，新增各2712项策略检查通过，见 [证据](reviews/R6_KVD_STRATEGY_2026-11-18.md)。既有独立L3/完整trace/506次停止参考、Bias及其它回归保留；策略与具名入口的逐位自比较只证明接口编排，不当作独立数值Golden，随后的文档提交也不代表重新构建。
+最新受测源码为 `5318cd817aa781345c159bd4ba22ee00fe926ee2`，分支 `dev-plan-P0-P1-mat-dictionary-probe`。SVG ON **57/57**、OFF **56/56**，全部实际运行、零失败/跳过/禁用。两配置先运行七项MAT测试，再分别运行剩余50/49项；本轮落实Session系数更新策略，新增各48523项检查通过，见 [证据](reviews/R6_COEFFICIENT_POLICY_2026-11-18.md)。既有独立SH/单步L3、真实Session交错与其它数值回归保留；策略编排的逐位自比较不当作独立数值Golden，随后的文档提交也不代表重新构建。
 
 实测环境仅 Ubuntu 24.04.5 / Linux 7.0.0-43-generic x86_64、GNU 16.2.0、C++17 Release、CMake/CTest 4.3.4、Eigen 3.4.0、matio 1.5.26、zlib 1.3、Sophus 1.24.6。其它 Debian/Ubuntu 版本和工具链**未验证**；构建耗时不作为性能预算。
 
@@ -27,6 +27,7 @@ C++ 工程已有固定输入数学回归、原始 MAT 独立逐值复核、有�
 | 源SH组合与物理作用（L3） | 10个固定旋转、九单位/混合系数及场值，源适配4886项最大绝对差4.4408920985006262e-16；Session源动作10006项最大差6.6613381477509392e-16 | 同球谐回归余量。源CS系数/无CS块的组合和物理参数作用分别验证；Session项使用受控Step替身，不是完整真实求解数值。见 [源动作验证](reviews/R6_SH_SOURCE_ACTION_2026-11-17.md) |
 | Adaptive 单步（L3） | 非对称九方向正/负均值，M1–M4、rhs、原始/归一化运动、MSE、新near与九系数逐节点参考通过 | 混合回归2e-8×(1+abs(reference))；没有据两固定输入宣布全输入域资格 |
 | Adaptive 条件性（L3/诊断） | 十二个运动阶段与独立解析参考对照；十二次完整单步均因零投影范数拒绝，另四个定义域负例；1077项、零失败 | 条件族回归余量2e-8，窄锥前向误差仅诊断；不能把“小残差”写作“运动准确”。见下节及 [条件验证](reviews/R6_ADAPTIVE_CONDITIONING_2026-11-17.md) |
+| Session系数策略（接口/源状态控制流） | Reset/Inherit/Periodic独立策略，三模式各42帧默认/注入逐位比较，32个策略与11个求解故障位置及重试/共享策略隔离，共48523项 | 固定模周期/常数是精确参考；旋转委托与默认/注入自比较仅验证编排，不代替独立SH或真实求解Golden。见 [策略验证](reviews/R6_COEFFICIENT_POLICY_2026-11-18.md) |
 | Session / RunContext 隔离 | 真实单步独立/交替重放9579项、252成功帧/12拒绝帧；两个RunContext交替282项、96个RNG样本、2540个回读值 | 重放一致性是状态隔离证据，不是独立数学Golden；不保证同一Session并发安全。见 [隔离验证](reviews/R6_INTERLEAVING_2026-11-17.md) |
 | Bias 生成与发布 | 有界level0…2、seed7/11，两种噪声路径及真实求解/七MAT/Manifest；合同17695项、发布5560项，最大绝对差均6.6613381477509392e-16 | 保留实际样本/失败计数；不是40次level9科学实验。见 [Bias验证](reviews/R6_BIAS_RUNNER_VALIDATION_2026-11-17.md) |
 | 历史 Bias 曲线（L2+独立计算） | 两组各40目录，400个实际曲线输入/10400值，26曲线/208对x-y、986来源；独立标签解码及long double累加，3323项、最大绝对差2.63782051757033286776e-14 | 纵值回归绝对1e-9，横值精确；其余160个ywerte1/2仅属存储复核，源分析未使用。不是重新生成560MAT。见 [历史曲线验证](reviews/R6_BIAS_ARCHIVE_ANALYSIS_2026-11-17.md) |
@@ -49,7 +50,7 @@ C++ 工程已有固定输入数学回归、原始 MAT 独立逐值复核、有�
 
 ## 身份、日志与复核方式
 
-- 最新RunId：`r6-kvd-strategy-20261118-iQclVtbH`；命令、工作目录、版本、开始/结束时间、退出码、stdout/stderr、JUnit与输入SHA位于忽略目录 `build/r6-kvd-strategy-20261118-iQclVtbH/evidence-ON/`、`evidence-OFF/`；`run.sh`保存完整执行参数。永久可审阅摘要见 [固定SHA验证报告](reviews/R6_KVD_STRATEGY_2026-11-18.md)。
+- 最新RunId：`r6-coefficient-final-20261118-A1AX7yeP`；命令、工作目录、版本、开始/结束时间、退出码、stdout/stderr、JUnit与输入SHA位于忽略目录 `build/r6-coefficient-final-20261118-A1AX7yeP/evidence-ON/`、`evidence-OFF/`；`run.sh`保存完整执行参数。永久可审阅摘要及首轮失败记录见 [固定SHA验证报告](reviews/R6_COEFFICIENT_POLICY_2026-11-18.md)。
 - 原始628文件/582MAT的Git树为 `70ee155131c24a50169346d0ffbaff0c01b1c547`；前后输入SHA核验均退出0。原文件未写入、重命名或删除；没有上传生成MAT和本机日志。
 - 五生成入口保存invocation/execution及计算Manifest；plot/SVG保存已分配RunId后的导出记录。只读入口和分配RunId前的记录边界尚未全部落实。进程信号终止的真实状态由外部执行者日志确定，缺结束记录不等于成功。
 - 每次新配置/构建/测试仍先原子提交、正常推送、核实远端SHA；此文档不自行授权完整科学实验、性能测量或安装依赖。

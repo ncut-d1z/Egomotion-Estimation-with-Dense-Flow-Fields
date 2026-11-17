@@ -4,7 +4,7 @@ A planned **C++17 reimplementation that directly reads the original MATLAB MAT f
 
 > **Permanent evidence policy:** Running MATLAB/Octave or collecting original MATLAB L1 execution traces is **not required** for design, coding, verification, or release. The original scripts are read-only specifications; numerical evidence will use the preserved MAT results (L2), independently checked analytic/reference implementations (L3), and statistical comparisons (L4). See [No MATLAB Execution Policy](docs/golden/NO_MATLAB_EXECUTION_POLICY.md). This change does not authorize C++ builds/tests or imply any numerical acceptance.
 
-> **项目状态（2026-11-18）**：R6仍在验证。最新受测源码 `df511f9924b75ded66b437fd533ca888918420c1` 两模式构建无诊断，**SVG ON56/56、OFF55/55 CTest通过**；KvD引擎与可替换平移规则已组合，新增策略测试各2712项、独立数值/停止/Bias回归通过，见 [最新验证](docs/reviews/R6_KVD_STRATEGY_2026-11-18.md)。真实Adaptive三入口仍因初始化第14帧acos越界或第151帧零旋转返回Incomplete，无MAT；**错误处理通过不等于科学实验成功**。[数值证据汇总](docs/NUMERICAL_EQUIVALENCE.md)、[98项任务复核](docs/reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)及[66项TC映射](docs/reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)列明实际证据和剩余义务；原始资料哈希不变。
+> **项目状态（2026-11-18）**：R6仍在验证。最新受测源码 `5318cd817aa781345c159bd4ba22ee00fe926ee2` 两模式构建无诊断，**SVG ON57/57、OFF56/56 CTest通过**；Session重置/继承/周期刷新策略已独立并可替换，专项各48523项和真实Session交错回归通过，见 [最新验证](docs/reviews/R6_COEFFICIENT_POLICY_2026-11-18.md)。真实Adaptive三入口仍因初始化第14帧acos越界或第151帧零旋转返回Incomplete，无MAT；**错误处理通过不等于科学实验成功**。[数值证据汇总](docs/NUMERICAL_EQUIVALENCE.md)、[98项任务复核](docs/reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)及[66项TC映射](docs/reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)列明实际证据和剩余义务；原始资料哈希不变。
 
 ## Original research and source material
 
