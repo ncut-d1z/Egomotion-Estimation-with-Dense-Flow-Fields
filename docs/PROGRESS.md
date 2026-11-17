@@ -2,6 +2,8 @@
 
 ## 最新接续：R6 真实CLI与历史分析集成（2026-11-17）
 
+**第二轮 `[HUMAN-EXECUTE/APPROVE]`：`3986ed5` 无诊断构建，34/35 CTest。** 帮助及真实CLI的42次调用通过；历史proportional横轴与当前生成公式不同，无噪声Adaptive被报告含非有限值。正在通过独立MAT解码记录原值/无定义位置，并补齐其余归档实测；不改变原文件或非有限拒绝规则。
+
 **首轮实测 `[HUMAN-EXECUTE/APPROVE]`：`3843a81` 无诊断构建，33/35 CTest。** 真实CLI的41次进程调用确认八个子命令帮助错误退出2；其余Bias发布/诊断通过。历史分析测试因新CMake脚本的变量名冲突在业务调用前退出，不能归因于Analyzer。现分别修复解析器与测试分派，原断言保留、待新检查点复测；证据见 [CLI验证](reviews/R6_CLI_PROCESS_VALIDATION_2026-11-17.md)。
 
 **[HUMAN-EXECUTE/APPROVE] 新增两项CTest，尚未执行。** 固定构建SHA的实际 `egomotion` 进程覆盖解析/错误诊断、两种有界Bias和六组历史结果JSON/SVG；35项登记不能继承33/33通过。已核实子命令帮助的源码疑点，准备保存首轮实测；详细边界及后续证据见 [CLI验证](reviews/R6_CLI_PROCESS_VALIDATION_2026-11-17.md)。

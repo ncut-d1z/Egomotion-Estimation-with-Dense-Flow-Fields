@@ -9,9 +9,11 @@
 #include <unistd.h>
 
 #include <cstdint>
+#include <cmath>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <set>
@@ -138,6 +140,24 @@ void checkFile(const fs::path& root,const std::string& relative,const std::strin
     const auto reference=decodeIndependent(path);
     require(reference.name==name&&reference.rows==rows&&reference.cols==cols&&
             reference.storage_type==storage_type,"Raw fields differ from independent inventory: "+relative);
+    // 原始归档可能与当前生成脚本不同；只报告独立解码事实，不修补原值。
+    if(name=="xwerte"&&relative.find("/40/")!=std::string::npos)
+        std::cout<<std::setprecision(17)<<"ARCHIVE_X file="<<relative<<" row3="<<reference.values.at(2)
+                 <<" row10="<<reference.values.at(9)<<'\n';
+    std::size_t nan_count=0,infinity_count=0;
+    std::string nonfinite_indices;
+    for(std::size_t i=0;i<reference.values.size();++i) {
+        const double x=reference.values[i];
+        nan_count+=std::isnan(x);infinity_count+=std::isinf(x);
+        if(!std::isfinite(x)) {
+            if(!nonfinite_indices.empty())nonfinite_indices+=",";
+            nonfinite_indices+=std::to_string(i+1);
+        }
+    }
+    if(nan_count||infinity_count)
+        std::cout<<"ARCHIVE_NONFINITE file="<<relative<<" nan="<<nan_count
+                 <<" infinity="<<infinity_count<<" matlab_linear_indices="
+                 <<nonfinite_indices<<'\n';
     const int fd=::open(path.c_str(),O_RDONLY|O_CLOEXEC|O_NOFOLLOW);
     require(fd>=0,"Cannot open SHA reference");
     const auto digest=io::sha256Fd(fd);::close(fd);
