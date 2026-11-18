@@ -801,6 +801,14 @@ if(BUILD_TESTING)
     set_tests_properties(r06_real_session_interleaving PROPERTIES
         LABELS "r06;session;real-step;interleaving;bounded-fixtures" TIMEOUT 60)
 
+    add_executable(test_r06_session_l3 tests/integration/test_r06_session_l3.cpp)
+    target_link_libraries(test_r06_session_l3 PRIVATE egomotion_estimators)
+    target_compile_options(test_r06_session_l3 PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_session_independent_multiframe COMMAND test_r06_session_l3
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_session_l3")
+    set_tests_properties(r06_session_independent_multiframe PROPERTIES
+        LABELS "r06;session;real-step;independent-l3;bounded-fixtures;write-sandbox" TIMEOUT 60)
+
     add_executable(test_r06_run_context_interleaving tests/integration/test_r06_run_context_interleaving.cpp)
     target_link_libraries(test_r06_run_context_interleaving PRIVATE egomotion_experiments egomotion_matio)
     target_compile_options(test_r06_run_context_interleaving PRIVATE -Wall -Wextra -Wpedantic)
