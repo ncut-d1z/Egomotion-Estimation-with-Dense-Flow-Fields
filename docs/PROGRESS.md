@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6三Adaptive入口编排（2026-11-18）
+
+`[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`34fe509240167a357afc43da71c588534bee005c`两模式构建无诊断，**SVG ON63/63、OFF62/62 CTest**；先MAT7项，再56/55项，零失败/跳过/禁用。P8.9的InitializationRunner、AdaptiveComparisonRunner、UpdateRateRunner已接管各自Config/Context检查、进度及发布，Production只装配分派，旧内存入口保留兼容；共享计算函数体保持。新增入口隔离两模式各172962项，六次交错完整运行、12错误Context、非法Config及第五轮失败后同Runner重新完成八轮；原88121项场景及真实数值回归通过。RunId `r6-adaptive-entries-20261118-gBryoJ8Q`，各722项输入摘要不变，见 [专项记录](reviews/R6_ADAPTIVE_ENTRIES_2026-11-18.md)。D2已列明源码职责缺口已补，总体对象/数值验收仍未签署；D1构造不变量、D4记录范围、完整科学实验及正式资格未完成。Issue #1/#2/#3开放、无PR，R6未结案。
+
 ## 最新接续：R6 P9.8分析组件分离（2026-11-18）
 
 `[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`03f7f81b6605a4492890a44e9e28290b8f3d785d`两模式构建无诊断，**SVG ON62/62、OFF61/61 CTest**；先MAT7项，零失败/跳过/禁用。BiasResultAnalyzer/AdaptiveResultAnalyzer分别拥有原分析逻辑，MatResultAnalyzer只分派，原函数体及异常分类保持。新测试各727项，覆盖四入口两次交替、40读取故障、结果自拥有及导出失败不改值；历史独立曲线/平滑和原回归保留。RunId `r6-analyzer-services-20261118-0WFb9nRp`，各722项输入摘要不变，见 [专项记录](reviews/R6_ANALYZER_SERVICES_2026-11-18.md)。P9.8源码职责缺口已补，D1、D2其余Runner职责、D4记录边界及完整实验/资格仍未完成，R6未结案；Issue #1/#2/#3开放、无PR。

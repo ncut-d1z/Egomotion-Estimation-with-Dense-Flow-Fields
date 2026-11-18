@@ -6,7 +6,7 @@
 
 C++ 工程已有固定输入数学回归、原始 MAT 独立逐值复核、有限端到端运行及错误路径证据。**尚不能认定全部实验数值等价**：三个真实 Adaptive 入口没有完整成功产物，完整 Bias/L4、病态前向误差资格及正式容差尚未完成。CTest 通过包含规定失败、替身编排与 I/O 负例，不能将测试总数当作有效科学样本数。
 
-最新受测源码为 `03f7f81b6605a4492890a44e9e28290b8f3d785d`，分支 `dev-plan-P0-P1-mat-dictionary-probe`。SVG ON **62/62**、OFF **61/61**，全部实际运行、零失败/跳过/禁用。两配置先运行七项MAT测试，再分别运行剩余55/54项；本轮补P9.8两类分析组件，各727项入口/40故障/结果隔离检查通过，见 [证据](reviews/R6_ANALYZER_SERVICES_2026-11-18.md)。原完整分析函数体不变；新增JSON对照仅证明分派一致，不能替代独立历史400文件/10400值、非线性平滑/分段等既有数值参考。原SH/单步/Session/MAT/CLI回归保留；未改变公式或容差，随后的文档提交不代表重新构建。
+最新受测源码为 `34fe509240167a357afc43da71c588534bee005c`，分支 `dev-plan-P0-P1-mat-dictionary-probe`。两模式构建无诊断，**SVG ON63/63、OFF62/62 CTest**；先MAT7项，再56/55项，零失败/跳过/禁用。本轮补P8.9三个具名入口的Config/Context及发布职责，各172962项检查与原88121项场景通过，见 [证据](reviews/R6_ADAPTIVE_ENTRIES_2026-11-18.md)。共用逐帧计算及辅助函数体不变；新完整运行使用固定Step和内存Writer/Publisher，仅证明Session/编排隔离及聚合，不能替代独立数值Golden或真实MAT持久化。原球谐/单步/Session/历史分析/MAT/CLI回归保留；未改变公式或容差，随后的文档提交不代表重新构建。
 
 实测环境仅 Ubuntu 24.04.5 / Linux 7.0.0-43-generic x86_64、GNU 16.2.0、C++17 Release、CMake/CTest 4.3.4、Eigen 3.4.0、matio 1.5.26、zlib 1.3、Sophus 1.24.6。其它 Debian/Ubuntu 版本和工具链**未验证**；构建耗时不作为性能预算。
 

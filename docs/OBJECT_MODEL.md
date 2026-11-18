@@ -1,5 +1,7 @@
 # 对象模型与生命周期合同（Object Model）
 
+> **2026-11-18 P8.9实现追踪，候选/未冻结**：InitializationRunner、AdaptiveComparisonRunner、UpdateRateRunner各有独立Config的compute/run，run借用当前Context并负责kind检查、进度、Comparison RNG及发布门禁；每次/每轮Session与缓冲仍局部创建。Production只装配分派，旧AdaptiveExperimentRunner仅兼容内存调用。共用逐帧计算没有重复方程。172962项交错/错误Context/第五轮失败后同Runner复用与双模式证据见 [记录](reviews/R6_ADAPTIVE_ENTRIES_2026-11-18.md)。D2列明源码职责缺口已补，领域构造不变量、记录边界及总体对象验收仍保留；下方旧时间注记保留当时状态。
+
 > **2026-11-18 P9.8实现追踪，候选/未冻结**：BiasResultAnalyzer与AdaptiveResultAnalyzer分别拥有Bias统计及三Adaptive分析的原函数体，借用Reader、不创建Writer/Exporter，返回自拥有数值及来源；MatResultAnalyzer仅分派，公共异常边界保持。727项四入口/40故障/结果与导出隔离及双模式实测见 [记录](reviews/R6_ANALYZER_SERVICES_2026-11-18.md)。P9.8源码缺口已补，领域构造不变量、其余Runner职责和总体对象验收仍未关闭。下方日期较早的实现描述保留当时状态。
 
 > **2026-11-18 P7.10实现追踪，候选/未冻结**：RealSphericalHarmonics、HarmonicFitter、HarmonicRotator现各有实现文件，分别拥有源基值/重建、逐通道投影、物理与原系数两种明确旋转动作；原自由函数仅转发。实际Adaptive单步/Session/Periodic策略已使用三个组件，无虚基类、缓存或多帧状态。482项参考/边界及双模式实测见 [记录](reviews/R6_HARMONIC_SERVICES_2026-11-18.md)。这补足P7.10源码职责，不关闭领域构造不变量、其余Runner/Analyzer结构和总体对象验收。
@@ -220,9 +222,9 @@ stateDiagram-v2
 | `adaptive_matched_filter_test/data_analysis/graph_agent_in_sphere_adaptive_matched_filter_many_parameter.m` | AdaptiveResultAnalyzer::updateRates | 已定位 / 合同待 P0 核验 |
 | `adaptive_matched_filter_test/data_analysis/graph_agent_in_sphere_adaptive_matched_filter_test.m` | AdaptiveResultAnalyzer::comparison | 已定位 / 合同待 P0 核验 |
 | `adaptive_matched_filter_test/data_analysis/graph_agent_in_sphere_initialization_test.m` | AdaptiveResultAnalyzer::initialization | 已定位 / 合同待 P0 核验 |
-| `adaptive_matched_filter_test/data_generation/agent_in_sphere_adaptive_matched_filter_many_parameter.m` | UpdateRateRunner::run | 已定位 / 合同待 P0 核验 |
-| `adaptive_matched_filter_test/data_generation/agent_in_sphere_adaptive_matched_filter_test.m` | AdaptiveComparisonRunner::run | 已定位 / 合同待 P0 核验 |
-| `adaptive_matched_filter_test/data_generation/agent_in_sphere_initialization_test.m` | InitializationRunner::run | 已定位 / 合同待 P0 核验 |
+| `adaptive_matched_filter_test/data_generation/agent_in_sphere_adaptive_matched_filter_many_parameter.m` | UpdateRateRunner::run | P8.9源码职责已落实、有限隔离实测；真实完整成功及正式验收仍缺 |
+| `adaptive_matched_filter_test/data_generation/agent_in_sphere_adaptive_matched_filter_test.m` | AdaptiveComparisonRunner::run | P8.9源码职责已落实、有限隔离实测；真实完整成功及正式验收仍缺 |
+| `adaptive_matched_filter_test/data_generation/agent_in_sphere_initialization_test.m` | InitializationRunner::run | P8.9源码职责已落实、有限隔离实测；真实完整成功及正式验收仍缺 |
 | `bias_test/data_analysis/graphs_bias_test.m` | BiasResultAnalyzer::aggregate | 已定位 / 合同待 P0 核验 |
 | `bias_test/data_generation/bias_test_nonspherical.m` | BiasExperimentRunner::runOccluded | 已定位 / 合同待 P0 核验 |
 | `bias_test/data_generation/bias_test_spherical_prop_error.m` | BiasExperimentRunner::runProportional | 已定位 / 合同待 P0 核验 |

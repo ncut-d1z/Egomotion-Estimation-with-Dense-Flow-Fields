@@ -1,6 +1,6 @@
 # 实验 Runner 与结果写出——详细设计草案
 
-> **2026-11-18 P8.9职责候选增量，未冻结/本检查点待测**：`InitializationRunner`、`AdaptiveComparisonRunner`、`UpdateRateRunner`分别接受独立Config，`run`检查本次RunContext种类、绑定进度/Comparison RNG并通过既有发布门禁交付；`compute`使用私有共用逐帧流程。每次调用/每轮仍新建Session和聚合缓冲，Runner只保存借用服务，不能缓存Context或可变系数。ProductionExperimentRunner只作入口装配，旧AdaptiveExperimentRunner为内存兼容分派；不承诺未冻结ABI兼容。共用计算公式、35/600/600帧、八轮固定除数、末轮ratio、错误链及完整输出检查保持；新增交错调用、错误Context、非法Config和第五轮失败后同Runner复用验证。关联P8.9及原REQ/TC不变，不改DEC-005容差或验收义务。
+> **2026-11-18 P8.9职责候选增量，未冻结**：`InitializationRunner`、`AdaptiveComparisonRunner`、`UpdateRateRunner`分别接受独立Config，`run`检查本次RunContext种类、绑定进度/Comparison RNG并通过既有发布门禁交付；`compute`使用私有共用逐帧流程。每次调用/每轮仍新建Session和聚合缓冲，Runner只保存借用服务，不能缓存Context或可变系数。ProductionExperimentRunner只作入口装配，旧AdaptiveExperimentRunner为内存兼容分派；不承诺未冻结ABI兼容。共用计算公式、35/600/600帧、八轮固定除数、末轮ratio、错误链及完整输出检查保持；新增交错调用、错误Context、非法Config和第五轮失败后同Runner复用验证。双模式ON63/OFF62、172962项隔离检查实测见 [记录](../reviews/R6_ADAPTIVE_ENTRIES_2026-11-18.md)。关联P8.9及原REQ/TC不变，不改DEC-005容差或验收义务。
 
 > **2026-11-18 场景装配候选增量，未冻结**：Adaptive内存Runner增加必需`AdaptiveScene`借用包，经轨迹模块的`ITrajectoryGenerator/ITrajectoryKinematics/ISphereEnvironment`调用原实现；ProductionExperimentRunner拥有默认具体服务或显式借用。轨迹点数/有限性先于运动学检查，运动帧数/有限性先于采样检查，防止替身success造成越界或无效值继续传播。局部FlowSynthesizer仍只负责确定性公式；原轨迹、旋转、球相交函数体未改。完整八轮合成场景及第五轮中断合同验证见 [场景记录](../reviews/R6_ADAPTIVE_SCENE_2026-11-18.md)，不作为真实科学实验成功或公共ABI冻结。
 
