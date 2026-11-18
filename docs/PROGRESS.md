@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：P10.8阶段Draft PR交付（2026-11-18）
+
+`[HUMAN-EXECUTE/APPROVE]` 已创建并API回读核实[Draft PR #6](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/pull/6)，Open/Draft/未合并，已附加到当前任务。创建时head `9c0022d2d7c3d19890cc46988f63b0544823d599`、base `eb08c6ba006727c3361af9ea8cb424ece99ba4e0`，main为祖先；353文件/1081提交的既有历史保留。PR按模块给出审查入口、固定受测3985b05的ON73/OFF72证据、Issue #1–#5修复链及原轨迹Incomplete范围。重新读取四份JUnit逐名匹配，并核对739项当前输入SHA；本轮仅文档/只读交付审计，没有重新构建/CTest。P10.8的创建动作完成，审查与正式验收未通过；不变更延期的Ready/合并/发布。详见[交付记录](reviews/R6_DRAFT_DELIVERY_2026-11-18.md)，证据目录`build/r6-draft-handoff-20261118-5nZ8yTP0/`；原资料和生产代码不变，R6仍未结案。
+
 ## 最新接续：R6真实Adaptive完整交付链独立参考（2026-11-18）
 
 `[HUMAN-EXECUTE/APPROVE]` 受测源码`3985b056aa19935c8348f0fefa5f5292f9fbd3b4`两模式配置/编译无诊断，**SVG ON73/73、OFF72/72 CTest**；先MAT7项，再66/65项，零失败/跳过/禁用。新增合成固定输入→真实Adaptive Step/Session→完整35/600帧及8轮聚合→MAT交付独立对照：3676721项、17441次Step、12个MAT/8540值通过，保存值最大差5.406439324458240113e-10，沿用原1e-9工程余量。两配置Step JSONL与MAT数值载荷相同，739项输入SHA及21组既有摘要不变。独立标量公式从自身状态演进，Comparison连续172224次normal、四错误数组固定除8、ratio取末轮，三合成Manifest Complete。RunId `r6-real-delivery-20261118-ghz37p6I`保留完整逐节点JSONL、MAT/Manifest、四份JUnit及通道日志，见 [专项记录](reviews/R6_REAL_STEP_DELIVERY_L3_2026-11-18.md)。合成场景不等于原科学实验成功；原轨迹三入口仍Incomplete、无完整科学MAT，L4、病态资格及正式验收未完成。Issue #1–#5开放，无PR，R6未结案。

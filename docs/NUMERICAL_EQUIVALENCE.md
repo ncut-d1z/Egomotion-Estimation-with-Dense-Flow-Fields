@@ -6,7 +6,7 @@
 
 C++ 工程已有固定输入数学回归、原始 MAT 独立逐值复核、有限端到端运行及错误路径证据。**尚不能认定全部实验数值等价**：三个原轨迹 Adaptive 入口没有完整成功产物，完整 Bias/L4、病态前向误差资格及正式容差尚未完成。CTest 通过包含规定失败、替身编排与 I/O 负例，不能将测试总数当作有效科学样本数。
 
-受测源码`3985b056aa19935c8348f0fefa5f5292f9fbd3b4`两模式配置/编译无诊断，**SVG ON73/73、OFF72/72 CTest**；先MAT7项，再66/65项，零失败/跳过/禁用。新增合成固定输入→真实Adaptive Step/Session→完整35/600帧及8轮聚合→MAT交付独立对照：3676721项、17441次Step、12个MAT/8540值通过，保存值最大差5.406439324458240113e-10，沿用原1e-9工程余量。两配置Step JSONL与MAT数值载荷相同，739项输入SHA及21组既有摘要不变。见 [完整交付链证据](reviews/R6_REAL_STEP_DELIVERY_L3_2026-11-18.md)。合成场景不等于原科学实验成功；原轨迹三入口仍Incomplete、无完整科学MAT，L4、病态资格及正式验收未完成。Issue #1–#5开放，无PR，R6未结案。
+受测源码`3985b056aa19935c8348f0fefa5f5292f9fbd3b4`两模式配置/编译无诊断，**SVG ON73/73、OFF72/72 CTest**；先MAT7项，再66/65项，零失败/跳过/禁用。新增合成固定输入→真实Adaptive Step/Session→完整35/600帧及8轮聚合→MAT交付独立对照：3676721项、17441次Step、12个MAT/8540值通过，保存值最大差5.406439324458240113e-10，沿用原1e-9工程余量。两配置Step JSONL与MAT数值载荷相同，739项输入SHA及21组既有摘要不变。见 [完整交付链证据](reviews/R6_REAL_STEP_DELIVERY_L3_2026-11-18.md)。合成场景不等于原科学实验成功；原轨迹三入口仍Incomplete、无完整科学MAT，L4、病态资格及正式验收未完成。Issue #1–#5开放，已建立[Draft PR #6](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/pull/6)，R6未结案。
 
 实测环境仅 Ubuntu 24.04.5 / Linux 7.0.0-43-generic x86_64、GNU 16.2.0、C++17 Release、CMake/CTest 4.3.4、Eigen 3.4.0、matio 1.5.26、zlib 1.3、Sophus 1.24.6。其它 Debian/Ubuntu 版本和工具链**未验证**；构建耗时不作为性能预算。
 

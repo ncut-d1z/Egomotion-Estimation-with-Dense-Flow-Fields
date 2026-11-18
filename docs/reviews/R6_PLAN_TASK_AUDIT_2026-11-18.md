@@ -1,6 +1,6 @@
 # R6：PLAN 的98项任务逐项复核
 
-> **接续实测**：受测源码`3985b056aa19935c8348f0fefa5f5292f9fbd3b4`两模式配置/编译无诊断，**SVG ON73/73、OFF72/72 CTest**；先MAT7项，再66/65项，零失败/跳过/禁用。新增合成固定输入→真实Adaptive Step/Session→完整35/600帧及8轮聚合→MAT交付独立对照：3676721项、17441次Step、12个MAT/8540值通过，保存值最大差5.406439324458240113e-10，沿用原1e-9工程余量。两配置Step JSONL与MAT数值载荷相同，739项输入SHA及21组既有摘要不变。见 [完整交付链证据](R6_REAL_STEP_DELIVERY_L3_2026-11-18.md)。合成场景不等于原科学实验成功；原轨迹三入口仍Incomplete、无完整科学MAT，L4、病态资格及正式验收未完成。Issue #1–#5开放，无PR，R6未结案。
+> **接续实测**：受测源码`3985b056aa19935c8348f0fefa5f5292f9fbd3b4`两模式配置/编译无诊断，**SVG ON73/73、OFF72/72 CTest**；先MAT7项，再66/65项，零失败/跳过/禁用。新增合成固定输入→真实Adaptive Step/Session→完整35/600帧及8轮聚合→MAT交付独立对照：3676721项、17441次Step、12个MAT/8540值通过，保存值最大差5.406439324458240113e-10，沿用原1e-9工程余量。两配置Step JSONL与MAT数值载荷相同，739项输入SHA及21组既有摘要不变。见 [完整交付链证据](R6_REAL_STEP_DELIVERY_L3_2026-11-18.md)。合成场景不等于原科学实验成功；原轨迹三入口仍Incomplete、无完整科学MAT，L4、病态资格及正式验收未完成。Issue #1–#5开放，已建立[Draft PR #6](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/pull/6)，R6未结案。
 
 `[AI-EDIT]`，2026-11-18。本表逐项保留 [PLAN](../PLAN.md) 的98个P编号和原义务，核对实际文件、现有测试及缺口；**不修改需求、验收门槛、批准或冻结状态，也不将“有代码/测试通过”改称“任务已验收”**。原始任务全文及REQ/TC/AC/依赖仍以PLAN为准；下列“核对对象”只是定位摘要，不替代它。
 
@@ -132,7 +132,7 @@
 | P10.5 | 论文数值图表复现 | NUM、RUN、ANALYSIS | 未完成 | 历史曲线分析/有限回归不等于完整Bias、初始化、轨迹、更新频率及L4。 |
 | P10.6 | 证据汇总及平台 | NUM、PROGRESS、BUILD：本轮新增NUMERICAL_EQUIVALENCE | 部分 | 实际仅一个Ubuntu/GCC环境；完整实验/性能/资源预算仍缺。 |
 | P10.7 | 来源notice与输出保护 | SRC、BUILD、IO：根MIT/来源与.gitignore | 已有材料/实测 | 不重授原作者许可，不上传output/MAT；正式发布单独授权。 |
-| P10.8 | Draft PR交付 | Issue #1–#5开放，尚无PR | 未完成 | 尚未创建Draft PR；不合并/发布，后续准备具体范围与证据后办理。 |
+| P10.8 | Draft PR交付 | [Draft PR #6](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/pull/6)及[交付记录](R6_DRAFT_DELIVERY_2026-11-18.md)，Issue #1–#5开放 | 已创建草案/待审查 | 创建及API回读已完成；含模块入口/固定SHA实测/修复链/剩余范围。人类审查及REQ/AC未验收，未Ready/合并/发布。 |
 | P10.9 | OOP边界验收 | CONTRACT、IO、SESSION、RUN、SRC | 部分 | D1–D5列明源码差别已补有限实测；所有权/替换/隔离不等于总体设计验收，不代签。 |
 | P10.10 | 避免过度继承/统一求解器 | KVD、STEP、SH、ANALYSIS：真实类及自由函数 | 部分 | 未引入统一虚假求解基类；与候选结构的差别需逐义务收敛，不能仅凭简洁或通过数宣布完成。 |
 
@@ -148,7 +148,7 @@
 
 ## 后续次序与权限边界
 
-1. D3已列明的Bias/Adaptive装配、D5真实版本负例、D4的已分配RunId导出记录及D2的KvD/Session策略、P7.1角度、P7.10球谐、P9.8分析和P8.9入口职责已补。D1的MotionEstimate/HarmonicCoefficients/DirectionSet/FlowField已补有限实测，D4应用身份/实际读取快照与进程记录关联也已补有限实测，继续其余R6义务，保留原数值公式、输入只读和检查点顺序。P10.8仍缺可审查Draft PR，后续以实际范围与测试证据准备，不合并或发布。
+1. D3已列明的Bias/Adaptive装配、D5真实版本负例、D4的已分配RunId导出记录及D2的KvD/Session策略、P7.1角度、P7.10球谐、P9.8分析和P8.9入口职责已补。D1的MotionEstimate/HarmonicCoefficients/DirectionSet/FlowField已补有限实测，D4应用身份/实际读取快照与进程记录关联也已补有限实测，继续其余R6义务，保留原数值公式、输入只读和检查点顺序。P10.8已创建Draft PR #6供阶段审查，见[交付记录](R6_DRAFT_DELIVERY_2026-11-18.md)；不等于R6验收或恢复Ready/合并/发布。
 2. 三个Adaptive真实失败（初始化帧14acos越界，另外两入口帧151零旋转）及完整Bias/L4仍未解决；不可修改门限、跳帧或改分母以获得成功。具体结果与未执行成功分支见NUM。
 3. 容差、资源、跨环境、基线及发布的正式批准仍按TODO的既定延期状态处理；本表不擅自解锁、催办或代签。**没有MATLAB/Octave/L1阻塞。**
 4. 本次新增NUMERICAL_EQUIVALENCE补齐了P10.6缺失的汇总文件；P10.6以及R6整体仍未完成。
