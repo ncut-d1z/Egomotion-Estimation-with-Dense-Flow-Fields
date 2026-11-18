@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6含噪Session独立多帧参考（2026-11-18）
+
+`[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`928a8071c7c4ff70b7e38a4ed91c13a31c770323`两模式配置/编译无诊断，**SVG ON72/72、OFF71/71 CTest**；先MAT7项，再65/64项，零失败/跳过/禁用。新增固定噪声→真实Session独立参考：0/±0.1系数、两流252帧、9072次normal、24回滚，290923项检查通过；噪声场最大差3.06178693509906452164e-16，Step/状态最大差1.94913529760754045128e-14。两配置含噪JSONL对应SHA相同，原无噪声多帧JSONL与493ba86完全相同，737项输入SHA及21组既有摘要不变。真实均模长噪声与独立long double投影分别产生观测，参考从自身状态演进；原无噪声299236项/252帧保留。新增756成功帧Step+24失败比较Step，另18默认Session首帧Step；不是完整科学样本。RunId `r6-noisy-session-20261118-FnQ0oODZ`，逐帧输入/状态/节点JSONL、原始通道及四份JUnit保留，见 [专项记录](reviews/R6_NOISY_SESSION_L3_2026-11-18.md)。仅补SN-G06/AD-G05固定输入子范围；生产公式和余量未变，完整科学实验、病态资格及正式验收未完成，真实Adaptive仍Incomplete、无完整MAT。Issue #1–#5开放，无PR，R6未结案。
+
 ## 最新接续：R6 Adaptive Session独立多帧参考（2026-11-18）
 
 `[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`493ba86917a8147a0ddf63fad214751f1b33dd9c`两模式配置/编译无诊断，**SVG ON71/71、OFF70/70 CTest**；先MAT7项，再64/63项，零失败/跳过/禁用。新增Adaptive Session独立long double多帧参考：三模式/两流共252帧、24次真实角度失败回滚、299236项检查通过；最大数值绝对差1.38144704009413032963e-14，比较角度最大差5.82190545772576228956e-14度。两配置逐帧参考/实际JSONL对应SHA相同；736项输入SHA及21组既有数值/合同摘要不变。参考从自身状态演进，使用独立标量消元与三维多项式旋转，不从生产结果重置Expected；沿用单步/角度工程余量。成功帧924个真实Step、失败尝试24个比较Step，另六默认Session首帧共22个Step；不将调用数当科学样本。RunId `r6-session-l3-20261118-UF1B2GwG`，完整输入/状态/逐节点JSONL及四份JUnit保留，见 [专项记录](reviews/R6_SESSION_MULTIFRAME_L3_2026-11-18.md)。本批补多帧/周期有限L3证据，未改变生产公式或工程余量；完整科学实验、病态资格和正式验收仍未完成，真实Adaptive仍Incomplete、无完整MAT。Issue #1–#5开放，无PR，R6未结案。

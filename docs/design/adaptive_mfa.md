@@ -1,5 +1,7 @@
 # Adaptive MFA 单步计算与轨迹状态——详细设计草案
 
+> **2026-11-18 含噪实测接续 `[AI-EDIT]`**：928a807 ON72/OFF71通过；固定0/±0.1噪声、252帧、9072 normal及24回滚，290923项独立对照见 [证据](../reviews/R6_NOISY_SESSION_L3_2026-11-18.md)。只补SN-G06/AD-G05有限子范围，原完整含噪/8轮ratio仍缺；公式、工程余量及下文LLD合同不变，未冻结。
+
 > **2026-11-18 实测接续 `[AI-EDIT]`**：源码493ba86新增标准库long double多帧独立参考，299236项/252帧/24真实角度失败回滚通过，ON71/OFF70 CTest，见 [证据](../reviews/R6_SESSION_MULTIFRAME_L3_2026-11-18.md)及 [固定输入/来源](../../verification/adaptive/session_multiframe_reference.md)。仅补AD-G04/05/06的状态/周期子范围；AD-G05完整addederror/八轮ratio、原35/600帧成功及正式Golden/DEC-005仍未完成。沿用工程余量、LLD/API未冻结；下列旧无实现/未测试描述属历史状态。
 
 > **2026-11-18 候选策略接口，未冻结**：已编写`ICoefficientUpdatePolicy`及Reset/Inherit/Periodic三实现，Session默认拥有策略或显式借用注入对象；策略只返回本帧比较候选，Session保留唯一主/基线状态和最终事务提交。现行签名见 [策略公共头](../../include/egomotion/estimators/coefficient_update.hpp)、[Session](../../include/egomotion/estimators/adaptive_session.hpp)，顺序/引用生命周期/独立性及验证状态见 [专项记录](../reviews/R6_COEFFICIENT_POLICY_2026-11-18.md)。不修改本节源公式、周期或错误合同；下列旧“无实现/未执行”描述保留历史语境，不代表当前HEAD。

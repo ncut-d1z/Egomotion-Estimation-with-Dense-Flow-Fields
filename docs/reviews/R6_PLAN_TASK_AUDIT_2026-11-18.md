@@ -1,6 +1,6 @@
 # R6：PLAN 的98项任务逐项复核
 
-> **接续实测**：受测源码`493ba86917a8147a0ddf63fad214751f1b33dd9c`两模式配置/编译无诊断，**SVG ON71/71、OFF70/70 CTest**；先MAT7项，再64/63项，零失败/跳过/禁用。新增Adaptive Session独立long double多帧参考：三模式/两流共252帧、24次真实角度失败回滚、299236项检查通过；最大数值绝对差1.38144704009413032963e-14，比较角度最大差5.82190545772576228956e-14度。两配置逐帧参考/实际JSONL对应SHA相同；736项输入SHA及21组既有数值/合同摘要不变。见 [专项记录](R6_SESSION_MULTIFRAME_L3_2026-11-18.md)。本批补多帧/周期有限L3证据，未改变生产公式或工程余量；完整科学实验、病态资格和正式验收仍未完成，真实Adaptive仍Incomplete、无完整MAT。Issue #1–#5开放，无PR，R6未结案。
+> **接续实测**：受测源码`928a8071c7c4ff70b7e38a4ed91c13a31c770323`两模式配置/编译无诊断，**SVG ON72/72、OFF71/71 CTest**；先MAT7项，再65/64项，零失败/跳过/禁用。新增固定噪声→真实Session独立参考：0/±0.1系数、两流252帧、9072次normal、24回滚，290923项检查通过；噪声场最大差3.06178693509906452164e-16，Step/状态最大差1.94913529760754045128e-14。两配置含噪JSONL对应SHA相同，原无噪声多帧JSONL与493ba86完全相同，737项输入SHA及21组既有摘要不变。见 [专项](R6_NOISY_SESSION_L3_2026-11-18.md)。仅补SN-G06/AD-G05固定输入子范围；生产公式和余量未变，完整科学实验、病态资格及正式验收未完成，真实Adaptive仍Incomplete、无完整MAT。Issue #1–#5开放，无PR，R6未结案。
 
 `[AI-EDIT]`，2026-11-18。本表逐项保留 [PLAN](../PLAN.md) 的98个P编号和原义务，核对实际文件、现有测试及缺口；**不修改需求、验收门槛、批准或冻结状态，也不将“有代码/测试通过”改称“任务已验收”**。原始任务全文及REQ/TC/AC/依赖仍以PLAN为准；下列“核对对象”只是定位摘要，不替代它。
 
@@ -17,7 +17,7 @@
 | 本表索引 | 真实文件与对应证据 |
 |---|---|
 | SRC | [SOURCE_INVENTORY](../SOURCE_INVENTORY.md)、[MAT_DATA_SCHEMA](../MAT_DATA_SCHEMA.md)、[MIGRATION_MATRIX](../MIGRATION_MATRIX.md)、[45源复核](R6_SOURCE_IMPLEMENTATION_MAP_2026-11-17.md)；对应SOURCE |
-| BUILD | [CMakeLists](../../CMakeLists.txt)、[README](../../README.md)、[无绘图构建](R6_HEADLESS_BUILD_2026-11-17.md)、[最新双模式证据](R6_SESSION_MULTIFRAME_L3_2026-11-18.md)；对应ENV/HEADLESS |
+| BUILD | [CMakeLists](../../CMakeLists.txt)、[README](../../README.md)、[无绘图构建](R6_HEADLESS_BUILD_2026-11-17.md)、[最新双模式证据](R6_NOISY_SESSION_L3_2026-11-18.md)；对应ENV/HEADLESS |
 | DESIGN | [OBJECT_MODEL](../OBJECT_MODEL.md)、[ARCHITECTURE](../ARCHITECTURE.md)、[contracts](../design/contracts.md)，均为候选；实际 [领域类型](../../include/egomotion/domain/types.hpp)、[运动值工厂](../../src/domain/motion_estimate.cpp)、[窄接口](../../include/egomotion/contracts/interfaces.hpp) |
 | GEO | [方向采样](../../src/sampling/directions.cpp)、[随机源](../../src/sampling/random.cpp)；对应GEOM |
 | FLOW | [光流及噪声](../../src/simulation/flow.cpp)、[接口](../../include/egomotion/simulation/flow.hpp)；对应GEOM/RUNNER |
@@ -42,7 +42,7 @@
 | P0.4 | MIT及重写来源 | SRC、SH、BUILD：根LICENSE、论文/勘误来源、Eigen-only | 已有材料/实测 | 不将根MIT授予原数据；普通版权复核不阻塞编码。 |
 | P0.5 | MAT字典与失败分类 | MAT、DICTIONARY：582真实扫描、独立值/摘要及类型负例 | 已有材料/实测 | 不是全MAT类型兼容，P10.4人工复核仍独立。 |
 | P0.6 | 三份追踪文档 | SRC、MAT：SOURCE_INVENTORY/MAT_DATA_SCHEMA/MIGRATION_MATRIX | 已有材料 | 本表补98任务；正式最终追踪/验收不因文档存在而完成。 |
-| P0.7 | 对象模型 | DESIGN、SRC：候选所有权与实际符号映射 | 部分 | 设计中若干具体类/接口与实现不同，见下方D1–D4，不称候选对象图已经实现。 |
+| P0.7 | 对象模型 | DESIGN、SRC：候选所有权与实际符号映射 | 部分 | D1–D5列明的源码差别已有接续实现/有限实测；整体对象模型/公共API未冻结，不以局部通过代签。 |
 | P0.8 | 最小接口与错误合同评审 | DESIGN、CONTRACT、CLI：Result/错误链/入口已有实测 | 部分 | DEC-008及HLD/LLD冻结未批准；不据测试通过代签。 |
 | P1.1 | C++17与依赖工程 | BUILD：CMake两配置及ELF/链接图，Ubuntu24.04.5 | 实测（有限） | 其它发行版未验证；Sophus相关target和Eigen-only SH已追踪，无sdla。 |
 | P1.2 | CLI与独立输出 | CLI、IO：解析/退出码/只读inspect、五实验及分析绘图 | 实测（有限） | inspect分派不调用求解器，不声称是独立最小二进制；schema冻结及日志缺口另列。 |
@@ -67,9 +67,9 @@
 | P3.2 | 固定随机深度 | FLOW、RUN：距离1…4、平均2.5、倒数与抽样顺序 | 实测（有限） | uniform/normal消费序保留；MATLAB RNG内部实现未验证。 |
 | P3.3 | 缺损视场均模长噪声 | FLOW、GEO、RUN：generateBiasFlow+MeanMagnitudeGaussianNoise | 实测（有限） | N uniform后3N normal，末端切向投影。 |
 | P3.4 | 球面分量噪声 | FLOW、GEO、RUN：ComponentProportionalGaussianNoise | 实测（有限） | 各分量尺度和零系数仍抽样已测，与均模长路径分开。 |
-| P3.5 | 轨迹nonpropfehler | FLOW、ADAPTIVE-CLI：独立来源参数、共享均流长公式 | 实测（有限） | 实际noise0调用路径有证据；完整含噪轨迹/L4未运行。 |
+| P3.5 | 轨迹nonpropfehler | FLOW、NOISY-SESSION、ADAPTIVE-CLI：独立均模长公式与真实服务 | 实测（有限） | 新增0/±0.1固定样本→252帧真实Session，9072次调用及独立逐节点通过；完整原含噪轨迹/L4仍未运行。 |
 | P3.6 | 单位球旋转射线求交 | TRAJ、GEO：SphereEnvironment | 实测（有限） | 球内/边界/非单位/非法输入有固定解析例。 |
-| P3.7 | 固定RNG与统计分离 | FLOW、RUN：固定序列及人工光流 | 部分 | 确定性参考已有，随机统计/L4未完成。 |
+| P3.7 | 固定RNG与统计分离 | FLOW、RUN、NOISY-SESSION：明确固定序列及人工场 | 部分 | 固定噪声顺序/符号/投影与多帧参考已测；人工序列不证明Gaussian分布或L4。 |
 | P3.8 | 显式随机源与独占 | CONTRACT、RUN：FixedSequence/Mt19937、RunContext | 实测（有限） | 两RunContext交替状态已测，不承诺单对象并发。 |
 | P3.9 | 三种噪声策略 | FLOW：IFlowNoiseModel/MeanMagnitude/Component/NoNoise | 实测（有限） | 参数语义及抽样调用已核；实际注入边界以公共头为准。 |
 | P4.1 | Franz三轴模板 | KVD：FranzMatchedFilter内三轴单位向量累加 | 实测（有限） | 没有源3×10工作表API，响应/分母由trace核对。 |
@@ -105,11 +105,11 @@
 | P7.7 | Adaptive矩阵阶段 | STEP、SESSION-L3：M1…M4/rhs与独立标量消元 | 实测（有限） | 九方向正负均值/12条件场景保留；新增252固定帧中924次真实Step矩阵/解逐节点对照，不是全输入域资格。 |
 | P7.8 | 完整单步输出 | STEP、SESSION-L3：运动/MSE/near/coeff | 实测（有限） | 新增924次成功帧Step完整节点的独立参考，原拒绝路径保留；不代表原轨迹完整成功。 |
 | P7.9 | Eigen与源inv/real差异 | STEP、METRIC、SESSION-L3：有限/病态/奇异诊断 | 部分 | 独立部分选主元long double与生产FullPivLU的固定多帧对照通过；一般病态前向误差仍未正式验收，不能由小残差推定准确。 |
-| P7.10 | 球谐职责分离 | SH：RealSphericalHarmonics/HarmonicFitter/HarmonicRotator三个固定约定组件 | 实测（有限） | 无多帧mutable状态；实际单步/Session/策略已调用，旧自由函数仅兼容转发。484项独立参考/边界（系数负例迁到工厂及原始叶子）及原回归通过；不代签公共API/数值验收。 |
+| P7.10 | 球谐职责分离 | SH：RealSphericalHarmonics/HarmonicFitter/HarmonicRotator三个固定约定组件 | 实测（有限） | 无多帧mutable状态；实际单步/Session/策略已调用，旧自由函数仅兼容转发。494项独立参考/边界（含方向拟合语义接续）及原回归通过；不代签公共API/数值验收。 |
 | P7.11 | 无状态Step接口 | STEP、SESSION：IAdaptiveStepSolver/AdaptiveMfaStepSolver | 实测（有限） | 可固定输入与替身注入，未继承KvD；正式对象合同仍未冻结。 |
 | P8.1 | 35帧初始化 | RUN、ADAPTIVE-CLI：真实入口与Complete编排替身 | 部分 | 真实帧14失败、valid12、无四MAT；替身99次Step不代表真实成功。 |
 | P8.2 | 600帧8次对比 | RUN、ADAPTIVE-CLI：配置/聚合/真实noise0 | 部分 | 真实帧151失败、valid149、completed0；未完成8次或含噪实验。 |
-| P8.3 | 前帧旋转时序 | SH、SESSION、SESSION-L3：旋转/比较/主提交 | 实测（有限） | 三模式两流i=2–43与独立多项式源动作和状态对照，含非交换次序及24失败回滚；完整原轨迹未成功。 |
+| P8.3 | 前帧旋转时序 | SH、SESSION、SESSION-L3、NOISY-SESSION：旋转/比较/主提交 | 实测（有限） | 原三模式独立参考保留；新增Comparison含噪两流/三系数i=2–43，24回滚/同帧重试；完整原轨迹未成功。 |
 | P8.4 | Comparison五MAT | RUN：固定8组600行聚合/ratio取末轮 | 部分 | 替身/合成发布合同已有，with/without-errors真实新产物对照未完成。 |
 | P8.5 | 更新率1/5/11/21 | SESSION、SESSION-L3、RUN：基线/旋转/周期刷新 | 部分 | 独立真实Step序列刷新42/8/3/2次，含21周期二次刷新、0-based误移位及dumi判别；真实原帧151失败，无完整曲线。 |
 | P8.6 | 独立baseline与主状态 | SESSION：比较返回dumi弃置、主akkoeff提交 | 实测（有限） | 真实Step短序列及替身周期规则已有；完整实验保存仍缺。 |
@@ -126,13 +126,13 @@
 | P9.8 | 分析与导出分层 | ANALYSIS、ANALYZER-SERVICE、SVG：BiasResultAnalyzer/AdaptiveResultAnalyzer、分派入口及IPlotExporter | 实测（有限） | 两类组件拥有原数值逻辑，借用Reader/自拥有结果；727项读取顺序/40故障/导出不改值及历史独立回归通过，不代签整体分析/对象验收。 |
 | P10.1 | README及直接MAT入口 | SRC、CLI、BUILD：README现行命令/两DOI/构建说明 | 已有材料 | 实际运行范围和失败限制明确；不是全平台支持承诺。 |
 | P10.2 | 45源最终追踪 | SRC：45路径/50声明现行映射 | 部分 | 已定位实现与非使用范围；最终人工验收/全部分支资格未完成。 |
-| P10.3 | 逐层构建测试 | BUILD及全部TC证据组：ON57/OFF56 | 实测（有限） | 每次固定SHA/日志，未把失败合同算实验成功；全部失败历史保留。 |
+| P10.3 | 逐层构建测试 | BUILD及全部TC证据组：当前ON72/OFF71 | 实测（有限） | 当前固定928a807与完整日志；不把失败合同算实验成功，全部旧失败历史保留。 |
 | P10.4 | 560+22结果合同 | MAT、ANALYSIS、RUN：582独立值、历史字段/NaN | 部分 | 数据与合同复核已有；三个Adaptive新完整产物及正式人工复核缺失。 |
 | P10.5 | 论文数值图表复现 | NUM、RUN、ANALYSIS | 未完成 | 历史曲线分析/有限回归不等于完整Bias、初始化、轨迹、更新频率及L4。 |
 | P10.6 | 证据汇总及平台 | NUM、PROGRESS、BUILD：本轮新增NUMERICAL_EQUIVALENCE | 部分 | 实际仅一个Ubuntu/GCC环境；完整实验/性能/资源预算仍缺。 |
 | P10.7 | 来源notice与输出保护 | SRC、BUILD、IO：根MIT/来源与.gitignore | 已有材料/实测 | 不重授原作者许可，不上传output/MAT；正式发布单独授权。 |
-| P10.8 | Draft PR交付 | Issue #1/#2/#3开放，尚无PR | 未完成 | 尚未创建Draft PR；不合并/发布，后续准备具体范围与证据后办理。 |
-| P10.9 | OOP边界验收 | CONTRACT、IO、SESSION、RUN、SRC | 部分 | 所有权/替换/隔离有有限实测；D1–D4未核销，不代签总体设计验收。 |
+| P10.8 | Draft PR交付 | Issue #1–#5开放，尚无PR | 未完成 | 尚未创建Draft PR；不合并/发布，后续准备具体范围与证据后办理。 |
+| P10.9 | OOP边界验收 | CONTRACT、IO、SESSION、RUN、SRC | 部分 | D1–D5列明源码差别已补有限实测；所有权/替换/隔离不等于总体设计验收，不代签。 |
 | P10.10 | 避免过度继承/统一求解器 | KVD、STEP、SH、ANALYSIS：真实类及自由函数 | 部分 | 未引入统一虚假求解基类；与候选结构的差别需逐义务收敛，不能仅凭简洁或通过数宣布完成。 |
 
 ## 设计与代码的具体差别

@@ -1,5 +1,7 @@
 # Golden 来源等级与 AC 独立验收矩阵（未冻结草案）
 
+> **2026-11-18 含噪证据接续 `[AI-EDIT]`**：固定均模长噪声与真实Session独立对照252帧/9072 normal/24回滚通过，928a807 ON72/OFF71，见 [报告](../reviews/R6_NOISY_SESSION_L3_2026-11-18.md)和 [候选固定输入](../../verification/adaptive/noisy_session_reference.md)。保留原无噪声参考；非分布统计、完整addederror/8轮或正式Golden资格。
+
 > **2026-11-18 证据接续 `[AI-EDIT]`**：本表较早的“生产未授权/未执行”状态由 [数值实测汇总](../NUMERICAL_EQUIVALENCE.md)及 [66 TC映射](../reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)更新；本轮493ba86 ON71/OFF70通过。Session新增独立标量演进参考252帧/24回滚/299236项，见 [专项](../reviews/R6_SESSION_MULTIFRAME_L3_2026-11-18.md)。只补有限L3候选与真实C++证据，不批准Golden/容差或关闭AC。
 
 > **长期决策：永久取消运行 MATLAB/Octave 及取得 L1 Golden 的强制要求。** 依据 [无需 MATLAB 运行政策](NO_MATLAB_EXECUTION_POLICY.md)，历史记录中将“缺 MATLAB L1”视为阻塞的判断**全部失效**。本文件不是实际 C++/CTest、数值容差或基线批准记录；只读原 .m 源码、原始 MAT 文件不作修改。
