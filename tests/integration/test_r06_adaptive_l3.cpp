@@ -1,3 +1,4 @@
+#include "../support/flow_fixture.hpp"
 #include "../support/coefficient_fixture.hpp"
 // Source-independent L3 candidate. All fixed 9-direction, M1..M4, RHS,
 // solved motion and new coefficients below are copied from:
@@ -402,14 +403,14 @@ void verify(const Evidence& evidence) {
         for(int c=0;c<5;++c)
             raw_old(r,c)=evidence.coefficients[5*r+c];
     const auto old=test_support::coefficientValue(raw_old);
-    FlowField field;
-    field.observations.resize(9,6);
+    FlowMatrix raw(9,6);
     for(int row=0;row<9;++row)
         for(int col=0;col<3;++col){
-            field.observations(row,col)=directions[3*row+col];
-            field.observations(row,3+col)=evidence.flow[3*row+col];
+            raw(row,col)=directions[3*row+col];
+            raw(row,3+col)=evidence.flow[3*row+col];
         }
 
+    const auto field=test_support::flowValue(raw);
     auto result=AdaptiveMfaStepSolver{}.solve(old,field);
     require(result.hasValue(),
             "Independent nine-direction Adaptive candidate must solve");

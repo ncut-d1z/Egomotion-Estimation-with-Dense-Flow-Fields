@@ -138,7 +138,7 @@ struct Step final:estimators::IAdaptiveStepSolver {
         const auto ordinal=calls++,slot=ordinal%mode.slots;
         const auto row=(ordinal/mode.slots)%(mode.frames-2)+1;
         const auto run=ordinal/(mode.slots*(mode.frames-2))+1;
-        require(flow.observations.rows()==6&&flow.observations(4,3)==-static_cast<double>(run),
+        require(flow.observations().rows()==6&&flow.observations()(4,3)==-static_cast<double>(run),
                 "Injected environment values reach real flow synthesis and Step");
         double expected=static_cast<double>(row);
         if(slot+1!=mode.slots){

@@ -1,3 +1,4 @@
+#include "../support/flow_fixture.hpp"
 // R6 L3 candidate only: values from independent archived Wolfram traces.
 // The source of reference numbers is verification/kvd/*.v1.json, NOT this C++
 // estimator. No execution, tolerance approval, or MATLAB runtime is implied.
@@ -24,15 +25,15 @@ bool close(double x,double y,double tolerance=1e-9) {
 template<std::size_t N>
 FlowField fixture(const std::array<Vector3,N>& directions,
                   const std::array<Vector3,N>& optical_flow) {
-    FlowField f;
-    f.observations.resize(static_cast<Eigen::Index>(N),6);
+    FlowMatrix f;
+    f.resize(static_cast<Eigen::Index>(N),6);
     for(std::size_t i=0;i<N;++i) {
-        f.observations.row(static_cast<Eigen::Index>(i)).head<3>()=
+        f.row(static_cast<Eigen::Index>(i)).head<3>()=
             directions[i].transpose();
-        f.observations.row(static_cast<Eigen::Index>(i)).tail<3>()=
+        f.row(static_cast<Eigen::Index>(i)).tail<3>()=
             optical_flow[i].transpose();
     }
-    return f;
+    return test_support::flowValue(f);
 }
 FlowField axial() {
     const std::array<Vector3,6> d{{
@@ -193,12 +194,12 @@ void evaluateSigned() {
           "Invalid iterative configuration must not create success");
 }
 void degenerateFranz() {
-    FlowField f;
-    f.observations.resize(3,6);
-    f.observations.setZero();
-    for(int i=0;i<3;++i)f.observations.row(i).head<3>()=
+    FlowMatrix f;
+    f.resize(3,6);
+    f.setZero();
+    for(int i=0;i<3;++i)f.row(i).head<3>()=
         Vector3::UnitX().transpose();
-    auto bad=FranzMatchedFilter{}.estimateWithTrace(f);
+    auto bad=FranzMatchedFilter{}.estimateWithTrace(test_support::flowValue(f));
     check(!bad.hasValue()&&bad.error().code==NumericalErrorCode::SingularSystem,
           "Axis-degenerate Franz response denominator requires an explicit failure");
 }

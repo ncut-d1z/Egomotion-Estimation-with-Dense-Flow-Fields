@@ -116,13 +116,13 @@ struct ObservedNoise final:IFlowNoiseModel {
         const auto ordinal=calls++;
         require(ordinal<kColumns*kLevels,"Unexpected extra Bias sample");
         check(coefficient==kNoise[ordinal/kLevels],"Noise-major, then level-minor source loop");
-        const Eigen::Index count=ideal.observations.rows();
+        const Eigen::Index count=ideal.observations().rows();
         for(Eigen::Index row=0;row<count;++row) {
-            const Vector3 d=ideal.observations.row(row).head<3>().transpose();
+            const Vector3 d=ideal.observations().row(row).head<3>().transpose();
             const double mu=1/((3*reference.uniform()+1)/2.5);
             const Vector3 expected=-mu*(translation-translation.dot(d)*d)-rotation.cross(d);
             for(int axis=0;axis<3;++axis)
-                near(ideal.observations(row,axis+3),expected[axis],"Truth, nearness and source reseed");
+                near(ideal.observations()(row,axis+3),expected[axis],"Truth, nearness and source reseed");
         }
         CheckedRandom checked(random,reference,fail_call==calls);
         auto output=delegate.apply(ideal,coefficient,checked);
@@ -167,7 +167,7 @@ BiasRunData observedCompute(ExperimentKind kind,std::uint32_t seed) {
         const auto slot=column*kLevels+level;const auto& flow=noise.fields.at(slot);
         const auto factor=std::size_t{1}<<(2*level);
         check(sampler.levels.at(slot)==static_cast<int>(level),"Sampler source level order");
-        check(flow.observations.rows()==static_cast<Eigen::Index>(base*factor),"Actual direction count");
+        check(flow.observations().rows()==static_cast<Eigen::Index>(base*factor),"Actual direction count");
         normal_expected+=3*base*factor;
         check(result.value().xwerte.at(level)==6.0*static_cast<double>(factor),
               "Source xwerte must remain 6*4^i even for the full sphere");
@@ -190,8 +190,8 @@ BiasRunData observedCompute(ExperimentKind kind,std::uint32_t seed) {
 }
 struct ZeroFlowNoise final:IFlowNoiseModel {
     Result<FlowField,NumericalErrorCode> apply(const FlowField& ideal,Scalar,IRandomSource&) const override {
-        FlowField zero=ideal;zero.observations.rightCols<3>().setZero();
-        return Result<FlowField,NumericalErrorCode>::success(std::move(zero));
+        FlowMatrix zero=ideal.observations();zero.rightCols<3>().setZero();
+        return FlowField::fromOwned(std::move(zero));
     }
 };
 void failureContracts() {

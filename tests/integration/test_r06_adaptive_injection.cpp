@@ -93,13 +93,14 @@ struct Noise final:IFlowNoiseModel {
         if(fault==Fault::Length)throw std::length_error("noise fixture");
         auto result=simulation::MeanMagnitudeGaussianNoise{}.apply(ideal,coefficient,random);
         if(!result.hasValue())return result;
-        auto value=std::move(result).value();
-        if(substitute)value.observations(0,4)+=0.25; // e_x方向的y流分量，替换可被求解器观察。
-        if(fault==Fault::Empty)value.observations.resize(0,6);
-        if(fault==Fault::NonFinite)value.observations(0,4)=std::numeric_limits<double>::quiet_NaN();
-        if(fault==Fault::Direction)value.observations(0,0)=-1;
-        outputs.push_back(value);
-        return Result<FlowField,NumericalErrorCode>::success(std::move(value));
+        auto raw=std::move(result).value().observations();
+        if(substitute)raw(0,4)+=0.25; // e_x方向的y流分量，替换可被求解器观察。
+        if(fault==Fault::Empty)raw.resize(0,6);
+        if(fault==Fault::NonFinite)raw(0,4)=std::numeric_limits<double>::quiet_NaN();
+        if(fault==Fault::Direction)raw(0,0)=-1;
+        auto stored=FlowField::fromOwned(std::move(raw));
+        if(stored.hasValue())outputs.push_back(stored.value());
+        return stored;
     }
 };
 struct Step final:estimators::IAdaptiveStepSolver {
@@ -159,8 +160,8 @@ void routingAndReplay() {
         require(rng.uniforms==0&&rng.resets==0&&rng.normals==(mode==1?36u:0u),"Exact normal consumption without reseed");
         if(mode==1) {
             require(noise.coefficients==std::vector<double>(2,coefficient),"Noise coefficient is passed explicitly");
-            for(std::size_t i=0;i<slots;++i)same(step.flows[i].observations,noise.outputs[0].observations);
-            same(step.flows.back().observations,noise.outputs[1].observations);
+            for(std::size_t i=0;i<slots;++i)same(step.flows[i].observations(),noise.outputs[0].observations());
+            same(step.flows.back().observations(),noise.outputs[1].observations());
         }else require(noise.coefficients.empty(),"No noise service in non-Comparison entry");
         const auto input=step.flows.front();
         const auto old_calls=step.flows.size();step.fail_at=old_calls+slots+1;
@@ -170,8 +171,8 @@ void routingAndReplay() {
         for(std::size_t i=0;i<slots;++i)
             same(step.coefficients[old_calls+i].values(),step.coefficients[i].values());
         // 重放Comparison使用新的系数0，故只核对原方向；其它模式核对全部输入。
-        same(step.flows[old_calls].observations.leftCols<3>().eval(),input.observations.leftCols<3>().eval());
-        if(mode!=1)same(step.flows[old_calls].observations,input.observations);
+        same(step.flows[old_calls].observations().leftCols<3>().eval(),input.observations().leftCols<3>().eval());
+        if(mode!=1)same(step.flows[old_calls].observations(),input.observations());
     }
 }
 void serviceFailures() {
@@ -197,8 +198,16 @@ void serviceFailures() {
         const auto result=compute(1,runner,rng);
         require(!result.hasValue()&&step.flows.empty(),"Invalid noise success never reaches Session");
         if(fault==Fault::Failure){require(result.error().code==ExperimentErrorCode::IncompleteRun,"Noise failure classification");checkCause(result.error());}
-        if(fault==Fault::Empty||fault==Fault::NonFinite||fault==Fault::Direction)
+        if(fault==Fault::Empty||fault==Fault::Direction)
             require(result.error().code==ExperimentErrorCode::DataMismatch,"Noise contract mismatch classification");
+        if(fault==Fault::NonFinite){
+            bool found=false;
+            for(const auto& cause:result.error().detail.causes)
+                found=found||(cause.domain=="NumericalErrorCode"&&cause.code=="NonFiniteInput"&&
+                    cause.stage==ErrorStage::Simulation&&cause.observation_index==0);
+            require(result.error().code==ExperimentErrorCode::IncompleteRun&&found,
+                    "Noise flow factory failure preserves its row through Runner");
+        }
     }
     Events events;Sampler sampler(events);Noise noise(events);Random rng(events);Step step(events);
     Scene scene;const AdaptiveExperimentRunner runner({sampler,noise},scene.services(),&step);
@@ -243,7 +252,7 @@ void productionComposition() {
             require(active_step.flows.size()==1,"Production reached the injected solver exactly once");
             inputs[injected]=active_step.flows.front();normals[injected]=observed->normals;
         }
-        same(inputs[0].observations,inputs[1].observations);
+        same(inputs[0].observations(),inputs[1].observations());
         require(normals[0]==normals[1]&&normals[1]==(mode==1?15360u:0u),"Default/explicit exact source noise consumption");
         require(sampler.levels==std::vector<int>{mode==1?4:2},"Production forwards sampling dependency");
         require(noise.coefficients.size()==(mode==1?1u:0u),"Production noise binding");

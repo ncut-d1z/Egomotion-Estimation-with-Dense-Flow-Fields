@@ -1,3 +1,5 @@
+#include "../support/flow_fixture.hpp"
+#include "../support/direction_fixture.hpp"
 #include "../support/coefficient_fixture.hpp"
 // P7.10：固定源约定的三个无状态服务；独立多项式/精确投影参考，不运行MATLAB。
 #include "egomotion/harmonics/services.hpp"
@@ -88,10 +90,10 @@ HarmonicMatrix projectionReference() {
     r(2,3)=-3075*p15/3541;r(2,4)=4360*p15/15349;return r;
 }
 FlowField projectionSamples() {
-    FlowField field{FlowMatrix::Zero(7,6)};
-    field.observations.leftCols<3>()<<1,0,0,0,1,0,0,0,1,3.0/5,4.0/5,0,
+    FlowMatrix field=FlowMatrix::Zero(7,6);
+    field.leftCols<3>()<<1,0,0,0,1,0,0,0,1,3.0/5,4.0/5,0,
         0,3.0/5,4.0/5,4.0/5,0,3.0/5,1.0/3,2.0/3,2.0/3;
-    return field;
+    return test_support::flowValue(field);
 }
 Eigen::VectorXd nearness() {
     Eigen::VectorXd values(7);values<<2,-1,4,0.5,-3,1.25,5.5;return values;
@@ -104,9 +106,17 @@ void fittingAndOwnership() {
     for(int l=0;l<3;++l)for(int m=0;m<5;++m)close(fitted.value().values()(l,m),expected(l,m));
     same(fitted.value().values(),fitSourceNear(near,input).value().values());
     // 原函数只消费视线列，即使尾部非有限也不改变此服务的投影合同。
-    input.observations(0,5)=std::numeric_limits<double>::infinity();
-    same(fitter.fitSourceNear(near,input).value().values(),fitted.value().values());
-    input.observations.setZero();near.setZero();
+    auto raw=input.observations();raw(0,5)=std::numeric_limits<double>::infinity();
+    const auto directions=test_support::directionValue(raw.leftCols<3>());
+    same(fitter.fitSourceNear(near,directions).value().values(),fitted.value().values());
+    const auto raw_fit=low_order::projectSourceCoefficientsOrderTwo(near,raw);
+    require(raw_fit.hasValue(),"Raw source leaf ignores non-finite trailing flow");
+    same(raw_fit.value(),fitted.value().values());
+    const auto rejected=FlowField::create(raw);
+    require(!rejected.hasValue()&&rejected.error().code==NumericalErrorCode::NonFiniteInput&&
+            rejected.error().detail.stage==ErrorStage::Simulation&&rejected.error().detail.observation_index==0,
+            "Full flow storage rejects its non-finite trailing component");
+    input=FlowField{};raw.setZero();near.setZero();
     same(fitted.value().values(),fitter.fitSourceNear(nearness(),original).value().values());
     const auto other=fitter.fitSourceNear(-nearness(),original);
     require(other.hasValue(),"Negative near projection remains allowed");
@@ -166,10 +176,15 @@ void boundaries() {
     error(fitter.fitSourceNear(Eigen::VectorXd{},FlowField{}),NumericalErrorCode::InvalidShape,nullptr);
     near[0]=std::numeric_limits<double>::quiet_NaN();
     error(fitter.fitSourceNear(near,samples),NumericalErrorCode::NonFiniteInput,"NonFiniteInput");
-    samples.observations(0,0)=2;
+    auto invalid_points=samples.observations();invalid_points(0,0)=2;
+    samples=test_support::flowValue(invalid_points);
     error(fitter.fitSourceNear(nearness(),samples),NumericalErrorCode::InvalidDirection,"NotUnitDirection");
-    FlowField axes{FlowMatrix::Zero(3,6)};axes.observations.leftCols<3>().setIdentity();
+    FlowMatrix raw_axes=FlowMatrix::Zero(3,6);raw_axes.leftCols<3>().setIdentity();
+    const auto axes=test_support::flowValue(raw_axes);
     error(fitter.fitSourceNear(Eigen::VectorXd::Ones(3),axes),NumericalErrorCode::SingularSystem,"ZeroProjectionNorm");
+    error(fitter.fitSourceNear(Eigen::VectorXd{},DirectionSet{}),NumericalErrorCode::InvalidShape,nullptr);
+    error(fitter.fitSourceNear(nearness(),test_support::directionValue(invalid_points.leftCols<3>())),
+          NumericalErrorCode::InvalidDirection,"NotUnitDirection");
     Matrix3 reflection=Matrix3::Identity();reflection(2,2)=-1;
     error(rotator.rotateCoefficients(c,reflection),NumericalErrorCode::InvalidDirection,"NotProperRotation");
     error(rotator.rotateSourceCoefficients(c,reflection),NumericalErrorCode::InvalidDirection,"NotProperRotation");

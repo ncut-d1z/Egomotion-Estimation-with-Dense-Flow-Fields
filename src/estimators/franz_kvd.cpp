@@ -25,10 +25,10 @@ Result<T,NumericalErrorCode> fail(NumericalErrorCode code,
     return Result<T,NumericalErrorCode>::failure({code,std::move(detail)});
 }
 Vector3 direction(const FlowField& field, Eigen::Index i) {
-    return field.observations.row(i).head<3>().transpose();
+    return field.observations().row(i).head<3>().transpose();
 }
 Vector3 velocity(const FlowField& field, Eigen::Index i) {
-    return field.observations.row(i).tail<3>().transpose();
+    return field.observations().row(i).tail<3>().transpose();
 }
 bool validParameters(const KvDParameters& p) {
     return std::isfinite(p.nearness_denominator_epsilon) &&
@@ -55,14 +55,14 @@ Status<NumericalErrorCode> translationInputs(
         ErrorDetail detail;detail.stage=ErrorStage::Solve;detail.message=message;
         return Status<NumericalErrorCode>::failure({code,std::move(detail)});
     };
-    if(field.observations.rows()==0)
+    if(field.observations().rows()==0)
         return reject(NumericalErrorCode::EmptyInput,"KvD translation rule requires observations");
-    if(near.size()!=field.observations.rows())
+    if(near.size()!=field.observations().rows())
         return reject(NumericalErrorCode::InvalidShape,"KvD translation rule nearness size differs");
-    if(!field.observations.allFinite()||!near.allFinite()||
+    if(!field.observations().allFinite()||!near.allFinite()||
        !motion.translation().allFinite()||!motion.rotation().allFinite())
         return reject(NumericalErrorCode::NonFiniteInput,"KvD translation rule input non-finite");
-    for(Eigen::Index i=0;i<field.observations.rows();++i)
+    for(Eigen::Index i=0;i<field.observations().rows();++i)
         if(std::abs(direction(field,i).squaredNorm()-1.0)>kUnitDirectionSquaredNormTolerance)
             return reject(NumericalErrorCode::InvalidDirection,"KvD translation rule requires unit directions");
     return Status<NumericalErrorCode>::success();
@@ -86,7 +86,7 @@ Result<KvDTranslationUpdate,NumericalErrorCode> OriginalKvDTranslationRule::comp
     if(!valid.hasValue())return Result<KvDTranslationUpdate,NumericalErrorCode>::failure(valid.error());
     KvDTranslationUpdate update;
     // norm_koenderink_iteration.m: near*p、near*d、near²*(t·d)*d。
-    for(Eigen::Index i=0;i<field.observations.rows();++i) {
+    for(Eigen::Index i=0;i<field.observations().rows();++i) {
         const Vector3 d=direction(field,i),p=velocity(field,i);
         const double mu=near[i],projection=motion.translation().dot(d);
         update.mean_a+=mu*p;
@@ -101,7 +101,7 @@ Result<KvDTranslationUpdate,NumericalErrorCode> ModifiedKvDTranslationRule::comp
     if(!valid.hasValue())return Result<KvDTranslationUpdate,NumericalErrorCode>::failure(valid.error());
     KvDTranslationUpdate update;
     // mue_norm_koenderink_iteration.m: p、d、near*(t·d)*d。
-    for(Eigen::Index i=0;i<field.observations.rows();++i) {
+    for(Eigen::Index i=0;i<field.observations().rows();++i) {
         const Vector3 d=direction(field,i),p=velocity(field,i);
         const double mu=near[i],projection=motion.translation().dot(d);
         update.mean_a+=p;
@@ -128,7 +128,7 @@ Result<KvDResult,NumericalErrorCode> KvDIterationEngine::estimate(
     Vector3 translation=initialization.before_translation_normalization.translation()/
         initialization.initial_translation_norm;
     Vector3 rotation=initialization.before_translation_normalization.rotation();
-    const Eigen::Index count=field.observations.rows();
+    const Eigen::Index count=field.observations().rows();
     const double sample_count=static_cast<double>(count);
     try {
         Eigen::VectorXd near(count), denominators(count);
@@ -291,13 +291,13 @@ Result<KvDResult,NumericalErrorCode> KvDIterationEngine::estimate(
 }
 Result<FranzInitializationTrace,NumericalErrorCode>
 FranzMatchedFilter::estimateWithTrace(const FlowField& field) const {
-    if (field.observations.rows()==0)
+    if (field.observations().rows()==0)
         return fail<FranzInitializationTrace>(NumericalErrorCode::EmptyInput,
                                               "Franz requires a nonempty flow field");
-    if (!field.observations.allFinite())
+    if (!field.observations().allFinite())
         return fail<FranzInitializationTrace>(NumericalErrorCode::NonFiniteInput,
                                               "Franz flow contains non-finite values");
-    for (Eigen::Index i=0;i<field.observations.rows();++i)
+    for (Eigen::Index i=0;i<field.observations().rows();++i)
         if (std::abs(direction(field,i).squaredNorm()-1.0)>kUnitDirectionSquaredNormTolerance)
             return fail<FranzInitializationTrace>(NumericalErrorCode::InvalidDirection,
                                                   "Franz requires unit direction vectors",
@@ -308,7 +308,7 @@ FranzMatchedFilter::estimateWithTrace(const FlowField& field) const {
         Vector3 e=Vector3::Zero();
         e[axis]=1.0;
         double tResponse=0,tDenom=0,rResponse=0,rDenom=0;
-        for (Eigen::Index i=0;i<field.observations.rows();++i) {
+        for (Eigen::Index i=0;i<field.observations().rows();++i) {
             const Vector3 d=direction(field,i),p=velocity(field,i);
             const Vector3 qt=-(e-e.dot(d)*d);
             const Vector3 qr=-e.cross(d);

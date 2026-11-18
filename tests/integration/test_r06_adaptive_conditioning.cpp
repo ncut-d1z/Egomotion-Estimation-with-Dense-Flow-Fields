@@ -1,3 +1,4 @@
+#include "../support/flow_fixture.hpp"
 #include "../support/coefficient_fixture.hpp"
 // 参考：verification/adaptive/zero_mean_conditioning_evidence.v1.json
 // blob be9aa64cb454fb434b407814f8cfa1310a7c90b7；独立 Wolfram 解析式，非 MATLAB 执行。
@@ -55,8 +56,8 @@ HarmonicCoefficients coefficients(double a,double b) {
     return test_support::coefficientValue(result);
 }
 FlowField flow(const Fixture& fixture) {
-    FlowField result;
-    result.observations.resize(static_cast<Eigen::Index>(fixture.directions.size()),6);
+    FlowMatrix result;
+    result.resize(static_cast<Eigen::Index>(fixture.directions.size()),6);
     for (std::size_t row=0;row<fixture.directions.size();++row) {
         const auto& d=fixture.directions[row];
         double projection=0;
@@ -64,12 +65,12 @@ FlowField flow(const Fixture& fixture) {
         for (std::size_t i=0;i<3;++i) {
             const double cross=fixture.rotation[(i+1)%3]*d[(i+2)%3]-
                                fixture.rotation[(i+2)%3]*d[(i+1)%3];
-            result.observations(static_cast<Eigen::Index>(row),static_cast<Eigen::Index>(i))=d[i];
-            result.observations(static_cast<Eigen::Index>(row),static_cast<Eigen::Index>(i+3))=
+            result(static_cast<Eigen::Index>(row),static_cast<Eigen::Index>(i))=d[i];
+            result(static_cast<Eigen::Index>(row),static_cast<Eigen::Index>(i+3))=
                 -fixture.raw_near[row]*(fixture.translation[i]-projection*d[i])-cross;
         }
     }
-    return result;
+    return test_support::flowValue(result);
 }
 Fixture axes(double a,double b,bool no_rotation=false) {
     Fixture f;
@@ -173,8 +174,8 @@ void verify(const Fixture& fixture) {
     const HarmonicCoefficients saved_coeff=fixture.coefficients;
     const auto actual=detail::solveAdaptiveMotion(fixture.coefficients,field);
     check(actual.hasValue(),fixture.name+": unexpected failure");
-    check(std::memcmp(field.observations.data(),saved_field.observations.data(),
-                      static_cast<std::size_t>(field.observations.size())*sizeof(double))==0&&
+    check(std::memcmp(field.observations().data(),saved_field.observations().data(),
+                      static_cast<std::size_t>(field.observations().size())*sizeof(double))==0&&
           std::memcmp(fixture.coefficients.values().data(),saved_coeff.values().data(),15*sizeof(double))==0,
           fixture.name+": input changed");
     if (!actual.hasValue()) { std::cerr<<actual.error().detail.message<<'\n'; return; }

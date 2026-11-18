@@ -233,7 +233,7 @@ AdaptiveFrameInput frame(std::size_t index) {
     in.matlab_frame_index=index;
     in.source_coefficient_rotation=rotations()[(index-2)%rotations().size()];
     in.truth=test_support::motionValue(Vector3::UnitX(),Vector3::UnitY());
-    in.observations.observations.resize(0,6);
+    in.observations=FlowField{};
     return in;
 }
 HarmonicCoefficients initial() {

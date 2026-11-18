@@ -1,3 +1,4 @@
+#include "../support/flow_fixture.hpp"
 #include "../support/direction_fixture.hpp"
 #include "egomotion/sampling/directions.hpp"
 #include "egomotion/simulation/flow.hpp"
@@ -132,8 +133,8 @@ void verifyBiasNearnessAndNoiseCalls() {
             "Historical scalar near is the final draw, not the mean");
     require(draws.uniform_calls==6&&draws.normal_calls==18,
             "Zero-coefficient Gaussian must still consume N + 3N draws");
-    require((result.value().noiseless.observations-
-             result.value().noisy.observations).norm()<1e-12,
+    require((result.value().noiseless.observations()-
+             result.value().noisy.observations()).norm()<1e-12,
             "Zero Gaussian coefficient must preserve ideal flow");
 
     simulation::NoNoise no_noise;
@@ -157,7 +158,7 @@ void verifyFlowCancellationAndComponentNoise() {
     require(near(ideal.value().mean_translational_magnitude,1)&&
             near(ideal.value().mean_rotational_magnitude,1),
             "Independent ideal component magnitudes must each be one");
-    require(ideal.value().flow.observations.row(0).tail<3>().norm()<1e-13,
+    require(ideal.value().flow.observations().row(0).tail<3>().norm()<1e-13,
             "Translated and rotated ideal flow must cancel exactly");
 
     simulation::MeanMagnitudeGaussianNoise gaussian;
@@ -165,17 +166,18 @@ void verifyFlowCancellationAndComponentNoise() {
     auto cancelled=gaussian.apply(ideal.value().flow,2.4,normals);
     require(cancelled.hasValue()&&normals.normal_calls==3,
             "Cancelled ideal flow still consumes three Gaussian draws");
-    require(cancelled.value().observations.row(0).tail<3>().norm()<1e-13,
+    require(cancelled.value().observations().row(0).tail<3>().norm()<1e-13,
             "Gaussian amplitude must use mean TOTAL flow, not component sum");
 
-    FlowField original=ideal.value().flow;
-    original.observations.row(0).tail<3>()=Vector3(1,2,0).transpose();
+    FlowMatrix raw=ideal.value().flow.observations();
+    raw.row(0).tail<3>()=Vector3(1,2,0).transpose();
+    const auto original=test_support::flowValue(raw);
     simulation::ComponentProportionalGaussianNoise component;
     SequenceRandom noise_samples({}, {1,-1,5});
     auto noisy=component.apply(original,0.5,noise_samples);
     require(noisy.hasValue()&&noise_samples.normal_calls==3,
             "Proportional noise must draw XYZ components separately");
-    require((noisy.value().observations.row(0).tail<3>().transpose()-
+    require((noisy.value().observations().row(0).tail<3>().transpose()-
              Vector3(1.5,1,0)).norm()<1e-13,
             "Component noise and tangent projection mismatch fixed reference");
 

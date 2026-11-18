@@ -60,7 +60,7 @@ AdaptiveFrameInput input(std::size_t matlab_index) {
     frame.truth=test_support::motionValue(Vector3::UnitX(),Vector3::UnitY());
     // Deliberately empty: the injected step consumes coefficients only.
     // No scientific data or claimed trajectory is generated here.
-    frame.observations.observations.resize(0,6);
+    frame.observations=FlowField{};
     return frame;
 }
 constexpr std::array<std::size_t,4> periods{{1,5,11,21}};

@@ -39,28 +39,28 @@ bool unit(const Vector3& d) {
     return d.allFinite() && std::abs(d.squaredNorm()-1.0) <= 1e-8;
 }
 Vector3 directionOf(const FlowField& flow, Eigen::Index i) {
-    return flow.observations.row(i).head<3>().transpose();
+    return flow.observations().row(i).head<3>().transpose();
 }
 Vector3 flowOf(const FlowField& flow, Eigen::Index i) {
-    return flow.observations.row(i).tail<3>().transpose();
+    return flow.observations().row(i).tail<3>().transpose();
 }
 double meanFlowMagnitude(const FlowField& flow) {
     double sum=0;
-    for (Eigen::Index i=0; i<flow.observations.rows(); ++i)
+    for (Eigen::Index i=0; i<flow.observations().rows(); ++i)
         sum += flowOf(flow,i).norm();
-    return sum/static_cast<double>(flow.observations.rows());
+    return sum/static_cast<double>(flow.observations().rows());
 }
 Result<FlowField,NumericalErrorCode> noiseApply(const FlowField& ideal,
                                                 Scalar coefficient,
                                                 IRandomSource& rng,
                                                 bool component_wise) {
-    if (!std::isfinite(coefficient) || !ideal.observations.allFinite())
+    if (!std::isfinite(coefficient) || !ideal.observations().allFinite())
         return fail<FlowField>(NumericalErrorCode::NonFiniteInput,
                                "Noise input or coefficient is non-finite");
-    if (ideal.observations.rows()==0)
+    if (ideal.observations().rows()==0)
         return fail<FlowField>(NumericalErrorCode::EmptyInput,
                                "Noise field contains no rows");
-    for (Eigen::Index i=0;i<ideal.observations.rows();++i)
+    for (Eigen::Index i=0;i<ideal.observations().rows();++i)
         if (!unit(directionOf(ideal,i)))
             return fail<FlowField>(NumericalErrorCode::InvalidDirection,
                                    "Noise field direction is not unit length",
@@ -70,8 +70,8 @@ Result<FlowField,NumericalErrorCode> noiseApply(const FlowField& ideal,
         return fail<FlowField>(NumericalErrorCode::NonFiniteResult,
                                "Ideal flow mean magnitude overflow");
     try {
-        FlowField output{ideal.observations};
-        for (Eigen::Index i=0; i<ideal.observations.rows(); ++i) {
+        FlowMatrix output=ideal.observations();
+        for (Eigen::Index i=0; i<ideal.observations().rows(); ++i) {
             const Vector3 d=directionOf(ideal,i);
             const Vector3 original=flowOf(ideal,i);
             Vector3 noisy=original;
@@ -96,9 +96,9 @@ Result<FlowField,NumericalErrorCode> noiseApply(const FlowField& ideal,
                 return fail<FlowField>(NumericalErrorCode::NonFiniteResult,
                                        "Noise/projection produced non-finite flow",
                                        static_cast<std::size_t>(i));
-            output.observations.row(i).tail<3>()=noisy.transpose();
+            output.row(i).tail<3>()=noisy.transpose();
         }
-        return Result<FlowField,NumericalErrorCode>::success(std::move(output));
+        return FlowField::fromOwned(std::move(output));
     } catch (const std::length_error&) {
         return fail<FlowField>(NumericalErrorCode::ResourceLimitExceeded,
                                "Flow container exceeds maximum size");
@@ -122,7 +122,7 @@ FlowSynthesizer::synthesize(const DirectionSet& directions,
                                      "Translation/rotation contains non-finite values");
     try {
         IdealFlowResult result;
-        result.flow.observations.resize(count, 6);
+        FlowMatrix observations(count,6);
         double total_trans=0,total_rot=0;
         for (Eigen::Index i=0; i<count; ++i) {
             const Vector3 d=directions.directions().row(i).transpose();
@@ -141,8 +141,8 @@ FlowSynthesizer::synthesize(const DirectionSet& directions,
             if (!p.allFinite())
                 return fail<IdealFlowResult>(NumericalErrorCode::NonFiniteResult,
                                              "Ideal flow overflow",static_cast<std::size_t>(i));
-            result.flow.observations.row(i).head<3>()=d.transpose();
-            result.flow.observations.row(i).tail<3>()=p.transpose();
+            observations.row(i).head<3>()=d.transpose();
+            observations.row(i).tail<3>()=p.transpose();
             total_trans += trans_flow.norm();
             total_rot += rot_flow.norm();
         }
@@ -152,6 +152,10 @@ FlowSynthesizer::synthesize(const DirectionSet& directions,
             !std::isfinite(result.mean_rotational_magnitude))
             return fail<IdealFlowResult>(NumericalErrorCode::NonFiniteResult,
                                          "Ideal component averages are non-finite");
+        auto stored=FlowField::fromOwned(std::move(observations));
+        if(!stored.hasValue())
+            return propagate<IdealFlowResult>(stored.error(), "Cannot store ideal flow");
+        result.flow=std::move(stored).value();
         return Result<IdealFlowResult,NumericalErrorCode>::success(std::move(result));
     } catch (const std::length_error&) {
         return fail<IdealFlowResult>(NumericalErrorCode::ResourceLimitExceeded,
@@ -171,19 +175,19 @@ Result<FlowField,NumericalErrorCode> ComponentProportionalGaussianNoise::apply(
 }
 Result<FlowField,NumericalErrorCode> NoNoise::apply(
     const FlowField& ideal, Scalar coefficient, IRandomSource&) const {
-    if (!std::isfinite(coefficient) || !ideal.observations.allFinite())
+    if (!std::isfinite(coefficient) || !ideal.observations().allFinite())
         return fail<FlowField>(NumericalErrorCode::NonFiniteInput,
                                "Non-finite NoNoise input or coefficient");
-    if (ideal.observations.rows()==0)
+    if (ideal.observations().rows()==0)
         return fail<FlowField>(NumericalErrorCode::EmptyInput,
                                "NoNoise input contains no rows");
-    for (Eigen::Index i=0;i<ideal.observations.rows();++i)
+    for (Eigen::Index i=0;i<ideal.observations().rows();++i)
         if (!unit(directionOf(ideal,i)))
             return fail<FlowField>(NumericalErrorCode::InvalidDirection,
                                    "NoNoise direction is not unit length",
                                    static_cast<std::size_t>(i));
     try {
-        return Result<FlowField,NumericalErrorCode>::success(FlowField{ideal.observations});
+        return Result<FlowField,NumericalErrorCode>::success(FlowField{ideal});
     } catch (const std::length_error&) {
         return fail<FlowField>(NumericalErrorCode::ResourceLimitExceeded,
                                "Flow container exceeds maximum size");
@@ -250,9 +254,9 @@ Result<FlowSynthesisResult,NumericalErrorCode> generateBiasFlow(
             return propagate<FlowSynthesisResult>(
                 perturbed.error(), "Bias noise injection failed");
         FlowField noisy=std::move(perturbed).value();
-        if (noisy.observations.rows()!=count || !noisy.observations.allFinite() ||
-            !(noisy.observations.leftCols<3>().array()==
-              full.flow.observations.leftCols<3>().array()).all())
+        if (noisy.observations().rows()!=count || !noisy.observations().allFinite() ||
+            !(noisy.observations().leftCols<3>().array()==
+              full.flow.observations().leftCols<3>().array()).all())
             return fail<FlowSynthesisResult>(NumericalErrorCode::InvalidShape,
                                              "Noise strategy changed source direction columns");
         FlowSynthesisResult output;

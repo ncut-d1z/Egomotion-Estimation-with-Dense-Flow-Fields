@@ -5,9 +5,10 @@
 #include <stdexcept>
 
 namespace egomotion::harmonics {
-Result<HarmonicCoefficients,NumericalErrorCode> HarmonicFitter::fitSourceNear(
-    const Eigen::VectorXd& near, const FlowField& field) const {
-    if (near.size()!=field.observations.rows() || near.size()==0) {
+namespace {
+Result<HarmonicCoefficients,NumericalErrorCode> fitDirections(
+    const Eigen::VectorXd& near,const Eigen::Ref<const Eigen::MatrixXd>& directions) {
+    if (near.size()!=directions.rows() || near.size()==0) {
         ErrorDetail error;
         error.stage=ErrorStage::Solve;
         error.message="SH source fitting requires one near per observed ray";
@@ -15,9 +16,8 @@ Result<HarmonicCoefficients,NumericalErrorCode> HarmonicFitter::fitSourceNear(
             {NumericalErrorCode::InvalidShape,std::move(error)});
     }
     try {
-        // Original koeff_aus_near.m consumes N×6 and only its first 3 columns.
-        // The pre-existing leaf takes an owning dynamic N×K matrix.
-        const Eigen::MatrixXd points=field.observations;
+        // 原koeff_aus_near仅消费前三列；不要求无关光流列有效或存在。
+        const Eigen::MatrixXd points=directions;
         auto fitted=low_order::projectSourceCoefficientsOrderTwo(near,points);
         if (!fitted.hasValue())
             return detail::bridge<HarmonicCoefficients>(fitted.error(),"SH source fit");
@@ -27,6 +27,17 @@ Result<HarmonicCoefficients,NumericalErrorCode> HarmonicFitter::fitSourceNear(
     } catch (const std::length_error&) {
         return detail::resourceFailure<HarmonicCoefficients>();
     }
+}
+} // namespace
+
+Result<HarmonicCoefficients,NumericalErrorCode> HarmonicFitter::fitSourceNear(
+    const Eigen::VectorXd& near,const FlowField& field) const {
+    return fitDirections(near,field.observations().leftCols<3>());
+}
+
+Result<HarmonicCoefficients,NumericalErrorCode> HarmonicFitter::fitSourceNear(
+    const Eigen::VectorXd& near,const DirectionSet& directions) const {
+    return fitDirections(near,directions.directions());
 }
 
 } // namespace egomotion::harmonics

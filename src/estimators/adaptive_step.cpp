@@ -41,21 +41,21 @@ Matrix3 crossMatrix(const Vector3& v) {
     return m;
 }
 Vector3 direction(const FlowField& f,Eigen::Index i) {
-    return f.observations.row(i).head<3>().transpose();
+    return f.observations().row(i).head<3>().transpose();
 }
 Vector3 opticFlow(const FlowField& f,Eigen::Index i) {
-    return f.observations.row(i).tail<3>().transpose();
+    return f.observations().row(i).tail<3>().transpose();
 }
 }  // namespace
 
 namespace detail {
 Result<AdaptiveMotionResult,NumericalErrorCode> solveAdaptiveMotion(
     const HarmonicCoefficients& old, const FlowField& observations) {
-    const Eigen::Index count=observations.observations.rows();
+    const Eigen::Index count=observations.observations().rows();
     if (count==0)
         return fail<AdaptiveMotionResult>(NumericalErrorCode::EmptyInput,
                                          "Adaptive step requires at least one flow observation");
-    if (!old.values().allFinite()||!observations.observations.allFinite())
+    if (!old.values().allFinite()||!observations.observations().allFinite())
         return fail<AdaptiveMotionResult>(NumericalErrorCode::NonFiniteInput,
                                          "Adaptive coefficients/flow must be finite");
     for (Eigen::Index i=0;i<count;++i) {

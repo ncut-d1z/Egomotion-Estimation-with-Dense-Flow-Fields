@@ -25,6 +25,7 @@ endif()
 add_library(egomotion_domain STATIC
     src/domain/motion_estimate.cpp
     src/domain/harmonic_coefficients.cpp
+    src/domain/flow_field.cpp
     src/domain/direction_set.cpp
 )
 add_library(egomotion::domain ALIAS egomotion_domain)
@@ -298,6 +299,14 @@ if(BUILD_TESTING)
         TIMEOUT 120
     )
 
+
+    add_executable(test_r06_flow_value tests/contracts/test_r06_flow_value.cpp)
+    target_link_libraries(test_r06_flow_value PRIVATE egomotion_estimators)
+    target_compile_options(test_r06_flow_value PRIVATE -Wall -Wextra -Wpedantic)
+    target_link_options(test_r06_flow_value PRIVATE "-Wl,--wrap=malloc")
+    add_test(NAME r06_flow_value_invariants COMMAND test_r06_flow_value)
+    set_tests_properties(r06_flow_value_invariants PROPERTIES
+        LABELS "r06;contracts;domain;flow;value-lifetime;negative;allocation" TIMEOUT 30)
 
     add_executable(test_r06_direction_value tests/contracts/test_r06_direction_value.cpp)
     target_link_libraries(test_r06_direction_value PRIVATE egomotion_simulation)

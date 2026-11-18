@@ -71,7 +71,7 @@ struct SolverState {
     mutable std::size_t calls=0;std::size_t fail_at=0;
     mutable std::vector<double> flow_sums;
     bool called(const FlowField& field) const {
-        events.push_back(label);flow_sums.push_back(field.observations.sum());
+        events.push_back(label);flow_sums.push_back(field.observations().sum());
         return ++calls==fail_at;
     }
 };

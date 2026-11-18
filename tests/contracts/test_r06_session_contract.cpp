@@ -38,7 +38,7 @@ void verifySessionRollback(estimators::AdaptiveSessionMode mode) {
     estimators::AdaptiveFrameInput frame;
     frame.matlab_frame_index=3;
     frame.source_coefficient_rotation=Matrix3::Identity();
-    frame.observations.observations.resize(0,6);
+    frame.observations=FlowField{};
     frame.truth=test_support::motionValue(Vector3::UnitX(),Vector3::UnitY());
     auto out_of_order=session.processFrame(frame);
     require(!out_of_order.hasValue()&&

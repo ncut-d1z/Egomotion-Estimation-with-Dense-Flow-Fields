@@ -1,3 +1,4 @@
+#include "../support/flow_fixture.hpp"
 #include "../support/motion_fixture.hpp"
 // 状态隔离测试：真实单步/Session；独立运行是调度不变性的参考，不是数值 Golden。
 #include "egomotion/estimators/adaptive_session.hpp"
@@ -57,7 +58,7 @@ AdaptiveFrameInput input(std::size_t stream,std::size_t index) {
     const std::array<double,3> w=stream==0?std::array<double,3>{{0.125,0.25,0.5}}:
                                                   std::array<double,3>{{-0.5,0.125,0.25}};
     const double phi=(1+std::sqrt(5.0))/2,norm=std::sqrt(1+phi*phi);
-    result.observations.observations.resize(12,6);
+    FlowMatrix raw(12,6);
     Eigen::Index row=0;
     for (int cyclic=0;cyclic<3;++cyclic) for (double sign1:{-1.0,1.0}) for (double sign2:{-1.0,1.0}) {
         std::array<double,3> d{};
@@ -67,12 +68,13 @@ AdaptiveFrameInput input(std::size_t stream,std::size_t index) {
         for (std::size_t i=0;i<3;++i) dot+=t[i]*d[i];
         const double near=(stream==0?1.0:1.5)+static_cast<double>(index-kFirstFrame)/128;
         for (std::size_t i=0;i<3;++i) {
-            result.observations.observations(row,static_cast<Eigen::Index>(i))=d[i];
-            result.observations.observations(row,static_cast<Eigen::Index>(i+3))=
+            raw(row,static_cast<Eigen::Index>(i))=d[i];
+            raw(row,static_cast<Eigen::Index>(i+3))=
                 -near*(t[i]-dot*d[i])-(w[(i+1)%3]*d[(i+2)%3]-w[(i+2)%3]*d[(i+1)%3]);
         }
         ++row;
     }
+    result.observations=test_support::flowValue(raw);
     return result;
 }
 void sameOutput(const AdaptiveFrameResult& a,const AdaptiveFrameResult& b) {
@@ -116,7 +118,7 @@ void injectedFailure(AdaptiveMfaSession& owner,const AdaptiveMfaSession& peer,
                      std::size_t stream,std::size_t index) {
     const auto before=snapshot(owner),peer_before=snapshot(peer);
     auto bad=input(stream,index);
-    if (stream==0) bad.observations.observations.resize(0,6);
+    if (stream==0) bad.observations=FlowField{};
     else bad.truth=test_support::motionValue(bad.truth.translation(),Vector3::Zero());
     const auto failed=owner.processFrame(bad);
     require(!failed.hasValue()&&failed.error().code==ExperimentErrorCode::SolverFailed,
@@ -154,7 +156,7 @@ void verifyMode(AdaptiveSessionMode mode) {
         sameOutput(output.value(),reference[index-kFirstFrame].output);
         sameState(owner,reference[index-kFirstFrame].state,"isolated reference");
         sameState(peer,peer_before,"peer after successful frame");
-        same(frame.observations.observations,saved.observations.observations,"input flow");
+        same(frame.observations.observations(),saved.observations.observations(),"input flow");
         same(frame.source_coefficient_rotation,saved.source_coefficient_rotation,"input rotation");
         ++next[stream]; ++successful_frames;
     };

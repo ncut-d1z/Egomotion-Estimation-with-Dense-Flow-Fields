@@ -90,7 +90,7 @@ int main(int argc,char** argv) {
         std::ofstream csv(report);require(csv.is_open(),"Cannot save last real solve input/output");
         csv<<"field,matlab_row,matlab_column,value\n"<<std::setprecision(21);
         matrixCsv(csv,"truth_translation",truth);matrixCsv(csv,"estimated_translation",estimate);
-        matrixCsv(csv,"old_coefficients",recorded.old.values());matrixCsv(csv,"observations",recorded.flow.observations);
+        matrixCsv(csv,"old_coefficients",recorded.old.values());matrixCsv(csv,"observations",recorded.flow.observations());
         matrixCsv(csv,"system",recorded.last->trace.system_matrix);matrixCsv(csv,"rhs",recorded.last->trace.rhs);
         matrixCsv(csv,"solved_motion",recorded.last->trace.solved_motion);
         csv.close();require(!csv.fail(),"Trace CSV write failed");

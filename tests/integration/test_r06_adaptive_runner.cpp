@@ -1,3 +1,4 @@
+#include "../support/flow_fixture.hpp"
 #include "../support/coefficient_fixture.hpp"
 #include "../support/motion_fixture.hpp"
 // 跨 Runner/Session/Writer 的合同测试；替身运动不属于科学结果或 L3 Golden。
@@ -73,8 +74,8 @@ struct ScriptedStep final:estimators::IAdaptiveStepSolver {
         const auto run=ordinal/((mode.frames-2)*calls_per_frame);
         const auto frame=(ordinal/calls_per_frame)%(mode.frames-2)+2;
         const auto slot=ordinal%calls_per_frame;
-        require(run<mode.runs&&flow.observations.cols()==6&&
-                flow.observations.rows()==static_cast<Eigen::Index>(mode.directions),
+        require(run<mode.runs&&flow.observations().cols()==6&&
+                flow.observations().rows()==static_cast<Eigen::Index>(mode.directions),
                 "Runner changed source frame/run/direction counts");
         double expected=static_cast<double>(frame-1);
         if(slot<mode.comparisons){
@@ -455,7 +456,7 @@ void fixedUpdateSession(const fs::path& root,const std::string& sha) {
         estimators::AdaptiveFrameInput input;
         input.matlab_frame_index=row+1;input.source_coefficient_rotation=Matrix3::Identity();
         input.truth=test_support::motionValue(true_translation,true_rotation);
-        input.observations.observations.setZero(kLevelTwoDirections,6);
+        input.observations=test_support::flowValue(FlowMatrix::Zero(kLevelTwoDirections,6));
         const auto frame=session.processFrame(input);
         require(frame.hasValue(),"Fixed nonzero-truth UpdateRates Session failed");
         for(std::size_t column=0;column<kRates;++column){

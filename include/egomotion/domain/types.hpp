@@ -21,7 +21,28 @@ using HarmonicMatrix = Eigen::Matrix<Scalar, 3, 5, Eigen::ColMajor>;
 using FlowMatrix = Eigen::Matrix<Scalar, Eigen::Dynamic, 6, Eigen::ColMajor>;
 using DirectionMatrix = Eigen::Matrix<Scalar, Eigen::Dynamic, 3, Eigen::ColMajor>;
 
-struct FlowField { FlowMatrix observations; };
+// N×6有限观测存储；空/单位/切向条件仍由实际算法按源语义判断。
+class FlowField final {
+public:
+    FlowField() noexcept = default;
+    FlowField(const FlowField&) = default;
+    FlowField(FlowField&&) noexcept = default;
+    FlowField& operator=(const FlowField& other);
+    FlowField& operator=(FlowField&&) noexcept = default;
+    static Result<FlowField,NumericalErrorCode> create(
+        const Eigen::Ref<const Eigen::MatrixXd>& observations);
+    // 先校验再移交，失败保留输入；成功后调用者须放弃旧可写别名。
+    static Result<FlowField,NumericalErrorCode> fromOwned(FlowMatrix&& observations);
+    // 阻止Eigen在进入工厂前隐式转换形状或分配另一份矩阵。
+    template<class T> static Result<FlowField,NumericalErrorCode> fromOwned(T&&) = delete;
+
+    const FlowMatrix& observations() const & noexcept { return observations_; }
+    FlowMatrix observations() && noexcept { return std::move(observations_); }
+    FlowMatrix observations() const && { return observations_; }
+private:
+    explicit FlowField(FlowMatrix&& observations) noexcept : observations_(std::move(observations)) {}
+    FlowMatrix observations_;
+};
 // N×3有限方向存储；允许空集合，单位/非零要求由实际物理模型检查。
 class DirectionSet final {
 public:

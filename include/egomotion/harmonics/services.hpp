@@ -17,6 +17,9 @@ class HarmonicFitter final {
 public:
     Result<HarmonicCoefficients,NumericalErrorCode> fitSourceNear(
         const Eigen::VectorXd& nearness,const FlowField& observations) const;
+    // 只需方向时无需构造光流；原N×K源矩阵应先显式提取前三列。
+    Result<HarmonicCoefficients,NumericalErrorCode> fitSourceNear(
+        const Eigen::VectorXd& nearness,const DirectionSet& directions) const;
 };
 
 class HarmonicRotator final {

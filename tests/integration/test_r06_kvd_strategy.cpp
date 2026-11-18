@@ -1,3 +1,4 @@
+#include "../support/flow_fixture.hpp"
 #include "../support/motion_fixture.hpp"
 #include "egomotion/estimators/franz_kvd.hpp"
 #include "egomotion/contracts/diagnostics.hpp"
@@ -30,18 +31,18 @@ FlowField signedField() {
     const double c=std::sqrt(99.0)/10.0,s=0.1;
     const std::array<Vector3,8> directions{{{c,s,0},{c,-s,0},{-c,s,0},{-c,-s,0},
                                          {0,1,0},{0,-1,0},{0,0,1},{0,0,-1}}};
-    FlowField field;field.observations.resize(8,6);
+    FlowMatrix field;field.resize(8,6);
     for(std::size_t i=0;i<directions.size();++i) {
-        const auto& d=directions[i];field.observations.row(i).head<3>()=d.transpose();
-        field.observations.row(i).tail<3>()=((i<4?10.0:-1.0)*(Vector3::UnitX()-d.x()*d)).transpose();
+        const auto& d=directions[i];field.row(i).head<3>()=d.transpose();
+        field.row(i).tail<3>()=((i<4?10.0:-1.0)*(Vector3::UnitX()-d.x()*d)).transpose();
     }
-    return field;
+    return test_support::flowValue(field);
 }
 FlowField axialField() {
-    FlowField field;field.observations.resize(6,6);
-    field.observations<<1,0,0,0,-0.5,0, -1,0,0,0,0.5,0,
+    FlowMatrix field;field.resize(6,6);
+    field<<1,0,0,0,-0.5,0, -1,0,0,0,0.5,0,
         0,1,0,-0.5,0,0, 0,-1,0,-1.5,0,0, 0,0,1,-2,0,0, 0,0,-1,-2,0,0;
-    return field;
+    return test_support::flowValue(field);
 }
 void directRules() {
     const auto field=axialField();Eigen::VectorXd near(6);near<<1,2,3,4,5,6;
@@ -58,7 +59,7 @@ void directRules() {
     same(b.value().mean_c,Vector3{0.5,0,0},"Modified mean near projection");
     same(a.value().raw_translation.x(),-(-29.5/6+0.5/6-5.0/6),"Original raw scalar reference");
     same(b.value().raw_translation.x(),1.5,"Modified raw translation is not normalized");
-    const auto original_input=field.observations;
+    const auto original_input=field.observations();
     const std::array<const IKvDTranslationRule*,2> rules{{&original,&modified}};
     for(const auto* rule:rules) {
         FlowField empty;
@@ -70,12 +71,15 @@ void directRules() {
         const auto invalid_motion=MotionEstimate::create(motion.translation(),invalid_rotation);
         require(!invalid_motion.hasValue()&&invalid_motion.error().code==NumericalErrorCode::NonFiniteInput,
                 "Non-finite old rotation rejected at value construction before rule");
-        auto invalid_field=field;invalid_field.observations(0,0)=2;
+        auto invalid_raw=field.observations();invalid_raw(0,0)=2;
+        auto invalid_field=test_support::flowValue(invalid_raw);
         require(rule->compute(invalid_field,near,motion).error().code==NumericalErrorCode::InvalidDirection,"Non-unit rule direction");
-        invalid_field=field;invalid_field.observations(0,4)=std::numeric_limits<double>::infinity();
-        require(rule->compute(invalid_field,near,motion).error().code==NumericalErrorCode::NonFiniteInput,"Non-finite flow");
+        invalid_raw=field.observations();invalid_raw(0,4)=std::numeric_limits<double>::infinity();
+        const auto invalid=FlowField::create(invalid_raw);
+        require(!invalid.hasValue()&&invalid.error().code==NumericalErrorCode::NonFiniteInput,
+                "Non-finite flow rejected at value construction before rule");
     }
-    same(field.observations,original_input,"Direct rules retain input");
+    same(field.observations(),original_input,"Direct rules retain input");
 }
 struct Call { const FlowField* field;Eigen::VectorXd near;MotionEstimate motion; };
 enum class Behavior { Delegate, Failure, InvalidMean, InfiniteRaw, ZeroRaw, AllocationFailure, DoubleRaw };
@@ -139,7 +143,7 @@ void engineComposition() {
     KvDParameters parameters;parameters.retain_trace=true;
     const std::array<FlowField,2> fields{{axialField(),signedField()}};
     for(const auto& field:fields) {
-        const auto before=field.observations;
+        const auto before=field.observations();
         const auto expected_a=OriginalKvDEstimator{}.estimate(field,parameters),expected_b=ModifiedKvDEstimator{}.estimate(field,parameters);
         require(expected_a.hasValue()&&expected_b.hasValue(),"Default composed estimators solve fixtures");
         ObservedRule a(original),b(modified);
@@ -153,9 +157,9 @@ void engineComposition() {
         const auto no_trace=engine.estimate(field,quiet,modified);
         require(no_trace.hasValue()&&no_trace.value().trace.empty(),"Trace opt-out retained");
         same(no_trace.value().motion.translation(),second.value().motion.translation(),"Trace cannot affect motion");
-        same(field.observations,before,"Engine does not modify flow");
+        same(field.observations(),before,"Engine does not modify flow");
         require(first.value().trace.front().translation_candidate_raw.x()!=second.value().trace.front().translation_candidate_raw.x(),"Original/Modified formulas remain distinct");
-        if(field.observations.rows()==8)require(first.value().trace.front().sign_flipped,"Sign-flip path actually covered");
+        if(field.observations().rows()==8)require(first.value().trace.front().sign_flipped,"Sign-flip path actually covered");
     }
 }
 void strategyFailures() {

@@ -1,3 +1,4 @@
+#include "../support/flow_fixture.hpp"
 // 六个轴向、成对反向视线的独立解析降维参考；无 Eigen 数值求解依赖。
 // norm_koenderink_iteration.m: d48048f37b859bfb19402ca85b0f4c20e76afbfd
 // mue_norm_koenderink_iteration.m: 9ffdac1baaecac06db20bcc6849bf4cdd165a484
@@ -95,24 +96,24 @@ std::vector<ReferenceStep> independentReference(const Scene& scene,bool modified
 FlowField makeField(const Scene& scene) {
     const std::array<double,3> translation{{scene.scale,2*scene.scale,3*scene.scale}};
     const std::array<double,3> rotation{{0.25*scene.scale,-0.5*scene.scale,0.75*scene.scale}};
-    FlowField field;
-    field.observations.setZero(kRayCount,6);
+    FlowMatrix field;
+    field.setZero(kRayCount,6);
     for (std::size_t axis=0;axis<3;++axis) {
         for (std::size_t side=0;side<2;++side) {
             const auto row=static_cast<Eigen::Index>(2*axis+side);
             const double sign=side==0?1:-1;
-            field.observations(row,static_cast<Eigen::Index>(axis))=sign;
+            field(row,static_cast<Eigen::Index>(axis))=sign;
             for (std::size_t i=0;i<3;++i) {
                 double cross=0;
                 if ((i+2)%3==axis) cross=rotation[(i+1)%3]*sign;
                 if ((i+1)%3==axis) cross=-rotation[(i+2)%3]*sign;
-                field.observations(row,static_cast<Eigen::Index>(i+3))=
+                field(row,static_cast<Eigen::Index>(i+3))=
                     (i==axis?0:-static_cast<double>(scene.mu[axis])*translation[i])-cross-
                     (axis==0&&i==1?scene.tangent_bias*scene.scale:0);
             }
         }
     }
-    return field;
+    return test_support::flowValue(field);
 }
 struct Coverage { std::size_t cap=0,dynamic=0,absolute=0,minimum_override=0; };
 void inspect(const Scene& scene,bool modified,Coverage& coverage) {

@@ -214,11 +214,11 @@ Output computeAdaptive(Mode mode, double noise_scale, IRandomSource* rng,
                         return fromNumeric(noisy,"nonpropfehler",mode,
                                            run+1,matlab_i,ExperimentErrorCode::IncompleteRun);
                     // 窄接口可替换不等于信任任意success；保持与Bias相同的拥有值边界。
-                    const auto& candidate=noisy.value().observations;
-                    if(candidate.rows()!=observations.observations.rows() ||
+                    const auto& candidate=noisy.value().observations();
+                    if(candidate.rows()!=observations.observations().rows() ||
                        !candidate.allFinite() ||
                        !(candidate.leftCols<3>().array()==
-                         observations.observations.leftCols<3>().array()).all())
+                         observations.observations().leftCols<3>().array()).all())
                         return fail(ExperimentErrorCode::DataMismatch,
                                     "Adaptive noise changed shape/directions or returned non-finite flow");
                     observations=std::move(noisy).value();
