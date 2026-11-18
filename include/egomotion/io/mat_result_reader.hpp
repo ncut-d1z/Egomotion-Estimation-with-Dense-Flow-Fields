@@ -1,6 +1,7 @@
 #pragma once
 
 #include "egomotion/contracts/interfaces.hpp"
+#include "egomotion/io/mat_read_observer.hpp"
 
 #include <filesystem>
 #include <string>
@@ -24,6 +25,7 @@ struct MatFileScan {
 
 class MatResultReader final : public IResultReader {
 public:
+    explicit MatResultReader(IMatReadObserver* observer = nullptr) : observer_(observer) {}
     Result<std::vector<MatVariableInfo>, MatErrorCode>
     inspect(const std::filesystem::path& path) const override;
 
@@ -40,6 +42,8 @@ public:
     scanFile(const std::filesystem::path& path, ScanMode mode) const;
 
     static std::string libraryVersion();
+private:
+    IMatReadObserver* observer_;
 };
 
 }  // namespace egomotion::io

@@ -1,5 +1,9 @@
 # CLI 参数、退出码与诊断协议：详细设计草案
 
+> **2026-11-18 应用上下文增量 `[AI-DRAFT + HUMAN-APPROVE]`，候选、未冻结，运行结果另行登记**：进程记录使用`egomotion-process-start-v2`/`finish-v2`，`application_context`改为指向`context.jsonl`及`egomotion-context-event-v1`的对象。通过显式借用的`IInvocationObserver`记录实际事件：应用进入、解析成功后的有效配置、seed选择、成功预留RunId、实际RunContext/导出上下文、MAT快照准备、分析/插图来源、应用返回；序号从1递增，每事件写入后fsync。`seed_selected`不表示算法已消耗随机数，`mat_snapshot_prepared`不表示变量已解码成功。RunContext/导出上下文复用同一份`invocation.json`序列化文本；不通过argv推测RunId，也不事后重新打开MAT路径拼接摘要。普通`egomotion`不注入观察器。
+>
+> 第一个观察失败缓存为Output错误，后续观察不再写入；应用在对应边界停止后续处理并返回6。正常返回事件fsync成功后，子进程通过独立非阻塞管道确认返回；父进程在waitpid后保存`context_return_confirmed`并对三个通道（stdout、stderr、context）保存字节数/SHA-256/fsync结果。正常exit没有确认则外层返回6；信号终止允许保留事件前缀并仍返回128+signal（通道或结束记录失败另返回6）。文件存在、完整JSON行或同名返回事件均不替代确认；确认也不等于科学计算成功或掉电保证。关联D4/P5.3/P8.9/P10.6、REQ/TC-NF-LOG-001；不变更AC、数值阈值、最终错误码或正式冻结状态。下文v1描述为617c7f8历史证据。
+
 > **2026-11-18 进程记录增量 `[AI-DRAFT + HUMAN-APPROVE]`，候选、未冻结**：新增显式入口 `egomotion-record <原egomotion参数>`，在单线程父进程中先确认开始记录，再fork执行同一构建的应用入口。原 `egomotion` 行为保持；记录器的stdout为日志位置/条件退出码收据，子进程stdout/stderr原始字节分别保存，不实时转发。构建/测试日志固定在 `build-cli-records/record_<128位OS随机身份>/`，此RecordId不是实验RunId，不是新MAT/图形输出根；科学产物继续仅允许 `output/<RunId>/`，不增加输出根参数。日志根及每次记录目录必须独占、私有；日志根拒绝符号链接及非私有权限，检出根为应用可信边界，保留失败证据。关联D4/P5.3/P8.9/P10.6、REQ/TC-NF-LOG-001；最终源码617c7f8已完成ON69/OFF68及新增399项/23次受监控调用、12组真实CLI对照，见 [证据](../reviews/R6_PROCESS_RECORDS_2026-11-18.md)；测试不等于正式冻结。
 >
 > `start.json`保存argv、编译时源码SHA、实际cwd、环境白名单及UTC；`finish.json`用waitpid区分正常exit与signal，保存原始wait状态、转发信号、两通道字节数/SHA-256/fsync状态。父进程收到INT/TERM/HUP/QUIT时转发给尚未回收的子进程；子进程恢复调用前的信号状态。正常返回原子进程码，信号返回128+signal；记录/通道/收据失败返回6，结束记录中的返回码是发布与收据成功条件下的值，文件存在不证明最终持久性。开始确认前不得启动应用；父进程SIGKILL、系统掉电和无法写盘仍不能保证结束记录。原应用的RunId/seed/已读取MAT快照身份与错误链仍在应用输出及其既有记录中，外层明确 `application_context=not_observed_by_supervisor`，不从请求参数猜测“实际已分配/已使用”，不据此宣称整个REQ-NF-LOG已满足。记录器捕获通道与直接终端/管道交付是不同运行环境；程序直接写坏管道的语义仍由原入口测试覆盖。

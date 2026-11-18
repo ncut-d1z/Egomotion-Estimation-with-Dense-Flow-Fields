@@ -4,6 +4,7 @@
 #include "egomotion/analysis/plot.hpp"
 #include "egomotion/experiments/runner.hpp"
 #include "egomotion/illustrations/illustration.hpp"
+#include "egomotion/cli/invocation_observer.hpp"
 
 #include <cstdint>
 #include <filesystem>
@@ -68,9 +69,10 @@ public:
                                         IAnalyzer* analyzer = nullptr,
                                         IPlotExporter* plotter = nullptr,
                                         std::filesystem::path trusted_repo = {},
-                                        illustrations::IExporter* illustrator = nullptr)
+                                        illustrations::IExporter* illustrator = nullptr,
+                                        IInvocationObserver* observer = nullptr)
         : reader_(reader), runner_(runner), analyzer_(analyzer),
-          plotter_(plotter), trusted_repo_(std::move(trusted_repo)), illustrator_(illustrator) {}
+          plotter_(plotter), trusted_repo_(std::move(trusted_repo)), illustrator_(illustrator), observer_(observer) {}
 
     int dispatch(const Command& command, std::ostream& out,
                  std::ostream& err,
@@ -83,6 +85,7 @@ private:
     IPlotExporter* plotter_;
     std::filesystem::path trusted_repo_;
     illustrations::IExporter* illustrator_;
+    IInvocationObserver* observer_;
 };
 
 int run(const std::vector<std::string>& args, std::ostream& out,

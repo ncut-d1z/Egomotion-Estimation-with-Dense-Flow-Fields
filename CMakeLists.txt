@@ -184,6 +184,7 @@ add_library(egomotion_cli STATIC
     src/cli/command.cpp
     src/cli/application.cpp
     src/cli/execution_record.cpp
+    src/cli/invocation_observer.cpp
 )
 add_library(egomotion::cli ALIAS egomotion_cli)
 target_link_libraries(egomotion_cli PUBLIC
@@ -239,7 +240,7 @@ if(EGOMOTION_ENABLE_SVG)
 endif()
 
 add_library(egomotion_process_record STATIC
-    src/cli/process_record.cpp src/cli/process_record_storage.cpp)
+    src/cli/process_record.cpp src/cli/process_record_storage.cpp src/cli/context_journal.cpp)
 target_link_libraries(egomotion_process_record PUBLIC egomotion_cli)
 target_compile_definitions(egomotion_process_record PRIVATE
     "EGOMOTION_BUILD_SOURCE_SHA=\"${EGOMOTION_BUILD_SOURCE_SHA}\"")
@@ -840,6 +841,18 @@ if(BUILD_TESTING)
     set_tests_properties(r06_adaptive_real_cli PROPERTIES
         LABELS "r06;adaptive;real-process;real-step;write-sandbox;readonly-l2-diagnostic" TIMEOUT 420)
 
+    add_executable(test_r06_context_journal tests/integration/test_r06_context_journal.cpp)
+    target_link_libraries(test_r06_context_journal PRIVATE egomotion_process_record egomotion_matio PkgConfig::MATIO)
+    target_include_directories(test_r06_context_journal PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/cli")
+    target_compile_options(test_r06_context_journal PRIVATE -Wall -Wextra -Wpedantic)
+    foreach(symbol IN ITEMS write fsync Mat_Open Mat_VarRead Mat_VarReadInfo)
+        target_link_options(test_r06_context_journal PRIVATE "LINKER:--wrap=${symbol}")
+    endforeach()
+    add_test(NAME r06_context_journal_identity COMMAND test_r06_context_journal
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_context_journal")
+    set_tests_properties(r06_context_journal_identity PROPERTIES
+        LABELS "r06;logging;mat;snapshot;fault-injection;write-sandbox" TIMEOUT 60)
+
     add_executable(test_r06_process_records tests/integration/test_r06_process_records.cpp)
     target_link_libraries(test_r06_process_records PRIVATE egomotion_process_record)
     target_include_directories(test_r06_process_records PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/cli")
@@ -853,6 +866,7 @@ if(BUILD_TESTING)
     add_test(NAME r06_process_records_real_cli COMMAND "${CMAKE_COMMAND}"
         "-DCLI=$<TARGET_FILE:egomotion>" "-DRECORDER=$<TARGET_FILE:egomotion-record>"
         "-DSOURCE_SHA=${EGOMOTION_BUILD_SOURCE_SHA}" "-DSOURCE_ROOT=${CMAKE_CURRENT_SOURCE_DIR}"
+        "-DSVG_ENABLED=${EGOMOTION_ENABLE_SVG}"
         "-DSANDBOX=${CMAKE_CURRENT_BINARY_DIR}/r06_process_records_cli"
         -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/test_r06_process_records_cli.cmake")
     set_tests_properties(r06_process_records_real_cli PROPERTIES

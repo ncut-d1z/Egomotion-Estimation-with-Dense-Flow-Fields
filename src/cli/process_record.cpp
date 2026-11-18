@@ -1,6 +1,7 @@
 #include "process_record.hpp"
 #include "process_record_storage.hpp"
 #include "execution_record.hpp"
+#include "context_journal.hpp"
 #include "stream_output.hpp"
 #include "egomotion/io/sha256.hpp"
 
@@ -8,6 +9,7 @@
 #include <csignal>
 #include <cstdio>
 #include <iostream>
+#include <fcntl.h>
 #include <poll.h>
 #include <stdexcept>
 #include <sys/signalfd.h>
@@ -78,7 +80,7 @@ std::string startRecord(const Directory& directory, int argc, char** argv) {
     const auto cwd = std::filesystem::current_path();
     std::error_code error;
     const auto executable = std::filesystem::read_symlink("/proc/self/exe", error);
-    std::string json = "{\"schema\":\"egomotion-process-start-v1\",\"phase\":\"started\"";
+    std::string json = "{\"schema\":\"egomotion-process-start-v2\",\"phase\":\"started\"";
     json += ",\"record_id\":" + jsonQuote(directory.id());
     json += ",\"started_utc\":" + processTimestamp();
     json += ",\"repo_sha\":" + jsonQuote(EGOMOTION_BUILD_SOURCE_SHA);
@@ -91,7 +93,7 @@ std::string startRecord(const Directory& directory, int argc, char** argv) {
     }
     json += "],\"environment\":" + processEnvironment();
     // RecordId不是实验RunId；解析和预留尚未执行，不推断配置/seed/输入身份。
-    json += ",\"application_context\":\"not_observed_by_supervisor\"";
+    json += ",\"application_context\":{\"file\":\"context.jsonl\",\"schema\":\"egomotion-context-event-v1\"}";
     json += ",\"record_directory\":" + jsonQuote(directory.path().string());
     return json + ",\"stdout\":\"stdout.bin\",\"stderr\":\"stderr.bin\",\"finish_record\":\"finish.json\"}\n";
 }
@@ -133,15 +135,16 @@ std::string channelRecord(int fd, const char* name, bool& confirmed) {
         ",\"sha256\":" + (hash.hasValue() ? jsonQuote(hash.value()) : "null") + '}';
 }
 
-struct Completion { int exit_code; bool channels_confirmed; std::string json; };
-Completion finishRecord(const Directory& directory, int status, int out, int err,
-                        const std::string& forwarded) {
+struct Completion { int exit_code; bool audit_confirmed; std::string json; };
+Completion finishRecord(const Directory& directory, int status, int out, int err, int journal,
+                        bool context_return_confirmed, const std::string& forwarded) {
     bool confirmed = true;
     auto channels = '[' + channelRecord(out, "stdout.bin", confirmed);
-    channels += ',' + channelRecord(err, "stderr.bin", confirmed) + ']';
+    channels += ',' + channelRecord(err, "stderr.bin", confirmed);
+    channels += ',' + channelRecord(journal, "context.jsonl", confirmed) + ']';
     const bool exited = WIFEXITED(status);
     const int child_code = exited ? WEXITSTATUS(status) : 128 + WTERMSIG(status);
-    std::string json = "{\"schema\":\"egomotion-process-finish-v1\",\"record_id\":" + jsonQuote(directory.id());
+    std::string json = "{\"schema\":\"egomotion-process-finish-v2\",\"record_id\":" + jsonQuote(directory.id());
     json += ",\"finished_utc\":" + processTimestamp() + ",\"wait_status\":" + std::to_string(status);
     json += ",\"termination\":" + jsonQuote(exited ? "exited" : "signaled");
     json += ",\"child_exit_code\":" + (exited ? std::to_string(WEXITSTATUS(status)) : "null");
@@ -149,26 +152,46 @@ Completion finishRecord(const Directory& directory, int status, int out, int err
     json += ",\"core_dump_flag\":" + std::string(WIFSIGNALED(status) && WCOREDUMP(status) ? "true" : "false");
     json += ",\"forwarded_signals\":[" + forwarded + "],\"channels\":" + channels;
     json += ",\"channels_confirmed\":" + std::string(confirmed ? "true" : "false");
-    const int code = confirmed ? child_code : record_failure_exit;
+    json += ",\"context_return_confirmed\":" + std::string(context_return_confirmed ? "true" : "false");
+    const bool audit_confirmed = confirmed && (!exited || context_return_confirmed);
+    const int code = audit_confirmed ? child_code : record_failure_exit;
     json += ",\"exit_code_if_record_and_receipt_confirmed\":" + std::to_string(code);
     json += ",\"exit_code_on_record_or_receipt_failure\":6}\n";
-    return {code, confirmed, std::move(json)};
+    return {code, audit_confirmed, std::move(json)};
 }
 
-[[noreturn]] void executeChild(int argc, char** argv, int (*application)(int, char**),
-                               const Signals& signals, int out, int err) noexcept {
+int invokeObserved(int argc, char** argv, RecordedApplication application, ContextJournal& journal, int receipt) {
+    auto entering = journal.record("application_entering", "{}");
+    if (!entering.hasValue()) return streams::report(std::cerr, entering.error(), record_failure_exit);
+    const int code = application(argc, argv, &journal);
+    if (journal.failure()) return record_failure_exit;
+    auto returned = journal.record("application_returned", "{\"application_exit_code\":" + std::to_string(code) + '}');
+    if (!returned.hasValue()) return streams::report(std::cerr, returned.error(), record_failure_exit);
+    constexpr char confirmed = 1;
+    ssize_t count;
+    do { count = ::write(receipt, &confirmed, 1); } while (count < 0 && errno == EINTR);
+    return count == 1 ? code : streams::outputFailure(std::cerr, "Cannot confirm application context return");
+}
+bool contextReturnConfirmed(int receipt) {
+    char confirmed = 0;
+    ssize_t count;
+    do { count = ::read(receipt, &confirmed, 1); } while (count < 0 && errno == EINTR);
+    return count == 1 && confirmed == 1;
+}
+[[noreturn]] void executeChild(int argc, char** argv, RecordedApplication application,
+                               const Signals& signals, int out, int err, ContextJournal& journal, int receipt) noexcept {
     if (::dup2(out, STDOUT_FILENO) < 0 || ::dup2(err, STDERR_FILENO) < 0 || !signals.restoreChild()) {
         constexpr char failed[] = "Child stream/signal setup failed before application entry\n";
         (void)::write(err, failed, sizeof(failed) - 1);
         ::_exit(record_failure_exit);
     }
-    const int code = application(argc, argv);
+    const int code = invokeObserved(argc, argv, application, journal, receipt);
     std::cout.flush();
     std::cerr.flush();
     const bool flushed = ::fflush(nullptr) == 0 && std::cout.good() && std::cerr.good();
     ::_exit(flushed ? code : record_failure_exit);
 }
-int recordWithSignals(int argc, char** argv, int (*application)(int, char**),
+int recordWithSignals(int argc, char** argv, RecordedApplication application,
                       const std::filesystem::path& trusted_root, const Signals& signals,
                       std::ostream& receipt, std::ostream& errors) {
     std::string location;
@@ -178,26 +201,36 @@ int recordWithSignals(int argc, char** argv, int (*application)(int, char**),
         location = directory.path().string();
         const auto out = directory.newFile("stdout.bin");
         const auto err = directory.newFile("stderr.bin");
+        const auto context = directory.newFile("context.jsonl");
+        ContextJournal journal(context.get(), directory.id(), directory.path()/"context.jsonl");
+        int receipt_pipe[2]{};
+        checked(::pipe2(receipt_pipe, O_CLOEXEC | O_NONBLOCK) == 0, "Cannot create context completion channel");
+        Fd receipt_read(receipt_pipe[0]), receipt_write(receipt_pipe[1]);
         checked(::fflush(nullptr) == 0, "Cannot flush pre-fork stdio");
         std::cout.flush(); std::cerr.flush();
         checked(std::cout.good() && std::cerr.good(), "Cannot flush pre-fork streams");
         directory.publish("start.json", startRecord(directory, argc, argv));
         const pid_t pid = ::fork();
         checked(pid >= 0, "Cannot fork recorded application");
-        if (pid == 0) executeChild(argc, argv, application, signals, out.get(), err.get());
+        if (pid == 0) {
+            receipt_read.reset();
+            executeChild(argc, argv, application, signals, out.get(), err.get(), journal, receipt_write.get());
+        }
+        receipt_write.reset();
         Child child(pid);
         std::string forwarded;
         const int status = waitForChild(pid, signal_fd.get(), forwarded);
         child.reaped();
-        const auto completion = finishRecord(directory, status, out.get(), err.get(), forwarded);
+        const auto completion = finishRecord(directory, status, out.get(), err.get(), context.get(),
+            contextReturnConfirmed(receipt_read.get()), forwarded);
         directory.publish("finish.json", completion.json);
         const auto response = "{\"record_id\":" + jsonQuote(directory.id()) +
             ",\"record_directory\":" + jsonQuote(location) +
             ",\"exit_code_if_receipt_delivered\":" + std::to_string(completion.exit_code) + "}\n";
         if (!streams::writeAndFlush(receipt, response))
             return streams::outputFailure(errors, "Process receipt delivery failed; retained record: " + location);
-        if (!completion.channels_confirmed)
-            return streams::outputFailure(errors, "Cannot confirm child logs; retained record: " + location);
+        if (!completion.audit_confirmed)
+            return streams::outputFailure(errors, "Cannot confirm child logs or context return; retained record: " + location);
         return completion.exit_code;
     } catch (const std::exception& error) {
         return streams::outputFailure(errors, std::string(error.what()) + "; retained record: " + location);
@@ -205,7 +238,7 @@ int recordWithSignals(int argc, char** argv, int (*application)(int, char**),
 }
 }  // namespace
 
-int recordProcess(int argc, char** argv, int (*application)(int, char**),
+int recordProcess(int argc, char** argv, RecordedApplication application,
                   const std::filesystem::path& trusted_root,
                   std::ostream& receipt, std::ostream& errors) {
     try {

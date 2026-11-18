@@ -13,6 +13,7 @@ public:
     Fd& operator=(const Fd&) = delete;
     Fd(Fd&& other) noexcept;
     int get() const noexcept { return value_; }
+    void reset() noexcept;
 private:
     int value_;
 };

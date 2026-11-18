@@ -151,24 +151,32 @@ Result<bool,MatErrorCode> hasMat73Header(int fd,const fs::path& path,std::string
 }
 
 Result<MatInput, MatErrorCode> openReadOnly(const fs::path& path,bool verify_container=false,
-                                           std::string_view variable={}) {
+                                           std::string_view variable={},IMatReadObserver* observer=nullptr,
+                                           MatReadPurpose purpose=MatReadPurpose::Metadata) {
     if (path.empty() || path.native().find('\0') != std::string::npos)
         return fail<MatInput>(MatErrorCode::MissingFile, ErrorStage::Read,
                                path, "MAT path is empty or contains NUL");
     errno = 0;
-    // 完整数值读取捕获并封存字节；元数据入口仍不读取数值载荷。
+    // 正式记录的元数据读取额外封存原始字节以绑定身份，仍不解码数值载荷。
+    const bool capture_snapshot=verify_container||observer;
     ReadDescriptor descriptor;
     MatInput input;
-    if(verify_container)descriptor.fd=::open(path.c_str(),O_RDONLY|O_CLOEXEC|O_NONBLOCK);
+    if(capture_snapshot)descriptor.fd=::open(path.c_str(),O_RDONLY|O_CLOEXEC|O_NONBLOCK);
     if(descriptor.fd>=0){
         struct stat info{};
         if(::fstat(descriptor.fd,&info)!=0||!S_ISREG(info.st_mode))
             return fail<MatInput>(MatErrorCode::InvalidMatHeader,ErrorStage::Read,path,
-                                   "Numeric MAT input must be a regular file",std::string(variable));
+                                   "Recorded or numeric MAT input must be a regular file",std::string(variable));
         auto snapshot=detail::snapshotMatInput(descriptor.fd,path,variable);
         if(!snapshot.hasValue())
             return Result<MatInput,MatErrorCode>::failure(std::move(snapshot).error());
         input.snapshot.emplace(std::move(snapshot).value());
+        if(observer) {
+            auto observed=observer->snapshotPrepared(path,variable,input.snapshot->sha256(),purpose);
+            if(!observed.hasValue())return Result<MatInput,MatErrorCode>::failure(std::move(observed).error());
+        }
+    }
+    if(verify_container&&input.snapshot){
         auto unsupported=hasMat73Header(input.snapshot->fd(),path,variable);
         if(!unsupported.hasValue())
             return Result<MatInput,MatErrorCode>::failure(std::move(unsupported).error());
@@ -176,9 +184,9 @@ Result<MatInput, MatErrorCode> openReadOnly(const fs::path& path,bool verify_con
             return fail<MatInput>(MatErrorCode::UnsupportedClassOrType,ErrorStage::Decode,path,
                 "Numeric MAT reader supports only MAT v5; MAT v7.3 is unsupported",std::string(variable));
     }
-    const std::string read_path=verify_container?
+    const std::string read_path=capture_snapshot?
         "/proc/self/fd/"+std::to_string(input.snapshot?input.snapshot->fd():-1):path.string();
-    MatHandle handle(verify_container&&descriptor.fd<0?nullptr:
+    MatHandle handle(capture_snapshot&&descriptor.fd<0?nullptr:
                      Mat_Open(read_path.c_str(), MAT_ACC_RDONLY));
     if (!handle) {
         const int saved_errno = errno;
@@ -271,7 +279,8 @@ Result<DenseDoubleArray, MatErrorCode> readWithHandle(const MatInput& mat,
 
 Result<MatFileScan, MatErrorCode>
 MatResultReader::scanFile(const std::filesystem::path& path, ScanMode mode) const {
-    auto opened = openReadOnly(path,mode==ScanMode::VerifyDecoded);
+    auto opened = openReadOnly(path,mode==ScanMode::VerifyDecoded,{},observer_,
+        mode==ScanMode::MetadataOnly?MatReadPurpose::Metadata:MatReadPurpose::DictionaryDecode);
     if (!opened.hasValue())
         return Result<MatFileScan, MatErrorCode>::failure(
             std::move(opened).error());
@@ -349,7 +358,7 @@ MatResultReader::readNamed(const std::filesystem::path& path,
     if (variable.empty() || variable.find('\0') != std::string_view::npos)
         return fail<DenseDoubleArray>(MatErrorCode::MissingVariable, ErrorStage::Read,
                                       path, "MAT variable name is empty or invalid");
-    auto opened = openReadOnly(path,true,variable);
+    auto opened = openReadOnly(path,true,variable,observer_,MatReadPurpose::Named);
     if (!opened.hasValue())
         return Result<DenseDoubleArray, MatErrorCode>::failure(
             std::move(opened).error());
@@ -383,7 +392,7 @@ MatResultReader::readFirstCompatible(const std::filesystem::path& path) const {
         if (!std::filesystem::exists(actual, ec))
             actual += ".mat";
     }
-    auto opened = openReadOnly(actual,true);
+    auto opened = openReadOnly(actual,true,{},observer_,MatReadPurpose::FirstCompatible);
     if (!opened.hasValue())
         return Result<DenseDoubleArray, MatErrorCode>::failure(
             std::move(opened).error());

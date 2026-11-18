@@ -10,14 +10,14 @@
 #include <string>
 #include <vector>
 
-int egomotionApplication(int argc,char** argv) {
+int egomotionApplication(int argc,char** argv,egomotion::cli::IInvocationObserver* observer) {
     std::vector<std::string> args;
     args.reserve(argc>0?static_cast<std::size_t>(argc-1):0);
     for(int i=1;i<argc;++i)args.emplace_back(argv[i]);
 
     // R5: all services own their own internal state. Plot is optional;
     // changing the configured plot backend must not affect analyze.
-    egomotion::io::MatResultReader reader;
+    egomotion::io::MatResultReader reader(observer);
     egomotion::analysis::MatResultAnalyzer analyzer;
     egomotion::IPlotExporter* plotter=nullptr;
     egomotion::illustrations::IExporter* illustrator=nullptr;
@@ -32,6 +32,6 @@ int egomotionApplication(int argc,char** argv) {
     // identified by the presence of origin/; no output-root CLI argument.
     const egomotion::cli::ApplicationCompositionRoot app(
         &reader,
-        &runner,&analyzer,plotter,std::filesystem::current_path(),illustrator);
+        &runner,&analyzer,plotter,std::filesystem::current_path(),illustrator,observer);
     return egomotion::cli::run(args,std::cout,std::cerr,app);
 }

@@ -10,7 +10,8 @@
 #include <utility>
 
 namespace egomotion::cli::process_record {
-Fd::~Fd() { if (value_ >= 0) ::close(value_); }
+Fd::~Fd() { reset(); }
+void Fd::reset() noexcept { if (value_ >= 0) ::close(std::exchange(value_, -1)); }
 Fd::Fd(Fd&& other) noexcept : value_(std::exchange(other.value_, -1)) {}
 
 void checked(bool success, const char* operation) {

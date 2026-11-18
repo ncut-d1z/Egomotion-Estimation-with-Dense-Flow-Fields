@@ -78,7 +78,12 @@ std::string environment() {
     return json;
 }
 std::string parameters(const Command& command) {
-    if (command.kind == CommandKind::Plot) {
+    if (command.kind == CommandKind::InspectMat) {
+        const auto& args = std::get<InspectMatArgs>(command.arguments);
+        return "{\"file\":" + jsonQuote(args.source.string()) + ",\"variable\":" +
+            (args.variable ? jsonQuote(*args.variable) : "null") + '}';
+    }
+    if (command.kind == CommandKind::Plot || command.kind == CommandKind::Analyze) {
         const auto& args = std::get<AnalysisArgs>(command.arguments);
         const char* kind = nullptr;
         switch (args.kind) {
@@ -93,10 +98,11 @@ std::string parameters(const Command& command) {
     }
     if (command.kind == CommandKind::Illustrate) {
         const auto& args = std::get<IllustrationArgs>(command.arguments);
+        const auto format = jsonQuote(args.svg ? "svg" : "json");
         if (const auto* harmonic = std::get_if<illustrations::HarmonicConfig>(&args.config))
-            return "{\"format\":\"svg\",\"kind\":\"harmonic\",\"degree\":" +
+            return "{\"format\":" + format + ",\"kind\":\"harmonic\",\"degree\":" +
                 std::to_string(harmonic->degree) + ",\"order\":" + std::to_string(harmonic->order) + '}';
-        return "{\"format\":\"svg\",\"kind\":" + jsonQuote(
+        return "{\"format\":" + format + ",\"kind\":" + jsonQuote(
             std::holds_alternative<illustrations::CircleConfig>(args.config) ? "circle" : "sinusoidal") + '}';
     }
     if (command.kind == CommandKind::BiasOccluded || command.kind == CommandKind::BiasProportional) {
@@ -117,6 +123,10 @@ std::string parameters(const Command& command) {
 }
 std::string commandName(CommandKind command) {
     switch (command) {
+    case CommandKind::Help: return "help";
+    case CommandKind::Version: return "version";
+    case CommandKind::InspectMat: return "inspect-mat";
+    case CommandKind::Analyze: return "analyze";
     case CommandKind::BiasOccluded: return "run-bias-occluded";
     case CommandKind::BiasProportional: return "run-bias-proportional";
     case CommandKind::AdaptiveInitialization: return "run-adaptive-init";
@@ -171,6 +181,23 @@ std::string artifactSuffix() {
 
 std::string processTimestamp() { return timestamp(); }
 std::string processEnvironment() { return environment(); }
+std::string commandObservation(const Command& command) {
+    return "{\"command\":" + jsonQuote(commandName(command.kind)) +
+        ",\"effective_config\":" + parameters(command) + '}';
+}
+std::string analysisObservation(const AnalysisDataset& data) {
+    std::string json = "{\"source_blob_sha\":" + jsonQuote(data.source_analysis_blob) + ",\"curves\":[";
+    for (std::size_t index = 0; index < data.curves.size(); ++index) {
+        if (index) json += ',';
+        json += "{\"id\":" + jsonQuote(data.curves[index].name) + ",\"helper_source_blob_shas\":" +
+            stringArray(data.curves[index].helper_source_blob_shas) + '}';
+    }
+    return json + "]}";
+}
+std::string illustrationObservation(const illustrations::Data& data) {
+    return "{\"source_blob_sha\":" + jsonQuote(data.source_script_blob) +
+        ",\"helper_source_blob_shas\":" + stringArray(data.helper_source_blobs) + '}';
+}
 
 std::string invocationRecord(const Command& command, const std::vector<std::string>* argv,
                              const RunContext& context) {

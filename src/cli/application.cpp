@@ -122,14 +122,28 @@ int failure(std::ostream& err,ExperimentErrorCode code,std::string message,int e
     return streams::report(err,Failure<ExperimentErrorCode>{code,std::move(d)},exit);
 }
 Status<MatErrorCode> startRecord(ITextPublisher& text,const Command& command,
-                                const std::vector<std::string>* args,const RunContext& context) {
+                                const std::vector<std::string>* args,const RunContext& context,
+                                IInvocationObserver* observer) {
     try {
-        return text.publishNew("invocation.json",invocationRecord(command,args,context));
+        const auto record=invocationRecord(command,args,context);
+        if(observer) {
+            auto observed=observer->record("run_context",record);
+            if(!observed.hasValue())return observed;
+        }
+        return text.publishNew("invocation.json",record);
     } catch(const std::exception& error) {
         ErrorDetail detail;detail.stage=ErrorStage::Output;detail.run_id=context.runId();
         detail.variable="invocation.json";detail.message=error.what();
         return Status<MatErrorCode>::failure({MatErrorCode::WriteFailed,std::move(detail)});
     }
+}
+int observationFailure(const IInvocationObserver& observer,std::ostream& err,const RunId* id=nullptr) {
+    if(id)return streams::report(err,detail::withRunIdIfMissing(*observer.failure(),*id),6);
+    return streams::report(err,*observer.failure(),6);
+}
+bool observeReservation(IInvocationObserver* observer,const io::RunDirectory& directory) {
+    return !observer||observer->record("run_id_reserved", "{\"run_id\":"+jsonQuote(directory.runId().text)+
+        ",\"output_directory\":"+jsonQuote((directory.outputRoot()/directory.runId().text).string())+'}').hasValue();
 }
 int finishRecord(ITextPublisher& text,const RunId& id,const CommandDelivery& delivery,
                  bool invocation_confirmed,std::ostream& err,bool has_calculation_manifest=true) {
@@ -173,7 +187,7 @@ std::string outcomeResponse(const RunOutcome& state) {
 int runExperiment(const Command& command,
                   const std::filesystem::path& trusted_root,
                   IExperimentRunner& runner,std::ostream& out,std::ostream& err,
-                  const std::vector<std::string>* args) {
+                  const std::vector<std::string>* args,IInvocationObserver* observer) {
     if(trusted_root.empty())
         return failure(err,ExperimentErrorCode::SourceUnavailable,
                        "No trusted repository checkout for output root",6);
@@ -184,6 +198,9 @@ int runExperiment(const Command& command,
     else if(!randomSeed(seed))
         return failure(err,ExperimentErrorCode::SourceUnavailable,
                        "OS random source unavailable for experiment seed");
+    if(observer&&!observer->record("seed_selected","{\"seed\":"+std::to_string(seed)+
+        ",\"origin\":"+jsonQuote(command.kind==CommandKind::BiasOccluded||command.kind==CommandKind::BiasProportional?
+        "config":"os_random")+'}').hasValue())return observationFailure(*observer,err);
     // No scientific RNG is consumed for generating a RunId.
     auto reservation=io::RunDirectory::create(trusted_root,runIdOption(command));
     if(!reservation.hasValue()){
@@ -191,6 +208,7 @@ int runExperiment(const Command& command,
         return streams::report(err,reservation.error(),exit);
     }
     auto directory=std::move(reservation).value();
+    if(!observeReservation(observer,*directory))return observationFailure(*observer,err,&directory->runId());
     io::RunMatWriter writer(*directory);
     io::RunTextPublisher text(*directory);
     auto random=std::make_unique<sampling::Mt19937RandomSource>(seed);
@@ -201,7 +219,7 @@ int runExperiment(const Command& command,
     RunContext context(directory->runId(),std::move(random),writer,text,
                        directory->outputRoot(),std::move(provenance),
                        sourceKind(command.kind),expectedRuns(command.kind));
-    const auto invocation=startRecord(text,command,args,context);
+    const auto invocation=startRecord(text,command,args,context,observer);
     const auto result=[&]() -> Result<RunOutcome,ExperimentErrorCode> {
         if(!invocation.hasValue()) {
             ErrorDetail detail;detail.stage=ErrorStage::Output;detail.run_id=context.runId();
@@ -229,14 +247,20 @@ int runExperiment(const Command& command,
 template<class Data,class Export>
 int exportRecorded(const Command& command,const std::vector<std::string>* args,
                    io::RunDirectory& directory,const Data& data,Export export_artifact,
-                   std::ostream& out,std::ostream& err) {
+                   std::ostream& out,std::ostream& err,IInvocationObserver* observer) {
     io::RunTextPublisher publisher(directory);
     const auto& id=directory.runId();
     bool invocation_confirmed=false;
     CommandDelivery delivery;
     try {
-        const auto started=publisher.publishNew("invocation.json",artifactInvocationRecord(
-            command,args,id,directory.outputRoot()/id.text,data));
+        const auto record=artifactInvocationRecord(command,args,id,directory.outputRoot()/id.text,data);
+        const auto started=[&]() {
+            if(observer) {
+                auto observed=observer->record("artifact_context",record);
+                if(!observed.hasValue())return observed;
+            }
+            return publisher.publishNew("invocation.json",record);
+        }();
         invocation_confirmed=started.hasValue();
         if(!invocation_confirmed) {
             delivery=deliverRecorded({}, {jsonFailure(started.error(),6)+"\n"},6,id,out,err);
@@ -265,13 +289,17 @@ int exportRecorded(const Command& command,const std::vector<std::string>* args,
 int analyzeOrPlot(const Command& cmd,IAnalyzer& analyzer,
                   IPlotExporter* plotter,IResultReader& reader,
                   const std::filesystem::path& repository_root,
-                  std::ostream& out,std::ostream& err,const std::vector<std::string>* invocation_arguments) {
+                  std::ostream& out,std::ostream& err,const std::vector<std::string>* invocation_arguments,
+                  IInvocationObserver* observer) {
     const auto& args=std::get<AnalysisArgs>(cmd.arguments);
     auto result=analyzer.analyze(args.kind,args.input_root,reader);
+    if(observer&&observer->failure())return observationFailure(*observer,err);
     if(!result.hasValue()){
         const int code=analysisExit(result.error().code);
         return streams::report(err,result.error(),code);
     }
+    if(observer&&!observer->record("analysis_ready",analysisObservation(result.value())).hasValue())
+        return observationFailure(*observer,err);
     if(cmd.kind==CommandKind::Analyze){
         auto json=analysis::datasetJson(result.value());
         if(!json.hasValue()){
@@ -289,15 +317,18 @@ int analyzeOrPlot(const Command& cmd,IAnalyzer& analyzer,
         return streams::report(err,reserved.error(),code);
     }
     auto dir=std::move(reserved).value();
+    if(!observeReservation(observer,*dir))return observationFailure(*observer,err,&dir->runId());
     return exportRecorded(cmd,invocation_arguments,*dir,result.value(),
-        [&](ITextPublisher& publisher){return plotter->exportPlot(result.value(),publisher);},out,err);
+        [&](ITextPublisher& publisher){return plotter->exportPlot(result.value(),publisher);},out,err,observer);
 }
 int illustrate(const Command& command,illustrations::IExporter* exporter,
                const std::filesystem::path& repository_root,std::ostream& out,std::ostream& err,
-               const std::vector<std::string>* invocation_arguments) {
+               const std::vector<std::string>* invocation_arguments,IInvocationObserver* observer) {
     const auto& args=std::get<IllustrationArgs>(command.arguments);
     auto data=illustrations::generate(args.config);
     if(!data.hasValue())return streams::report(err,data.error(),5);
+    if(observer&&!observer->record("illustration_ready",illustrationObservation(data.value())).hasValue())
+        return observationFailure(*observer,err);
     if(!args.svg) {
         auto json=illustrations::dataJson(data.value());
         if(!json.hasValue())return streams::report(err,json.error(),5);
@@ -310,14 +341,17 @@ int illustrate(const Command& command,illustrations::IExporter* exporter,
         return streams::report(err,reserved.error(),code);
     }
     auto directory=std::move(reserved).value();
+    if(!observeReservation(observer,*directory))return observationFailure(*observer,err,&directory->runId());
     return exportRecorded(command,invocation_arguments,*directory,data.value(),
-        [&](ITextPublisher& publisher){return exporter->exportSvg(data.value(),publisher);},out,err);
+        [&](ITextPublisher& publisher){return exporter->exportSvg(data.value(),publisher);},out,err,observer);
 }
 } // namespace
 
 int ApplicationCompositionRoot::dispatch(
     const Command& command,std::ostream& out,std::ostream& err,
     const std::vector<std::string>* invocation_arguments) const {
+    if(observer_&&!observer_->record("command_accepted",commandObservation(command)).hasValue())
+        return observationFailure(*observer_,err);
     switch(command.kind){
     case CommandKind::Help:
         return streams::success(out,err,"Usage: egomotion <command> [--option VALUE]\n"
@@ -332,6 +366,7 @@ int ApplicationCompositionRoot::dispatch(
         if(!reader_)return unavailable(err,"read","MAT Reader");
         const auto& params=std::get<InspectMatArgs>(command.arguments);
         auto inspected=reader_->inspect(params.source);
+        if(observer_&&observer_->failure())return observationFailure(*observer_,err);
         if(!inspected.hasValue()){
             const int code=matExit(inspected.error().code);
             return streams::report(err,inspected.error(),code);
@@ -367,12 +402,12 @@ int ApplicationCompositionRoot::dispatch(
     case CommandKind::Plot:
         if(!reader_||!analyzer_)return unavailable(err,"analyze","Analyzer/Reader");
         return analyzeOrPlot(command,*analyzer_,plotter_,*reader_,
-                             trusted_repo_,out,err,invocation_arguments);
+                             trusted_repo_,out,err,invocation_arguments,observer_);
     case CommandKind::Illustrate:
-        return illustrate(command,illustrator_,trusted_repo_,out,err,invocation_arguments);
+        return illustrate(command,illustrator_,trusted_repo_,out,err,invocation_arguments,observer_);
     default:
         if(!runner_)return unavailable(err,"simulation","Experiment Runner");
-        return runExperiment(command,trusted_repo_,*runner_,out,err,invocation_arguments);
+        return runExperiment(command,trusted_repo_,*runner_,out,err,invocation_arguments,observer_);
     }
 }
 int run(const std::vector<std::string>& args,std::ostream& out,

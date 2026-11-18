@@ -1,4 +1,5 @@
 #include "process_record.hpp"
+#include "egomotion/cli/invocation_observer.hpp"
 
 #include <cerrno>
 #include <csignal>
@@ -17,7 +18,7 @@
 #include <vector>
 
 namespace {
-enum class Fault { None, StartLink, StartSync, FinishLink, FinishSync, ChannelSync, Fork, Random, Collision };
+enum class Fault { None, StartLink, StartSync, FinishLink, FinishSync, ChannelSync, Fork, Random, Collision, ContextSync };
 Fault fault = Fault::None;
 int failed_sync_fd = -1;
 bool forked = false;
@@ -39,6 +40,7 @@ extern "C" int __wrap_linkat(int from, const char* source, int to, const char* n
     return result;
 }
 extern "C" int __wrap_fsync(int fd) {
+    if (fault == Fault::ContextSync) { ++hits; errno = EIO; return -1; }
     if (fd == failed_sync_fd || (forked && fault == Fault::ChannelSync && hits == 0)) {
         failed_sync_fd = -1; ++hits; errno = EIO; return -1;
     }
@@ -70,13 +72,19 @@ std::string read(const fs::path& path) {
 void contains(const std::string& text, const std::string& wanted) {
     require(text.find(wanted) != std::string::npos, "Required record field missing");
 }
-int fixture(int argc, char** argv) {
+int fixture(int argc, char** argv, egomotion::cli::IInvocationObserver* observer) {
     if (argc != 2) return 91;
     std::ofstream("entered") << "same-build fixture\n";
     std::cout.write("ok\0tail\n", 8);
     std::cerr << "{\"fixture\":\"中文\",\"causes\":[{\"message\":\"inner\"}]}\n";
     std::cout.flush(); std::cerr.flush();
     const std::string mode = argv[1];
+    if (mode == "exit") ::_exit(0);
+    if (mode == "unacknowledged") {
+        if (!observer->record("application_returned", "{\"application_exit_code\":0}").hasValue()) return 93;
+        ::_exit(0);
+    }
+    if (mode == "context-sync") fault = Fault::ContextSync;
     if (mode == "kill") ::raise(SIGKILL);
     if (mode == "pipe") ::raise(SIGPIPE);
     if (mode == "forward") {
@@ -135,7 +143,8 @@ void termination(const fs::path& base) {
         const auto directory = onlyRecord(root);
         const auto start = read(directory / "start.json");
         const auto finish = read(directory / "finish.json");
-        contains(start, "\"application_context\":\"not_observed_by_supervisor\"");
+        contains(start, "\"application_context\":{\"file\":\"context.jsonl\"");
+        contains(finish, "\"context_return_confirmed\":" + std::string(signal ? "false" : "true"));
         contains(start, "\"arguments\":[\"" + std::string(mode) + "\"]");
         contains(finish, signal ? "\"termination\":\"signaled\"" : "\"termination\":\"exited\"");
         contains(finish, "\"child_exit_code\":" + (signal ? std::string("null") : std::to_string(expected)));
@@ -182,6 +191,22 @@ void publicationFaults(const fs::path& base) {
         const auto result = invoke(root, "ok", true, bad_errors);
         require(result.code == 6 && result.receipt.empty(), "Receipt failure remains failure even if diagnostic also fails");
         contains(read(onlyRecord(root) / "finish.json"), "\"child_exit_code\":0");
+    }
+}
+void incompleteContexts(const fs::path& base) {
+    for (const auto* mode : {"exit", "unacknowledged", "context-sync"}) {
+        const auto root = newRoot(base, mode);
+        const auto result = invoke(root, mode);
+        require(result.code == 6 && !result.errors.empty(), "Missing confirmed return must fail process audit");
+        const auto directory = onlyRecord(root);
+        const auto finish = read(directory / "finish.json");
+        contains(finish, "\"termination\":\"exited\"");
+        contains(finish, "\"context_return_confirmed\":false");
+        contains(finish, "\"channels_confirmed\":true");
+        contains(finish, std::strcmp(mode, "context-sync") == 0 ? "\"child_exit_code\":6" : "\"child_exit_code\":0");
+        const auto context = read(directory / "context.jsonl");
+        contains(context, "\"event\":\"application_entering\"");
+        if (std::strcmp(mode, "exit") != 0) contains(context, "\"event\":\"application_returned\"");
     }
 }
 void paths(const fs::path& base) {
@@ -262,6 +287,7 @@ int main(int argc, char** argv) {
         const fs::path base(pattern);
         termination(base);
         publicationFaults(base);
+        incompleteContexts(base);
         paths(base);
         brokenPipes(base);
         std::cout << "Process records: " << checks << " checks, " << calls << " supervised calls; retained " << base << '\n';
