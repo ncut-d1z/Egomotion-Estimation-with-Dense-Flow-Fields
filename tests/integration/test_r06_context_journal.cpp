@@ -31,7 +31,8 @@ void require(bool value, const char* message) {
     ++checks; if (!value) throw std::runtime_error(message);
 }
 void contains(const std::string& value, const std::string& part) {
-    require(value.find(part) != std::string::npos, "Missing context field");
+    ++checks;
+    if (value.find(part) == std::string::npos) throw std::runtime_error("Missing context field: " + part + "; actual=" + value);
 }
 std::string read(const fs::path& path) {
     std::ifstream input(path, std::ios::binary);
@@ -234,6 +235,7 @@ int main(int argc, char** argv) {
         std::string pattern = (fs::path(argv[1]) / "context-XXXXXX").string();
         require(::mkdtemp(pattern.data()) != nullptr, "Exclusive sandbox");
         const fs::path root = fs::absolute(pattern);
+        std::cout << "Context journal sandbox=" << root << '\n';
         journalCases(root); snapshots(root); applicationCases(root); artifactCases(root);
         std::cout << "Context journal checks=" << checks << " sandbox=" << root << '\n'; return 0;
     } catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }

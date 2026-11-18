@@ -263,7 +263,8 @@ int exportRecorded(const Command& command,const std::vector<std::string>* args,
         }();
         invocation_confirmed=started.hasValue();
         if(!invocation_confirmed) {
-            delivery=deliverRecorded({}, {jsonFailure(started.error(),6)+"\n"},6,id,out,err);
+            const auto error=detail::withRunIdIfMissing(started.error(),id);
+            delivery=deliverRecorded({}, {jsonFailure(error,6)+"\n"},6,id,out,err);
         } else {
             auto exported=export_artifact(publisher);
             if(!exported.hasValue()) {
