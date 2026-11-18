@@ -100,6 +100,8 @@ Response invoke(const fs::path& root, const char* mode = "ok", bool bad_receipt 
     require(::sigprocmask(SIG_SETMASK, nullptr, &before) == 0, "Read initial mask");
     require(::sigaction(SIGPIPE, nullptr, &pipe_before) == 0, "Read initial pipe action");
     const int code = egomotion::cli::recordProcess(2, args, fixture, root, receipt, errors);
+    std::ofstream(root / "fixture-response.txt") << "exit=" << code << "\nhits=" << hits
+        << "\nreceipt=" << receipt.str() << "\nerrors=" << errors.str();
     require(::sigprocmask(SIG_SETMASK, nullptr, &after) == 0, "Read restored mask");
     require(::sigaction(SIGPIPE, nullptr, &pipe_after) == 0, "Read restored pipe action");
     require(pipe_before.sa_handler == pipe_after.sa_handler, "Do not change caller SIGPIPE disposition");
@@ -182,6 +184,8 @@ void paths(const fs::path& base) {
     for (const auto* component : {"build", "build/cli-records"}) {
         const auto root = newRoot(base, std::strcmp(component, "build") == 0 ? "build_link" : "logs_link");
         fs::create_directories((root / component).parent_path());
+        if (std::strcmp(component, "build") != 0)
+            fs::permissions(root / "build", fs::perms::owner_all);
         fs::create_directory_symlink(outside, root / component);
         require(invoke(root).code == 6 && !fs::exists(root / "entered"), "Reject log directory symlink before child");
         require(!fs::exists(outside / "cli-records"), "Do not write through symlink");
@@ -189,6 +193,7 @@ void paths(const fs::path& base) {
     const auto collision = newRoot(base, "collision");
     const auto occupied = collision / "build/cli-records/record_00000000000000000000000000000000";
     fs::create_directories(occupied);
+    fs::permissions(collision / "build", fs::perms::owner_all);
     fs::permissions(collision / "build/cli-records", fs::perms::owner_all);
     std::ofstream(occupied / "retained") << "never replace";
     fault = Fault::Collision;
@@ -199,8 +204,14 @@ void paths(const fs::path& base) {
     require(!fs::exists(collision / "entered"), "No child after identity failure");
     const auto shared = newRoot(base, "shared_logs");
     fs::create_directories(shared / "build/cli-records");
+    fs::permissions(shared / "build", fs::perms::owner_all);
     fs::permissions(shared / "build/cli-records", fs::perms::owner_all | fs::perms::group_all);
     require(invoke(shared).code == 6, "Reject shared log directory");
+    const auto unsafe_build = newRoot(base, "shared_build");
+    fs::create_directories(unsafe_build / "build");
+    fs::permissions(unsafe_build / "build", fs::perms::owner_all | fs::perms::group_all);
+    require(invoke(unsafe_build).code == 6 && !fs::exists(unsafe_build / "entered"),
+            "Keep unsafe build ancestor rejection independently of final directory");
 }
 }  // namespace
 
