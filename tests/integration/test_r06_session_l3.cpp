@@ -2,6 +2,7 @@
 #include "../support/flow_fixture.hpp"
 #include "../support/motion_fixture.hpp"
 #include "egomotion/estimators/adaptive_session.hpp"
+#include "egomotion/simulation/flow.hpp"
 
 #include <cstdlib>
 #include <cstring>
@@ -10,6 +11,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <optional>
 #include <string>
 
 namespace {
@@ -24,6 +26,8 @@ constexpr std::size_t first_frame=2,last_frame=43;
 constexpr std::array<std::size_t,4> periods{{1,5,11,21}};
 std::size_t checks=0,frames=0,solves=0,failures=0,rollback_cases=0;
 Real max_absolute=0,max_scaled=0,max_angle=0;
+Real max_noise_absolute=0;
+std::size_t noise_draws=0;
 void require(bool good,const std::string& message) {
     ++checks; if(!good)throw std::runtime_error(message);
 }
@@ -139,6 +143,74 @@ AdaptiveFrameInput input(std::size_t stream,std::size_t frame,const ref::Field& 
                                            stream==0?Vector3::UnitZ():Vector3::UnitX());
     return result;
 }
+// 固定输入序列只验证消费顺序，不声称服从Gaussian分布或等同MATLAB RNG。
+struct FixedNormals final:IRandomSource {
+    explicit FixedNormals(std::size_t stream) {
+        constexpr std::size_t directions=12,components=3;
+        for(std::size_t i=0;i<(last_frame-first_frame+1)*directions*components;++i)
+            samples.push_back(static_cast<double>(static_cast<int>((17*i+13*stream)%29)-14)/8);
+    }
+    std::vector<double> samples;
+    std::size_t calls=0;
+    Result<Scalar,NumericalErrorCode> normal() override {
+        require(calls<samples.size(),"Fixed normal input exhausted");
+        ++noise_draws;
+        return Result<Scalar,NumericalErrorCode>::success(samples[calls++]);
+    }
+    Result<Scalar,NumericalErrorCode> uniform() override {
+        throw std::runtime_error("nonpropfehler must not consume uniform samples");
+    }
+    Status<NumericalErrorCode> reseed(std::uint32_t) override {
+        throw std::runtime_error("nonpropfehler must not reseed the fixed stream");
+    }
+};
+struct NoiseEvidence {
+    Real scale=0,mean_magnitude=0;
+    std::size_t first_draw=0;
+    std::vector<Real> normals;
+    ref::Field ideal;
+};
+struct PreparedFrame {
+    ref::Field expected_field,actual_field;
+    AdaptiveFrameInput actual;
+    std::optional<NoiseEvidence> noise;
+};
+PreparedFrame prepare(std::size_t stream,std::size_t frame,const ref::Matrix<3>& r,
+                      FixedNormals& draws,std::optional<double> scale) {
+    PreparedFrame result;
+    result.expected_field=observations(stream,frame);
+    result.actual_field=result.expected_field;
+    result.actual=input(stream,frame,result.expected_field,r);
+    if(!scale)return result;
+    NoiseEvidence evidence;
+    evidence.scale=*scale; evidence.ideal=result.expected_field;
+    const std::size_t per_frame=3*evidence.ideal.size();
+    evidence.first_draw=(frame-first_frame)*per_frame;
+    require(draws.calls==evidence.first_draw,"Noise consumption before frame");
+    for(std::size_t j=0;j<per_frame;++j)evidence.normals.push_back(draws.samples[evidence.first_draw+j]);
+    const auto independent=ref::nonproportionalNoise(evidence.ideal,evidence.scale,evidence.normals);
+    result.expected_field=independent.field;
+    evidence.mean_magnitude=independent.mean_magnitude;
+    const simulation::MeanMagnitudeGaussianNoise production;
+    auto noisy=production.apply(result.actual.observations,*scale,draws);
+    require(noisy.hasValue(),"Real nonpropfehler application");
+    require(draws.calls==evidence.first_draw+per_frame,"Exactly 3N normal draws, including zero scale");
+    result.actual.observations=std::move(noisy).value();
+    const auto& matrix=result.actual.observations.observations();
+    // 沿用sampling_flow固定噪声回归的绝对1e-12，不使用更宽的Step余量。
+    constexpr Real noise_margin=1e-12L;
+    for(std::size_t row=0;row<result.actual_field.size();++row)for(std::size_t axis=0;axis<3;++axis) {
+        require(matrix(static_cast<Eigen::Index>(row),static_cast<Eigen::Index>(axis))==
+                evidence.ideal[row].direction[axis],"Noise must preserve sightline values");
+        const Real actual=matrix(static_cast<Eigen::Index>(row),static_cast<Eigen::Index>(axis+3));
+        result.actual_field[row].flow[axis]=actual;
+        const Real delta=std::abs(actual-result.expected_field[row].flow[axis]);
+        max_noise_absolute=std::max(max_noise_absolute,delta);
+        require(std::isfinite(delta)&&delta<=noise_margin,"Independent noisy flow differs");
+    }
+    result.noise=std::move(evidence);
+    return result;
+}
 template<class Values> void writeArray(std::ostream& out,const Values& values) {
     out<<'['; bool first=true;
     for(const auto& v:values) { if(!first)out<<','; out<<v; first=false; } out<<']';
@@ -156,18 +228,28 @@ void writeStep(std::ostream& out,const ref::Step& s) {
     out<<",\"rotation\":"; writeArray(out,s.rotation); out<<",\"new_near\":"; writeArray(out,s.recomputed);
     out<<",\"coefficients_next\":"; writeArray(out,s.next); out<<'}';
 }
-void writeRecord(std::ostream& out,std::size_t mode,std::size_t stream,std::size_t frame,
-                 const ref::Field& field,const ref::Matrix<3>& r,const std::vector<ref::Coefficients>& inputs,
-                 const std::vector<ref::Step>& steps,const ref::Session& state,
-                 const std::vector<Real>& translation_errors,const std::vector<Real>& rotation_errors) {
-    out<<"{\"mode\":"<<mode<<",\"stream\":"<<stream<<",\"matlab_frame\":"<<frame<<",\"rotation\":";
-    writeMatrix(out,r); out<<",\"observations\":[";
+void writeField(std::ostream& out,const ref::Field& field) {
+    out<<'[';
     for(std::size_t j=0;j<field.size();++j) {
         if(j)out<<',';
         out<<"{\"direction\":"; writeArray(out,field[j].direction);
         out<<",\"flow\":"; writeArray(out,field[j].flow); out<<'}';
     }
-    out<<"],\"step_inputs_comparisons_then_primary\":"; writeMatrix(out,inputs); out<<",\"steps\":[";
+    out<<']';
+}
+void writeRecord(std::ostream& out,std::size_t mode,std::size_t stream,std::size_t frame,
+                 const ref::Field& field,const ref::Matrix<3>& r,const std::vector<ref::Coefficients>& inputs,
+                 const std::vector<ref::Step>& steps,const ref::Session& state,
+                 const std::vector<Real>& translation_errors,const std::vector<Real>& rotation_errors,
+                 const std::optional<NoiseEvidence>& noise=std::nullopt) {
+    out<<"{\"mode\":"<<mode<<",\"stream\":"<<stream<<",\"matlab_frame\":"<<frame<<",\"rotation\":";
+    writeMatrix(out,r); out<<",\"observations\":"; writeField(out,field);
+    if(noise) {
+        out<<",\"noise_coefficient\":"<<noise->scale<<",\"first_normal_draw\":"<<noise->first_draw;
+        out<<",\"reference_mean_magnitude\":"<<noise->mean_magnitude<<",\"normal_inputs\":";
+        writeArray(out,noise->normals); out<<",\"ideal_observations\":"; writeField(out,noise->ideal);
+    }
+    out<<",\"step_inputs_comparisons_then_primary\":"; writeMatrix(out,inputs); out<<",\"steps\":[";
     for(std::size_t j=0;j<steps.size();++j) { if(j)out<<','; writeStep(out,steps[j]); }
     out<<"],\"primary_state\":"; writeArray(out,state.primary);
     out<<",\"baseline_state\":"; writeMatrix(out,state.baselines);
@@ -207,18 +289,22 @@ void rollback(AdaptiveMfaSession& actual,const ref::Session& expected,const Adap
         require(same(before_baselines[j],actual.updateRateBaselines()[j].values()),"Failure commits no baseline bits");
     ++rollback_cases;
 }
-void sequence(std::size_t mode_index,std::size_t stream,std::ostream& reference,std::ostream& actual_log) {
+void sequence(std::size_t mode_index,std::size_t stream,std::ostream& reference,std::ostream& actual_log,
+              std::optional<double> noise_scale=std::nullopt) {
     const auto mode=static_cast<AdaptiveSessionMode>(mode_index);
     const auto reference_mode=static_cast<ref::Mode>(mode_index);
     ref::Session expected;
+    FixedNormals draws(stream);
     TracedProduction traced; AdaptiveMfaSession actual(mode,&traced);
     std::array<std::size_t,4> refreshed{},discarded{};
     std::size_t phase_distinguished=0,clock_distinguished=0;
     for(std::size_t frame=first_frame;frame<=last_frame;++frame) {
-        const auto field=observations(stream,frame); const auto r=rotation(frame);
-        const auto in=input(stream,frame,field,r);
+        const auto r=rotation(frame);
+        const auto prepared=prepare(stream,frame,r,draws,noise_scale);
+        const auto& field=prepared.expected_field; const auto& in=prepared.actual;
         const auto before=expected;
-        const std::string key="mode="+std::to_string(mode_index)+" stream="+std::to_string(stream)+" frame="+std::to_string(frame);
+        const std::string key="mode="+std::to_string(mode_index)+" stream="+std::to_string(stream)+" frame="+std::to_string(frame)+
+            (noise_scale?" noise="+std::to_string(*noise_scale):"");
         compareState(actual,before,key+" before");
         if(frame==5||frame==11||frame==21||frame==42)rollback(actual,before,in);
         traced.clear();
@@ -231,13 +317,13 @@ void sequence(std::size_t mode_index,std::size_t stream,std::ostream& reference,
             wanted_rotation_errors.push_back(ref::angleDegrees(vector(in.truth.rotation()),comparison.rotation));
         }
         writeRecord(reference,mode_index,stream,frame,field,r,wanted_inputs,wanted_steps,expected,
-                    wanted_translation_errors,wanted_rotation_errors);
+                    wanted_translation_errors,wanted_rotation_errors,prepared.noise);
         const auto result=actual.processFrame(in);
         require(result.hasValue(),key+(result.hasValue()?"":" "+result.error().detail.message));
         const auto& output=result.value();
-        writeRecord(actual_log,mode_index,stream,frame,field,r,traced.inputs,traced.outputs,state(actual),
+        writeRecord(actual_log,mode_index,stream,frame,prepared.actual_field,r,traced.inputs,traced.outputs,state(actual),
                     {output.comparison_translation_error_deg.begin(),output.comparison_translation_error_deg.end()},
-                    {output.comparison_rotation_error_deg.begin(),output.comparison_rotation_error_deg.end()});
+                    {output.comparison_rotation_error_deg.begin(),output.comparison_rotation_error_deg.end()},prepared.noise);
         require(traced.outputs.size()==wanted_steps.size()&&traced.inputs.size()==wanted_inputs.size(),key+" solve count");
         for(std::size_t j=0;j<wanted_steps.size();++j) {
             values(traced.inputs[j],wanted_inputs[j],key+" prepared"+std::to_string(j));
@@ -276,7 +362,12 @@ void sequence(std::size_t mode_index,std::size_t stream,std::ostream& reference,
         for(const auto count:discarded)require(count>0,"Every baseline distinguishes discarded dumi from committed next coeff");
     }
     std::cout<<"mode="<<mode_index<<" stream="<<stream<<" frames=42 phase_discriminators="<<phase_distinguished
-             <<" clock_discriminators="<<clock_distinguished<<'\n';
+             <<" clock_discriminators="<<clock_distinguished;
+    if(noise_scale) {
+        require(draws.calls==draws.samples.size(),"Full fixed normal sequence consumed");
+        std::cout<<" noise="<<*noise_scale<<" normal_draws="<<draws.calls;
+    }
+    std::cout<<'\n';
 }
 void calibrateReference() {
     // 原有独立Wolfram正/负均值L3；检查参考计算本身，非从生产输出生成Expected。
@@ -308,24 +399,46 @@ void calibrateReference() {
     near(ref::evaluate(ref::rotate(field,x_quarter_turn),{0,1,0}),1,"Source action of 2+z at ey");
     near(ref::evaluate(ref::rotate(field,x_quarter_turn,false),{0,1,0}),3,"Physical action must remain distinct");
 }
+void calibrateNoiseReference() {
+    // 两行模长恰为5；dyadic样本/尺度的投影有独立精确有理值。
+    const ref::Field ideal{{{1,0,0},{0,3,4}},{{0,1,0},{4,0,3}}};
+    const std::vector<Real> normals{1,2,3,-1,0.5L,-2};
+    const std::array<Real,3> scales{{0,0.125L,-0.125L}};
+    const std::array<std::array<ref::Vec,2>,3> wanted{{
+        {{{0,3,4},{4,0,3}}}, {{{0,4.25L,5.875L},{3.375L,0,1.75L}}},
+        {{{0,1.75L,2.125L},{4.625L,0,4.25L}}}}};
+    for(std::size_t test=0;test<scales.size();++test) {
+        const auto result=ref::nonproportionalNoise(ideal,scales[test],normals);
+        require(result.mean_magnitude==5,"Exact reference noise mean");
+        for(std::size_t row=0;row<2;++row)
+            require(result.field[row].flow==wanted[test][row],"Exact reference noise/projected values");
+    }
+}
 } // namespace
 int main(int argc,char** argv) {
     try {
-        require(argc==2,"Sandbox base required"); fs::create_directories(argv[1]);
-        std::string pattern=(fs::absolute(argv[1])/"独立多帧-XXXXXX").string();
+        const bool noisy=argc==3&&std::string(argv[2])=="--noise";
+        require(argc==2||noisy,"Sandbox base and optional --noise required"); fs::create_directories(argv[1]);
+        std::string pattern=(fs::absolute(argv[1])/(noisy?"独立含噪-XXXXXX":"独立多帧-XXXXXX")).string();
         require(::mkdtemp(pattern.data())!=nullptr,"Exclusive retained sandbox");
         const fs::path root(pattern);
         std::ofstream reference(root/"reference.jsonl"),actual(root/"actual.jsonl");
         reference.exceptions(std::ios::badbit|std::ios::failbit); actual.exceptions(std::ios::badbit|std::ios::failbit);
         reference<<std::setprecision(std::numeric_limits<Real>::max_digits10);
         actual<<std::setprecision(std::numeric_limits<Real>::max_digits10);
-        std::cout<<"Independent Session L3 sandbox="<<root<<'\n';
+        std::cout<<(noisy?"Independent noisy Session L3 sandbox=":"Independent Session L3 sandbox=")<<root<<'\n';
         calibrateReference();
-        for(std::size_t mode=0;mode<3;++mode)for(std::size_t stream=0;stream<2;++stream)sequence(mode,stream,reference,actual);
+        if(noisy) {
+            calibrateNoiseReference();
+            for(double scale:{0.0,0.1,-0.1})for(std::size_t stream=0;stream<2;++stream)
+                sequence(1,stream,reference,actual,scale);
+        } else for(std::size_t mode=0;mode<3;++mode)for(std::size_t stream=0;stream<2;++stream)
+            sequence(mode,stream,reference,actual);
         reference.close(); actual.close();
-        std::cout<<std::setprecision(21)<<"Session independent L3 checks="<<checks<<" frames="<<frames<<" real_solves="<<solves
+        std::cout<<std::setprecision(21)<<(noisy?"Noisy Session L3 checks=":"Session independent L3 checks=")<<checks<<" frames="<<frames<<" real_solves="<<solves
                  <<" rollback_cases="<<rollback_cases<<" failures="<<failures<<" max_abs="<<max_absolute
                  <<" max_scaled="<<max_scaled<<" max_angle_abs="<<max_angle<<'\n';
+        if(noisy)std::cout<<"Noisy Session input checks: normal_draws="<<noise_draws<<" max_noise_abs="<<max_noise_absolute<<'\n';
         return failures==0?0:1;
     } catch(const std::exception& error) { std::cerr<<"Independent Session L3 failure: "<<error.what()<<'\n'; return 1; }
 }

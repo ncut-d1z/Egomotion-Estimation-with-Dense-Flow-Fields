@@ -34,6 +34,27 @@ inline Real angleDegrees(const Vec& a, const Vec& b) {
     if (std::abs(cosine) > 1) throw std::runtime_error("Reference acos outside domain");
     return std::acos(cosine) * 180 / pi(); // 不夹断、不隐藏未定义角度。
 }
+struct NoisyField {
+    Field field;
+    Real mean_magnitude=0;
+};
+// nonpropfehler：先完整求平均模长，再按每行x/y/z加噪，最后作切向投影。
+// normals为固定输入，不在参考实现中调用生产RNG/噪声函数。
+inline NoisyField nonproportionalNoise(const Field& ideal,Real scale,const std::vector<Real>& normals) {
+    if(ideal.empty()||normals.size()!=3*ideal.size())throw std::runtime_error("Reference noise shape");
+    NoisyField result;
+    for(const auto& row:ideal)result.mean_magnitude+=std::sqrt(dot(row.flow,row.flow));
+    result.mean_magnitude/=static_cast<Real>(ideal.size());
+    for(std::size_t row=0;row<ideal.size();++row) {
+        const auto& d=ideal[row].direction;
+        Vec perturbed=ideal[row].flow;
+        for(std::size_t axis=0;axis<3;++axis)perturbed[axis]+=normals[3*row+axis]*scale*result.mean_magnitude;
+        const Real radial=dot(perturbed,d);
+        for(std::size_t axis=0;axis<3;++axis)perturbed[axis]-=radial*d[axis];
+        result.field.push_back({d,perturbed});
+    }
+    return result;
+}
 inline Coefficients basis(const Vec& d) {
     const Real x=d[0], y=d[1], z=d[2];
     const Real one=std::sqrt(3/(4*pi())), mixed=std::sqrt(15/(4*pi()));
