@@ -1,5 +1,7 @@
 # Golden 来源等级与 AC 独立验收矩阵（未冻结草案）
 
+> **2026-11-18 证据接续 `[AI-EDIT]`**：本表较早的“生产未授权/未执行”状态由 [数值实测汇总](../NUMERICAL_EQUIVALENCE.md)及 [66 TC映射](../reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)更新；本轮493ba86 ON71/OFF70通过。Session新增独立标量演进参考252帧/24回滚/299236项，见 [专项](../reviews/R6_SESSION_MULTIFRAME_L3_2026-11-18.md)。只补有限L3候选与真实C++证据，不批准Golden/容差或关闭AC。
+
 > **长期决策：永久取消运行 MATLAB/Octave 及取得 L1 Golden 的强制要求。** 依据 [无需 MATLAB 运行政策](NO_MATLAB_EXECUTION_POLICY.md)，历史记录中将“缺 MATLAB L1”视为阻塞的判断**全部失效**。本文件不是实际 C++/CTest、数值容差或基线批准记录；只读原 .m 源码、原始 MAT 文件不作修改。
 
 ## 1. 证据等级与使用范围
@@ -39,7 +41,7 @@
 | AC/TC 组（共用后缀） | 当前允许的数值参考 | 仍未完成的真实工作 |
 |---|---|---|
 | F-FILTER-001、F-KVD-001/002 | 三组人造固定输入：两组六方向24轮（正mean near），八方向12轮（首轮翻号，后五轮不翻），合计36轮独立Wolfram数学参考及四源Git blob/4工件SHA-256已留档 | 生产C++/CTest未授权且未执行本模块；真实L2 Bias、非退化一般输入、200轮及异常资格、正式DEC-005与所有AC批准仍缺 |
-| F-ADAPT-001/002/003、DC-ADAPT-001 | 除AN-G12对称20方向外，新补九个有理非对称方向的正/负均值近度完整源流程：正均值 M2/M3非零且精确恢复z与MSE=0；负均值归一后均值=-1、M1与加权投影差2I，来源矩阵非奇异、差异可复算，见 `verification/adaptive/asymmetric_signed_near_one_step.v1.json` | 两例均为Wolfram数学参考，负例原始近度全部为负不属于严格正距离场景；仍缺零/近零均值、近奇异、Session原子提交、多轮、生产Adaptive C++/CTest、正式DEC-005与其它L2/L4 |
+| F-ADAPT-001/002/003、DC-ADAPT-001 | 原九方向非对称正/负均值Wolfram单步参考保留；新增标准库long double独立消元/源多项式旋转和自身状态演进，三模式两流252固定帧及924次成功Step节点通过，24真实角度失败逐位回滚/重试，来源与候选定义见 [多帧参考](../../verification/adaptive/session_multiframe_reference.md) | 数值/角度沿用既有工程余量，非批准Golden；固定12视线流不能代替原35/600帧、AD-G05完整噪声/八轮、一般病态/全输入域、正式DEC-005及L4；真实Adaptive仍Incomplete，无完整MAT |
 | F-SH-001/002 | L3 九基/一般R3/R5与系数转换已由独立Wolfram精确证明；原AN-G06/07/08固定参考与受限koeff_aus_near七方向九系数新增数学参考/测试 | 用户旧SH回归在601c74de原生CTest 1/1 Passed；**固定5e522198用户已实际构建SH源投影CPP并通过归档176次、源二阶拟合76次检查，三个SH CTest合计3/3 Passed**，广泛L2/L3/正式DEC-005/公共ABI仍缺，不得整项关闭 |
 | F-GEOM-002/003 | 已保存 i=0/1/2 全714行有序方向参考；独立Wolfram对全部2,142坐标完成逐行比较、最大绝对差1.1102230246251565e-16；候选和复核脚本SHA-256见 `verification/geometry/full_ordered_row_verification.v1.json` | 生产采样C++/CTest未获授权且未执行；本证据限数学参考，仍缺正式DEC-005、非法/退化/资源边界、RNG耗尽及其它采样噪声义务 |
 | F-FLOW-002/003、DC-RNG-001、NF-RNG-001 | L3 固定 RNG 值与调用数；L4 统计 | 固定源替身和真实统计/测试 |

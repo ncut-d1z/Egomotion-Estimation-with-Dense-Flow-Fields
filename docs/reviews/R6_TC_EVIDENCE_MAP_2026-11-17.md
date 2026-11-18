@@ -2,7 +2,7 @@
 
 `[AI-EDIT]` 事实索引，基于当前Git树、CMake登记、测试源码及实际日志。保留 [TEST_PLAN §3](../TEST_PLAN.md) 的66个TC/REQ/AC和 [PLAN](../PLAN.md) 的98项任务，不替换候选规范、改动阈值或签署验收。下表每个TC仅列一次；其REQ/AC采用相同后缀，正式义务仍以 [REQUIREMENTS](../REQUIREMENTS.md) 为准。
 
-**没有任何一行仅凭CTest数量被宣布正式验收。** 最新受测源码`ff8aaa723d979642cca30b6fc79953fc8f2963ed`为ON70/OFF69，见 [上下文记录证据](R6_CONTEXT_JOURNAL_2026-11-18.md)；此前数值/合同回归保留。D4所列身份关联缺口已补有限实测；REQ-NF-LOG整体及R6未验收，完整科学实验/最终资格未完成，真实Adaptive仍Incomplete、无MAT。Issue #1–#5保持开放，无PR。全部失败日志保留，不以尚未签署为理由停止已授权源码/测试补足。
+**没有任何一行仅凭CTest数量被宣布正式验收。** 受测源码`493ba86917a8147a0ddf63fad214751f1b33dd9c`两模式配置/编译无诊断，**SVG ON71/71、OFF70/70 CTest**；先MAT7项，再64/63项，零失败/跳过/禁用。新增Adaptive Session独立long double多帧参考：三模式/两流共252帧、24次真实角度失败回滚、299236项检查通过；最大数值绝对差1.38144704009413032963e-14，比较角度最大差5.82190545772576228956e-14度。两配置逐帧参考/实际JSONL对应SHA相同；736项输入SHA及21组既有数值/合同摘要不变。见 [多帧参考证据](R6_SESSION_MULTIFRAME_L3_2026-11-18.md)。本批补多帧/周期有限L3证据，未改变生产公式或工程余量；完整科学实验、病态资格和正式验收仍未完成，真实Adaptive仍Incomplete、无完整MAT。Issue #1–#5开放，无PR，R6未结案。
 
 ## 实际测试组及证据入口
 
@@ -38,6 +38,7 @@
 | STEP | `r06_adaptive_step_independent_l3`, `r06_adaptive_conditioning_reference` | `tests/integration/test_r06_adaptive_l3.cpp`, `test_r06_adaptive_conditioning.cpp`；正/负九方向完整单步，另12个解析运动阶段/完整投影拒绝及4个定义域负例，见 [conditioning实测](R6_ADAPTIVE_CONDITIONING_2026-11-17.md) |
 | SH | `low_order_harmonics`, `low_order_harmonics_archived_golden`, `low_order_harmonics_source_projection`, `r06_sh_argument_action`, `r06_sh_source_phase_reference`, `r06_sh_source_session_action`, `r06_source_spherical_angles`, `r06_harmonic_service_contract` | `tests/unit/test_low_order*.cpp`, `tests/integration/test_r06_sh_adapter.cpp`, `test_r06_source_sh.cpp`；[源相位作用](R6_SH_SOURCE_ACTION_2026-11-17.md)、`tests/unit/test_r06_source_angles.cpp`及 [角度接口](R6_SOURCE_ANGLES_2026-11-18.md)；`tests/integration/test_r06_harmonic_services.cpp`的原482项三组件独立参考/边界见 [职责分离](R6_HARMONIC_SERVICES_2026-11-18.md)；系数非法输入迁到工厂/原始叶子后为484项，见 [更新](R6_COEFFICIENT_VALUE_2026-11-18.md)；本轮方向入口/前缀边界后494项，见 [流场接续](R6_FLOW_VALUE_2026-11-18.md) |
 | SESSION | `r06_adaptive_session_transaction`, `r06_adaptive_periods_atomic_commit`, `r06_real_session_interleaving`, `r06_coefficient_policy_composition` | `tests/contracts/test_r06_session_contract.cpp`, `test_r06_adaptive_periods.cpp`, `tests/integration/test_r06_session_interleaving.cpp`；三模式原子性/1/5/11/21刷新，真实单步交错9579项见 [隔离实测](R6_INTERLEAVING_2026-11-17.md)；新增`tests/contracts/test_r06_coefficient_policies.cpp`的策略组合/失败/重试48523项见 [策略实测](R6_COEFFICIENT_POLICY_2026-11-18.md) |
+| SESSION-L3 | `r06_session_independent_multiframe` | `tests/integration/test_r06_session_l3.cpp`与标准库标量参考；299236项/252帧/24回滚，真实Step逐节点及演进状态独立对照，见 [证据](R6_SESSION_MULTIFRAME_L3_2026-11-18.md)；不替代原轨迹/完整addederror/八轮实验 |
 | RUNNER | `r06_adaptive_runner_complete_contract`, `r06_adaptive_runner_incomplete_contract`, `r06_adaptive_default_undefined_contract`, `r06_bias_runner_contract`, `r06_bias_runner_publication`, `r06_run_context_interleaving` | `tests/integration/test_r06_adaptive_runner.cpp`, `test_r06_bias_runner.cpp`, `test_r06_run_context_interleaving.cpp`；[Adaptive](R6_ADAPTIVE_RUNNER_CONTRACT_2026-11-17.md)、[Bias](R6_BIAS_RUNNER_VALIDATION_2026-11-17.md)、[RunContext隔离](R6_INTERLEAVING_2026-11-17.md)。Adaptive Runner含单步替身；隔离fixture使用真实RNG/MAT/Manifest，均不等于完整真实求解实验 |
 | ANALYZER-SERVICE | `r06_analyzer_service_contract` | `tests/integration/test_r06_analyzer_services.cpp`；727项四入口两次交替/40读取故障/自拥有结果/导出失败不改值，见 [职责分离](R6_ANALYZER_SERVICES_2026-11-18.md)；内存Reader/Exporter不冒称真实MAT或独立全数值参考 |
 | ANALYSIS | `r05_analysis_source_contract`, `r06_analysis_segments_smoothing`, `r06_analysis_finite_cli`, `r06_bias_archive_independent_curves`（另复用CLI archive） | `tests/integration/test_r05_analysis.cpp`, `test_r06_analysis_segments.cpp`, `test_r06_analysis_finite.cmake`, `r06_analysis_fixture.cpp`, `test_r06_bias_archive.cpp`；[有限输入](R6_ANALYSIS_FINITE_VALIDATION_2026-11-17.md)、[历史Bias及辅助来源](R6_BIAS_ARCHIVE_ANALYSIS_2026-11-17.md) |
@@ -74,9 +75,9 @@
 | TC-F-TRAJ-001 | GEOM、RUNNER、ADAPT-SCENE | 独立轨迹/运动/端点例；三场景接口在生产Runner中的真实流合成/调用边界已测。默认600帧的第151帧UndefinedAngle仍明确记录，合成成功不能替代真实场景 |
 | TC-F-SH-001 | SH、STEP | 独立解析九基/布局/拟合与重建，源角度18解析方向及边界；三个固定约定组件及实际求解调用已落实，三组件初始482项，系数/方向入口接续后494项。最终Golden/容差资格另办 |
 | TC-F-SH-002 | SH | 源相位作用与物理旋转分别实测；不声称MATLAB运行轨迹相同 |
-| TC-F-ADAPT-001 | STEP、SH | 正/负近度固定单步及zero_mean_conditioning解析族已接入；六轴/窄锥完整步骤因投影零范数拒绝，运动阶段可独立核对。病态前向误差未正式验收 |
-| TC-F-ADAPT-002 | SESSION、SH、RUNNER、ADAPT-ENTRY | 旋转→比较→主提交、失败回滚及两Session三模式交替独立性已有真实单步实测；三具名入口交错与失败后复用已测；调度一致性不是独立数值Golden |
-| TC-F-ADAPT-003 | SESSION、RUNNER | 1/5/11/21刷新与弃置比较返回值已有替身断言；可替换Reset/Inherit/Periodic策略、所有槽失败/回滚/重试已测，完整真实轨迹未成功 |
+| TC-F-ADAPT-001 | STEP、SESSION-L3 | 九方向正/负均值逐节点及条件族有独立参考；新增252固定成功帧的924个真实Step逐节点与独立标量解比较，病态全输入域/正式容差仍未验收 |
+| TC-F-ADAPT-002 | SESSION、SESSION-L3、SH、RUNNER、ADAPT-ENTRY | 原真实重放/替身隔离保留；新增三模式两流i=2–43的独立状态、全部比较/主运动与角度、24失败回滚及同帧重试；完整原35/600帧实验仍未成功 |
+| TC-F-ADAPT-003 | SESSION、SESSION-L3、RUNNER | 独立多帧参考核对1/5/11/21旋转刷新和弃置dumi，覆盖i=42二次21周期；原策略全部槽失败/回滚/重试保留，完整真实更新率曲线未成功 |
 | TC-F-EXP-001 | RUNNER、ADAPTIVE-CLI | 35帧编排/字段替身合同；真实入口第14帧acos越界终止、valid12，无完整四MAT/L2对照成功证据 |
 | TC-F-EXP-002 | RUNNER、ADAPTIVE-CLI | 固定600帧/8次聚合及失败分母；真实noise0入口第151帧零旋转拒绝、valid149、计划8不变，未完成8轮 |
 | TC-F-EXP-003 | RUNNER、ANALYSIS、ADAPTIVE-CLI | 更新率/现行save集合/缺ratio合同；真实入口第151帧零旋转拒绝、valid149，无MAT，未完成完整真实算法实验 |
@@ -108,7 +109,7 @@
 | TC-NF-RECOVERY-001 | IO、CONTRACT、RUNNER、ADAPTIVE-CLI、RUNID、STREAM、DICTIONARY、EXECUTION、PROCESS-RECORD | 应用及进程开始记录未确认均不运行后续工作，结束失败保留产物/通道/条件状态；记录器可观察子进程SIGPIPE/SIGKILL并保护自身坏管道诊断。父进程自身SIGKILL/系统掉电不能保证结束记录；原三Adaptive仍Incomplete、无MAT |
 | TC-NF-PORTABLE-001 | IO、MAT、CLI | 实际中文/空格路径；目标仅GNU/Linux，不推断其它平台 |
 | TC-NF-RUNTIME-001 | 无完整基准 | 未授权完整实验/性能测量，DEC-006预算未批准；编译耗时不能代替实验预算 |
-| TC-NF-SESSION-001 | SESSION、RUNNER、BIAS-INJECT、ADAPT-INJECT、ADAPT-SCENE、ADAPT-ENTRY | 两Session三模式独立/交替重放、两RunContext交替RNG/输出/失败隔离、Bias交错及同Adaptive Runner重放已有实测；新增完整八轮逐轮主/比较全系数重置和精确失败前缀。新增具名Runner六次交错及失败后同对象重试，不改失败Context/RNG；不承诺单Session多线程，正式验收仍未签署 |
+| TC-NF-SESSION-001 | SESSION、SESSION-L3、RUNNER、BIAS-INJECT、ADAPT-INJECT、ADAPT-SCENE、ADAPT-ENTRY | 原两Session/RunContext交替、具名Runner六次交错及失败后重试保留；新增各序列独立数学状态与24次真实角度失败逐位回滚。八轮替身重置/固定分母不是完整科学实验，不承诺单Session多线程，未正式验收 |
 | TC-NF-COPYRIGHT-001 | SOURCE | 根MIT与来源notice存在；不将MIT扩展至原MATLAB/MAT/论文，不以额外普通版权审批阻塞编码 |
 | TC-F-CLI-002 | CLI、RUNNER、EXECUTION | 两Bias真实进程、有界输出/seed/RunId及拒覆盖，开始/结束记录独立解析；完整规模未运行 |
 | TC-F-CLI-003 | CLI、RUNNER、ADAPTIVE-CLI、EXECUTION | 三入口实际失败链/计数/源身份/无MAT/拒覆盖及运行记录已测；默认初始化因acos越界、另两入口因零旋转不能完成，完整成功产物分支仍未实测 |
@@ -121,7 +122,7 @@
 
 ## 下一步按缺口实施
 
-1. 当前两模式分别完成67/67、66/66复测；所有失败日志及原始数据不变证据保留。不等于完整数值资格、Adaptive实验成功或MATLAB像素等价完成。
+1. 当前两模式分别完成71/71、70/70复测；所有旧失败日志及原始数据不变证据保留。独立多帧参考只补限定输入的数学证据，不等于完整数值资格、Adaptive实验成功或MATLAB像素等价完成。
 2. 三份illustration已有JSON/SVG入口、独立全网格参考和实际CLI/目视证据；保留sphere端点运行细节尚未验证及平面着色的明确边界，不用求解器九项归一化基函数替代插图。
-3. 三Adaptive真实进程的失败链已有证据；初始化第14帧acos越界、另外两入口第151帧零旋转均未产出完整MAT，真实科学成功路径仍未验证。三入口合成完整场景和八轮聚合只证明组合合同。45源、98 P和本表有限证据已映射，[数值汇总](../NUMERICAL_EQUIVALENCE.md)已建立；Bias/Adaptive已列明装配、真实MAT73负例、plot/SVG导出记录、KvD/Session策略、球谐三组件、两分析组件、三具名Adaptive入口及MotionEstimate/HarmonicCoefficients/DirectionSet/FlowField构造已补有限实测，继续只读/预留前记录及其余R6义务。数值策略变更不能由AI通过改测试自行批准。
+3. 三Adaptive真实进程的失败链已有证据；初始化第14帧acos越界、另外两入口第151帧零旋转均未产出完整MAT，真实科学成功路径仍未验证。三入口合成完整场景和八轮聚合只证明组合合同。45源、98 P和本表有限证据已映射，[数值汇总](../NUMERICAL_EQUIVALENCE.md)已建立；Bias/Adaptive已列明装配、真实MAT73负例、plot/SVG导出记录、KvD/Session策略、球谐三组件、两分析组件、三具名Adaptive入口及MotionEstimate/HarmonicCoefficients/DirectionSet/FlowField构造已补有限实测，只读/预留前记录和实际身份关联已补有限实测；本批多帧独立参考补充SESSION-L3，继续其余R6义务。数值策略变更不能由AI通过改测试自行批准。
 4. 完整科学/L4实验、跨发行版资格、资源预算与正式审批不在本轮运行授权内；准备具体材料并在真正到达该边界时请求相应授权。无MATLAB/L1阻塞。

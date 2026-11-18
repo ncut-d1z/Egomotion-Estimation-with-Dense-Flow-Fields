@@ -1,6 +1,6 @@
 # R6：PLAN 的98项任务逐项复核
 
-> **接续实测**：受测源码`ff8aaa723d979642cca30b6fc79953fc8f2963ed`两模式构建无诊断，**SVG ON70/70、OFF69/69 CTest**；先MAT7项，再63/62项，零失败/跳过/禁用。进程记录已关联实际RunId、选定seed、有效配置与sealed MAT快照；各224项上下文检查、464项/26次进程检查、29次真实CLI调用通过。733项输入SHA及21组既有数值/合同摘要不变。见 [专项记录](R6_CONTEXT_JOURNAL_2026-11-18.md)。D4所列身份关联缺口已补有限实测；REQ-NF-LOG整体及R6未验收，完整科学实验/最终资格未完成，真实Adaptive仍Incomplete、无MAT。Issue #1–#5保持开放，无PR。
+> **接续实测**：受测源码`493ba86917a8147a0ddf63fad214751f1b33dd9c`两模式配置/编译无诊断，**SVG ON71/71、OFF70/70 CTest**；先MAT7项，再64/63项，零失败/跳过/禁用。新增Adaptive Session独立long double多帧参考：三模式/两流共252帧、24次真实角度失败回滚、299236项检查通过；最大数值绝对差1.38144704009413032963e-14，比较角度最大差5.82190545772576228956e-14度。两配置逐帧参考/实际JSONL对应SHA相同；736项输入SHA及21组既有数值/合同摘要不变。见 [专项记录](R6_SESSION_MULTIFRAME_L3_2026-11-18.md)。本批补多帧/周期有限L3证据，未改变生产公式或工程余量；完整科学实验、病态资格和正式验收仍未完成，真实Adaptive仍Incomplete、无完整MAT。Issue #1–#5开放，无PR，R6未结案。
 
 `[AI-EDIT]`，2026-11-18。本表逐项保留 [PLAN](../PLAN.md) 的98个P编号和原义务，核对实际文件、现有测试及缺口；**不修改需求、验收门槛、批准或冻结状态，也不将“有代码/测试通过”改称“任务已验收”**。原始任务全文及REQ/TC/AC/依赖仍以PLAN为准；下列“核对对象”只是定位摘要，不替代它。
 
@@ -17,7 +17,7 @@
 | 本表索引 | 真实文件与对应证据 |
 |---|---|
 | SRC | [SOURCE_INVENTORY](../SOURCE_INVENTORY.md)、[MAT_DATA_SCHEMA](../MAT_DATA_SCHEMA.md)、[MIGRATION_MATRIX](../MIGRATION_MATRIX.md)、[45源复核](R6_SOURCE_IMPLEMENTATION_MAP_2026-11-17.md)；对应SOURCE |
-| BUILD | [CMakeLists](../../CMakeLists.txt)、[README](../../README.md)、[无绘图构建](R6_HEADLESS_BUILD_2026-11-17.md)、[最新双模式证据](R6_FLOW_VALUE_2026-11-18.md)；对应ENV/HEADLESS |
+| BUILD | [CMakeLists](../../CMakeLists.txt)、[README](../../README.md)、[无绘图构建](R6_HEADLESS_BUILD_2026-11-17.md)、[最新双模式证据](R6_SESSION_MULTIFRAME_L3_2026-11-18.md)；对应ENV/HEADLESS |
 | DESIGN | [OBJECT_MODEL](../OBJECT_MODEL.md)、[ARCHITECTURE](../ARCHITECTURE.md)、[contracts](../design/contracts.md)，均为候选；实际 [领域类型](../../include/egomotion/domain/types.hpp)、[运动值工厂](../../src/domain/motion_estimate.cpp)、[窄接口](../../include/egomotion/contracts/interfaces.hpp) |
 | GEO | [方向采样](../../src/sampling/directions.cpp)、[随机源](../../src/sampling/random.cpp)；对应GEOM |
 | FLOW | [光流及噪声](../../src/simulation/flow.cpp)、[接口](../../include/egomotion/simulation/flow.hpp)；对应GEOM/RUNNER |
@@ -102,19 +102,19 @@
 | P7.4 | 逐项投影 | SH、STEP：fitSourceNear/source projection | 实测（有限） | sum(Y·near)/sum(Y²)及归一顺序；零通道拒绝，不冒充联合最小二乘。 |
 | P7.5 | IR低阶旋转 | SH、BUILD：原论文/勘误、Eigen-only R0/R3/R5 | 实测（有限） | 材料已提供，无重复上传阻塞；高阶W未实现且低阶权重恒零。 |
 | P7.6 | 源系数动作 | SH、SESSION：rotateSourceCoefficients与物理接口分离 | 实测（有限） | R5全项/布局/逆组合有独立参考；不凭物理旋转代替源组合，正式容差未签署。 |
-| P7.7 | Adaptive矩阵阶段 | STEP：solveAdaptiveMotion、M1…M4/rhs | 实测（有限） | 九方向正负均值与12解析条件场景，矩阵和求解结果分开。 |
-| P7.8 | 完整单步输出 | STEP：归一运动/MSE/near/coeff | 实测（有限） | 固定九方向成功；零投影/未定义路径拒绝，非完整多帧资格。 |
-| P7.9 | Eigen与源inv/real差异 | STEP、METRIC：有限/病态/奇异诊断 | 部分 | 病态前向误差未正式验收；不能由小后向残差推定运动准确。 |
+| P7.7 | Adaptive矩阵阶段 | STEP、SESSION-L3：M1…M4/rhs与独立标量消元 | 实测（有限） | 九方向正负均值/12条件场景保留；新增252固定帧中924次真实Step矩阵/解逐节点对照，不是全输入域资格。 |
+| P7.8 | 完整单步输出 | STEP、SESSION-L3：运动/MSE/near/coeff | 实测（有限） | 新增924次成功帧Step完整节点的独立参考，原拒绝路径保留；不代表原轨迹完整成功。 |
+| P7.9 | Eigen与源inv/real差异 | STEP、METRIC、SESSION-L3：有限/病态/奇异诊断 | 部分 | 独立部分选主元long double与生产FullPivLU的固定多帧对照通过；一般病态前向误差仍未正式验收，不能由小残差推定准确。 |
 | P7.10 | 球谐职责分离 | SH：RealSphericalHarmonics/HarmonicFitter/HarmonicRotator三个固定约定组件 | 实测（有限） | 无多帧mutable状态；实际单步/Session/策略已调用，旧自由函数仅兼容转发。484项独立参考/边界（系数负例迁到工厂及原始叶子）及原回归通过；不代签公共API/数值验收。 |
 | P7.11 | 无状态Step接口 | STEP、SESSION：IAdaptiveStepSolver/AdaptiveMfaStepSolver | 实测（有限） | 可固定输入与替身注入，未继承KvD；正式对象合同仍未冻结。 |
 | P8.1 | 35帧初始化 | RUN、ADAPTIVE-CLI：真实入口与Complete编排替身 | 部分 | 真实帧14失败、valid12、无四MAT；替身99次Step不代表真实成功。 |
 | P8.2 | 600帧8次对比 | RUN、ADAPTIVE-CLI：配置/聚合/真实noise0 | 部分 | 真实帧151失败、valid149、completed0；未完成8次或含噪实验。 |
-| P8.3 | 前帧旋转时序 | SH、SESSION：三模式、主/比较/提交、失败回滚 | 实测（有限） | 源动作与非交换旋转已测，完整真实轨迹未成功。 |
+| P8.3 | 前帧旋转时序 | SH、SESSION、SESSION-L3：旋转/比较/主提交 | 实测（有限） | 三模式两流i=2–43与独立多项式源动作和状态对照，含非交换次序及24失败回滚；完整原轨迹未成功。 |
 | P8.4 | Comparison五MAT | RUN：固定8组600行聚合/ratio取末轮 | 部分 | 替身/合成发布合同已有，with/without-errors真实新产物对照未完成。 |
-| P8.5 | 更新率1/5/11/21 | SESSION、RUN：冻结基线、旋转与周期刷新 | 部分 | 状态规则有证据；真实帧151失败，无完整曲线。 |
+| P8.5 | 更新率1/5/11/21 | SESSION、SESSION-L3、RUN：基线/旋转/周期刷新 | 部分 | 独立真实Step序列刷新42/8/3/2次，含21周期二次刷新、0-based误移位及dumi判别；真实原帧151失败，无完整曲线。 |
 | P8.6 | 独立baseline与主状态 | SESSION：比较返回dumi弃置、主akkoeff提交 | 实测（有限） | 真实Step短序列及替身周期规则已有；完整实验保存仍缺。 |
 | P8.7 | 历史额外字段 | MAT、RUN、ANALYSIS：HistoricalOnly与缺ratio拒绝 | 实测（有限） | 不伪造当前Runner字段，不猜测历史成因。 |
-| P8.8 | Session与更新策略 | SESSION：唯一持久状态、ICoefficientUpdatePolicy及Reset/Inherit/Periodic | 实测（有限） | 策略可替换、全部准备先于求解、失败原子性/同帧重试/隔离48523项通过；默认源周期/旋转与真实Session回归保留，候选接口未冻结。 |
+| P8.8 | Session与更新策略 | SESSION、SESSION-L3：唯一状态及可替换策略 | 实测（有限） | 原48523项编排/失败/隔离保留；新增独立标量演进状态与真实Step，24次角度失败逐位回滚/同帧重试；候选接口未冻结。 |
 | P8.9 | 独立Runner上下文 | RUN、SESSION、ADAPT-SCENE、ADAPT-ENTRY：三具名入口独立Config/Context，逐次/逐轮新Session | 实测（有限） | 172962项具名Runner交错/12错误Context/非法Config/第五轮失败后重试，八轮固定分母及末轮ratio保持；原88121项场景保留。真实完整科学成功、记录全部边界及正式验收未完成。 |
 | P9.1 | 初始化抽取/范围 | ANALYSIS、SVG、CLI：历史与固定数值 | 实测（有限） | 对数轴与取样区间已核，不声称全部MATLAB视觉细节相同。 |
 | P9.2 | 轨迹Comparison分析 | ANALYSIS、SVG：ratio分段阈值0.01、双轴 | 实测（有限） | 历史NaN明确失败，有限多项式参考不能代替历史成功。 |
