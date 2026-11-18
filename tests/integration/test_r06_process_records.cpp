@@ -12,6 +12,7 @@
 #include <stdexcept>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <vector>
 
@@ -213,6 +214,42 @@ void paths(const fs::path& base) {
     require(invoke(unsafe_build).code == 6 && !fs::exists(unsafe_build / "entered"),
             "Keep unsafe build ancestor rejection independently of final directory");
 }
+void brokenPipes(const fs::path& base) {
+    for (const int phase : {0, 1, 2}) {
+        const auto root = newRoot(base, "closed_pipe_" + std::to_string(phase));
+        ++calls;
+        int pipe_fds[2]{};
+        require(::pipe(pipe_fds) == 0, "Create actual pipe");
+        require(::close(pipe_fds[0]) == 0, "Remove every pipe reader before fork");
+        const auto pid = __real_fork();
+        require(pid >= 0, "Fork isolated supervisor pipe probe");
+        if (pid == 0) {
+            struct sigaction action{}; action.sa_handler = SIG_DFL; ::sigemptyset(&action.sa_mask);
+            if (::sigaction(SIGPIPE, &action, nullptr) != 0 ||
+                ::dup2(pipe_fds[1], phase == 2 ? STDOUT_FILENO : STDERR_FILENO) < 0) ::_exit(90);
+            ::close(pipe_fds[1]);
+            fs::current_path(root);
+            fault = phase == 0 ? Fault::StartLink : phase == 1 ? Fault::FinishLink : Fault::None;
+            char name[] = "pipe-probe", mode[] = "ok";
+            char* args[] = {name, mode, nullptr};
+            std::ostringstream receipt, errors;
+            const int code = egomotion::cli::recordProcess(2, args, fixture, root,
+                phase == 2 ? std::cout : receipt, phase == 2 ? errors : std::cerr);
+            ::_exit(code);
+        }
+        ::close(pipe_fds[1]);
+        int status = 0;
+        pid_t observed;
+        do { observed = ::waitpid(pid, &status, 0); } while (observed < 0 && errno == EINTR);
+        std::ofstream(root / "supervisor-wait-status.txt") << status << '\n';
+        require(observed == pid && WIFEXITED(status) && WEXITSTATUS(status) == 6,
+                "Recorder diagnostic/receipt pipe failures return 6, not SIGPIPE");
+        require(fs::exists(root / "entered") == (phase != 0), "Start gate remains effective with broken diagnostics");
+        const auto directory = onlyRecord(root);
+        require(fs::exists(directory / "finish.json") == (phase == 2), "Keep confirmed finish on broken receipt only");
+        if (phase != 0) require(read(directory / "stdout.bin") == std::string("ok\0tail\n", 8), "Child log survives supervisor pipe failure");
+    }
+}
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -225,6 +262,7 @@ int main(int argc, char** argv) {
         termination(base);
         publicationFaults(base);
         paths(base);
+        brokenPipes(base);
         std::cout << "Process records: " << checks << " checks, " << calls << " supervised calls; retained " << base << '\n';
         return 0;
     } catch (const std::exception& error) {

@@ -168,14 +168,11 @@ Completion finishRecord(const Directory& directory, int status, int out, int err
     const bool flushed = ::fflush(nullptr) == 0 && std::cout.good() && std::cerr.good();
     ::_exit(flushed ? code : record_failure_exit);
 }
-}  // namespace
-
-int recordProcess(int argc, char** argv, int (*application)(int, char**),
-                  const std::filesystem::path& trusted_root,
-                  std::ostream& receipt, std::ostream& errors) {
+int recordWithSignals(int argc, char** argv, int (*application)(int, char**),
+                      const std::filesystem::path& trusted_root, const Signals& signals,
+                      std::ostream& receipt, std::ostream& errors) {
     std::string location;
     try {
-        Signals signals;
         const auto signal_fd = signals.descriptor();
         const Directory directory(trusted_root);
         location = directory.path().string();
@@ -204,6 +201,19 @@ int recordProcess(int argc, char** argv, int (*application)(int, char**),
         return completion.exit_code;
     } catch (const std::exception& error) {
         return streams::outputFailure(errors, std::string(error.what()) + "; retained record: " + location);
+    }
+}
+}  // namespace
+
+int recordProcess(int argc, char** argv, int (*application)(int, char**),
+                  const std::filesystem::path& trusted_root,
+                  std::ostream& receipt, std::ostream& errors) {
+    try {
+        Signals signals;
+        // 自身故障的诊断也属于父进程保护范围；异常展开不能提前恢复SIGPIPE。
+        return recordWithSignals(argc, argv, application, trusted_root, signals, receipt, errors);
+    } catch (const std::exception& error) {
+        return streams::outputFailure(errors, error.what());
     }
 }
 }  // namespace egomotion::cli
