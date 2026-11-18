@@ -122,7 +122,7 @@ void write(AdaptiveRunData& data,const std::string& field,
         throw std::logic_error("Invalid Adaptive output index or non-finite statistic");
     array.values_column_major[column*rows+row]=value;
 }
-Output compute(Mode mode, double noise_scale, IRandomSource* rng,
+Output computeAdaptive(Mode mode, double noise_scale, IRandomSource* rng,
                const AdaptiveProgress& progress,
                const estimators::IAdaptiveStepSolver* injected_solver,
                AdaptiveSampling sampling, AdaptiveScene scene) {
@@ -299,20 +299,37 @@ Output compute(Mode mode, double noise_scale, IRandomSource* rng,
 }  // namespace
 
 Result<AdaptiveRunData,ExperimentErrorCode>
-AdaptiveExperimentRunner::computeInitialization(
+InitializationRunner::compute(
     const AdaptiveInitializationConfig&,const AdaptiveProgress& progress) const {
-    return compute(Mode::Initialization,0.0,nullptr,progress,injected_solver_,sampling_,scene_);
+    return computeAdaptive(Mode::Initialization,0.0,nullptr,progress,injected_solver_,sampling_,scene_);
+}
+Result<AdaptiveRunData,ExperimentErrorCode>
+AdaptiveComparisonRunner::compute(
+    const AdaptiveComparisonConfig& config,IRandomSource& rng,
+    const AdaptiveProgress& progress) const {
+    return computeAdaptive(Mode::Comparison,config.noise_scale,&rng,progress,injected_solver_,sampling_,scene_);
+}
+Result<AdaptiveRunData,ExperimentErrorCode>
+UpdateRateRunner::compute(
+    const AdaptiveUpdateRatesConfig&,const AdaptiveProgress& progress) const {
+    return computeAdaptive(Mode::UpdateRates,0.0,nullptr,progress,injected_solver_,sampling_,scene_);
+}
+
+Result<AdaptiveRunData,ExperimentErrorCode>
+AdaptiveExperimentRunner::computeInitialization(
+    const AdaptiveInitializationConfig& config,const AdaptiveProgress& progress) const {
+    return initialization_.compute(config,progress);
 }
 Result<AdaptiveRunData,ExperimentErrorCode>
 AdaptiveExperimentRunner::computeComparison(
     const AdaptiveComparisonConfig& config,IRandomSource& rng,
     const AdaptiveProgress& progress) const {
-    return compute(Mode::Comparison,config.noise_scale,&rng,progress,injected_solver_,sampling_,scene_);
+    return comparison_.compute(config,rng,progress);
 }
 Result<AdaptiveRunData,ExperimentErrorCode>
 AdaptiveExperimentRunner::computeUpdateRates(
-    const AdaptiveUpdateRatesConfig&,const AdaptiveProgress& progress) const {
-    return compute(Mode::UpdateRates,0.0,nullptr,progress,injected_solver_,sampling_,scene_);
+    const AdaptiveUpdateRatesConfig& config,const AdaptiveProgress& progress) const {
+    return rates_.compute(config,progress);
 }
 
 }  // namespace egomotion::experiments

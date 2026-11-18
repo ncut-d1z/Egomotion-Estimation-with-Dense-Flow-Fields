@@ -50,15 +50,6 @@ Outcome finishBias(const Result<BiasRunData,ExperimentErrorCode>& source,
     if(!packed.hasValue())return propagate(packed,ctx,"Bias current-save encoding failed");
     return publish(packed.value(),ctx,1,3*source.value().level_count);
 }
-AdaptiveProgress progressFor(RunContext& ctx) {
-    return [&ctx](AdaptiveProgressEvent event) noexcept {
-        switch(event) {
-        case AdaptiveProgressEvent::RunStarted:ctx.noteAttempt();break;
-        case AdaptiveProgressEvent::FrameCompleted:ctx.noteValid();break;
-        case AdaptiveProgressEvent::RunCompleted:ctx.noteCompleted();break;
-        }
-    };
-}
 }  // namespace
 
 Outcome detail::finishAdaptive(const Result<AdaptiveRunData,ExperimentErrorCode>& source,
@@ -118,31 +109,18 @@ Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runBiasPropor
 }
 Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runAdaptiveInitialization(
     const AdaptiveInitializationConfig& config,RunContext& context) {
-    if(context.experimentKind()!=ExperimentKind::AdaptiveInitialization)
-        return failed(context,ExperimentErrorCode::InvalidParameters,
-                      "Composition Root injected wrong Adaptive kind");
-    const AdaptiveExperimentRunner calculator(adaptiveSampling(),adaptiveScene(),injected_solver_);
-    return detail::finishAdaptive(calculator.computeInitialization(config,progressFor(context)),context,
-                          ExperimentKind::AdaptiveInitialization);
+    const InitializationRunner runner(adaptiveSampling(),adaptiveScene(),injected_solver_);
+    return runner.run(config,context);
 }
 Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runAdaptiveComparison(
     const AdaptiveComparisonConfig& config,RunContext& context) {
-    if(context.experimentKind()!=ExperimentKind::AdaptiveComparison)
-        return failed(context,ExperimentErrorCode::InvalidParameters,
-                      "Composition Root injected wrong Adaptive kind");
-    const AdaptiveExperimentRunner calculator(adaptiveSampling(),adaptiveScene(),injected_solver_);
-    return detail::finishAdaptive(calculator.computeComparison(
-                              config,context.randomSource(),progressFor(context)),
-                          context,ExperimentKind::AdaptiveComparison);
+    const AdaptiveComparisonRunner runner(adaptiveSampling(),adaptiveScene(),injected_solver_);
+    return runner.run(config,context);
 }
 Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runAdaptiveUpdateRates(
     const AdaptiveUpdateRatesConfig& config,RunContext& context) {
-    if(context.experimentKind()!=ExperimentKind::AdaptiveUpdateRates)
-        return failed(context,ExperimentErrorCode::InvalidParameters,
-                      "Composition Root injected wrong Adaptive kind");
-    const AdaptiveExperimentRunner calculator(adaptiveSampling(),adaptiveScene(),injected_solver_);
-    return detail::finishAdaptive(calculator.computeUpdateRates(config,progressFor(context)),context,
-                          ExperimentKind::AdaptiveUpdateRates);
+    const UpdateRateRunner runner(adaptiveSampling(),adaptiveScene(),injected_solver_);
+    return runner.run(config,context);
 }
 
 }  // namespace egomotion::experiments

@@ -135,6 +135,7 @@ endif()
 add_library(egomotion_experiments STATIC
     src/experiments/bias_runner.cpp
     src/experiments/adaptive_runner.cpp
+    src/experiments/adaptive_entries.cpp
     src/experiments/adaptive_aggregation.cpp
     src/experiments/output_contract.cpp
     src/experiments/output_values.cpp
@@ -681,7 +682,8 @@ if(BUILD_TESTING)
     target_link_libraries(test_r06_adaptive_scene PRIVATE egomotion_experiments)
     target_compile_options(test_r06_adaptive_scene PRIVATE -Wall -Wextra -Wpedantic)
     add_test(NAME r06_adaptive_scene_composition COMMAND test_r06_adaptive_scene)
-    set_tests_properties(r06_adaptive_scene_composition PROPERTIES
+    add_test(NAME r06_adaptive_entry_isolation COMMAND test_r06_adaptive_scene entry-isolation)
+    set_tests_properties(r06_adaptive_scene_composition r06_adaptive_entry_isolation PROPERTIES
         LABELS "r06;adaptive;runner;scene-injection;fixed-solvers;memory-only;eight-runs" TIMEOUT 180)
 
     foreach(case IN ITEMS contract archive)

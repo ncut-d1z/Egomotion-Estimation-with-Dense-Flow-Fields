@@ -198,22 +198,22 @@ Result<RunOutcome,ExperimentErrorCode> run(ProductionExperimentRunner& runner,Mo
     if(mode.kind==ExperimentKind::AdaptiveComparison)return runner.runAdaptiveComparison({0},context);
     return runner.runAdaptiveUpdateRates({},context);
 }
-void verifyFields(const Harness& h) {
-    require(h.writer.arrays.size()==(h.mode.slots==5?3u:(h.mode.runs==8?5u:4u)),"Exact current-save set");
-    for(const auto& [name,array]:h.writer.arrays){
-        const auto columns=name=="akrot"||h.mode.slots==3?1u:4u;
-        require(array.info.dimensions==std::vector<std::size_t>{h.mode.frames,columns},"Source column-major shape");
-        for(std::size_t c=0;c<columns;++c)for(std::size_t r=0;r<h.mode.frames;++r){
+void verifyFields(Mode mode,const Writer& writer) {
+    require(writer.arrays.size()==(mode.slots==5?3u:(mode.runs==8?5u:4u)),"Exact current-save set");
+    for(const auto& [name,array]:writer.arrays){
+        const auto columns=name=="akrot"||mode.slots==3?1u:4u;
+        require(array.info.dimensions==std::vector<std::size_t>{mode.frames,columns},"Source column-major shape");
+        for(std::size_t c=0;c<columns;++c)for(std::size_t r=0;r<mode.frames;++r){
             double expected=0;
-            if(r>0&&r+1<h.mode.frames){
+            if(r>0&&r+1<mode.frames){
                 if(name=="rottransratio")expected=0.125; // 最后第8轮，不是八轮比值的均值。
                 else if(name=="akrot")expected=57.2957795130823208768;
-                else if(h.mode.slots==5)expected=std::array<double,4>{{0,90,180,90}}[c];
-                else if(name=="allemittransfehler")expected=h.mode.runs==8?45:0;
+                else if(mode.slots==5)expected=std::array<double,4>{{0,90,180,90}}[c];
+                else if(name=="allemittransfehler")expected=mode.runs==8?45:0;
                 else if(name=="allemitrotfehler")expected=0;
                 else expected=90;
             }
-            near(array.values_column_major[c*h.mode.frames+r],expected);
+            near(array.values_column_major[c*mode.frames+r],expected);
         }
     }
 }
@@ -233,7 +233,7 @@ void fullRuns() {
         require(h.step.calls==valid*mode.slots,"All comparison slots and main Step called");
         require(observed->normals==(mode.runs==8?valid*18:0)&&observed->uniforms==0&&observed->resets==0,
                 "Zero-noise still 3N normal draws, no reseed across eight runs");
-        verifyFields(h);require(h.publisher.json.find("Complete")!=std::string::npos,"Synthetic Complete Manifest");
+        verifyFields(mode,h.writer);require(h.publisher.json.find("Complete")!=std::string::npos,"Synthetic Complete Manifest");
     }
 }
 void checkCause(const Failure<ExperimentErrorCode>& failure) {
@@ -290,9 +290,114 @@ void fifthRunFailure() {
         context.manifestDraft().failed==1&&h.publisher.json.find("Incomplete")!=std::string::npos,
         "Synthetic failure record remains Incomplete without MAT results");
 }
+// 共用借用服务而不共用Context；各Runner对象贯穿所有交错调用。
+struct DirectEntries {
+    InitializationRunner initialization;
+    AdaptiveComparisonRunner comparison;
+    UpdateRateRunner rates;
+    explicit DirectEntries(const Harness& h)
+        : initialization(h.sampling(),h.scene(),&h.step),
+          comparison(h.sampling(),h.scene(),&h.step),rates(h.sampling(),h.scene(),&h.step) {}
+    Result<RunOutcome,ExperimentErrorCode> run(Mode mode,RunContext& context) const {
+        if(mode.kind==ExperimentKind::AdaptiveInitialization)return initialization.run({},context);
+        if(mode.kind==ExperimentKind::AdaptiveComparison)return comparison.run({0},context);
+        return rates.run({},context);
+    }
+};
+void prepareScene(Harness& h,Mode mode) {
+    // 只复位可计数的替身输入，不能访问或重建被测Runner/Session。
+    h.mode=mode;h.generator.mode=mode;h.environment.mode=mode;h.sampler.mode=mode;h.step.mode=mode;
+    h.generator.calls=0;h.kinematics.calls=0;h.environment.calls=0;h.sampler.calls=0;h.step.calls=0;
+    h.environment.fail_at=0;
+}
+void completeEntry(const DirectEntries& entries,Harness& h,Mode mode,const std::string& id) {
+    prepareScene(h,mode);Writer writer;Publisher publisher;
+    auto random=std::make_unique<Random>();auto* observed=random.get();
+    RunContext context(RunId{id},std::move(random),writer,publisher,"/MEMORY-ONLY",
+        {std::string(40,'a'),std::string(40,'b'),std::nullopt},mode.kind,mode.runs);
+    const auto result=entries.run(mode,context);
+    require(result.hasValue()&&result.value().status==RunStatus::Complete,"Reused named Runner completes");
+    const auto valid=mode.runs*(mode.frames-2);
+    const auto& draft=context.manifestDraft();
+    require(draft.attempted==mode.runs&&draft.completed==mode.runs&&draft.valid==valid&&draft.failed==0,
+            "Fresh Context has only this run counts");
+    require(h.generator.calls==1&&h.kinematics.calls==1&&h.sampler.calls==1&&h.environment.calls==valid&&
+            h.step.calls==valid*mode.slots,"Full source loop and fresh Session for every repeat");
+    require(observed->normals==(mode.runs==8?valid*18:0)&&observed->resets==0&&observed->uniforms==0,
+            "Independent Context RNG with unchanged consumption");
+    require(publisher.json.find(id)!=std::string::npos&&publisher.json.find("Complete")!=std::string::npos,
+            "Manifest belongs to this Context");
+    verifyFields(mode,writer);
+}
+void wrongContext(const DirectEntries& entries,Harness& h) {
+    const std::array<ExperimentKind,5> kinds{{ExperimentKind::BiasOccluded,ExperimentKind::BiasProportional,
+        ExperimentKind::AdaptiveInitialization,ExperimentKind::AdaptiveComparison,ExperimentKind::AdaptiveUpdateRates}};
+    for(const auto mode:kModes)for(const auto kind:kinds){
+        if(kind==mode.kind)continue;
+        prepareScene(h,mode);Writer writer;Publisher publisher;
+        auto random=std::make_unique<Random>();auto* observed=random.get();
+        RunContext context(RunId{"wrong_context"},std::move(random),writer,publisher,"/MEMORY-ONLY",
+            {std::string(40,'a'),std::string(40,'b'),std::nullopt},kind,mode.runs);
+        const auto result=entries.run(mode,context);
+        require(!result.hasValue()&&result.error().code==ExperimentErrorCode::InvalidParameters&&
+            result.error().detail.stage==ErrorStage::Simulation&&result.error().detail.run_id&&
+            result.error().detail.run_id->text=="wrong_context","Wrong kind reports current RunId before work");
+        require(h.generator.calls==0&&h.kinematics.calls==0&&h.sampler.calls==0&&h.environment.calls==0&&
+            h.step.calls==0&&observed->normals==0&&observed->resets==0&&observed->uniforms==0&&
+            context.manifestDraft().attempted==0&&context.manifestDraft().valid==0&&
+            writer.arrays.empty()&&publisher.json.empty(),"Wrong Context has no scene/RNG/state/output side effects");
+    }
+}
+void entryFailureRecovery(const DirectEntries& entries,Harness& h) {
+    const auto mode=kModes[1];prepareScene(h,mode);
+    constexpr std::size_t kValidBeforeFailure=4*(kRegularFrames-2)+15;
+    h.environment.fail_at=kValidBeforeFailure+1;
+    Writer writer;Publisher publisher;auto random=std::make_unique<Random>();auto* observed=random.get();
+    RunContext context(RunId{"entry_failed"},std::move(random),writer,publisher,"/MEMORY-ONLY",
+        {std::string(40,'a'),std::string(40,'b'),std::nullopt},mode.kind,mode.runs);
+    const auto result=entries.run(mode,context);
+    require(!result.hasValue()&&writer.arrays.empty()&&publisher.json.empty(),"Direct failure publishes no partial averages");
+    checkCause(result.error());
+    require(context.manifestDraft().attempted==5&&context.manifestDraft().completed==4&&
+            context.manifestDraft().valid==kValidBeforeFailure&&context.manifestDraft().expected_repetitions==8&&
+            h.step.calls==kValidBeforeFailure*3&&observed->normals==kValidBeforeFailure*18,
+            "Direct failure retains denominator eight and exact interrupted prefix");
+    const auto saved=context.publishFailureRecord(result.error());
+    require(saved.hasValue()&&context.manifestDraft().status==RunStatus::Incomplete&&
+            context.manifestDraft().failed==1,"Direct incomplete record preserved");
+    const auto old_manifest=publisher.json;
+    completeEntry(entries,h,mode,"entry_recovered");
+    require(publisher.json==old_manifest&&writer.arrays.empty()&&context.manifestDraft().completed==4&&
+            context.manifestDraft().valid==kValidBeforeFailure&&observed->normals==kValidBeforeFailure*18,
+            "Recovery cannot change failed Context, RNG or publication");
+}
+void entryIsolation() {
+    Harness h(kModes[0]);const DirectEntries entries(h);
+    wrongContext(entries,h);
+    std::size_t invocation=0;
+    for(const auto index:{0u,1u,2u,1u,0u,2u})
+        completeEntry(entries,h,kModes[index],std::string("interleaved_")+
+            std::to_string(++invocation)+"_"+kModes[index].name);
+    // NaN配置在轨迹/RNG前拒绝；下一次合法调用仍从独立Session开始。
+    prepareScene(h,kModes[1]);Writer writer;Publisher publisher;auto random=std::make_unique<Random>();
+    auto* observed=random.get();
+    RunContext context(RunId{"invalid_config"},std::move(random),writer,publisher,"/MEMORY-ONLY",
+        {std::string(40,'a'),std::string(40,'b'),std::nullopt},kModes[1].kind,kRuns);
+    const auto invalid=entries.comparison.run({std::numeric_limits<double>::quiet_NaN()},context);
+    require(!invalid.hasValue()&&invalid.error().code==ExperimentErrorCode::InvalidParameters&&
+            h.generator.calls==0&&observed->normals==0&&context.manifestDraft().attempted==0&&
+            writer.arrays.empty()&&publisher.json.empty(),"Entry-specific invalid Config has no side effects");
+    entryFailureRecovery(entries,h);
+}
 } // namespace
-int main() {
+int main(int argc,char** argv) {
     try {
+        if(argc==2&&std::string(argv[1])=="entry-isolation"){
+            entryIsolation();
+            std::cout<<"adaptive entry checks="<<checks<<"; interleaved complete=6; recovered complete=1; wrong contexts=12; fifth-run failure=1\n";
+            return 0;
+        }
+        if(argc!=1)throw std::runtime_error("Unexpected scene test argument");
         fullRuns();failures();fifthRunFailure();
         std::cout<<"adaptive scene checks="<<checks<<"; full modes=3; complete comparison runs=8; service faults=54; fifth-run failure=1\n";
         return 0;

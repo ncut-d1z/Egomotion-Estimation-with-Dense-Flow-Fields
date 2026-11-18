@@ -13,9 +13,8 @@ namespace egomotion::estimators { class IAdaptiveStepSolver; }
 
 namespace egomotion::experiments {
 
-// The memory-only R4 result contains exactly the current MATLAB 'save'
-// variables. All values own column-major dense data and have unique names.
-// R5 will be responsible for RunContext, MAT Writer and Manifest persistence.
+// 内存结果只含原脚本当前save字段，独占列主序数据且名称唯一。
+// 具名Runner的run方法通过RunContext交付，compute不写文件。
 struct AdaptiveRunData {
     std::map<std::string, DenseDoubleArray> fields;
     std::size_t frame_count = 0;
@@ -40,13 +39,67 @@ struct AdaptiveScene {
     const trajectory::ISphereEnvironment& environment;
 };
 
-class AdaptiveExperimentRunner {
+// 每入口只接受自己的Config；run借用本次RunContext，compute不发布结果。
+// Session及聚合缓冲在每次compute内部创建，Runner不持有跨运行可变状态。
+class InitializationRunner final {
+public:
+    InitializationRunner(AdaptiveSampling sampling, AdaptiveScene scene,
+        const estimators::IAdaptiveStepSolver* injected_solver=nullptr)
+        : sampling_(sampling), scene_(scene), injected_solver_(injected_solver) {}
+    Result<AdaptiveRunData,ExperimentErrorCode> compute(
+        const AdaptiveInitializationConfig& config = {},
+        const AdaptiveProgress& progress = {}) const;
+    Result<RunOutcome,ExperimentErrorCode> run(
+        const AdaptiveInitializationConfig&,RunContext&) const;
+private:
+    AdaptiveSampling sampling_;
+    AdaptiveScene scene_;
+    const estimators::IAdaptiveStepSolver* injected_solver_;
+};
+
+class AdaptiveComparisonRunner final {
+public:
+    AdaptiveComparisonRunner(AdaptiveSampling sampling, AdaptiveScene scene,
+        const estimators::IAdaptiveStepSolver* injected_solver=nullptr)
+        : sampling_(sampling), scene_(scene), injected_solver_(injected_solver) {}
+    // 八轮共用本次外部RNG，不重新播种；noise_scale=0仍消耗原normal序列。
+    Result<AdaptiveRunData,ExperimentErrorCode> compute(
+        const AdaptiveComparisonConfig&,IRandomSource&,
+        const AdaptiveProgress& progress = {}) const;
+    Result<RunOutcome,ExperimentErrorCode> run(
+        const AdaptiveComparisonConfig&,RunContext&) const;
+private:
+    AdaptiveSampling sampling_;
+    AdaptiveScene scene_;
+    const estimators::IAdaptiveStepSolver* injected_solver_;
+};
+
+class UpdateRateRunner final {
+public:
+    UpdateRateRunner(AdaptiveSampling sampling, AdaptiveScene scene,
+        const estimators::IAdaptiveStepSolver* injected_solver=nullptr)
+        : sampling_(sampling), scene_(scene), injected_solver_(injected_solver) {}
+    Result<AdaptiveRunData,ExperimentErrorCode> compute(
+        const AdaptiveUpdateRatesConfig& config = {},
+        const AdaptiveProgress& progress = {}) const;
+    Result<RunOutcome,ExperimentErrorCode> run(
+        const AdaptiveUpdateRatesConfig&,RunContext&) const;
+private:
+    AdaptiveSampling sampling_;
+    AdaptiveScene scene_;
+    const estimators::IAdaptiveStepSolver* injected_solver_;
+};
+
+// 旧内存调用面保留为兼容分派；生产装配直接选择各具名Runner。
+class AdaptiveExperimentRunner final {
 public:
     // 可选借用同一求解器做跨帧合同测试；调用者须保证其生命周期。
     // 空指针保留真实 StepSolver，不改变生产帧数、采样级别或八次重复。
     AdaptiveExperimentRunner(AdaptiveSampling sampling, AdaptiveScene scene,
         const estimators::IAdaptiveStepSolver* injected_solver=nullptr)
-        : sampling_(sampling), scene_(scene), injected_solver_(injected_solver) {}
+        : initialization_(sampling,scene,injected_solver),
+          comparison_(sampling,scene,injected_solver),
+          rates_(sampling,scene,injected_solver) {}
     Result<AdaptiveRunData,ExperimentErrorCode> computeInitialization(
         const AdaptiveInitializationConfig& config = {},
         const AdaptiveProgress& progress = {}) const;
@@ -61,9 +114,9 @@ public:
         const AdaptiveUpdateRatesConfig& config = {},
         const AdaptiveProgress& progress = {}) const;
 private:
-    AdaptiveSampling sampling_;
-    AdaptiveScene scene_;
-    const estimators::IAdaptiveStepSolver* injected_solver_;
+    InitializationRunner initialization_;
+    AdaptiveComparisonRunner comparison_;
+    UpdateRateRunner rates_;
 };
 
 }  // namespace egomotion::experiments
