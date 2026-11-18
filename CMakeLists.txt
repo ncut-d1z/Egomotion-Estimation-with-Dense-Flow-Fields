@@ -231,19 +231,31 @@ target_compile_definitions(egomotion_cli PRIVATE
 )
 message(STATUS "Executable source commit: ${EGOMOTION_BUILD_SOURCE_SHA}")
 
-add_executable(egomotion src/cli/main.cpp)
-target_link_libraries(egomotion PRIVATE egomotion_cli)
-target_compile_definitions(egomotion PRIVATE "EGOMOTION_ENABLE_SVG=$<BOOL:${EGOMOTION_ENABLE_SVG}>")
+add_library(egomotion_application_main STATIC src/cli/application_main.cpp)
+target_link_libraries(egomotion_application_main PUBLIC egomotion_cli)
+target_compile_definitions(egomotion_application_main PRIVATE "EGOMOTION_ENABLE_SVG=$<BOOL:${EGOMOTION_ENABLE_SVG}>")
 if(EGOMOTION_ENABLE_SVG)
-    target_link_libraries(egomotion PRIVATE egomotion_plotting egomotion_illustration_svg)
+    target_link_libraries(egomotion_application_main PUBLIC egomotion_plotting egomotion_illustration_svg)
 endif()
+
+add_library(egomotion_process_record STATIC
+    src/cli/process_record.cpp src/cli/process_record_storage.cpp)
+target_link_libraries(egomotion_process_record PUBLIC egomotion_cli)
+target_compile_definitions(egomotion_process_record PRIVATE
+    "EGOMOTION_BUILD_SOURCE_SHA=\"${EGOMOTION_BUILD_SOURCE_SHA}\"")
+add_executable(egomotion-record src/cli/record_main.cpp)
+target_link_libraries(egomotion-record PRIVATE egomotion_application_main egomotion_process_record)
+
+add_executable(egomotion src/cli/main.cpp)
+target_link_libraries(egomotion PRIVATE egomotion_application_main)
 target_compile_features(egomotion PRIVATE cxx_std_17)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     foreach(target IN ITEMS
             egomotion_sampling egomotion_simulation egomotion_estimators
             egomotion_matio egomotion_experiments egomotion_analysis
-            egomotion_plotting egomotion_illustrations egomotion_illustration_svg egomotion_cli egomotion)
+            egomotion_plotting egomotion_illustrations egomotion_illustration_svg egomotion_cli egomotion
+            egomotion_application_main egomotion_process_record egomotion-record)
         if(TARGET ${target})
             target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
         endif()
@@ -827,6 +839,24 @@ if(BUILD_TESTING)
         -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/test_r06_adaptive_cli.cmake")
     set_tests_properties(r06_adaptive_real_cli PROPERTIES
         LABELS "r06;adaptive;real-process;real-step;write-sandbox;readonly-l2-diagnostic" TIMEOUT 420)
+
+    add_executable(test_r06_process_records tests/integration/test_r06_process_records.cpp)
+    target_link_libraries(test_r06_process_records PRIVATE egomotion_process_record)
+    target_include_directories(test_r06_process_records PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/cli")
+    target_compile_options(test_r06_process_records PRIVATE -Wall -Wextra -Wpedantic)
+    target_link_options(test_r06_process_records PRIVATE
+        "-Wl,--wrap=linkat" "-Wl,--wrap=fsync" "-Wl,--wrap=fork" "-Wl,--wrap=getrandom")
+    add_test(NAME r06_process_records_lifecycle COMMAND test_r06_process_records
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_process_records")
+    set_tests_properties(r06_process_records_lifecycle PROPERTIES
+        LABELS "r06;logging;fork;signal;fault-injection;write-sandbox" TIMEOUT 60)
+    add_test(NAME r06_process_records_real_cli COMMAND "${CMAKE_COMMAND}"
+        "-DCLI=$<TARGET_FILE:egomotion>" "-DRECORDER=$<TARGET_FILE:egomotion-record>"
+        "-DSOURCE_SHA=${EGOMOTION_BUILD_SOURCE_SHA}" "-DSOURCE_ROOT=${CMAKE_CURRENT_SOURCE_DIR}"
+        "-DSANDBOX=${CMAKE_CURRENT_BINARY_DIR}/r06_process_records_cli"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/integration/test_r06_process_records_cli.cmake")
+    set_tests_properties(r06_process_records_real_cli PROPERTIES
+        LABELS "r06;logging;real-process;readonly-mat;write-sandbox" TIMEOUT 90)
 
     # 所有测试在无显示服务的子进程环境运行；不修改调用者的环境。
     get_property(egomotion_tests DIRECTORY PROPERTY TESTS)

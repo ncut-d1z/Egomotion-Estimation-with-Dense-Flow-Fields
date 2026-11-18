@@ -169,6 +169,9 @@ std::string artifactSuffix() {
 }
 }  // namespace
 
+std::string processTimestamp() { return timestamp(); }
+std::string processEnvironment() { return environment(); }
+
 std::string invocationRecord(const Command& command, const std::vector<std::string>* argv,
                              const RunContext& context) {
     const auto& provenance = context.provenance();

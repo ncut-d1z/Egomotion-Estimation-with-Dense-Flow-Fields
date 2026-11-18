@@ -8,6 +8,10 @@
 
 namespace egomotion::cli {
 
+// 进程级记录与应用级记录使用同一套公开环境白名单和UTC格式。
+std::string processTimestamp();
+std::string processEnvironment();
+
 struct ChannelDelivery {
     std::string channel;
     std::string attempted_text;

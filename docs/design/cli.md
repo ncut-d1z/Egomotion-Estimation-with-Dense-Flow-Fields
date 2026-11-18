@@ -1,5 +1,9 @@
 # CLI 参数、退出码与诊断协议：详细设计草案
 
+> **2026-11-18 进程记录增量 `[AI-DRAFT + HUMAN-APPROVE]`，候选、未冻结**：新增显式入口 `egomotion-record <原egomotion参数>`，在单线程父进程中先确认开始记录，再fork执行同一构建的应用入口。原 `egomotion` 行为保持；记录器的stdout为日志位置/条件退出码收据，子进程stdout/stderr原始字节分别保存，不实时转发。构建/测试日志固定在 `build/cli-records/record_<128位OS随机身份>/`，此RecordId不是实验RunId，不是新MAT/图形输出根；科学产物继续仅允许 `output/<RunId>/`，不增加输出根参数。日志目录必须独占、私有，祖先拒绝符号链接及不安全写权限，保留失败证据。关联D4/P5.3/P8.9/P10.6、REQ/TC-NF-LOG-001；源码与新增测试准备阶段，尚未以本次构建验证。
+>
+> `start.json`保存argv、编译时源码SHA、实际cwd、环境白名单及UTC；`finish.json`用waitpid区分正常exit与signal，保存原始wait状态、转发信号、两通道字节数/SHA-256/fsync状态。父进程收到INT/TERM/HUP/QUIT时转发给尚未回收的子进程；子进程恢复调用前的信号状态。正常返回原子进程码，信号返回128+signal；记录/通道/收据失败返回6，结束记录中的返回码是发布与收据成功条件下的值，文件存在不证明最终持久性。开始确认前不得启动应用；父进程SIGKILL、系统掉电和无法写盘仍不能保证结束记录。原应用的RunId/seed/已读取MAT快照身份与错误链仍在应用输出及其既有记录中，外层明确 `application_context=not_observed_by_supervisor`，不从请求参数猜测“实际已分配/已使用”，不据此宣称整个REQ-NF-LOG已满足。记录器捕获通道与直接终端/管道交付是不同运行环境；程序直接写坏管道的语义仍由原入口测试覆盖。
+
 > **2026-11-17 日志实测 `[AI-EDIT]`**：`9eb831531ce04f2bfab8bf813011c36a451ee409` 构建及47/47 CTest通过；已分配RunId的实验、绘图/插图返回错误现补齐缺省顶层身份，保留已有身份及完整causes，未分配时不虚构。见 [修复/验证](../reviews/R6_RUNID_DIAGNOSTICS_2026-11-17.md)。落实既有日志义务，不新增字段或改变正式冻结状态。
 
 > **2026-11-17 Adaptive实测 `[AI-EDIT]`**：`2438a8039a905c7f3d8ab74aba1faeaa9a2387cf` 构建及46/46 CTest通过；三个实际生成入口均exit5/Incomplete，无MAT。初始化第14帧acos越界、比较/更新率第151帧零旋转，完整错误链/计数/拒覆盖已有 [证据](../reviews/R6_ADAPTIVE_CLI_2026-11-17.md)。这是失败合同验证，成功产物分支未执行，CLI及数值验收状态不改变。
