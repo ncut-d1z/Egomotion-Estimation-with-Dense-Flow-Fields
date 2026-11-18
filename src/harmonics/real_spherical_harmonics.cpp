@@ -4,7 +4,7 @@
 namespace egomotion::harmonics {
 Result<Scalar,NumericalErrorCode> RealSphericalHarmonics::reconstructNear(
     const HarmonicCoefficients& coeff, const Vector3& direction) const {
-    auto converted=low_order::fromMatlabLayout(coeff.values);
+    auto converted=low_order::fromMatlabLayout(coeff.values());
     if (!converted.hasValue())
         return detail::bridge<Scalar>(converted.error(),"Near reconstruction layout");
     auto scalar=low_order::reconstruct(converted.value(),direction);

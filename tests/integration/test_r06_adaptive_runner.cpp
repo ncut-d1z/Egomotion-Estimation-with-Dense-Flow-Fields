@@ -1,3 +1,4 @@
+#include "../support/coefficient_fixture.hpp"
 #include "../support/motion_fixture.hpp"
 // 跨 Runner/Session/Writer 的合同测试；替身运动不属于科学结果或 L3 Golden。
 // 默认600帧轨迹的零旋转必须失败；八次聚合使用设计§8.2的固定600行结果。
@@ -82,8 +83,8 @@ struct ScriptedStep final:estimators::IAdaptiveStepSolver {
                 expected=refreshed<2?1.0:static_cast<double>(refreshed-1);
             }else if(slot==0)expected=1.0;
         }
-        require(old.values(0,0)==expected,"Runner/Session reset, refresh or primary order changed");
-        auto padding=old.values;padding(0,0)=0;
+        require(old.values()(0,0)==expected,"Runner/Session reset, refresh or primary order changed");
+        auto padding=old.values();padding(0,0)=0;
         require(padding.isZero(0),"Synthetic scalar coefficient acquired other harmonics");
         if(calls==fail_on_call){
             ErrorDetail reason;reason.stage=ErrorStage::Solve;
@@ -93,10 +94,11 @@ struct ScriptedStep final:estimators::IAdaptiveStepSolver {
         }
         estimators::AdaptiveStepResult result;
         result.motion=syntheticMotion(run,frame,slot);
-        result.coefficients_next.values.setZero();
+        HarmonicMatrix next=HarmonicMatrix::Zero();
         // 比较调用的假 dumi 与主状态明显不同，错误提交会在下一调用被检出。
-        result.coefficients_next.values(0,0)=slot==mode.comparisons?
+        next(0,0)=slot==mode.comparisons?
             static_cast<double>(frame):10000.0+static_cast<double>(frame);
+        result.coefficients_next=test_support::coefficientValue(next);
         result.trace.coefficients_next=result.coefficients_next;
         return Result<estimators::AdaptiveStepResult,NumericalErrorCode>::success(std::move(result));
     }

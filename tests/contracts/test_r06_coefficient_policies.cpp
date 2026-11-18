@@ -1,3 +1,4 @@
+#include "../support/coefficient_fixture.hpp"
 #include "../support/motion_fixture.hpp"
 // 替身只验证源状态编排；数学回归另由独立SH/单步L3和真实Session测试承担。
 #include "egomotion/estimators/adaptive_session.hpp"
@@ -6,6 +7,7 @@
 
 #include <array>
 #include <cstring>
+#include <cmath>
 #include <iostream>
 #include <limits>
 #include <new>
@@ -29,10 +31,10 @@ void same(const Eigen::MatrixBase<A>& a,const Eigen::MatrixBase<B>& b,const char
     }
 }
 HarmonicCoefficients coefficients(double constant) {
-    HarmonicCoefficients result;result.values.setZero();result.values(0,0)=constant;
-    result.values.row(1).head<3>()<<0.125,0.25,-0.5;
-    result.values.row(2)<<0.0625,-0.125,0.25,0.5,-1;
-    return result;
+    HarmonicMatrix result;result.setZero();result(0,0)=constant;
+    result.row(1).head<3>()<<0.125,0.25,-0.5;
+    result.row(2)<<0.0625,-0.125,0.25,0.5,-1;
+    return test_support::coefficientValue(result);
 }
 AdaptiveFrameInput frame(std::size_t index) {
     AdaptiveFrameInput result;result.matlab_frame_index=index;
@@ -62,30 +64,39 @@ void directPolicies() {
         const auto inherit=policies.inherit.prepare(i,primary,baseline,rotation);
         require(reset.hasValue()&&inherit.hasValue(),"Reset/inherit succeed");
         HarmonicMatrix constant=HarmonicMatrix::Zero();constant(0,0)=1;
-        same(reset.value().values,constant,"Exact constant reset");
-        same(inherit.value().values,primary.values,"Inherit without rotating again");
+        same(reset.value().values(),constant,"Exact constant reset");
+        same(inherit.value().values(),primary.values(),"Inherit without rotating again");
         for(std::size_t j=0;j<4;++j){
             auto result=policies.periodic[j].prepare(i,primary,baseline,rotation);
             require(result.hasValue(),"Periodic prepare succeeds");
-            same(result.value().values,i%kAdaptiveUpdatePeriods[j]==0?primary.values:rotated.value().values,
+            same(result.value().values(),i%kAdaptiveUpdatePeriods[j]==0?primary.values():rotated.value().values(),
                  "MATLAB modulo selects pre-solve primary or rotated baseline");
             auto owned=std::move(result).value();
-            owned.values.setZero(); // 移出自拥有候选，不修改Result只读载荷或传入值。
+            owned=HarmonicCoefficients{}; // 替换整个自拥有值，不修改输入或Result载荷。
         }
     }
-    same(primary.values,coefficients(101).values,"Primary input remains unchanged");
-    same(baseline.values,coefficients(7).values,"Baseline input remains unchanged");
+    same(primary.values(),coefficients(101).values(),"Primary input remains unchanged");
+    same(baseline.values(),coefficients(7).values(),"Baseline input remains unchanged");
     for(const auto* policy:policies.forMode(AdaptiveSessionMode::UpdateRates))
         require(policy->prepare(1,primary,baseline,rotation).error().code==NumericalErrorCode::InvalidShape,"Reject non-source frame");
     require(!policies.reset.prepare(0,primary,baseline,rotation).hasValue(),"Reset frame validation");
     require(!policies.inherit.prepare(1,primary,baseline,rotation).hasValue(),"Inherit frame validation");
     PeriodicCoefficientUpdatePolicy zero(0);
     require(zero.prepare(2,primary,baseline,rotation).error().code==NumericalErrorCode::InvalidShape,"Reject zero before modulo");
-    auto invalid=baseline;invalid.values(0,0)=std::numeric_limits<double>::infinity();
-    require(!policies.periodic[1].prepare(5,primary,invalid,rotation).hasValue(),"Refresh cannot skip baseline rotation failure");
+    HarmonicMatrix large=HarmonicMatrix::Zero();
+    large(1,0)=std::numeric_limits<double>::max();large(1,2)=std::numeric_limits<double>::max();
+    const auto overflowing=test_support::coefficientValue(large);
+    const double diagonal=std::sqrt(0.5);
+    Matrix3 mixed;mixed<<diagonal,-diagonal,0,diagonal,diagonal,0,0,0,1;
+    const auto invalid_rotation=policies.periodic[1].prepare(5,primary,overflowing,mixed);
+    require(!invalid_rotation.hasValue()&&invalid_rotation.error().code==NumericalErrorCode::NonFiniteResult,
+            "Refresh cannot skip finite baseline rotation overflow");
     const Matrix3 reflection=-Matrix3::Identity();
     require(!policies.periodic[1].prepare(5,primary,baseline,reflection).hasValue(),"Refresh cannot skip improper rotation");
-    require(policies.inherit.prepare(2,invalid,baseline,rotation).error().code==NumericalErrorCode::NonFiniteInput,"Reject invalid inherited primary");
+    auto invalid=primary.values();invalid(0,0)=std::numeric_limits<double>::infinity();
+    const auto invalid_primary=HarmonicCoefficients::create(invalid);
+    require(!invalid_primary.hasValue()&&invalid_primary.error().code==NumericalErrorCode::NonFiniteInput,
+            "Reject non-finite inherited primary at construction");
 }
 struct Call {std::size_t frame;HarmonicMatrix primary,baseline;Matrix3 rotation;};
 enum class Fault { None, Failure, NonFinite, Allocation, Length };
@@ -101,7 +112,7 @@ struct ObservedPolicy final:ICoefficientUpdatePolicy {
     Result<HarmonicCoefficients,NumericalErrorCode> prepare(
         std::size_t i,const HarmonicCoefficients& main,const HarmonicCoefficients& baseline,
         const Matrix3& rotation) const override {
-        events.push_back("P"+std::to_string(slot));calls.push_back({i,main.values,baseline.values,rotation});
+        events.push_back("P"+std::to_string(slot));calls.push_back({i,main.values(),baseline.values(),rotation});
         if(fault==Fault::Allocation)throw std::bad_alloc{};
         if(fault==Fault::Length)throw std::length_error("policy fixture");
         if(fault==Fault::Failure){
@@ -112,10 +123,17 @@ struct ObservedPolicy final:ICoefficientUpdatePolicy {
                 NumericalErrorCode::InvalidNearness,std::move(outer),Failure<MatErrorCode>{MatErrorCode::InvalidShape,std::move(inner)}));
         }
         auto result=delegate.prepare(i,main,baseline,rotation);if(!result.hasValue())return result;
-        auto candidate=std::move(result).value();
-        if(fault==Fault::NonFinite)candidate.values(0,0)=std::numeric_limits<double>::quiet_NaN();
-        candidate.values(0,0)+=offset;
-        return Result<HarmonicCoefficients,NumericalErrorCode>::success(std::move(candidate));
+        auto candidate=result.value().values();
+        if(fault==Fault::NonFinite)candidate(0,0)=std::numeric_limits<double>::quiet_NaN();
+        candidate(0,0)+=offset;
+        auto owned=HarmonicCoefficients::create(candidate);
+        if(!owned.hasValue()){
+            ErrorDetail detail;detail.stage=ErrorStage::Solve;
+            detail.message="Coefficient update policy produced non-finite candidate";
+            return Result<HarmonicCoefficients,NumericalErrorCode>::failure(wrapFailure(
+                NumericalErrorCode::NonFiniteResult,std::move(detail),owned.error()));
+        }
+        return owned;
     }
 };
 struct Solver final:IAdaptiveStepSolver {
@@ -124,13 +142,13 @@ struct Solver final:IAdaptiveStepSolver {
     std::size_t fail_at=0;
     explicit Solver(std::vector<std::string>& log):events(log) {}
     Result<AdaptiveStepResult,NumericalErrorCode> solve(const HarmonicCoefficients& old,const FlowField&) const override {
-        events.push_back("S");received.push_back(old.values);
+        events.push_back("S");received.push_back(old.values());
         if(fail_at==received.size()){
             ErrorDetail detail;detail.stage=ErrorStage::Solve;detail.message="injected solver";
             return Result<AdaptiveStepResult,NumericalErrorCode>::failure({NumericalErrorCode::SingularSystem,std::move(detail)});
         }
         AdaptiveStepResult result;result.motion=test_support::motionValue(Vector3::UnitX(),Vector3::UnitY());
-        result.coefficients_next=old;result.coefficients_next.values+=coefficients(100).values;result.error_mse=0;
+        result.coefficients_next=test_support::coefficientValue(old.values()+coefficients(100).values());result.error_mse=0;
         result.trace.coefficients_next=result.coefficients_next;
         return Result<AdaptiveStepResult,NumericalErrorCode>::success(std::move(result));
     }
@@ -144,8 +162,8 @@ struct ObservedPolicies {
     AdaptiveCoefficientPolicies pointers() const {return {{&values[0],&values[1],&values[2],&values[3]}};}
 };
 void stateEquals(const AdaptiveMfaSession& a,const AdaptiveMfaSession& b) {
-    same(a.primaryCoefficients().values,b.primaryCoefficients().values,"Primary state equality");
-    for(std::size_t j=0;j<4;++j)same(a.updateRateBaselines()[j].values,b.updateRateBaselines()[j].values,"Baseline state equality");
+    same(a.primaryCoefficients().values(),b.primaryCoefficients().values(),"Primary state equality");
+    for(std::size_t j=0;j<4;++j)same(a.updateRateBaselines()[j].values(),b.updateRateBaselines()[j].values(),"Baseline state equality");
 }
 std::size_t count(AdaptiveSessionMode mode){return mode==AdaptiveSessionMode::UpdateRates?4:2;}
 void composition(AdaptiveSessionMode mode) {
@@ -158,8 +176,8 @@ void composition(AdaptiveSessionMode mode) {
         const auto old_primary=session.primaryCoefficients();const auto old_baselines=session.updateRateBaselines();
         events.clear();const auto input=frame(i);const auto output=session.processFrame(input),expected=reference.processFrame(input);
         require(output.hasValue()&&expected.hasValue(),"Both assemblies succeed");stateEquals(session,reference);
-        same(output.value().primary_step.coefficients_next.values,expected.value().primary_step.coefficients_next.values,"Primary result unchanged");
-        same(output.value().primary_step.trace.coefficients_next.values,output.value().primary_step.coefficients_next.values,"Synthetic trace is fully initialized and consistent");
+        same(output.value().primary_step.coefficients_next.values(),expected.value().primary_step.coefficients_next.values(),"Primary result unchanged");
+        same(output.value().primary_step.trace.coefficients_next.values(),output.value().primary_step.coefficients_next.values(),"Synthetic trace is fully initialized and consistent");
         require(output.value().comparison_motion.size()==count(mode),"Comparison count unchanged");
         require(events.size()==count(mode)*2+1,"All policies then comparisons then primary");
         auto primary=mode==AdaptiveSessionMode::Initialization
@@ -169,8 +187,8 @@ void composition(AdaptiveSessionMode mode) {
         for(std::size_t j=0;j<count(mode);++j){
             require(events[j]=="P"+std::to_string(j)&&events[count(mode)+j]=="S","Policy order precedes solver");
             const auto& call=observed.values[j].calls.back();require(call.frame==i,"MATLAB index unchanged");
-            same(call.primary,primary.value().values,"Policy sees rotated pre-solve main");
-            same(call.baseline,old_baselines[j].values,"Policy sees previous persistent baseline");
+            same(call.primary,primary.value().values(),"Policy sees rotated pre-solve main");
+            same(call.baseline,old_baselines[j].values(),"Policy sees previous persistent baseline");
             same(call.rotation,input.source_coefficient_rotation,"Source rotation passed exactly");
         }
         require(events.back()=="S","Main solver last");
@@ -211,10 +229,10 @@ void replacementAndIsolation() {
     observed.values[1].offset=16;
     AdaptiveMfaSession session(AdaptiveSessionMode::UpdateRates,observed.pointers(),&solver),peer(AdaptiveSessionMode::UpdateRates,&peer_solver);
     require(session.processFrame(frame(2)).hasValue(),"Replacement policy used");
-    require(solver.received[1](0,0)==17&&session.updateRateBaselines()[1].values(0,0)==17,"Candidate used and baseline committed, comparison dumi discarded");
-    require(session.primaryCoefficients().values(0,0)==101&&solver.received.back()(0,0)==1,"Policy cannot replace primary");
-    require(peer.primaryCoefficients().values(0,0)==1,"Peer remains untouched");
-    require(peer.processFrame(frame(2)).hasValue()&&peer.updateRateBaselines()[1].values(0,0)==1,"Default peer retains own baseline");
+    require(solver.received[1](0,0)==17&&session.updateRateBaselines()[1].values()(0,0)==17,"Candidate used and baseline committed, comparison dumi discarded");
+    require(session.primaryCoefficients().values()(0,0)==101&&solver.received.back()(0,0)==1,"Policy cannot replace primary");
+    require(peer.primaryCoefficients().values()(0,0)==1,"Peer remains untouched");
+    require(peer.processFrame(frame(2)).hasValue()&&peer.updateRateBaselines()[1].values()(0,0)==1,"Default peer retains own baseline");
     AdaptiveMfaSession shared(AdaptiveSessionMode::UpdateRates,observed.pointers(),&peer_solver);
     require(shared.processFrame(frame(2)).hasValue(),"Policies may be shared without sharing Session state");stateEquals(session,shared);
     for(auto mode:{AdaptiveSessionMode::Initialization,AdaptiveSessionMode::Comparison,AdaptiveSessionMode::UpdateRates}){

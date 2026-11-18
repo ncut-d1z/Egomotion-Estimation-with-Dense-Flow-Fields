@@ -14,10 +14,7 @@ namespace {
 constexpr std::size_t kResetAndInheritComparisons=2;
 
 HarmonicCoefficients originalInitialCoefficients() {
-    HarmonicCoefficients value;
-    value.values.setZero();
-    value.values(0,0)=1.0; // original MATLAB akkoeff(1,1)=1
-    return value;
+    return HarmonicCoefficients::zeroOrderUnit(); // original MATLAB akkoeff(1,1)=1
 }
 Result<AdaptiveFrameResult,ExperimentErrorCode> fail(
     ExperimentErrorCode code,std::string message) {
@@ -97,7 +94,7 @@ AdaptiveMfaSession::processFrame(const AdaptiveFrameInput& frame) {
                 return propagate(candidate.error(),
                                  "Adaptive coefficient update failed (baseline="+
                                      std::to_string(j)+")",frame.matlab_frame_index);
-            if(!candidate.value().values.allFinite()) {
+            if(!candidate.value().values().allFinite()) {
                 ErrorDetail detail;detail.stage=ErrorStage::Solve;
                 detail.message="Coefficient update policy returned non-finite candidate";
                 return propagate({NumericalErrorCode::NonFiniteResult,std::move(detail)},

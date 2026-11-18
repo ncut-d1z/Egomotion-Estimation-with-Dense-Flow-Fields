@@ -32,14 +32,14 @@ struct State {
 };
 State snapshot(const AdaptiveMfaSession& session) {
     State result;
-    result.primary=session.primaryCoefficients().values;
-    for (std::size_t i=0;i<4;++i) result.baselines[i]=session.updateRateBaselines()[i].values;
+    result.primary=session.primaryCoefficients().values();
+    for (std::size_t i=0;i<4;++i) result.baselines[i]=session.updateRateBaselines()[i].values();
     return result;
 }
 void sameState(const AdaptiveMfaSession& session,const State& state,const std::string& label) {
-    same(session.primaryCoefficients().values,state.primary,label+" primary");
+    same(session.primaryCoefficients().values(),state.primary,label+" primary");
     for (std::size_t i=0;i<4;++i)
-        same(session.updateRateBaselines()[i].values,state.baselines[i],label+" baseline");
+        same(session.updateRateBaselines()[i].values(),state.baselines[i],label+" baseline");
 }
 AdaptiveFrameInput input(std::size_t stream,std::size_t index) {
     AdaptiveFrameInput result;
@@ -79,7 +79,7 @@ void sameOutput(const AdaptiveFrameResult& a,const AdaptiveFrameResult& b) {
     require(a.matlab_frame_index==b.matlab_frame_index,"Frame identity");
     same(a.primary_step.motion.translation(),b.primary_step.motion.translation(),"primary translation");
     same(a.primary_step.motion.rotation(),b.primary_step.motion.rotation(),"primary rotation");
-    same(a.primary_step.coefficients_next.values,b.primary_step.coefficients_next.values,"next coefficients");
+    same(a.primary_step.coefficients_next.values(),b.primary_step.coefficients_next.values(),"next coefficients");
     require(a.primary_step.error_mse==b.primary_step.error_mse,"MSE changed with schedule");
     const auto& x=a.primary_step.trace; const auto& y=b.primary_step.trace;
     same(x.near_raw,y.near_raw,"raw near"); same(x.near_after_sign,y.near_after_sign,"signed near");
@@ -90,7 +90,7 @@ void sameOutput(const AdaptiveFrameResult& a,const AdaptiveFrameResult& b) {
     same(x.solved_motion,y.solved_motion,"raw solution");
     same(x.translation_raw,y.translation_raw,"raw translation");
     same(x.recomputed_near,y.recomputed_near,"new near");
-    same(x.coefficients_next.values,y.coefficients_next.values,"trace coefficients");
+    same(x.coefficients_next.values(),y.coefficients_next.values(),"trace coefficients");
     require(a.comparison_motion.size()==b.comparison_motion.size(),"comparison count");
     for (std::size_t i=0;i<a.comparison_motion.size();++i) {
         same(a.comparison_motion[i].translation(),b.comparison_motion[i].translation(),"comparison translation");
@@ -165,7 +165,7 @@ void verifyMode(AdaptiveSessionMode mode) {
         advance(1); advance(0); advance(1); advance(0);
     }
     require(failed_once[0]&&failed_once[1],"Both failure branches must run");
-    require((a.primaryCoefficients().values-b.primaryCoefficients().values).norm()>0,
+    require((a.primaryCoefficients().values()-b.primaryCoefficients().values()).norm()>0,
             "Different streams unexpectedly share the same final state");
     std::cout<<"mode="<<static_cast<int>(mode)<<" isolated_success=42 interleaved_success=42 rejected=4\n";
 }

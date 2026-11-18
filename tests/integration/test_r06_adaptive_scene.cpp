@@ -1,3 +1,4 @@
+#include "../support/coefficient_fixture.hpp"
 #include "../support/motion_fixture.hpp"
 // 合成场景贯穿真实Runner/Session/聚合/发布；不是原MATLAB或科学实验Golden。
 #include "egomotion/experiments/production_runner.hpp"
@@ -148,10 +149,10 @@ struct Step final:estimators::IAdaptiveStepSolver {
                 expected=refresh?static_cast<double>(refresh-1):1;
             }
         }
-        require(old.values(0,0)==expected,"Source reset/inherit/periodic candidate before main solve");
+        require(old.values()(0,0)==expected,"Source reset/inherit/periodic candidate before main solve");
         if(row==1){
             HarmonicMatrix initial=HarmonicMatrix::Zero();initial(0,0)=1;
-            require((old.values.array()==initial.array()).all(),"Every run resets all primary and baseline coefficients");
+            require((old.values().array()==initial.array()).all(),"Every run resets all primary and baseline coefficients");
         }
         estimators::AdaptiveStepResult result;
         result.motion=test_support::motionValue(Vector3::UnitX(),Vector3::UnitZ());
@@ -166,8 +167,9 @@ struct Step final:estimators::IAdaptiveStepSolver {
                     slot==0?Vector3::UnitX():Vector3::UnitZ());
             }
         }
-        result.coefficients_next=old;result.coefficients_next.values(0,0)+=1;
-        result.coefficients_next.values(1,0)=9; // 检出跨run未重置的非零高阶状态。
+        auto next=old.values();next(0,0)+=1;
+        next(1,0)=9; // 检出跨run未重置的非零高阶状态。
+        result.coefficients_next=test_support::coefficientValue(next);
         result.trace.coefficients_next=result.coefficients_next;
         return Result<estimators::AdaptiveStepResult,NumericalErrorCode>::success(std::move(result));
     }

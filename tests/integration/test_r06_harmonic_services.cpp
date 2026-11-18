@@ -1,6 +1,8 @@
+#include "../support/coefficient_fixture.hpp"
 // P7.10：固定源约定的三个无状态服务；独立多项式/精确投影参考，不运行MATLAB。
 #include "egomotion/harmonics/services.hpp"
 #include "egomotion/harmonics/adapter.hpp"
+#include "egomotion/harmonics/low_order.hpp"
 
 #include <algorithm>
 #include <array>
@@ -51,9 +53,9 @@ std::vector<Vector3> directions() {
         Vector3(4.0/5,0,3.0/5),Vector3(1.0/3,2.0/3,2.0/3)};
 }
 HarmonicCoefficients coefficients() {
-    HarmonicCoefficients c;
-    c.values<<2,0,0,0,0, 0.125,-0.25,0.375,0,0, -0.125,0.25,0.5,-0.375,0.625;
-    return c;
+    HarmonicMatrix c;
+    c<<2,0,0,0,0, 0.125,-0.25,0.375,0,0, -0.125,0.25,0.5,-0.375,0.625;
+    return test_support::coefficientValue(c);
 }
 void basisAndReconstruction() {
     const RealSphericalHarmonics service;const auto c=coefficients();
@@ -62,15 +64,17 @@ void basisAndReconstruction() {
         for(int l=0;l<3;++l)for(int m=0;m<5;++m)close(basis(l,m),expected(l,m));
         const auto reconstructed=service.reconstructNear(c,direction);
         require(reconstructed.hasValue(),"Finite source reconstruction");
-        close(reconstructed.value(),(c.values.array()*expected.array()).sum());
+        close(reconstructed.value(),(c.values().array()*expected.array()).sum());
         require(reconstructed.value()==reconstructNear(c,direction).value(),"Reconstruction forwarding");
         for(int l=0;l<3;++l)for(int m=0;m<2*l+1;++m) {
-            HarmonicCoefficients channel{HarmonicMatrix::Zero()};channel.values(l,m)=1;
+            HarmonicMatrix values=HarmonicMatrix::Zero();values(l,m)=1;
+            const auto channel=test_support::coefficientValue(values);
             close(service.reconstructNear(channel,direction).value(),expected(l,m));
         }
     }
     // 无效六项只要求有限、不参与重建；不得暗改为非零填充拒绝。
-    auto padding=c;for(int l=0;l<2;++l)for(int m=2*l+1;m<5;++m)padding.values(l,m)=123;
+    auto padded=c.values();for(int l=0;l<2;++l)for(int m=2*l+1;m<5;++m)padded(l,m)=123;
+    const auto padding=test_support::coefficientValue(padded);
     require(service.reconstructNear(padding,Vector3::UnitX()).value()==
             service.reconstructNear(c,Vector3::UnitX()).value(),"Finite unused padding ignored");
 }
@@ -97,16 +101,16 @@ void fittingAndOwnership() {
     auto input=projectionSamples();auto near=nearness();const auto original=input;
     const auto fitted=fitter.fitSourceNear(near,input);
     require(fitted.hasValue(),"Independent seven-direction source fit");
-    for(int l=0;l<3;++l)for(int m=0;m<5;++m)close(fitted.value().values(l,m),expected(l,m));
-    same(fitted.value().values,fitSourceNear(near,input).value().values);
+    for(int l=0;l<3;++l)for(int m=0;m<5;++m)close(fitted.value().values()(l,m),expected(l,m));
+    same(fitted.value().values(),fitSourceNear(near,input).value().values());
     // 原函数只消费视线列，即使尾部非有限也不改变此服务的投影合同。
     input.observations(0,5)=std::numeric_limits<double>::infinity();
-    same(fitter.fitSourceNear(near,input).value().values,fitted.value().values);
+    same(fitter.fitSourceNear(near,input).value().values(),fitted.value().values());
     input.observations.setZero();near.setZero();
-    same(fitted.value().values,fitter.fitSourceNear(nearness(),original).value().values);
+    same(fitted.value().values(),fitter.fitSourceNear(nearness(),original).value().values());
     const auto other=fitter.fitSourceNear(-nearness(),original);
     require(other.hasValue(),"Negative near projection remains allowed");
-    same(fitter.fitSourceNear(nearness(),original).value().values,fitted.value().values);
+    same(fitter.fitSourceNear(nearness(),original).value().values(),fitted.value().values());
 }
 void rotationSemantics() {
     const HarmonicRotator rotator;const RealSphericalHarmonics basis;const auto old=coefficients();
@@ -117,17 +121,18 @@ void rotationSemantics() {
         const auto physical=rotator.rotateCoefficients(old,r);
         const auto source=rotator.rotateSourceCoefficients(old,r);
         require(physical.hasValue()&&source.hasValue(),"Both explicit rotation conventions");
-        same(physical.value().values,rotateCoefficients(old,r).value().values);
-        same(source.value().values,rotateSourceCoefficients(old,r).value().values);
+        same(physical.value().values(),rotateCoefficients(old,r).value().values());
+        same(source.value().values(),rotateSourceCoefficients(old,r).value().values());
         for(const auto& d:directions())close(basis.reconstructNear(physical.value(),d).value(),
-            (old.values.array()*referenceBasis(r*d).array()).sum());
+            (old.values().array()*referenceBasis(r*d).array()).sum());
         const auto inverse=rotator.rotateCoefficients(physical.value(),r.transpose());
         require(inverse.hasValue(),"Inverse physical rotation");
-        for(int l=0;l<3;++l)for(int m=0;m<5;++m)close(inverse.value().values(l,m),old.values(l,m));
+        for(int l=0;l<3;++l)for(int m=0;m<5;++m)close(inverse.value().values()(l,m),old.values()(l,m));
     }
     // 独立判别mu=2+z与Rx(pi/2)：物理2+y，原系数动作2-y。
-    HarmonicCoefficients c{HarmonicMatrix::Zero()};const double pi=std::acos(-1.0);
-    c.values(0,0)=2*std::sqrt(4*pi);c.values(1,1)=std::sqrt(4*pi/3);
+    HarmonicMatrix values=HarmonicMatrix::Zero();const double pi=std::acos(-1.0);
+    values(0,0)=2*std::sqrt(4*pi);values(1,1)=std::sqrt(4*pi/3);
+    const auto c=test_support::coefficientValue(values);
     close(basis.reconstructNear(rotator.rotateCoefficients(c,x).value(),Vector3::UnitY()).value(),3);
     close(basis.reconstructNear(rotator.rotateSourceCoefficients(c,x).value(),Vector3::UnitY()).value(),1);
 }
@@ -142,14 +147,21 @@ template<class T> void error(const Result<T,NumericalErrorCode>& result,Numerica
                 chain.front().stage==ErrorStage::Solve&&!chain.front().message.empty(),"Leaf family/code/message preserved");
     }else require(result.error().detail.causes.empty(),"Adapter shape failure does not invent a leaf");
 }
+void invalidCoefficient(const HarmonicMatrix& invalid) {
+    // 非法领域值已不可构造；仍独立核对原始矩阵叶子的错误身份。
+    error(HarmonicCoefficients::create(invalid),NumericalErrorCode::NonFiniteInput,nullptr);
+    const auto leaf=low_order::fromMatlabLayout(invalid);
+    require(!leaf.hasValue()&&leaf.error().code==low_order::ErrorCode::NonFiniteInput,"Original layout leaf rejection");
+    require(leaf.error().message&&std::string(leaf.error().message).size()>0,"Leaf still explains non-finite storage");
+}
 void boundaries() {
     const RealSphericalHarmonics basis;const HarmonicFitter fitter;const HarmonicRotator rotator;
     const auto c=coefficients();auto samples=projectionSamples();auto near=nearness();
     error(basis.sourceBasis(Vector3::Zero()),NumericalErrorCode::InvalidDirection,"NotUnitDirection");
     Vector3 nan=Vector3::UnitX();nan.x()=std::numeric_limits<double>::quiet_NaN();
     error(basis.sourceBasis(nan),NumericalErrorCode::NonFiniteInput,"NonFiniteInput");
-    auto invalid=c;invalid.values(0,4)=std::numeric_limits<double>::infinity();
-    error(basis.reconstructNear(invalid,Vector3::UnitX()),NumericalErrorCode::NonFiniteInput,"NonFiniteInput");
+    auto invalid=c.values();invalid(0,4)=std::numeric_limits<double>::infinity();
+    invalidCoefficient(invalid);
     error(fitter.fitSourceNear(Eigen::VectorXd::Zero(6),samples),NumericalErrorCode::InvalidShape,nullptr);
     error(fitter.fitSourceNear(Eigen::VectorXd{},FlowField{}),NumericalErrorCode::InvalidShape,nullptr);
     near[0]=std::numeric_limits<double>::quiet_NaN();
@@ -161,10 +173,11 @@ void boundaries() {
     Matrix3 reflection=Matrix3::Identity();reflection(2,2)=-1;
     error(rotator.rotateCoefficients(c,reflection),NumericalErrorCode::InvalidDirection,"NotProperRotation");
     error(rotator.rotateSourceCoefficients(c,reflection),NumericalErrorCode::InvalidDirection,"NotProperRotation");
-    error(rotator.rotateSourceCoefficients(invalid,Matrix3::Identity()),NumericalErrorCode::NonFiniteInput,"NonFiniteInput");
+    invalid=c.values();invalid(2,3)=std::numeric_limits<double>::quiet_NaN();
+    invalidCoefficient(invalid);
     // 失败不改变可复用的无状态服务，也不污染独立返回值。
-    same(fitter.fitSourceNear(nearness(),projectionSamples()).value().values,
-         fitSourceNear(nearness(),projectionSamples()).value().values);
+    same(fitter.fitSourceNear(nearness(),projectionSamples()).value().values(),
+         fitSourceNear(nearness(),projectionSamples()).value().values());
 }
 } // namespace
 int main() {

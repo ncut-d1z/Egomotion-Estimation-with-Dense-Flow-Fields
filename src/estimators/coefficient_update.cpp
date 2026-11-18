@@ -12,7 +12,7 @@ Output fail(NumericalErrorCode code,const char* message) {
     return Output::failure({code,std::move(detail)});
 }
 Output inherit(const HarmonicCoefficients& primary) {
-    if(!primary.values.allFinite())
+    if(!primary.values().allFinite())
         return fail(NumericalErrorCode::NonFiniteInput,"Coefficient policy primary is non-finite");
     return Output::success(primary);
 }
@@ -25,9 +25,8 @@ Result<HarmonicCoefficients,NumericalErrorCode> ResetCoefficientUpdatePolicy::pr
     std::size_t frame,const HarmonicCoefficients&,const HarmonicCoefficients&,
     const Matrix3&) const {
     if(frame<kFirstMatlabFrame)return invalidFrame();
-    HarmonicCoefficients constant;constant.values.setZero();
-    constant.values(0,0)=1; // 两份源脚本每帧重新构造ohnekoeff。
-    return Output::success(std::move(constant));
+    // 两份源脚本每帧重新构造ohnekoeff。
+    return Output::success(HarmonicCoefficients::zeroOrderUnit());
 }
 Result<HarmonicCoefficients,NumericalErrorCode> InheritCoefficientUpdatePolicy::prepare(
     std::size_t frame,const HarmonicCoefficients& primary,const HarmonicCoefficients&,

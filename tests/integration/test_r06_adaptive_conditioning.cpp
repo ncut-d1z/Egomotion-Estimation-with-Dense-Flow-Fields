@@ -1,3 +1,4 @@
+#include "../support/coefficient_fixture.hpp"
 // 参考：verification/adaptive/zero_mean_conditioning_evidence.v1.json
 // blob be9aa64cb454fb434b407814f8cfa1310a7c90b7；独立 Wolfram 解析式，非 MATLAB 执行。
 #include "egomotion/estimators/adaptive_step.hpp"
@@ -47,11 +48,11 @@ struct Fixture {
     bool check_forward_solution=true;
 };
 HarmonicCoefficients coefficients(double a,double b) {
-    HarmonicCoefficients result;
-    result.values.setZero();
-    result.values(0,0)=a*std::sqrt(4*kPi);
-    result.values(1,0)=-b*std::sqrt(4*kPi/3);
-    return result;
+    HarmonicMatrix result;
+    result.setZero();
+    result(0,0)=a*std::sqrt(4*kPi);
+    result(1,0)=-b*std::sqrt(4*kPi/3);
+    return test_support::coefficientValue(result);
 }
 FlowField flow(const Fixture& fixture) {
     FlowField result;
@@ -174,7 +175,7 @@ void verify(const Fixture& fixture) {
     check(actual.hasValue(),fixture.name+": unexpected failure");
     check(std::memcmp(field.observations.data(),saved_field.observations.data(),
                       static_cast<std::size_t>(field.observations.size())*sizeof(double))==0&&
-          std::memcmp(fixture.coefficients.values.data(),saved_coeff.values.data(),15*sizeof(double))==0,
+          std::memcmp(fixture.coefficients.values().data(),saved_coeff.values().data(),15*sizeof(double))==0,
           fixture.name+": input changed");
     if (!actual.hasValue()) { std::cerr<<actual.error().detail.message<<'\n'; return; }
     const auto& result=actual.value();

@@ -43,7 +43,22 @@ private:
     Vector3 translation_=Vector3::Zero();
     Vector3 rotation_=Vector3::Zero();
 };
-struct HarmonicCoefficients { HarmonicMatrix values; };
+// MATLAB 3×5列主序；1+3+5项有效，六个未用位置也须有限但不强制为零。
+class HarmonicCoefficients final {
+public:
+    HarmonicCoefficients() noexcept = default;
+    static Result<HarmonicCoefficients,NumericalErrorCode> create(
+        const Eigen::Ref<const Eigen::MatrixXd>& values);
+    // 原脚本akkoeff(1,1)=1，其余为零；不是把重建近度归一成1。
+    static HarmonicCoefficients zeroOrderUnit() noexcept;
+
+    const HarmonicMatrix& values() const & noexcept { return values_; }
+    HarmonicMatrix values() && noexcept { return values_; }
+    HarmonicMatrix values() const && noexcept { return values_; }
+private:
+    explicit HarmonicCoefficients(const HarmonicMatrix& values) noexcept : values_(values) {}
+    HarmonicMatrix values_=HarmonicMatrix::Zero();
+};
 struct RunId { std::string text; };
 
 // matio-independent metadata. Numeric class/type values are opaque until R2.

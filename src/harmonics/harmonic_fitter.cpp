@@ -21,10 +21,7 @@ Result<HarmonicCoefficients,NumericalErrorCode> HarmonicFitter::fitSourceNear(
         auto fitted=low_order::projectSourceCoefficientsOrderTwo(near,points);
         if (!fitted.hasValue())
             return detail::bridge<HarmonicCoefficients>(fitted.error(),"SH source fit");
-        HarmonicCoefficients result;
-        result.values=std::move(fitted).value();
-        return Result<HarmonicCoefficients,NumericalErrorCode>::success(
-            std::move(result));
+        return HarmonicCoefficients::create(fitted.value());
     } catch (const std::bad_alloc&) {
         return detail::resourceFailure<HarmonicCoefficients>();
     } catch (const std::length_error&) {

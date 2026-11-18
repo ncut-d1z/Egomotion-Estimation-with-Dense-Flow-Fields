@@ -30,7 +30,7 @@ struct CountRandom final:IRandomSource {
 };
 void verifySessionRollback(estimators::AdaptiveSessionMode mode) {
     estimators::AdaptiveMfaSession session(mode);
-    const auto initial=session.primaryCoefficients().values;
+    const auto initial=session.primaryCoefficients().values();
     const auto initial_baselines=session.updateRateBaselines();
     require(initial(0,0)==1.0,
             "Source Adaptive initial coefficient akkoeff(1,1) must be one");
@@ -66,11 +66,11 @@ void verifySessionRollback(estimators::AdaptiveSessionMode mode) {
                              cause.code=="EmptyInput");
     require(has_numerical_root,
             "Session failure must retain underlying numerical error frame");
-    require((session.primaryCoefficients().values-initial).norm()==0.0,
+    require((session.primaryCoefficients().values()-initial).norm()==0.0,
             "Failed frame must not commit primary harmonic coefficients");
     const auto& final_baselines=session.updateRateBaselines();
     for(std::size_t k=0;k<initial_baselines.size();++k)
-        require((final_baselines[k].values-initial_baselines[k].values).norm()==0,
+        require((final_baselines[k].values()-initial_baselines[k].values()).norm()==0,
                 "Failed frame must not commit periodic baseline coefficients");
 
     frame.matlab_frame_index=3;

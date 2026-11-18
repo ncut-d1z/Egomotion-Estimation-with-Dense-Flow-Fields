@@ -55,7 +55,7 @@ Result<AdaptiveMotionResult,NumericalErrorCode> solveAdaptiveMotion(
     if (count==0)
         return fail<AdaptiveMotionResult>(NumericalErrorCode::EmptyInput,
                                          "Adaptive step requires at least one flow observation");
-    if (!old.values.allFinite()||!observations.observations.allFinite())
+    if (!old.values().allFinite()||!observations.observations.allFinite())
         return fail<AdaptiveMotionResult>(NumericalErrorCode::NonFiniteInput,
                                          "Adaptive coefficients/flow must be finite");
     for (Eigen::Index i=0;i<count;++i) {
@@ -69,7 +69,7 @@ Result<AdaptiveMotionResult,NumericalErrorCode> solveAdaptiveMotion(
         AdaptiveMotionResult result;
         auto& trace=result.trace;
         // 内部阶段尚未投影；显式占位，避免移动 trace 时读取未初始化的 Eigen 系数。
-        trace.coefficients_next.values.setZero();
+        trace.coefficients_next=HarmonicCoefficients{};
         trace.near_raw.resize(count);
         double raw_sum=0.0;
         const harmonics::RealSphericalHarmonics basis;

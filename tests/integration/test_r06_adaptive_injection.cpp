@@ -1,3 +1,4 @@
+#include "../support/coefficient_fixture.hpp"
 #include "../support/motion_fixture.hpp"
 // 只验证组合/失败/所有权；固定Step不是数值Golden或完整科学实验。
 #include "egomotion/experiments/production_runner.hpp"
@@ -113,7 +114,8 @@ struct Step final:estimators::IAdaptiveStepSolver {
             return Result<estimators::AdaptiveStepResult,NumericalErrorCode>::failure(failure());
         estimators::AdaptiveStepResult result;
         result.motion=test_support::motionValue(Vector3{1,2,3},Vector3{3,2,1});
-        result.coefficients_next=old;result.coefficients_next.values(0,0)+=0.01;
+        auto next=old.values();next(0,0)+=0.01;
+        result.coefficients_next=test_support::coefficientValue(next);
         result.trace.coefficients_next=result.coefficients_next;
         return Result<estimators::AdaptiveStepResult,NumericalErrorCode>::success(std::move(result));
     }
@@ -166,7 +168,7 @@ void routingAndReplay() {
         require(!again.hasValue(),"Replay has its own Session");
         require(step.flows.size()==old_calls+slots+1,"Replay begins at source frame two");
         for(std::size_t i=0;i<slots;++i)
-            same(step.coefficients[old_calls+i].values,step.coefficients[i].values);
+            same(step.coefficients[old_calls+i].values(),step.coefficients[i].values());
         // 重放Comparison使用新的系数0，故只核对原方向；其它模式核对全部输入。
         same(step.flows[old_calls].observations.leftCols<3>().eval(),input.observations.leftCols<3>().eval());
         if(mode!=1)same(step.flows[old_calls].observations,input.observations);

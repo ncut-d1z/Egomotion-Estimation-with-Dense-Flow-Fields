@@ -1,3 +1,4 @@
+#include "../support/coefficient_fixture.hpp"
 // Source-independent L3 candidate. All fixed 9-direction, M1..M4, RHS,
 // solved motion and new coefficients below are copied from:
 // verification/adaptive/asymmetric_signed_near_one_step.v1.json
@@ -396,10 +397,11 @@ static constexpr double neg_updated[] = {
 };
 
 void verify(const Evidence& evidence) {
-    HarmonicCoefficients old;
+    HarmonicMatrix raw_old;
     for(int r=0;r<3;++r)
         for(int c=0;c<5;++c)
-            old.values(r,c)=evidence.coefficients[5*r+c];
+            raw_old(r,c)=evidence.coefficients[5*r+c];
+    const auto old=test_support::coefficientValue(raw_old);
     FlowField field;
     field.observations.resize(9,6);
     for(int row=0;row<9;++row)
@@ -461,7 +463,7 @@ void verify(const Evidence& evidence) {
     const int offsets[3]={0,1,4};
     for(int l=0;l<3;++l)
         for(int c=0;c<2*l+1;++c)
-            near(output.coefficients_next.values(l,c),
+            near(output.coefficients_next.values()(l,c),
                  evidence.updated[offsets[l]+c],
                  "New nine source harmonic coefficients differ from independent L3");
     if(evidence.is_negative) {

@@ -1,3 +1,4 @@
+#include "../support/coefficient_fixture.hpp"
 #include "../support/motion_fixture.hpp"
 // R6：原 transfor_koeff 的系数动作与物理场动作分别验证。
 // 独立参考采用已审阅 IR96 Table 3 的显式二次表，不调用生产递推/张量。
@@ -5,6 +6,7 @@
 // 不运行 MATLAB，不将替身 Session 称为科学实验或批准 Golden。
 #include "egomotion/estimators/adaptive_session.hpp"
 #include "egomotion/harmonics/adapter.hpp"
+#include "egomotion/harmonics/low_order.hpp"
 
 #include <algorithm>
 #include <array>
@@ -44,7 +46,7 @@ void near(double actual,double expected,const std::string& context) {
 void same(const HarmonicCoefficients& actual,const HarmonicCoefficients& expected,
           const std::string& context) {
     for(int row=0;row<3;++row)for(int col=0;col<5;++col)
-        near(actual.values(row,col),expected.values(row,col),
+        near(actual.values()(row,col),expected.values()(row,col),
              context+" C("+std::to_string(row+1)+","+std::to_string(col+1)+")");
 }
 
@@ -69,31 +71,32 @@ ReferenceBlocks sourceBlocks(const Matrix3& r) {
 }
 HarmonicCoefficients sourceAction(const HarmonicCoefficients& old,const Matrix3& r) {
     const auto blocks=sourceBlocks(r);
-    HarmonicCoefficients out;
-    out.values.setZero();
-    out.values(0,0)=old.values(0,0);
-    out.values.row(1).head<3>()=(blocks.one*old.values.row(1).head<3>().transpose()).transpose();
-    out.values.row(2)=(blocks.two*old.values.row(2).transpose()).transpose();
-    return out;
+    HarmonicMatrix out;
+    out.setZero();
+    out(0,0)=old.values()(0,0);
+    out.row(1).head<3>()=(blocks.one*old.values().row(1).head<3>().transpose()).transpose();
+    out.row(2)=(blocks.two*old.values().row(2).transpose()).transpose();
+    return test_support::coefficientValue(out);
 }
-HarmonicCoefficients phase(HarmonicCoefficients c) {
-    c.values(1,0)=-c.values(1,0);c.values(1,2)=-c.values(1,2);
-    c.values(2,1)=-c.values(2,1);c.values(2,3)=-c.values(2,3);
-    return c;
+HarmonicCoefficients phase(const HarmonicCoefficients& input) {
+    auto c=input.values();
+    c(1,0)=-c(1,0);c(1,2)=-c(1,2);
+    c(2,1)=-c(2,1);c(2,3)=-c(2,3);
+    return test_support::coefficientValue(c);
 }
 double sourceField(const HarmonicCoefficients& c,const Vector3& v) {
     // kugelflfunc2 的九个 Cartesian 多项式；不调用被测重建器。
     const double pi=std::acos(-1.0),x=v.x(),y=v.y(),z=v.z();
-    return c.values(0,0)/std::sqrt(4*pi)+std::sqrt(3/(4*pi))*
-        (-c.values(1,0)*y+c.values(1,1)*z-c.values(1,2)*x)+
-        std::sqrt(15/(4*pi))*(c.values(2,0)*x*y-c.values(2,1)*y*z-
-            c.values(2,3)*x*z)+std::sqrt(5/(16*pi))*c.values(2,2)*(3*z*z-1)+
-        std::sqrt(15/(16*pi))*c.values(2,4)*(x*x-y*y);
+    return c.values()(0,0)/std::sqrt(4*pi)+std::sqrt(3/(4*pi))*
+        (-c.values()(1,0)*y+c.values()(1,1)*z-c.values()(1,2)*x)+
+        std::sqrt(15/(4*pi))*(c.values()(2,0)*x*y-c.values()(2,1)*y*z-
+            c.values()(2,3)*x*z)+std::sqrt(5/(16*pi))*c.values()(2,2)*(3*z*z-1)+
+        std::sqrt(15/(16*pi))*c.values()(2,4)*(x*x-y*y);
 }
 HarmonicCoefficients asymmetric() {
-    HarmonicCoefficients c;
-    c.values<<2,0,0,0,0, 0.125,-0.25,0.375,0,0, -0.125,0.25,0.5,-0.375,0.625;
-    return c;
+    HarmonicMatrix c;
+    c<<2,0,0,0,0, 0.125,-0.25,0.375,0,0, -0.125,0.25,0.5,-0.375,0.625;
+    return test_support::coefficientValue(c);
 }
 std::vector<Matrix3> rotations() {
     Matrix3 x,y,z,mixed;
@@ -122,7 +125,8 @@ void verifyAdapter() {
         for(std::size_t column=0;column<=positions.size();++column) {
             HarmonicCoefficients old=asymmetric();
             if(column<positions.size()) {
-                old.values.setZero();old.values(positions[column][0],positions[column][1])=1;
+                HarmonicMatrix unit=HarmonicMatrix::Zero();unit(positions[column][0],positions[column][1])=1;
+                old=test_support::coefficientValue(unit);
             }
             const std::string label="rotation="+std::to_string(index)+" column="+std::to_string(column);
             const auto raw=sourceAction(old,r);
@@ -140,10 +144,10 @@ void verifyAdapter() {
         }
         ++index;
     }
-    HarmonicCoefficients positive;
-    positive.values.setZero();
-    positive.values(0,0)=2*std::sqrt(4*std::acos(-1.0));
-    positive.values(1,1)=std::sqrt(4*std::acos(-1.0)/3);
+    HarmonicMatrix positive_values=HarmonicMatrix::Zero();
+    positive_values(0,0)=2*std::sqrt(4*std::acos(-1.0));
+    positive_values(1,1)=std::sqrt(4*std::acos(-1.0)/3);
+    const auto positive=test_support::coefficientValue(positive_values);
     const Matrix3 x=rotations()[1];
     const auto physical=harmonics::rotateCoefficients(positive,x);
     if(!physical.hasValue())throw std::runtime_error("Counterexample rotation failed");
@@ -163,14 +167,15 @@ void verifySourceCompositionAndErrors() {
     // 列系数的拉回作用反序：D(x*y)=D(y)D(x)，故先y后x对应y*x。
     same(sequential.value(),sourceAction(sample,y*x),"noncommuting sequential");
     same(combined.value(),sourceAction(sample,x*y),"noncommuting combined");
-    check((sequential.value().values-combined.value().values).norm()>0.1,
+    check((sequential.value().values()-combined.value().values()).norm()>0.1,
           "Composition fixture distinguishes order");
     const auto moved=harmonics::rotateSourceCoefficients(sample,mixed);
     if(!moved.hasValue())throw std::runtime_error("Source rational step failed");
     const auto restored=harmonics::rotateSourceCoefficients(moved.value(),mixed.transpose());
     if(!restored.hasValue())throw std::runtime_error("Source inverse failed");
     same(restored.value(),sample,"rational source inverse");
-    auto padded=sample;padded.values(0,4)=17;padded.values(1,4)=-23;
+    auto padding=sample.values();padding(0,4)=17;padding(1,4)=-23;
+    const auto padded=test_support::coefficientValue(padding);
     const auto old=padded;
     const auto padding_result=harmonics::rotateSourceCoefficients(padded,x);
     if(!padding_result.hasValue())throw std::runtime_error("Finite ignored padding rejected");
@@ -178,7 +183,16 @@ void verifySourceCompositionAndErrors() {
     same(padded,old,"const source coefficients remain unchanged");
     for(int kind=0;kind<4;++kind) {
         auto bad_coeff=sample;Matrix3 bad_rotation=Matrix3::Identity();
-        if(kind==0)bad_coeff.values(2,3)=std::numeric_limits<double>::infinity();
+        if(kind==0){
+            auto raw=sample.values();raw(2,3)=std::numeric_limits<double>::infinity();
+            const auto invalid=HarmonicCoefficients::create(raw);
+            check(!invalid.hasValue()&&invalid.error().code==NumericalErrorCode::NonFiniteInput,
+                  "Non-finite source coefficients rejected at construction");
+            const auto leaf=harmonics::low_order::fromMatlabLayout(raw);
+            check(!leaf.hasValue()&&leaf.error().code==harmonics::low_order::ErrorCode::NonFiniteInput,
+                  "Raw source leaf retains non-finite error identity");
+            continue;
+        }
         if(kind==1)bad_rotation(0,1)=std::numeric_limits<double>::quiet_NaN();
         if(kind==2)bad_rotation(0,0)=-1;
         if(kind==3)bad_rotation(0,0)=2;
@@ -208,7 +222,8 @@ struct TraceSolver final:IAdaptiveStepSolver {
         AdaptiveStepResult out;
         out.motion=test_support::motionValue(Vector3::UnitX(),Vector3::UnitY());
         out.error_mse=0;out.coefficients_next=old;
-        out.coefficients_next.values+=asymmetric().values;
+        out.coefficients_next=test_support::coefficientValue(
+            out.coefficients_next.values()+asymmetric().values());
         out.trace.coefficients_next=out.coefficients_next;
         return Result<AdaptiveStepResult,NumericalErrorCode>::success(std::move(out));
     }
@@ -222,7 +237,7 @@ AdaptiveFrameInput frame(std::size_t index) {
     return in;
 }
 HarmonicCoefficients initial() {
-    HarmonicCoefficients c;c.values.setZero();c.values(0,0)=1;return c;
+    return HarmonicCoefficients::zeroOrderUnit();
 }
 struct Model {
     HarmonicCoefficients primary=initial();
@@ -249,7 +264,7 @@ void successfulFrame(AdaptiveMfaSession& session,TraceSolver& solver,Model& mode
         same(solver.received.at(before+j),expected,label+" comparator="+std::to_string(j));
     }
     same(solver.received.at(before+comparisons),model.primary,label+" primary input");
-    model.primary.values+=asymmetric().values;
+    model.primary=test_support::coefficientValue(model.primary.values()+asymmetric().values());
     same(session.primaryCoefficients(),model.primary,label+" primary commit");
     for(std::size_t j=0;j<kPeriods.size();++j)
         same(session.updateRateBaselines()[j],model.baselines[j],label+" baseline commit");

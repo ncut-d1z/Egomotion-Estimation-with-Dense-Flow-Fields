@@ -22,7 +22,10 @@ if(NOT TARGET Sophus::Sophus)
 endif()
 
 
-add_library(egomotion_domain STATIC src/domain/motion_estimate.cpp)
+add_library(egomotion_domain STATIC
+    src/domain/motion_estimate.cpp
+    src/domain/harmonic_coefficients.cpp
+)
 add_library(egomotion::domain ALIAS egomotion_domain)
 target_include_directories(egomotion_domain PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
@@ -294,6 +297,13 @@ if(BUILD_TESTING)
         TIMEOUT 120
     )
 
+
+    add_executable(test_r06_coefficient_value tests/contracts/test_r06_coefficient_value.cpp)
+    target_link_libraries(test_r06_coefficient_value PRIVATE egomotion_contracts)
+    target_compile_options(test_r06_coefficient_value PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_coefficient_value_invariants COMMAND test_r06_coefficient_value)
+    set_tests_properties(r06_coefficient_value_invariants PROPERTIES
+        LABELS "r06;contracts;domain;harmonics;value-lifetime;negative" TIMEOUT 30)
 
     add_executable(test_r06_motion_value tests/contracts/test_r06_motion_value.cpp)
     target_link_libraries(test_r06_motion_value PRIVATE egomotion_contracts)

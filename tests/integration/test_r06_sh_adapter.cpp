@@ -1,3 +1,4 @@
+#include "../support/coefficient_fixture.hpp"
 // R6 pure-visual rotation action and SH adapter invariants (NOT a claim
 // that source SHRotate.m uses the same phase/action convention).
 // Physical rotation reference is AN-G08; distinguish R versus R^T explicitly.
@@ -20,18 +21,18 @@ bool close(double a,double b,double tol=2e-10) {
            std::abs(a-b)<tol*(1+std::abs(b));
 }
 HarmonicCoefficients testCoefficients() {
-    HarmonicCoefficients c;
-    c.values.setZero();
-    c.values(0,0)=3.544907701811032;
-    c.values(1,0)=0.37;
-    c.values(1,1)=-0.21;
-    c.values(1,2)=0.83;
-    c.values(2,0)=-0.14;
-    c.values(2,1)=0.42;
-    c.values(2,2)=0.75;
-    c.values(2,3)=-0.51;
-    c.values(2,4)=0.23;
-    return c;
+    HarmonicMatrix c;
+    c.setZero();
+    c(0,0)=3.544907701811032;
+    c(1,0)=0.37;
+    c(1,1)=-0.21;
+    c(1,2)=0.83;
+    c(2,0)=-0.14;
+    c(2,1)=0.42;
+    c(2,2)=0.75;
+    c(2,3)=-0.51;
+    c(2,4)=0.23;
+    return test_support::coefficientValue(c);
 }
 void verifyArgumentAction(const Matrix3& rotation) {
     const auto old=testCoefficients();
@@ -61,7 +62,7 @@ void verifyArgumentAction(const Matrix3& rotation) {
     auto undone=harmonics::rotateCoefficients(
         forward.value(),rotation.transpose());
     require(undone.hasValue(),"SH inverse argument rotation must be defined");
-    require((undone.value().values-old.values).norm()<2e-9,
+    require((undone.value().values()-old.values()).norm()<2e-9,
             "R then R transpose must recover the complete nine source coefficients");
 }
 } // namespace
@@ -80,7 +81,7 @@ int main() {
     auto identity=harmonics::rotateCoefficients(
         testCoefficients(),Matrix3::Identity());
     require(identity.hasValue()&&
-            (identity.value().values-testCoefficients().values).norm()<2e-10,
+            (identity.value().values()-testCoefficients().values()).norm()<2e-10,
             "Identity SO(3) must not change any source coefficient");
     auto antiparallel=trajectory::sourceRotationBetween(
         Vector3::UnitX(),-Vector3::UnitX());
