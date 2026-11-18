@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 本次代码与构建验证请求交付复核（2026-11-18）
+
+`[AI-EDIT]` 核对已推送e2275d0及Draft PR #6：D1–D5已列实现缺口均有修复/有限回归，当前62个生产翻译单元全部接入CMake和ON实际编译清单；OFF仅排除两个SVG实现。受测代码3985b05至当前无变化，重新读取四份原始JUnit/meta确认ON73/73、OFF72/72及构建退出0，739项输入SHA不变，98项P/66项规范TC集合一致。本次用户要求的代码补齐、编译和CTest验证已交付；本段不是R6总体、科学实验或REQ/AC的验收签字。三Adaptive原场景仍Incomplete，完整Bias/L4、病态/跨环境资格及已延期审批继续开放。未新增生产代码或重复运行测试，原始失败记录保留；见[交付范围复核](reviews/R6_DRAFT_DELIVERY_2026-11-18.md#本次代码与构建验证请求的交付范围复核)，只读证据`build/r6-scope-audit-20261118-RdRFcN3p/`。
+
 ## 最新接续：P10.8阶段Draft PR交付（2026-11-18）
 
 `[HUMAN-EXECUTE/APPROVE]` 已创建并API回读核实[Draft PR #6](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/pull/6)，Open/Draft/未合并，已附加到当前任务。创建时head `9c0022d2d7c3d19890cc46988f63b0544823d599`、base `eb08c6ba006727c3361af9ea8cb424ece99ba4e0`，main为祖先；353文件/1081提交的既有历史保留。PR按模块给出审查入口、固定受测3985b05的ON73/OFF72证据、Issue #1–#5修复链及原轨迹Incomplete范围。重新读取四份JUnit逐名匹配，并核对739项当前输入SHA；本轮仅文档/只读交付审计，没有重新构建/CTest。P10.8的创建动作完成，审查与正式验收未通过；不变更延期的Ready/合并/发布。详见[交付记录](reviews/R6_DRAFT_DELIVERY_2026-11-18.md)，证据目录`build/r6-draft-handoff-20261118-5nZ8yTP0/`；原资料和生产代码不变，R6仍未结案。
