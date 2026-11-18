@@ -1,6 +1,6 @@
 # R6：PLAN 的98项任务逐项复核
 
-> **接续实测**：`7f4d248255a1502b65e1f8210071a5d47b919839`两模式构建无诊断，**SVG ON66/66、OFF65/65 CTest**；先MAT7项，再59/58项，零失败/跳过/禁用。DirectionSet构造/只读/所有权和分配故障901项、714行采样及原回归通过，见 [专项记录](R6_DIRECTION_VALUE_2026-11-18.md)。MotionEstimate/HarmonicCoefficients已补；FlowField及其余义务保留。Issue #1/#2/#3仍开放，不代签对象/数值验收。
+> **接续实测**：`b2628a97d1ca74844a2b57fab035387ce847670c`两模式构建无诊断，**SVG ON67/67、OFF66/66 CTest**；先MAT7项，再60/59项，零失败/跳过/禁用。FlowField构造/所有权1245项与HarmonicFitter方向独立入口494项及原回归通过，见 [专项记录](R6_FLOW_VALUE_2026-11-18.md)。D1列明四类存储边界已补有限实测；D4与完整实验/正式资格仍缺。Issue #1/#2/#3仍开放，不代签验收。
 
 `[AI-EDIT]`，2026-11-18。本表逐项保留 [PLAN](../PLAN.md) 的98个P编号和原义务，核对实际文件、现有测试及缺口；**不修改需求、验收门槛、批准或冻结状态，也不将“有代码/测试通过”改称“任务已验收”**。原始任务全文及REQ/TC/AC/依赖仍以PLAN为准；下列“核对对象”只是定位摘要，不替代它。
 
@@ -17,7 +17,7 @@
 | 本表索引 | 真实文件与对应证据 |
 |---|---|
 | SRC | [SOURCE_INVENTORY](../SOURCE_INVENTORY.md)、[MAT_DATA_SCHEMA](../MAT_DATA_SCHEMA.md)、[MIGRATION_MATRIX](../MIGRATION_MATRIX.md)、[45源复核](R6_SOURCE_IMPLEMENTATION_MAP_2026-11-17.md)；对应SOURCE |
-| BUILD | [CMakeLists](../../CMakeLists.txt)、[README](../../README.md)、[无绘图构建](R6_HEADLESS_BUILD_2026-11-17.md)、[最新双模式证据](R6_DIRECTION_VALUE_2026-11-18.md)；对应ENV/HEADLESS |
+| BUILD | [CMakeLists](../../CMakeLists.txt)、[README](../../README.md)、[无绘图构建](R6_HEADLESS_BUILD_2026-11-17.md)、[最新双模式证据](R6_FLOW_VALUE_2026-11-18.md)；对应ENV/HEADLESS |
 | DESIGN | [OBJECT_MODEL](../OBJECT_MODEL.md)、[ARCHITECTURE](../ARCHITECTURE.md)、[contracts](../design/contracts.md)，均为候选；实际 [领域类型](../../include/egomotion/domain/types.hpp)、[运动值工厂](../../src/domain/motion_estimate.cpp)、[窄接口](../../include/egomotion/contracts/interfaces.hpp) |
 | GEO | [方向采样](../../src/sampling/directions.cpp)、[随机源](../../src/sampling/random.cpp)；对应GEOM |
 | FLOW | [光流及噪声](../../src/simulation/flow.cpp)、[接口](../../include/egomotion/simulation/flow.hpp)；对应GEOM/RUNNER |
@@ -53,14 +53,14 @@
 | P1.8 | 探针与生产Reader分开核对 | DICTIONARY、MAT、SNAPSHOT：两者均实际执行 | 部分 | 存储复核已做；性能预算与人工字典验收仍未完成。 |
 | P1.9 | move-only句柄与输出安全 | IO、MAT、CONTRACT：符号链接、拒覆盖、发布故障/寿命 | 实测（有限） | 实际RunDirectory锚定固定根，未声称无限资源或全部竞态证明。 |
 | P1.10 | 窄Reader/Writer接口 | CONTRACT、IO、CLI：IResultReader/IResultWriter及内存替身 | 实测（有限） | 公共ABI未冻结；matio C句柄不进入求解器接口。 |
-| P2.1 | N×6与数学量合同 | GEO、CONTRACT、MOTION-VALUE、DIR-VALUE：double/列主序领域值和边界 | 部分 | 运动与方向存储形状/有限性已测，零/非单位方向仍由原物理模型拒绝；FlowField不变量仍缺，见D1。 |
+| P2.1 | N×6与数学量合同 | GEO、CONTRACT、MOTION-VALUE、DIR-VALUE、FLOW-VALUE | 部分 | 四类存储形状/有限性已测；物理单位/切向规则沿用原算法作用范围，未增加统一门槛，总体合同未冻结。 |
 | P2.2 | 向量基础运算 | GEO、KVD、STEP：Eigen dot/cross与内部叉乘矩阵 | 实测（有限） | 融合入业务公式，无机械同名包装类；独立固定公式覆盖符号。 |
 | P2.3 | 递归四分 | GEO：emitFace/normalizeSource，独立有序JSON | 实测（有限） | level0…2全行；任意深度资源和全部浮点输入不由此证明。 |
 | P2.4 | 完整八面体 | GEO：OctahedralSampler，8×4^level | 实测（有限） | 同层点序和原face顺序已核。 |
 | P2.5 | 缺损八面体 | GEO：OccludedOctahedralSampler，保留源面2/3/5/6/7/8 | 实测（有限） | 6×4^level；level0…2逐行，不将面集互换。 |
 | P2.6 | 二十面体 | GEO：IcosahedralSampler，源顶点/面表 | 实测（有限） | 20×4^level，独立逐行到level2；实际Comparison使用level4但未完整成功。 |
 | P2.7 | 随机单位方向 | GEO、RUN：两uniform固定序列/耗尽 | 实测（有限） | 不证明不同语言同seed序列或L4随机分布。 |
-| P2.8 | 值语义与不变量 | CONTRACT、MAT、SH、MOTION-VALUE、COEFF-VALUE、DIR-VALUE | 部分 | 运动839项、系数178项、方向901项构造/有限性/所有权/寿命与编译断言通过；FlowField仍缺，不代签整体对象验收。 |
+| P2.8 | 值语义与不变量 | CONTRACT、MAT、SH、MOTION-VALUE、COEFF-VALUE、DIR-VALUE、FLOW-VALUE | 部分 | 运动839、系数178、方向901、流场1245项构造/有限性/拥有/寿命与编译约束通过；求解输出和总体对象验收仍按原AC复核。 |
 | P2.9 | 可替换方向采样 | GEO、RUN：IDirectionSampler三实现，Bias及Adaptive均显式注入 | 实测（有限） | Adaptive级别2/4/2及默认/显式装配逐位输入已测，正式对象边界验收仍独立。 |
 | P3.1 | 理想切向光流 | FLOW：idealFlow、平移/旋转/合成和均流长 | 实测（有限） | 固定解析输入；不以单族等同全域数学证明。 |
 | P3.2 | 固定随机深度 | FLOW、RUN：距离1…4、平均2.5、倒数与抽样顺序 | 实测（有限） | uniform/normal消费序保留；MATLAB RNG内部实现未验证。 |
@@ -138,7 +138,7 @@
 
 下列差别是本次源码审计事实，**不是AI批准的新设计**。P任务中明确的结构义务不能因算法回归通过而静默删除；是否通过最小改动补齐结构或修订候选设计，需保持原职责、可替换性、生命周期和算法次序。未冻结的候选类名称也不能被报告成已经存在的生产API。
 
-- **D1：构造不变量（P2.1/P2.8/P10.9）**。MotionEstimate/HarmonicCoefficients已补有限私有存储；`7f4d248`落实DirectionSet的N×3有限性、默认空集合、检查复制/严格原类型移交、只读getter及复制异常安全，901项及原回归通过，见 [方向证据](R6_DIRECTION_VALUE_2026-11-18.md)、[运动证据](R6_MOTION_VALUE_2026-11-18.md)、[系数证据](R6_COEFFICIENT_VALUE_2026-11-18.md)。FlowField仍为Eigen成员aggregate；须保留源前缀读取和各算法单位/切向条件作用范围，不能任意统一门槛。零/非单位方向存储不等于物理可用；DEC-008-03只针对Result/Status，本候选不等于领域工厂全部获批或总体对象验收。
+- **D1：构造不变量（P2.1/P2.8/P10.9）**。MotionEstimate/HarmonicCoefficients/DirectionSet后，`b2628a9`补齐FlowField私有N×6有限存储、检查复制/严格移交、只读访问和异常边界；1245项及原回归通过，见 [流场证据](R6_FLOW_VALUE_2026-11-18.md)、[方向证据](R6_DIRECTION_VALUE_2026-11-18.md)、[运动证据](R6_MOTION_VALUE_2026-11-18.md)、[系数证据](R6_COEFFICIENT_VALUE_2026-11-18.md)。HarmonicFitter方向重载保留源前三列合同，物理条件由原消费端决定，不统一容差。已列明四类存储构造源码缺口补齐，不等于所有求解输出/对象/API正式验收；DEC-008-03仍只针对Result/Status。
 - **D2：策略和纯数学职责（P4.9/P7.1/P7.10/P8.8/P8.9/P9.8）**。`df511f9`已补KvD引擎/平移规则，`5318cd8`已补Session的ICoefficientUpdatePolicy及Reset/Inherit/Periodic默认组合和显式注入；48523项策略检查及既有真实Session/独立数值回归通过，见 [Session证据](R6_COEFFICIENT_POLICY_2026-11-18.md)，P4.9/P8.8结构缺口已补。`cce0bf2`另补P7.1的独立源角度接口，1137项解析/边界检查见 [角度证据](R6_SOURCE_ANGLES_2026-11-18.md)，不改变已有Cartesian基路径。`a19d2d8`已补P7.10的RealSphericalHarmonics/HarmonicFitter/HarmonicRotator三个固定约定组件，实际求解/Session/策略接入，482项独立参考/边界和原回归见 [球谐职责证据](R6_HARMONIC_SERVICES_2026-11-18.md)。`03f7f81`再补P9.8的BiasResultAnalyzer/AdaptiveResultAnalyzer，MatResultAnalyzer只分派；727项入口/故障/隔离及历史回归见 [分析职责证据](R6_ANALYZER_SERVICES_2026-11-18.md)。`34fe509`补足P8.9三具名入口的Config/Context编排与独立会话，172962项交错/故障恢复及旧回归见 [入口证据](R6_ADAPTIVE_ENTRIES_2026-11-18.md)。D2列明的源码职责缺口已补，总体对象与公共API仍未冻结/正式验收。
 - **D3：编排依赖注入（P5.7/P10.9）**。首次发现Bias在compute内创建Franz/Original/Modified及RNG，与SRS附录A的**REQ-DC-EXPERIMENT-001“通过组合注入求解、RNG、采样和写入器”**存在差距。`909fd57`已补BiasEstimators三槽及RunContext RNG注入，保留采样/噪声/Writer接口、源两次reseed和求解顺序；[668项测试及真实回归](R6_BIAS_INJECTION_2026-11-18.md)验证该Bias缺口。`0cd5439`再补AdaptiveSampling的采样/噪声显式借用及Production默认拥有服务，RNG沿用RunContext；噪声success先核行数/方向/有限性。36088项组合/故障/重放及真实回归见 [Adaptive证据](R6_ADAPTIVE_INJECTION_2026-11-18.md)。`74dbccd`再补AdaptiveScene的轨迹/运动学/球环境三接口及Production默认/外部装配；原数学函数体不变，轨迹/运动学返回值在下游调用前检查。三入口完整合成场景、八轮聚合、54个服务故障及第5轮失败前缀共88121项见 [场景证据](R6_ADAPTIVE_SCENE_2026-11-18.md)。D3目前列明的装配源码缺口已补，总体OOP验收未关闭；FlowSynthesizer仍为无状态公式服务，不为凑类名添加无用途包装。
 - **D4：正式运行记录边界（P5.3/P8.9/P10.6）**。五生成入口已有开始/结束记录；`00d1742`补齐plot/SVG在分配RunId后的导出记录，394项/38次调用及真实进程检查通过，见 [证据](R6_ARTIFACT_RECORDS_2026-11-18.md)。来源摘要沿用读取快照，未使用的RNG/计算Manifest明确为null；记录失败保留已有产物。inspect/analyze/JSON illustration继续只读，解析/分析/几何/RunId预留失败及信号终止仍依赖外部证据；不将这一有限补足等同整个REQ-NF-LOG验收。
@@ -146,7 +146,7 @@
 
 ## 后续次序与权限边界
 
-1. D3已列明的Bias/Adaptive装配、D5真实版本负例、D4的已分配RunId导出记录及D2的KvD/Session策略、P7.1角度、P7.10球谐、P9.8分析和P8.9入口职责已补。D1的MotionEstimate/HarmonicCoefficients/DirectionSet已补，继续FlowField及只读/预留前记录范围，保留原数值公式、输入只读和检查点顺序。P10.8仍缺可审查Draft PR，后续以实际范围与测试证据准备，不合并或发布。
+1. D3已列明的Bias/Adaptive装配、D5真实版本负例、D4的已分配RunId导出记录及D2的KvD/Session策略、P7.1角度、P7.10球谐、P9.8分析和P8.9入口职责已补。D1的MotionEstimate/HarmonicCoefficients/DirectionSet/FlowField已补有限实测，继续D4只读/预留前记录范围及其余R6义务，保留原数值公式、输入只读和检查点顺序。P10.8仍缺可审查Draft PR，后续以实际范围与测试证据准备，不合并或发布。
 2. 三个Adaptive真实失败（初始化帧14acos越界，另外两入口帧151零旋转）及完整Bias/L4仍未解决；不可修改门限、跳帧或改分母以获得成功。具体结果与未执行成功分支见NUM。
 3. 容差、资源、跨环境、基线及发布的正式批准仍按TODO的既定延期状态处理；本表不擅自解锁、催办或代签。**没有MATLAB/Octave/L1阻塞。**
 4. 本次新增NUMERICAL_EQUIVALENCE补齐了P10.6缺失的汇总文件；P10.6以及R6整体仍未完成。

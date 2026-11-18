@@ -1,5 +1,7 @@
 # 视线采样、光流合成与噪声——详细设计草案
 
+> **2026-11-18 FlowField实现事实，候选/未冻结**：合成/噪声先在局部N×6矩阵完成原公式、XYZ随机调用及投影，再检查并移交为有限只读FlowField；NoNoise保留原值，不额外投影。1245项及全回归见 [实测](../reviews/R6_FLOW_VALUE_2026-11-18.md)。NaN噪声产物在工厂拒绝，Runner保留实际行号；空/方向改动仍按原合同失败。不改数值门槛或正式冻结。
+
 > **2026-11-18 DirectionSet实现事实，候选/未冻结**：生产采样器先在局部DirectionMatrix按原面/叶次序与sqrt(dot)生成，再由DirectionSet::fromOwned检查并移交；消费端使用directions()只读访问。N×3有限性不代替原物理单位检查；create复制未知形状输入，fromOwned拒绝其它Eigen类型的隐式移交。901项及714行独立L3与全回归见 [实测](../reviews/R6_DIRECTION_VALUE_2026-11-18.md)。下方旧aggregate伪代码保留草案语境，此处不改源采样/噪声公式、抽样顺序或正式冻结。
 
 > **LLD v0.13 草案，未冻结；采样/噪声仍无生产实现或 CTest。i=0/1/2 全714行方向已通过独立 Wolfram 逐坐标双实现对照（2,142个坐标、最大绝对差1.1102230246251565e-16）；正式 Golden/DEC-005、异常和 RNG 等软件验收尚未批准。** 对应 P2/P3、REQ-F-GEOM-*、REQ-F-FLOW-*、REQ-DC-RNG-001、REQ-DC-NOISE-001。

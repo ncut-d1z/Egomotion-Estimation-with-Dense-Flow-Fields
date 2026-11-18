@@ -1,5 +1,7 @@
 # 实球谐、近度重建及系数旋转——详细设计
 
+> **2026-11-18 方向独立拟合实现，候选/未冻结**：HarmonicFitter新增DirectionSet重载，原FlowField重载仅取前三列，两者沿用同一原始逐通道投影叶子。源N×K矩阵可显式提取前三列而不要求光流尾列有效；完整FlowField则要求全部六列有限。尾部Inf、原始叶子、空/非单位方向及独立参考使服务检查增至494项，双模式全回归见 [实测](../reviews/R6_FLOW_VALUE_2026-11-18.md)。原相位/4pi/求和顺序和叶子错误链不变，不签署数值或API验收。
+
 > **2026-11-18 P7.10候选实现，未冻结**：`services.hpp`提供三个无状态具体类：`RealSphericalHarmonics`负责源CS基值和近度重建，`HarmonicFitter`负责原逐通道投影，`HarmonicRotator`分别命名物理场动作与原系数动作。原适配函数体分别迁入三个实现文件，公共错误码映射与叶子Frame保留；低阶Eigen公式、相位、4π和运算顺序不变。旧自由函数只转发，Adaptive单步/Session/更新策略使用具体组件；不增加继承、共享可变缓存或实验状态。新`sourceBasis`返回源3×5基值布局（l=0..2、m=-l..l，六项无效填零），沿用叶子方向校验。实施与实测状态见 [职责分离记录](../reviews/R6_HARMONIC_SERVICES_2026-11-18.md)，不代签公共ABI或DEC-005验收。
 
 > **2026-11-18 P7.1候选增量，未冻结**：低阶叶子新增`SphericalAngles{theta_radians,phi_radians}`及`sourceAnglesFromDirection`，保持原`winkelausvektor.m`的`atan2(y,x)`后`acos(z)`顺序与弧度轴约定。沿用现有单位方向校验；不归一化或裁剪，范数舍入余量内但z越界仍以`NonFiniteResult`失败。两极方位角不具几何唯一性，C++带符号零行为单独登记，不能推断原MATLAB运行轨迹。现有Cartesian基/拟合/旋转路径不变；实现与验证状态见 [角度记录](../reviews/R6_SOURCE_ANGLES_2026-11-18.md)。不新增跨模块错误码或将此叶子接口冒充已冻结的公共ABI。
