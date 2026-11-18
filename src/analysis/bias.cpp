@@ -1,4 +1,5 @@
-#include "reader_helpers.hpp"
+#include "egomotion/analysis/result_analyzer.hpp"
+#include "analysis_guard.hpp"
 
 #include <array>
 #include <charconv>
@@ -10,7 +11,13 @@
 #include <utility>
 #include <vector>
 
-namespace egomotion::analysis::detail {
+namespace egomotion::analysis {
+using detail::DatasetResult;
+using detail::error;
+using detail::load;
+using detail::column;
+using detail::provenance;
+using detail::series;
 namespace {
 namespace fs=std::filesystem;
 
@@ -56,7 +63,11 @@ Result<std::vector<fs::path>,AnalysisErrorCode> runDirectories(
 }
 } // namespace
 
-DatasetResult bias(const std::filesystem::path& root,IResultReader& reader) {
+DatasetResult BiasResultAnalyzer::aggregate(const std::filesystem::path& root,IResultReader& reader) const {
+    return detail::guardAnalysis(root,[&]{return aggregateSource(root,reader);});
+}
+
+DatasetResult BiasResultAnalyzer::aggregateSource(const std::filesystem::path& root,IResultReader& reader) const {
     auto runs=runDirectories(root);
     if(!runs.hasValue())
         return DatasetResult::failure(std::move(runs).error());
@@ -134,4 +145,4 @@ DatasetResult bias(const std::filesystem::path& root,IResultReader& reader) {
     return DatasetResult::success(std::move(out));
 }
 
-}  // namespace egomotion::analysis::detail
+}  // namespace egomotion::analysis

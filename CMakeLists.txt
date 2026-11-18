@@ -406,6 +406,14 @@ if(BUILD_TESTING)
     set_tests_properties(r06_adaptive_session_transaction PROPERTIES
         LABELS "r06;adaptive;session;failure-atomic" TIMEOUT 60)
 
+    add_executable(test_r06_analyzer_services tests/integration/test_r06_analyzer_services.cpp)
+    target_link_libraries(test_r06_analyzer_services PRIVATE egomotion_analysis)
+    target_compile_options(test_r06_analyzer_services PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_analyzer_service_contract COMMAND test_r06_analyzer_services
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_analyzer_services")
+    set_tests_properties(r06_analyzer_service_contract PROPERTIES
+        LABELS "r06;analysis;services;memory-reader;source-order" TIMEOUT 60)
+
     add_executable(test_r06_analysis_segments tests/integration/test_r06_analysis_segments.cpp)
     target_link_libraries(test_r06_analysis_segments PRIVATE egomotion_analysis)
     target_compile_features(test_r06_analysis_segments PRIVATE cxx_std_17)

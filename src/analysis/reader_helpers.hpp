@@ -27,7 +27,4 @@ AnalysisSeries series(std::string name,std::string panel,
                       std::vector<double> x,std::vector<double> y,
                       std::vector<AnalysisInput> sources,
                       std::size_t begin,std::size_t end);
-DatasetResult bias(const std::filesystem::path& root,IResultReader& reader);
-DatasetResult adaptive(AnalysisKind kind,const std::filesystem::path& root,
-                       IResultReader& reader);
 }  // namespace egomotion::analysis::detail

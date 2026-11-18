@@ -1,4 +1,5 @@
-#include "reader_helpers.hpp"
+#include "egomotion/analysis/result_analyzer.hpp"
+#include "analysis_guard.hpp"
 
 #include <array>
 #include <cmath>
@@ -10,7 +11,14 @@
 #include <utility>
 #include <vector>
 
-namespace egomotion::analysis::detail {
+namespace egomotion::analysis {
+using detail::DatasetResult;
+using detail::ArrayResult;
+using detail::error;
+using detail::load;
+using detail::column;
+using detail::provenance;
+using detail::series;
 namespace {
 
 constexpr const char* kSmoothingSourceBlob="eced66659205a6386ec84723e37a46517d06c017";
@@ -116,8 +124,13 @@ DatasetResult loadRatioFailure(ArrayResult& ratio) {
 }
 } // namespace
 
-DatasetResult adaptive(AnalysisKind kind,const std::filesystem::path& root,
-                       IResultReader& reader) {
+DatasetResult AdaptiveResultAnalyzer::analyze(AnalysisKind kind,const std::filesystem::path& root,
+                       IResultReader& reader) const {
+    return detail::guardAnalysis(root,[&]{return analyzeSource(kind,root,reader);});
+}
+
+DatasetResult AdaptiveResultAnalyzer::analyzeSource(AnalysisKind kind,const std::filesystem::path& root,
+                       IResultReader& reader) const {
     if(kind==AnalysisKind::Bias)
         return error(AnalysisErrorCode::UnsupportedExperiment,
                      "Adaptive analyzer received Bias kind");
@@ -247,4 +260,4 @@ DatasetResult adaptive(AnalysisKind kind,const std::filesystem::path& root,
     return DatasetResult::success(std::move(out));
 }
 
-} // namespace egomotion::analysis::detail
+} // namespace egomotion::analysis
