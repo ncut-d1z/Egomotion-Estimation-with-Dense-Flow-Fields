@@ -26,14 +26,13 @@ void writeAll(int fd, const std::string& contents) {
     }
 }
 namespace {
-Fd openDirectory(int parent, const char* name, bool private_directory) {
+Fd openDirectory(int parent, const char* name) {
     checked(::mkdirat(parent, name, 0700) == 0 || errno == EEXIST, "Cannot create log ancestor");
     Fd fd(::openat(parent, name, O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW));
     checked(fd.get() >= 0, "Log ancestor must be a real directory");
     struct stat identity{};
     checked(::fstat(fd.get(), &identity) == 0, "Cannot inspect log ancestor");
-    const mode_t forbidden = private_directory ? 0077 : 0022;
-    if (identity.st_uid != ::geteuid() || (identity.st_mode & forbidden) != 0)
+    if (identity.st_uid != ::geteuid() || (identity.st_mode & 0077) != 0)
         throw std::runtime_error("Log ancestor has an unsafe owner or permissions");
     checked(::fsync(parent) == 0, "Cannot persist log ancestor");
     return fd;
@@ -58,8 +57,8 @@ Fd reserve(const std::filesystem::path& root, std::string& id, std::filesystem::
     struct stat origin{};
     checked(::fstatat(repo.get(), "origin", &origin, AT_SYMLINK_NOFOLLOW) == 0 && S_ISDIR(origin.st_mode),
             "Trusted checkout requires a real origin directory");
-    const auto build = openDirectory(repo.get(), "build", false);
-    const auto logs = openDirectory(build.get(), "cli-records", true);
+    // 独立私有日志根，不要求更改已有CMake build目录的共享权限。
+    const auto logs = openDirectory(repo.get(), "build-cli-records");
     constexpr int collision_limit = 4;
     for (int attempt = 0; attempt < collision_limit; ++attempt) {
         id = randomId();
@@ -70,7 +69,7 @@ Fd reserve(const std::filesystem::path& root, std::string& id, std::filesystem::
         Fd directory(::openat(logs.get(), id.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW));
         checked(directory.get() >= 0, "Cannot anchor process record directory");
         checked(::fsync(logs.get()) == 0, "Cannot persist process record directory");
-        path = root / "build" / "cli-records" / id;
+        path = root / "build-cli-records" / id;
         return directory;
     }
     throw std::runtime_error("Process record identity collision limit exceeded");

@@ -117,13 +117,16 @@ fs::path newRoot(const fs::path& base, const std::string& name) {
 }
 fs::path onlyRecord(const fs::path& root) {
     std::vector<fs::path> records;
-    for (const auto& entry : fs::directory_iterator(root / "build/cli-records")) records.push_back(entry.path());
+    for (const auto& entry : fs::directory_iterator(root / "build-cli-records")) records.push_back(entry.path());
     require(records.size() == 1, "Exactly one exclusive process record");
     return records.front();
 }
 void termination(const fs::path& base) {
     for (const auto* mode : {"ok", "137", "6", "kill", "pipe", "forward"}) {
         const auto root = newRoot(base, mode);
+        fs::create_directories(root / "build");
+        fs::permissions(root / "build", fs::perms::owner_all | fs::perms::group_all |
+                                        fs::perms::others_read | fs::perms::others_exec);
         const auto result = invoke(root, mode);
         const int signal = std::strcmp(mode, "kill") == 0 ? SIGKILL : std::strcmp(mode, "pipe") == 0 ? SIGPIPE :
                            std::strcmp(mode, "forward") == 0 ? SIGTERM : 0;
@@ -143,6 +146,7 @@ void termination(const fs::path& base) {
         contains(read(directory / "stderr.bin"), "\"causes\":[{\"message\":\"inner\"}]");
         require(!fs::exists(root / "output"), "Process audit must not create an experiment output root");
         struct stat info{};
+        require(::stat((root / "build").c_str(), &info) == 0 && (info.st_mode & 0777) == 0775, "Existing shared build permissions unchanged");
         require(::stat(directory.c_str(), &info) == 0 && (info.st_mode & 0777) == 0700, "Private record directory");
         require(::stat((directory / "stdout.bin").c_str(), &info) == 0 && (info.st_mode & 0777) == 0600, "Private channel log");
         require(!fs::exists(directory / "start.json.pending"), "Successful temporary link cleaned");
@@ -182,20 +186,18 @@ void publicationFaults(const fs::path& base) {
 }
 void paths(const fs::path& base) {
     const auto outside = newRoot(base, "outside");
-    for (const auto* component : {"build", "build/cli-records"}) {
-        const auto root = newRoot(base, std::strcmp(component, "build") == 0 ? "build_link" : "logs_link");
-        fs::create_directories((root / component).parent_path());
-        if (std::strcmp(component, "build") != 0)
-            fs::permissions(root / "build", fs::perms::owner_all);
-        fs::create_directory_symlink(outside, root / component);
-        require(invoke(root).code == 6 && !fs::exists(root / "entered"), "Reject log directory symlink before child");
-        require(!fs::exists(outside / "cli-records"), "Do not write through symlink");
+    for (const bool symlink : {true, false}) {
+        const auto root = newRoot(base, symlink ? "logs_link" : "logs_file");
+        if (symlink) fs::create_directory_symlink(outside, root / "build-cli-records");
+        else std::ofstream(root / "build-cli-records") << "retained regular file";
+        require(invoke(root).code == 6 && !fs::exists(root / "entered"), "Reject non-directory audit root before child");
+        require(!fs::exists(outside / "build-cli-records"), "Do not write through symlink");
+        if (!symlink) require(read(root / "build-cli-records") == "retained regular file", "Keep regular-file blocker");
     }
     const auto collision = newRoot(base, "collision");
-    const auto occupied = collision / "build/cli-records/record_00000000000000000000000000000000";
+    const auto occupied = collision / "build-cli-records/record_00000000000000000000000000000000";
     fs::create_directories(occupied);
-    fs::permissions(collision / "build", fs::perms::owner_all);
-    fs::permissions(collision / "build/cli-records", fs::perms::owner_all);
+    fs::permissions(collision / "build-cli-records", fs::perms::owner_all);
     std::ofstream(occupied / "retained") << "never replace";
     fault = Fault::Collision;
     const auto response = invoke(collision);
@@ -204,15 +206,14 @@ void paths(const fs::path& base) {
     require(read(occupied / "retained") == "never replace", "Collision preserves existing evidence");
     require(!fs::exists(collision / "entered"), "No child after identity failure");
     const auto shared = newRoot(base, "shared_logs");
-    fs::create_directories(shared / "build/cli-records");
-    fs::permissions(shared / "build", fs::perms::owner_all);
-    fs::permissions(shared / "build/cli-records", fs::perms::owner_all | fs::perms::group_all);
+    fs::create_directories(shared / "build-cli-records");
+    fs::permissions(shared / "build-cli-records", fs::perms::owner_all | fs::perms::group_all);
     require(invoke(shared).code == 6, "Reject shared log directory");
-    const auto unsafe_build = newRoot(base, "shared_build");
-    fs::create_directories(unsafe_build / "build");
-    fs::permissions(unsafe_build / "build", fs::perms::owner_all | fs::perms::group_all);
-    require(invoke(unsafe_build).code == 6 && !fs::exists(unsafe_build / "entered"),
-            "Keep unsafe build ancestor rejection independently of final directory");
+    const auto public_logs = newRoot(base, "public_logs");
+    fs::create_directories(public_logs / "build-cli-records");
+    fs::permissions(public_logs / "build-cli-records", fs::perms::owner_all | fs::perms::others_read);
+    require(invoke(public_logs).code == 6 && !fs::exists(public_logs / "entered"),
+            "Reject public audit root even when others cannot write");
 }
 void brokenPipes(const fs::path& base) {
     for (const int phase : {0, 1, 2}) {
