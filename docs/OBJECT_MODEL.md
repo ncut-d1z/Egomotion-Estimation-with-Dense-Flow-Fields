@@ -1,5 +1,7 @@
 # 对象模型与生命周期合同（Object Model）
 
+> **2026-11-18 MotionEstimate实现追踪，候选/未冻结**：运动分量已私有，只读getter及检查工厂保证3×1/有限，自拥有固定矩阵、默认静止且允许完整值复制/移动赋值；右值访问按值返回。Franz/KvD/Adaptive生产路径使用工厂，不新增模长/单位/容差限制，零运动可观测性由原算法处理。839项维度/有限性/寿命及全回归见 [记录](reviews/R6_MOTION_VALUE_2026-11-18.md)。这是D1/P2.1/P2.8的MotionEstimate实现；FlowField/DirectionSet/HarmonicCoefficients构造边界仍未完成，Result决定不扩展为所有领域值批准，总体对象验收未签署。
+
 > **2026-11-18 P8.9实现追踪，候选/未冻结**：InitializationRunner、AdaptiveComparisonRunner、UpdateRateRunner各有独立Config的compute/run，run借用当前Context并负责kind检查、进度、Comparison RNG及发布门禁；每次/每轮Session与缓冲仍局部创建。Production只装配分派，旧AdaptiveExperimentRunner仅兼容内存调用。共用逐帧计算没有重复方程。172962项交错/错误Context/第五轮失败后同Runner复用与双模式证据见 [记录](reviews/R6_ADAPTIVE_ENTRIES_2026-11-18.md)。D2列明源码职责缺口已补，领域构造不变量、记录边界及总体对象验收仍保留；下方旧时间注记保留当时状态。
 
 > **2026-11-18 P9.8实现追踪，候选/未冻结**：BiasResultAnalyzer与AdaptiveResultAnalyzer分别拥有Bias统计及三Adaptive分析的原函数体，借用Reader、不创建Writer/Exporter，返回自拥有数值及来源；MatResultAnalyzer仅分派，公共异常边界保持。727项四入口/40故障/结果与导出隔离及双模式实测见 [记录](reviews/R6_ANALYZER_SERVICES_2026-11-18.md)。P9.8源码缺口已补，领域构造不变量、其余Runner职责和总体对象验收仍未关闭。下方日期较早的实现描述保留当时状态。

@@ -1,6 +1,6 @@
 # 源 MATLAB 文件到当前 C++ 实现的迁移矩阵（MIGRATION_MATRIX）
 
-> **2026-11-18 P8.9入口映射接续 `[AI-EDIT]`**：受测`34fe509240167a357afc43da71c588534bee005c`为ON63/63、OFF62/62。三个具名Adaptive Runner负责各自Config/Context及发布，Production只分派；172962项隔离与旧回归见 [实测](reviews/R6_ADAPTIVE_ENTRIES_2026-11-18.md)。下表45路径/50声明不变，仅更新三个生成入口当前归属，不改变原算法范围。
+> **2026-11-18 运动值接续 `[AI-EDIT]`**：受测`1588ebb97b0c3b0984e5b21335f1e67af9184e62`为ON64/64、OFF63/63。Franz/KvD/Adaptive和Runner的MotionEstimate创建/访问已迁移至检查工厂和只读值；839项及原数值/源顺序回归见 [实测](reviews/R6_MOTION_VALUE_2026-11-18.md)。下表45路径/50声明与映射不变，原数学算式、调用与算法范围不变。
 
 > **2026-11-18 P7.10职责映射接续 `[AI-EDIT]`**：受测`a19d2d82ab9b7b27f9b77061e9f4880c8d8944bf`为ON61/61、OFF60/60。基值/重建、逐项拟合、系数旋转分别由三个无状态组件承接，原自由函数兼容转发，实际Adaptive已接入；482项检查见 [实测](reviews/R6_HARMONIC_SERVICES_2026-11-18.md)。下表45路径/50声明及算法身份不变，更新四行实际代码去向，不扩大阶数或宣称原MATLAB运行时等价。
 

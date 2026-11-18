@@ -2,7 +2,7 @@
 
 `[AI-EDIT]` 事实索引，基于当前Git树、CMake登记、测试源码及实际日志。保留 [TEST_PLAN §3](../TEST_PLAN.md) 的66个TC/REQ/AC和 [PLAN](../PLAN.md) 的98项任务，不替换候选规范、改动阈值或签署验收。下表每个TC仅列一次；其REQ/AC采用相同后缀，正式义务仍以 [REQUIREMENTS](../REQUIREMENTS.md) 为准。
 
-**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面具体程序/样本已有运行证据。最新受测源码 `34fe509240167a357afc43da71c588534bee005c` 为SVG ON63/63、OFF62/62，见 [入口职责证据](R6_ADAPTIVE_ENTRIES_2026-11-18.md)；此前各专项回归保留。Issue #1/#2/#3和旧失败日志保持开放供复核。真实Adaptive三入口仍失败、无完整MAT；合成八轮成功只证明组合合同。正式数值/环境/基线资格独立办理，不以尚未签署为理由停止已授权的源码/测试补足。
+**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”只表示下面具体程序/样本已有运行证据。最新受测源码 `1588ebb97b0c3b0984e5b21335f1e67af9184e62` 为SVG ON64/64、OFF63/63，见 [运动值证据](R6_MOTION_VALUE_2026-11-18.md)；此前各专项回归保留。Issue #1/#2/#3和旧失败日志保持开放供复核。真实Adaptive三入口仍失败、无完整MAT；合成八轮成功只证明组合合同。正式数值/环境/基线资格独立办理，不以尚未签署为理由停止已授权的源码/测试补足。
 
 ## 实际测试组及证据入口
 
@@ -10,6 +10,7 @@
 
 | 索引 | 实际CTest（完整名称） | 源码/证据 |
 |---|---|---|
+| MOTION-VALUE | `r06_motion_value_invariants` | `tests/contracts/test_r06_motion_value.cpp`；839项49有限输入对/16形状负例/18非有限分量/值复制移动寿命及编译只读约束，见 [证据](R6_MOTION_VALUE_2026-11-18.md)；不归一化/不判可观测性，不覆盖其他领域值 |
 | MAT73 | `r06_mat73_version_rejection` | `tests/integration/test_r06_mat73.cpp`及固定合成v7.3夹具；32场景/308项，3入口在Mat_Open之前拒绝、EINTR/短读/EIO/后端替身/描述符/输入身份，见 [版本证据](R6_MAT73_REJECTION_2026-11-18.md)。无HDF5库实际构建未验证 |
 | ADAPT-ENTRY | `r06_adaptive_entry_isolation` | `tests/integration/test_r06_adaptive_scene.cpp`的entry-isolation分支；172962项三具名Runner六次交错、12错误Context、非法Config及第五轮失败后同Runner复用，见 [证据](R6_ADAPTIVE_ENTRIES_2026-11-18.md)；固定Step及内存发布只证明组合合同 |
 | ADAPT-SCENE | `r06_adaptive_scene_composition` | `tests/integration/test_r06_adaptive_scene.cpp`；88121项三入口完整合成场景、Comparison八轮聚合/状态重置、54服务故障及第5轮失败前缀，见 [证据](R6_ADAPTIVE_SCENE_2026-11-18.md)；Step及Writer/Publisher为替身，不证明真实科学实验或MAT持久化 |
@@ -51,7 +52,7 @@
 | TC-F-MAT-002 | MAT、MAT73、CLI、DICTIONARY | 结构/类型拒绝与原文件枚举、独立探针582解码/报告及输出故障已测；真实v7.3夹具已补，旧错误分类复现/修复、32场景通过，见 [任务复核D5](R6_PLAN_TASK_AUDIT_2026-11-18.md)。正式数据字典复核仍独立 |
 | TC-F-MAT-003 | MAT、SNAPSHOT | named/首变量/后缀/多变量及捕获后路径替换、同inode改写已有实测；复制期间可观察变化拒绝，范围限首版类型 |
 | TC-F-MAT-004 | IO、RUNNER | 合成写回读、no-overwrite、字段身份及故障链已测；完整五入口实验不在此证据内 |
-| TC-F-GEOM-001 | GEOM | 固定uniform顺序及耗尽已有例；不能等同随机统计资格 |
+| TC-F-GEOM-001 | GEOM、MOTION-VALUE | 固定uniform顺序及耗尽已有例；运动值形状/有限性/复制移动/寿命已测，不引入运动尺度约束；不能等同随机统计资格 |
 | TC-F-GEOM-002 | GEOM | level0…2全/缺损八面体有序独立参考；最终容差审查另办 |
 | TC-F-GEOM-003 | GEOM | level0…2二十面体有序独立参考；最终容差审查另办 |
 | TC-F-FLOW-001 | GEOM、RUNNER | 近度/理想流与抵消固定例；需按完整源输入域审查 |
@@ -81,7 +82,7 @@
 | TC-D-MAT-001 | MAT、SOURCE、DICTIONARY | 582实际读取/独立值与SHA；新隔离报告已生成并验证原输入不变，未重写已提交字典；P10.4正式复核未完成 |
 | TC-D-MAT-002 | MAT、IO | 列主序、类型/形状与值逐位、写回读；只覆盖已选首版范围 |
 | TC-D-MAT-003 | MAT、RUNNER、ANALYSIS | CurrentGenerated/HistoricalOnly及缺ratio已有证据；不推测额外字段历史成因 |
-| TC-DC-DOMAIN-001 | CONTRACT、SH | 显式Result工厂、move/lifetime/error链；对象模型正式审查另办 |
+| TC-DC-DOMAIN-001 | CONTRACT、SH、MOTION-VALUE | 显式Result工厂、move/lifetime/error链；MotionEstimate的3×1/有限/只读/默认静止/右值自拥有构造已测。FlowField/DirectionSet/HarmonicCoefficients构造边界及总体对象模型正式审查未完成 |
 | TC-DC-IO-001 | MAT、IO、CONTRACT、SNAPSHOT | 自拥有载荷、故障/权限与寿命、封存副本拒写/拒截断及30例fd释放已测；不凭测试数声称全资源状态证明 |
 | TC-DC-RNG-001 | GEOM、RUNNER、BIAS-INJECT | RNG注入/顺序/耗尽/seed分离、两次reset/不支持reset/缓存重置已测；正式接口冻结未完成 |
 | TC-DC-NOISE-001 | GEOM、RUNNER、ADAPT-INJECT | 噪声接口两路径、Adaptive显式coefficient/零值仍3N抽样、非法success拒绝及错误上下文已有固定测试 |
@@ -115,7 +116,7 @@
 
 ## 下一步按缺口实施
 
-1. 当前两模式分别完成62/62、61/61复测；所有失败日志及原始数据不变证据保留。不等于完整数值资格、Adaptive实验成功或MATLAB像素等价完成。
+1. 当前两模式分别完成64/64、63/63复测；所有失败日志及原始数据不变证据保留。不等于完整数值资格、Adaptive实验成功或MATLAB像素等价完成。
 2. 三份illustration已有JSON/SVG入口、独立全网格参考和实际CLI/目视证据；保留sphere端点运行细节尚未验证及平面着色的明确边界，不用求解器九项归一化基函数替代插图。
-3. 三Adaptive真实进程的失败链已有证据；初始化第14帧acos越界、另外两入口第151帧零旋转均未产出完整MAT，真实科学成功路径仍未验证。三入口合成完整场景和八轮聚合只证明组合合同。45源、98 P和本表有限证据已映射，[数值汇总](../NUMERICAL_EQUIVALENCE.md)已建立；Bias/Adaptive已列明装配、真实MAT73负例、plot/SVG导出记录、KvD/Session策略、球谐三组件和两分析组件已补，继续领域构造不变量/其它职责及只读/预留前记录边界。数值策略变更不能由AI通过改测试自行批准。
+3. 三Adaptive真实进程的失败链已有证据；初始化第14帧acos越界、另外两入口第151帧零旋转均未产出完整MAT，真实科学成功路径仍未验证。三入口合成完整场景和八轮聚合只证明组合合同。45源、98 P和本表有限证据已映射，[数值汇总](../NUMERICAL_EQUIVALENCE.md)已建立；Bias/Adaptive已列明装配、真实MAT73负例、plot/SVG导出记录、KvD/Session策略、球谐三组件、两分析组件、三具名Adaptive入口及MotionEstimate构造已补，继续其余FlowField/DirectionSet/HarmonicCoefficients构造及只读/预留前记录边界。数值策略变更不能由AI通过改测试自行批准。
 4. 完整科学/L4实验、跨发行版资格、资源预算与正式审批不在本轮运行授权内；准备具体材料并在真正到达该边界时请求相应授权。无MATLAB/L1阻塞。

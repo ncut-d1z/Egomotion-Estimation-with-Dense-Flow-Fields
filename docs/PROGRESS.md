@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6运动值构造与寿命（2026-11-18）
+
+`[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`1588ebb97b0c3b0984e5b21335f1e67af9184e62`两模式构建无诊断，**SVG ON64/64、OFF63/63 CTest**；先MAT7项，再57/56项，零失败/跳过/禁用。MotionEstimate采用私有有限3维分量、检查工厂/只读getter、明确静止默认值和自拥有右值访问，Franz/KvD/Adaptive/Runner生产路径及夹具已迁移；无归一化/新数值门槛。新增839项构造/维度/非有限/值寿命检查，两模式原172962入口隔离/88121场景/独立数值回归保留。RunId `r6-motion-value-20261118-9j2NQZaD`，各724项输入摘要不变，见 [专项记录](reviews/R6_MOTION_VALUE_2026-11-18.md)。D1的MotionEstimate缺口已补，FlowField/DirectionSet/HarmonicCoefficients及D4记录边界仍待处理；完整实验与正式资格未完成。Issue #1/#2/#3开放、无PR，R6未结案。
+
 ## 最新接续：R6三Adaptive入口编排（2026-11-18）
 
 `[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`34fe509240167a357afc43da71c588534bee005c`两模式构建无诊断，**SVG ON63/63、OFF62/62 CTest**；先MAT7项，再56/55项，零失败/跳过/禁用。P8.9的InitializationRunner、AdaptiveComparisonRunner、UpdateRateRunner已接管各自Config/Context检查、进度及发布，Production只装配分派，旧内存入口保留兼容；共享计算函数体保持。新增入口隔离两模式各172962项，六次交错完整运行、12错误Context、非法Config及第五轮失败后同Runner重新完成八轮；原88121项场景及真实数值回归通过。RunId `r6-adaptive-entries-20261118-gBryoJ8Q`，各722项输入摘要不变，见 [专项记录](reviews/R6_ADAPTIVE_ENTRIES_2026-11-18.md)。D2已列明源码职责缺口已补，总体对象/数值验收仍未签署；D1构造不变量、D4记录范围、完整科学实验及正式资格未完成。Issue #1/#2/#3开放、无PR，R6未结案。

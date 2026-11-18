@@ -1,6 +1,6 @@
 # C++17 公共详细设计合同（跨模块 LLD）
 
-> **2026-11-18 MotionEstimate候选实现增量，未冻结/本检查点待测**：运动值改为私有三维分量及只读访问，默认明确为有限静止运动；`create`先检查两个3×1列向量形状，再检查全部分量有限，返回既有Result/InvalidShape/NonFiniteInput。有限零值、符号、尺度、单位和signed zero均保留，不做归一化、不计算模长或新增容差；可观测性仍由原算法检查。工厂复制到自有固定矩阵，右值访问按值返回避免借用已销毁对象；允许完整值复制/移动赋值。Franz/KvD/Adaptive生产构造改用工厂，原数值失败仍映射原输出错误。原KvD非法运动负例改在构造边界拒绝，禁止先伪造非法对象再传入规则。DEC-008-03仍只针对Result/Status，本增量是D1/P2.1/P2.8候选实现，不代表所有领域类型已批准或冻结；FlowField/DirectionSet/HarmonicCoefficients边界仍待处理。
+> **2026-11-18 MotionEstimate候选实现增量，未冻结**：下方aggregate示例保留历史候选语境，不是当前MotionEstimate签名。运动值改为私有三维分量及只读访问，默认明确为有限静止运动；`create`先检查两个3×1列向量形状，再检查全部分量有限，返回既有Result/InvalidShape/NonFiniteInput。有限零值、符号、尺度、单位和signed zero均保留，不做归一化、不计算模长或新增容差；可观测性仍由原算法检查。工厂复制到自有固定矩阵，右值访问按值返回避免借用已销毁对象；允许完整值复制/移动赋值。Franz/KvD/Adaptive生产构造改用工厂，原数值失败仍映射原输出错误。原KvD非法运动负例改在构造边界拒绝，禁止先伪造非法对象再传入规则。DEC-008-03仍只针对Result/Status，本增量是D1/P2.1/P2.8候选实现，不代表所有领域类型已批准或冻结；双模式ON64/OFF63、839项及原数值回归见 [实测](../reviews/R6_MOTION_VALUE_2026-11-18.md)；FlowField/DirectionSet/HarmonicCoefficients边界仍待处理。
 
 > **2026-11-17 接口候选增量，未冻结**：`DenseDoubleArray`尾部增加 `std::optional<std::string> source_mat_sha256`，表示产生当前解码值的封存原MAT字节摘要；纯合成或未知输入为空。值仍自拥有且无matio/fd，Reader三方法和既有JSON字段不变；这改变C++值布局，须重新构建依赖方，不承诺跨旧二进制ABI兼容。`130a82ba0090e186fcf43bc28bb98c282e68c96c` 已重编译相关依赖且48/48 CTest通过，见 [实现范围与实测](../reviews/R6_MAT_SNAPSHOT_2026-11-17.md)，不据AI实现签署DEC-008。
 
