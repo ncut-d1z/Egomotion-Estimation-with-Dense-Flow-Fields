@@ -2,7 +2,7 @@
 
 `[AI-EDIT]` 事实索引，基于当前Git树、CMake登记、测试源码及实际日志。保留 [TEST_PLAN §3](../TEST_PLAN.md) 的66个TC/REQ/AC和 [PLAN](../PLAN.md) 的98项任务，不替换候选规范、改动阈值或签署验收。下表每个TC仅列一次；其REQ/AC采用相同后缀，正式义务仍以 [REQUIREMENTS](../REQUIREMENTS.md) 为准。
 
-**没有任何一行仅凭CTest数量被宣布正式验收。** “相关实测”仅指列明程序/样本已有证据。最新受测源码`617c7f8a21966ee8f8f9974bfd8ab0f123c50eda`为ON69/OFF68，见 [进程记录证据](R6_PROCESS_RECORDS_2026-11-18.md)；此前数值/合同回归保留。Issue #1–#4及全部失败日志保持开放供复核。外层尚未关联应用RunId/seed/实际MAT快照身份，不能将进程记录等同整个REQ-NF-LOG验收；完整科学实验和正式资格仍未完成，真实Adaptive仍Incomplete、无MAT。不以尚未签署为理由停止已授权源码/测试补足。
+**没有任何一行仅凭CTest数量被宣布正式验收。** 最新受测源码`ff8aaa723d979642cca30b6fc79953fc8f2963ed`为ON70/OFF69，见 [上下文记录证据](R6_CONTEXT_JOURNAL_2026-11-18.md)；此前数值/合同回归保留。D4所列身份关联缺口已补有限实测；REQ-NF-LOG整体及R6未验收，完整科学实验/最终资格未完成，真实Adaptive仍Incomplete、无MAT。Issue #1–#5保持开放，无PR。全部失败日志保留，不以尚未签署为理由停止已授权源码/测试补足。
 
 ## 实际测试组及证据入口
 
@@ -24,7 +24,8 @@
 | RUNID | `r06_runid_failure_context`（并扩展Manifest、Bias/Adaptive库及实际CLI用例） | `tests/integration/test_r06_runid_diagnostics.cpp`；63项检查/8次装配调用、真实预留与失败Manifest；[身份实测](R6_RUNID_DIAGNOSTICS_2026-11-17.md) |
 | STREAM | `r06_cli_output_streams`, `r06_cli_output_real_process` | `tests/integration/test_r06_cli_streams.cpp/.cmake`；每模式现856项/123次调用、11次真实`/dev/full`及默认SIGPIPE后失败审计保存；[原实测](R6_CLI_STREAM_OUTPUT_2026-11-17.md)、[运行记录增补](R6_EXECUTION_RECORDS_2026-11-17.md) |
 | EXECUTION | `r06_execution_record_contract`（另扩展CLI、ADAPTIVE-CLI、STREAM及ILLUSTRATION） | `tests/integration/test_r06_execution_records.cpp`, `execution_record_checks.cmake`, `artifact_record_checks.cmake`；每模式394项/38次调用，五生成入口及plot/SVG的真实参数/环境/输入身份/交付状态，独立JSON解析及发布/持久化/流故障，见 [导出记录实测](R6_ARTIFACT_RECORDS_2026-11-18.md) |
-| PROCESS-RECORD | `r06_process_records_lifecycle`, `r06_process_records_real_cli` | `tests/integration/test_r06_process_records.cpp`、`test_r06_process_records_cli.cmake`；各399项/23次受监控调用、12组/24次实际CLI，二进制通道与独立JSON/哈希、信号/发布/坏管道/路径边界；[专项](R6_PROCESS_RECORDS_2026-11-18.md) |
+| PROCESS-RECORD | `r06_process_records_lifecycle`, `r06_process_records_real_cli` | 各464项/26次受监控调用、29次真实CLI；原通道/信号/权限边界及新上下文返回确认，见 [最新证据](R6_CONTEXT_JOURNAL_2026-11-18.md) |
+| CONTEXT | `r06_context_journal_identity`（另扩展PROCESS-RECORD） | `tests/integration/test_r06_context_journal.cpp`；224项日志短写/失败、MAT路径/inode竞态、只读元数据、阻止下游及实际RunId错误身份；[证据](R6_CONTEXT_JOURNAL_2026-11-18.md) |
 | DICTIONARY | `r06_dictionary_output_streams`, `r06_dictionary_real_process` | 每模式165项/40次入口、17次真实进程；582原MAT、状态/报告write/close故障、历史参数/报告与输入保护；[实测](R6_DICTIONARY_OUTPUT_2026-11-17.md) |
 | ADAPTIVE-CLI | `r06_adaptive_real_cli` | `tests/integration/test_r06_adaptive_cli.cmake`、`r06_adaptive_init_trace.cpp`；6次实际CLI和1次真实Step记录进程，三种生成均Incomplete，无MAT，见 [实测](R6_ADAPTIVE_CLI_2026-11-17.md)。`r06_adaptive_cli_values.cpp`仅编译，成功产物/L2分支未执行 |
 | MAT | `r02_mat_reader`, `r06_historical_mat_readonly_schema`, `r06_mat_independent_storage_values`, `r06_mat_reader_boundaries`, `r06_mat_raw_payload_boundaries` | `tests/integration/test_r02_reader.cpp`, `test_r06_archive_readonly.cpp`, `test_r06_mat_independent.cpp`, `test_r06_reader_negative.cpp`, `test_r06_mat_payload.cpp`；[L2](R6_MAT_STORAGE_VALIDATION_2026-11-17.md)、[边界](R6_READER_BOUNDARIES_2026-11-17.md)、[载荷](R6_MAT_PAYLOAD_VALIDATION_2026-11-17.md) |
@@ -101,7 +102,7 @@
 | TC-NF-NUM-002 | MAT、KVD、STEP、METRIC、RUNNER、SESSION、ADAPTIVE-CLI | 多类明确失败/病态条件已有固定测试；真实初始化cosine越界及另外两入口零旋转拒绝已有实际进程证据。未改变拒绝策略/阈值或宣称完整实验成功 |
 | TC-PROC-TRACE-001 | SOURCE、本文及 [98项P任务表](R6_PLAN_TASK_AUDIT_2026-11-18.md) | 66 TC、45源/50声明、98 P逐项实现/证据/缺口均有索引；已有表不等于逐义务关闭，全部分支资格与正式冻结仍未完成 |
 | TC-NF-RNG-001 | GEOM、RUNNER | 固定序列/两seed与失败数量保存；L4统计及全样本账本未完成 |
-| TC-NF-LOG-001 | CONTRACT、RUNNER、CLI、ADAPTIVE-CLI、RUNID、STREAM、DICTIONARY、EXECUTION、PROCESS-RECORD | 应用记录和显式父进程记录已测；只读/预留前错误原始通道、exit与signal、记录失败及条件返回码可复核。外层尚未关联RunId/seed/实际MAT快照，不关闭整项义务；完整科学结果未生成 |
+| TC-NF-LOG-001 | CONTRACT、RUNNER、CLI、ADAPTIVE-CLI、RUNID、STREAM、DICTIONARY、EXECUTION、PROCESS-RECORD、CONTEXT | 实际RunId/选定seed/有效Config/封存MAT与独立RecordId已关联；返回fsync与独立确认、日志失败停止后续处理、元数据身份竞态有有限实测。父进程强杀/掉电边界明确；全部日志资格/完整科学结果未完成，不关闭整项义务 |
 | TC-NF-OOP-001 | CONTRACT、SH、SESSION、ANALYZER-SERVICE、ADAPT-ENTRY、MOTION-VALUE、COEFF-VALUE、DIR-VALUE、FLOW-VALUE | 错误桥接、球谐/分析服务、四类值构造与所有权、三Adaptive入口及策略/依赖替换已有有限实测；D1–D3列明的源码职责缺口已补。总体对象/API正式审查与设计验收仍未完成 |
 | TC-NF-HEADLESS-001 | CLI、ANALYSIS、ENV、HEADLESS | 全新禁用SVG构建47/47通过，9次合法绘图请求明确拒绝且无输出，数值入口/参考全部保留；默认48/48，全部无显示环境。限定运行证据，不是完整科学验收 |
 | TC-NF-RECOVERY-001 | IO、CONTRACT、RUNNER、ADAPTIVE-CLI、RUNID、STREAM、DICTIONARY、EXECUTION、PROCESS-RECORD | 应用及进程开始记录未确认均不运行后续工作，结束失败保留产物/通道/条件状态；记录器可观察子进程SIGPIPE/SIGKILL并保护自身坏管道诊断。父进程自身SIGKILL/系统掉电不能保证结束记录；原三Adaptive仍Incomplete、无MAT |

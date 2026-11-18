@@ -1,6 +1,6 @@
 # CLI 参数、退出码与诊断协议：详细设计草案
 
-> **2026-11-18 应用上下文增量 `[AI-DRAFT + HUMAN-APPROVE]`，候选、未冻结，运行结果另行登记**：进程记录使用`egomotion-process-start-v2`/`finish-v2`，`application_context`改为指向`context.jsonl`及`egomotion-context-event-v1`的对象。通过显式借用的`IInvocationObserver`记录实际事件：应用进入、解析成功后的有效配置、seed选择、成功预留RunId、实际RunContext/导出上下文、MAT快照准备、分析/插图来源、应用返回；序号从1递增，每事件写入后fsync。`seed_selected`不表示算法已消耗随机数，`mat_snapshot_prepared`不表示变量已解码成功。RunContext/导出上下文复用同一份`invocation.json`序列化文本；不通过argv推测RunId，也不事后重新打开MAT路径拼接摘要。普通`egomotion`不注入观察器。
+> **2026-11-18 应用上下文增量 `[AI-DRAFT + HUMAN-APPROVE]`，候选、未冻结；ff8aaa7已完成ON70/OFF69及故障复测，见 [实际证据](../reviews/R6_CONTEXT_JOURNAL_2026-11-18.md)**：进程记录使用`egomotion-process-start-v2`/`finish-v2`，`application_context`改为指向`context.jsonl`及`egomotion-context-event-v1`的对象。通过显式借用的`IInvocationObserver`记录实际事件：应用进入、解析成功后的有效配置、seed选择、成功预留RunId、实际RunContext/导出上下文、MAT快照准备、分析/插图来源、应用返回；序号从1递增，每事件写入后fsync。`seed_selected`不表示算法已消耗随机数，`mat_snapshot_prepared`不表示变量已解码成功。RunContext/导出上下文复用同一份`invocation.json`序列化文本；不通过argv推测RunId，也不事后重新打开MAT路径拼接摘要。普通`egomotion`不注入观察器。
 >
 > 第一个观察失败缓存为Output错误，后续观察不再写入；应用在对应边界停止后续处理并返回6。正常返回事件fsync成功后，子进程通过独立非阻塞管道确认返回；父进程在waitpid后保存`context_return_confirmed`并对三个通道（stdout、stderr、context）保存字节数/SHA-256/fsync结果。正常exit没有确认则外层返回6；信号终止允许保留事件前缀并仍返回128+signal（通道或结束记录失败另返回6）。文件存在、完整JSON行或同名返回事件均不替代确认；确认也不等于科学计算成功或掉电保证。关联D4/P5.3/P8.9/P10.6、REQ/TC-NF-LOG-001；不变更AC、数值阈值、最终错误码或正式冻结状态。下文v1描述为617c7f8历史证据。
 

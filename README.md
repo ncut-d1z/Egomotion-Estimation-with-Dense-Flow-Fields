@@ -4,7 +4,7 @@ A planned **C++17 reimplementation that directly reads the original MATLAB MAT f
 
 > **Permanent evidence policy:** Running MATLAB/Octave or collecting original MATLAB L1 execution traces is **not required** for design, coding, verification, or release. The original scripts are read-only specifications; numerical evidence will use the preserved MAT results (L2), independently checked analytic/reference implementations (L3), and statistical comparisons (L4). See [No MATLAB Execution Policy](docs/golden/NO_MATLAB_EXECUTION_POLICY.md). This change does not authorize C++ builds/tests or imply any numerical acceptance.
 
-> **项目状态（2026-11-18）**：R6仍在验证。受测源码`617c7f8a21966ee8f8f9974bfd8ab0f123c50eda`两模式构建无诊断，**SVG ON69/69、OFF68/68 CTest**；先MAT7项，再62/61项，零失败/跳过/禁用。新增显式egomotion-record在私有build-cli-records目录保存全程开始/结束与原始通道，区分正常退出和信号终止；各399项/23次受监控调用、12组/24次真实CLI对照通过。首轮夹具权限失败及后续修复见 [最新验证](docs/reviews/R6_PROCESS_RECORDS_2026-11-18.md)；所有旧日志保留，原始资料哈希不变。外层尚未关联应用RunId/seed/实际MAT快照身份，不能将进程记录等同整个REQ-NF-LOG验收；完整科学实验和正式资格仍未完成，真实Adaptive仍Incomplete、无MAT。[98项任务复核](docs/reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)和[66项TC映射](docs/reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)列明剩余义务；Issue #1–#4保持开放。
+> **项目状态（2026-11-18）**：受测源码`ff8aaa723d979642cca30b6fc79953fc8f2963ed`两模式构建无诊断，**SVG ON70/70、OFF69/69 CTest**；先MAT7项，再63/62项，零失败/跳过/禁用。进程记录已关联实际RunId、选定seed、有效配置与sealed MAT快照；各224项上下文检查、464项/26次进程检查、29次真实CLI调用通过。733项输入SHA及21组既有数值/合同摘要不变。新增日志失败诊断缺RunId的Issue #5已修复复测，详见 [最新证据](docs/reviews/R6_CONTEXT_JOURNAL_2026-11-18.md)。D4所列身份关联缺口已补有限实测；REQ-NF-LOG整体及R6未验收，完整科学实验/最终资格未完成，真实Adaptive仍Incomplete、无MAT。Issue #1–#5保持开放，无PR。
 
 ## Original research and source material
 

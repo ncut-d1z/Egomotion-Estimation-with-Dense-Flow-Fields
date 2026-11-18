@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6进程记录关联实际应用身份（2026-11-18）
+
+`[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`ff8aaa723d979642cca30b6fc79953fc8f2963ed`两模式构建无诊断，**SVG ON70/70、OFF69/69 CTest**；先MAT7项，再63/62项，零失败/跳过/禁用。进程记录已关联实际RunId、选定seed、有效配置与sealed MAT快照；各224项上下文检查、464项/26次进程检查、29次真实CLI调用通过。733项输入SHA及21组既有数值/合同摘要不变。首轮798c84f ON69/70，发现导出观察失败诊断遗漏已预留RunId，登记Issue #5；ff8aaa7补全身份并保留断言，双配置复测通过。日志RunId `r6-context-journal-final-20261118-TbQO9zck`，旧失败证据保留，见 [专项记录](reviews/R6_CONTEXT_JOURNAL_2026-11-18.md)。D4所列身份关联缺口已补有限实测；REQ-NF-LOG整体及R6未验收，完整科学实验/最终资格未完成，真实Adaptive仍Incomplete、无MAT。Issue #1–#5保持开放，无PR。
+
 ## 最新接续：R6独立进程记录与终止状态（2026-11-18）
 
 `[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`617c7f8a21966ee8f8f9974bfd8ab0f123c50eda`两模式构建无诊断，**SVG ON69/69、OFF68/68 CTest**；先MAT7项，再62/61项，零失败/跳过/禁用。新增显式egomotion-record在私有build-cli-records目录保存全程开始/结束与原始通道，区分正常退出和信号终止；各399项/23次受监控调用、12组/24次真实CLI对照通过。首轮300aae5的碰撞夹具因build0775先被安全检查拒绝，登记Issue #4；f8d556a修复夹具，e16b27e延长父进程SIGPIPE保护至故障诊断结束，ON69/69通过。最终617c7f8改用独立私有日志根，保留0775现有build权限、符号链接/共享日志拒绝和全部失败证据。各732项输入SHA不变，21组既有数值/合同摘要不变，RunId `r6-process-records-private-20261118-d91C3PbC`，详见 [专项记录](reviews/R6_PROCESS_RECORDS_2026-11-18.md)。外层尚未关联应用RunId/seed/实际MAT快照身份，不能将进程记录等同整个REQ-NF-LOG验收；完整科学实验和正式资格仍未完成，真实Adaptive仍Incomplete、无MAT。Issue #1–#4开放，无PR；继续D4上下文关联与剩余P/TC义务。
