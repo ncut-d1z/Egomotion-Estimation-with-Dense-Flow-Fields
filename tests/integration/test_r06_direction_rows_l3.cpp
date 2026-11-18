@@ -102,7 +102,7 @@ void checkCase(const std::string& text,std::string_view mode,
             "Independent ordered rows array cannot be delimited");
     ArrayCursor cursor(text,opening, next_level);
     cursor.expect('[');
-    const Eigen::Index n=computed.directions.rows();
+    const Eigen::Index n=computed.directions().rows();
     const std::size_t count=static_cast<std::size_t>(n);
     const std::size_t expected_base=mode=="octa"?8:mode=="occluded"?6:20;
     const std::size_t factor=static_cast<std::size_t>(1)<<(2*level);
@@ -112,7 +112,7 @@ void checkCase(const std::string& text,std::string_view mode,
         cursor.expect('[');
         for(int col=0;col<3;++col) {
             const double reference=cursor.number();
-            const double actual=computed.directions(
+            const double actual=computed.directions()(
                 static_cast<Eigen::Index>(row),col);
             require(std::isfinite(actual)&&
                     std::abs(actual-reference)<=1e-12,
@@ -150,7 +150,7 @@ int main(int argc,char** argv) {
                           kind==1?occluded.sample(level):icosa.sample(level);
             require(computed.hasValue(),"Sampler failed on an approved subdivision");
             checkCase(text,keys[kind],level,computed.value(),start,end);
-            confirmed+=static_cast<std::size_t>(computed.value().directions.rows());
+            confirmed+=static_cast<std::size_t>(computed.value().directions().rows());
         }
     }
     require(confirmed==714,

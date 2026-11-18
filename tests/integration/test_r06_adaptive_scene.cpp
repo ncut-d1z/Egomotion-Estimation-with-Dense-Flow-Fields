@@ -102,7 +102,7 @@ struct Environment final:trajectory::ISphereEnvironment {
         const DirectionSet& directions,const Vector3& camera,const Vector3& rotation) const override {
         const std::size_t ordinal=calls++;
         const std::size_t row=ordinal%(mode.frames-2)+1,run=ordinal/(mode.frames-2)+1;
-        require(directions.directions.rows()==6,"Injected sampler passed to environment");
+        require(directions.directions().rows()==6,"Injected sampler passed to environment");
         require((camera.array()==position(row).array()).all()&&rotation.isZero(0),"Frame position/orientation order");
         throwIfRequested(fault);
         if(fault==Fault::Failure||calls==fail_at)return Result<Eigen::VectorXd,NumericalErrorCode>::failure(sceneFailure());
@@ -119,9 +119,9 @@ struct Sampler final:IDirectionSampler {
     explicit Sampler(Mode value):mode(value){}
     Result<DirectionSet,NumericalErrorCode> sample(int level) const override {
         ++calls;require(level==(mode.kind==ExperimentKind::AdaptiveComparison?4:2),"Unchanged source sampling level");
-        DirectionSet result;result.directions.resize(6,3);
-        result.directions<<1,0,0,-1,0,0,0,1,0,0,-1,0,0,0,1,0,0,-1;
-        return Result<DirectionSet,NumericalErrorCode>::success(std::move(result));
+        DirectionMatrix result(6,3);
+        result<<1,0,0,-1,0,0,0,1,0,0,-1,0,0,0,1,0,0,-1;
+        return DirectionSet::fromOwned(std::move(result));
     }
 };
 struct Random final:IRandomSource {

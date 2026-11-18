@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace egomotion {
@@ -21,7 +22,26 @@ using FlowMatrix = Eigen::Matrix<Scalar, Eigen::Dynamic, 6, Eigen::ColMajor>;
 using DirectionMatrix = Eigen::Matrix<Scalar, Eigen::Dynamic, 3, Eigen::ColMajor>;
 
 struct FlowField { FlowMatrix observations; };
-struct DirectionSet { DirectionMatrix directions; };
+// N×3有限方向存储；允许空集合，单位/非零要求由实际物理模型检查。
+class DirectionSet final {
+public:
+    DirectionSet() noexcept = default;
+    DirectionSet(const DirectionSet&) = default;
+    DirectionSet(DirectionSet&&) noexcept = default;
+    DirectionSet& operator=(const DirectionSet& other);
+    DirectionSet& operator=(DirectionSet&&) noexcept = default;
+    static Result<DirectionSet,NumericalErrorCode> create(
+        const Eigen::Ref<const Eigen::MatrixXd>& directions);
+    // 先校验再移交，失败保留输入；成功后调用者须放弃旧可写别名。
+    static Result<DirectionSet,NumericalErrorCode> fromOwned(DirectionMatrix&& directions);
+
+    const DirectionMatrix& directions() const & noexcept { return directions_; }
+    DirectionMatrix directions() && noexcept { return std::move(directions_); }
+    DirectionMatrix directions() const && { return directions_; }
+private:
+    explicit DirectionSet(DirectionMatrix&& directions) noexcept : directions_(std::move(directions)) {}
+    DirectionMatrix directions_;
+};
 // 有限运动值；零运动合法，归一化/可观测性由具体算法判断。
 // 默认值明确为静止，不表示Result成功，也不允许未初始化分量。
 class MotionEstimate final {

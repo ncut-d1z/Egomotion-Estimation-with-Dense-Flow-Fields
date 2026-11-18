@@ -1,3 +1,4 @@
+#include "../support/direction_fixture.hpp"
 #include "egomotion/sampling/directions.hpp"
 #include "egomotion/simulation/flow.hpp"
 
@@ -60,34 +61,34 @@ void verifySamplingCountsAndOrder() {
         auto i=icosahedron.sample(level);
         require(c.hasValue()&&o.hasValue()&&i.hasValue(),
                 "Three source samplers must accept subdivision levels 0,1,2");
-        require(c.value().directions.rows()==static_cast<Eigen::Index>(8*children),
+        require(c.value().directions().rows()==static_cast<Eigen::Index>(8*children),
                 "Full octahedron direction count differs from 8*4^level");
-        require(o.value().directions.rows()==static_cast<Eigen::Index>(6*children),
+        require(o.value().directions().rows()==static_cast<Eigen::Index>(6*children),
                 "Occluded octahedron direction count differs from 6*4^level");
-        require(i.value().directions.rows()==static_cast<Eigen::Index>(20*children),
+        require(i.value().directions().rows()==static_cast<Eigen::Index>(20*children),
                 "Icosahedron direction count differs from 20*4^level");
 
         // Source retained faces 2,3,5,6,7,8 (MATLAB 1-based).
         constexpr std::array<std::size_t,6> kept{{1,2,4,5,6,7}};
         for(std::size_t k=0;k<kept.size();++k)
             for(std::size_t j=0;j<children;++j) {
-                const auto actual=o.value().directions.row(
+                const auto actual=o.value().directions().row(
                     static_cast<Eigen::Index>(k*children+j));
-                const auto expected=c.value().directions.row(
+                const auto expected=c.value().directions().row(
                     static_cast<Eigen::Index>(kept[k]*children+j));
                 require((actual-expected).norm()<1e-13,
                         "Occlusion must preserve original depth-first leaf order");
             }
         for(const DirectionSet* directions:
             {&c.value(),&o.value(),&i.value()})
-            for(Eigen::Index row=0;row<directions->directions.rows();++row)
-                require(near(directions->directions.row(row).norm(),1.0),
+            for(Eigen::Index row=0;row<directions->directions().rows();++row)
+                require(near(directions->directions().row(row).norm(),1.0),
                         "Every emitted source direction must be unit length");
     }
     auto initial=complete.sample(0);
     const Vector3 expected=Vector3(1,1,1).normalized();
     require(initial.hasValue()&&
-            (initial.value().directions.row(0).transpose()-expected).norm()<1e-13,
+            (initial.value().directions().row(0).transpose()-expected).norm()<1e-13,
             "Original first octahedral face has wrong centre");
     require(!complete.sample(-1).hasValue(),
             "Negative subdivisions must return failure");
@@ -146,9 +147,8 @@ void verifyBiasNearnessAndNoiseCalls() {
 
 void verifyFlowCancellationAndComponentNoise() {
     simulation::FlowSynthesizer synthesizer;
-    DirectionSet direction;
-    direction.directions.resize(1,3);
-    direction.directions.row(0)=Vector3::UnitZ().transpose();
+    DirectionMatrix values(1,3);values.row(0)=Vector3::UnitZ().transpose();
+    const auto direction=test_support::directionValue(values);
     Eigen::VectorXd nearness(1);
     nearness[0]=1;
     auto ideal=synthesizer.synthesize(

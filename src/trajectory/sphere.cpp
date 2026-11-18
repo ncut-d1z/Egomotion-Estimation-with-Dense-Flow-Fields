@@ -28,7 +28,7 @@ bool unit(const Vector3& direction) {
 Result<Eigen::VectorXd,NumericalErrorCode> SphereEnvironment::nearnessInUnitSphere(
     const DirectionSet& directions, const Vector3& camera_position,
     const Vector3& absolute_rotation_vector) const {
-    if (directions.directions.rows()==0)
+    if (directions.directions().rows()==0)
         return fail(NumericalErrorCode::EmptyInput,"Sphere requires unit rays");
     if (!camera_position.allFinite()||!absolute_rotation_vector.allFinite())
         return fail(NumericalErrorCode::NonFiniteInput,
@@ -49,9 +49,9 @@ Result<Eigen::VectorXd,NumericalErrorCode> SphereEnvironment::nearnessInUnitSphe
                         orientation.error()));
     }
     try {
-        Eigen::VectorXd nearness(directions.directions.rows());
-        for (Eigen::Index i=0;i<directions.directions.rows();++i) {
-            const Vector3 d=directions.directions.row(i).transpose();
+        Eigen::VectorXd nearness(directions.directions().rows());
+        for (Eigen::Index i=0;i<directions.directions().rows();++i) {
+            const Vector3 d=directions.directions().row(i).transpose();
             if (!unit(d))
                 return fail(NumericalErrorCode::InvalidDirection,
                             "Sphere ray is not unit length",static_cast<std::size_t>(i));

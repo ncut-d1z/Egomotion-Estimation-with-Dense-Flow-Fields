@@ -113,7 +113,7 @@ Result<IdealFlowResult,NumericalErrorCode>
 FlowSynthesizer::synthesize(const DirectionSet& directions,
                             const Eigen::VectorXd& nearness,
                             const Vector3& translation, const Vector3& rotation) const {
-    const Eigen::Index count=directions.directions.rows();
+    const Eigen::Index count=directions.directions().rows();
     if (count==0 || nearness.size()!=count)
         return fail<IdealFlowResult>(NumericalErrorCode::InvalidShape,
                                      "Directions and nearness must have matching nonzero rows");
@@ -125,7 +125,7 @@ FlowSynthesizer::synthesize(const DirectionSet& directions,
         result.flow.observations.resize(count, 6);
         double total_trans=0,total_rot=0;
         for (Eigen::Index i=0; i<count; ++i) {
-            const Vector3 d=directions.directions.row(i).transpose();
+            const Vector3 d=directions.directions().row(i).transpose();
             const double near=nearness[i];
             if (!unit(d))
                 return fail<IdealFlowResult>(NumericalErrorCode::InvalidDirection,
@@ -208,7 +208,7 @@ Result<FlowSynthesisResult,NumericalErrorCode> generateBiasFlow(
             sampled.error(), "Bias direction sampling failed at level "+
                 std::to_string(params.subdivision_level));
     DirectionSet directions=std::move(sampled).value();
-    const Eigen::Index count=directions.directions.rows();
+    const Eigen::Index count=directions.directions().rows();
     if (count==0)
         return fail<FlowSynthesisResult>(NumericalErrorCode::EmptyInput,
                                          "Bias sampler yielded no directions");

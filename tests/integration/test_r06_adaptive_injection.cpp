@@ -57,14 +57,14 @@ struct Sampler final:IDirectionSampler {
         if(fault==Fault::Allocation)throw std::bad_alloc{};
         if(fault==Fault::Length)throw std::length_error("sampler fixture");
         if(real)return sampling::IcosahedralSampler{}.sample(level);
-        DirectionSet result;
+        DirectionMatrix result;
         if(fault!=Fault::Empty){
-            result.directions.resize(6,3);
-            result.directions<<1,0,0,-1,0,0,0,1,0,0,-1,0,0,0,1,0,0,-1;
-            if(fault==Fault::NonFinite)result.directions(2,0)=std::numeric_limits<double>::infinity();
-            if(fault==Fault::Direction)result.directions.row(2)*=2;
+            result.resize(6,3);
+            result<<1,0,0,-1,0,0,0,1,0,0,-1,0,0,0,1,0,0,-1;
+            if(fault==Fault::NonFinite)result(2,0)=std::numeric_limits<double>::infinity();
+            if(fault==Fault::Direction)result.row(2)*=2;
         }
-        return Result<DirectionSet,NumericalErrorCode>::success(std::move(result));
+        return DirectionSet::fromOwned(std::move(result));
     }
 };
 struct Random final:IRandomSource {
@@ -183,6 +183,13 @@ void serviceFailures() {
         require(!result.hasValue()&&step.flows.empty()&&noise.coefficients.empty()&&rng.normals==0,
                 "Invalid sampling cannot reach noise or solver");
         if(fault==Fault::Failure)checkCause(result.error());
+        if(fault==Fault::NonFinite){
+            bool found=false;
+            for(const auto& cause:result.error().detail.causes)
+                found=found||(cause.domain=="NumericalErrorCode"&&cause.code=="NonFiniteInput"&&
+                    cause.stage==ErrorStage::Simulation&&cause.observation_index==2);
+            require(found,"Direction factory failure preserves the actual zero-based row through Runner");
+        }
     }
     for(Fault fault:{Fault::Failure,Fault::Allocation,Fault::Length,Fault::Empty,Fault::NonFinite,Fault::Direction}) {
         Events events;Sampler sampler(events);Noise noise(events);Random rng(events);Step step(events);

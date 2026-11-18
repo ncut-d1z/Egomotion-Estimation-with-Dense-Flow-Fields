@@ -76,7 +76,7 @@ bool normalizeSource(const Vector3& raw, Vector3& output) {
 // Recursive depth-first A,B,C,D. The source also evaluates midpoint vectors
 // at leaf depth; keep that operation order for traceability.
 bool emitFace(const Face& vertices, int level, int stop,
-              DirectionSet& result, Eigen::Index& row) {
+              DirectionMatrix& result, Eigen::Index& row) {
     const auto& x = vertices[0];
     const auto& y = vertices[1];
     const auto& z = vertices[2];
@@ -87,7 +87,7 @@ bool emitFace(const Face& vertices, int level, int stop,
     if (level >= stop) {
         Vector3 center;
         if (!normalizeSource((x+y+z)/3.0, center)) return false;
-        result.directions.row(row++) = center.transpose();
+        result.row(row++) = center.transpose();
         return true;
     }
     return emitFace({x,xz,xy}, level+1, stop, result, row) &&
@@ -113,8 +113,8 @@ Result<DirectionSet, NumericalErrorCode> generate(
         return failure<DirectionSet>(NumericalErrorCode::SampleCountOverflow,
                                      "Subdivision row count overflows Eigen::Index");
     try {
-        DirectionSet result;
-        result.directions.resize(static_cast<Eigen::Index>(count), 3);
+        DirectionMatrix result;
+        result.resize(static_cast<Eigen::Index>(count), 3);
         Eigen::Index row=0;
         for (const Face& face : faces) {
             if (!emitFace(face,0,level,result,row))
@@ -122,10 +122,10 @@ Result<DirectionSet, NumericalErrorCode> generate(
                                              "Triangle midpoint or centroid undefined",
                                              static_cast<std::size_t>(row));
         }
-        if (row!=result.directions.rows())
+        if (row!=result.rows())
             return failure<DirectionSet>(NumericalErrorCode::InvalidShape,
                                          "Sampler did not emit every expected row");
-        return Result<DirectionSet,NumericalErrorCode>::success(std::move(result));
+        return DirectionSet::fromOwned(std::move(result));
     } catch (const std::bad_alloc&) {
         return failure<DirectionSet>(NumericalErrorCode::ResourceLimitExceeded,
                                      "Cannot allocate direction samples");

@@ -1,3 +1,4 @@
+#include "../support/direction_fixture.hpp"
 // R6 independent geometric probes for source trajectory and sphere code.
 // Tests use analytically known locations/intersections, not the C++ routine
 // under test to construct expected values. This is NOT an executed CTest.
@@ -84,13 +85,13 @@ void checkRelativeKinematics() {
             "Exact antiparallel source axis must explicitly fail in safe C++");
 }
 DirectionSet unitAxes() {
-    DirectionSet d;
-    d.directions.resize(4,3);
-    d.directions.row(0)=Vector3::UnitX().transpose();
-    d.directions.row(1)=(-Vector3::UnitX()).transpose();
-    d.directions.row(2)=Vector3::UnitY().transpose();
-    d.directions.row(3)=Vector3::UnitZ().transpose();
-    return d;
+    DirectionMatrix d;
+    d.resize(4,3);
+    d.row(0)=Vector3::UnitX().transpose();
+    d.row(1)=(-Vector3::UnitX()).transpose();
+    d.row(2)=Vector3::UnitY().transpose();
+    d.row(3)=Vector3::UnitZ().transpose();
+    return test_support::directionValue(d);
 }
 void checkSphereRayDistance() {
     const SphereEnvironment sphere;
@@ -125,7 +126,8 @@ void checkSphereRayDistance() {
     require(!sphere.nearnessInUnitSphere(
                 axes,Vector3(1.1,0,0),Vector3::Zero()).hasValue(),
             "Camera outside sphere must return explicit non-success");
-    axes.directions.row(0)=Vector3(2,0,0).transpose();
+    auto nonunit_values=axes.directions();nonunit_values.row(0)=Vector3(2,0,0).transpose();
+    axes=test_support::directionValue(nonunit_values);
     const auto nonunit=sphere.nearnessInUnitSphere(
         axes,Vector3::Zero(),Vector3::Zero());
     require(!nonunit.hasValue()&&
