@@ -1,6 +1,6 @@
 # 人类输入、已决定事项与无限期延期清单（TODO）
 
-> **2026-11-18 可继续实施项**：[98项P任务复核](reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)列明的装配/D2职责及D1四类值构造已补，最新`b2628a9` ON67/OFF66通过，见 [证据](reviews/R6_FLOW_VALUE_2026-11-18.md)。继续D4只读/预留前记录及其余R6义务，不能全部归为待审批。DEC-008-03只约束Result/Status，领域值API仍为未冻结候选；完整实验/正式资格仍缺，不重复催办无限期延期事项。
+> **2026-11-18 可继续实施项**：[98项P复核](reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)列明的D1四类值、D2/D3职责与D4进程终止记录已补有限实测，最新617c7f8 ON69/OFF68通过，见 [证据](reviews/R6_PROCESS_RECORDS_2026-11-18.md)。继续D4应用RunId/seed/实际MAT快照与进程记录关联及其余R6义务；只读inspect尚无被记录器绑定的读取快照身份，不用请求参数或重开路径摘要冒充。外层尚未关联应用RunId/seed/实际MAT快照身份，不能将进程记录等同整个REQ-NF-LOG验收；完整科学实验和正式资格仍未完成，真实Adaptive仍Incomplete、无MAT。不重复催办无限期延期审批。
 
 > **2026-11-18 更新**：用户已明确允许生产代码修改、构建/CTest和方案文档修改；最新受测源码 `4c2973b19c148f640613b03309e8756006adb053` 两模式增量构建无诊断、**SVG ON 53/53、OFF 52/52 CTest**，见 [五实验运行记录验证](reviews/R6_EXECUTION_RECORDS_2026-11-17.md) 与 [PROGRESS](PROGRESS.md)。五生成入口的argv/Config/环境/seed及输出交付记录、发布故障和Complete保留已测；MAT读取身份绑定、探针状态/报告故障回归保留，三Adaptive入口仍为Incomplete、无完整MAT。继续 [剩余工作](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md) 中的非生成入口/分配RunId前记录边界及P/TC覆盖复核；[45源现行映射](MIGRATION_MATRIX.md)已更新。完整成功、病态数值资格、L4/完整实验、资源、DEC-005/006/008及正式验收仍未完成，不擅改角度策略或重复催办延期审批。
 
