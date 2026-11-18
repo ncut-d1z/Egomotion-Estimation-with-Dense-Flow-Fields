@@ -1,6 +1,6 @@
 # C++ 实施路线图
 
-> **2026-11-18 最新结果**：`1588ebb97b0c3b0984e5b21335f1e67af9184e62`两模式构建无诊断，**SVG ON64/64、OFF63/63 CTest**；先MAT7项，再57/56项，零失败/跳过/禁用。D1的MotionEstimate已实现检查构造和只读自拥有值，839项与原回归通过，见 [运动值证据](reviews/R6_MOTION_VALUE_2026-11-18.md)。[98项P复核](reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)同步；继续D1其余FlowField/DirectionSet/HarmonicCoefficients边界及D4只读/预留前记录范围。未改PLAN/AC、数值阈值或正式资格，Issue #1/#2/#3仍开放，R6未结案。
+> **2026-11-18 最新结果**：`9e4b60f065ecb5625bc30429d59607d9b002cfda`两模式构建无诊断，**SVG ON65/65、OFF64/64 CTest**；先MAT7项，再58/57项，零失败/跳过/禁用。D1的HarmonicCoefficients检查构造/存储及178项与原回归通过，见 [系数值证据](reviews/R6_COEFFICIENT_VALUE_2026-11-18.md)。[98项P复核](reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)同步；MotionEstimate已补，继续FlowField/DirectionSet及D4只读/预留前记录范围。未改PLAN/AC、数值阈值或正式资格，Issue #1/#2/#3仍开放，R6未结案。
 
 > **2026-11-17 最新执行授权**：用户已明确允许生产代码修改、构建/CTest 和方案文档修改。现进入 R6 原生验证及失败修复，旧批次的运行暂缓只作历史记录；每次运行前仍执行远程检查点规则。实际命令/结果见 [PROGRESS](PROGRESS.md)，本次授权不等于数值验收或冻结。
 

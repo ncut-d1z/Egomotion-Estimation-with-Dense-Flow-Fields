@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6球谐系数构造与存储（2026-11-18）
+
+`[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`9e4b60f065ecb5625bc30429d59607d9b002cfda`两模式构建无诊断，**SVG ON65/65、OFF64/64 CTest**；先MAT7项，再58/57项，零失败/跳过/禁用。HarmonicCoefficients采用检查工厂、私有3×5列主序存储及只读访问，全部15项有限且保留六个未用位置的有限非零值；默认全零、源初始化零阶项为1。新增178项形状/非有限/逐位保存/值寿命检查通过。拟合/旋转/Session/策略及夹具已迁移；工厂和原始叶子独立保留非有限负例，有限大基线旋转溢出及策略失败回滚/同帧重试通过，不改数学公式/相位/容差。各726项输入摘要不变，RunId `r6-coefficient-value-20261118-SQJ9gcFR`，见 [专项记录](reviews/R6_COEFFICIENT_VALUE_2026-11-18.md)。D1的MotionEstimate与HarmonicCoefficients已补；FlowField/DirectionSet及D4记录边界、完整实验/正式资格仍未完成。Issue #1/#2/#3开放、无PR，R6未结案。
+
 ## 最新接续：R6运动值构造与寿命（2026-11-18）
 
 `[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`1588ebb97b0c3b0984e5b21335f1e67af9184e62`两模式构建无诊断，**SVG ON64/64、OFF63/63 CTest**；先MAT7项，再57/56项，零失败/跳过/禁用。MotionEstimate采用私有有限3维分量、检查工厂/只读getter、明确静止默认值和自拥有右值访问，Franz/KvD/Adaptive/Runner生产路径及夹具已迁移；无归一化/新数值门槛。新增839项构造/维度/非有限/值寿命检查，两模式原172962入口隔离/88121场景/独立数值回归保留。RunId `r6-motion-value-20261118-9j2NQZaD`，各724项输入摘要不变，见 [专项记录](reviews/R6_MOTION_VALUE_2026-11-18.md)。D1的MotionEstimate缺口已补，FlowField/DirectionSet/HarmonicCoefficients及D4记录边界仍待处理；完整实验与正式资格未完成。Issue #1/#2/#3开放、无PR，R6未结案。
