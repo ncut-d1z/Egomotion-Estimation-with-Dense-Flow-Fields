@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **2026-11-18 最新证据登记（[AI-EDIT]）**：受测源码 `9e4b60f065ecb5625bc30429d59607d9b002cfda` 两模式构建无诊断，**SVG ON65/65、OFF64/64 CTest**；先MAT7项，再58/57项，零失败/跳过/禁用，原始输入SHA不变。新增`r06_coefficient_value_invariants`各178项存储/维度/非有限/值寿命检查及编译断言；旧非法系数负例迁到工厂并保留原始矩阵叶子检查，刷新帧旋转溢出及原数值/Session/MAT/CLI等回归通过，见 [双模式证据](reviews/R6_COEFFICIENT_VALUE_2026-11-18.md)。[66 TC映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)、[98项P复核](reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)及 [数值汇总](NUMERICAL_EQUIVALENCE.md)同步。未改下列66项TC/AC、阈值、优先级或冻结状态；完整实验/L4及正式资格仍缺，三个真实Adaptive仍Incomplete、无MAT，旧描述保留历史语境。
+> **2026-11-18 最新证据登记（[AI-EDIT]）**：受测源码 `7f4d248255a1502b65e1f8210071a5d47b919839` 两模式构建无诊断，**SVG ON66/66、OFF65/65 CTest**；先MAT7项，再59/58项，零失败/跳过/禁用，原始输入SHA不变。新增`r06_direction_value_invariants`各901项、三次分配故障和移交编译断言；714行独立采样及原数值/MAT/CLI回归保留，Adaptive注入增加三条行索引断言为36091项，见 [双模式证据](reviews/R6_DIRECTION_VALUE_2026-11-18.md)。[66 TC映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)、[98项P复核](reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)及 [数值汇总](NUMERICAL_EQUIVALENCE.md)同步。未改下列TC/AC、阈值、优先级或冻结状态；完整实验/L4与正式资格仍缺，真实Adaptive仍Incomplete、无MAT。
 
 > **测试计划草案 v0.31，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
 

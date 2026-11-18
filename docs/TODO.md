@@ -1,6 +1,6 @@
 # 人类输入、已决定事项与无限期延期清单（TODO）
 
-> **2026-11-18 可继续实施项**：[98项P任务复核](reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)已补已列明装配/D2职责及D1的MotionEstimate/HarmonicCoefficients构造，最新`9e4b60f` ON65/OFF64项CTest通过，见 [证据](reviews/R6_COEFFICIENT_VALUE_2026-11-18.md)。继续FlowField/DirectionSet构造边界和只读/预留前记录范围，不能全部归为待人类审批。DEC-008-03只约束Result/Status，新领域值实现仍是未冻结候选，不冒称所有领域工厂已批准。完整实验/正式资格仍缺；不重复催办无限期延期事项。
+> **2026-11-18 可继续实施项**：[98项P任务复核](reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)已补已列明装配/D2职责及D1的MotionEstimate/HarmonicCoefficients/DirectionSet，最新`7f4d248` ON66/OFF65通过，见 [证据](reviews/R6_DIRECTION_VALUE_2026-11-18.md)。继续FlowField构造及只读/预留前记录边界，不能全部归为待审批。DEC-008-03只约束Result/Status，新领域值API仍是未冻结候选；完整实验/正式资格仍缺，不重复催办无限期延期事项。
 
 > **2026-11-18 更新**：用户已明确允许生产代码修改、构建/CTest和方案文档修改；最新受测源码 `4c2973b19c148f640613b03309e8756006adb053` 两模式增量构建无诊断、**SVG ON 53/53、OFF 52/52 CTest**，见 [五实验运行记录验证](reviews/R6_EXECUTION_RECORDS_2026-11-17.md) 与 [PROGRESS](PROGRESS.md)。五生成入口的argv/Config/环境/seed及输出交付记录、发布故障和Complete保留已测；MAT读取身份绑定、探针状态/报告故障回归保留，三Adaptive入口仍为Incomplete、无完整MAT。继续 [剩余工作](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md) 中的非生成入口/分配RunId前记录边界及P/TC覆盖复核；[45源现行映射](MIGRATION_MATRIX.md)已更新。完整成功、病态数值资格、L4/完整实验、资源、DEC-005/006/008及正式验收仍未完成，不擅改角度策略或重复催办延期审批。
 
