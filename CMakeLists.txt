@@ -701,6 +701,15 @@ if(BUILD_TESTING)
     set_tests_properties(r06_adaptive_default_undefined_contract PROPERTIES
         LABELS "r06;runner;source-trajectory;undefined-angle;synthetic-step;write-sandbox" TIMEOUT 180)
 
+    add_executable(test_r06_adaptive_delivery_l3 tests/integration/test_r06_adaptive_delivery_l3.cpp)
+    target_link_libraries(test_r06_adaptive_delivery_l3 PRIVATE egomotion_experiments egomotion_matio ZLIB::ZLIB)
+    target_compile_features(test_r06_adaptive_delivery_l3 PRIVATE cxx_std_17)
+    target_compile_options(test_r06_adaptive_delivery_l3 PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_adaptive_real_step_delivery_l3 COMMAND test_r06_adaptive_delivery_l3
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_adaptive_delivery_l3" "${EGOMOTION_BUILD_SOURCE_SHA}")
+    set_tests_properties(r06_adaptive_real_step_delivery_l3 PROPERTIES
+        LABELS "r06;runner;real-step;independent-l3;synthetic-scene;write-sandbox" TIMEOUT 180)
+
     add_executable(test_r06_bias_runner tests/integration/test_r06_bias_runner.cpp)
     target_link_libraries(test_r06_bias_runner PRIVATE egomotion_experiments egomotion_matio)
     target_compile_features(test_r06_bias_runner PRIVATE cxx_std_17)
