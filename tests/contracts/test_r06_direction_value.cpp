@@ -27,6 +27,9 @@ extern "C" void* __wrap_malloc(std::size_t size) {
 namespace {
 using namespace egomotion;
 std::size_t checks=0;
+template<class T,class=void> struct CanTransfer : std::false_type {};
+template<class T> struct CanTransfer<T,std::void_t<decltype(DirectionSet::fromOwned(std::declval<T>()))>>
+    : std::true_type {};
 void require(bool condition,const char* message) {
     ++checks;if(!condition)throw std::runtime_error(message);
 }
@@ -44,6 +47,10 @@ DirectionSet owned(const DirectionMatrix& values) {
 void compileContracts() {
     static_assert(!std::is_aggregate_v<DirectionSet>);
     static_assert(!std::is_constructible_v<DirectionSet,DirectionMatrix>);
+    static_assert(CanTransfer<DirectionMatrix&&>::value);
+    static_assert(!CanTransfer<DirectionMatrix&>::value&&!CanTransfer<const DirectionMatrix&&>::value);
+    static_assert(!CanTransfer<Eigen::MatrixXd&&>::value&&!CanTransfer<Eigen::Matrix<double,3,2>&&>::value);
+    static_assert(!CanTransfer<Eigen::Matrix<double,Eigen::Dynamic,3,Eigen::RowMajor>&&>::value);
     static_assert(DirectionMatrix::RowsAtCompileTime==Eigen::Dynamic&&DirectionMatrix::ColsAtCompileTime==3);
     static_assert(!DirectionMatrix::IsRowMajor);
     static_assert(std::is_same_v<decltype(std::declval<DirectionSet&>().directions()),const DirectionMatrix&>);

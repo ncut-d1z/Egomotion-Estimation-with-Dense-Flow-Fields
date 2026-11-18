@@ -34,6 +34,8 @@ public:
         const Eigen::Ref<const Eigen::MatrixXd>& directions);
     // 先校验再移交，失败保留输入；成功后调用者须放弃旧可写别名。
     static Result<DirectionSet,NumericalErrorCode> fromOwned(DirectionMatrix&& directions);
+    // 阻止Eigen在进入工厂前隐式转换形状或分配另一份矩阵。
+    template<class T> static Result<DirectionSet,NumericalErrorCode> fromOwned(T&&) = delete;
 
     const DirectionMatrix& directions() const & noexcept { return directions_; }
     DirectionMatrix directions() && noexcept { return std::move(directions_); }
