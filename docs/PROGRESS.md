@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6 P9.8分析组件分离（2026-11-18）
+
+`[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`03f7f81b6605a4492890a44e9e28290b8f3d785d`两模式构建无诊断，**SVG ON62/62、OFF61/61 CTest**；先MAT7项，零失败/跳过/禁用。BiasResultAnalyzer/AdaptiveResultAnalyzer分别拥有原分析逻辑，MatResultAnalyzer只分派，原函数体及异常分类保持。新测试各727项，覆盖四入口两次交替、40读取故障、结果自拥有及导出失败不改值；历史独立曲线/平滑和原回归保留。RunId `r6-analyzer-services-20261118-0WFb9nRp`，各722项输入摘要不变，见 [专项记录](reviews/R6_ANALYZER_SERVICES_2026-11-18.md)。P9.8源码职责缺口已补，D1、D2其余Runner职责、D4记录边界及完整实验/资格仍未完成，R6未结案；Issue #1/#2/#3开放、无PR。
+
 ## 最新接续：R6 P7.10球谐职责分离（2026-11-18）
 
 `[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`a19d2d82ab9b7b27f9b77061e9f4880c8d8944bf`两模式构建无诊断，**SVG ON61/61、OFF60/60 CTest**；先MAT7项，零失败/跳过/禁用。RealSphericalHarmonics/HarmonicFitter/HarmonicRotator分别拥有源基值/重建、逐项拟合及两种旋转动作，实际单步/Session/策略已接入；9个迁移函数体仅改辅助命名空间限定，叶子公式不变。新测试各482项，最大绝对差1.7763568394002505e-15；完整原回归保留。RunId `r6-harmonic-services-20261118-e9E0GmUL`，各721项输入摘要不变，见 [专项记录](reviews/R6_HARMONIC_SERVICES_2026-11-18.md)。P7.10源码缺口已补，D1、D2其余Runner/Analyzer职责、D4记录范围和完整实验/资格仍未完成，R6未结案；Issue #1/#2/#3开放、无PR。

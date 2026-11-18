@@ -1,5 +1,7 @@
 # 对象模型与生命周期合同（Object Model）
 
+> **2026-11-18 P9.8实现追踪，候选/未冻结**：BiasResultAnalyzer与AdaptiveResultAnalyzer分别拥有Bias统计及三Adaptive分析的原函数体，借用Reader、不创建Writer/Exporter，返回自拥有数值及来源；MatResultAnalyzer仅分派，公共异常边界保持。727项四入口/40故障/结果与导出隔离及双模式实测见 [记录](reviews/R6_ANALYZER_SERVICES_2026-11-18.md)。P9.8源码缺口已补，领域构造不变量、其余Runner职责和总体对象验收仍未关闭。下方日期较早的实现描述保留当时状态。
+
 > **2026-11-18 P7.10实现追踪，候选/未冻结**：RealSphericalHarmonics、HarmonicFitter、HarmonicRotator现各有实现文件，分别拥有源基值/重建、逐通道投影、物理与原系数两种明确旋转动作；原自由函数仅转发。实际Adaptive单步/Session/Periodic策略已使用三个组件，无虚基类、缓存或多帧状态。482项参考/边界及双模式实测见 [记录](reviews/R6_HARMONIC_SERVICES_2026-11-18.md)。这补足P7.10源码职责，不关闭领域构造不变量、其余Runner/Analyzer结构和总体对象验收。
 
 > **2026-11-18 Adaptive注入追踪，候选/未冻结**：内存Runner现在借用`AdaptiveSampling`和`AdaptiveScene`，生产适配拥有默认采样/噪声/轨迹/运动学/球环境或借用外部服务；RNG仍由RunContext独占，Session每次compute新建。新增场景三接口不持有跨帧系数，三入口合成完整场景、八轮状态重置/聚合及故障各88121项检查与双模式实测见 [记录](reviews/R6_ADAPTIVE_SCENE_2026-11-18.md)。已列明的装配源码缺口已补，领域构造不变量及其余职责/正式对象验收仍保留；未把Result工厂决定扩大成全部领域值的批准。
