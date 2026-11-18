@@ -8,6 +8,9 @@
 
 namespace egomotion {
 
+template<class T,class Code> class Result;
+enum class NumericalErrorCode;
+
 using Scalar = double;
 using Vector3 = Eigen::Matrix<Scalar, 3, 1>;
 using Matrix3 = Eigen::Matrix<Scalar, 3, 3>;
@@ -19,7 +22,27 @@ using DirectionMatrix = Eigen::Matrix<Scalar, Eigen::Dynamic, 3, Eigen::ColMajor
 
 struct FlowField { FlowMatrix observations; };
 struct DirectionSet { DirectionMatrix directions; };
-struct MotionEstimate { Vector3 translation; Vector3 rotation; };
+// 有限运动值；零运动合法，归一化/可观测性由具体算法判断。
+// 默认值明确为静止，不表示Result成功，也不允许未初始化分量。
+class MotionEstimate final {
+public:
+    MotionEstimate() noexcept = default;
+    static Result<MotionEstimate,NumericalErrorCode> create(
+        const Eigen::Ref<const Eigen::MatrixXd>& translation,
+        const Eigen::Ref<const Eigen::MatrixXd>& rotation);
+
+    const Vector3& translation() const & noexcept { return translation_; }
+    const Vector3& rotation() const & noexcept { return rotation_; }
+    Vector3 translation() && noexcept { return translation_; }
+    Vector3 rotation() && noexcept { return rotation_; }
+    Vector3 translation() const && noexcept { return translation_; }
+    Vector3 rotation() const && noexcept { return rotation_; }
+private:
+    MotionEstimate(const Vector3& translation,const Vector3& rotation) noexcept
+        : translation_(translation),rotation_(rotation) {}
+    Vector3 translation_=Vector3::Zero();
+    Vector3 rotation_=Vector3::Zero();
+};
 struct HarmonicCoefficients { HarmonicMatrix values; };
 struct RunId { std::string text; };
 

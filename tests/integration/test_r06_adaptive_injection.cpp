@@ -1,3 +1,4 @@
+#include "../support/motion_fixture.hpp"
 // 只验证组合/失败/所有权；固定Step不是数值Golden或完整科学实验。
 #include "egomotion/experiments/production_runner.hpp"
 #include "egomotion/experiments/run_context.hpp"
@@ -111,7 +112,7 @@ struct Step final:estimators::IAdaptiveStepSolver {
         if(flows.size()==fail_at)
             return Result<estimators::AdaptiveStepResult,NumericalErrorCode>::failure(failure());
         estimators::AdaptiveStepResult result;
-        result.motion={{1,2,3},{3,2,1}};
+        result.motion=test_support::motionValue(Vector3{1,2,3},Vector3{3,2,1});
         result.coefficients_next=old;result.coefficients_next.values(0,0)+=0.01;
         result.trace.coefficients_next=result.coefficients_next;
         return Result<estimators::AdaptiveStepResult,NumericalErrorCode>::success(std::move(result));

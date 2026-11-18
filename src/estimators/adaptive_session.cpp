@@ -66,7 +66,7 @@ AdaptiveMfaSession::processFrame(const AdaptiveFrameInput& frame) {
                     "MATLAB 1-based order, starting with i=2 (expected i="+
                     std::to_string(expected_matlab_frame_index_)+")");
     if (!frame.source_coefficient_rotation.allFinite()||
-        !frame.truth.translation.allFinite()||!frame.truth.rotation.allFinite())
+        !frame.truth.translation().allFinite()||!frame.truth.rotation().allFinite())
         return fail(ExperimentErrorCode::InvalidParameters,
                     "Adaptive frame rotation/truth contains non-finite values");
     const std::size_t comparison_count=mode_==AdaptiveSessionMode::UpdateRates
@@ -125,13 +125,13 @@ AdaptiveMfaSession::processFrame(const AdaptiveFrameInput& frame) {
             // frame only (source anzahlitfuerini=1).
             const MotionEstimate& motion=comparison.value().motion;
             auto t_error=source_metrics::sourceDirectionErrorDegrees(
-                frame.truth.translation,motion.translation);
+                frame.truth.translation(),motion.translation());
             if (!t_error.hasValue())
                 return propagate(t_error.error(),
                                  "Adaptive comparison translation angle undefined",
                                  frame.matlab_frame_index);
             auto r_error=source_metrics::sourceDirectionErrorDegrees(
-                frame.truth.rotation,motion.rotation);
+                frame.truth.rotation(),motion.rotation());
             if (!r_error.hasValue())
                 return propagate(r_error.error(),
                                  "Adaptive comparison rotation angle undefined",

@@ -60,7 +60,7 @@ Status<NumericalErrorCode> translationInputs(
     if(near.size()!=field.observations.rows())
         return reject(NumericalErrorCode::InvalidShape,"KvD translation rule nearness size differs");
     if(!field.observations.allFinite()||!near.allFinite()||
-       !motion.translation.allFinite()||!motion.rotation.allFinite())
+       !motion.translation().allFinite()||!motion.rotation().allFinite())
         return reject(NumericalErrorCode::NonFiniteInput,"KvD translation rule input non-finite");
     for(Eigen::Index i=0;i<field.observations.rows();++i)
         if(std::abs(direction(field,i).squaredNorm()-1.0)>kUnitDirectionSquaredNormTolerance)
@@ -88,12 +88,12 @@ Result<KvDTranslationUpdate,NumericalErrorCode> OriginalKvDTranslationRule::comp
     // norm_koenderink_iteration.m: near*p、near*d、near²*(t·d)*d。
     for(Eigen::Index i=0;i<field.observations.rows();++i) {
         const Vector3 d=direction(field,i),p=velocity(field,i);
-        const double mu=near[i],projection=motion.translation.dot(d);
+        const double mu=near[i],projection=motion.translation().dot(d);
         update.mean_a+=mu*p;
         update.mean_b+=mu*d;
         update.mean_c+=(mu*mu*projection)*d;
     }
-    return translationResult(std::move(update),static_cast<double>(near.size()),motion.rotation);
+    return translationResult(std::move(update),static_cast<double>(near.size()),motion.rotation());
 }
 Result<KvDTranslationUpdate,NumericalErrorCode> ModifiedKvDTranslationRule::compute(
     const FlowField& field,const Eigen::VectorXd& near,const MotionEstimate& motion) const {
@@ -103,12 +103,12 @@ Result<KvDTranslationUpdate,NumericalErrorCode> ModifiedKvDTranslationRule::comp
     // mue_norm_koenderink_iteration.m: p、d、near*(t·d)*d。
     for(Eigen::Index i=0;i<field.observations.rows();++i) {
         const Vector3 d=direction(field,i),p=velocity(field,i);
-        const double mu=near[i],projection=motion.translation.dot(d);
+        const double mu=near[i],projection=motion.translation().dot(d);
         update.mean_a+=p;
         update.mean_b+=d;
         update.mean_c+=(mu*projection)*d;
     }
-    return translationResult(std::move(update),static_cast<double>(near.size()),motion.rotation);
+    return translationResult(std::move(update),static_cast<double>(near.size()),motion.rotation());
 }
 
 // 逐轮trace与源赋值时序同处一体，保留超过100行以便逐节点审计。
@@ -125,9 +125,9 @@ Result<KvDResult,NumericalErrorCode> KvDIterationEngine::estimate(
     if (initialization.initial_translation_norm==0)
         return fail<KvDResult>(NumericalErrorCode::ZeroNorm,
                                "Franz translation cannot initialize KvD direction");
-    Vector3 translation=initialization.before_translation_normalization.translation/
+    Vector3 translation=initialization.before_translation_normalization.translation()/
         initialization.initial_translation_norm;
-    Vector3 rotation=initialization.before_translation_normalization.rotation;
+    Vector3 rotation=initialization.before_translation_normalization.rotation();
     const Eigen::Index count=field.observations.rows();
     const double sample_count=static_cast<double>(count);
     try {
@@ -183,7 +183,11 @@ Result<KvDResult,NumericalErrorCode> KvDIterationEngine::estimate(
                 trace.nearness_after_sign=near;
             }
             const Vector3 tOld=translation;
-            const auto candidate=rule.compute(field,near,MotionEstimate{tOld,rotation});
+            const auto old_motion=MotionEstimate::create(tOld,rotation);
+            if(!old_motion.hasValue())
+                return fail<KvDResult>(NumericalErrorCode::NonFiniteResult,
+                                       "KvD old motion is non-finite");
+            const auto candidate=rule.compute(field,near,old_motion.value());
             if(!candidate.hasValue())
                 return Result<KvDResult,NumericalErrorCode>::failure(candidate.error());
             const auto& update=candidate.value();
@@ -266,16 +270,16 @@ Result<KvDResult,NumericalErrorCode> KvDIterationEngine::estimate(
         for (Eigen::Index i=0;i<count;++i)
             source_near_sum+=near[i]; // source's explicit for-loop order
         const double nearMean=source_near_sum/sample_count;
-        result.motion.translation=translation*nearMean;
-        result.motion.rotation=rotation;
+        const Vector3 scaled_translation=translation*nearMean;
+        auto final_motion=MotionEstimate::create(scaled_translation,rotation);
         result.final_nearness=std::move(near);
         result.final_nearness_mean=nearMean;
         result.final_translation_direction_before_scale=translation;
         result.iteration_count=iteration;
-        if (!result.motion.translation.allFinite()||
-            !result.motion.rotation.allFinite()||!std::isfinite(nearMean))
+        if (!final_motion.hasValue()||!std::isfinite(nearMean))
             return fail<KvDResult>(NumericalErrorCode::NonFiniteResult,
                                    "KvD final motion overflow");
+        result.motion=std::move(final_motion).value();
         return Result<KvDResult,NumericalErrorCode>::success(std::move(result));
     } catch (const std::bad_alloc&) {
         return fail<KvDResult>(NumericalErrorCode::ResourceLimitExceeded,
@@ -299,9 +303,7 @@ FranzMatchedFilter::estimateWithTrace(const FlowField& field) const {
                                                   "Franz requires unit direction vectors",
                                                   static_cast<std::size_t>(i));
     FranzInitializationTrace trace;
-    MotionEstimate motion;
-    motion.translation.setZero();
-    motion.rotation.setZero();
+    Vector3 translation=Vector3::Zero(),rotation=Vector3::Zero();
     for (int axis=0;axis<3;++axis) {
         Vector3 e=Vector3::Zero();
         e[axis]=1.0;
@@ -328,15 +330,16 @@ FranzMatchedFilter::estimateWithTrace(const FlowField& field) const {
         trace.translation_denominators[axis]=tDenom;
         trace.rotation_responses[axis]=rResponse;
         trace.rotation_denominators[axis]=rDenom;
-        motion.translation[axis]=tResponse/tDenom;
-        motion.rotation[axis]=rResponse/rDenom;
+        translation[axis]=tResponse/tDenom;
+        rotation[axis]=rResponse/rDenom;
     }
     // zellendefinieren has exactly three axes: original scale 3/anzahlzellen=1.
-    if (!motion.translation.allFinite()||!motion.rotation.allFinite())
+    auto motion=MotionEstimate::create(translation,rotation);
+    if (!motion.hasValue())
         return fail<FranzInitializationTrace>(NumericalErrorCode::NonFiniteResult,
                                               "Franz initialized non-finite motion");
-    trace.before_translation_normalization=motion;
-    trace.initial_translation_norm=motion.translation.norm();
+    trace.before_translation_normalization=std::move(motion).value();
+    trace.initial_translation_norm=translation.norm();
     if (!std::isfinite(trace.initial_translation_norm))
         return fail<FranzInitializationTrace>(NumericalErrorCode::NonFiniteResult,
                                               "Franz translation norm overflow");

@@ -1,3 +1,4 @@
+#include "../support/motion_fixture.hpp"
 // 跨 Runner/Session/Writer 的合同测试；替身运动不属于科学结果或 L3 Golden。
 // 默认600帧轨迹的零旋转必须失败；八次聚合使用设计§8.2的固定600行结果。
 #include "adaptive_aggregation.hpp"
@@ -57,7 +58,7 @@ const Mode kUpdateRates{ExperimentKind::AdaptiveUpdateRates,kFrames,1,kLevelTwoD
 MotionEstimate syntheticMotion(std::size_t run,std::size_t frame,std::size_t slot) {
     // 非轴对称、非零的合成输出，各run与各比较列不同，能检出错误平均和列混淆。
     const double r=static_cast<double>(run),f=static_cast<double>(frame),s=static_cast<double>(slot);
-    return {Vector3(1+r,2+s,3+f/1000.0),Vector3(3+s,-2-r,1+f/500.0)};
+    return test_support::motionValue(Vector3(1+r,2+s,3+f/1000.0),Vector3(3+s,-2-r,1+f/500.0));
 }
 struct ScriptedStep final:estimators::IAdaptiveStepSolver {
     const Mode mode;
@@ -182,8 +183,8 @@ double expectedError(const Mode& mode,const trajectory::FrameKinematics& truth,
     double sum=0;
     for(std::size_t run=0;run<mode.runs;++run){
         const auto motion=syntheticMotion(run,row+1,slot);
-        sum+=rotation?angleDegrees(truth.relative_rotation,motion.rotation):
-                      angleDegrees(truth.local_translation,motion.translation);
+        sum+=rotation?angleDegrees(truth.relative_rotation,motion.rotation()):
+                      angleDegrees(truth.local_translation,motion.translation());
     }
     return sum/static_cast<double>(mode.runs);
 }
@@ -304,7 +305,7 @@ void sourceFailureCase(const fs::path& root,const std::string& sha,const Mode& m
     if(!rng_failure){
         const auto reference=referenceTrajectory(mode);
         require(reference.motions[first_undefined_frame-1].relative_rotation.norm()==0.0&&
-                syntheticMotion(0,first_undefined_frame,0).rotation.norm()>0,
+                syntheticMotion(0,first_undefined_frame,0).rotation().norm()>0,
                 "Undefined-angle diagnosis is not the actual zero truth vector");
     }
     require(sandbox.context->publishFailureRecord(result.error()).hasValue(),"Cannot persist failure audit");
@@ -451,7 +452,7 @@ void fixedUpdateSession(const fs::path& root,const std::string& sha) {
     for(std::size_t row=1;row+1<kFrames;++row){
         estimators::AdaptiveFrameInput input;
         input.matlab_frame_index=row+1;input.source_coefficient_rotation=Matrix3::Identity();
-        input.truth={true_translation,true_rotation};
+        input.truth=test_support::motionValue(true_translation,true_rotation);
         input.observations.observations.setZero(kLevelTwoDirections,6);
         const auto frame=session.processFrame(input);
         require(frame.hasValue(),"Fixed nonzero-truth UpdateRates Session failed");
@@ -459,8 +460,8 @@ void fixedUpdateSession(const fs::path& root,const std::string& sha) {
             const auto motion=syntheticMotion(0,row+1,column);
             const double t=frame.value().comparison_translation_error_deg[column];
             const double r=frame.value().comparison_rotation_error_deg[column];
-            require(std::abs(t-angleDegrees(true_translation,motion.translation))<=kContractAngleTolerance&&
-                    std::abs(r-angleDegrees(true_rotation,motion.rotation))<=kContractAngleTolerance,
+            require(std::abs(t-angleDegrees(true_translation,motion.translation()))<=kContractAngleTolerance&&
+                    std::abs(r-angleDegrees(true_rotation,motion.rotation()))<=kContractAngleTolerance,
                     "Full 600-frame fixed Session angle/column changed");
             data.fields.at("allemittransfehler").values_column_major[row+kFrames*column]=t;
             data.fields.at("allemitrotfehler").values_column_major[row+kFrames*column]=r;

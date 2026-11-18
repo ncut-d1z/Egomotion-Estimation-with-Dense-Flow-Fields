@@ -118,9 +118,9 @@ ErrorResult computeImpl(const BiasExperimentConfig& config,
                 const MotionEstimate& o=orig_result.value().motion;
                 const MotionEstimate& m=mod_result.value().motion;
                 const std::array<std::pair<Vector3,Vector3>,6> pairs = {{
-                    {t,f.translation}, {w,f.rotation},
-                    {t,o.translation}, {w,o.rotation},
-                    {t,m.translation}, {w,m.rotation}
+                    {t,f.translation()}, {w,f.rotation()},
+                    {t,o.translation()}, {w,o.rotation()},
+                    {t,m.translation()}, {w,m.rotation()}
                 }};
                 for (std::size_t metric=0;metric<6;++metric) {
                     auto err=source_metrics::normalizedVectorError(pairs[metric].first,

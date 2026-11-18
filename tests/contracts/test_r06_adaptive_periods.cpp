@@ -1,3 +1,4 @@
+#include "../support/motion_fixture.hpp"
 // R6 deterministic Adaptive Session tests using a narrow solver seam.
 // This verifies the MATLAB 1-based 1/5/11/21 policy, discarded "dumi"
 // coefficients, primary update order, and failure atomicity. The fake solver
@@ -41,8 +42,7 @@ struct IncrementSolver final:IAdaptiveStepSolver {
                 NumericalErrorCode::SingularSystem,std::move(reason)});
         }
         AdaptiveStepResult output;
-        output.motion.translation=Vector3::UnitX();
-        output.motion.rotation=Vector3::UnitY();
+        output.motion=test_support::motionValue(Vector3::UnitX(),Vector3::UnitY());
         output.error_mse=0.0;
         output.coefficients_next=old;
         output.coefficients_next.values(0,0)+=100.0;
@@ -55,8 +55,7 @@ AdaptiveFrameInput input(std::size_t matlab_index) {
     AdaptiveFrameInput frame;
     frame.matlab_frame_index=matlab_index;
     frame.source_coefficient_rotation=Matrix3::Identity();
-    frame.truth.translation=Vector3::UnitX();
-    frame.truth.rotation=Vector3::UnitY();
+    frame.truth=test_support::motionValue(Vector3::UnitX(),Vector3::UnitY());
     // Deliberately empty: the injected step consumes coefficients only.
     // No scientific data or claimed trajectory is generated here.
     frame.observations.observations.resize(0,6);

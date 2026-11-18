@@ -1,3 +1,4 @@
+#include "../support/motion_fixture.hpp"
 // R6：原 transfor_koeff 的系数动作与物理场动作分别验证。
 // 独立参考采用已审阅 IR96 Table 3 的显式二次表，不调用生产递推/张量。
 // 来源：verification/harmonics/verify_low_order_layout.wl（一般 SO(3) 符号核对）。
@@ -205,7 +206,7 @@ struct TraceSolver final:IAdaptiveStepSolver {
                 {NumericalErrorCode::SingularSystem,std::move(detail)});
         }
         AdaptiveStepResult out;
-        out.motion.translation=Vector3::UnitX();out.motion.rotation=Vector3::UnitY();
+        out.motion=test_support::motionValue(Vector3::UnitX(),Vector3::UnitY());
         out.error_mse=0;out.coefficients_next=old;
         out.coefficients_next.values+=asymmetric().values;
         out.trace.coefficients_next=out.coefficients_next;
@@ -216,7 +217,7 @@ AdaptiveFrameInput frame(std::size_t index) {
     AdaptiveFrameInput in;
     in.matlab_frame_index=index;
     in.source_coefficient_rotation=rotations()[(index-2)%rotations().size()];
-    in.truth.translation=Vector3::UnitX();in.truth.rotation=Vector3::UnitY();
+    in.truth=test_support::motionValue(Vector3::UnitX(),Vector3::UnitY());
     in.observations.observations.resize(0,6);
     return in;
 }

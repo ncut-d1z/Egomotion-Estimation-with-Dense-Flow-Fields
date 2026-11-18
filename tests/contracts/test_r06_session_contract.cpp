@@ -1,3 +1,4 @@
+#include "../support/motion_fixture.hpp"
 #include "egomotion/estimators/adaptive_session.hpp"
 #include "egomotion/experiments/adaptive_runner.hpp"
 #include "egomotion/sampling/directions.hpp"
@@ -38,8 +39,7 @@ void verifySessionRollback(estimators::AdaptiveSessionMode mode) {
     frame.matlab_frame_index=3;
     frame.source_coefficient_rotation=Matrix3::Identity();
     frame.observations.observations.resize(0,6);
-    frame.truth.translation=Vector3::UnitX();
-    frame.truth.rotation=Vector3::UnitY();
+    frame.truth=test_support::motionValue(Vector3::UnitX(),Vector3::UnitY());
     auto out_of_order=session.processFrame(frame);
     require(!out_of_order.hasValue()&&
             out_of_order.error().code==ExperimentErrorCode::InvalidParameters,

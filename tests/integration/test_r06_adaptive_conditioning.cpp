@@ -179,16 +179,16 @@ void verify(const Fixture& fixture) {
     if (!actual.hasValue()) { std::cerr<<actual.error().detail.message<<'\n'; return; }
     const auto& result=actual.value();
     inspectSystem(fixture,result);
-    near(result.motion.translation.norm(),1,fixture.name+": unit translation");
-    check(result.motion.translation.allFinite()&&result.motion.rotation.allFinite()&&
+    near(result.motion.translation().norm(),1,fixture.name+": unit translation");
+    check(result.motion.translation().allFinite()&&result.motion.rotation().allFinite()&&
           result.trace.recomputed_near.allFinite()&&std::isfinite(result.error_mse),
           fixture.name+": nonfinite result");
     check(result.error_mse>=0,fixture.name+": negative MSE");
     if (fixture.check_forward_solution) {
         for (std::size_t i=0;i<3;++i) {
-            near(result.motion.translation[static_cast<Eigen::Index>(i)],fixture.translation[i],
+            near(result.motion.translation()[static_cast<Eigen::Index>(i)],fixture.translation[i],
                  fixture.name+": normalized translation");
-            near(result.motion.rotation[static_cast<Eigen::Index>(i)],fixture.rotation[i],fixture.name+": rotation");
+            near(result.motion.rotation()[static_cast<Eigen::Index>(i)],fixture.rotation[i],fixture.name+": rotation");
         }
         near(result.error_mse,0,fixture.name+": ideal-flow MSE");
         for (std::size_t i=0;i<6;++i)

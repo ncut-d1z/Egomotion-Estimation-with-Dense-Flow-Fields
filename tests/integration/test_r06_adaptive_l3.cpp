@@ -448,9 +448,9 @@ void verify(const Evidence& evidence) {
              "Adaptive general non-symmetric 6x6 solution mismatch");
     }
     for(int k=0;k<3;++k){
-        near(output.motion.translation[k],evidence.translation[k],
+        near(output.motion.translation()[k],evidence.translation[k],
              "Adaptive normalized translation mismatch");
-        near(output.motion.rotation[k],evidence.rotation[k],
+        near(output.motion.rotation()[k],evidence.rotation[k],
              "Adaptive estimated rotation mismatch");
     }
     near(output.error_mse,evidence.mse,

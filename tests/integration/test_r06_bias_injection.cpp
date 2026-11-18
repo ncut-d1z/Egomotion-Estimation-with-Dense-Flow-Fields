@@ -1,3 +1,4 @@
+#include "../support/motion_fixture.hpp"
 // 固定替身验证依赖边界；真实求解器/MAT数值回归由test_r06_bias_runner保留。
 #include "egomotion/experiments/bias_runner.hpp"
 #include "egomotion/experiments/production_runner.hpp"
@@ -63,7 +64,7 @@ struct ScriptRandom final:IRandomSource {
 MotionEstimate motion(std::size_t slot) {
     const std::array<Vector3,6> vectors{{{1,2,3},{-2,1,3},{3,-1,2},
                                        {1,3,-2},{-3,2,1},{2,-3,1}}};
-    return {vectors[2*slot],vectors[2*slot+1]};
+    return test_support::motionValue(vectors[2*slot],vectors[2*slot+1]);
 }
 struct SolverState {
     Events& events;std::string label;std::size_t slot;
@@ -159,7 +160,7 @@ void checkMetrics(const BiasRunData& data,std::uint32_t seed) {
     require(data.level_count==2&&data.xwerte==std::vector<double>({6,24}),"Source xwerte remains 6*4^level in both modes");
     for(std::size_t metric=0;metric<6;++metric) {
         const auto estimate=motion(metric/2);
-        const Vector3 value=metric%2?estimate.rotation:estimate.translation;
+        const Vector3 value=metric%2?estimate.rotation():estimate.translation();
         const Vector3 reference=truth[metric%2];
         const double angle=std::atan2(reference.cross(value).norm(),reference.dot(value));
         const double expected=2*reference.norm()*std::sin(angle/2);

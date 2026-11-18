@@ -1,3 +1,4 @@
+#include "../support/motion_fixture.hpp"
 // 替身只验证源状态编排；数学回归另由独立SH/单步L3和真实Session测试承担。
 #include "egomotion/estimators/adaptive_session.hpp"
 #include "egomotion/harmonics/adapter.hpp"
@@ -36,7 +37,7 @@ HarmonicCoefficients coefficients(double constant) {
 AdaptiveFrameInput frame(std::size_t index) {
     AdaptiveFrameInput result;result.matlab_frame_index=index;
     result.source_coefficient_rotation<<0,-1,0,1,0,0,0,0,1;
-    result.truth.translation=Vector3::UnitX();result.truth.rotation=Vector3::UnitY();
+    result.truth=test_support::motionValue(Vector3::UnitX(),Vector3::UnitY());
     return result; // 空流场仅交给确定性替身，不声称是真实数值输入。
 }
 struct Policies {
@@ -128,7 +129,7 @@ struct Solver final:IAdaptiveStepSolver {
             ErrorDetail detail;detail.stage=ErrorStage::Solve;detail.message="injected solver";
             return Result<AdaptiveStepResult,NumericalErrorCode>::failure({NumericalErrorCode::SingularSystem,std::move(detail)});
         }
-        AdaptiveStepResult result;result.motion.translation=Vector3::UnitX();result.motion.rotation=Vector3::UnitY();
+        AdaptiveStepResult result;result.motion=test_support::motionValue(Vector3::UnitX(),Vector3::UnitY());
         result.coefficients_next=old;result.coefficients_next.values+=coefficients(100).values;result.error_mse=0;
         result.trace.coefficients_next=result.coefficients_next;
         return Result<AdaptiveStepResult,NumericalErrorCode>::success(std::move(result));

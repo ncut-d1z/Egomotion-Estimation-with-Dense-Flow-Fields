@@ -1,3 +1,4 @@
+#include "../support/motion_fixture.hpp"
 // 状态隔离测试：真实单步/Session；独立运行是调度不变性的参考，不是数值 Golden。
 #include "egomotion/estimators/adaptive_session.hpp"
 
@@ -49,8 +50,8 @@ AdaptiveFrameInput input(std::size_t stream,std::size_t index) {
         result.source_coefficient_rotation<<1,0,0,0,0,-1,0,1,0;
     if (index%2==1) result.source_coefficient_rotation.transposeInPlace();
     // 固定参考轴与信号不共线，使角度处于定义域内部；不宣称原轨迹/科学真值。
-    result.truth.translation=stream==0?Vector3::UnitX():Vector3::UnitY();
-    result.truth.rotation=stream==0?Vector3::UnitZ():Vector3::UnitX();
+    result.truth=test_support::motionValue(stream==0?Vector3::UnitX():Vector3::UnitY(),
+        stream==0?Vector3::UnitZ():Vector3::UnitX());
     const std::array<double,3> t=stream==0?std::array<double,3>{{1,0.25,-0.5}}:
                                                   std::array<double,3>{{0.25,1,0.125}};
     const std::array<double,3> w=stream==0?std::array<double,3>{{0.125,0.25,0.5}}:
@@ -76,8 +77,8 @@ AdaptiveFrameInput input(std::size_t stream,std::size_t index) {
 }
 void sameOutput(const AdaptiveFrameResult& a,const AdaptiveFrameResult& b) {
     require(a.matlab_frame_index==b.matlab_frame_index,"Frame identity");
-    same(a.primary_step.motion.translation,b.primary_step.motion.translation,"primary translation");
-    same(a.primary_step.motion.rotation,b.primary_step.motion.rotation,"primary rotation");
+    same(a.primary_step.motion.translation(),b.primary_step.motion.translation(),"primary translation");
+    same(a.primary_step.motion.rotation(),b.primary_step.motion.rotation(),"primary rotation");
     same(a.primary_step.coefficients_next.values,b.primary_step.coefficients_next.values,"next coefficients");
     require(a.primary_step.error_mse==b.primary_step.error_mse,"MSE changed with schedule");
     const auto& x=a.primary_step.trace; const auto& y=b.primary_step.trace;
@@ -92,8 +93,8 @@ void sameOutput(const AdaptiveFrameResult& a,const AdaptiveFrameResult& b) {
     same(x.coefficients_next.values,y.coefficients_next.values,"trace coefficients");
     require(a.comparison_motion.size()==b.comparison_motion.size(),"comparison count");
     for (std::size_t i=0;i<a.comparison_motion.size();++i) {
-        same(a.comparison_motion[i].translation,b.comparison_motion[i].translation,"comparison translation");
-        same(a.comparison_motion[i].rotation,b.comparison_motion[i].rotation,"comparison rotation");
+        same(a.comparison_motion[i].translation(),b.comparison_motion[i].translation(),"comparison translation");
+        same(a.comparison_motion[i].rotation(),b.comparison_motion[i].rotation(),"comparison rotation");
     }
     require(a.comparison_translation_error_deg==b.comparison_translation_error_deg&&
             a.comparison_rotation_error_deg==b.comparison_rotation_error_deg,"comparison angles");
@@ -116,7 +117,7 @@ void injectedFailure(AdaptiveMfaSession& owner,const AdaptiveMfaSession& peer,
     const auto before=snapshot(owner),peer_before=snapshot(peer);
     auto bad=input(stream,index);
     if (stream==0) bad.observations.observations.resize(0,6);
-    else bad.truth.rotation.setZero();
+    else bad.truth=test_support::motionValue(bad.truth.translation(),Vector3::Zero());
     const auto failed=owner.processFrame(bad);
     require(!failed.hasValue()&&failed.error().code==ExperimentErrorCode::SolverFailed,
             "Injected frame must fail");

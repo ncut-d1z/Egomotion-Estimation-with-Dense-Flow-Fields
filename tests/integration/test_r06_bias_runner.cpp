@@ -177,9 +177,9 @@ BiasRunData observedCompute(ExperimentKind kind,std::uint32_t seed) {
         require(f.hasValue()&&o.hasValue()&&m.hasValue(),"Captured-sample estimator replay failed");
         const std::array<MotionEstimate,3> estimates{{f.value(),o.value().motion,m.value().motion}};
         for(std::size_t method=0;method<estimates.size();++method) {
-            near(result.value().ywerte[method*2].at(slot),metric(noise.translation,estimates[method].translation),
+            near(result.value().ywerte[method*2].at(slot),metric(noise.translation,estimates[method].translation()),
                  "Translation metric, solver slot and MATLAB column-major output");
-            near(result.value().ywerte[method*2+1].at(slot),metric(noise.rotation,estimates[method].rotation),
+            near(result.value().ywerte[method*2+1].at(slot),metric(noise.rotation,estimates[method].rotation()),
                  "Rotation metric, solver slot and MATLAB column-major output");
         }
     }

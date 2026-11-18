@@ -240,8 +240,11 @@ Output computeAdaptive(Mode mode, double noise_scale, IRandomSource* rng,
                 frame.matlab_frame_index=matlab_i;
                 frame.source_coefficient_rotation=coefficient_rotation;
                 frame.observations=std::move(observations);
-                frame.truth.translation=frames[row].local_translation;
-                frame.truth.rotation=frames[row].relative_rotation;
+                auto truth=MotionEstimate::create(frames[row].local_translation,
+                                                   frames[row].relative_rotation);
+                if(!truth.hasValue())
+                    return fromNumeric(truth,"trajectory truth",mode,run+1,matlab_i);
+                frame.truth=std::move(truth).value();
 
                 auto computed=session.processFrame(frame);
                 if (!computed.hasValue())

@@ -1,3 +1,4 @@
+#include "../support/motion_fixture.hpp"
 // 合成场景贯穿真实Runner/Session/聚合/发布；不是原MATLAB或科学实验Golden。
 #include "egomotion/experiments/production_runner.hpp"
 #include "egomotion/experiments/run_context.hpp"
@@ -153,15 +154,16 @@ struct Step final:estimators::IAdaptiveStepSolver {
             require((old.values.array()==initial.array()).all(),"Every run resets all primary and baseline coefficients");
         }
         estimators::AdaptiveStepResult result;
-        result.motion={Vector3::UnitX(),Vector3::UnitZ()};
+        result.motion=test_support::motionValue(Vector3::UnitX(),Vector3::UnitZ());
         if(slot+1!=mode.slots){
             if(mode.slots==5){
                 const std::array<Vector3,4> t{{Vector3::UnitX(),Vector3::UnitY(),-Vector3::UnitX(),Vector3::UnitZ()}};
                 const std::array<Vector3,4> r{{Vector3::UnitZ(),Vector3::UnitX(),-Vector3::UnitZ(),Vector3::UnitY()}};
-                result.motion={t[slot],r[slot]};
+                result.motion=test_support::motionValue(t[slot],r[slot]);
             }else{
-                result.motion.translation=(slot==0||run%2==0)?Vector3::UnitY():Vector3::UnitX();
-                result.motion.rotation=slot==0?Vector3::UnitX():Vector3::UnitZ();
+                result.motion=test_support::motionValue(
+                    (slot==0||run%2==0)?Vector3::UnitY():Vector3::UnitX(),
+                    slot==0?Vector3::UnitX():Vector3::UnitZ());
             }
         }
         result.coefficients_next=old;result.coefficients_next.values(0,0)+=1;

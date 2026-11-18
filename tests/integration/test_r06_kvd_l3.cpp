@@ -87,9 +87,9 @@ void inspect(const KvDResult& actual,const Expected& expected,
     check(close(actual.trace[0].translation_candidate_raw.x(),
                 expected.translation_raw_x),
           "First KvD translation raw update differs from independent math");
-    check(close(actual.motion.translation.x(),expected.final_translation_x),
+    check(close(actual.motion.translation().x(),expected.final_translation_x),
           "Final KvD source near-mean scaling differs from independent math");
-    check(close(actual.motion.rotation.z(),expected.final_rotation_z),
+    check(close(actual.motion.rotation().z(),expected.final_rotation_z),
           "Final KvD rotation deviates from independent math");
     check(close(actual.trace.front().nearness_raw[0],
                 expected.first_near),
@@ -113,7 +113,7 @@ void inspect(const KvDResult& actual,const Expected& expected,
         check(close(step.residual_mse,step.residual_rms*step.residual_rms,1e-16),
               "KvD MSE and RMS must satisfy square relation");
     }
-    check(close(actual.motion.translation.x(),
+    check(close(actual.motion.translation().x(),
                 actual.final_nearness_mean*
                 actual.final_translation_direction_before_scale.x()),
           "Source final t must equal last-near mean times direction");
@@ -122,9 +122,9 @@ void evaluateSix(const FlowField& input,bool oblique_input) {
     FranzMatchedFilter franz;
     auto first=franz.estimateWithTrace(input);
     check(first.hasValue(),"Franz source initialization must be defined");
-    check(close(first.value().before_translation_normalization.translation.x(),1.5),
+    check(close(first.value().before_translation_normalization.translation().x(),1.5),
           "Independent six-ray Franz translation is 3/2");
-    check(close(first.value().before_translation_normalization.rotation.z(),
+    check(close(first.value().before_translation_normalization.rotation().z(),
                 oblique_input?0.0:0.5),
           "Independent six-ray Franz angular motion mismatch");
     check(close(first.value().translation_denominators.x(),4.0)&&
@@ -162,7 +162,7 @@ void evaluateSigned() {
     FranzMatchedFilter franz;
     auto f=franz.estimateWithTrace(input);
     check(f.hasValue()&&
-          close(f.value().before_translation_normalization.translation.x(),
+          close(f.value().before_translation_normalization.translation().x(),
                 90.0/101.0),
           "Signed eight-ray Franz reference translation equals 90/101");
     KvDParameters params;

@@ -143,18 +143,23 @@ Result<AdaptiveMotionResult,NumericalErrorCode> solveAdaptiveMotion(
         if (translation_norm==0)
             return fail<AdaptiveMotionResult>(NumericalErrorCode::ZeroNorm,
                                              "Adaptive raw translation has zero norm");
-        result.motion.translation=trace.translation_raw/translation_norm;
-        result.motion.rotation=trace.solved_motion.tail<3>();
+        const Vector3 translation=trace.translation_raw/translation_norm;
+        const Vector3 rotation=trace.solved_motion.tail<3>();
+        auto motion=MotionEstimate::create(translation,rotation);
+        if(!motion.hasValue())
+            return fail<AdaptiveMotionResult>(NumericalErrorCode::NonFiniteResult,
+                                             "Adaptive normalized motion is non-finite");
+        result.motion=std::move(motion).value();
         double error_sum=0;
         trace.recomputed_near.resize(count);
         for (Eigen::Index i=0;i<count;++i) {
             const Vector3 d=direction(observations,i),p=opticFlow(observations,i);
             const double mu=trace.near_normalized[i];
             const Vector3 predicted=-mu*mean*
-                (result.motion.translation-result.motion.translation.dot(d)*d)
-                -result.motion.rotation.cross(d);
+                (result.motion.translation()-result.motion.translation().dot(d)*d)
+                -result.motion.rotation().cross(d);
             error_sum+=std::abs((p-predicted).squaredNorm());
-            const double proj=result.motion.translation.dot(d);
+            const double proj=result.motion.translation().dot(d);
             constexpr double adaptive_denominator_epsilon=1e-11;
             const double denominator=1.0-proj*proj+adaptive_denominator_epsilon;
             if (!std::isfinite(denominator)||denominator<=0.0)
@@ -162,7 +167,7 @@ Result<AdaptiveMotionResult,NumericalErrorCode> solveAdaptiveMotion(
                                                  "Adaptive new near denominator is invalid",
                                                  static_cast<std::size_t>(i));
             trace.recomputed_near[i]=
-                -result.motion.translation.dot(p-d.cross(result.motion.rotation))/
+                -result.motion.translation().dot(p-d.cross(result.motion.rotation()))/
                 denominator;
             if (!std::isfinite(trace.recomputed_near[i]))
                 return fail<AdaptiveMotionResult>(NumericalErrorCode::NonFiniteResult,

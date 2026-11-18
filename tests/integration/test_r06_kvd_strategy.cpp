@@ -1,3 +1,4 @@
+#include "../support/motion_fixture.hpp"
 #include "egomotion/estimators/franz_kvd.hpp"
 #include "egomotion/contracts/diagnostics.hpp"
 
@@ -44,7 +45,7 @@ FlowField axialField() {
 }
 void directRules() {
     const auto field=axialField();Eigen::VectorXd near(6);near<<1,2,3,4,5,6;
-    const MotionEstimate motion{Vector3{1,0,0},Vector3{0,0,0.5}};
+    const auto motion=test_support::motionValue(Vector3{1,0,0},Vector3{0,0,0.5});
     OriginalKvDTranslationRule original;ModifiedKvDTranslationRule modified;
     const auto a=original.compute(field,near,motion),b=modified.compute(field,near,motion);
     require(a.hasValue()&&b.hasValue(),"Direct translation rules");
@@ -65,8 +66,10 @@ void directRules() {
         require(rule->compute(field,Eigen::VectorXd::Zero(5),motion).error().code==NumericalErrorCode::InvalidShape,"Near size checked before access");
         auto invalid_near=near;invalid_near[2]=std::numeric_limits<double>::infinity();
         require(rule->compute(field,invalid_near,motion).error().code==NumericalErrorCode::NonFiniteInput,"Non-finite near");
-        auto invalid_motion=motion;invalid_motion.rotation.x()=std::numeric_limits<double>::quiet_NaN();
-        require(rule->compute(field,near,invalid_motion).error().code==NumericalErrorCode::NonFiniteInput,"Non-finite old rotation");
+        auto invalid_rotation=motion.rotation();invalid_rotation.x()=std::numeric_limits<double>::quiet_NaN();
+        const auto invalid_motion=MotionEstimate::create(motion.translation(),invalid_rotation);
+        require(!invalid_motion.hasValue()&&invalid_motion.error().code==NumericalErrorCode::NonFiniteInput,
+                "Non-finite old rotation rejected at value construction before rule");
         auto invalid_field=field;invalid_field.observations(0,0)=2;
         require(rule->compute(invalid_field,near,motion).error().code==NumericalErrorCode::InvalidDirection,"Non-unit rule direction");
         invalid_field=field;invalid_field.observations(0,4)=std::numeric_limits<double>::infinity();
@@ -107,7 +110,7 @@ private:
     const IKvDTranslationRule& delegate_;
 };
 void compare(const KvDResult& a,const KvDResult& b) {
-    same(a.motion.translation,b.motion.translation,"Final translation");same(a.motion.rotation,b.motion.rotation,"Final rotation");
+    same(a.motion.translation(),b.motion.translation(),"Final translation");same(a.motion.rotation(),b.motion.rotation(),"Final rotation");
     same(a.final_nearness,b.final_nearness,"Final near");same(a.final_nearness_mean,b.final_nearness_mean,"Mean near");
     require(a.iteration_count==b.iteration_count&&a.trace.size()==b.trace.size(),"Same iteration and trace counts");
     for(std::size_t i=0;i<a.trace.size();++i) {
@@ -127,8 +130,8 @@ void observations(const FlowField& field,const KvDResult& result,const ObservedR
         const auto& call=rule.calls[i];const auto& trace=result.trace[i];
         require(call.field==&field,"Borrow caller flow only during compute");
         same(call.near,trace.nearness_after_sign,"Strategy sees corrected near");
-        same(call.motion.translation,trace.translation_after_sign,"Strategy sees corrected OLD translation");
-        same(call.motion.rotation,trace.rotation_before,"Strategy sees OLD rotation");
+        same(call.motion.translation(),trace.translation_after_sign,"Strategy sees corrected OLD translation");
+        same(call.motion.rotation(),trace.rotation_before,"Strategy sees OLD rotation");
     }
 }
 void engineComposition() {
@@ -149,7 +152,7 @@ void engineComposition() {
         auto quiet=parameters;quiet.retain_trace=false;
         const auto no_trace=engine.estimate(field,quiet,modified);
         require(no_trace.hasValue()&&no_trace.value().trace.empty(),"Trace opt-out retained");
-        same(no_trace.value().motion.translation,second.value().motion.translation,"Trace cannot affect motion");
+        same(no_trace.value().motion.translation(),second.value().motion.translation(),"Trace cannot affect motion");
         same(field.observations,before,"Engine does not modify flow");
         require(first.value().trace.front().translation_candidate_raw.x()!=second.value().trace.front().translation_candidate_raw.x(),"Original/Modified formulas remain distinct");
         if(field.observations.rows()==8)require(first.value().trace.front().sign_flipped,"Sign-flip path actually covered");

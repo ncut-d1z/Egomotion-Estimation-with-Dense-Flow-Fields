@@ -83,7 +83,7 @@ int main(int argc,char** argv) {
         const auto motions=trajectory::TrajectoryKinematics{}.fromPoints(points.value());
         require(motions.hasValue(),"Cannot recover source kinematics");
         const auto& truth=motions.value()[frame-1].local_translation;
-        const auto& estimate=recorded.last->motion.translation;
+        const auto& estimate=recorded.last->motion.translation();
         const double binary64=scalarCosine(truth,estimate);
         const long double wide=wideCosine(truth,estimate);
         const auto error=source_metrics::sourceDirectionErrorDegrees(truth,estimate);
@@ -105,7 +105,7 @@ int main(int argc,char** argv) {
                 error.error().detail.message=="normrelfehler acos argument outside [-1,1]",
                 "Real metric rejection not explained by retained vectors");
         const auto replay=recorded.actual.solve(recorded.old,recorded.flow);
-        require(replay.hasValue()&&std::memcmp(replay.value().motion.translation.data(),estimate.data(),3*sizeof(double))==0,
+        require(replay.hasValue()&&std::memcmp(replay.value().motion.translation().data(),estimate.data(),3*sizeof(double))==0,
                 "Retained last real solve is not bitwise replayable");
         std::cout<<"PASS real initialization trace; finite nonzero vectors, no clamping or threshold change\n";
         return 0;

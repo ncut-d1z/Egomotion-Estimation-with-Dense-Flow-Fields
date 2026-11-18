@@ -22,13 +22,14 @@ if(NOT TARGET Sophus::Sophus)
 endif()
 
 
-add_library(egomotion_domain INTERFACE)
+add_library(egomotion_domain STATIC src/domain/motion_estimate.cpp)
 add_library(egomotion::domain ALIAS egomotion_domain)
-target_include_directories(egomotion_domain INTERFACE
+target_include_directories(egomotion_domain PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
 )
-target_link_libraries(egomotion_domain INTERFACE Eigen3::Eigen)
-target_compile_features(egomotion_domain INTERFACE cxx_std_17)
+target_link_libraries(egomotion_domain PUBLIC Eigen3::Eigen)
+target_compile_features(egomotion_domain PUBLIC cxx_std_17)
+target_compile_options(egomotion_domain PRIVATE -Wall -Wextra -Wpedantic)
 
 add_library(egomotion_contracts INTERFACE)
 add_library(egomotion::contracts ALIAS egomotion_contracts)
@@ -293,6 +294,13 @@ if(BUILD_TESTING)
         TIMEOUT 120
     )
 
+
+    add_executable(test_r06_motion_value tests/contracts/test_r06_motion_value.cpp)
+    target_link_libraries(test_r06_motion_value PRIVATE egomotion_contracts)
+    target_compile_options(test_r06_motion_value PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_motion_value_invariants COMMAND test_r06_motion_value)
+    set_tests_properties(r06_motion_value_invariants PROPERTIES
+        LABELS "r06;contracts;domain;motion;value-lifetime;negative" TIMEOUT 30)
 
     add_executable(test_r01_contracts tests/contracts/test_r01_contracts.cpp)
     target_link_libraries(test_r01_contracts PRIVATE egomotion_contracts)
