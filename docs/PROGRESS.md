@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 最新接续：R6真实Adaptive完整交付链独立参考（2026-11-18）
+
+`[HUMAN-EXECUTE/APPROVE]` 受测源码`3985b056aa19935c8348f0fefa5f5292f9fbd3b4`两模式配置/编译无诊断，**SVG ON73/73、OFF72/72 CTest**；先MAT7项，再66/65项，零失败/跳过/禁用。新增合成固定输入→真实Adaptive Step/Session→完整35/600帧及8轮聚合→MAT交付独立对照：3676721项、17441次Step、12个MAT/8540值通过，保存值最大差5.406439324458240113e-10，沿用原1e-9工程余量。两配置Step JSONL与MAT数值载荷相同，739项输入SHA及21组既有摘要不变。独立标量公式从自身状态演进，Comparison连续172224次normal、四错误数组固定除8、ratio取末轮，三合成Manifest Complete。RunId `r6-real-delivery-20261118-ghz37p6I`保留完整逐节点JSONL、MAT/Manifest、四份JUnit及通道日志，见 [专项记录](reviews/R6_REAL_STEP_DELIVERY_L3_2026-11-18.md)。合成场景不等于原科学实验成功；原轨迹三入口仍Incomplete、无完整科学MAT，L4、病态资格及正式验收未完成。Issue #1–#5开放，无PR，R6未结案。
+
 ## 最新接续：R6含噪Session独立多帧参考（2026-11-18）
 
 `[HUMAN-EXECUTE/APPROVE]` 实测：受测源码`928a8071c7c4ff70b7e38a4ed91c13a31c770323`两模式配置/编译无诊断，**SVG ON72/72、OFF71/71 CTest**；先MAT7项，再65/64项，零失败/跳过/禁用。新增固定噪声→真实Session独立参考：0/±0.1系数、两流252帧、9072次normal、24回滚，290923项检查通过；噪声场最大差3.06178693509906452164e-16，Step/状态最大差1.94913529760754045128e-14。两配置含噪JSONL对应SHA相同，原无噪声多帧JSONL与493ba86完全相同，737项输入SHA及21组既有摘要不变。真实均模长噪声与独立long double投影分别产生观测，参考从自身状态演进；原无噪声299236项/252帧保留。新增756成功帧Step+24失败比较Step，另18默认Session首帧Step；不是完整科学样本。RunId `r6-noisy-session-20261118-FnQ0oODZ`，逐帧输入/状态/节点JSONL、原始通道及四份JUnit保留，见 [专项记录](reviews/R6_NOISY_SESSION_L3_2026-11-18.md)。仅补SN-G06/AD-G05固定输入子范围；生产公式和余量未变，完整科学实验、病态资格及正式验收未完成，真实Adaptive仍Incomplete、无完整MAT。Issue #1–#5开放，无PR，R6未结案。

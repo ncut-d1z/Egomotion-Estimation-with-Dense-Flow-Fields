@@ -4,7 +4,7 @@ A planned **C++17 reimplementation that directly reads the original MATLAB MAT f
 
 > **Permanent evidence policy:** Running MATLAB/Octave or collecting original MATLAB L1 execution traces is **not required** for design, coding, verification, or release. The original scripts are read-only specifications; numerical evidence will use the preserved MAT results (L2), independently checked analytic/reference implementations (L3), and statistical comparisons (L4). See [No MATLAB Execution Policy](docs/golden/NO_MATLAB_EXECUTION_POLICY.md). This change does not authorize C++ builds/tests or imply any numerical acceptance.
 
-> **项目状态（2026-11-18）**：受测源码`928a8071c7c4ff70b7e38a4ed91c13a31c770323`两模式配置/编译无诊断，**SVG ON72/72、OFF71/71 CTest**；先MAT7项，再65/64项，零失败/跳过/禁用。新增固定噪声→真实Session独立参考：0/±0.1系数、两流252帧、9072次normal、24回滚，290923项检查通过；噪声场最大差3.06178693509906452164e-16，Step/状态最大差1.94913529760754045128e-14。两配置含噪JSONL对应SHA相同，原无噪声多帧JSONL与493ba86完全相同，737项输入SHA及21组既有摘要不变。见 [最新证据](docs/reviews/R6_NOISY_SESSION_L3_2026-11-18.md)。仅补SN-G06/AD-G05固定输入子范围；生产公式和余量未变，完整科学实验、病态资格及正式验收未完成，真实Adaptive仍Incomplete、无完整MAT。Issue #1–#5开放，无PR，R6未结案。
+> **项目状态（2026-11-18）**：受测源码`3985b056aa19935c8348f0fefa5f5292f9fbd3b4`两模式配置/编译无诊断，**SVG ON73/73、OFF72/72 CTest**；先MAT7项，再66/65项，零失败/跳过/禁用。新增合成固定输入→真实Adaptive Step/Session→完整35/600帧及8轮聚合→MAT交付独立对照：3676721项、17441次Step、12个MAT/8540值通过，保存值最大差5.406439324458240113e-10，沿用原1e-9工程余量。两配置Step JSONL与MAT数值载荷相同，739项输入SHA及21组既有摘要不变。见 [完整交付链证据](docs/reviews/R6_REAL_STEP_DELIVERY_L3_2026-11-18.md)。合成场景不等于原科学实验成功；原轨迹三入口仍Incomplete、无完整科学MAT，L4、病态资格及正式验收未完成。Issue #1–#5开放，无PR，R6未结案。
 
 ## Original research and source material
 

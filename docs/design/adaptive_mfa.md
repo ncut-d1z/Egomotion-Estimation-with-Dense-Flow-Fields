@@ -1,5 +1,7 @@
 # Adaptive MFA 单步计算与轨迹状态——详细设计草案
 
+> **2026-11-18 完整交付实测接续 `[AI-EDIT]`**：3985b05 ON73/OFF72通过；显式合成场景保留35/600帧及8轮，以真实Step/Session贯穿聚合和12个MAT回读，17441次Step/8540保存值独立对照，见 [证据](../reviews/R6_REAL_STEP_DELIVERY_L3_2026-11-18.md)。原轨迹仍Incomplete；只补AD-G05/SN-G06合成数值交付子范围，公式、阈值及下文LLD合同未变，未冻结。
+
 > **2026-11-18 含噪实测接续 `[AI-EDIT]`**：928a807 ON72/OFF71通过；固定0/±0.1噪声、252帧、9072 normal及24回滚，290923项独立对照见 [证据](../reviews/R6_NOISY_SESSION_L3_2026-11-18.md)。只补SN-G06/AD-G05有限子范围，原完整含噪/8轮ratio仍缺；公式、工程余量及下文LLD合同不变，未冻结。
 
 > **2026-11-18 实测接续 `[AI-EDIT]`**：源码493ba86新增标准库long double多帧独立参考，299236项/252帧/24真实角度失败回滚通过，ON71/OFF70 CTest，见 [证据](../reviews/R6_SESSION_MULTIFRAME_L3_2026-11-18.md)及 [固定输入/来源](../../verification/adaptive/session_multiframe_reference.md)。仅补AD-G04/05/06的状态/周期子范围；AD-G05完整addederror/八轮ratio、原35/600帧成功及正式Golden/DEC-005仍未完成。沿用工程余量、LLD/API未冻结；下列旧无实现/未测试描述属历史状态。

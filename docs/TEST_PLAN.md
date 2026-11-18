@@ -1,6 +1,6 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **2026-11-18 最新证据登记（[AI-EDIT]）**：受测源码`928a8071c7c4ff70b7e38a4ed91c13a31c770323`两模式配置/编译无诊断，**SVG ON72/72、OFF71/71 CTest**；先MAT7项，再65/64项，零失败/跳过/禁用。新增固定噪声→真实Session独立参考：0/±0.1系数、两流252帧、9072次normal、24回滚，290923项检查通过；噪声场最大差3.06178693509906452164e-16，Step/状态最大差1.94913529760754045128e-14。两配置含噪JSONL对应SHA相同，原无噪声多帧JSONL与493ba86完全相同，737项输入SHA及21组既有摘要不变。见 [专项](reviews/R6_NOISY_SESSION_L3_2026-11-18.md)；[66 TC映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)与[98 P复核](reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)同步。下列TC/AC、阈值与冻结状态不变。仅补SN-G06/AD-G05固定输入子范围；生产公式和余量未变，完整科学实验、病态资格及正式验收未完成，真实Adaptive仍Incomplete、无完整MAT。Issue #1–#5开放，无PR，R6未结案。
+> **2026-11-18 最新证据登记（[AI-EDIT]）**：受测源码`3985b056aa19935c8348f0fefa5f5292f9fbd3b4`两模式配置/编译无诊断，**SVG ON73/73、OFF72/72 CTest**；先MAT7项，再66/65项，零失败/跳过/禁用。新增合成固定输入→真实Adaptive Step/Session→完整35/600帧及8轮聚合→MAT交付独立对照：3676721项、17441次Step、12个MAT/8540值通过，保存值最大差5.406439324458240113e-10，沿用原1e-9工程余量。两配置Step JSONL与MAT数值载荷相同，739项输入SHA及21组既有摘要不变。见 [完整交付链证据](reviews/R6_REAL_STEP_DELIVERY_L3_2026-11-18.md)。合成场景不等于原科学实验成功；原轨迹三入口仍Incomplete、无完整科学MAT，L4、病态资格及正式验收未完成。Issue #1–#5开放，无PR，R6未结案。下列66 TC/AC、阈值与冻结状态不变。
 
 > **测试计划草案 v0.31，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。
 

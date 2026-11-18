@@ -1,6 +1,6 @@
 # R6：PLAN 的98项任务逐项复核
 
-> **接续实测**：受测源码`928a8071c7c4ff70b7e38a4ed91c13a31c770323`两模式配置/编译无诊断，**SVG ON72/72、OFF71/71 CTest**；先MAT7项，再65/64项，零失败/跳过/禁用。新增固定噪声→真实Session独立参考：0/±0.1系数、两流252帧、9072次normal、24回滚，290923项检查通过；噪声场最大差3.06178693509906452164e-16，Step/状态最大差1.94913529760754045128e-14。两配置含噪JSONL对应SHA相同，原无噪声多帧JSONL与493ba86完全相同，737项输入SHA及21组既有摘要不变。见 [专项](R6_NOISY_SESSION_L3_2026-11-18.md)。仅补SN-G06/AD-G05固定输入子范围；生产公式和余量未变，完整科学实验、病态资格及正式验收未完成，真实Adaptive仍Incomplete、无完整MAT。Issue #1–#5开放，无PR，R6未结案。
+> **接续实测**：受测源码`3985b056aa19935c8348f0fefa5f5292f9fbd3b4`两模式配置/编译无诊断，**SVG ON73/73、OFF72/72 CTest**；先MAT7项，再66/65项，零失败/跳过/禁用。新增合成固定输入→真实Adaptive Step/Session→完整35/600帧及8轮聚合→MAT交付独立对照：3676721项、17441次Step、12个MAT/8540值通过，保存值最大差5.406439324458240113e-10，沿用原1e-9工程余量。两配置Step JSONL与MAT数值载荷相同，739项输入SHA及21组既有摘要不变。见 [完整交付链证据](R6_REAL_STEP_DELIVERY_L3_2026-11-18.md)。合成场景不等于原科学实验成功；原轨迹三入口仍Incomplete、无完整科学MAT，L4、病态资格及正式验收未完成。Issue #1–#5开放，无PR，R6未结案。
 
 `[AI-EDIT]`，2026-11-18。本表逐项保留 [PLAN](../PLAN.md) 的98个P编号和原义务，核对实际文件、现有测试及缺口；**不修改需求、验收门槛、批准或冻结状态，也不将“有代码/测试通过”改称“任务已验收”**。原始任务全文及REQ/TC/AC/依赖仍以PLAN为准；下列“核对对象”只是定位摘要，不替代它。
 
@@ -17,7 +17,7 @@
 | 本表索引 | 真实文件与对应证据 |
 |---|---|
 | SRC | [SOURCE_INVENTORY](../SOURCE_INVENTORY.md)、[MAT_DATA_SCHEMA](../MAT_DATA_SCHEMA.md)、[MIGRATION_MATRIX](../MIGRATION_MATRIX.md)、[45源复核](R6_SOURCE_IMPLEMENTATION_MAP_2026-11-17.md)；对应SOURCE |
-| BUILD | [CMakeLists](../../CMakeLists.txt)、[README](../../README.md)、[无绘图构建](R6_HEADLESS_BUILD_2026-11-17.md)、[最新双模式证据](R6_NOISY_SESSION_L3_2026-11-18.md)；对应ENV/HEADLESS |
+| BUILD | [CMakeLists](../../CMakeLists.txt)、[README](../../README.md)、[无绘图构建](R6_HEADLESS_BUILD_2026-11-17.md)、[最新双模式证据](R6_REAL_STEP_DELIVERY_L3_2026-11-18.md)；对应ENV/HEADLESS |
 | DESIGN | [OBJECT_MODEL](../OBJECT_MODEL.md)、[ARCHITECTURE](../ARCHITECTURE.md)、[contracts](../design/contracts.md)，均为候选；实际 [领域类型](../../include/egomotion/domain/types.hpp)、[运动值工厂](../../src/domain/motion_estimate.cpp)、[窄接口](../../include/egomotion/contracts/interfaces.hpp) |
 | GEO | [方向采样](../../src/sampling/directions.cpp)、[随机源](../../src/sampling/random.cpp)；对应GEOM |
 | FLOW | [光流及噪声](../../src/simulation/flow.cpp)、[接口](../../include/egomotion/simulation/flow.hpp)；对应GEOM/RUNNER |
@@ -26,6 +26,7 @@
 | SH | [组件公共头](../../include/egomotion/harmonics/services.hpp)、[基值/重建](../../src/harmonics/real_spherical_harmonics.cpp)、[拟合](../../src/harmonics/harmonic_fitter.cpp)、[旋转适配](../../src/harmonics/harmonic_rotator.cpp)、[低阶叶子](../../include/egomotion/harmonics/low_order.hpp)；对应SH |
 | STEP / SESSION | [单步](../../src/estimators/adaptive_step.cpp)、[运动阶段](../../src/estimators/adaptive_motion.hpp)、[会话](../../src/estimators/adaptive_session.cpp)、[会话公共头](../../include/egomotion/estimators/adaptive_session.hpp)；对应同名组 |
 | RUN | [生产编排](../../src/experiments/production_runner.cpp)、[Bias](../../src/experiments/bias_runner.cpp)、[Adaptive逐帧](../../src/experiments/adaptive_runner.cpp)、[三入口](../../src/experiments/adaptive_entries.cpp)、[RunContext](../../src/experiments/run_context.cpp)；对应RUNNER |
+| DELIVERY-L3 | [真实Step交付测试](../../tests/integration/test_r06_adaptive_delivery_l3.cpp)、[独立输入](../../verification/adaptive/real_step_delivery_reference.md)、[实测](R6_REAL_STEP_DELIVERY_L3_2026-11-18.md)；合成完整日程与磁盘数值，不是原实验 |
 | MAT / IO | [Reader](../../src/io/mat_result_reader.cpp)、[封存](../../src/io/mat_read_snapshot.cpp)、[Writer](../../src/io/run_mat_writer.cpp)、[目录](../../src/io/run_directory.cpp)；对应MAT/SNAPSHOT/IO |
 | ANALYSIS / SVG | [分析分派](../../src/analysis/result_analyzer.cpp)、[Bias数值](../../src/analysis/bias.cpp)、[Adaptive数值](../../src/analysis/adaptive.cpp)、[SVG](../../src/analysis/svg_plot.cpp) |
 | CONTEXT | [观察接口](../../include/egomotion/cli/invocation_observer.hpp)、[上下文日志](../../src/cli/context_journal.cpp)、[MAT观察边界](../../include/egomotion/io/mat_read_observer.hpp)与 [双配置证据](R6_CONTEXT_JOURNAL_2026-11-18.md)；对应CONTEXT/PROCESS-RECORD |
@@ -107,12 +108,12 @@
 | P7.9 | Eigen与源inv/real差异 | STEP、METRIC、SESSION-L3：有限/病态/奇异诊断 | 部分 | 独立部分选主元long double与生产FullPivLU的固定多帧对照通过；一般病态前向误差仍未正式验收，不能由小残差推定准确。 |
 | P7.10 | 球谐职责分离 | SH：RealSphericalHarmonics/HarmonicFitter/HarmonicRotator三个固定约定组件 | 实测（有限） | 无多帧mutable状态；实际单步/Session/策略已调用，旧自由函数仅兼容转发。494项独立参考/边界（含方向拟合语义接续）及原回归通过；不代签公共API/数值验收。 |
 | P7.11 | 无状态Step接口 | STEP、SESSION：IAdaptiveStepSolver/AdaptiveMfaStepSolver | 实测（有限） | 可固定输入与替身注入，未继承KvD；正式对象合同仍未冻结。 |
-| P8.1 | 35帧初始化 | RUN、ADAPTIVE-CLI：真实入口与Complete编排替身 | 部分 | 真实帧14失败、valid12、无四MAT；替身99次Step不代表真实成功。 |
-| P8.2 | 600帧8次对比 | RUN、ADAPTIVE-CLI：配置/聚合/真实noise0 | 部分 | 真实帧151失败、valid149、completed0；未完成8次或含噪实验。 |
-| P8.3 | 前帧旋转时序 | SH、SESSION、SESSION-L3、NOISY-SESSION：旋转/比较/主提交 | 实测（有限） | 原三模式独立参考保留；新增Comparison含噪两流/三系数i=2–43，24回滚/同帧重试；完整原轨迹未成功。 |
-| P8.4 | Comparison五MAT | RUN：固定8组600行聚合/ratio取末轮 | 部分 | 替身/合成发布合同已有，with/without-errors真实新产物对照未完成。 |
-| P8.5 | 更新率1/5/11/21 | SESSION、SESSION-L3、RUN：基线/旋转/周期刷新 | 部分 | 独立真实Step序列刷新42/8/3/2次，含21周期二次刷新、0-based误移位及dumi判别；真实原帧151失败，无完整曲线。 |
-| P8.6 | 独立baseline与主状态 | SESSION：比较返回dumi弃置、主akkoeff提交 | 实测（有限） | 真实Step短序列及替身周期规则已有；完整实验保存仍缺。 |
+| P8.1 | 35帧初始化 | RUN、DELIVERY-L3、ADAPTIVE-CLI：合成真实Step/四MAT及原入口 | 部分 | 合成33有效帧/99次真实Step及140保存值独立通过；原轨迹帧14失败、valid12，无完整科学MAT。 |
+| P8.2 | 600帧8次对比 | RUN、DELIVERY-L3、ADAPTIVE-CLI：完整合成数值及原noise0 | 部分 | 合成8轮/4784有效帧/14352次真实Step及172224 normal通过；原轨迹帧151失败、completed0，未完成科学8轮。 |
+| P8.3 | 前帧旋转时序 | SH、SESSION、SESSION-L3、NOISY-SESSION、DELIVERY-L3 | 实测（有限） | 原多帧/回滚保留；完整合成Runner的真实Sophus前帧旋转与独立标量Rodrigues/系数动作逐节点核对，未覆盖原科学成功。 |
+| P8.4 | Comparison五MAT | RUN、DELIVERY-L3：真实Step、固定8平均、末轮ratio及磁盘 | 部分 | 合成5个MAT/3000值经独立参考与v5解码；原场景with/without-errors完整新产物对照未完成。 |
+| P8.5 | 更新率1/5/11/21 | SESSION、SESSION-L3、DELIVERY-L3、RUN | 部分 | 原独立短序列/回滚保留；合成598有效帧/2990真实Step及四列保存值独立核对，原轨迹帧151失败、科学曲线未完成。 |
+| P8.6 | 独立baseline与主状态 | SESSION、DELIVERY-L3：比较dumi弃置、主akkoeff提交及真实MAT | 实测（有限） | 独立状态覆盖完整合成更新率日程并写入/核对5400值；不等同完整原场景实验保存。 |
 | P8.7 | 历史额外字段 | MAT、RUN、ANALYSIS：HistoricalOnly与缺ratio拒绝 | 实测（有限） | 不伪造当前Runner字段，不猜测历史成因。 |
 | P8.8 | Session与更新策略 | SESSION、SESSION-L3：唯一状态及可替换策略 | 实测（有限） | 原48523项编排/失败/隔离保留；新增独立标量演进状态与真实Step，24次角度失败逐位回滚/同帧重试；候选接口未冻结。 |
 | P8.9 | 独立Runner上下文 | RUN、SESSION、ADAPT-SCENE、ADAPT-ENTRY：三具名入口独立Config/Context，逐次/逐轮新Session | 实测（有限） | 172962项具名Runner交错/12错误Context/非法Config/第五轮失败后重试，八轮固定分母及末轮ratio保持；原88121项场景保留。真实完整科学成功、记录全部边界及正式验收未完成。 |
@@ -126,8 +127,8 @@
 | P9.8 | 分析与导出分层 | ANALYSIS、ANALYZER-SERVICE、SVG：BiasResultAnalyzer/AdaptiveResultAnalyzer、分派入口及IPlotExporter | 实测（有限） | 两类组件拥有原数值逻辑，借用Reader/自拥有结果；727项读取顺序/40故障/导出不改值及历史独立回归通过，不代签整体分析/对象验收。 |
 | P10.1 | README及直接MAT入口 | SRC、CLI、BUILD：README现行命令/两DOI/构建说明 | 已有材料 | 实际运行范围和失败限制明确；不是全平台支持承诺。 |
 | P10.2 | 45源最终追踪 | SRC：45路径/50声明现行映射 | 部分 | 已定位实现与非使用范围；最终人工验收/全部分支资格未完成。 |
-| P10.3 | 逐层构建测试 | BUILD及全部TC证据组：当前ON72/OFF71 | 实测（有限） | 当前固定928a807与完整日志；不把失败合同算实验成功，全部旧失败历史保留。 |
-| P10.4 | 560+22结果合同 | MAT、ANALYSIS、RUN：582独立值、历史字段/NaN | 部分 | 数据与合同复核已有；三个Adaptive新完整产物及正式人工复核缺失。 |
+| P10.3 | 逐层构建测试 | BUILD及全部TC证据组：当前ON73/OFF72 | 实测（有限） | 固定3985b05及完整日志；不把失败合同或合成成功算原科学成功，旧证据保留。 |
+| P10.4 | 560+22结果合同 | MAT、ANALYSIS、RUN：582独立值、历史字段/NaN | 部分 | 数据与合同复核已有；三个Adaptive原科学场景新完整产物及正式人工复核缺失，合成12个MAT不替代。 |
 | P10.5 | 论文数值图表复现 | NUM、RUN、ANALYSIS | 未完成 | 历史曲线分析/有限回归不等于完整Bias、初始化、轨迹、更新频率及L4。 |
 | P10.6 | 证据汇总及平台 | NUM、PROGRESS、BUILD：本轮新增NUMERICAL_EQUIVALENCE | 部分 | 实际仅一个Ubuntu/GCC环境；完整实验/性能/资源预算仍缺。 |
 | P10.7 | 来源notice与输出保护 | SRC、BUILD、IO：根MIT/来源与.gitignore | 已有材料/实测 | 不重授原作者许可，不上传output/MAT；正式发布单独授权。 |

@@ -1,5 +1,7 @@
 # Golden 来源等级与 AC 独立验收矩阵（未冻结草案）
 
+> **2026-11-18 完整交付证据接续 `[AI-EDIT]`**：3985b05 ON73/OFF72通过；合成固定输入以真实数值Step贯穿完整35/600帧、8轮聚合及12个MAT/8540值回读，见 [报告](../reviews/R6_REAL_STEP_DELIVERY_L3_2026-11-18.md)及 [候选输入](../../verification/adaptive/real_step_delivery_reference.md)。独立参考不取生产输出作为Expected；仍非原场景科学成功、L4或正式Golden批准。
+
 > **2026-11-18 含噪证据接续 `[AI-EDIT]`**：固定均模长噪声与真实Session独立对照252帧/9072 normal/24回滚通过，928a807 ON72/OFF71，见 [报告](../reviews/R6_NOISY_SESSION_L3_2026-11-18.md)和 [候选固定输入](../../verification/adaptive/noisy_session_reference.md)。保留原无噪声参考；非分布统计、完整addederror/8轮或正式Golden资格。
 
 > **2026-11-18 证据接续 `[AI-EDIT]`**：本表较早的“生产未授权/未执行”状态由 [数值实测汇总](../NUMERICAL_EQUIVALENCE.md)及 [66 TC映射](../reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)更新；本轮493ba86 ON71/OFF70通过。Session新增独立标量演进参考252帧/24回滚/299236项，见 [专项](../reviews/R6_SESSION_MULTIFRAME_L3_2026-11-18.md)。只补有限L3候选与真实C++证据，不批准Golden/容差或关闭AC。

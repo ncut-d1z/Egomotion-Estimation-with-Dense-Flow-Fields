@@ -1,6 +1,6 @@
 # 人类输入、已决定事项与无限期延期清单（TODO）
 
-> **2026-11-18 可继续实施项**：[98项P复核](reviews/R6_PLAN_TASK_AUDIT_2026-11-18.md)已列源码差别已补有限实测；本批补含噪Session独立参考，928a807 ON72/OFF71通过，见 [证据](reviews/R6_NOISY_SESSION_L3_2026-11-18.md)。继续其余R6数值/证据义务。仅补SN-G06/AD-G05固定输入子范围；生产公式和余量未变，完整科学实验、病态资格及正式验收未完成，真实Adaptive仍Incomplete、无完整MAT。Issue #1–#5开放，无PR，R6未结案。不重复催办无限期延期审批。
+> **2026-11-18 可继续实施项**：受测源码`3985b056aa19935c8348f0fefa5f5292f9fbd3b4`两模式配置/编译无诊断，**SVG ON73/73、OFF72/72 CTest**；先MAT7项，再66/65项，零失败/跳过/禁用。新增合成固定输入→真实Adaptive Step/Session→完整35/600帧及8轮聚合→MAT交付独立对照：3676721项、17441次Step、12个MAT/8540值通过，保存值最大差5.406439324458240113e-10，沿用原1e-9工程余量。两配置Step JSONL与MAT数值载荷相同，739项输入SHA及21组既有摘要不变。见 [完整交付链证据](reviews/R6_REAL_STEP_DELIVERY_L3_2026-11-18.md)。合成场景不等于原科学实验成功；原轨迹三入口仍Incomplete、无完整科学MAT，L4、病态资格及正式验收未完成。Issue #1–#5开放，无PR，R6未结案。
 
 > **2026-11-18 更新**：用户已明确允许生产代码修改、构建/CTest和方案文档修改；最新受测源码 `4c2973b19c148f640613b03309e8756006adb053` 两模式增量构建无诊断、**SVG ON 53/53、OFF 52/52 CTest**，见 [五实验运行记录验证](reviews/R6_EXECUTION_RECORDS_2026-11-17.md) 与 [PROGRESS](PROGRESS.md)。五生成入口的argv/Config/环境/seed及输出交付记录、发布故障和Complete保留已测；MAT读取身份绑定、探针状态/报告故障回归保留，三Adaptive入口仍为Incomplete、无完整MAT。继续 [剩余工作](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md) 中的非生成入口/分配RunId前记录边界及P/TC覆盖复核；[45源现行映射](MIGRATION_MATRIX.md)已更新。完整成功、病态数值资格、L4/完整实验、资源、DEC-005/006/008及正式验收仍未完成，不擅改角度策略或重复催办延期审批。
 

@@ -2,7 +2,7 @@
 
 `[AI-EDIT]` 事实索引，基于当前Git树、CMake登记、测试源码及实际日志。保留 [TEST_PLAN §3](../TEST_PLAN.md) 的66个TC/REQ/AC和 [PLAN](../PLAN.md) 的98项任务，不替换候选规范、改动阈值或签署验收。下表每个TC仅列一次；其REQ/AC采用相同后缀，正式义务仍以 [REQUIREMENTS](../REQUIREMENTS.md) 为准。
 
-**没有任何一行仅凭CTest数量被宣布正式验收。** 受测源码`928a8071c7c4ff70b7e38a4ed91c13a31c770323`两模式配置/编译无诊断，**SVG ON72/72、OFF71/71 CTest**；先MAT7项，再65/64项，零失败/跳过/禁用。新增固定噪声→真实Session独立参考：0/±0.1系数、两流252帧、9072次normal、24回滚，290923项检查通过；噪声场最大差3.06178693509906452164e-16，Step/状态最大差1.94913529760754045128e-14。两配置含噪JSONL对应SHA相同，原无噪声多帧JSONL与493ba86完全相同，737项输入SHA及21组既有摘要不变。见 [含噪多帧证据](R6_NOISY_SESSION_L3_2026-11-18.md)。仅补SN-G06/AD-G05固定输入子范围；生产公式和余量未变，完整科学实验、病态资格及正式验收未完成，真实Adaptive仍Incomplete、无完整MAT。Issue #1–#5开放，无PR，R6未结案。
+**没有任何一行仅凭CTest数量被宣布正式验收。** 受测源码`3985b056aa19935c8348f0fefa5f5292f9fbd3b4`两模式配置/编译无诊断，**SVG ON73/73、OFF72/72 CTest**；先MAT7项，再66/65项，零失败/跳过/禁用。新增合成固定输入→真实Adaptive Step/Session→完整35/600帧及8轮聚合→MAT交付独立对照：3676721项、17441次Step、12个MAT/8540值通过，保存值最大差5.406439324458240113e-10，沿用原1e-9工程余量。两配置Step JSONL与MAT数值载荷相同，739项输入SHA及21组既有摘要不变。见 [完整交付链证据](R6_REAL_STEP_DELIVERY_L3_2026-11-18.md)。合成场景不等于原科学实验成功；原轨迹三入口仍Incomplete、无完整科学MAT，L4、病态资格及正式验收未完成。Issue #1–#5开放，无PR，R6未结案。
 
 ## 实际测试组及证据入口
 
@@ -40,6 +40,7 @@
 | SESSION | `r06_adaptive_session_transaction`, `r06_adaptive_periods_atomic_commit`, `r06_real_session_interleaving`, `r06_coefficient_policy_composition` | `tests/contracts/test_r06_session_contract.cpp`, `test_r06_adaptive_periods.cpp`, `tests/integration/test_r06_session_interleaving.cpp`；三模式原子性/1/5/11/21刷新，真实单步交错9579项见 [隔离实测](R6_INTERLEAVING_2026-11-17.md)；新增`tests/contracts/test_r06_coefficient_policies.cpp`的策略组合/失败/重试48523项见 [策略实测](R6_COEFFICIENT_POLICY_2026-11-18.md) |
 | SESSION-L3 | `r06_session_independent_multiframe` | `tests/integration/test_r06_session_l3.cpp`与标准库标量参考；299236项/252帧/24回滚，真实Step逐节点及演进状态独立对照，见 [证据](R6_SESSION_MULTIFRAME_L3_2026-11-18.md)；不替代原轨迹/完整addederror/八轮实验 |
 | NOISY-SESSION | `r06_noisy_session_independent_multiframe` | 同一测试的`--noise`分支与独立标量噪声参考，290923项/252帧/9072固定normal/24回滚；[证据](R6_NOISY_SESSION_L3_2026-11-18.md)，不是原轨迹/L4或完整8轮 |
+| DELIVERY-L3 | `r06_adaptive_real_step_delivery_l3` | `tests/integration/test_r06_adaptive_delivery_l3.cpp`；3676721项/17441真实Step/12MAT/8540值，合成35/600帧及8轮独立数值交付，见 [证据](R6_REAL_STEP_DELIVERY_L3_2026-11-18.md)；非原场景科学成功 |
 | RUNNER | `r06_adaptive_runner_complete_contract`, `r06_adaptive_runner_incomplete_contract`, `r06_adaptive_default_undefined_contract`, `r06_bias_runner_contract`, `r06_bias_runner_publication`, `r06_run_context_interleaving` | `tests/integration/test_r06_adaptive_runner.cpp`, `test_r06_bias_runner.cpp`, `test_r06_run_context_interleaving.cpp`；[Adaptive](R6_ADAPTIVE_RUNNER_CONTRACT_2026-11-17.md)、[Bias](R6_BIAS_RUNNER_VALIDATION_2026-11-17.md)、[RunContext隔离](R6_INTERLEAVING_2026-11-17.md)。Adaptive Runner含单步替身；隔离fixture使用真实RNG/MAT/Manifest，均不等于完整真实求解实验 |
 | ANALYZER-SERVICE | `r06_analyzer_service_contract` | `tests/integration/test_r06_analyzer_services.cpp`；727项四入口两次交替/40读取故障/自拥有结果/导出失败不改值，见 [职责分离](R6_ANALYZER_SERVICES_2026-11-18.md)；内存Reader/Exporter不冒称真实MAT或独立全数值参考 |
 | ANALYSIS | `r05_analysis_source_contract`, `r06_analysis_segments_smoothing`, `r06_analysis_finite_cli`, `r06_bias_archive_independent_curves`（另复用CLI archive） | `tests/integration/test_r05_analysis.cpp`, `test_r06_analysis_segments.cpp`, `test_r06_analysis_finite.cmake`, `r06_analysis_fixture.cpp`, `test_r06_bias_archive.cpp`；[有限输入](R6_ANALYSIS_FINITE_VALIDATION_2026-11-17.md)、[历史Bias及辅助来源](R6_BIAS_ARCHIVE_ANALYSIS_2026-11-17.md) |
@@ -76,12 +77,12 @@
 | TC-F-TRAJ-001 | GEOM、RUNNER、ADAPT-SCENE | 独立轨迹/运动/端点例；三场景接口在生产Runner中的真实流合成/调用边界已测。默认600帧的第151帧UndefinedAngle仍明确记录，合成成功不能替代真实场景 |
 | TC-F-SH-001 | SH、STEP | 独立解析九基/布局/拟合与重建，源角度18解析方向及边界；三个固定约定组件及实际求解调用已落实，三组件初始482项，系数/方向入口接续后494项。最终Golden/容差资格另办 |
 | TC-F-SH-002 | SH | 源相位作用与物理旋转分别实测；不声称MATLAB运行轨迹相同 |
-| TC-F-ADAPT-001 | STEP、SESSION-L3 | 九方向正/负均值逐节点及条件族有独立参考；新增252固定成功帧的924个真实Step逐节点与独立标量解比较，病态全输入域/正式容差仍未验收 |
-| TC-F-ADAPT-002 | SESSION、SESSION-L3、NOISY-SESSION、SH、RUNNER、ADAPT-ENTRY | 原三模式独立参考与隔离保留；新增Comparison含噪固定输入逐帧状态/比较/主运动及24失败回滚；未覆盖原35/600完整轨迹/8轮科学成功 |
-| TC-F-ADAPT-003 | SESSION、SESSION-L3、RUNNER | 独立多帧参考核对1/5/11/21旋转刷新和弃置dumi，覆盖i=42二次21周期；原策略全部槽失败/回滚/重试保留，完整真实更新率曲线未成功 |
-| TC-F-EXP-001 | RUNNER、ADAPTIVE-CLI | 35帧编排/字段替身合同；真实入口第14帧acos越界终止、valid12，无完整四MAT/L2对照成功证据 |
-| TC-F-EXP-002 | RUNNER、ADAPTIVE-CLI | 固定600帧/8次聚合及失败分母；真实noise0入口第151帧零旋转拒绝、valid149、计划8不变，未完成8轮 |
-| TC-F-EXP-003 | RUNNER、ANALYSIS、ADAPTIVE-CLI | 更新率/现行save集合/缺ratio合同；真实入口第151帧零旋转拒绝、valid149，无MAT，未完成完整真实算法实验 |
+| TC-F-ADAPT-001 | STEP、SESSION-L3、DELIVERY-L3 | 九方向正/负单步及独立多帧保留；新增17441真实Step的全部113节点贯穿合成完整日程，病态全输入域/正式容差未验收 |
+| TC-F-ADAPT-002 | SESSION、SESSION-L3、NOISY-SESSION、DELIVERY-L3、SH、RUNNER、ADAPT-ENTRY | 原独立参考/回滚保留；新增完整合成Runner前帧旋转/比较/主状态演进，原轨迹8轮科学成功未完成 |
+| TC-F-ADAPT-003 | SESSION、SESSION-L3、DELIVERY-L3、RUNNER | 真实Step完整合成598内帧/四周期与5400保存值独立核对，原策略失败/回滚保留；原轨迹更新率科学曲线未成功 |
+| TC-F-EXP-001 | RUNNER、DELIVERY-L3、ADAPTIVE-CLI | 合成35帧以99次真实Step产生四MAT/140值并独立核对；原轨迹第14帧acos越界、valid12，无完整科学MAT/L2对照 |
+| TC-F-EXP-002 | RUNNER、DELIVERY-L3、ADAPTIVE-CLI | 合成600帧/8轮/4784有效内帧，真实噪声/Step、固定8平均/末轮ratio及五MAT独立通过；原noise0帧151零旋转拒绝、valid149，科学8轮未完成 |
+| TC-F-EXP-003 | RUNNER、DELIVERY-L3、ANALYSIS、ADAPTIVE-CLI | 合成600帧以真实Step生成三MAT/5400值，独立四列/akrot/端点及缺额外字段；原轨迹帧151零旋转、valid149，无完整科学MAT |
 | TC-F-AN-001 | ANALYSIS、CLI、SNAPSHOT | 32条有限曲线独立逐值与输入SHA完整JSON、初始化区间已测；平滑辅助源Git blob逐曲线记录并验证JSON/SVG。原NaN明确拒绝；生产MAT摘要已绑定，合成/未知来源仍为空 |
 | TC-F-AN-002 | CLI、ANALYSIS、ANALYZER-SERVICE、SVG、ILLUSTRATION | 两分析组件与只消费结果的Exporter已分离，结果自拥有和导出失败不改值有727项新合同证据；三份插图生产入口/数值隔离/画幅已有实测，sphere端点运行细节与MATLAB灯光/像素等价未验证 |
 | TC-D-SOURCE-001 | SOURCE、MAT | 628原文件Git树与582MAT固定身份有证据；正式冻结未签署 |
@@ -118,12 +119,12 @@
 | TC-F-CLI-005 | CLI、SVG、ILLUSTRATION | plot与三份插图实际发布/无后端错误/几何/拒覆盖已测；CLI增量未冻结，不承诺MATLAB像素等价 |
 | TC-I-CLI-001 | CLI | 已知子命令帮助、JSONL、拒自定义输出根等；DEC-008冻结未签署 |
 | TC-I-MAT-001 | MAT、IO、SNAPSHOT | 严格/兼容读取与安全写回读；数值读取封存副本和metadata不解码均已测，首版类型边界明确 |
-| TC-I-RESULT-001 | IO、CONTRACT、RUNNER、CLI、ADAPTIVE-CLI | 当前save合同和真实三个失败审计/固定目录已有实测；五入口完整真实成功不能由替身或失败合同通过覆盖 |
+| TC-I-RESULT-001 | IO、CONTRACT、RUNNER、DELIVERY-L3、CLI、ADAPTIVE-CLI | 合成真实Step的12MAT/8540值经生产Reader与独立v5解码，receipt/SHA/Manifest核对；五入口原科学场景完整成功仍未完成 |
 | TC-I-ANALYSIS-001 | ANALYSIS、CLI、SNAPSHOT | 原数据不变/全部分析类型成功或规定失败、历史Bias全曲线及逐曲线平滑来源有证据；986贡献摘要与有限曲线实际读取SHA已核验，原NaN拒绝、未知来源空值保留 |
 
 ## 下一步按缺口实施
 
-1. 当前两模式分别完成72/72、71/71复测；所有旧失败日志及原始数据不变证据保留。独立多帧参考只补限定输入的数学证据，不等于完整数值资格、Adaptive实验成功或MATLAB像素等价完成。
+1. 当前两模式分别完成73/73、72/72复测；旧失败日志及原始数据不变证据保留。独立多帧与完整合成交付只补限定输入证据，不等于完整数值资格、原Adaptive实验成功或MATLAB像素等价完成。
 2. 三份illustration已有JSON/SVG入口、独立全网格参考和实际CLI/目视证据；保留sphere端点运行细节尚未验证及平面着色的明确边界，不用求解器九项归一化基函数替代插图。
-3. 三Adaptive真实进程的失败链已有证据；初始化第14帧acos越界、另外两入口第151帧零旋转均未产出完整MAT，真实科学成功路径仍未验证。三入口合成完整场景和八轮聚合只证明组合合同。45源、98 P和本表有限证据已映射，[数值汇总](../NUMERICAL_EQUIVALENCE.md)已建立；Bias/Adaptive已列明装配、真实MAT73负例、plot/SVG导出记录、KvD/Session策略、球谐三组件、两分析组件、三具名Adaptive入口及MotionEstimate/HarmonicCoefficients/DirectionSet/FlowField构造已补有限实测，只读/预留前记录和实际身份关联已补有限实测；本批多帧独立参考补充SESSION-L3，继续其余R6义务。数值策略变更不能由AI通过改测试自行批准。
+3. 三Adaptive真实进程的失败链已有证据；初始化第14帧acos越界、另外两入口第151帧零旋转均未产出完整MAT，真实科学成功路径仍未验证。三入口现有替身测试仍只证明组合合同；新增DELIVERY-L3将真实Step及独立数值参考贯穿合成完整日程和MAT，仍不证明原科学实验成功。45源、98 P和本表有限证据已映射，[数值汇总](../NUMERICAL_EQUIVALENCE.md)已建立；Bias/Adaptive已列明装配、真实MAT73负例、plot/SVG导出记录、KvD/Session策略、球谐三组件、两分析组件、三具名Adaptive入口及MotionEstimate/HarmonicCoefficients/DirectionSet/FlowField构造已补有限实测，只读/预留前记录和实际身份关联已补有限实测；本批补DELIVERY-L3合成数值交付，保留SESSION-L3/NOISY-SESSION及失败回归，继续其余R6义务。数值策略变更不能由AI通过改测试自行批准。
 4. 完整科学/L4实验、跨发行版资格、资源预算与正式审批不在本轮运行授权内；准备具体材料并在真正到达该边界时请求相应授权。无MATLAB/L1阻塞。
