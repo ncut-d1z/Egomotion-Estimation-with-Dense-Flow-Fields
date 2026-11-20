@@ -144,7 +144,10 @@ void saveBytes(const fs::path& path,const Bytes& bytes) {
 void requireRejected(const fs::path& path) {
     const auto before=digest(path);
     io::MatResultReader reader;
-    require(!reader.readNamed(path,"value").hasValue(),"Damaged MAT accepted by named Reader");
+    const auto named=reader.readNamed(path,"value");
+    require(!named.hasValue(),"Damaged MAT accepted by named Reader");
+    require(named.error().detail.source_path==path.string()&&named.error().detail.variable=="value",
+            "Rejected named MAT lost its requested source/variable identity");
     require(!reader.readFirstCompatible(path).hasValue(),"Damaged MAT accepted by compatible Reader");
     require(!reader.scanFile(path,io::ScanMode::VerifyDecoded).hasValue(),
             "Full dictionary scan accepted a damaged MAT container");
@@ -203,12 +206,32 @@ void directoryCases(const fs::path& directory,Cases& cases) {
         require(digest(v4)==before,"Version rejection changed input");
     });
     cases.run("missing-file-variable-and-invalid-name",[&]{
-        const auto missing=reader.readNamed(directory/"missing.mat","value");
-        require(!missing.hasValue()&&missing.error().code==MatErrorCode::MissingFile,"MissingFile mismatch");
+        for(const auto& path:{directory/"missing.mat",fs::path{},
+                              directory/fs::path(std::string("invalid\0path",12))}){
+            const auto missing=reader.readNamed(path,"value");
+            require(!missing.hasValue()&&missing.error().code==MatErrorCode::MissingFile,"MissingFile mismatch");
+            require(missing.error().detail.stage==ErrorStage::Read&&
+                    missing.error().detail.source_path==path.string()&&
+                    missing.error().detail.variable=="value","Unreadable path lost requested MAT identity");
+        }
         for(const auto& name:{std::string(),std::string("no_such_variable"),std::string("bad\0name",8)}){
             const auto absent=reader.readNamed(multiple,name);
             require(!absent.hasValue()&&absent.error().code==MatErrorCode::MissingVariable,"MissingVariable mismatch");
+            require(absent.error().detail.stage==ErrorStage::Read&&
+                    absent.error().detail.source_path==multiple.string()&&
+                    absent.error().detail.variable==name,"Rejected variable lost exact requested MAT identity");
         }
+    });
+    const auto empty=directory/"empty-directory.mat";
+    save(empty,{},MAT_COMPRESSION_NONE);
+    cases.run("empty-directory-request-identity",[&]{
+        const auto before=digest(empty);
+        const auto missing=reader.readNamed(empty,"value");
+        require(!missing.hasValue()&&missing.error().code==MatErrorCode::InvalidMatHeader&&
+                missing.error().detail.stage==ErrorStage::Read&&
+                missing.error().detail.source_path==empty.string()&&
+                missing.error().detail.variable=="value","Empty MAT directory lost requested variable identity");
+        require(digest(empty)==before,"Empty directory rejection modified source");
     });
 }
 } // namespace

@@ -155,7 +155,7 @@ Result<MatInput, MatErrorCode> openReadOnly(const fs::path& path,bool verify_con
                                            MatReadPurpose purpose=MatReadPurpose::Metadata) {
     if (path.empty() || path.native().find('\0') != std::string::npos)
         return fail<MatInput>(MatErrorCode::MissingFile, ErrorStage::Read,
-                               path, "MAT path is empty or contains NUL");
+                               path, "MAT path is empty or contains NUL", std::string(variable));
     errno = 0;
     // 正式记录的元数据读取额外封存原始字节以绑定身份，仍不解码数值载荷。
     const bool capture_snapshot=verify_container||observer;
@@ -199,7 +199,7 @@ Result<MatInput, MatErrorCode> openReadOnly(const fs::path& path,bool verify_con
             : (saved_errno == ENOENT || (!status_error && !still_exists)
                 ? MatErrorCode::MissingFile : MatErrorCode::InvalidMatHeader);
         return fail<MatInput>(code, ErrorStage::Read, path,
-                               "Unable to open MAT file for reading");
+                               "Unable to open MAT file for reading", std::string(variable));
     }
     if(verify_container&&Mat_GetVersion(handle.get())==MAT_FT_MAT5){
         auto checked=detail::validateMat5Container(input.snapshot->fd(),path,variable);
@@ -357,7 +357,7 @@ MatResultReader::readNamed(const std::filesystem::path& path,
                            std::string_view variable) const {
     if (variable.empty() || variable.find('\0') != std::string_view::npos)
         return fail<DenseDoubleArray>(MatErrorCode::MissingVariable, ErrorStage::Read,
-                                      path, "MAT variable name is empty or invalid");
+                                      path, "MAT variable name is empty or invalid", std::string(variable));
     auto opened = openReadOnly(path,true,variable,observer_,MatReadPurpose::Named);
     if (!opened.hasValue())
         return Result<DenseDoubleArray, MatErrorCode>::failure(
@@ -367,7 +367,7 @@ MatResultReader::readNamed(const std::filesystem::path& path,
     char* const* directory = Mat_GetDir(mat.get(), &count);
     if (!directory || count == 0)
         return fail<DenseDoubleArray>(MatErrorCode::InvalidMatHeader,
-                                      ErrorStage::Read, path, "MAT directory is missing");
+                                      ErrorStage::Read, path, "MAT directory is missing", std::string(variable));
     const auto matches = occurrences(directory, count, variable);
     if (matches == 0)
         return fail<DenseDoubleArray>(MatErrorCode::MissingVariable, ErrorStage::Read,
