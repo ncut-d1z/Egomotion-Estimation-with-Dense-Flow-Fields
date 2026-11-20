@@ -1,6 +1,8 @@
 # Egomotion Estimation with Dense Flow Fields
 
-> **最新接续：停止阈值与输出完整性，仅代码（2026-11-20）**。拒绝 KvD 动态阈值分母溢出；防止格式化失败后的截断 JSON/SVG 或字典指纹被当作成功结果；补齐分析分段及 MAT 哈希失败的来源诊断。实现和待执行回归见 [本批记录](docs/reviews/R6_FORMATTING_FAILURE_CONTINUATION_2026-11-20.md)。**构建/测试继续延期，没有新增运行证据；R6 总体验收未完成，PR #6 保持 Draft。**
+> **最新接续：插图数值与记录目录身份，仅代码（2026-11-20）**。插图法向/光照溢出在整数颜色转换前拒绝，保留原零面积面行为；进程记录目录已创建但打开/确认失败时保留实际路径，碰撞不冒认本次记录。实现和待执行回归见 [本批记录](docs/reviews/R6_ILLUSTRATION_RECORD_CONTINUATION_2026-11-20.md)。**构建/测试继续延期，没有新增运行证据；R6 总体验收未完成，PR #6 保持 Draft。**
+
+> **前批接续：停止阈值与输出完整性，仅代码（2026-11-20）**。拒绝 KvD 动态阈值分母溢出；防止格式化失败后的截断 JSON/SVG 或字典指纹被当作成功结果；补齐分析分段及 MAT 哈希失败的来源诊断。实现和待执行回归见 [前批记录](docs/reviews/R6_FORMATTING_FAILURE_CONTINUATION_2026-11-20.md)。该批同样没有构建/测试证据。
 
 > **前批接续：发布封存与错误身份，仅代码（2026-11-20）**。确认发布 Manifest 后封存 RunContext 的计数、错误与输出入口；MAT 具名读取失败保留原请求变量；有限轨迹向量的模长溢出改报计算结果失败。实现及待执行回归见 [前批记录](docs/reviews/R6_LIFECYCLE_DIAGNOSTICS_CONTINUATION_2026-11-20.md)。该批同样没有构建/测试证据。
 

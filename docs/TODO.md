@@ -4,11 +4,11 @@
 
 **最新直接指令：继续代码实现，推迟构建、测试。** 本次继续修复可确定的 R6 源码问题，并准备对应回归源码；不进行构建、编译器语法检查、CTest、项目程序或实验。下文此前“具备环境可复测”和运行授权说明保留历史语境，当前由此直接指令覆盖。新改动保持“代码已提交未验证”，不因环境具备条件而自行恢复执行。
 
-**同日最新实施**：KvD 停止阈值分母溢出、JSON/SVG/字典指纹的格式化完整性、分析分段来源及 MAT 哈希失败路径已修源码，见 [停止阈值与输出完整性接续](reviews/R6_FORMATTING_FAILURE_CONTINUATION_2026-11-20.md)。前批保留在 [发布封存与错误身份接续](reviews/R6_LIFECYCLE_DIAGNOSTICS_CONTINUATION_2026-11-20.md) 和 [失败边界接续](reviews/R6_FAILURE_BOUNDARY_CONTINUATION_2026-11-20.md)。没有新增需立即决定的事项；下文旧固定 SHA 的通过次数不代表当前源码已验证。
+**同日最新实施**：插图法向/光照溢出与整数颜色转换保护、进程记录目录创建后失败的身份保留已修源码，见 [插图数值与记录目录身份接续](reviews/R6_ILLUSTRATION_RECORD_CONTINUATION_2026-11-20.md)。前批见 [停止阈值与输出完整性接续](reviews/R6_FORMATTING_FAILURE_CONTINUATION_2026-11-20.md)、[发布封存与错误身份接续](reviews/R6_LIFECYCLE_DIAGNOSTICS_CONTINUATION_2026-11-20.md) 和 [失败边界接续](reviews/R6_FAILURE_BOUNDARY_CONTINUATION_2026-11-20.md)。没有新增需立即决定的事项；下文旧固定 SHA 的通过次数不代表当前源码已验证。
 
 **前阶段实际结果**：四项决定的源码和测试适配已提交；受测594a1b11的有限子集12/12通过，29生产文件/11测试程序编译成功，另13文件语法检查通过。完整验证受现有环境缺少CMake/matio/Sophus限制；未安装依赖，不为当前已实现四项重复索取决定。后续明确恢复验证后，再优先使用具备原生依赖的环境；若必须安装或增加资源再通知所有者。
 
-DEC-R6-01 采用稳定 atan2 方向角；DEC-R6-02 采用 SO(3) 测地角；DEC-R6-03 纯指标缺测允许继续但求解/策略/状态失败仍回滚；DEC-R6-04 采用方案 B 保存部分有效数据，**不用方案 A**。这四项不再重复提请选择，前阶段实现与实测见 [指标决定记录](reviews/R6_METRIC_DECISIONS_IMPLEMENTATION_2026-11-20.md)，最新源码状态见 [停止阈值与输出完整性接续](reviews/R6_FORMATTING_FAILURE_CONTINUATION_2026-11-20.md)。其它可推迟事项全部继续延期，无新增默认期限；仅实际需要新的决定时再通知所有者。当前先完成源码并推迟构建/测试，不因已有工具可用而自行恢复执行。依赖安装、完整科学实验、DEC-005 最终阈值、DEC-006 性能、基线签字及 Ready/合并/发布不自动开放。
+DEC-R6-01 采用稳定 atan2 方向角；DEC-R6-02 采用 SO(3) 测地角；DEC-R6-03 纯指标缺测允许继续但求解/策略/状态失败仍回滚；DEC-R6-04 采用方案 B 保存部分有效数据，**不用方案 A**。这四项不再重复提请选择，前阶段实现与实测见 [指标决定记录](reviews/R6_METRIC_DECISIONS_IMPLEMENTATION_2026-11-20.md)，最新源码状态见 [插图数值与记录目录身份接续](reviews/R6_ILLUSTRATION_RECORD_CONTINUATION_2026-11-20.md)。其它可推迟事项全部继续延期，无新增默认期限；仅实际需要新的决定时再通知所有者。当前先完成源码并推迟构建/测试，不因已有工具可用而自行恢复执行。依赖安装、完整科学实验、DEC-005 最终阈值、DEC-006 性能、基线签字及 Ready/合并/发布不自动开放。
 
 > **2026-11-18 可继续实施项**：受测源码`3985b056aa19935c8348f0fefa5f5292f9fbd3b4`两模式配置/编译无诊断，**SVG ON73/73、OFF72/72 CTest**；先MAT7项，再66/65项，零失败/跳过/禁用。新增合成固定输入→真实Adaptive Step/Session→完整35/600帧及8轮聚合→MAT交付独立对照：3676721项、17441次Step、12个MAT/8540值通过，保存值最大差5.406439324458240113e-10，沿用原1e-9工程余量。两配置Step JSONL与MAT数值载荷相同，739项输入SHA及21组既有摘要不变。见 [完整交付链证据](reviews/R6_REAL_STEP_DELIVERY_L3_2026-11-18.md)。合成场景不等于原科学实验成功；原轨迹三入口仍Incomplete、无完整科学MAT，L4、病态资格及正式验收未完成。Issue #1–#5开放，已建立[Draft PR #6](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/pull/6)，R6未结案。
 

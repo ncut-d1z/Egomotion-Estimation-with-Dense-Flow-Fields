@@ -1,5 +1,7 @@
 # R6 停止阈值、输出完整性与诊断接续（2026-11-20）
 
+> **同日后续**：插图法向/光照数值防护及进程记录目录身份修复见 [后续接续](R6_ILLUSTRATION_RECORD_CONTINUATION_2026-11-20.md)。构建、测试仍延期，两批均没有新运行证据。
+
 `[HUMAN-EXECUTE/APPROVE]`。所有者再次要求继续代码实现，既有“推迟构建、测试”继续有效。本批从 Draft [PR #6](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/pull/6) 的 `1ab26a3c25cd320bb43ca6c63af8ad0c6b2b2f21` 接续，沿用 `dev-plan-P0-P1-mat-dictionary-probe`。**只修改生产源码、必要回归源码与状态文档；没有执行配置、编译、编译器语法检查、CTest、测试程序、CLI、MAT I/O 或数值实验。**
 
 前批 RunContext 封存、Reader 身份与轨迹分类见 [发布封存与错误身份接续](R6_LIFECYCLE_DIAGNOSTICS_CONTINUATION_2026-11-20.md)。前后批次均没有新的运行证据，不能继承旧固定 SHA 的通过结论。
