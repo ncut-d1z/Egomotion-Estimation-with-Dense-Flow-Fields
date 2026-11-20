@@ -122,12 +122,15 @@ struct Smoothed {
     std::vector<double> values;
     std::vector<unsigned char> defined;
 };
-Smoothed smoothSource(const std::vector<double>& input,
-                       const std::vector<unsigned char>& defined,std::size_t half) {
-    if(half==0)return {input,defined};
+using SmoothedResult=Result<Smoothed,AnalysisErrorCode>;
+SmoothedResult smoothSource(const std::vector<double>& input,
+                            const std::vector<unsigned char>& defined,std::size_t half,
+                            const std::filesystem::path& path,const std::string& variable,
+                            std::size_t first_matlab_frame) {
+    if(half==0)return SmoothedResult::success({input,defined});
     Smoothed out{std::vector<double>(input.size(),0.0),{}};
     if(!defined.empty())out.defined.assign(input.size(),1);
-    if(input.size()<=2*half)return out; // original zeros at edges
+    if(input.size()<=2*half)return SmoothedResult::success(std::move(out)); // original zeros at edges
     for(std::size_t i=half;i+half<input.size();++i) {
         double sum=0.0;
         bool complete=true;
@@ -135,12 +138,19 @@ Smoothed smoothSource(const std::vector<double>& input,
             if(!defined.empty()&&!defined[j])complete=false;
             else sum+=input[j];
         }
+        if(complete&&!std::isfinite(sum)) {
+            ErrorDetail d;d.stage=ErrorStage::Analyze;
+            d.source_path=path.string();d.variable=variable;
+            d.observation_index=first_matlab_frame+i;
+            d.message="Source fixed-window smoothing sum overflowed for finite inputs";
+            return SmoothedResult::failure({AnalysisErrorCode::UndefinedStatistic,std::move(d)});
+        }
         // 固定窗口缺一项就缺测；不按剩余样本重加权或收缩窗口。
         out.values[i]=complete?sum/static_cast<double>(2*half+1):
             std::numeric_limits<double>::quiet_NaN();
         if(!out.defined.empty())out.defined[i]=static_cast<unsigned char>(complete);
     }
-    return out;
+    return SmoothedResult::success(std::move(out));
 }
 
 std::vector<double> matlabRange(std::size_t first,std::size_t last) {
@@ -341,7 +351,10 @@ DatasetResult AdaptiveResultAnalyzer::analyzeSource(AnalysisKind kind,const std:
             if(half>0 && sub.size()<=2*half)
                 return error(AnalysisErrorCode::InvalidSegment,
                              "Rotation segment too short for original smoothing window");
-            const auto smoothed=smoothSource(sub,sub_mask,half);
+            auto smoothing=smoothSource(sub,sub_mask,half,root/"allemitrotfehler.mat",
+                                        "allemitrotfehler",s.begin);
+            if(!smoothing.hasValue())return DatasetResult::failure(std::move(smoothing).error());
+            const auto& smoothed=smoothing.value();
             const auto from=s.begin+half,to=s.end-half;
             const auto plotted=half?select(smoothed.values,half+1,smoothed.values.size()-half):
                                     smoothed.values;
@@ -364,7 +377,10 @@ DatasetResult AdaptiveResultAnalyzer::analyzeSource(AnalysisKind kind,const std:
     for(std::size_t col=0;col<4;++col){
         const auto all=column(trans.value().array,col);
         const std::size_t half=halfwindows[col];
-        const auto smoothed=smoothSource(all,maskColumn(trans.value(),col),half);
+        auto smoothing=smoothSource(all,maskColumn(trans.value(),col),half,
+                                    root/"allemittransfehler.mat","allemittransfehler",1);
+        if(!smoothing.hasValue())return DatasetResult::failure(std::move(smoothing).error());
+        const auto& smoothed=smoothing.value();
         const auto plotted_mask=smoothed.defined.empty()?std::vector<unsigned char>{}:
             select(smoothed.defined,50,550);
         auto curve=makeCurve(root,trans.value(),

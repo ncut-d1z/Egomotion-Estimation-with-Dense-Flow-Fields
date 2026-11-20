@@ -209,6 +209,26 @@ void smoothing() {
             "Source smoothing padding remains a defined structural zero");
     require(analysis::datasetJson(result.value()).hasValue(),"Smoothing NaNs have explicit JSON masks");
 }
+void smoothingOverflow() {
+    for(const bool declared:{false,true})
+        for(const std::string variable:{"allemitrotfehler","allemittransfehler"}) {
+            // 有限输入仍须验证求和后的结果；不改源求和顺序或固定除数。
+            auto reader=inputs(AnalysisKind::AdaptiveUpdateRates,true);
+            if(!declared)reader.data.erase(marker);
+            auto& values=reader.data.at(variable).values_column_major;
+            constexpr std::size_t column=1,rows=600;
+            values[column*rows+79]=std::numeric_limits<double>::max(); // MATLAB 80。
+            values[column*rows+80]=std::numeric_limits<double>::max(); // MATLAB 81。
+            const auto result=analyze(reader,AnalysisKind::AdaptiveUpdateRates);
+            require(!result.hasValue()&&result.error().code==AnalysisErrorCode::UndefinedStatistic,
+                    "Finite source values must not produce a successful infinite smoothing curve");
+            const auto& detail=result.error().detail;
+            require(detail.stage==ErrorStage::Analyze&&detail.variable==variable&&
+                    detail.source_path==(root/(variable+".mat")).string()&&
+                    detail.observation_index==79,
+                    "Smoothing overflow keeps the original variable and MATLAB frame");
+        }
+}
 void invalidDataset() {
     for(unsigned bad=0;bad<7;++bad) {
         AnalysisDataset data;AnalysisSeries curve;curve.x={1,2,3};curve.y={1,missing(),3};
@@ -229,7 +249,7 @@ void invalidDataset() {
 } // namespace
 int main() {
     try {
-        initialization();declarations();comparison();smoothing();invalidDataset();
+        initialization();declarations();comparison();smoothing();smoothingOverflow();invalidDataset();
         std::cout<<"PASS declared partial Adaptive analysis, fixed-denominator counts and gap propagation\n";
         return 0;
     } catch(const std::exception& error) {
