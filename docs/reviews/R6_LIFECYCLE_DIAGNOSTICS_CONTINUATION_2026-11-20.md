@@ -1,5 +1,7 @@
 # R6 发布封存与错误身份接续（2026-11-20）
 
+> **同日后续**：停止阈值分母溢出、输出格式化完整性及分析/MAT 诊断补齐见 [后续接续](R6_FORMATTING_FAILURE_CONTINUATION_2026-11-20.md)。构建、测试仍延期，均没有新运行证据。
+
 `[HUMAN-EXECUTE/APPROVE]`。所有者要求继续代码实现，既有“推迟构建、测试”继续有效。本批从 Draft [PR #6](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/pull/6) 的 `c89e7a1270e05685c23328e2a9802a7d7ee9d6f0` 接续，沿用 `dev-plan-P0-P1-mat-dictionary-probe`。**只修改生产源码、必要回归源码与状态文档；没有执行 CMake 配置、编译、编译器语法检查、CTest、测试程序、CLI、MAT I/O 或数值实验。**
 
 前批 Session、Manifest 状态与实验异常修复见 [失败边界接续](R6_FAILURE_BOUNDARY_CONTINUATION_2026-11-20.md)；更早聚合与分析修改见 [代码接续](R6_CODE_CONTINUATION_2026-11-20.md)。这些批次的新代码均不能继承旧固定 SHA 的通过结论。

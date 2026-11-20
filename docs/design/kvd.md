@@ -1,5 +1,7 @@
 # Franz / Original KvD / Modified KvD 详细设计草案
 
+> **2026-11-20 停止阈值失败边界接续，未构建/未测试**：原动态阈值分母 `accuracy_factor * count` 即使参数有限也可能溢出为 Inf；现在于原乘法阶段检查并返回 `NonFiniteResult@Solve`，避免后续有限 RMS 除以 Inf 产生零而掩盖失败。公式、默认参数、求值次序和停止条件不变，见 [实现与待执行回归](../reviews/R6_FORMATTING_FAILURE_CONTINUATION_2026-11-20.md)。下文旧固定 SHA 的通过记录不覆盖新代码，LLD 冻结状态不变。
+
 > **2026-11-20 现行指标决定**：所有者已选择 [DEC-R6-01/02](../decisions/PROJECT_OWNER_DECISIONS_2026-11-20.md)：有限非零方向角采用 atan2；Adaptive逐帧旋转误差采用 Exp 后 SO(3) 测地角。原KvD/Franz求解、迭代、停止与 Bias 的尺度对齐向量误差均不因旋转指标变化而改变；零平移方向继续显式缺测，不能填零。下文原 acos 表达式保留为源公式说明，不再规定新实现必须因舍入越界拒绝。**受测594a1b11的指标测试973项通过，属于12/12有限子集；完整工程尚未复测，正式容差及LLD整体冻结仍未完成。** 见[本轮验证](../reviews/R6_METRIC_DECISIONS_IMPLEMENTATION_2026-11-20.md)。
 
 > **2026-11-18 候选接口增量，未冻结**：现已编写P4.9的`estimators::KvDIterationEngine`和`IKvDTranslationRule::compute(const FlowField&,const Eigen::VectorXd&,const MotionEstimate&) const`，返回`Result<KvDTranslationUpdate,NumericalErrorCode>`，含mean_a/b/c及raw_translation；引擎`estimate(flow,parameters,rule) const`按调用借用规则，不保存跨调用状态。Original/Modified两个规则分别保留本节公式，两个Estimator各组合引擎及明确规则。归一、旋转、停止及末轮near尺度均由引擎处理；现行声明见 [公共头](../../include/egomotion/estimators/franz_kvd.hpp)，实际验证状态见 [专项记录](../reviews/R6_KVD_STRATEGY_2026-11-18.md)。此次布局变动需重编译依赖，不宣布ABI或正式设计验收。

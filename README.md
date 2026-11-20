@@ -1,6 +1,8 @@
 # Egomotion Estimation with Dense Flow Fields
 
-> **最新接续：发布封存与错误身份，仅代码（2026-11-20）**。确认发布 Manifest 后封存 RunContext 的计数、错误与输出入口；MAT 具名读取失败保留原请求变量；有限轨迹向量的模长溢出改报计算结果失败。实现及待执行回归见 [本批记录](docs/reviews/R6_LIFECYCLE_DIAGNOSTICS_CONTINUATION_2026-11-20.md)。**构建/测试继续延期，没有新增运行证据；R6 总体验收未完成，PR #6 保持 Draft。**
+> **最新接续：停止阈值与输出完整性，仅代码（2026-11-20）**。拒绝 KvD 动态阈值分母溢出；防止格式化失败后的截断 JSON/SVG 或字典指纹被当作成功结果；补齐分析分段及 MAT 哈希失败的来源诊断。实现和待执行回归见 [本批记录](docs/reviews/R6_FORMATTING_FAILURE_CONTINUATION_2026-11-20.md)。**构建/测试继续延期，没有新增运行证据；R6 总体验收未完成，PR #6 保持 Draft。**
+
+> **前批接续：发布封存与错误身份，仅代码（2026-11-20）**。确认发布 Manifest 后封存 RunContext 的计数、错误与输出入口；MAT 具名读取失败保留原请求变量；有限轨迹向量的模长溢出改报计算结果失败。实现及待执行回归见 [前批记录](docs/reviews/R6_LIFECYCLE_DIAGNOSTICS_CONTINUATION_2026-11-20.md)。该批同样没有构建/测试证据。
 
 > **前批接续：失败边界，仅代码（2026-11-20）**。补齐 Session 对成功 Step 载荷的有限性检查、未确认产物的内存/Manifest 状态一致性，以及实验标准异常的 RunId/失败记录保留。生产修改和待执行回归见 [前批记录](docs/reviews/R6_FAILURE_BOUNDARY_CONTINUATION_2026-11-20.md)。该批同样没有构建/测试证据。
 

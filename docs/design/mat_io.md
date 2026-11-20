@@ -1,5 +1,7 @@
 # MAT I/O、路径安全与原始数据合同——详细设计草案
 
+> **2026-11-20 输出诊断接续，未构建/未测试**：MAT 暂存 SHA-256 失败的包装补齐已知输出目录，保留原 RunId、变量、阶段和原因链；字典 FNV 指纹的内存流失败归入原单文件 `ERROR`，报告仍可包含失败记录。发布、回执、摘要算法和读取支持不变，见 [本批记录](../reviews/R6_FORMATTING_FAILURE_CONTINUATION_2026-11-20.md)。没有新增故障执行覆盖，合同冻结状态不变。
+
 > **2026-11-20 请求身份接续，未构建/未测试**：具名读取在无效路径、无法打开、非法请求名及空目录失败时保留原始请求变量，落实既有 `source_path/variable/stage` 诊断约定。错误码、读取顺序与支持集合不变，见 [实现与待执行回归](../reviews/R6_LIFECYCLE_DIAGNOSTICS_CONTINUATION_2026-11-20.md)。下文旧固定 SHA 的实测记录不覆盖新代码；合同冻结状态不变。
 
 > **2026-11-18 候选实现，未冻结；实测事实 [AI-EDIT]**：数值named/compatible及VerifyDecoded在封存输入上预检128字节版本头；识别v7.3/0x0200后于Mat_Open之前返回UnsupportedClassOrType/Decode，保持首版v5-only范围。named保留请求变量，其它入口尚未枚举时变量为空；不为不支持的文件继续做变量选择。EINTR/短读重试，真实读取失败为InvalidMatHeader/Read；MetadataOnly继续原matio元数据边界。`f1a7ab2`的ON55/OFF54项CTest通过，32场景/308项及旧Reader实际失败见 [专项记录](../reviews/R6_MAT73_REJECTION_2026-11-18.md)；不声称另一个无HDF5工具链已实测。
