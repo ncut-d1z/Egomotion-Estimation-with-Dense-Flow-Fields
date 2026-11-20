@@ -199,8 +199,12 @@ void verifyPublication(const AdaptiveRunData& data,bool partial) {
             json.find("\"computation_complete\":true")!=std::string::npos&&
             json.find("\"metric_policy\":")!=std::string::npos&&
             json.find("\"repetitions\":[")!=std::string::npos&&
-            json.find("\"aggregation_denominator\":8")!=std::string::npos&&
-            json.find("NaN")==std::string::npos,"Manifest v2 must retain complete metric semantics and raw repetitions");
+            json.find("\"aggregation_denominator\":8")!=std::string::npos,
+            "Manifest v2 must retain complete metric semantics and raw repetitions");
+    for(const std::string token:{":NaN",",NaN","[NaN",":nan",",nan","[nan",
+                                ":Inf",",Inf","[Inf",":inf",",inf","[inf"})
+        require(json.find(token)==std::string::npos,
+                "Manifest must not contain bare non-finite JSON numbers");
     require(json.find(partial?"\"statistics_complete\":false":"\"statistics_complete\":true")!=std::string::npos,
             "Manifest statistical completeness must match the delivered outcome");
     if(partial) {

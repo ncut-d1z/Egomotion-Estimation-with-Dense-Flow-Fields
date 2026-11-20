@@ -694,12 +694,12 @@ if(BUILD_TESTING)
         "${CMAKE_CURRENT_BINARY_DIR}/r06_runner_complete" "${EGOMOTION_BUILD_SOURCE_SHA}" complete)
     add_test(NAME r06_adaptive_runner_incomplete_contract COMMAND test_r06_adaptive_runner
         "${CMAKE_CURRENT_BINARY_DIR}/r06_runner_incomplete" "${EGOMOTION_BUILD_SOURCE_SHA}" incomplete)
-    add_test(NAME r06_adaptive_default_undefined_contract COMMAND test_r06_adaptive_runner
+    add_test(NAME r06_adaptive_zero_rotation_and_solver_failure COMMAND test_r06_adaptive_runner
         "${CMAKE_CURRENT_BINARY_DIR}/r06_runner_undefined" "${EGOMOTION_BUILD_SOURCE_SHA}" undefined)
     set_tests_properties(r06_adaptive_runner_complete_contract r06_adaptive_runner_incomplete_contract PROPERTIES
         LABELS "r06;runner;fixed-600-row-aggregation;synthetic-step;write-sandbox" TIMEOUT 180)
-    set_tests_properties(r06_adaptive_default_undefined_contract PROPERTIES
-        LABELS "r06;runner;source-trajectory;undefined-angle;synthetic-step;write-sandbox" TIMEOUT 180)
+    set_tests_properties(r06_adaptive_zero_rotation_and_solver_failure PROPERTIES
+        LABELS "r06;runner;source-trajectory;zero-rotation;solver-failure;synthetic-step;write-sandbox" TIMEOUT 180)
 
     add_executable(test_r06_adaptive_delivery_l3 tests/integration/test_r06_adaptive_delivery_l3.cpp)
     target_link_libraries(test_r06_adaptive_delivery_l3 PRIVATE egomotion_experiments egomotion_matio ZLIB::ZLIB)
@@ -787,6 +787,29 @@ if(BUILD_TESTING)
     add_test(NAME r06_source_motion_errors COMMAND test_r06_motion_errors)
     set_tests_properties(r06_source_motion_errors PROPERTIES
         LABELS "r06;metrics;analytic;boundaries" TIMEOUT 30)
+
+    add_executable(test_r06_masked_mat_writer tests/integration/test_r06_masked_mat_writer.cpp)
+    target_link_libraries(test_r06_masked_mat_writer PRIVATE egomotion_matio)
+    target_compile_options(test_r06_masked_mat_writer PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_masked_mat_writer COMMAND test_r06_masked_mat_writer
+        "${CMAKE_CURRENT_BINARY_DIR}/r06_masked_mat_writer")
+    set_tests_properties(r06_masked_mat_writer PROPERTIES
+        LABELS "r06;io;partial-metrics;write-sandbox" TIMEOUT 60)
+
+    add_executable(test_r06_partial_analysis tests/integration/test_r06_partial_analysis.cpp)
+    target_link_libraries(test_r06_partial_analysis PRIVATE egomotion_analysis)
+    target_compile_options(test_r06_partial_analysis PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_partial_analysis COMMAND test_r06_partial_analysis)
+    set_tests_properties(r06_partial_analysis PROPERTIES
+        LABELS "r06;analysis;partial-metrics;synthetic-only" TIMEOUT 60)
+
+    add_executable(test_r06_partial_adaptive_output tests/integration/test_r06_partial_adaptive_output.cpp)
+    target_include_directories(test_r06_partial_adaptive_output PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/experiments")
+    target_link_libraries(test_r06_partial_adaptive_output PRIVATE egomotion_experiments)
+    target_compile_options(test_r06_partial_adaptive_output PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_partial_adaptive_output COMMAND test_r06_partial_adaptive_output)
+    set_tests_properties(r06_partial_adaptive_output PROPERTIES
+        LABELS "r06;runner;partial-metrics;eight-runs;memory-only" TIMEOUT 60)
 
     add_executable(test_r06_kvd_stopping tests/integration/test_r06_kvd_stopping.cpp)
     target_link_libraries(test_r06_kvd_stopping PRIVATE egomotion_estimators)
