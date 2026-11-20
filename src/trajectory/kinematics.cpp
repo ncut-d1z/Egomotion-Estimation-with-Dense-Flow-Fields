@@ -42,7 +42,7 @@ Result<Vector3,NumericalErrorCode> sourceRotationBetween(
     const double norm1=std::sqrt(v1.dot(v1));
     const double norm2=std::sqrt(v2.dot(v2));
     if (!std::isfinite(norm1) || !std::isfinite(norm2))
-        return fail<Vector3>(NumericalErrorCode::NonFiniteInput,
+        return fail<Vector3>(NumericalErrorCode::NonFiniteResult,
                               "Rotation source vector norm overflow");
     if (norm1==0.0 || norm2==0.0)
         return fail<Vector3>(NumericalErrorCode::ZeroNorm,

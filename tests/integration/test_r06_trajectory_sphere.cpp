@@ -84,6 +84,49 @@ void checkRelativeKinematics() {
             antiparallel.error().code==NumericalErrorCode::InvalidDirection,
             "Exact antiparallel source axis must explicitly fail in safe C++");
 }
+void checkRotationFailureClassification() {
+    const Vector3 finite_large(std::numeric_limits<double>::max(),0,0);
+    const Vector3 nonfinite(std::numeric_limits<double>::infinity(),0,0);
+    for(bool first: {true,false}) {
+        const auto overflow=first
+            ? sourceRotationBetween(finite_large,Vector3::UnitX())
+            : sourceRotationBetween(Vector3::UnitX(),finite_large);
+        require(!overflow.hasValue()&&
+                overflow.error().code==NumericalErrorCode::NonFiniteResult&&
+                overflow.error().detail.stage==ErrorStage::Simulation,
+                "Finite source vectors with overflowing norms are result failures");
+        const auto invalid=first
+            ? sourceRotationBetween(nonfinite,Vector3::UnitX())
+            : sourceRotationBetween(Vector3::UnitX(),nonfinite);
+        require(!invalid.hasValue()&&
+                invalid.error().code==NumericalErrorCode::NonFiniteInput,
+                "Non-finite source vectors must remain input failures");
+    }
+
+    // All point coordinates and both differences are finite; only the
+    // source squared-norm calculation overflows at the interior point.
+    TrajectoryPoints points;
+    points.points.resize(3,3);
+    points.points.row(0)=Vector3::Zero().transpose();
+    points.points.row(1)=finite_large.transpose();
+    points.points.row(2)=Vector3(finite_large.x(),1,0).transpose();
+    const auto motion=TrajectoryKinematics{}.fromPoints(points);
+    require(!motion.hasValue()&&
+            motion.error().code==NumericalErrorCode::NonFiniteResult&&
+            motion.error().detail.stage==ErrorStage::Simulation,
+            "Trajectory must propagate the numeric result failure without a partial pose");
+    require(motion.error().detail.observation_index.has_value()&&
+            motion.error().detail.observation_index.value()==1,
+            "Trajectory norm overflow must identify the actual interior point");
+    const auto& causes=motion.error().detail.causes;
+    require(!causes.empty()&&
+            causes.front().domain=="NumericalErrorCode"&&
+            causes.front().code=="NonFiniteResult"&&
+            causes.front().stage==ErrorStage::Simulation&&
+            causes.front().message=="Rotation source vector norm overflow"&&
+            !causes.front().observation_index.has_value(),
+            "Trajectory failure must retain the original norm-overflow cause");
+}
 DirectionSet unitAxes() {
     DirectionMatrix d;
     d.resize(4,3);
@@ -142,5 +185,6 @@ void checkSphereRayDistance() {
 int main() {
     checkCircleAndSinusoidal();
     checkRelativeKinematics();
+    checkRotationFailureClassification();
     checkSphereRayDistance();
 }
