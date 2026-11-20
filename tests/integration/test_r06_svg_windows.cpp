@@ -185,6 +185,32 @@ void invalidSeries(const fs::path& root) {
         save(root/(label+".txt"),evidence.str());
     }
 }
+void coordinateOverflow() {
+    const double maximum=std::numeric_limits<double>::max();
+    for(unsigned scenario=0;scenario<3;++scenario) {
+        AnalysisDataset data;data.source_analysis_blob="finite-coordinate-overflow";
+        // 先准备一个可发布面板，后续面板失败仍须保持零发布。
+        data.curves.push_back(curve("ordinary","a-valid",{1,2,3},{1,2,3},false,false));
+        auto primary=curve("extreme-primary","b-invalid",{1,2,3},{1,2,3},false,false);
+        if(scenario==0)primary.x={-maximum,0,maximum};
+        if(scenario==1)primary.y={-maximum,0,maximum};
+        data.curves.push_back(std::move(primary));
+        if(scenario==2)
+            data.curves.push_back(curve("extreme-right","b-invalid",{1,2,3},
+                {-maximum,0,maximum},false,false,true));
+        const auto before=analysis::datasetJson(data);
+        require(before.hasValue(),"Finite extreme coordinates remain valid numeric JSON input");
+        Publisher publisher;analysis::SvgPlotExporter plotter;
+        const auto result=plotter.exportPlot(data,publisher);
+        check(!result.hasValue()&&result.error().code==PlotErrorCode::InvalidSeries&&
+              result.error().detail.stage==ErrorStage::Plot,
+              "Overflow in X, primary Y or right Y coordinates is an explicit plot failure");
+        check(publisher.files.empty(),"Coordinate overflow cannot publish an earlier prepared panel");
+        const auto after=analysis::datasetJson(data);
+        check(after.hasValue()&&after.value()==before.value(),
+              "Rejected coordinate transformation preserves all finite numeric source values");
+    }
+}
 void declaredGaps(const fs::path& root) {
     AnalysisDataset data;data.source_analysis_blob="declared-synthetic-metric";
     data.metric_policy="adaptive-atan2-so3-geodesic-v1";data.planned_repetitions=1;
@@ -247,7 +273,8 @@ int main(int argc,char** argv) {
         const fs::path root=pattern;
         save(root/"identity.txt",std::string("source_sha=")+argv[2]+"\nseed=none\nfixed synthetic SVG geometry\n");
         std::cout<<"RunId="<<root.filename()<<" evidence="<<root<<'\n';
-        bias(root);comparison(root,"rotation");comparison(root,"translation");automatic(root);invalidSeries(root);declaredGaps(root);
+        bias(root);comparison(root,"rotation");comparison(root,"translation");automatic(root);
+        invalidSeries(root);coordinateOverflow();declaredGaps(root);
         std::cout<<"checks="<<checks<<" failures="<<failures<<'\n';
         return failures?1:0;
     }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

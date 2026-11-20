@@ -189,6 +189,8 @@ std::string renderPanel(const std::string& panel,
             if(!std::isfinite(x)||!std::isfinite(y)){flush();continue;}
             const double px=left+(x-bx.minimum)/xrange*(right-left);
             const double py=bottom-(y-axis.minimum)/span*(bottom-top);
+            if(!std::isfinite(px)||!std::isfinite(py))
+                throw std::invalid_argument("SVG coordinate transformation overflowed for finite input values");
             std::ostringstream position;position.imbue(std::locale::classic());
             position<<std::fixed<<std::setprecision(3)<<px<<","<<py<<" ";
             points+=position.str();
