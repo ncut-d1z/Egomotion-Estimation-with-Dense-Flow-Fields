@@ -1,6 +1,10 @@
 # 实施进度与证据登记（PROGRESS）
 
-## 最新接续：Session、Manifest 与实验异常，只改代码（2026-11-20）
+## 最新接续：发布封存与错误身份，只改代码（2026-11-20）
+
+`[HUMAN-EXECUTE/APPROVE]` 从 PR #6 的 `c89e7a1270e05685c23328e2a9802a7d7ee9d6f0` 继续。修复三项静态可确认问题：RunContext 确认发布 Manifest 后，Bias 写入/完成入口拒绝重入，计数及错误记录不再更改审计快照；MAT 具名读取的路径、打开、非法名称及空目录失败保留请求变量；轨迹有限向量的模长溢出使用 NonFiniteResult，真正非有限输入仍为 NonFiniteInput。必要回归源码复用四个既有测试目标，未修改 CMake。具体反例与边界见 [本批记录](reviews/R6_LIFECYCLE_DIAGNOSTICS_CONTINUATION_2026-11-20.md)。**未配置、未编译、未做编译器语法检查、未执行测试/CLI/MAT I/O/数值实验。** 四项指标决定保持，无新增即时人类决策；新代码尚未验证，R6 总体验收仍未完成。
+
+## 前批接续：Session、Manifest 与实验异常，只改代码（2026-11-20）
 
 `[HUMAN-EXECUTE/APPROVE]` 从 PR #6 的 `9c91bbc408a315b2386876c2aa2dca958637d05d` 继续源码实施。修复三个确定边界：Session 在接受成功 Step 前拒绝非有限 MSE/已提供 trace，保留真实失败回滚；失败 Manifest 与内存状态共用同一份实际产物回执，保留未确认文件为 Incomplete；实验标准异常保留原 OutputFailed/退出6分类和已预留 RunId，并走失败/结束记录流程。三项已有回归扩充源码、无新 CTest 登记；具体反例、文件和边界见 [本批记录](reviews/R6_FAILURE_BOUNDARY_CONTINUATION_2026-11-20.md)。**没有配置、编译、语法编译、测试、CLI、MAT I/O 或数值实验。** 四项指标决定及其它延期项不变，无新增即时人类决定，R6 总体验收未完成。
 

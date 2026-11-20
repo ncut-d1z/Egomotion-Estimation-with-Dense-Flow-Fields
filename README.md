@@ -1,6 +1,8 @@
 # Egomotion Estimation with Dense Flow Fields
 
-> **最新接续：失败边界，仅代码（2026-11-20）**。补齐 Session 对成功 Step 载荷的有限性检查、未确认产物的内存/Manifest 状态一致性，以及实验标准异常的 RunId/失败记录保留。生产修改和待执行回归见 [本批记录](docs/reviews/R6_FAILURE_BOUNDARY_CONTINUATION_2026-11-20.md)。**构建/测试继续延期，没有新增运行证据；R6 总体验收未完成，PR #6 保持 Draft。**
+> **最新接续：发布封存与错误身份，仅代码（2026-11-20）**。确认发布 Manifest 后封存 RunContext 的计数、错误与输出入口；MAT 具名读取失败保留原请求变量；有限轨迹向量的模长溢出改报计算结果失败。实现及待执行回归见 [本批记录](docs/reviews/R6_LIFECYCLE_DIAGNOSTICS_CONTINUATION_2026-11-20.md)。**构建/测试继续延期，没有新增运行证据；R6 总体验收未完成，PR #6 保持 Draft。**
+
+> **前批接续：失败边界，仅代码（2026-11-20）**。补齐 Session 对成功 Step 载荷的有限性检查、未确认产物的内存/Manifest 状态一致性，以及实验标准异常的 RunId/失败记录保留。生产修改和待执行回归见 [前批记录](docs/reviews/R6_FAILURE_BOUNDARY_CONTINUATION_2026-11-20.md)。该批同样没有构建/测试证据。
 
 > **前批接续：仅代码，构建/测试延期（2026-11-20）**。按所有者最新指令，继续补齐聚合缺测证据、有限输入平滑/SVG 溢出拒绝及分析运行记录的指标身份；本批源码与必要回归源码已修改，**未配置、未编译、未测试**。改动和静态依据见 [前批记录](docs/reviews/R6_CODE_CONTINUATION_2026-11-20.md)。下文 12+1 项及更早通过记录仅对应其固定旧 SHA，不能外推到当前生产源码；PR #6 保持 Draft。
 

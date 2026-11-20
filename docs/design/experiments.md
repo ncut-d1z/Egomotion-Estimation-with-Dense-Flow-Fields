@@ -1,5 +1,7 @@
 # 实验 Runner 与结果写出——详细设计草案
 
+> **2026-11-20 发布封存接续，未构建/未测试**：Manifest 确认发布后，RunContext 的 Bias 写入/完成入口拒绝重入，既有 void 计数及错误记录入口不再更改审计快照；Complete、方案 B Incomplete 与 Failed 均保留已发布证据。未确认持久化的失败流程和借用 Writer/RNG 接口保持原合同，见 [实现与待执行回归](../reviews/R6_LIFECYCLE_DIAGNOSTICS_CONTINUATION_2026-11-20.md)。本次不改变结果状态定义或正式冻结状态。
+
 > **2026-11-20 失败审计接续，未构建/未测试**：RunContext 失败内存状态与 Manifest 共用同一份 Writer 产物回执；最终文件已发布但持久化未确认时保持 Incomplete 与 `durably_confirmed=false`，没有部分进度/产物的失败仍为 Failed。原 Complete 门禁不放宽，见 [实现和待执行回归](../reviews/R6_FAILURE_BOUNDARY_CONTINUATION_2026-11-20.md)。
 
 > **2026-11-20 聚合入口接续，未构建/未测试**：累计和与最终结果复用同一严格缺测证据检查；追加之前、候选提交之前和最终化时都核对原值/次数/唯一原因/帧账本，拒绝时原聚合不改变。完整输出仍须全部计划轮次，八轮分母和末轮 ratio 不变。本批实现及尚未执行的回归源码见 [记录](../reviews/R6_CODE_CONTINUATION_2026-11-20.md)；按所有者要求，构建和测试延期，下文固定 SHA 的通过记录不外推到新源码。
