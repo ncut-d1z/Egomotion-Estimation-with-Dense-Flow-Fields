@@ -1,4 +1,5 @@
 #include "process_record.hpp"
+#include "application_main.hpp"
 #include "egomotion/cli/invocation_observer.hpp"
 #include "egomotion/contracts/diagnostics.hpp"
 
@@ -7,6 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <fcntl.h>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -103,7 +105,8 @@ int fixture(int argc, char** argv, egomotion::cli::IInvocationObserver* observer
     return mode == "137" ? 137 : mode == "6" ? 6 : 0;
 }
 struct Response { int code; std::string receipt, errors; };
-Response invoke(const fs::path& root, const char* mode = "ok", bool bad_receipt = false, bool bad_errors = false) {
+Response invoke(const fs::path& root, const char* mode = "ok", bool bad_receipt = false, bool bad_errors = false,
+                egomotion::cli::RecordedApplication application = fixture) {
     ++calls;
     fs::current_path(root);
     char program[] = "test-recorder";
@@ -117,7 +120,7 @@ Response invoke(const fs::path& root, const char* mode = "ok", bool bad_receipt 
     struct sigaction pipe_before{}, pipe_after{};
     require(::sigprocmask(SIG_SETMASK, nullptr, &before) == 0, "Read initial mask");
     require(::sigaction(SIGPIPE, nullptr, &pipe_before) == 0, "Read initial pipe action");
-    const int code = egomotion::cli::recordProcess(2, args, fixture, root, receipt, errors);
+    const int code = egomotion::cli::recordProcess(2, args, application, root, receipt, errors);
     std::ofstream(root / "fixture-response.txt") << "exit=" << code << "\nhits=" << hits
         << "\nreceipt=" << receipt.str() << "\nerrors=" << errors.str();
     require(::sigprocmask(SIG_SETMASK, nullptr, &after) == 0, "Read restored mask");
@@ -137,6 +140,58 @@ fs::path onlyRecord(const fs::path& root) {
     for (const auto& entry : fs::directory_iterator(root / "build-cli-records")) records.push_back(entry.path());
     require(records.size() == 1, "Exactly one exclusive process record");
     return records.front();
+}
+int missingWorkingDirectory(int argc, char** argv, egomotion::cli::IInvocationObserver* observer) {
+    // 只移除本测试子进程新建的空目录；父进程和已打开的日志目录保持有效。
+    require(::mkdir("unlinked-cwd", 0700) == 0, "Create disposable child working directory");
+    require(::chdir("unlinked-cwd") == 0, "Enter disposable child working directory");
+    require(::rmdir("../unlinked-cwd") == 0, "Unlink disposable child working directory");
+    return egomotionApplication(argc, argv, observer);
+}
+void startupFailure(const fs::path& base) {
+    const auto direct = newRoot(base, "startup-direct");
+    fs::current_path(direct);
+    const int out = ::open("stdout.bin", O_CREAT | O_EXCL | O_WRONLY | O_CLOEXEC, 0600);
+    const int err = ::open("stderr.bin", O_CREAT | O_EXCL | O_WRONLY | O_CLOEXEC, 0600);
+    require(out >= 0 && err >= 0, "Create retained direct-entry channels");
+    std::cout.flush(); std::cerr.flush();
+    const auto pid = __real_fork();
+    require(pid >= 0, "Fork isolated application startup");
+    if (pid == 0) {
+        if (::dup2(out, STDOUT_FILENO) < 0 || ::dup2(err, STDERR_FILENO) < 0) ::_exit(91);
+        ::close(out); ::close(err);
+        char name[] = "egomotion", mode[] = "--help";
+        char* args[] = {name, mode, nullptr};
+        try { ::_exit(missingWorkingDirectory(2, args, nullptr)); }
+        catch (...) { ::_exit(92); }
+    }
+    ++calls; ::close(out); ::close(err);
+    int status = 0; pid_t observed;
+    do { observed = ::waitpid(pid, &status, 0); } while (observed < 0 && errno == EINTR);
+    require(observed == pid && WIFEXITED(status) && WEXITSTATUS(status) == 6,
+            "Application startup exception must return 6 without escaping");
+    const auto diagnostic = read(direct / "stderr.bin");
+    contains(diagnostic, "\"error_domain\":\"ExperimentErrorCode\"");
+    contains(diagnostic, "\"error_code\":\"OutputFailed\"");
+    contains(diagnostic, "\"stage\":\"output\"");
+    contains(diagnostic, "\"exit_code\":6");
+    contains(diagnostic, "\"causes\":[]");
+    require(diagnostic.find("\"run_id\"") == std::string::npos, "Startup failure has no allocated RunId");
+    require(read(direct / "stdout.bin").empty(), "Startup failure cannot print successful help");
+    require(!fs::exists(direct / "output"), "Startup failure cannot create scientific outputs");
+
+    const auto supervised = newRoot(base, "startup-recorded");
+    const auto response = invoke(supervised, "--help", false, false, missingWorkingDirectory);
+    require(response.code == 6 && response.errors.empty(), "Recorder preserves actual startup failure exit");
+    const auto directory = onlyRecord(supervised);
+    const auto finish = read(directory / "finish.json");
+    contains(finish, "\"termination\":\"exited\"");
+    contains(finish, "\"child_exit_code\":6");
+    contains(finish, "\"context_return_confirmed\":true");
+    contains(read(directory / "context.jsonl"), "\"event\":\"application_returned\"");
+    require(read(directory / "stderr.bin") == diagnostic, "Both entries retain the same startup diagnostic");
+    require(read(directory / "stdout.bin").empty(), "Recorded startup failure cannot print successful help");
+    require(!fs::exists(supervised / "output"), "Recorded startup failure has no scientific output");
 }
 void termination(const fs::path& base) {
     for (const auto* mode : {"ok", "137", "6", "kill", "pipe", "forward"}) {
@@ -312,13 +367,14 @@ int main(int argc, char** argv) {
         std::string pattern = fs::absolute(fs::path(argv[1]) / "运行 记录-XXXXXX").string();
         require(::mkdtemp(pattern.data()) != nullptr, "Unique retained sandbox");
         const fs::path base(pattern);
+        startupFailure(base);
         termination(base);
         publicationFaults(base);
         incompleteContexts(base);
         reservationFailure(base);
         paths(base);
         brokenPipes(base);
-        std::cout << "Process records: " << checks << " checks, " << calls << " supervised calls; retained " << base << '\n';
+        std::cout << "Process records: " << checks << " checks, " << calls << " application/recorder calls; retained " << base << '\n';
         return 0;
     } catch (const std::exception& error) {
         std::cerr << "Process record test failed: " << error.what() << '\n';

@@ -913,7 +913,7 @@ if(BUILD_TESTING)
         LABELS "r06;logging;mat;snapshot;fault-injection;write-sandbox" TIMEOUT 60)
 
     add_executable(test_r06_process_records tests/integration/test_r06_process_records.cpp)
-    target_link_libraries(test_r06_process_records PRIVATE egomotion_process_record)
+    target_link_libraries(test_r06_process_records PRIVATE egomotion_process_record egomotion_application_main)
     target_include_directories(test_r06_process_records PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/cli")
     target_compile_options(test_r06_process_records PRIVATE -Wall -Wextra -Wpedantic)
     target_link_options(test_r06_process_records PRIVATE

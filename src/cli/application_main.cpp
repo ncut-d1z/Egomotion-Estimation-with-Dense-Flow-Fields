@@ -1,16 +1,18 @@
 #include "application_main.hpp"
+#include "stream_output.hpp"
 #include "egomotion/cli/command.hpp"
 #include "egomotion/io/mat_result_reader.hpp"
 #include "egomotion/analysis/result_analyzer.hpp"
 #include "egomotion/analysis/plot.hpp"
 #include "egomotion/experiments/production_runner.hpp"
 
+#include <exception>
 #include <filesystem>
 #include <iostream>
 #include <string>
 #include <vector>
 
-int egomotionApplication(int argc,char** argv,egomotion::cli::IInvocationObserver* observer) {
+int egomotionApplication(int argc,char** argv,egomotion::cli::IInvocationObserver* observer) try {
     std::vector<std::string> args;
     args.reserve(argc>0?static_cast<std::size_t>(argc-1):0);
     for(int i=1;i<argc;++i)args.emplace_back(argv[i]);
@@ -34,4 +36,7 @@ int egomotionApplication(int argc,char** argv,egomotion::cli::IInvocationObserve
         &reader,
         &runner,&analyzer,plotter,std::filesystem::current_path(),illustrator,observer);
     return egomotion::cli::run(args,std::cout,std::cerr,app);
+} catch (const std::exception& error) {
+    // 参数构造和实际装配也可能在cli::run的异常边界之前失败。
+    return egomotion::cli::streams::outputFailure(std::cerr,error.what());
 }
