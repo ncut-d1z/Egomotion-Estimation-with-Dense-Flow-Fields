@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <locale>
 #include <map>
 #include <sstream>
 #include <stdexcept>
@@ -29,6 +30,48 @@ int invoke(const std::vector<std::string>& args, std::ostream& diagnostic) {
     ++calls;
     return egomotion::cli::runMatDictionaryCommand(
         static_cast<int>(argv.size()), argv.data(), diagnostic);
+}
+class GroupedNumbers final : public std::numpunct<char> {
+protected:
+    char do_thousands_sep() const override { return '_'; }
+    std::string do_grouping() const override { return "\3"; }
+};
+class GlobalLocale final {
+public:
+    explicit GlobalLocale(const std::locale& locale)
+        : previous_(std::locale::global(locale)) {}
+    ~GlobalLocale() { std::locale::global(previous_); }
+    GlobalLocale(const GlobalLocale&) = delete;
+    GlobalLocale& operator=(const GlobalLocale&) = delete;
+private:
+    std::locale previous_;
+};
+void localeIndependentReport(const fs::path& source, const fs::path& sandbox) {
+    const auto original = std::locale();
+    const auto ordinary = sandbox / "locale-classic.md";
+    const auto grouped = sandbox / "locale-grouped.md";
+    {
+        const GlobalLocale locale(std::locale::classic());
+        std::ostringstream diagnostic;
+        require(invoke({source.string(), ordinary.string(), "--expected-count", "4"}, diagnostic) == 0,
+                "Classic-locale report must succeed");
+        require(diagnostic.str() == "scanned=4, ok=4, failed=0, variables=4\n",
+                "Classic-locale status must preserve its format");
+    }
+    {
+        const GlobalLocale locale(std::locale(std::locale::classic(), new GroupedNumbers));
+        std::ostringstream witness;
+        witness << std::hex << 0x1234u;
+        require(witness.str() == "1_234", "Custom locale must actually group hexadecimal numbers");
+        std::ostringstream diagnostic;
+        require(invoke({source.string(), grouped.string(), "--expected-count", "4"}, diagnostic) == 0,
+                "Grouped-locale report must succeed");
+        require(diagnostic.str() == "scanned=4, ok=4, failed=0, variables=4\n",
+                "Caller locale must not change status formatting");
+    }
+    require(std::locale() == original, "Report locale test must restore the caller's global locale");
+    // 报告不包含输出文件名；相同输入和参数应保留包括FNV64在内的相同字节。
+    require(read(grouped) == read(ordinary), "Caller locale must not change FNV64 or report bytes");
 }
 enum class Fault { ShortWrite, PartialWrite, Flush, ThrowWrite, ThrowFlush };
 class FaultBuffer final : public std::stringbuf {
@@ -116,6 +159,7 @@ int main(int argc, char** argv) {
         if (file.path().extension() == ".mat") originals.emplace(file.path(), read(file.path()));
     require(originals.size() == 4, "Expected immutable four-file initialization archive");
     validAndInvalid(source, sandbox);
+    localeIndependentReport(source, sandbox);
     outputFaults(source, sandbox);
     for (const auto& file : originals)
         require(read(file.first) == file.second, "Original MAT changed");
