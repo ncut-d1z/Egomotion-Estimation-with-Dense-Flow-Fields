@@ -47,6 +47,18 @@ bool safeName(const std::string& name) {
 bool rightAxis(const AnalysisSeries& s){
     return s.y_unit=="rot/trans flow ratio";
 }
+std::string primaryAxisLabel(const std::vector<const AnalysisSeries*>& curves,
+                             bool marked_policy,bool logarithmic) {
+    if(marked_policy) {
+        for(const auto* curve:curves) {
+            if(rightAxis(*curve)||curve->y_unit.empty())continue;
+            if(curve->metric_semantics=="rotation-so3-geodesic-degrees"||
+               curve->metric_semantics=="translation-direction-atan2-degrees")
+                return curve->y_scale=="log"?"log10("+curve->y_unit+")":curve->y_unit;
+        }
+    }
+    return logarithmic?"log10(Y)":"Y";
+}
 struct Bounds{
     double minimum=std::numeric_limits<double>::infinity();
     double maximum=-std::numeric_limits<double>::infinity();
@@ -84,7 +96,7 @@ void applySourceWindows(const std::string& panel,const std::string& source_blob,
 }
 std::string renderPanel(const std::string& panel,
                         const std::vector<const AnalysisSeries*>& curves,
-                        const std::string& source_blob) {
+                        const std::string& source_blob,bool marked_policy) {
     constexpr double left=95,right=1080,top=70,bottom=630;
     Bounds bx,by,byRight;
     const bool xlog=curves.front()->x_scale=="log";
@@ -136,7 +148,7 @@ std::string renderPanel(const std::string& panel,
     out<<"<text x=\"95\" y=\"680\" font-size=\"15\">"
        <<(xlog?"log10(X)":"source MATLAB frame / xwerte")<<"</text>\n";
     out<<"<text x=\"95\" y=\"54\" font-size=\"13\">"
-       <<(ylog?"log10(Y)":"Y")<<"</text>\n";
+       <<xml(primaryAxisLabel(curves,marked_policy,ylog))<<"</text>\n";
     if(byRight.valid())
         out<<"<text x=\"1090\" y=\"54\" font-size=\"13\">ratio (right)</text>\n";
 
@@ -203,7 +215,8 @@ Files SvgPlotExporter::exportPlot(const AnalysisDataset& data,
         for(const auto& group:panels)
             prepared.emplace_back(group.first+".svg",
                                   renderPanel(group.first,group.second,
-                                              data.source_analysis_blob));
+                                              data.source_analysis_blob,
+                                              data.metric_policy=="adaptive-atan2-so3-geodesic-v1"));
         std::vector<std::string> published;
         published.reserve(prepared.size());
         for(const auto& file:prepared){

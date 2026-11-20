@@ -191,6 +191,7 @@ void declaredGaps(const fs::path& root) {
     const auto nan=std::numeric_limits<double>::quiet_NaN();
     auto series=curve("declared-gap","rotation",{1,2,3,4,5},{1,2,nan,4,5},false,false);
     series.defined={1,1,0,1,1};series.metric_semantics="rotation-so3-geodesic-degrees";
+    series.y_unit="rotation SO(3) geodesic error in degree";
     data.curves.push_back(series);
     const auto svg=render(root,"declared-gap",data);
     const auto paths=lines(svg,"declared-gap");
@@ -198,6 +199,21 @@ void declaredGaps(const fs::path& root) {
           "Declared missing sample divides polylines instead of bridging the gap");
     check(svg.find("rotation-so3-geodesic-degrees")!=std::string::npos,
           "SVG retains revised rotation metric semantics");
+    check(svg.find("<text x=\"95\" y=\"54\" font-size=\"13\">rotation SO(3) geodesic error in degree</text>")
+              !=std::string::npos,
+          "Marked rotation metric and units are visible on the primary axis");
+    auto logarithmic=data;logarithmic.curves[0].y_scale="log";
+    const auto log_svg=render(root,"declared-gap-log",logarithmic);
+    check(log_svg.find("<text x=\"95\" y=\"54\" font-size=\"13\">log10(rotation SO(3) geodesic error in degree)</text>")
+              !=std::string::npos,
+          "Marked logarithmic primary axis visibly names its transform and metric");
+    auto historical=data;historical.metric_policy="historical-adaptive-direction-acos";
+    historical.curves[0].y[2]=3.0;historical.curves[0].defined.clear();
+    historical.curves[0].y_unit="angle error in degree";
+    historical.curves[0].metric_semantics="historical-rotation-direction-acos-degrees";
+    const auto historical_svg=render(root,"declared-gap-historical-label",historical);
+    check(historical_svg.find("<text x=\"95\" y=\"54\" font-size=\"13\">Y</text>")!=std::string::npos,
+          "An unmarked policy preserves the historical visible axis label");
     for(unsigned invalid=0;invalid<5;++invalid) {
         auto candidate=data;
         auto& current=candidate.curves[0];
