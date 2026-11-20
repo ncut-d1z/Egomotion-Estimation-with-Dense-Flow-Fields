@@ -162,6 +162,44 @@ void drawing(const ill::Config& config) {
         check(failed.files.size()==1&&failed.files.at("illustration.json")==before.value(),"First file preserved after second failure");
     }
 }
+void nonfiniteShading() {
+    const auto original=generated(ill::HarmonicConfig{0,0});
+    const auto diagonal=original.surface.rows+1; // 首个列主序四边形的第三个顶点。
+    for(const double radius:{1e100,1e154}) {
+        auto data=original;
+        data.surface.vertices[0]=Vector3(radius,0,0);
+        data.surface.vertices[1]=Vector3(-radius,0,0);
+        data.surface.vertices[diagonal]=Vector3(0,radius,0);
+        const auto before=ill::dataJson(data);
+        require(before.hasValue(),"Finite large surface coordinates satisfy the numeric data contract");
+        // 各顶点模长有限；法向为(0,0,-2R²)，分别使其模长或叉积先溢出。
+        const auto message=radius==1e100?"Illustration surface normal length overflow":
+                                         "Illustration surface normal overflow";
+        Publisher publisher;ill::SvgExporter exporter;
+        const auto result=exporter.exportSvg(data,publisher);
+        check(!result.hasValue()&&result.error().code==PlotErrorCode::InvalidSeries&&
+              result.error().detail.stage==ErrorStage::Plot,"Nonfinite shading classified before publication");
+        if(!result.hasValue()) {
+            const auto& causes=result.error().detail.causes;
+            check(!causes.empty()&&causes.front().domain=="NumericalErrorCode"&&
+                  causes.front().code=="NonFiniteResult"&&causes.front().stage==ErrorStage::Analyze&&
+                  causes.front().message==message,"Retain the precise nonfinite shading cause");
+        }
+        check(publisher.calls==0&&publisher.files.empty(),"Shading failure publishes neither JSON nor SVG");
+        const auto after=ill::dataJson(data);
+        check(after.hasValue()&&after.value()==before.value(),"Shading failure preserves numeric input data");
+    }
+    auto degenerate=original;
+    for(const auto index:{std::size_t{0},std::size_t{1},diagonal})
+        degenerate.surface.vertices[index]=Vector3(0,0,1);
+    Publisher publisher;ill::SvgExporter exporter;
+    const auto result=exporter.exportSvg(degenerate,publisher);
+    require(result.hasValue(),"Finite zero-area triangle remains drawable");
+    check(publisher.calls==2&&publisher.files.size()==2,"Degenerate triangle preserves both publications");
+    check(publisher.files.at("illustration.svg").find(
+        "<polygon data-face=\"0\" fill=\"rgb(70,130,160)\"")!=std::string::npos,
+        "Zero-area triangle retains the original zero-light color");
+}
 #endif
 void rejectedData(const ill::Data& data) {
     check(!ill::dataJson(data).hasValue(),"Invalid numeric data rejected");
@@ -209,6 +247,7 @@ int main() {
 #if EGOMOTION_ENABLE_SVG
         drawing(ill::CircleConfig{});drawing(ill::SinusoidalConfig{});
         drawing(ill::HarmonicConfig{0,0});drawing(ill::HarmonicConfig{3,2});
+        nonfiniteShading();
 #endif
         negative();optionalBackend();
         std::cout<<std::setprecision(21)<<"checks="<<checks<<" failures="<<failures

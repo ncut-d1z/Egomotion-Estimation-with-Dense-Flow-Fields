@@ -6,6 +6,7 @@
 #include <cmath>
 #include <iomanip>
 #include <ios>
+#include <limits>
 #include <locale>
 #include <new>
 #include <sstream>
@@ -55,9 +56,17 @@ Primitive triangle(const Vector3& a,const Vector3& b,const Vector3& c,
                    const Camera& view,std::size_t face) {
     const std::array<Vector3,3> points{{view.project(a),view.project(b),view.project(c)}};
     Vector3 normal=(b-a).cross(c-a);
+    if(!normal.allFinite())throw std::invalid_argument("Illustration surface normal overflow");
     const double length=normal.norm();
+    if(!std::isfinite(length))throw std::invalid_argument("Illustration surface normal length overflow");
     const double light=length>0?std::abs(normal.dot(view.forward)/length):0;
-    const int green=static_cast<int>(130+95*light),blue=static_cast<int>(160+85*light);
+    if(!std::isfinite(light))throw std::invalid_argument("Illustration surface lighting overflow");
+    const double green_value=130+95*light,blue_value=160+85*light;
+    // 保留原光照/颜色公式；整数转换前只核对可表示性，不钳制亮度。
+    if(!(green_value>=std::numeric_limits<int>::min()&&green_value<=std::numeric_limits<int>::max()&&
+         blue_value>=std::numeric_limits<int>::min()&&blue_value<=std::numeric_limits<int>::max()))
+        throw std::invalid_argument("Illustration surface color conversion overflow");
+    const int green=static_cast<int>(green_value),blue=static_cast<int>(blue_value);
     std::ostringstream out;
     out.exceptions(std::ios::badbit|std::ios::failbit);
     out.imbue(std::locale::classic());out<<std::fixed<<std::setprecision(3);
