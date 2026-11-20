@@ -1,4 +1,5 @@
 #include "../support/io_fault_injection.hpp"
+#include "../support/adaptive_result_fixture.hpp"
 
 #include "egomotion/experiments/run_context.hpp"
 #include "egomotion/io/mat_result_reader.hpp"
@@ -217,12 +218,15 @@ void checkManifest(const fs::path& root,Point point) {
                    directory->outputRoot(),std::move(provenance),kind,1);
     std::map<std::string,DenseDoubleArray> values;
     for(const auto& name:experiments::currentSaveFields(kind))values.emplace(name,matrix(name,35,1));
-    require(run.noteCompletedMemory(1,33).hasValue()&&run.writeCurrentResults(values).hasValue(),
+    const auto data=test_support::completeAdaptiveData(std::move(values),35);
+    require(run.noteAdaptiveCompletedMemory(data).hasValue()&&run.writeAdaptiveResults(data).hasValue(),
             "Real MAT Writer must finish all synthetic scientific inputs before Manifest fault");
+    require(writer.fileEvidence().size()==2*data.fields.size()+1,
+            "Manifest fault must follow every policy, validity and source MAT publication");
     Observed events;
     const auto outcome=[&]{
         io_fault_test::Scope fault(point,directory->runFd(),"manifest.json");
-        auto result=run.publishCompleteOutcome();events=fault.observed();return result;
+        auto result=run.publishAdaptiveOutcome();events=fault.observed();return result;
     }();
     checkEvents(point,events);
     checkStaging(*directory,point,"manifest.json");
@@ -231,7 +235,7 @@ void checkManifest(const fs::path& root,Point point) {
         require(outcome.hasValue()&&outcome.value().status==RunStatus::Complete&&
                 run.manifestDraft().status==RunStatus::Complete,
                 "Confirmed real Manifest must yield a successful Complete outcome");
-        require(!run.publishCompleteOutcome().hasValue(),"Complete cannot be published twice");
+        require(!run.publishAdaptiveOutcome().hasValue(),"Complete cannot be published twice");
         return;
     }
     require(!outcome.hasValue()&&outcome.error().code==ExperimentErrorCode::OutputFailed&&
