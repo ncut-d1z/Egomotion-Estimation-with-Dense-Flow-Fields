@@ -67,8 +67,8 @@ Status<ExperimentErrorCode> validateAdaptiveEvidence(
     auto valid=validateMaskedAdaptiveOutput(kind,source.fields,masksFor(source.fields));
     if(!valid.hasValue())return valid;
     for(const auto& repetition:source.repetition_fields) {
-        valid=validateMaskedAdaptiveOutput(kind,repetition,masksFor(repetition));
-        if(!valid.hasValue())return valid;
+        const auto repetition_valid=validateMaskedAdaptiveOutput(kind,repetition,masksFor(repetition));
+        if(!repetition_valid.hasValue())return repetition_valid;
     }
     std::set<MetricKey> declared;
     for(const auto& item:source.undefined_metrics) {
