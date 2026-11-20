@@ -172,6 +172,17 @@ std::string stringArray(const std::vector<std::string>& values) {
     }
     return json + ']';
 }
+std::string analysisMetricFields(const AnalysisDataset& data) {
+    // 同一原分析脚本可读取历史轴方向角和新版SO(3)角；blob不能代替指标身份。
+    return ",\"metric_policy\":" + jsonQuote(data.metric_policy) +
+        ",\"planned_repetitions\":" + std::to_string(data.planned_repetitions);
+}
+std::string analysisCurvePrefix(const AnalysisSeries& curve) {
+    return "{\"id\":" + jsonQuote(curve.name) +
+        ",\"metric_semantics\":" + jsonQuote(curve.metric_semantics) +
+        ",\"y_unit\":" + jsonQuote(curve.y_unit) +
+        ",\"helper_source_blob_shas\":" + stringArray(curve.helper_source_blob_shas);
+}
 std::string artifactSuffix() {
     return ",\"record_scope\":\"artifact_export\",\"algorithm_rng\":{\"engine\":null,\"seed\":null,\"seed_origin\":\"not_used\"}"
         ",\"environment\":" + environment() +
@@ -186,11 +197,11 @@ std::string commandObservation(const Command& command) {
         ",\"effective_config\":" + parameters(command) + '}';
 }
 std::string analysisObservation(const AnalysisDataset& data) {
-    std::string json = "{\"source_blob_sha\":" + jsonQuote(data.source_analysis_blob) + ",\"curves\":[";
+    std::string json = "{\"source_blob_sha\":" + jsonQuote(data.source_analysis_blob) +
+        analysisMetricFields(data) + ",\"curves\":[";
     for (std::size_t index = 0; index < data.curves.size(); ++index) {
         if (index) json += ',';
-        json += "{\"id\":" + jsonQuote(data.curves[index].name) + ",\"helper_source_blob_shas\":" +
-            stringArray(data.curves[index].helper_source_blob_shas) + '}';
+        json += analysisCurvePrefix(data.curves[index]) + '}';
     }
     return json + "]}";
 }
@@ -221,12 +232,12 @@ std::string artifactInvocationRecord(const Command& command, const std::vector<s
     auto json = invocationPrefix(command, argv, id, output_directory,
         EGOMOTION_BUILD_SOURCE_SHA, data.source_analysis_blob);
     // 使用Analyzer读取时已绑定的身份，不重新打开路径计算一个可能已变化的摘要。
+    json += analysisMetricFields(data);
     json += ",\"inputs\":{\"kind\":\"analyzed_mat_snapshots\",\"curves\":[";
     for (std::size_t i = 0; i < data.curves.size(); ++i) {
         if (i) json += ',';
         const auto& curve = data.curves[i];
-        json += "{\"id\":" + jsonQuote(curve.name) + ",\"helper_source_blob_shas\":" +
-            stringArray(curve.helper_source_blob_shas) + ",\"mat_files\":[";
+        json += analysisCurvePrefix(curve) + ",\"mat_files\":[";
         for (std::size_t j = 0; j < curve.inputs.size(); ++j) {
             if (j) json += ',';
             const auto& input = curve.inputs[j];

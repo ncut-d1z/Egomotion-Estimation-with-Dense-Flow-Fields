@@ -14,6 +14,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace {
@@ -172,9 +173,16 @@ void preserveCompleteAndExisting(const fs::path& root) {
 }
 class FixedAnalyzer final : public IAnalyzer {
 public:
+    bool revised = true;
     Result<AnalysisDataset,AnalysisErrorCode> analyze(AnalysisKind,const fs::path&,IResultReader&) override {
         AnalysisDataset data;data.source_analysis_blob="fixture-analysis-blob";
         AnalysisSeries curve;curve.name="曲线\"\n";curve.x={1};curve.y={2};
+        if(revised) {
+            data.metric_policy="adaptive-atan2-so3-geodesic-v1";
+            data.planned_repetitions=1;
+            curve.metric_semantics="rotation-so3-geodesic-degrees";
+            curve.y_unit="rotation SO(3) geodesic error in degree";
+        }
         curve.helper_source_blob_shas={"fixture-helper"};
         // 故意不可打开；记录必须借用Analyzer快照身份，不能重读这些路径。
         curve.inputs={{"missing/中文 引号\".mat","v",7,"retained snapshot",std::string(64,'a')},
@@ -183,6 +191,24 @@ public:
         return Result<AnalysisDataset,AnalysisErrorCode>::success(std::move(data));
     }
 };
+class AnalysisObserver final : public cli::IInvocationObserver {
+public:
+    std::string ready;
+    Status<MatErrorCode> append(std::string_view event,std::string_view data) override {
+        if(event=="analysis_ready")ready=std::string(data);
+        return Status<MatErrorCode>::success();
+    }
+};
+void metricIdentity(const std::string& record,bool revised) {
+    contains(record,"\"metric_policy\":"+jsonQuote(revised?
+        "adaptive-atan2-so3-geodesic-v1":"source-defined"),"Retain actual analysis policy");
+    contains(record,revised?"\"planned_repetitions\":1":"\"planned_repetitions\":0",
+        "Do not infer repetitions for an unknown historical result");
+    contains(record,"\"metric_semantics\":"+jsonQuote(revised?
+        "rotation-so3-geodesic-degrees":""),"Keep each curve metric distinct from source blob");
+    contains(record,"\"y_unit\":"+jsonQuote(revised?
+        "rotation SO(3) geodesic error in degree":""),"Keep actual metric units");
+}
 class TrackingExporter final : public IPlotExporter,public illustrations::IExporter {
 public:
     fs::path directory;
@@ -212,11 +238,12 @@ class FlushFailure final : public std::stringbuf {
     int sync() override {return -1;}
 };
 Response artifact(const fs::path& root,TrackingExporter& exporter,bool plot,const std::string& id,
-                  bool direct=false,bool bad_out=false,bool bad_err=false) {
+                  bool direct=false,bool bad_out=false,bool bad_err=false,bool revised=true) {
     ++calls;
-    io::MatResultReader reader;FixedAnalyzer analyzer;
-    cli::ApplicationCompositionRoot app(&reader,nullptr,&analyzer,&exporter,root,&exporter);
-    auto args=plot?std::vector<std::string>{"plot","--experiment","bias","--input-root","missing"}:
+    io::MatResultReader reader;FixedAnalyzer analyzer;analyzer.revised=revised;
+    AnalysisObserver observer;
+    cli::ApplicationCompositionRoot app(&reader,nullptr,&analyzer,&exporter,root,&exporter,&observer);
+    auto args=plot?std::vector<std::string>{"plot","--experiment",revised?"adaptive-init":"bias","--input-root","missing"}:
         std::vector<std::string>{"illustrate","--kind","harmonic","--degree","3","--order","2","--format","svg"};
     args.insert(args.end(),{"--run-id",id});
     exporter.directory=root/"output"/id;
@@ -228,11 +255,12 @@ Response artifact(const fs::path& root,TrackingExporter& exporter,bool plot,cons
     auto parsed=cli::parseCommand(args);
     require(parsed.hasValue(),"Artifact fixture must satisfy established CLI contract");
     const auto code=direct?app.dispatch(parsed.value(),out,err):cli::run(args,out,err,app);
+    if(plot)metricIdentity(observer.ready,revised);
     return {code,bad_out?out_buffer.str():good_out.str(),bad_err?err_buffer.str():good_err.str()};
 }
-void artifactSuccess(const fs::path& root,bool plot) {
+void artifactSuccess(const fs::path& root,bool plot,bool revised=true) {
     TrackingExporter exporter;
-    const auto response=artifact(root,exporter,plot,"success",true);
+    const auto response=artifact(root,exporter,plot,revised?"success":"legacy_success",true,false,false,revised);
     require(response.code==0&&response.err.empty()&&exporter.invocations==1,"Successful export");
     const auto start=read(exporter.directory/"invocation.json");
     const auto finish=read(exporter.directory/"execution.json");
@@ -244,6 +272,7 @@ void artifactSuccess(const fs::path& root,bool plot) {
     contains(finish,"\"exit_code_if_record_published\":0","Successful audit exit");
     require(!fs::exists(exporter.directory/"manifest.json"),"No computation manifest for export");
     if(plot) {
+        metricIdentity(start,revised);
         contains(start,"\"mat_sha256\":"+jsonQuote(std::string(64,'a')),"Retain snapshot digest");
         contains(start,"\"mat_sha256\":null","Unknown digest remains unknown");
         contains(start,"\"matlab_run_ordinal\":7","Keep 1-based source ordinal");
@@ -304,6 +333,7 @@ void artifacts(const fs::path& root) {
     for(const bool plot:{true,false}) {
         const auto repo=root/(plot?"plot":"illustration");fs::create_directories(repo/"origin");
         artifactSuccess(repo,plot);artifactRecordFaults(repo,plot);artifactFailures(repo,plot);
+        if(plot)artifactSuccess(repo,plot,false);
         require(fs::is_empty(repo/"origin"),"Artifact original marker untouched");
     }
 }
