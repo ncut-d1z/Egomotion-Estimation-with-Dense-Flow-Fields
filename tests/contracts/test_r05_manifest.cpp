@@ -1,3 +1,4 @@
+#include "../support/adaptive_result_fixture.hpp"
 #include "egomotion/experiments/run_context.hpp"
 #include "egomotion/experiments/manifest_json.hpp"
 #include "egomotion/experiments/output_contract.hpp"
@@ -94,7 +95,8 @@ auto fields(egomotion::experiments::ExperimentKind kind){
         const std::size_t cols=rates&&name!="akrot"?4:1;
         result.emplace(name,matrix(name,rows,cols));
     }
-    return result;
+    const std::size_t rows=kind==egomotion::experiments::ExperimentKind::AdaptiveInitialization?35:600;
+    return test_support::completeAdaptiveData(std::move(result),rows);
 }
 SourceProvenance provenance() {
     SourceProvenance p;
@@ -142,12 +144,12 @@ void checkPublishedButUnconfirmedManifest() {
         std::make_unique<FixedRandom>(),writer,publisher,
         std::filesystem::path("/R5-UNIT-ONLY"),provenance(),
         ExperimentKind::AdaptiveInitialization,1);
-    require(run.noteCompletedMemory(1,33).hasValue()&&
-            run.writeCurrentResults(fields(ExperimentKind::AdaptiveInitialization)).hasValue(),
+    require(run.noteAdaptiveCompletedMemory(fields(ExperimentKind::AdaptiveInitialization)).hasValue()&&
+            run.writeAdaptiveResults(fields(ExperimentKind::AdaptiveInitialization)).hasValue(),
             "Synthetic scientific/Writer inputs must be complete");
 
     // 模拟 link 成功后 fsync 失败：目录中已有文件，但调用者没有成功回执。
-    const auto outcome=run.publishCompleteOutcome();
+    const auto outcome=run.publishAdaptiveOutcome();
     require(!outcome.hasValue()&&outcome.error().code==ExperimentErrorCode::OutputFailed&&
             hasMatCause(outcome.error(),"ReadbackMismatch"),
             "Unconfirmed durability must preserve the cause and reject success");
@@ -168,7 +170,7 @@ void checkPublishedButUnconfirmedManifest() {
             run.manifestDraft().errors.size()==1&&
             hasMatCause(run.manifestDraft().errors.front(),"ReadbackMismatch"),
             "Preserve published evidence and the original error without claiming recovery");
-    require(!run.publishCompleteOutcome().hasValue()&&publisher.contents==visible_contents,
+    require(!run.publishAdaptiveOutcome().hasValue()&&publisher.contents==visible_contents,
             "Retrying Complete must neither overwrite evidence nor return success");
 }
 }
@@ -184,20 +186,20 @@ int main() {
         writer,publisher,std::filesystem::path("/R5-UNIT-ONLY"),provenance(),
         ExperimentKind::AdaptiveInitialization,1);
 
-    require(!run.publishCompleteOutcome().hasValue(),
+    require(!run.publishAdaptiveOutcome().hasValue(),
             "No Complete outcome may precede file writing");
-    require(run.noteCompletedMemory(1,33).hasValue(),
+    require(run.noteAdaptiveCompletedMemory(fields(ExperimentKind::AdaptiveInitialization)).hasValue(),
             "Complete independent scientific memory output");
     auto data=fields(ExperimentKind::AdaptiveInitialization);
-    require(run.writeCurrentResults(data).hasValue(),"Writer should receive all four MAT");
-    require(writer.calls==4,"Writer current-save calls must equal source saves");
-    auto result=run.publishCompleteOutcome();
+    require(run.writeAdaptiveResults(data).hasValue(),"Writer should receive source MATs and validity companions");
+    require(writer.calls==9,"Writer must receive policy, four masks and four source fields");
+    auto result=run.publishAdaptiveOutcome();
     require(result.hasValue()&&result.value().status==RunStatus::Complete,
             "Only after durable manifest is Complete possible");
     require(publisher.name=="manifest.json","Manifest filename must be exact");
     require(publisher.contents.find("\"completeness\":\"Complete\"")!=std::string::npos,
             "Durable Manifest content must reflect verified complete data");
-    require(!run.publishCompleteOutcome().hasValue(),
+    require(!run.publishAdaptiveOutcome().hasValue(),
             "Double Complete publication must be rejected");
 
     FakeWriter failed_writer;
@@ -206,10 +208,10 @@ int main() {
     RunContext partial(RunId{"test_partial"},std::make_unique<FixedRandom>(),
         failed_writer,failure_pub,std::filesystem::path("/R5-UNIT-ONLY"),provenance(),
         ExperimentKind::AdaptiveInitialization,1);
-    auto cannot_write=partial.writeCurrentResults(data);
+    auto cannot_write=partial.writeAdaptiveResults(data);
     require(!cannot_write.hasValue(),"Injected Writer failure must propagate");
     require(failed_writer.calls==2,"Failure cannot skip a planned Writer call");
-    require(!partial.publishCompleteOutcome().hasValue(),
+    require(!partial.publishAdaptiveOutcome().hasValue(),
             "Partial MAT receipts cannot publish Complete");
     require(partial.publishFailureRecord(cannot_write.error()).hasValue(),
             "Failed/Incomplete manifest must remain publishable");
@@ -224,8 +226,8 @@ int main() {
         rates_writer,rates_pub,std::filesystem::path("/R5-UNIT-ONLY"),provenance(),
         ExperimentKind::AdaptiveUpdateRates,1);
     auto output=fields(ExperimentKind::AdaptiveUpdateRates);
-    output.emplace("rottransratio",matrix("rottransratio",600,1)); // HistoricalOnly
-    const auto invalid_fields=rates.writeCurrentResults(output);
+    output.fields.emplace("rottransratio",matrix("rottransratio",600,1)); // HistoricalOnly
+    const auto invalid_fields=rates.writeAdaptiveResults(output);
     require(!invalid_fields.hasValue()&&invalid_fields.error().detail.run_id&&
             invalid_fields.error().detail.run_id->text==rates.runId().text,
             "UpdateRates must refuse HistoricalOnly fields before MAT IO");
@@ -239,12 +241,12 @@ int main() {
         std::make_unique<FixedRandom>(),unverified_writer,
         unverified_publisher,std::filesystem::path("/R5-UNIT-ONLY"),
         provenance(),ExperimentKind::AdaptiveInitialization,1);
-    require(unverified.noteCompletedMemory(1,33).hasValue(),
+    require(unverified.noteAdaptiveCompletedMemory(fields(ExperimentKind::AdaptiveInitialization)).hasValue(),
             "Synthetic in-memory run must set truthful completed count");
-    require(unverified.writeCurrentResults(data).hasValue(),
+    require(unverified.writeAdaptiveResults(data).hasValue(),
             "Synthetic Writer must accept all current MATLAB fields");
     unverified_writer.receipts[0].sha256="NOT_A_VERIFIED_SHA256";
-    auto denied_sha=unverified.publishCompleteOutcome();
+    auto denied_sha=unverified.publishAdaptiveOutcome();
     require(!denied_sha.hasValue()&&unverified_publisher.contents.empty(),
             "Missing/invalid SHA256 evidence must block Complete publication");
     require(unverified.publishFailureRecord(denied_sha.error()).hasValue(),
@@ -254,7 +256,7 @@ int main() {
             unverified_publisher.contents.find("\"sha256\":null")!=
                 std::string::npos,
             "Incomplete Manifest must identify unverified SHA as null");
-    require(!unverified.publishCompleteOutcome().hasValue(),
+    require(!unverified.publishAdaptiveOutcome().hasValue(),
             "Published Incomplete Manifest must permanently bar later Complete");
 
     // R6: a Publisher failure is independent of scientific success. In
@@ -267,10 +269,10 @@ int main() {
         std::make_unique<FixedRandom>(),complete_writer,
         unreliable_publisher,std::filesystem::path("/R5-UNIT-ONLY"),
         provenance(),ExperimentKind::AdaptiveInitialization,1);
-    require(incomplete.noteCompletedMemory(1,33).hasValue()&&
-            incomplete.writeCurrentResults(data).hasValue(),
+    require(incomplete.noteAdaptiveCompletedMemory(fields(ExperimentKind::AdaptiveInitialization)).hasValue()&&
+            incomplete.writeAdaptiveResults(data).hasValue(),
             "Before publication all synthetic scientific/Writer inputs must be ready");
-    auto cannot_complete=incomplete.publishCompleteOutcome();
+    auto cannot_complete=incomplete.publishAdaptiveOutcome();
     require(!cannot_complete.hasValue()&&unreliable_publisher.contents.empty(),
             "Injected failed Manifest write must never claim a Complete outcome");
     bool underlying_mat_writer=false;
@@ -298,10 +300,10 @@ int main() {
         std::make_unique<FixedRandom>(),dirty_writer,
         dirty_publisher,std::filesystem::path("/R5-UNIT-ONLY"),
         std::move(missing_provenance),ExperimentKind::AdaptiveInitialization,1);
-    require(dirty.noteCompletedMemory(1,33).hasValue()&&
-            dirty.writeCurrentResults(data).hasValue(),
+    require(dirty.noteAdaptiveCompletedMemory(fields(ExperimentKind::AdaptiveInitialization)).hasValue()&&
+            dirty.writeAdaptiveResults(data).hasValue(),
             "Synthetic unverified-build input setup failed");
-    auto blocked=dirty.publishCompleteOutcome();
+    auto blocked=dirty.publishAdaptiveOutcome();
     require(!blocked.hasValue()&&dirty_publisher.name.empty(),
             "Unverified executable source identity must block Complete Manifest");
     require(blocked.error().detail.run_id&&blocked.error().detail.run_id->text==dirty.runId().text,

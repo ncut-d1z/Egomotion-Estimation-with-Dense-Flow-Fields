@@ -1,4 +1,5 @@
 // 仅合成合同数据；真实独立 RunDirectory/MAT Writer/Manifest/RNG，非完整实验。
+#include "../support/adaptive_result_fixture.hpp"
 #include "egomotion/contracts/diagnostics.hpp"
 #include "egomotion/experiments/run_context.hpp"
 #include "egomotion/io/mat_result_reader.hpp"
@@ -79,11 +80,11 @@ struct Box {
         require(publisher->publishNew("SYNTHETIC_TEST_ONLY.txt",
             "Interleaved RunContext contract fixtures, not scientific experiment results.\n").hasValue(),
             "Cannot mark synthetic output");
-        const auto kind=first?ExperimentKind::AdaptiveInitialization:ExperimentKind::AdaptiveUpdateRates;
+        const auto kind=first?ExperimentKind::AdaptiveInitialization:ExperimentKind::AdaptiveComparison;
         const auto seed=first?kSeedA:kSeedB;
         // 原脚本身份仅标记对应 save schema，不声称执行了这些脚本。
         const std::string blob=first?"a3154ae391be82ccf48c9f3a03c55109dde85f65":
-                                     "4629901c1233cdee5d6d22c917603720ffd1fab4";
+                                     "c9548c83fd0a2ce13d96394e98f6c7573119a7d5";
         context=std::make_unique<RunContext>(directory->runId(),
             std::make_unique<sampling::Mt19937RandomSource>(seed),*forwarding,*publisher,
             directory->outputRoot(),SourceProvenance{sha,blob,seed},kind,first?1:8);
@@ -114,13 +115,13 @@ std::string state(RunContext& run) {
               <<' '<<receipt.size_bytes<<' '<<receipt.durably_confirmed;
     return result.str();
 }
-std::map<std::string,DenseDoubleArray> fields(bool first) {
-    const auto kind=first?ExperimentKind::AdaptiveInitialization:ExperimentKind::AdaptiveUpdateRates;
+experiments::AdaptiveRunData fields(bool first) {
+    const auto kind=first?ExperimentKind::AdaptiveInitialization:ExperimentKind::AdaptiveComparison;
     std::map<std::string,DenseDoubleArray> result;
     std::size_t field=0;
     for (const auto& name:experiments::currentSaveFields(kind)) {
         DenseDoubleArray value;
-        const std::size_t rows=first?35:600,cols=!first&&name!="akrot"?4:1;
+        const std::size_t rows=first?35:600,cols=1;
         value.info.name=name; value.info.dimensions={rows,cols};
         value.info.original_class_type=6; value.info.original_data_type=9;
         value.info.data_bytes=rows*cols*sizeof(double);
@@ -128,7 +129,7 @@ std::map<std::string,DenseDoubleArray> fields(bool first) {
             value.values_column_major.push_back((first?1.0:8.0)+static_cast<double>(field)/16+static_cast<double>(i)/1024);
         result.emplace(name,std::move(value)); ++field;
     }
-    return result;
+    return test_support::completeAdaptiveData(std::move(result),first?35:600,first?1:8);
 }
 void randomPair(Box& a,Box& b,sampling::Mt19937RandomSource& ref_a,sampling::Mt19937RandomSource& ref_b) {
     auto compare=[](IRandomSource& actual,IRandomSource& expected,bool normal) {
@@ -144,20 +145,31 @@ void randomPair(Box& a,Box& b,sampling::Mt19937RandomSource& ref_a,sampling::Mt1
         compare(a.context->randomSource(),ref_a,false);
     }
 }
-void readBack(const Box& box,const std::map<std::string,DenseDoubleArray>& expected,std::size_t count) {
-    const auto names=experiments::currentSaveFields(box.context->experimentKind());
+void readBack(const Box& box,const experiments::AdaptiveRunData& data,std::size_t count) {
+    auto expected=data.fields;
+    for(const auto& item:data.fields) {
+        auto validity=item.second;validity.info.name="valid_"+item.first;
+        for(std::size_t i=0;i<validity.values_column_major.size();++i)
+            validity.values_column_major[i]=static_cast<double>(data.valid_counts.at(item.first)[i]);
+        expected.emplace(validity.info.name,std::move(validity));
+    }
+    DenseDoubleArray policy;
+    policy.info.name="egomotion_metric_policy";policy.info.dimensions={1,4};
+    policy.values_column_major={1,1,1,static_cast<double>(data.planned_runs)};
+    expected.emplace(policy.info.name,std::move(policy));
     require(box.writer->fileEvidence().size()==count,"Wrong per-run receipt count");
-    for (std::size_t i=0;i<names.size();++i) {
-        const auto path=box.path/(names[i]+".mat");
-        require(fs::exists(path)==(i<count),"Other run filled an unattempted field");
-        if (i>=count) continue;
-        const auto actual=io::MatResultReader{}.readNamed(path,names[i]);
+    for (const auto& item:expected) {
+        const auto path=box.path/(item.first+".mat");
+        const bool confirmed=box.writer->receipts().count(item.first)!=0;
+        require(fs::exists(path)==confirmed,"Other run filled an unattempted field");
+        if (!confirmed) continue;
+        const auto actual=io::MatResultReader{}.readNamed(path,item.first);
         require(actual.hasValue(),"Real MAT readback failed");
-        const auto& target=expected.at(names[i]);
+        const auto& target=item.second;
         require(actual.value().info.dimensions==target.info.dimensions&&
                 actual.value().values_column_major==target.values_column_major,"Cross-run MAT values or dimensions");
         read_values+=target.values_column_major.size();
-        const auto& receipt=box.writer->receipts().at(names[i]);
+        const auto& receipt=box.writer->receipts().at(item.first);
         require(receipt.durably_confirmed&&receipt.sha256==digest(path),"Receipt must identify own durable MAT");
     }
 }
@@ -167,23 +179,22 @@ void verify(const fs::path& root,const std::string& sha) {
     require(a.directory->runId().text!=b.directory->runId().text,"RunIds must be independent");
     sampling::Mt19937RandomSource ref_a(kSeedA),ref_b(kSeedB);
     randomPair(a,b,ref_a,ref_b);
+    const auto a_data=fields(true),b_data=fields(false);
     const auto b_initial=state(*b.context);
-    require(a.context->noteCompletedMemory(1,33).hasValue(),"Synthetic A memory completion");
+    require(a.context->noteAdaptiveCompletedMemory(a_data).hasValue(),"Synthetic A memory completion");
     require(state(*b.context)==b_initial,"A memory completion changed B");
     const auto a_ready=state(*a.context);
     const auto a_files=files(a);
-    b.context->noteAttempt(); b.context->noteAttempt(); b.context->noteAttempt();
-    b.context->noteValid(); b.context->noteValid(); b.context->noteUndefined();
-    const auto a_data=fields(true),b_data=fields(false);
-    const auto failed=b.context->writeCurrentResults(b_data);
+    require(b.context->noteAdaptiveCompletedMemory(b_data).hasValue(),"Synthetic B memory completion");
+    const auto failed=b.context->writeAdaptiveResults(b_data);
     require(!failed.hasValue()&&failed.error().code==ExperimentErrorCode::OutputFailed,"B write fault did not fire");
     require(b.forwarding->calls==2&&b.writer->receipts().size()==1,"B must retain exactly one real MAT");
     require(state(*a.context)==a_ready&&files(a)==a_files,"B counters/write failure contaminated A");
-    require(!a.context->writeCurrentResults(b_data).hasValue(),"A accepted B output schema");
+    require(!a.context->writeAdaptiveResults(b_data).hasValue(),"A accepted B output schema");
     require(a.forwarding->calls==0&&state(*a.context)==a_ready&&files(a)==a_files,"Schema rejection changed A");
     const auto b_partial=state(*b.context);
     const auto b_partial_files=files(b);
-    require(a.context->writeCurrentResults(a_data).hasValue(),"A cannot write after B failure");
+    require(a.context->writeAdaptiveResults(a_data).hasValue(),"A cannot write after B failure");
     require(state(*b.context)==b_partial&&files(b)==b_partial_files,"A writes changed B");
     const auto a_written=state(*a.context);
     const auto a_written_files=files(a);
@@ -192,22 +203,22 @@ void verify(const fs::path& root,const std::string& sha) {
     randomPair(a,b,ref_a,ref_b);
     const auto b_final=state(*b.context);
     const auto b_final_files=files(b);
-    require(!b.context->publishCompleteOutcome().hasValue(),"Incomplete B became Complete");
-    const auto complete=a.context->publishCompleteOutcome();
+    require(!b.context->publishAdaptiveOutcome().hasValue(),"Incomplete B became Complete");
+    const auto complete=a.context->publishAdaptiveOutcome();
     require(complete.hasValue()&&complete.value().status==RunStatus::Complete&&
             complete.value().run_id.text==a.directory->runId().text&&complete.value().valid==33,
             "A must independently publish Complete");
     require(state(*b.context)==b_final&&files(b)==b_final_files,"A Complete changed B");
     const auto a_final=state(*a.context);
     const auto a_final_files=files(a);
-    require(!a.context->publishCompleteOutcome().hasValue()&&
-            !a.context->writeCurrentResults(a_data).hasValue(),"Duplicate publication succeeded");
-    require(!b.writer->saveNewVariable(a.directory->runId(),"akrot",b_data.at("akrot")).hasValue(),
+    require(!a.context->publishAdaptiveOutcome().hasValue()&&
+            !a.context->writeAdaptiveResults(a_data).hasValue(),"Duplicate publication succeeded");
+    require(!b.writer->saveNewVariable(a.directory->runId(),"allemitrotfehler",b_data.fields.at("allemitrotfehler")).hasValue(),
             "B Writer accepted foreign RunId");
     require(state(*a.context)==a_final&&files(a)==a_final_files&&
             state(*b.context)==b_final&&files(b)==b_final_files,"Rejected operations changed independent runs");
     randomPair(a,b,ref_a,ref_b);
-    readBack(a,a_data,4); readBack(b,b_data,1);
+    readBack(a,a_data,9); readBack(b,b_data,1);
     const auto ma=textFile(a.path/"manifest.json"),mb=textFile(b.path/"manifest.json");
     require(ma.find("\"completeness\":\"Complete\"")!=std::string::npos&&
             ma.find("\"algorithm_rng_seed\":7")!=std::string::npos&&ma.find(b.directory->runId().text)==std::string::npos,
@@ -216,12 +227,12 @@ void verify(const fs::path& root,const std::string& sha) {
             mb.find("\"algorithm_rng_seed\":11")!=std::string::npos&&mb.find(a.directory->runId().text)==std::string::npos&&
             mb.find("WriteFailed")!=std::string::npos&&mb.find("Interleaved B second-write fault")!=std::string::npos,
             "B Manifest lost its own failure chain");
-    require(b.context->manifestDraft().attempted==3&&b.context->manifestDraft().valid==2&&
-            b.context->manifestDraft().undefined==1&&b.context->manifestDraft().failed==1&&
-            b.context->manifestDraft().completed==0,"B count ledger changed");
-    require(a_final_files.size()==6&&b_final_files.size()==3,"Unexpected files in isolated RunIds");
-    require(digest(a.path/"allemittransfehler.mat")!=digest(b.path/"allemittransfehler.mat"),
-            "Same filename unexpectedly points to same content");
+    require(b.context->manifestDraft().attempted==8&&b.context->manifestDraft().valid==8*598&&
+            b.context->manifestDraft().undefined==0&&b.context->manifestDraft().failed==1&&
+            b.context->manifestDraft().completed==8,"B completed computation and failed publication counts changed");
+    require(a_final_files.size()==11&&b_final_files.size()==3,"Unexpected files in isolated RunIds");
+    require(digest(a.path/"egomotion_metric_policy.mat")!=digest(b.path/"egomotion_metric_policy.mat"),
+            "Independent repetition policies unexpectedly point to the same content");
     std::cout<<"A manifest_sha256="<<digest(a.path/"manifest.json")
              <<" B manifest_sha256="<<digest(b.path/"manifest.json")<<'\n';
 }
