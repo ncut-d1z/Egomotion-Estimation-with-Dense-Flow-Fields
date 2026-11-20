@@ -373,15 +373,19 @@ Status<ExperimentErrorCode> RunContext::publishFailureRecord(
     try{
         recordFailure(std::move(original));
         ++draft_.failed;
-        // Partial in-memory or verified file results remain an audit record,
-        // not a substitute for a successful Complete run.
-        draft_.status=(draft_.completed>0||draft_.valid>0||
-                       !draft_.files_writer_confirmed.empty()||
-                       (adaptiveKind(kind_)&&(draft_.undefined>0||
-                        !adaptive_metric_validity_json_.empty())))
+        const bool has_partial_memory=draft_.completed>0||draft_.valid>0||
+            (adaptiveKind(kind_)&&(draft_.undefined>0||
+             !adaptive_metric_validity_json_.empty()));
+        // 读取回执可能分配失败，先保留已知内存/确认记录对应的失败状态。
+        draft_.status=(has_partial_memory||!draft_.files_writer_confirmed.empty())
+                      ?RunStatus::Incomplete:RunStatus::Failed;
+        // Writer 可在最终文件已发布、持久化未确认时返回失败。内存状态与
+        // Manifest 共用该次证据快照，不能把这种未确认产物当作没有产物。
+        const auto published=writer_.fileEvidence();
+        draft_.status=(has_partial_memory||!published.empty())
                       ?RunStatus::Incomplete:RunStatus::Failed;
         auto json=experiments::makeFailureManifestJson(
-            *this,writer_.fileEvidence());
+            *this,published);
         if(!json.hasValue())
             return Status<ExperimentErrorCode>::failure(std::move(json).error());
         auto persisted=manifest_publisher_.publishNew("manifest.json",json.value());

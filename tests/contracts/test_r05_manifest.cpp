@@ -30,15 +30,22 @@ struct FixedRandom final: IRandomSource {
 struct FakeWriter final:IResultWriter {
     std::size_t calls=0;
     std::size_t fail_at=0;
+    bool fail_after_publication=false;
     std::vector<FileEvidence> receipts;
     Status<MatErrorCode> saveNewVariable(
         const RunId&,std::string_view name,const DenseDoubleArray& a) override {
         ++calls;
         if(fail_at&&calls==fail_at){
+            if(fail_after_publication)
+                receipts.push_back(FileEvidence{
+                    std::string(name),std::string(name)+".mat",
+                    std::string(64,'a'),a.info.data_bytes,false});
             ErrorDetail d;d.stage=ErrorStage::Output;
-            d.message="Injected MAT Writer failure";
+            d.message=fail_after_publication?
+                "MAT linked but directory durability unconfirmed":"Injected MAT Writer failure";
             return Status<MatErrorCode>::failure(
-                {MatErrorCode::WriteFailed,std::move(d)});
+                {fail_after_publication?MatErrorCode::ReadbackMismatch:
+                    MatErrorCode::WriteFailed,std::move(d)});
         }
         receipts.push_back(FileEvidence{
             std::string(name),std::string(name)+".mat",
@@ -110,6 +117,54 @@ bool hasMatCause(const Failure<ExperimentErrorCode>& failure,const char* code) {
         if(cause.domain=="MatErrorCode"&&cause.code==code)return true;
     return false;
 }
+void checkFailedWriteAuditStatus() {
+    using egomotion::experiments::ExperimentKind;
+    for(const auto kind:{ExperimentKind::BiasOccluded,ExperimentKind::BiasProportional}) {
+        std::map<std::string,DenseDoubleArray> outputs;
+        for(const auto& name:experiments::currentSaveFields(kind))
+            outputs.emplace(name,matrix(name,1,name=="xwerte"?1:3));
+        for(const bool published:{false,true}) {
+            FakeWriter writer;FakePublisher publisher;
+            writer.fail_at=1;writer.fail_after_publication=published;
+            RunContext run(RunId{"first_write_audit"},std::make_unique<FixedRandom>(),
+                writer,publisher,"/R5-UNIT-ONLY",provenance(),kind,1);
+            // 替身模拟发布前失败或发布后未确认；不进行文件 I/O，也未调用完成计数。
+            const auto written=run.writeCurrentResults(outputs);
+            require(!written.hasValue()&&writer.calls==1&&
+                    run.manifestDraft().files_writer_confirmed.empty(),
+                    "The failed first write must not create a confirmed-file identity");
+            require(run.manifestDraft().completed==0&&run.manifestDraft().valid==0,
+                    "The fixture must not infer completion from valid output arrays");
+            const auto before=jsonFailure(written.error(),6);
+            require(run.publishFailureRecord(written.error()).hasValue(),
+                    "First-write failure must retain a truthful audit");
+            const auto expected=published?RunStatus::Incomplete:RunStatus::Failed;
+            require(run.manifestDraft().status==expected&&
+                    publisher.contents.find(published?"\"completeness\":\"Incomplete\"":
+                        "\"completeness\":\"Failed\"")!=std::string::npos,
+                    "In-memory and serialized failure status must agree on published evidence");
+            require(run.manifestDraft().failed==1&&run.manifestDraft().errors.size()==1&&
+                    jsonFailure(run.manifestDraft().errors.front(),6)==before&&
+                    written.error().detail.run_id&&
+                    written.error().detail.run_id->text==run.runId().text&&
+                    hasMatCause(written.error(),published?"ReadbackMismatch":"WriteFailed"),
+                    "Failure audit must preserve the original RunId and full Writer error chain");
+            if(published) {
+                require(writer.receipts.size()==1&&!writer.receipts.front().durably_confirmed&&
+                        publisher.contents.find("\"file\":\"xwerte.mat\"")!=std::string::npos&&
+                        publisher.contents.find("\"durably_confirmed\":false")!=std::string::npos,
+                        "An unconfirmed published MAT must remain visible and unconfirmed");
+            } else {
+                require(writer.receipts.empty()&&
+                        publisher.contents.find("\"mat_files\":[]")!=std::string::npos,
+                        "A failure before publication must not invent output evidence");
+            }
+            const auto retained=publisher.contents;
+            require(!run.publishCompleteOutcome().hasValue()&&publisher.contents==retained,
+                    "A published failure audit cannot be replaced by Complete");
+        }
+    }
+}
 void checkFailureRunIdentity() {
     ErrorDetail root;root.stage=ErrorStage::Read;
     root.source_path="只读 输入.mat";root.variable="xwerte";root.observation_index=7;
@@ -178,6 +233,7 @@ void checkPublishedButUnconfirmedManifest() {
 int main() {
     using namespace egomotion;
     using egomotion::experiments::ExperimentKind;
+    checkFailedWriteAuditStatus();
     checkFailureRunIdentity();
     checkPublishedButUnconfirmedManifest();
     FakeWriter writer;
