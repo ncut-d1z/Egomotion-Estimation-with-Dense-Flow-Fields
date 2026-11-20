@@ -5,6 +5,7 @@
 #include <array>
 #include <cmath>
 #include <iomanip>
+#include <ios>
 #include <locale>
 #include <new>
 #include <sstream>
@@ -57,7 +58,9 @@ Primitive triangle(const Vector3& a,const Vector3& b,const Vector3& c,
     const double length=normal.norm();
     const double light=length>0?std::abs(normal.dot(view.forward)/length):0;
     const int green=static_cast<int>(130+95*light),blue=static_cast<int>(160+85*light);
-    std::ostringstream out;out.imbue(std::locale::classic());out<<std::fixed<<std::setprecision(3);
+    std::ostringstream out;
+    out.exceptions(std::ios::badbit|std::ios::failbit);
+    out.imbue(std::locale::classic());out<<std::fixed<<std::setprecision(3);
     out<<"<polygon data-face=\""<<face<<"\" fill=\"rgb(70,"<<green<<','<<blue
        <<")\" stroke=\"#527286\" stroke-width=\"0.25\" points=\"";
     for(const auto& p:points)out<<p.x()<<','<<p.y()<<' ';
@@ -77,7 +80,9 @@ std::vector<Primitive> primitives(const Data& data,const Camera& view) {
         }
     for(std::size_t i=1;i<data.trajectory.size();++i) {
         const auto a=view.project(data.trajectory[i-1]),b=view.project(data.trajectory[i]);
-        std::ostringstream line;line.imbue(std::locale::classic());line<<std::fixed<<std::setprecision(3);
+        std::ostringstream line;
+        line.exceptions(std::ios::badbit|std::ios::failbit);
+        line.imbue(std::locale::classic());line<<std::fixed<<std::setprecision(3);
         line<<"<line data-trajectory-segment=\""<<i<<"\" x1=\""<<a.x()<<"\" y1=\""<<a.y()
             <<"\" x2=\""<<b.x()<<"\" y2=\""<<b.y()<<"\" stroke=\"#ab2637\" stroke-width=\"2.4\"/>\n";
         out.push_back({(a.z()+b.z())/2,line.str()});
@@ -89,6 +94,7 @@ std::string render(const Data& data) {
     const auto view=camera(data);
     const auto elements=primitives(data,view);
     std::ostringstream out;out.imbue(std::locale::classic());
+    out.exceptions(std::ios::badbit|std::ios::failbit);
     out<<"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"900\" height=\"800\" viewBox=\"0 0 900 800\">\n"
           "<rect width=\"900\" height=\"800\" fill=\"white\"/>\n"
           "<defs><clipPath id=\"scene\"><rect x=\"30\" y=\"80\" width=\"840\" height=\"680\"/></clipPath></defs>\n";

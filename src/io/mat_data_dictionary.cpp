@@ -80,6 +80,7 @@ std::string checksum(const fs::path& path) {
     }
     if (!in.eof()) throw std::runtime_error("Checksum read failed");
     std::ostringstream out;
+    out.exceptions(std::ios::badbit | std::ios::failbit);
     out << std::hex << std::setfill('0') << std::setw(16) << hash;
     return out.str();
 }

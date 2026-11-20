@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstddef>
 #include <iomanip>
+#include <ios>
 #include <limits>
 #include <locale>
 #include <map>
@@ -138,6 +139,7 @@ std::string renderPanel(const std::string& panel,
         "#467d8c","#b5487c","#6b7380","#6e8b3d","#98644b"
     }};
     std::ostringstream out;
+    out.exceptions(std::ios::badbit|std::ios::failbit);
     out.imbue(std::locale::classic());
     out<<std::fixed<<std::setprecision(4);
     out<<"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1200\" height=\"720\" "
@@ -191,7 +193,9 @@ std::string renderPanel(const std::string& panel,
             const double py=bottom-(y-axis.minimum)/span*(bottom-top);
             if(!std::isfinite(px)||!std::isfinite(py))
                 throw std::invalid_argument("SVG coordinate transformation overflowed for finite input values");
-            std::ostringstream position;position.imbue(std::locale::classic());
+            std::ostringstream position;
+            position.exceptions(std::ios::badbit|std::ios::failbit);
+            position.imbue(std::locale::classic());
             position<<std::fixed<<std::setprecision(3)<<px<<","<<py<<" ";
             points+=position.str();
         }
@@ -249,6 +253,8 @@ Files SvgPlotExporter::exportPlot(const AnalysisDataset& data,
         return failure(PlotErrorCode::WriteFailed,"SVG renderer memory allocation failed");
     }catch(const std::length_error&){
         return failure(PlotErrorCode::InvalidSeries,"SVG panel data too large");
+    }catch(const std::ios_base::failure&){
+        return failure(PlotErrorCode::WriteFailed,"SVG output stream failed");
     }
 }
 } // namespace egomotion::analysis

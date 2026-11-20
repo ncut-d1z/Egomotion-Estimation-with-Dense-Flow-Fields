@@ -105,6 +105,9 @@ Result<std::string,NumericalErrorCode> dataJson(const Data& data) {
         }else out<<"null";
         out<<",\"view\":{\"azimuth_degrees\":"<<data.azimuth_degrees<<",\"elevation_degrees\":"
            <<data.elevation_degrees<<",\"camera_zoom\":"<<data.camera_zoom<<"}}\n";
+        if(!out.good())
+            return Json::failure(detail::failure(NumericalErrorCode::ResourceLimitExceeded,
+                                                "Cannot format complete illustration JSON"));
         return Json::success(out.str());
     }catch(const std::bad_alloc&) {
         return Json::failure(detail::failure(NumericalErrorCode::ResourceLimitExceeded,"Illustration JSON allocation failed"));
