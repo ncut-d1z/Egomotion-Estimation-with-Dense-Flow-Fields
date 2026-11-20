@@ -72,12 +72,14 @@ Bytes numbers(const std::vector<double>& values,std::uint32_t type,bool little){
 }
 struct Fixture {
     std::string label,name="value";
+    std::optional<std::string> requested_name;
     std::vector<std::uint32_t> dims{2,3};
     std::vector<double> values=kValues;
     std::uint32_t storage=kDouble;
     std::uint32_t class_type=6;
     bool small_name=false,small_real=false;
     bool single_neighbor=false;
+    std::string single_neighbor_name="other";
     std::optional<MatErrorCode> rejected;
     std::string mutation;
 };
@@ -117,7 +119,7 @@ Bytes fileBytes(const Fixture& fixture,bool little,bool compressed){
         out.insert(out.end(),packed.begin(),packed.end()); // miCOMPRESSED后没有8字节补齐。
     }else out.insert(out.end(),raw.begin(),raw.end());
     if(fixture.single_neighbor){
-        Fixture other;other.name="other";other.storage=kSingle;
+        Fixture other;other.name=fixture.single_neighbor_name;other.storage=kSingle;
         const auto encoded=fileBytes(other,little,compressed);
         out.insert(out.end(),encoded.begin()+kHeaderBytes,encoded.end());
     }
@@ -137,8 +139,9 @@ std::string digest(const fs::path& path){
 }
 void check(const fs::path& path,const Fixture& fixture){
     io::MatResultReader reader;
+    const auto& requested=fixture.requested_name?*fixture.requested_name:fixture.name;
     for(const bool compatible:{false,true}){
-        const auto result=compatible?reader.readFirstCompatible(path):reader.readNamed(path,fixture.name);
+        const auto result=compatible?reader.readFirstCompatible(path):reader.readNamed(path,requested);
         if(compatible&&fixture.single_neighbor){
             require(!result.hasValue(),"Compatible reader guessed a value from a mixed file");
         }else if(fixture.rejected){
@@ -146,10 +149,11 @@ void check(const fs::path& path,const Fixture& fixture){
             require(result.error().code==*fixture.rejected,
                     "Wrong error: "+std::string(errorName(result.error().code))+" "+result.error().detail.message);
             require(result.error().detail.source_path==path.string(),"Failure lost source identity");
+            if(!compatible)require(result.error().detail.variable==requested,"Failure lost requested variable");
         }else{
             require(result.hasValue(),result.hasValue()?"":"Valid fixture rejected: "+result.error().detail.message);
             const auto& data=result.value();
-            require(data.info.name==fixture.name&&data.info.dimensions==
+            require(data.info.name==requested&&data.info.dimensions==
                     std::vector<std::size_t>(fixture.dims.begin(),fixture.dims.end()),"Raw fixture shape/name changed");
             require(data.values_column_major.size()==fixture.values.size()&&
                     std::memcmp(data.values_column_major.data(),fixture.values.data(),fixture.values.size()*sizeof(double))==0,
@@ -185,8 +189,24 @@ std::vector<Fixture> fixtures(){
     std::vector<Fixture> out;
     Fixture base;base.label="double";out.push_back(base);
     base.label="named-selection-with-single-neighbor";base.single_neighbor=true;out.push_back(base);
-    base.single_neighbor=false;
+    base.label="named-selection-with-nul-single-neighbor";
+    base.single_neighbor_name=std::string("other\0suffix",12);out.push_back(base);
+    base.label="named-selection-longer-than-neighbor-prefix";base.name="value_suffix";
+    base.single_neighbor_name=std::string("value\0suffix",12);out.push_back(base);
+    base.label="named-selection-shorter-than-neighbor-prefix";base.name="value";
+    base.single_neighbor_name=std::string("values\0suffix",13);out.push_back(base);
+    base=Fixture{};
     base.label="small-name";base.name="v";base.small_name=true;out.push_back(base);
+    // 原始名字与matio查找用的C字符串分开；别名不得绕过已有single禁止门禁。
+    for(const std::size_t prefix:{1U,5U,127U,128U,129U}){
+        Fixture alias;alias.label="nul-name-"+std::to_string(prefix);
+        alias.requested_name=std::string(prefix,'v');
+        alias.name=*alias.requested_name+std::string("\0x",2);
+        alias.small_name=prefix==1;
+        out.push_back(alias); // 支持的double仍按同一后端名字可读。
+        alias.label+="-single";alias.storage=kSingle;
+        alias.rejected=MatErrorCode::UnsupportedClassOrType;out.push_back(std::move(alias));
+    }
     base=Fixture{};base.label="int32-packed-double";base.storage=kInt32;base.values={1,-2,3,-4,5,6};out.push_back(base);
     base.label="small-int32-real";base.dims={1,1};base.values={-7};base.small_real=true;out.push_back(base);
     // 总解压长度在8KiB边界前/等于/后；另用固定置换值跨越输入与输出多个缓冲块。

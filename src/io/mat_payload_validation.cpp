@@ -164,15 +164,22 @@ std::size_t numericWidth(std::uint32_t type){
 }
 bool selectedName(PayloadStream& stream,Element& name,std::string_view requested){
     if(requested.empty()){finishElement(stream,name);return true;}
-    bool matches=name.bytes==requested.size();
+    bool matches=true,terminated=false;
+    std::size_t compared=0;
     std::array<unsigned char,128> chunk{}; // 只比较名字，不按文件声明长度分配字符串。
     while(name.consumed<name.bytes){
         const auto offset=name.consumed;
         const auto count=std::min<std::size_t>(name.bytes-offset,chunk.size());
         readElement(stream,name,chunk.data(),count);
-        if(matches&&std::memcmp(chunk.data(),requested.data()+offset,count)!=0)matches=false;
+        // matio按C字符串查名；首个NUL之后仍消费全部原始字节，但不参与选择。
+        for(std::size_t i=0;i<count&&!terminated;++i){
+            if(chunk[i]==0){terminated=true;break;}
+            if(compared>=requested.size()||chunk[i]!=static_cast<unsigned char>(requested[compared]))
+                matches=false;
+            ++compared;
+        }
     }
-    finishElement(stream,name);return matches;
+    finishElement(stream,name);return matches&&compared==requested.size();
 }
 void numericPayload(PayloadStream& stream,std::uint64_t& remaining,bool little,
                     std::uint32_t cls,std::size_t count,bool selected){
