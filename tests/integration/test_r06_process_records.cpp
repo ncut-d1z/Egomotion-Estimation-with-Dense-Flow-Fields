@@ -1,5 +1,6 @@
 #include "process_record.hpp"
 #include "egomotion/cli/invocation_observer.hpp"
+#include "egomotion/contracts/diagnostics.hpp"
 
 #include <cerrno>
 #include <csignal>
@@ -18,7 +19,8 @@
 #include <vector>
 
 namespace {
-enum class Fault { None, StartLink, StartSync, FinishLink, FinishSync, ChannelSync, Fork, Random, Collision, ContextSync };
+enum class Fault { None, StartLink, StartSync, FinishLink, FinishSync, ChannelSync, Fork, Random,
+                   Collision, ContextSync, ReservationSync };
 Fault fault = Fault::None;
 int failed_sync_fd = -1;
 bool forked = false;
@@ -40,6 +42,13 @@ extern "C" int __wrap_linkat(int from, const char* source, int to, const char* n
     return result;
 }
 extern "C" int __wrap_fsync(int fd) {
+    if (fault == Fault::ReservationSync) {
+        struct stat logs{}, target{};
+        if (::stat("build-cli-records", &logs) == 0 && ::fstat(fd, &target) == 0 &&
+            logs.st_dev == target.st_dev && logs.st_ino == target.st_ino) {
+            ++hits; errno = EIO; return -1;
+        }
+    }
     if (fault == Fault::ContextSync) { ++hits; errno = EIO; return -1; }
     if (fd == failed_sync_fd || (forked && fault == Fault::ChannelSync && hits == 0)) {
         failed_sync_fd = -1; ++hits; errno = EIO; return -1;
@@ -209,6 +218,22 @@ void incompleteContexts(const fs::path& base) {
         if (std::strcmp(mode, "exit") != 0) contains(context, "\"event\":\"application_returned\"");
     }
 }
+void reservationFailure(const fs::path& base) {
+    const auto root = newRoot(base, "reservation_sync");
+    fault = Fault::ReservationSync;
+    const auto response = invoke(root);
+    fault = Fault::None;
+    require(hits == 1 && response.code == 6, "Reserved directory sync failure surfaced exactly once");
+    require(response.receipt.empty() && !fs::exists(root / "entered"),
+            "No receipt or child before record directory confirmation");
+    const auto directory = onlyRecord(root);
+    require(fs::is_directory(directory), "Keep the directory created before failed confirmation");
+    const auto message = "Cannot persist process record directory; errno=" + std::to_string(EIO) +
+        "; retained record: " + directory.string();
+    contains(response.errors, "\"message\":" + egomotion::jsonQuote(message));
+    require(!fs::exists(directory / "start.json") && !fs::exists(directory / "finish.json"),
+            "Directory reservation failure cannot fabricate process records");
+}
 void paths(const fs::path& base) {
     const auto outside = newRoot(base, "outside");
     for (const bool symlink : {true, false}) {
@@ -228,6 +253,8 @@ void paths(const fs::path& base) {
     const auto response = invoke(collision);
     fault = Fault::None;
     require(response.code == 6 && hits == 4, "Bounded independent identity retries");
+    require(response.receipt.empty() && response.errors.find("retained record:") == std::string::npos,
+            "Collision candidates cannot be claimed as a retained record from this invocation");
     require(read(occupied / "retained") == "never replace", "Collision preserves existing evidence");
     require(!fs::exists(collision / "entered"), "No child after identity failure");
     const auto shared = newRoot(base, "shared_logs");
@@ -288,6 +315,7 @@ int main(int argc, char** argv) {
         termination(base);
         publicationFaults(base);
         incompleteContexts(base);
+        reservationFailure(base);
         paths(base);
         brokenPipes(base);
         std::cout << "Process records: " << checks << " checks, " << calls << " supervised calls; retained " << base << '\n';

@@ -27,6 +27,14 @@ void writeAll(int fd, const std::string& contents) {
     }
 }
 namespace {
+void checkedReservedDirectory(bool success, const char* operation,
+                              const std::filesystem::path& root, const std::string& id) {
+    if (success) return;
+    const int failure_errno = errno;
+    const auto retained = root / "build-cli-records" / id;
+    throw std::runtime_error(std::string(operation) + "; errno=" + std::to_string(failure_errno) +
+                             "; retained record: " + retained.string());
+}
 Fd openDirectory(int parent, const char* name) {
     checked(::mkdirat(parent, name, 0700) == 0 || errno == EEXIST, "Cannot create log ancestor");
     Fd fd(::openat(parent, name, O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW));
@@ -68,8 +76,9 @@ Fd reserve(const std::filesystem::path& root, std::string& id, std::filesystem::
             checked(false, "Cannot reserve exclusive process record directory");
         }
         Fd directory(::openat(logs.get(), id.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW));
-        checked(directory.get() >= 0, "Cannot anchor process record directory");
-        checked(::fsync(logs.get()) == 0, "Cannot persist process record directory");
+        // mkdir已成功，构造失败时也须保留本次目录身份；碰撞候选不进入此分支。
+        checkedReservedDirectory(directory.get() >= 0, "Cannot anchor process record directory", root, id);
+        checkedReservedDirectory(::fsync(logs.get()) == 0, "Cannot persist process record directory", root, id);
         path = root / "build-cli-records" / id;
         return directory;
     }

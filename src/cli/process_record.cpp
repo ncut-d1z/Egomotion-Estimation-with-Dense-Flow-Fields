@@ -233,7 +233,9 @@ int recordWithSignals(int argc, char** argv, RecordedApplication application,
             return streams::outputFailure(errors, "Cannot confirm child logs or context return; retained record: " + location);
         return completion.exit_code;
     } catch (const std::exception& error) {
-        return streams::outputFailure(errors, std::string(error.what()) + "; retained record: " + location);
+        std::string message = error.what();
+        if (!location.empty()) message += "; retained record: " + location;
+        return streams::outputFailure(errors, message);
     }
 }
 }  // namespace
