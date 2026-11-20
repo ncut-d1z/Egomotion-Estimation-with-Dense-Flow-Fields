@@ -1,5 +1,7 @@
 # 实验 Runner 与结果写出——详细设计草案
 
+> **2026-11-20 失败审计接续，未构建/未测试**：RunContext 失败内存状态与 Manifest 共用同一份 Writer 产物回执；最终文件已发布但持久化未确认时保持 Incomplete 与 `durably_confirmed=false`，没有部分进度/产物的失败仍为 Failed。原 Complete 门禁不放宽，见 [实现和待执行回归](../reviews/R6_FAILURE_BOUNDARY_CONTINUATION_2026-11-20.md)。
+
 > **2026-11-20 聚合入口接续，未构建/未测试**：累计和与最终结果复用同一严格缺测证据检查；追加之前、候选提交之前和最终化时都核对原值/次数/唯一原因/帧账本，拒绝时原聚合不改变。完整输出仍须全部计划轮次，八轮分母和末轮 ratio 不变。本批实现及尚未执行的回归源码见 [记录](../reviews/R6_CODE_CONTINUATION_2026-11-20.md)；按所有者要求，构建和测试延期，下文固定 SHA 的通过记录不外推到新源码。
 
 > **2026-11-20 现行部分有效方案B**：按 [DEC-R6-01～04](../decisions/PROJECT_OWNER_DECISIONS_2026-11-20.md)，保留全部逐帧、逐轮指标及有效次数/缺测原因；Comparison任一单元缺一轮就保留缺测，不能缩减八轮分母，ratio仍取末轮。全部求解完成但指标缺测允许交付Incomplete；真正求解失败仍按原失败合同中止。Adaptive原MAT字段/shape保留，增加`egomotion_metric_policy=[1,1,1,planned_runs]`及每字段`valid_`同形次数、Manifest v2和逐轮null/原因。标记先发布；新NaN只有与明确有效性合同配套才合法，旧数据定义不变。本段覆盖下文“一律有限、指标失败必使整场无MAT”的旧设计。**受测594a1b11的有限子集12/12通过，包含纯内存八轮聚合和v2发布；真实MAT/CLI及完整CMake/CTest尚未验证，不能继承旧73/72。** 见[本轮验证](../reviews/R6_METRIC_DECISIONS_IMPLEMENTATION_2026-11-20.md)，其它验收与延期不变。

@@ -1,5 +1,7 @@
 # R6 代码接续：聚合证据与分析边界（2026-11-20）
 
+> **同日后续**：所有者再次要求继续代码实现，后续 Session/Manifest/实验异常边界修复见 [失败边界接续](R6_FAILURE_BOUNDARY_CONTINUATION_2026-11-20.md)。构建、测试仍延期，两批均没有新运行证据。
+
 `[HUMAN-EXECUTE/APPROVE]`。所有者在 DEC-R6-01～04 实现之后明确要求“继续代码实现，推迟构建、测试”。本次从已核实的 Draft [PR #6](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/pull/6) HEAD `9e6ea3ae314426d67beb275374739eb111efa0f4` 接续，保持分支 `dev-plan-P0-P1-mat-dictionary-probe`。**本次只有代码、必要回归源码、构建登记和静态审阅；没有执行配置、编译、语法编译、CTest、测试程序、CLI、MAT I/O 或科学实验。**
 
 此前 `594a1b11...` 的 12 项及 `2ed5c2d...` 的补充 1 项仅为其固定版本的实测记录，见 [前阶段报告](R6_METRIC_DECISIONS_IMPLEMENTATION_2026-11-20.md)。本次生产源码已有修改，不能继续称新 HEAD 已通过这些用例。四项指标决定仍适用，不增加数值阈值或恢复其它延期事项。

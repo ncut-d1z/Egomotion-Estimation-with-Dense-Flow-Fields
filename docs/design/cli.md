@@ -1,5 +1,7 @@
 # CLI 参数、退出码与诊断协议：详细设计草案
 
+> **2026-11-20 实验异常记录接续，未构建/未测试**：已预留 RunId 且开始记录已确认后，Runner 抛出的 `std::exception` 由局部边界捕获，保留真实 RunId/原 `what()` 并进入现有失败 Manifest 和结束记录流程。保持原 OutputFailed/Output/退出6，不猜测数值类型、不虚增原因链；既有 Complete 和结束记录禁止覆盖。详见 [本批记录](../reviews/R6_FAILURE_BOUNDARY_CONTINUATION_2026-11-20.md)，正式冻结状态不变。
+
 > **2026-11-20 代码接续，未构建/未测试**：`analysis_ready` 与 plot 的 `invocation.json` 直接保留 Analyzer 的 `metric_policy`、`planned_repetitions`，每曲线保留 `metric_semantics`、`y_unit` 及原输入身份。同一原分析脚本可消费不同版本指标，因此源 blob 不再成为日志中唯一的指标解释依据。未知信息原样保留，不读取原路径重新推测；既有记录 schema 增补字段，正式冻结状态不变。按所有者最新指令，构建与测试延期，见 [本批记录](../reviews/R6_CODE_CONTINUATION_2026-11-20.md)。
 
 > **2026-11-18 应用上下文增量 `[AI-DRAFT + HUMAN-APPROVE]`，候选、未冻结；ff8aaa7已完成ON70/OFF69及故障复测，见 [实际证据](../reviews/R6_CONTEXT_JOURNAL_2026-11-18.md)**：进程记录使用`egomotion-process-start-v2`/`finish-v2`，`application_context`改为指向`context.jsonl`及`egomotion-context-event-v1`的对象。通过显式借用的`IInvocationObserver`记录实际事件：应用进入、解析成功后的有效配置、seed选择、成功预留RunId、实际RunContext/导出上下文、MAT快照准备、分析/插图来源、应用返回；序号从1递增，每事件写入后fsync。`seed_selected`不表示算法已消耗随机数，`mat_snapshot_prepared`不表示变量已解码成功。RunContext/导出上下文复用同一份`invocation.json`序列化文本；不通过argv推测RunId，也不事后重新打开MAT路径拼接摘要。普通`egomotion`不注入观察器。
