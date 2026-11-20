@@ -1,6 +1,8 @@
 # Egomotion Estimation with Dense Flow Fields
 
-> **最新接续：输出目录异常所有权，仅代码（2026-11-20）**。修复 RunDirectory 在路径或 RunId 复制失败时可能提前释放并泄漏目录句柄的问题：构造成功后才移交所有权；补充逐分配点故障与正常析构回归源码。具体依据与限定范围见 [本批记录](docs/reviews/R6_DIRECTORY_OWNERSHIP_CONTINUATION_2026-11-20.md)。**构建/测试继续延期，没有新增运行证据；R6 总体验收未完成，PR #6 保持 Draft。**
+> **最新接续：MAT 名称选择与字典指纹，仅代码（2026-11-20）**。原始 MAT 载荷的变量选择现与 matio 的首个 NUL 截断语义一致，防止选中变量绕过已有 single 存储拒绝规则；FNV 指纹固定 classic locale，保持报告字节稳定。必要回归仅准备源码。对照生产装配与 62 个 CMake 源路径，当前已列明的 R6 代码范围具备源码级闭合条件，未发现其它确定的未实现入口；依据和验证边界见 [本批记录](docs/reviews/R6_MAT_SELECTION_LOCALE_CONTINUATION_2026-11-20.md)。**构建/测试继续延期，没有新增运行证据；R6 总体验收未完成，PR #6 保持 Draft。**
+
+> **前批接续：输出目录异常所有权，仅代码（2026-11-20）**。修复 RunDirectory 在路径或 RunId 复制失败时可能提前释放并泄漏目录句柄的问题：构造成功后才移交所有权；补充逐分配点故障与正常析构回归源码。具体依据与限定范围见 [前批记录](docs/reviews/R6_DIRECTORY_OWNERSHIP_CONTINUATION_2026-11-20.md)。该批同样没有构建/测试证据。
 
 > **前批接续：插图数值与记录目录身份，仅代码（2026-11-20）**。插图法向/光照溢出在整数颜色转换前拒绝，保留原零面积面行为；进程记录目录已创建但打开/确认失败时保留实际路径，碰撞不冒认本次记录。实现和待执行回归见 [前批记录](docs/reviews/R6_ILLUSTRATION_RECORD_CONTINUATION_2026-11-20.md)。该批同样没有构建/测试证据。
 
