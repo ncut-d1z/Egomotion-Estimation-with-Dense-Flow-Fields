@@ -81,7 +81,7 @@ executed_tests=0
 passed_tests=0
 failed_tests=0
 blocked_tests=0
-planned_tests=12
+planned_tests=13
 
 finish() {
     local result=$?
@@ -227,6 +227,7 @@ production_sources=(
 )
 test_sources=(
     tests/integration/test_r06_motion_errors.cpp
+    tests/contracts/test_r06_session_metric_validity.cpp
     tests/contracts/test_r06_adaptive_periods.cpp
     tests/contracts/test_r06_coefficient_policies.cpp
     tests/integration/test_r06_session_interleaving.cpp
@@ -240,6 +241,7 @@ test_sources=(
 )
 test_specs=(
     'r06_source_motion_errors:test_r06_motion_errors:30s:none'
+    'r06_session_metric_validity:test_r06_session_metric_validity:60s:none'
     'r06_adaptive_periods_atomic_commit:test_r06_adaptive_periods:60s:none'
     'r06_coefficient_policy_composition:test_r06_coefficient_policies:60s:none'
     'r06_real_session_interleaving:test_r06_session_interleaving:60s:none'

@@ -456,6 +456,13 @@ if(BUILD_TESTING)
     set_tests_properties(r06_adaptive_session_transaction PROPERTIES
         LABELS "r06;adaptive;session;failure-atomic" TIMEOUT 60)
 
+    add_executable(test_r06_session_metric_validity tests/contracts/test_r06_session_metric_validity.cpp)
+    target_link_libraries(test_r06_session_metric_validity PRIVATE egomotion_estimators)
+    target_compile_options(test_r06_session_metric_validity PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_session_metric_validity COMMAND test_r06_session_metric_validity)
+    set_tests_properties(r06_session_metric_validity PROPERTIES
+        LABELS "r06;adaptive;session;partial-metrics;failure-atomic" TIMEOUT 60)
+
     add_executable(test_r06_analyzer_services tests/integration/test_r06_analyzer_services.cpp)
     target_link_libraries(test_r06_analyzer_services PRIVATE egomotion_analysis)
     target_compile_options(test_r06_analyzer_services PRIVATE -Wall -Wextra -Wpedantic)
