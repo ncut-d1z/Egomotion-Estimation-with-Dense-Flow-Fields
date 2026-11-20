@@ -1,5 +1,7 @@
 # MAT 结果分析与可选绘图——详细设计草案
 
+> **2026-11-20 现行新结果解释**：按 [DEC-R6-01～04](../decisions/PROJECT_OWNER_DECISIONS_2026-11-20.md)，仅对合法`egomotion_metric_policy`及同形`valid_`次数完整配对的新Adaptive结果解释缺测；旧目录仍维持旧NaN拒绝合同。新旋转曲线为逐帧SO(3)测地角，不能冒称历史轴方向角。原索引/分段/平滑次序保持，缺测保留位置和有效性，JSON用null，SVG断线；不删点、补零或跨缺口连线。**本轮源码与测试尚未原生验证，不继承旧73/72通过状态；下文旧全有限描述仅适用于历史格式，LLD未整体冻结。**
+
 > **2026-11-18 P9.8候选实现，未冻结**：`BiasResultAnalyzer::aggregate(root,IResultReader&) const`与`AdaptiveResultAnalyzer::analyze(AnalysisKind,root,IResultReader&) const`分别拥有原Bias汇总和三Adaptive数值分析，借用Reader而不创建Writer/Exporter；结果独立拥有数值和输入来源。`MatResultAnalyzer`只按kind分派到两个组件；空路径与既有四类异常映射由私有共同边界保留。原读取顺序、最后x、分母、分段、平滑、缺失历史字段及NaN拒绝规则不变，纯数值构建不引入SVG实现。具体源码和验证状态见 [职责分离记录](../reviews/R6_ANALYZER_SERVICES_2026-11-18.md)；不冻结以下候选签名或签署完整分析验收。
 
 > **2026-11-17 实现候选，未冻结；实测事实 [AI-EDIT]**：既有 `AnalysisInput::mat_sha256` 改由Reader返回数组的 `source_mat_sha256` 传递；真实Reader先捕获匿名封存字节再摘要/解码，合成或未知来源仍为空。`130a82ba0090e186fcf43bc28bb98c282e68c96c` 构建及48/48 CTest通过，历史Bias986贡献摘要、32条有限分析曲线的独立数值+SHA完整JSON均通过。不新增JSON字段，不改变曲线数学；下文旧生产null状态限旧SHA，见 [实测范围](../reviews/R6_MAT_SNAPSHOT_2026-11-17.md)。
