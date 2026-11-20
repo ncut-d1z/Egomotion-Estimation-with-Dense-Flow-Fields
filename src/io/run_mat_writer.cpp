@@ -240,6 +240,7 @@ Status<MatErrorCode> RunMatWriter::saveNewValidatedVariable(
             outer.stage=ErrorStage::Output;
             outer.run_id=directory_.runId();
             outer.variable=name;
+            outer.source_path=(directory_.outputRoot()/directory_.runId().text).string();
             outer.message="Cannot SHA-256 the staging MAT file";
             return Status<MatErrorCode>::failure(wrapFailure(
                 MatErrorCode::ReadbackMismatch,std::move(outer),sha.error()));
