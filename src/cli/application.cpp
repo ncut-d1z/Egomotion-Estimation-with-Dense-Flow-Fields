@@ -229,7 +229,16 @@ int runExperiment(const Command& command,
             return Result<RunOutcome,ExperimentErrorCode>::failure(
                 wrapFailure(ExperimentErrorCode::OutputFailed,std::move(detail),invocation.error()));
         }
-        return invokeExperiment(command,runner,context);
+        try {
+            return invokeExperiment(command,runner,context);
+        } catch(const std::exception& error) {
+            // RunId已预留且调用记录已确认；异常也须经过同一失败记录路径。
+            // 保留CLI原异常回退分类，不把标准异常猜成某种数值求解错误。
+            ErrorDetail detail;detail.stage=ErrorStage::Output;detail.run_id=context.runId();
+            detail.message=error.what();
+            return Result<RunOutcome,ExperimentErrorCode>::failure(
+                {ExperimentErrorCode::OutputFailed,std::move(detail)});
+        }
     }();
     if(!result.hasValue()) {
         const int code=result.error().detail.stage==ErrorStage::Output?6:5;

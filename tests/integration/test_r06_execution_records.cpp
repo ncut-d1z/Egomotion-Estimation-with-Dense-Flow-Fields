@@ -61,7 +61,8 @@ void contains(const std::string& text, const std::string& expected, const char* 
 class TrackingRunner final : public IExperimentRunner {
 public:
     std::size_t invocations = 0;
-    bool real_bias = false, block_finish = false;
+    bool real_bias = false, block_finish = false, throw_failure = false;
+    bool note_progress_before_throw = false;
     Result<RunOutcome, ExperimentErrorCode> failed(RunContext& context) {
         ++invocations;
         const auto directory = context.approvedOutputRoot() / context.runId().text;
@@ -70,6 +71,14 @@ public:
         if (block_finish) {
             std::ofstream existing(directory / "execution.json");
             existing << "retained blocker\n";
+        }
+        if (throw_failure) {
+            if (note_progress_before_throw) {
+                context.noteAttempt();
+                context.noteValid();
+                context.noteUndefined();
+            }
+            throw std::runtime_error("Injected \"runner\" exception\n第二行");
         }
         ErrorDetail detail; detail.stage = ErrorStage::Simulation;
         detail.message = "Injected \"runner\" failure\n第二行";
@@ -153,6 +162,45 @@ void recordFaults(const fs::path& root) {
                 contains(record, "\"exit_code_if_record_published\":5", "Conditional command status retained");
                 contains(record, "\"exit_code_on_record_failure\":6", "Actual audit failure return described separately");
             } else require(!fs::exists(root / "output" / id / "execution.json"), "Pre-publication error cannot claim record exists");
+        }
+    }
+}
+void runnerExceptions(const fs::path& root) {
+    for (const bool direct : {false,true}) {
+        for (const bool progress : {false,true}) {
+            TrackingRunner runner;
+            runner.throw_failure=true;
+            runner.note_progress_before_throw=progress;
+            const auto id=std::string("runner_exception_")+(direct?"direct_":"cli_")+
+                (progress?"partial":"empty");
+            const auto response=invoke(root,runner,
+                {"run-adaptive-init","--run-id",id},direct);
+            require(response.code==6&&response.out.empty()&&runner.invocations==1,
+                    "Runner exception preserves CLI fallback without escaping dispatch");
+            contains(response.err,"\"error_code\":\"OutputFailed\"",
+                     "Do not reinterpret a standard exception as a numerical Failure");
+            contains(response.err,"\"stage\":\"output\"","Keep existing exception stage");
+            contains(response.err,"\"run_id\":"+jsonQuote(id),"Exception keeps reserved RunId");
+            contains(response.err,"\"message\":"+jsonQuote("Injected \"runner\" exception\n第二行"),
+                     "Exception text is retained and escaped");
+            contains(response.err,"\"causes\":[]","No invented numerical cause chain");
+            const auto directory=root/"output"/id;
+            const auto manifest=read(directory/"manifest.json");
+            contains(manifest,progress?"\"completeness\":\"Incomplete\"":
+                                      "\"completeness\":\"Failed\"",
+                     "Exception failure record reflects prior progress");
+            contains(manifest,"\"completed\":0","Exception cannot fabricate completed run");
+            contains(manifest,progress?"\"valid\":1":"\"valid\":0","Retain actual valid count");
+            contains(manifest,progress?"\"undefined\":1":"\"undefined\":0",
+                     "Retain metric absence separately from exception");
+            contains(manifest,"OutputFailed","Manifest records original exception classification");
+            const auto finish=read(directory/"execution.json");
+            contains(finish,"\"invocation_confirmed\":true","Confirmed invocation remains recorded");
+            contains(finish,"\"exit_code_if_record_published\":6","Exception execution record keeps exit 6");
+            contains(finish,"\"attempted_text\":"+jsonQuote(response.err),
+                     "Execution record retains entire exception diagnostic");
+            require(!fs::exists(directory/"allemittransfehler.mat"),
+                    "Runner exception cannot publish fabricated result arrays");
         }
     }
 }
@@ -344,7 +392,8 @@ int main(int argc, char** argv) {
     std::string pattern = (fs::path(argv[1]) / "运行记录 中文-XXXXXX").string();
     require(::mkdtemp(pattern.data()) != nullptr, "Cannot reserve new execution sandbox");
     const fs::path root(pattern); fs::create_directory(root / "origin");
-    allEntries(root); recordFaults(root); preserveCompleteAndExisting(root); artifacts(root);
+    allEntries(root); recordFaults(root); runnerExceptions(root);
+    preserveCompleteAndExisting(root); artifacts(root);
     require(fs::is_empty(root / "origin"), "Original marker untouched");
     std::cout << "PASS execution records checks=" << checks << " calls=" << calls
               << " evidence=" << root << '\n';
