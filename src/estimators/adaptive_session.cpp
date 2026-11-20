@@ -123,19 +123,11 @@ AdaptiveMfaSession::processFrame(const AdaptiveFrameInput& frame) {
             const MotionEstimate& motion=comparison.value().motion;
             auto t_error=source_metrics::sourceDirectionErrorDegrees(
                 frame.truth.translation(),motion.translation());
-            if (!t_error.hasValue())
-                return propagate(t_error.error(),
-                                 "Adaptive comparison translation angle undefined",
-                                 frame.matlab_frame_index);
-            auto r_error=source_metrics::sourceDirectionErrorDegrees(
+            auto r_error=source_metrics::rotationGeodesicErrorDegrees(
                 frame.truth.rotation(),motion.rotation());
-            if (!r_error.hasValue())
-                return propagate(r_error.error(),
-                                 "Adaptive comparison rotation angle undefined",
-                                 frame.matlab_frame_index);
             output.comparison_motion.push_back(motion);
-            output.comparison_translation_error_deg.push_back(t_error.value());
-            output.comparison_rotation_error_deg.push_back(r_error.value());
+            output.comparison_translation_error_deg.push_back(std::move(t_error));
+            output.comparison_rotation_error_deg.push_back(std::move(r_error));
         }
         auto primary_result=solver_->solve(next_primary,frame.observations);
         if (!primary_result.hasValue())

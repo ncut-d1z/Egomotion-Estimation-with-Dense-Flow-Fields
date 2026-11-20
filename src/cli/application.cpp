@@ -177,7 +177,9 @@ std::string outcomeResponse(const RunOutcome& state) {
     response.imbue(std::locale::classic());
     response.exceptions(std::ios::badbit|std::ios::failbit);
     response<<"{\"run_id\":"<<jsonQuote(state.run_id.text)
-       <<",\"status\":\"Complete\",\"attempted\":"<<state.attempted
+       <<",\"status\":"<<jsonQuote(state.status==RunStatus::Complete?"Complete":
+           (state.status==RunStatus::Incomplete?"Incomplete":"Failed"))
+       <<",\"attempted\":"<<state.attempted
        <<",\"completed\":"<<state.completed
        <<",\"valid\":"<<state.valid
        <<",\"failed\":"<<state.failed

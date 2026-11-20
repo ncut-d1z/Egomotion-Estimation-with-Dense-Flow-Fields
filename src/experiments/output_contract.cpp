@@ -59,11 +59,15 @@ std::vector<std::string> currentSaveFields(ExperimentKind kind) {
     return {};
 }
 
-Status<ExperimentErrorCode> validateCurrentOutput(
-    ExperimentKind kind, const std::map<std::string,DenseDoubleArray>& fields) {
+namespace {
+Status<ExperimentErrorCode> validateOutput(
+    ExperimentKind kind, const std::map<std::string,DenseDoubleArray>& fields,
+    const std::map<std::string,std::vector<unsigned char>>* defined) {
     const auto planned=currentSaveFields(kind);
     if (planned.empty() || fields.size()!=planned.size())
         return fail("Output batch does not have exactly the current save set");
+    if(defined&&defined->size()!=fields.size())
+        return fail("Adaptive output masks do not cover exactly the source fields");
     std::size_t bias_rows=0;
     for (const auto& name:planned) {
         auto found=fields.find(name);
@@ -92,10 +96,34 @@ Status<ExperimentErrorCode> validateCurrentOutput(
             array.info.is_complex || array.info.is_logical ||
             array.info.data_bytes!=n*sizeof(double))
             return fail("Output data shape, MATLAB double type or bytes are inconsistent",name);
-        for (double value:array.values_column_major)
-            if (!std::isfinite(value))
-                return fail("Output contains a non-finite numeric element",name);
+        const std::vector<unsigned char>* mask=nullptr;
+        if(defined) {
+            const auto found_mask=defined->find(name);
+            if(found_mask==defined->end()||found_mask->second.size()!=n)
+                return fail("Adaptive validity mask has wrong shape",name);
+            mask=&found_mask->second;
+        }
+        for(std::size_t i=0;i<n;++i) {
+            const auto flag=mask?(*mask)[i]:1;
+            if((flag==1&&!std::isfinite(array.values_column_major[i]))||
+               (flag==0&&!std::isnan(array.values_column_major[i]))||flag>1)
+                return fail("Output contains an undeclared or invalid non-finite numeric element",name);
+        }
     }
     return Status<ExperimentErrorCode>::success();
+}
+}  // namespace
+
+Status<ExperimentErrorCode> validateCurrentOutput(
+    ExperimentKind kind,const std::map<std::string,DenseDoubleArray>& fields) {
+    return validateOutput(kind,fields,nullptr);
+}
+
+Status<ExperimentErrorCode> validateMaskedAdaptiveOutput(
+    ExperimentKind kind,const std::map<std::string,DenseDoubleArray>& fields,
+    const std::map<std::string,std::vector<unsigned char>>& defined) {
+    if(kind==ExperimentKind::BiasOccluded||kind==ExperimentKind::BiasProportional)
+        return fail("Masked output is supported only for the Adaptive metric policy");
+    return validateOutput(kind,fields,&defined);
 }
 }  // namespace egomotion::experiments

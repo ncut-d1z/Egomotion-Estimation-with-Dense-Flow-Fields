@@ -22,4 +22,9 @@ std::vector<std::string> currentSaveFields(ExperimentKind kind);
 Status<ExperimentErrorCode> validateCurrentOutput(
     ExperimentKind kind, const std::map<std::string,DenseDoubleArray>& fields);
 
+// Adaptive方案B专用：掩码为1只能是有限值，为0只能是NaN；不放宽旧入口。
+Status<ExperimentErrorCode> validateMaskedAdaptiveOutput(
+    ExperimentKind kind,const std::map<std::string,DenseDoubleArray>& fields,
+    const std::map<std::string,std::vector<unsigned char>>& defined);
+
 }  // namespace egomotion::experiments

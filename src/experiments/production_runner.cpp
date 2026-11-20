@@ -73,8 +73,11 @@ Outcome detail::finishAdaptive(const Result<AdaptiveRunData,ExperimentErrorCode>
                       "Adaptive run/valid frame count is incomplete or overflowing");
     auto packed=makeAdaptiveOutput(kind,data);
     if(!packed.hasValue())return propagate(packed,ctx,"Adaptive current-save encoding failed");
-    return publish(packed.value(),ctx,data.completed_runs,
-                   (data.frame_count-2)*data.completed_runs);
+    auto counted=ctx.noteAdaptiveCompletedMemory(data);
+    if(!counted.hasValue())return Outcome::failure(std::move(counted).error());
+    auto written=ctx.writeAdaptiveResults(data);
+    if(!written.hasValue())return Outcome::failure(std::move(written).error());
+    return ctx.publishAdaptiveOutcome();
 }
 
 Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runBiasOccluded(

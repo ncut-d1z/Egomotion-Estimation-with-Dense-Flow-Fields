@@ -8,21 +8,38 @@
 #include <functional>
 #include <map>
 #include <string>
+#include <vector>
 
 namespace egomotion::estimators { class IAdaptiveStepSolver; }
 
 namespace egomotion::experiments {
 
-// 内存结果只含原脚本当前save字段，独占列主序数据且名称唯一。
-// 具名Runner的run方法通过RunContext交付，compute不写文件。
+struct AdaptiveUndefinedMetric {
+    std::string variable;
+    std::size_t matlab_run_index = 0;
+    std::size_t matlab_frame_index = 0;
+    std::size_t matlab_column_index = 0;
+    Failure<NumericalErrorCode> reason;
+};
+
+// 原字段保持列主序；方案B以NaN表示已声明缺测，并保留每轮原值与原因。
+// valid_counts按单元计有效重复次数，首尾预分配零为结构端点，次数为0。
+// 八轮误差只有8次全有效才提供均值；rottransratio仍仅取最后一轮。
 struct AdaptiveRunData {
     std::map<std::string, DenseDoubleArray> fields;
+    std::map<std::string, std::vector<std::size_t>> valid_counts;
+    std::vector<AdaptiveUndefinedMetric> undefined_metrics;
+    std::vector<std::map<std::string, DenseDoubleArray>> repetition_fields;
     std::size_t frame_count = 0;
     std::size_t planned_runs = 0;
     std::size_t completed_runs = 0;
+    std::size_t valid_frames = 0;
+    std::size_t undefined_frames = 0;
 };
 
-enum class AdaptiveProgressEvent { RunStarted, FrameCompleted, RunCompleted };
+enum class AdaptiveProgressEvent {
+    RunStarted, FrameCompleted, FrameWithUndefinedMetrics, RunCompleted
+};
 using AdaptiveProgress = std::function<void(AdaptiveProgressEvent)>;
 
 // 借用服务的生命周期须覆盖Runner；Comparison之外不调用噪声模型。

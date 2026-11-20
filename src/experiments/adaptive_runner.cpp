@@ -93,6 +93,7 @@ void addField(AdaptiveRunData& output, std::string name,
     auto inserted=output.fields.emplace(name,allocateArray(name,rows,cols));
     if (!inserted.second)
         throw std::logic_error("Duplicate Adaptive current save name");
+    output.valid_counts.emplace(name,std::vector<std::size_t>(rows*cols,0));
 }
 
 AdaptiveRunData newResult(Mode mode) {
@@ -113,14 +114,37 @@ AdaptiveRunData newResult(Mode mode) {
         addField(out,"akrot",n,1);
     return out;
 }
+using Metric=Result<Scalar,NumericalErrorCode>;
+Metric statistic(double value,const char* message) {
+    if(std::isfinite(value))return Metric::success(value);
+    ErrorDetail detail;detail.stage=ErrorStage::Simulation;detail.message=message;
+    return Metric::failure({NumericalErrorCode::NonFiniteResult,std::move(detail)});
+}
+Metric componentRatio(double numerator,double denominator) {
+    if(denominator>0.0&&std::isfinite(numerator)&&std::isfinite(denominator))
+        return statistic(numerator/denominator,"Ideal component ratio is not representable");
+    ErrorDetail detail;detail.stage=ErrorStage::Simulation;
+    detail.message="Ideal component ratio has zero or non-finite translation magnitude";
+    return Metric::failure({denominator==0.0?NumericalErrorCode::ZeroNorm:
+                           NumericalErrorCode::NonFiniteResult,std::move(detail)});
+}
 void write(AdaptiveRunData& data,const std::string& field,
-           std::size_t row,std::size_t column,double value) {
+           std::size_t row,std::size_t column,const Metric& value,std::size_t run) {
     auto& array=data.fields.at(field);
     const std::size_t rows=array.info.dimensions.at(0);
     const std::size_t columns=array.info.dimensions.at(1);
-    if (row>=rows || column>=columns || !std::isfinite(value))
-        throw std::logic_error("Invalid Adaptive output index or non-finite statistic");
-    array.values_column_major[column*rows+row]=value;
+    if (row==0 || row+1>=rows || column>=columns ||
+        (value.hasValue()&&!std::isfinite(value.value())))
+        throw std::logic_error("Invalid Adaptive output index or undeclared non-finite statistic");
+    const std::size_t offset=column*rows+row;
+    if(value.hasValue()) {
+        array.values_column_major[offset]=value.value();
+        data.valid_counts.at(field)[offset]=1;
+    } else {
+        data.undefined_metrics.push_back({field,run,row+1,column+1,value.error()});
+        array.values_column_major[offset]=std::numeric_limits<double>::quiet_NaN();
+        data.valid_counts.at(field)[offset]=0;
+    }
 }
 Output computeAdaptive(Mode mode, double noise_scale, IRandomSource* rng,
                const AdaptiveProgress& progress,
@@ -177,6 +201,7 @@ Output computeAdaptive(Mode mode, double noise_scale, IRandomSource* rng,
             // last row MUST remain original preallocated zeros, not estimates.
             for (std::size_t row=1;row+1<n;++row) {
                 const std::size_t matlab_i=row+1;
+                const auto missing_before=current.undefined_metrics.size();
                 if (!frames[row].has_original_matlab_motion)
                     return fail(ExperimentErrorCode::DataMismatch,
                                 "Expected source-valid trajectory interior frame");
@@ -199,16 +224,7 @@ Output computeAdaptive(Mode mode, double noise_scale, IRandomSource* rng,
                 const double denominator=ideal.value().mean_translational_magnitude;
                 // All source scenario outputs are N×6; no Writer/RunId here.
                 FlowField observations=std::move(ideal).value().flow;
-                double ratio=0;
                 if (mode==Mode::Comparison) {
-                    if (!(denominator>0.0)||!std::isfinite(numerator)||
-                        !std::isfinite(denominator))
-                        return fail(ExperimentErrorCode::SolverFailed,
-                                    "Comparison ideal component ratio undefined");
-                    ratio=numerator/denominator;
-                    if (!std::isfinite(ratio))
-                        return fail(ExperimentErrorCode::SolverFailed,
-                                    "Comparison ideal component ratio overflow");
                     auto noisy=sampling.comparison_noise.apply(observations,noise_scale,*rng);
                     if (!noisy.hasValue())
                         return fromNumeric(noisy,"nonpropfehler",mode,
@@ -222,7 +238,8 @@ Output computeAdaptive(Mode mode, double noise_scale, IRandomSource* rng,
                         return fail(ExperimentErrorCode::DataMismatch,
                                     "Adaptive noise changed shape/directions or returned non-finite flow");
                     observations=std::move(noisy).value();
-                    write(current,"rottransratio",row,0,ratio);
+                    write(current,"rottransratio",row,0,
+                          componentRatio(numerator,denominator),run+1);
                 }
                 Matrix3 coefficient_rotation=Matrix3::Identity();
                 if (mode!=Mode::Initialization) {
@@ -259,27 +276,28 @@ Output computeAdaptive(Mode mode, double noise_scale, IRandomSource* rng,
                 if (mode==Mode::UpdateRates) {
                     const double angle_degrees=360.0*frames[row].relative_rotation.norm()/
                         (2.0*std::acos(-1.0));
-                    if (!std::isfinite(angle_degrees))
-                        return fail(ExperimentErrorCode::SolverFailed,
-                                    "UpdateRates akrot is non-finite");
-                    write(current,"akrot",row,0,angle_degrees);
+                    write(current,"akrot",row,0,statistic(angle_degrees,
+                          "UpdateRates akrot is not representable"),run+1);
                     for (std::size_t k=0;k<expected;++k) {
                         write(current,"allemittransfehler",row,k,
-                              values.comparison_translation_error_deg[k]);
+                              values.comparison_translation_error_deg[k],run+1);
                         write(current,"allemitrotfehler",row,k,
-                              values.comparison_rotation_error_deg[k]);
+                              values.comparison_rotation_error_deg[k],run+1);
                     }
                 } else {
                     write(current,"alleohnerotfehler",row,0,
-                          values.comparison_rotation_error_deg[0]);
+                          values.comparison_rotation_error_deg[0],run+1);
                     write(current,"alleohnetransfehler",row,0,
-                          values.comparison_translation_error_deg[0]);
+                          values.comparison_translation_error_deg[0],run+1);
                     write(current,"allemitrotfehler",row,0,
-                          values.comparison_rotation_error_deg[1]);
+                          values.comparison_rotation_error_deg[1],run+1);
                     write(current,"allemittransfehler",row,0,
-                          values.comparison_translation_error_deg[1]);
+                          values.comparison_translation_error_deg[1],run+1);
                 }
-                if(progress)progress(AdaptiveProgressEvent::FrameCompleted);
+                const bool defined=current.undefined_metrics.size()==missing_before;
+                if(defined)++current.valid_frames;else ++current.undefined_frames;
+                if(progress)progress(defined?AdaptiveProgressEvent::FrameCompleted:
+                                             AdaptiveProgressEvent::FrameWithUndefinedMetrics);
             }
             // A complete run contributes atomically to the aggregate.
             // Only the final planned run may supply rottransratio.

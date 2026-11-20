@@ -26,8 +26,9 @@ struct AdaptiveFrameResult {
     std::size_t matlab_frame_index=0;
     AdaptiveStepResult primary_step;
     std::vector<MotionEstimate> comparison_motion;
-    std::vector<Scalar> comparison_translation_error_deg;
-    std::vector<Scalar> comparison_rotation_error_deg;
+    // 指标无定义与求解失败分离：仅指标失败不回滚已成功的帧求解。
+    std::vector<Result<Scalar,NumericalErrorCode>> comparison_translation_error_deg;
+    std::vector<Result<Scalar,NumericalErrorCode>> comparison_rotation_error_deg;
 };
 
 // Each session owns its own primary and baseline states. It never writes

@@ -18,6 +18,7 @@ AdaptiveProgress progressFor(RunContext& ctx) {
         switch(event) {
         case AdaptiveProgressEvent::RunStarted:ctx.noteAttempt();break;
         case AdaptiveProgressEvent::FrameCompleted:ctx.noteValid();break;
+        case AdaptiveProgressEvent::FrameWithUndefinedMetrics:ctx.noteUndefined();break;
         case AdaptiveProgressEvent::RunCompleted:ctx.noteCompleted();break;
         }
     };
