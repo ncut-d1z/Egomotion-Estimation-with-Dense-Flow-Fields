@@ -19,8 +19,9 @@ DatasetResult error(AnalysisErrorCode code,std::string message,
     d.variable=std::move(variable);
     return DatasetResult::failure({code,std::move(d)});
 }
-ArrayResult load(IResultReader& reader,const std::filesystem::path& root,
-                 const std::string& name,std::size_t rows,std::size_t cols) {
+namespace {
+ArrayResult loadArray(IResultReader& reader,const std::filesystem::path& root,
+                      const std::string& name,std::size_t rows,std::size_t cols) {
     const auto path=root/(name+".mat");
     auto read=reader.readNamed(path,name);
     if(!read.hasValue()){
@@ -48,19 +49,69 @@ ArrayResult load(IResultReader& reader,const std::filesystem::path& root,
                         std::nullopt,{}}});
     const auto n=info.dimensions[0];
     const auto c=info.dimensions[1];
-    if(!n||!c||c>std::numeric_limits<std::size_t>::max()/n||value.values_column_major.size()!=n*c)
+    if(!n||!c||c>std::numeric_limits<std::size_t>::max()/n||
+       n*c>std::numeric_limits<std::size_t>::max()/sizeof(double)||
+       value.values_column_major.size()!=n*c||info.data_bytes!=n*c*sizeof(double))
         return ArrayResult::failure({
             AnalysisErrorCode::ShapeMismatch,
             ErrorDetail{std::nullopt,ErrorStage::Decode,
                         "MAT column-major array length mismatch",path.string(),name,
                         std::nullopt,{}}});
-    for(double x:value.values_column_major)
+    return ArrayResult::success(std::move(value));
+}
+} // namespace
+
+ArrayResult load(IResultReader& reader,const std::filesystem::path& root,
+                 const std::string& name,std::size_t rows,std::size_t cols) {
+    auto input=loadArray(reader,root,name,rows,cols);
+    if(!input.hasValue())return input;
+    for(double x:input.value().values_column_major)
         if(!std::isfinite(x)){
-            ErrorDetail d;d.stage=ErrorStage::Analyze;d.source_path=path.string();
+            ErrorDetail d;d.stage=ErrorStage::Analyze;
+            d.source_path=(root/(name+".mat")).string();
             d.variable=name;d.message="MAT analysis input contains NaN or infinity";
             return ArrayResult::failure({AnalysisErrorCode::NonFiniteInput,std::move(d)});
         }
-    return ArrayResult::success(std::move(value));
+    return input;
+}
+
+MetricArrayResult loadDeclaredMetric(
+    IResultReader& reader,const std::filesystem::path& root,
+    const std::string& name,std::size_t rows,std::size_t cols,
+    std::size_t expected_repetitions) {
+    auto source=loadArray(reader,root,name,rows,cols);
+    if(!source.hasValue())return MetricArrayResult::failure(std::move(source).error());
+    auto counts=load(reader,root,"valid_"+name,rows,cols);
+    if(!counts.hasValue())return MetricArrayResult::failure(std::move(counts).error());
+    const auto& values=source.value().values_column_major;
+    const auto& repetitions=counts.value().values_column_major;
+    const auto source_rows=source.value().info.dimensions[0];
+    std::vector<unsigned char> defined(values.size(),1);
+    for(std::size_t i=0;i<values.size();++i) {
+        const auto count=repetitions[i];
+        const auto value=values[i];
+        const bool endpoint=i%source_rows==0||i%source_rows+1==source_rows;
+        const bool valid_count=std::isfinite(count)&&count>=0.0&&
+            count<=static_cast<double>(expected_repetitions)&&std::floor(count)==count;
+        const bool complete=count==static_cast<double>(expected_repetitions);
+        const bool consistent=endpoint?(value==0.0&&count==0.0):
+            (complete?std::isfinite(value):std::isnan(value));
+        if(expected_repetitions==0||!valid_count||!consistent) {
+            ErrorDetail d;d.stage=ErrorStage::Analyze;
+            d.source_path=(root/(name+".mat")).string();d.variable=name;
+            d.observation_index=i%source_rows+1;
+            d.message="Declared metric/count mismatch at column "+std::to_string(i/source_rows+1)+
+                "; endpoints require zero/count zero, complete counts require finite values, and missing counts require NaN";
+            return MetricArrayResult::failure({
+                AnalysisErrorCode::UndefinedStatistic,std::move(d)});
+        }
+        defined[i]=static_cast<unsigned char>(endpoint||complete);
+    }
+    MetricArray result;
+    result.array=std::move(source).value();
+    result.valid_counts=std::move(counts).value();
+    result.defined=std::move(defined);
+    return MetricArrayResult::success(std::move(result));
 }
 std::vector<double> column(const DenseDoubleArray& array,std::size_t col) {
     const auto rows=array.info.dimensions.at(0);

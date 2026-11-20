@@ -47,7 +47,14 @@ struct Reader final:IResultReader {
                 return Result<DenseDoubleArray,MatErrorCode>::failure({MatErrorCode::MissingVariable,std::move(d)});
             }
         }
-        const auto it=data.find(path.string());require(it!=data.end(),"Expected input path and variable order");
+        const auto it=data.find(path.string());
+        if(it==data.end()&&name=="egomotion_metric_policy") {
+            ErrorDetail d;d.stage=ErrorStage::Read;d.source_path=path.string();d.variable=name;
+            d.message="Legacy source fixture has no revised metric policy";
+            return Result<DenseDoubleArray,MatErrorCode>::failure(
+                {MatErrorCode::MissingFile,std::move(d)});
+        }
+        require(it!=data.end(),"Expected input path and variable order");
         require(it->second.info.name==name,"Exact named variable");
         return Result<DenseDoubleArray,MatErrorCode>::success(it->second);
     }
@@ -83,6 +90,7 @@ Reader inputs(AnalysisKind kind,const fs::path& root) {
 std::vector<std::string> expectedCalls(AnalysisKind kind,const fs::path& root) {
     std::vector<std::string> paths;auto add=[&](const fs::path& dir,const char* name){paths.push_back((dir/(std::string(name)+".mat")).string());};
     if(kind==AnalysisKind::Bias){for(const char* run:{"1","2"})for(const char* name:{"xwerte","ywerte3","ywerte4","ywerte5","ywerte6"})add(root/run,name);return paths;}
+    add(root,"egomotion_metric_policy");
     add(root,"allemittransfehler");add(root,"allemitrotfehler");
     if(kind!=AnalysisKind::AdaptiveInitialization)add(root,"rottransratio");
     if(kind!=AnalysisKind::AdaptiveUpdateRates){add(root,"alleohnetransfehler");add(root,"alleohnerotfehler");}

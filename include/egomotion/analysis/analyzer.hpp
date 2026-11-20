@@ -60,10 +60,18 @@ struct AnalysisSeries {
     // For segment-local smoothing, retain ALL temporary values (zero edges)
     // in addition to the truncated actual plotted curve x/y.
     std::vector<double> smoothing_full;
+    // 空掩码保持历史严格有限合同；显式0仅表示已声明的NaN缺测。
+    std::vector<unsigned char> defined;
+    std::vector<unsigned char> smoothing_defined;
+    // 首尾源行是结构零值，不能计作有效指标样本，也不是缺测。
+    std::vector<unsigned char> structural_endpoint;
+    std::string metric_semantics;
 };
 struct AnalysisDataset {
     std::string source_analysis_blob; // exact original .m Git blob
     std::vector<AnalysisSeries> curves;
+    std::string metric_policy="source-defined";
+    std::size_t planned_repetitions=0;
 };
 
 // Numeric-only, read-only Analyzer interface. No runtime plotting required.

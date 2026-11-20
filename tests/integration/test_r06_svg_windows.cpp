@@ -185,6 +185,33 @@ void invalidSeries(const fs::path& root) {
         save(root/(label+".txt"),evidence.str());
     }
 }
+void declaredGaps(const fs::path& root) {
+    AnalysisDataset data;data.source_analysis_blob="declared-synthetic-metric";
+    data.metric_policy="adaptive-atan2-so3-geodesic-v1";data.planned_repetitions=1;
+    const auto nan=std::numeric_limits<double>::quiet_NaN();
+    auto series=curve("declared-gap","rotation",{1,2,3,4,5},{1,2,nan,4,5},false,false);
+    series.defined={1,1,0,1,1};series.metric_semantics="rotation-so3-geodesic-degrees";
+    data.curves.push_back(series);
+    const auto svg=render(root,"declared-gap",data);
+    const auto paths=lines(svg,"declared-gap");
+    check(paths.size()==2&&paths[0].size()==2&&paths[1].size()==2,
+          "Declared missing sample divides polylines instead of bridging the gap");
+    check(svg.find("rotation-so3-geodesic-degrees")!=std::string::npos,
+          "SVG retains revised rotation metric semantics");
+    for(unsigned invalid=0;invalid<5;++invalid) {
+        auto candidate=data;
+        auto& current=candidate.curves[0];
+        if(invalid==0)current.defined.clear();
+        if(invalid==1)current.defined.pop_back();
+        if(invalid==2)current.defined[2]=2;
+        if(invalid==3)current.y[2]=0.0;
+        if(invalid==4)current.y[2]=std::numeric_limits<double>::infinity();
+        Publisher publisher;analysis::SvgPlotExporter plotter;
+        const auto result=plotter.exportPlot(candidate,publisher);
+        check(!result.hasValue()&&result.error().code==PlotErrorCode::InvalidSeries&&publisher.files.empty(),
+              "SVG rejects invalid or undeclared NaN/Inf/finite-zero gap masks");
+    }
+}
 } // namespace
 int main(int argc,char** argv) {
     try {
@@ -195,7 +222,7 @@ int main(int argc,char** argv) {
         const fs::path root=pattern;
         save(root/"identity.txt",std::string("source_sha=")+argv[2]+"\nseed=none\nfixed synthetic SVG geometry\n");
         std::cout<<"RunId="<<root.filename()<<" evidence="<<root<<'\n';
-        bias(root);comparison(root,"rotation");comparison(root,"translation");automatic(root);invalidSeries(root);
+        bias(root);comparison(root,"rotation");comparison(root,"translation");automatic(root);invalidSeries(root);declaredGaps(root);
         std::cout<<"checks="<<checks<<" failures="<<failures<<'\n';
         return failures?1:0;
     }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

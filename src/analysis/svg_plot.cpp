@@ -1,4 +1,5 @@
 #include "egomotion/analysis/plot.hpp"
+#include "series_validity.hpp"
 
 #include <algorithm>
 #include <array>
@@ -89,13 +90,13 @@ std::string renderPanel(const std::string& panel,
     const bool xlog=curves.front()->x_scale=="log";
     const bool ylog=curves.front()->y_scale=="log";
     for(const auto* curve:curves){
+        detail::validateSeriesValidity(*curve);
         if(curve->x.empty()||curve->x.size()!=curve->y.size())
             throw std::invalid_argument("An SVG curve is empty or has different X and Y lengths");
         const bool is_right=rightAxis(*curve);
         for(std::size_t i=0;i<curve->x.size();++i){
-            // 有限log零/负值可形成显示空隙；NaN/Inf不是合法空白图。
-            if(!std::isfinite(curve->x[i])||!std::isfinite(curve->y[i]))
-                throw std::invalid_argument("An SVG curve has non-finite input coordinates");
+            // 已声明缺测形成断线；无掩码NaN及所有Inf已在上方拒绝。
+            if(!detail::elementDefined(curve->defined,i))continue;
             const double x=transformed(curve->x[i],xlog);
             const double y=transformed(curve->y[i],curve->y_scale=="log");
             if(std::isfinite(x)&&std::isfinite(y)){
@@ -141,6 +142,9 @@ std::string renderPanel(const std::string& panel,
 
     std::size_t series_index=0;
     for(const auto* series:curves){
+        if(!series->metric_semantics.empty())
+            out<<"<metadata data-curve=\""<<xml(series->name)
+               <<"\">metric: "<<xml(series->metric_semantics)<<"</metadata>\n";
         for(const auto& helper:series->helper_source_blob_shas)
             out<<"<metadata data-curve=\""<<xml(series->name)
                <<"\">helper .m blob: "<<xml(helper)<<"</metadata>\n";
@@ -158,6 +162,7 @@ std::string renderPanel(const std::string& panel,
             }
         };
         for(std::size_t i=0;i<series->x.size();++i){
+            if(!detail::elementDefined(series->defined,i)){flush();continue;}
             const double x=transformed(series->x[i],xlog);
             const double y=transformed(series->y[i],series->y_scale=="log");
             if(!std::isfinite(x)||!std::isfinite(y)){flush();continue;}
