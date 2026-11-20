@@ -54,17 +54,9 @@ Outcome finishBias(const Result<BiasRunData,ExperimentErrorCode>& source,
 
 Outcome detail::finishAdaptive(const Result<AdaptiveRunData,ExperimentErrorCode>& source,
                        RunContext& ctx,ExperimentKind kind) {
-    if(!source.hasValue()){
-        // 终止本轨迹的无定义角也是实际无效样本，不能只留在错误链而漏记计数。
-        for(const auto& cause:source.error().detail.causes){
-            if(cause.domain==errorDomain<NumericalErrorCode>()&&
-               cause.code==errorName(NumericalErrorCode::UndefinedAngle)){
-                ctx.noteUndefined();
-                break;
-            }
-        }
+    if(!source.hasValue())
+        // 纯指标缺测已由逐帧事件计数；求解失败的原因链不能再次充当指标缺测。
         return propagate(source,ctx,"Adaptive numerical computation failed");
-    }
     const auto& data=source.value();
     if(data.frame_count<3||data.planned_runs==0||data.completed_runs!=data.planned_runs||
        (data.frame_count-2)>
