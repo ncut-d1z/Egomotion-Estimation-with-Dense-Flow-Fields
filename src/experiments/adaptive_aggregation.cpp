@@ -122,6 +122,10 @@ Result<AdaptiveRunData,ExperimentErrorCode> finishAdaptiveAggregation(
         return Output::failure(failure(ExperimentErrorCode::IncompleteRun,
             "Adaptive cannot finalize or divide incomplete planned runs"));
     try {
+        // 除法可能把受损的非零次正规累计和舍入成零；先核对未经除法的证据。
+        const auto kind=aggregateKind(aggregate);
+        auto prefix=validateAdaptiveEvidence(kind,aggregate,AdaptiveEvidencePhase::Accumulating);
+        if(!prefix.hasValue())return Output::failure(std::move(prefix).error());
         // 在副本内最终化；证据/资源失败不能把调用者的累计和部分除以8。
         AdaptiveRunData next=aggregate;
         if(comparison){
@@ -133,7 +137,7 @@ Result<AdaptiveRunData,ExperimentErrorCode> finishAdaptiveAggregation(
             }
         }
         auto validated=validateAdaptiveEvidence(
-            aggregateKind(next),next,AdaptiveEvidencePhase::Finalized);
+            kind,next,AdaptiveEvidencePhase::Finalized);
         if(!validated.hasValue())return Output::failure(std::move(validated).error());
         return Output::success(std::move(next));
     } catch(const std::bad_alloc&) {

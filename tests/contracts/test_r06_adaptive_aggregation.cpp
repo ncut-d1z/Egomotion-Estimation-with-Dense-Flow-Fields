@@ -202,6 +202,18 @@ void finalization() {
         else if(fault=="endpoint")bad.fields.at(kTranslation).values_column_major[0]=1.0;
         rejectFinalization(bad,true,"Finalization accepted invalid evidence: "+fault);
     }
+    // 八个有效原值均为零，但受损累计和除8后也会舍入成零；不能仅核对均值。
+    auto rounded=prefix;
+    for(auto& raw:rounded.repetition_fields)raw.at(kTranslation).values_column_major[2]=0.0;
+    rounded.fields.at(kTranslation).values_column_major[2]=std::numeric_limits<double>::denorm_min();
+    require(rounded.valid_counts.at(kTranslation)[2]==kRuns&&
+            rounded.fields.at(kTranslation).values_column_major[2]>0.0,
+            "The rounding regression requires eight valid zeros and a positive subnormal sum");
+    rejectFinalization(rounded,true,"Division rounding concealed a corrupted nonzero accumulated sum");
+    rounded.fields.at(kTranslation).values_column_major[2]=0.0;
+    const auto exact_zero=finishAdaptiveAggregation(std::move(rounded),true);
+    require(exact_zero.hasValue()&&exact_zero.value().fields.at(kTranslation).values_column_major[2]==0.0,
+            "An exact zero sum matching eight valid zeros must still finalize");
     auto wrong_mode=prefix;
     rejectFinalization(wrong_mode,false,"Eight repetitions must not bypass their fixed denominator");
     auto incomplete=empty();
