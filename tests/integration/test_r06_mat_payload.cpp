@@ -80,6 +80,8 @@ struct Fixture {
     bool small_name=false,small_real=false;
     bool single_neighbor=false;
     std::string single_neighbor_name="other";
+    std::optional<std::string> additional_name;
+    bool additional_single_class=false;
     std::optional<MatErrorCode> rejected;
     std::string mutation;
 };
@@ -123,6 +125,12 @@ Bytes fileBytes(const Fixture& fixture,bool little,bool compressed){
         const auto encoded=fileBytes(other,little,compressed);
         out.insert(out.end(),encoded.begin()+kHeaderBytes,encoded.end());
     }
+    if(fixture.additional_name){
+        Fixture other;other.name=*fixture.additional_name;other.dims={1,2};other.values={7,-2};
+        if(fixture.additional_single_class){other.class_type=MAT_C_SINGLE;other.storage=kSingle;}
+        const auto encoded=fileBytes(other,little,compressed);
+        out.insert(out.end(),encoded.begin()+kHeaderBytes,encoded.end());
+    }
     return out;
 }
 void save(const fs::path& path,const Bytes& bytes){
@@ -137,7 +145,52 @@ std::string digest(const fs::path& path){
     const auto value=io::sha256Fd(fd);::close(fd);
     require(value.hasValue(),"Cannot hash fixture");return value.value();
 }
+void checkDirectory(const fs::path& path,const Fixture& fixture){
+    io::MatResultReader reader;
+    const auto ambiguous=[&](const auto& result,const std::string& variable){
+        require(!result.hasValue()&&result.error().code==MatErrorCode::AmbiguousVariable,
+                "Duplicate or ambiguous directory must not select a variable");
+        require(result.error().detail.source_path==path.string()&&
+                result.error().detail.variable==variable&&result.error().detail.stage==ErrorStage::Read,
+                "Ambiguous directory lost source/name/stage");
+    };
+    if(fixture.rejected){
+        ambiguous(reader.inspect(path),fixture.name);
+        ambiguous(reader.scanFile(path,io::ScanMode::MetadataOnly),fixture.name);
+        ambiguous(reader.scanFile(path,io::ScanMode::VerifyDecoded),fixture.name);
+        ambiguous(reader.readNamed(path,fixture.name),fixture.name);
+        ambiguous(reader.readFirstCompatible(path),{});
+        require(numeric_read_calls==0,"Ambiguous directory reached numeric decoding");
+        return;
+    }
+    const auto metadata=reader.inspect(path);
+    require(metadata.hasValue()&&metadata.value().size()==2,"Unique names must retain both structures");
+    const auto checkInfo=[&](const MatVariableInfo& first,const MatVariableInfo& second){
+        require(first.name==fixture.name&&first.original_class_type==MAT_C_DOUBLE&&
+                first.dimensions==std::vector<std::size_t>({2,3}),"First directory structure changed");
+        require(second.name==*fixture.additional_name&&
+                second.original_class_type==(fixture.additional_single_class?MAT_C_SINGLE:MAT_C_DOUBLE)&&
+                second.dimensions==std::vector<std::size_t>({1,2}),"Second directory structure was aliased");
+    };
+    checkInfo(metadata.value()[0],metadata.value()[1]);
+    const auto info=reader.scanFile(path,io::ScanMode::MetadataOnly);
+    require(info.hasValue()&&info.value().variables.size()==2,"Unique metadata scan failed");
+    checkInfo(info.value().variables[0].info,info.value().variables[1].info);
+    for(const auto& entry:info.value().variables)require(entry.status=="METADATA_OK","Metadata status changed");
+    require(numeric_read_calls==0,"Directory inspection decoded numeric data");
+    const auto decoded=reader.scanFile(path,io::ScanMode::VerifyDecoded);
+    require(decoded.hasValue()&&decoded.value().variables.size()==2,"Unique full scan failed");
+    checkInfo(decoded.value().variables[0].info,decoded.value().variables[1].info);
+    for(const auto& entry:decoded.value().variables)require(entry.status=="READ_OK","Full scan status changed");
+    const auto named=reader.readNamed(path,fixture.name);
+    require(named.hasValue()&&named.value().values_column_major.size()==fixture.values.size()&&
+            std::memcmp(named.value().values_column_major.data(),fixture.values.data(),
+                        fixture.values.size()*sizeof(double))==0,"Unique named payload changed");
+    ambiguous(reader.readFirstCompatible(path),{});
+    require(numeric_read_calls==3,"Unique directory did not decode each intended variable exactly once");
+}
 void check(const fs::path& path,const Fixture& fixture){
+    if(fixture.additional_name){checkDirectory(path,fixture);return;}
     io::MatResultReader reader;
     const auto& requested=fixture.requested_name?*fixture.requested_name:fixture.name;
     for(const bool compatible:{false,true}){
@@ -188,6 +241,14 @@ bool isolatedCheck(const fs::path& path,const Fixture& fixture){
 std::vector<Fixture> fixtures(){
     std::vector<Fixture> out;
     Fixture base;base.label="double";out.push_back(base);
+    for(const bool single_class:{false,true}){
+        Fixture multiple;multiple.additional_single_class=single_class;
+        multiple.label=single_class?"unique-single-class-neighbor":"unique-double-neighbor";
+        multiple.additional_name="other";out.push_back(multiple);
+        multiple.label=single_class?"duplicate-different-class":"duplicate-different-shape";
+        multiple.additional_name="value";multiple.rejected=MatErrorCode::AmbiguousVariable;out.push_back(multiple);
+        multiple.label+="-nul-alias";multiple.additional_name=std::string("value\0suffix",12);out.push_back(multiple);
+    }
     base.label="named-selection-with-single-neighbor";base.single_neighbor=true;out.push_back(base);
     base.label="named-selection-with-nul-single-neighbor";
     base.single_neighbor_name=std::string("other\0suffix",12);out.push_back(base);

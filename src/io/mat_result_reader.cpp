@@ -293,6 +293,11 @@ MatResultReader::scanFile(const std::filesystem::path& path, ScanMode mode) cons
     MatFileScan result;
     result.version = versionName(Mat_GetVersion(mat.get()));
     try {
+        // 后续按名读取只能定位首个匹配项，不能用它冒充同名的其它结构。
+        for (std::size_t i = 0; i < count; ++i)
+            if (directory[i] && occurrences(directory, count, directory[i]) != 1)
+                return fail<MatFileScan>(MatErrorCode::AmbiguousVariable, ErrorStage::Read,
+                                         path, "Duplicate variable name in MAT directory", directory[i]);
         result.variables.reserve(count);
         for (std::size_t i = 0; i < count; ++i) {
             if (!directory[i]) {
