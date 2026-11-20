@@ -84,9 +84,9 @@ Status<ExperimentErrorCode> RunContext::writeCurrentResults(
     if(adaptiveKind(kind_))
         return contextFailure(run_id_,ExperimentErrorCode::InvalidParameters,
             "Adaptive results require writeAdaptiveResults and metric policy v2");
-    if(write_started_) {
+    if(write_started_||manifest_published_) {
         ErrorDetail d;d.stage=ErrorStage::Output;d.run_id=run_id_;
-        d.message="Duplicate writeCurrentResults is prohibited";
+        d.message="Results cannot be written twice or after a published Manifest";
         return Status<ExperimentErrorCode>::failure({
             ExperimentErrorCode::OutputFailed,std::move(d)});
     }
@@ -222,6 +222,10 @@ Status<ExperimentErrorCode> RunContext::noteCompletedMemory(
     if(adaptiveKind(kind_))
         return contextFailure(run_id_,ExperimentErrorCode::InvalidParameters,
             "Adaptive counters require noteAdaptiveCompletedMemory with complete metric evidence",
+            ErrorStage::Simulation);
+    if(manifest_published_)
+        return contextFailure(run_id_,ExperimentErrorCode::IncompleteRun,
+            "A published run cannot be reclassified as Bias completion",
             ErrorStage::Simulation);
     if(repetitions!=draft_.expected_repetitions||!repetitions||!valid_samples) {
         ErrorDetail d;d.stage=ErrorStage::Simulation;d.run_id=run_id_;
@@ -411,6 +415,7 @@ Status<ExperimentErrorCode> RunContext::publishFailureRecord(
 }
 
 void RunContext::recordFailure(Failure<ExperimentErrorCode> failure) {
+    if(manifest_published_)return;
     // ErrorDetail.causes is kept whole; do not collapse to root code.
     draft_.errors.push_back(detail::withRunIdIfMissing(std::move(failure),run_id_));
 }

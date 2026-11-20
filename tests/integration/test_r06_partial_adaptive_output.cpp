@@ -213,7 +213,35 @@ void verifyPublication(const AdaptiveRunData& data,bool partial) {
                 json.find("Synthetic zero translation direction at original run/frame")!=std::string::npos,
                 "Missing raw values require JSON null, original 1-based identity, and a numerical reason");
     }
-    require(!context.publishAdaptiveOutcome().hasValue(),"Published outcome cannot be replaced");
+    const auto saved_draft=context.manifestDraft();
+    const auto saved_manifest=publisher.contents;
+    const auto saved_metric_evidence=context.adaptiveMetricValidityJson();
+    const auto saved_outputs=context.expectedOutputNames();
+    const auto saved_receipts=writer.receipts.size();
+    ErrorDetail detail;detail.stage=ErrorStage::Output;
+    detail.message="Synthetic late failure after confirmed publication";
+    const Failure<ExperimentErrorCode> late{ExperimentErrorCode::OutputFailed,std::move(detail)};
+    context.noteAttempt();context.noteCompleted();context.noteValid();
+    context.noteFailed();context.noteUndefined();context.recordFailure(late);
+    require(!context.noteAdaptiveCompletedMemory(data).hasValue()&&
+            !context.writeAdaptiveResults(data).hasValue()&&
+            !context.noteCompletedMemory(kRuns,kRuns*(kFrames-2)).hasValue()&&
+            !context.writeCurrentResults(data.fields).hasValue()&&
+            !context.publishCompleteOutcome().hasValue()&&
+            !context.publishAdaptiveOutcome().hasValue()&&
+            !context.publishFailureRecord(late).hasValue(),
+            "Both Complete and policy-B Incomplete publications must seal every context gateway");
+    const auto& retained=context.manifestDraft();
+    require(retained.status==saved_draft.status&&retained.attempted==saved_draft.attempted&&
+            retained.completed==saved_draft.completed&&retained.valid==saved_draft.valid&&
+            retained.failed==saved_draft.failed&&retained.undefined==saved_draft.undefined&&
+            retained.expected_repetitions==saved_draft.expected_repetitions&&
+            retained.files_writer_confirmed==saved_draft.files_writer_confirmed&&retained.errors.empty()&&
+            context.adaptiveComputationComplete()&&context.adaptiveStatisticsComplete()==!partial&&
+            context.adaptiveMetricValidityJson()==saved_metric_evidence&&
+            context.expectedOutputNames()==saved_outputs&&writer.receipts.size()==saved_receipts&&
+            publisher.contents==saved_manifest,
+            "Late events must preserve published counts, metric validity, output identities and Manifest bytes");
 }
 } // namespace
 

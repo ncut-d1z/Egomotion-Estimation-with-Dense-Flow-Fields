@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <map>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -116,6 +117,69 @@ bool hasMatCause(const Failure<ExperimentErrorCode>& failure,const char* code) {
     for(const auto& cause:failure.detail.causes)
         if(cause.domain=="MatErrorCode"&&cause.code==code)return true;
     return false;
+}
+std::string lifecycleSnapshot(const RunContext& run) {
+    const auto& draft=run.manifestDraft();
+    std::ostringstream snapshot;
+    snapshot<<static_cast<int>(draft.status)<<' '<<draft.attempted<<' '<<draft.completed
+            <<' '<<draft.valid<<' '<<draft.failed<<' '<<draft.undefined
+            <<' '<<draft.expected_repetitions<<' '<<run.adaptiveComputationComplete()
+            <<' '<<run.adaptiveStatisticsComplete()<<'\n';
+    for(const auto& name:draft.files_writer_confirmed)snapshot<<name<<'\n';
+    for(const auto& error:draft.errors)snapshot<<jsonFailure(error,6)<<'\n';
+    for(const auto& name:run.expectedOutputNames())snapshot<<name<<'\n';
+    snapshot<<run.adaptiveMetricValidityJson();
+    return snapshot.str();
+}
+void checkPublishedBiasLifecycle() {
+    using egomotion::experiments::ExperimentKind;
+    ErrorDetail detail;detail.stage=ErrorStage::Output;
+    detail.message="Synthetic terminal output failure";
+    const Failure<ExperimentErrorCode> original{ExperimentErrorCode::OutputFailed,std::move(detail)};
+    const auto adaptive=fields(ExperimentKind::AdaptiveInitialization);
+    for(const auto kind:{ExperimentKind::BiasOccluded,ExperimentKind::BiasProportional}) {
+        std::map<std::string,DenseDoubleArray> outputs;
+        for(const auto& name:experiments::currentSaveFields(kind))
+            outputs.emplace(name,matrix(name,1,name=="xwerte"?1:3));
+        for(const auto terminal:{RunStatus::Complete,RunStatus::Incomplete,RunStatus::Failed}) {
+            FakeWriter writer;FakePublisher publisher;
+            RunContext run(RunId{"sealed_bias"},std::make_unique<FixedRandom>(),writer,publisher,
+                "/R5-UNIT-ONLY",provenance(),kind,1);
+            if(terminal!=RunStatus::Failed)
+                require(run.noteCompletedMemory(1,3).hasValue(),"Prepare completed Bias memory");
+            if(terminal==RunStatus::Complete) {
+                require(run.writeCurrentResults(outputs).hasValue(),"Prepare complete Bias receipts");
+                require(run.publishCompleteOutcome().hasValue(),"Publish Complete Bias outcome");
+            } else {
+                // 两类失败均未开始写 MAT；仅靠 write_started_ 无法封存此 RunId。
+                require(run.publishFailureRecord(original).hasValue(),"Publish terminal Bias failure");
+            }
+            require(run.manifestDraft().status==terminal,"Fixture must publish its intended status");
+            const auto before=lifecycleSnapshot(run);
+            const auto manifest=publisher.contents;
+            const auto calls=writer.calls;
+            const auto written=run.writeCurrentResults(outputs);
+            const auto counted=run.noteCompletedMemory(1,9);
+            require(!written.hasValue()&&written.error().code==ExperimentErrorCode::OutputFailed&&
+                    written.error().detail.stage==ErrorStage::Output&&
+                    written.error().detail.run_id&&written.error().detail.run_id->text==run.runId().text&&
+                    !counted.hasValue()&&counted.error().code==ExperimentErrorCode::IncompleteRun&&
+                    counted.error().detail.stage==ErrorStage::Simulation&&
+                    counted.error().detail.run_id&&counted.error().detail.run_id->text==run.runId().text,
+                    "Published Bias must reject later writing/completion with contextual diagnostics");
+            run.noteAttempt();run.noteCompleted();run.noteValid();run.noteFailed();run.noteUndefined();
+            run.recordFailure(original);
+            require(!run.writeAdaptiveResults(adaptive).hasValue()&&
+                    !run.noteAdaptiveCompletedMemory(adaptive).hasValue()&&
+                    !run.publishCompleteOutcome().hasValue()&&
+                    !run.publishAdaptiveOutcome().hasValue()&&
+                    !run.publishFailureRecord(original).hasValue(),
+                    "No stateful gateway may replace a published Bias outcome");
+            require(lifecycleSnapshot(run)==before&&writer.calls==calls&&
+                    publisher.name=="manifest.json"&&publisher.contents==manifest,
+                    "Late progress, errors and retries must preserve the entire published audit snapshot");
+        }
+    }
 }
 void checkFailedWriteAuditStatus() {
     using egomotion::experiments::ExperimentKind;
@@ -233,6 +297,7 @@ void checkPublishedButUnconfirmedManifest() {
 int main() {
     using namespace egomotion;
     using egomotion::experiments::ExperimentKind;
+    checkPublishedBiasLifecycle();
     checkFailedWriteAuditStatus();
     checkFailureRunIdentity();
     checkPublishedButUnconfirmedManifest();

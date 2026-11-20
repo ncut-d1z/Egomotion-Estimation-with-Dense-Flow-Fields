@@ -90,11 +90,12 @@ public:
 
     // Counts and failure events can be observed by the future Manifest
     // publisher. They are never themselves durable evidence of a file.
-    void noteAttempt() noexcept { ++draft_.attempted; }
-    void noteCompleted() noexcept { ++draft_.completed; }
-    void noteValid() noexcept { ++draft_.valid; }
-    void noteFailed() noexcept { ++draft_.failed; }
-    void noteUndefined() noexcept { ++draft_.undefined; }
+    // Manifest 确认发布后封存本次审计；迟到的进度/失败事件不能改写其快照。
+    void noteAttempt() noexcept { if(!manifest_published_)++draft_.attempted; }
+    void noteCompleted() noexcept { if(!manifest_published_)++draft_.completed; }
+    void noteValid() noexcept { if(!manifest_published_)++draft_.valid; }
+    void noteFailed() noexcept { if(!manifest_published_)++draft_.failed; }
+    void noteUndefined() noexcept { if(!manifest_published_)++draft_.undefined; }
     void recordFailure(Failure<ExperimentErrorCode> failure);
     const RunManifestDraft& manifestDraft() const noexcept { return draft_; }
     const std::vector<std::string>& expectedOutputNames() const noexcept {
