@@ -100,6 +100,7 @@ Result<std::string,AnalysisErrorCode> datasetJson(const AnalysisDataset& data) {
             json<<"]}";
         }
         json<<"]}\n";
+        if(!json.good())return fail("Cannot format complete numeric analysis JSON");
         return Result<std::string,AnalysisErrorCode>::success(json.str());
     }catch(const std::invalid_argument& e){
         return fail(e.what());
