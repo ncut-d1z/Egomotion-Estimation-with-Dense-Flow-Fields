@@ -13,6 +13,8 @@
 
 namespace egomotion {
 
+namespace experiments { struct AdaptiveRunData; }
+
 struct SourceProvenance {
     std::string repository_commit_sha;
     std::string matlab_source_blob_sha; // source identity, not MATLAB execution
@@ -58,21 +60,28 @@ public:
     }
     experiments::ExperimentKind experimentKind() const noexcept { return kind_; }
 
-    // Call only for a COMPLETED in-memory experiment. Validates every
+    // Bias only: call for a COMPLETED in-memory experiment. Validates every
     // intended source-save field before invoking Writer even once.
     // On partial Writer failure, the committed file names remain recorded,
     // and the single-run Result returns failure (never fake Complete).
     Status<ExperimentErrorCode> writeCurrentResults(
         const std::map<std::string,DenseDoubleArray>& outputs);
 
-    // Only after all necessary source repetitions succeeded.
+    // Adaptive v2：先发布指标政策与同形状有效次数，再发布带显式缺测掩码的值。
+    // 部分统计仍须完成全部求解轮次；求解失败不能借此提交部分平均。
+    Status<ExperimentErrorCode> writeAdaptiveResults(
+        const experiments::AdaptiveRunData& outputs);
+
+    // Bias only, after all necessary source repetitions succeeded.
     Status<ExperimentErrorCode> noteCompletedMemory(
         std::size_t repetitions,std::size_t valid_samples);
+    Status<ExperimentErrorCode> noteAdaptiveCompletedMemory(
+        const experiments::AdaptiveRunData& outputs);
 
-    // The ONLY production gateway that can produce Complete. It validates
-    // the exact receipts, durably publishes manifest.json and THEN returns
-    // a success RunOutcome. The optional plotting path cannot trigger it.
+    // Bias v1 publication validates exact receipts and publishes manifest.json
+    // durably before returning success. Adaptive uses its explicit v2 gateway.
     Result<RunOutcome,ExperimentErrorCode> publishCompleteOutcome();
+    Result<RunOutcome,ExperimentErrorCode> publishAdaptiveOutcome();
 
     // A failed or incomplete run still attempts to persist a truthful
     // Failed/Incomplete audit. Failure to persist is reported separately.
@@ -88,6 +97,16 @@ public:
     void noteUndefined() noexcept { ++draft_.undefined; }
     void recordFailure(Failure<ExperimentErrorCode> failure);
     const RunManifestDraft& manifestDraft() const noexcept { return draft_; }
+    const std::vector<std::string>& expectedOutputNames() const noexcept {
+        return expected_output_names_;
+    }
+    const std::string& adaptiveMetricValidityJson() const noexcept {
+        return adaptive_metric_validity_json_;
+    }
+    bool adaptiveComputationComplete() const noexcept;
+    bool adaptiveStatisticsComplete() const noexcept {
+        return adaptiveComputationComplete()&&adaptive_statistics_complete_;
+    }
 
 private:
     RunId run_id_;
@@ -98,8 +117,17 @@ private:
     SourceProvenance provenance_;
     experiments::ExperimentKind kind_;
     RunManifestDraft draft_;
+    std::vector<std::string> expected_output_names_;
+    std::string adaptive_metric_validity_json_;
+    std::size_t adaptive_expected_repetitions_=0;
+    std::size_t adaptive_valid_frames_=0;
+    std::size_t adaptive_undefined_frames_=0;
+    bool adaptive_memory_noted_=false;
+    bool adaptive_statistics_complete_=false;
     bool write_started_=false;
     bool manifest_published_=false;
+    Status<ExperimentErrorCode> retainAdaptiveEvidence(
+        const experiments::AdaptiveRunData& outputs,std::string serialized);
 };
 
 }  // namespace egomotion
