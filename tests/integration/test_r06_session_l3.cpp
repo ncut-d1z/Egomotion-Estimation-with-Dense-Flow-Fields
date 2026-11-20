@@ -270,16 +270,25 @@ bool distinguish(const ref::Coefficients& a,const ref::Coefficients& b) {
     for(std::size_t j=0;j<a.size();++j)if(std::abs(a[j]-b[j])>step_margin*(1+std::abs(b[j])))return true;
     return false;
 }
+std::vector<Real> validMetrics(const std::vector<Result<Scalar,NumericalErrorCode>>& metrics) {
+    std::vector<Real> values;
+    for(const auto& metric:metrics) {
+        require(metric.hasValue(),"Finite L3 fixture has an undefined metric");
+        values.push_back(metric.value());
+    }
+    return values;
+}
 void rollback(AdaptiveMfaSession& actual,const ref::Session& expected,const AdaptiveFrameInput& good) {
     const HarmonicMatrix before_primary=actual.primaryCoefficients().values();
     std::array<HarmonicMatrix,4> before_baselines;
     for(std::size_t j=0;j<4;++j)before_baselines[j]=actual.updateRateBaselines()[j].values();
-    auto bad=good; bad.truth=test_support::motionValue(Vector3::UnitX(),Vector3::Zero());
+    // DEC-R6-03后，指标缺测不再伪装成求解失败；保留真实空观测失败的原子回滚。
+    auto bad=good; bad.observations=FlowField{};
     const auto failed=actual.processFrame(bad);
-    require(!failed.hasValue()&&failed.error().code==ExperimentErrorCode::SolverFailed,"Real comparison angle failure");
-    bool undefined=false;
-    for(const auto& cause:failed.error().detail.causes)undefined|=cause.code=="UndefinedAngle";
-    require(undefined,"Preserve real UndefinedAngle root");
+    require(!failed.hasValue()&&failed.error().code==ExperimentErrorCode::SolverFailed,"Real comparison solve failure");
+    bool empty=false;
+    for(const auto& cause:failed.error().detail.causes)empty|=cause.code=="EmptyInput";
+    require(empty,"Preserve real EmptyInput root");
     compareState(actual,expected,"Independent state after failed frame");
     const auto same=[](const HarmonicMatrix& a,const HarmonicMatrix& b) {
         return std::memcmp(a.data(),b.data(),static_cast<std::size_t>(a.size())*sizeof(double))==0;
@@ -314,7 +323,7 @@ void sequence(std::size_t mode_index,std::size_t stream,std::ostream& reference,
         std::vector<Real> wanted_translation_errors,wanted_rotation_errors;
         for(const auto& comparison:model.comparisons) {
             wanted_translation_errors.push_back(ref::angleDegrees(vector(in.truth.translation()),comparison.translation));
-            wanted_rotation_errors.push_back(ref::angleDegrees(vector(in.truth.rotation()),comparison.rotation));
+            wanted_rotation_errors.push_back(ref::rotationErrorDegrees(vector(in.truth.rotation()),comparison.rotation));
         }
         writeRecord(reference,mode_index,stream,frame,field,r,wanted_inputs,wanted_steps,expected,
                     wanted_translation_errors,wanted_rotation_errors,prepared.noise);
@@ -322,8 +331,8 @@ void sequence(std::size_t mode_index,std::size_t stream,std::ostream& reference,
         require(result.hasValue(),key+(result.hasValue()?"":" "+result.error().detail.message));
         const auto& output=result.value();
         writeRecord(actual_log,mode_index,stream,frame,prepared.actual_field,r,traced.inputs,traced.outputs,state(actual),
-                    {output.comparison_translation_error_deg.begin(),output.comparison_translation_error_deg.end()},
-                    {output.comparison_rotation_error_deg.begin(),output.comparison_rotation_error_deg.end()},prepared.noise);
+                    validMetrics(output.comparison_translation_error_deg),
+                    validMetrics(output.comparison_rotation_error_deg),prepared.noise);
         require(traced.outputs.size()==wanted_steps.size()&&traced.inputs.size()==wanted_inputs.size(),key+" solve count");
         for(std::size_t j=0;j<wanted_steps.size();++j) {
             values(traced.inputs[j],wanted_inputs[j],key+" prepared"+std::to_string(j));
@@ -336,8 +345,11 @@ void sequence(std::size_t mode_index,std::size_t stream,std::ostream& reference,
         for(std::size_t j=0;j<model.comparisons.size();++j) {
             values(vector(result.value().comparison_motion[j].translation()),model.comparisons[j].translation,key+" comparison t");
             values(vector(result.value().comparison_motion[j].rotation()),model.comparisons[j].rotation,key+" comparison w");
-            near(result.value().comparison_translation_error_deg[j],wanted_translation_errors[j],key+" t angle",true);
-            near(result.value().comparison_rotation_error_deg[j],wanted_rotation_errors[j],key+" w angle",true);
+            const auto& translation=result.value().comparison_translation_error_deg[j];
+            const auto& rotation=result.value().comparison_rotation_error_deg[j];
+            require(translation.hasValue()&&rotation.hasValue(),key+" metric validity");
+            near(translation.value(),wanted_translation_errors[j],key+" t angle",true);
+            near(rotation.value(),wanted_rotation_errors[j],key+" SO3 angle",true);
         }
         if(frame==first_frame) {
             AdaptiveMfaSession default_session(mode);
@@ -370,6 +382,12 @@ void sequence(std::size_t mode_index,std::size_t stream,std::ostream& reference,
     std::cout<<'\n';
 }
 void calibrateReference() {
+    near(ref::rotationErrorDegrees({0,0,0},{0,0,0}),0,"Reference identity rotations",true);
+    near(ref::rotationErrorDegrees({0,0,0},{0,0,ref::pi()/2}),90,"Reference quarter rotation",true);
+    near(ref::rotationErrorDegrees({ref::pi()/2,0,0},{ref::pi(),0,0}),90,
+         "Reference same axis different rotation magnitude",true);
+    near(ref::rotationErrorDegrees({0,0,ref::pi()},{0,0,-ref::pi()}),0,
+         "Reference opposite rotation-vector representations",true);
     // 原有独立Wolfram正/负均值L3；检查参考计算本身，非从生产输出生成Expected。
     const std::array<ref::Vec,9> directions{{{1,0,0},{0,1,0},{0,0,1},{-1,0,0},{0,-1,0},{0,0,-1},
         {0.6L,0.8L,0},{0,0.6L,0.8L},{0.8L,0,0.6L}}};

@@ -98,8 +98,18 @@ void sameOutput(const AdaptiveFrameResult& a,const AdaptiveFrameResult& b) {
         same(a.comparison_motion[i].translation(),b.comparison_motion[i].translation(),"comparison translation");
         same(a.comparison_motion[i].rotation(),b.comparison_motion[i].rotation(),"comparison rotation");
     }
-    require(a.comparison_translation_error_deg==b.comparison_translation_error_deg&&
-            a.comparison_rotation_error_deg==b.comparison_rotation_error_deg,"comparison angles");
+    for(const auto* pair:{&a.comparison_translation_error_deg,&a.comparison_rotation_error_deg}) {
+        const auto& other=pair==&a.comparison_translation_error_deg
+            ?b.comparison_translation_error_deg:b.comparison_rotation_error_deg;
+        require(pair->size()==other.size(),"Metric result count");
+        for(std::size_t i=0;i<pair->size();++i) {
+            const auto& x=(*pair)[i];const auto& y=other[i];
+            require(x.hasValue()==y.hasValue(),"Metric validity changed with schedule");
+            if(x.hasValue())require(x.value()==y.value(),"Metric value changed with schedule");
+            else require(x.error().code==y.error().code&&x.error().detail.message==y.error().detail.message,
+                         "Metric failure changed with schedule");
+        }
+    }
 }
 struct Record { AdaptiveFrameResult output; State state; };
 std::vector<Record> isolated(AdaptiveSessionMode mode,std::size_t stream) {
@@ -119,13 +129,17 @@ void injectedFailure(AdaptiveMfaSession& owner,const AdaptiveMfaSession& peer,
     const auto before=snapshot(owner),peer_before=snapshot(peer);
     auto bad=input(stream,index);
     if (stream==0) bad.observations=FlowField{};
-    else bad.truth=test_support::motionValue(bad.truth.translation(),Vector3::Zero());
+    else {
+        auto zero_flow=bad.observations.observations();
+        zero_flow.rightCols(3).setZero();
+        bad.observations=test_support::flowValue(zero_flow);
+    }
     const auto failed=owner.processFrame(bad);
     require(!failed.hasValue()&&failed.error().code==ExperimentErrorCode::SolverFailed,
             "Injected frame must fail");
     bool root=false;
     for (const auto& cause:failed.error().detail.causes)
-        root|=cause.domain=="NumericalErrorCode"&&cause.code==(stream==0?"EmptyInput":"UndefinedAngle");
+        root|=cause.domain=="NumericalErrorCode"&&cause.code==(stream==0?"EmptyInput":"ZeroNorm");
     require(root,"Wrong failure root");
     sameState(owner,before,"failed owner"); sameState(peer,peer_before,"failed peer");
     const auto skipped=owner.processFrame(input(stream,index+1));

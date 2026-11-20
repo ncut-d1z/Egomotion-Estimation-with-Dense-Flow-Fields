@@ -209,7 +209,7 @@ struct VerifiedStep final:estimators::IAdaptiveStepSolver {
             const std::string prefix=mode.comparisons==4||j==1?"allemit":"alleohne";
             const auto offset=row+(mode.comparisons==4?j*mode.frames:0);
             expected[prefix+"transfehler"][offset]+=angle(t,motion.translation);
-            expected[prefix+"rotfehler"][offset]+=angle(w,motion.rotation);
+            expected[prefix+"rotfehler"][offset]+=ref::rotationErrorDegrees(w,motion.rotation);
         }
         if(mode.comparisons==4)expected["akrot"][row]=std::sqrt(ref::dot(w,w))*180/ref::pi();
         if(mode.runs==8){if(run==0)ratio_first[row]=input.ratio;if(run+1==8)expected["rottransratio"][row]=input.ratio;}
@@ -254,9 +254,17 @@ std::string digest(const fs::path& p) {
     const int fd=::open(p.c_str(),O_RDONLY|O_NOFOLLOW|O_CLOEXEC);require(fd>=0,"Read MAT identity");
     const auto hash=io::sha256Fd(fd);::close(fd);require(hash.hasValue(),"SHA-256");return hash.value();
 }
-void verifySaved(const fs::path& root,const io::RunMatWriter& writer,Mode mode,const Fields& expected,std::ostream& evidence) {
+void verifySaved(const fs::path& root,const io::RunMatWriter& writer,const RunContext& context,
+                 Mode mode,const Fields& expected,std::ostream& evidence) {
     const auto manifest=readText(root/"manifest.json");const auto receipts=writer.fileEvidence();
-    require(receipts.size()==expected.size(),"Current save set");
+    require(receipts.size()==2*expected.size()+1,"Current save set and validity metadata");
+    require(!context.manifestDraft().files_writer_confirmed.empty()&&
+            context.manifestDraft().files_writer_confirmed.front()=="egomotion_metric_policy",
+            "Policy publication precedes data");
+    const auto policy=archive_reference::decodeIndependent(root/"egomotion_metric_policy.mat");
+    require(policy.name=="egomotion_metric_policy"&&policy.rows==1&&policy.cols==4&&
+            policy.values==std::vector<double>{1,1,1,static_cast<double>(mode.runs)},
+            "Independent metric-policy payload");
     for(const auto& field:expected) {
         const auto file=root/(field.first+".mat");const auto independent=archive_reference::decodeIndependent(file);
         const auto production=io::MatResultReader{}.readNamed(file,field.first);
@@ -265,10 +273,20 @@ void verifySaved(const fs::path& root,const io::RunMatWriter& writer,Mode mode,c
         require(independent.name==field.first&&independent.rows==mode.frames&&independent.cols==columns&&
             independent.storage_type==archive_reference::kDouble&&independent.values.size()==field.second.size(),"Independent MAT metadata");
         const auto& actual=production.value().values_column_major;
+        const auto validity_name="valid_"+field.first;
+        const auto validity=archive_reference::decodeIndependent(root/(validity_name+".mat"));
+        const auto validity_read=io::MatResultReader{}.readNamed(root/(validity_name+".mat"),validity_name);
+        require(validity.name==validity_name&&validity.rows==mode.frames&&validity.cols==columns&&
+                validity.values.size()==actual.size()&&validity_read.hasValue()&&
+                validity.values==validity_read.value().values_column_major,
+                "Independent same-shape validity readback");
         require(actual.size()==independent.values.size()&&std::memcmp(actual.data(),independent.values.data(),actual.size()*sizeof(double))==0,
             "Independent v5 decoder and production Reader bitwise agree");
         for(std::size_t i=0;i<actual.size();++i) {
-            if(i%mode.frames==0||i%mode.frames+1==mode.frames)require(actual[i]==0,"Source zero endpoints");
+            const bool endpoint=i%mode.frames==0||i%mode.frames+1==mode.frames;
+            if(endpoint)require(actual[i]==0,"Source zero endpoints");
+            require(validity.values[i]==(endpoint?0.0:(field.first=="rottransratio"?1.0:static_cast<double>(mode.runs))),
+                    "Complete synthetic data retains full planned count at every applicable cell");
             near(actual[i],field.second[i],kOutputMargin,"Published "+field.first+" index "+std::to_string(i),max_output);++published_values;
         }
         const auto hash=digest(file);bool receipt_found=false;
@@ -278,7 +296,7 @@ void verifySaved(const fs::path& root,const io::RunMatWriter& writer,Mode mode,c
         jsonArray(evidence,field.second);evidence<<",\"actual\":";jsonArray(evidence,actual);evidence<<"}\n";
     }
     std::size_t mats=0;for(const auto& entry:fs::directory_iterator(root))mats+=entry.path().extension()==".mat";
-    require(mats==expected.size(),"No historical extra MAT fields");
+    require(mats==2*expected.size()+1,"Only source fields, validity companions and policy are present");
 }
 void execute(Mode mode,const fs::path& base,const std::string& sha,std::ostream& nodes,std::ostream& arrays) {
     Scene fixture(mode);const simulation::MeanMagnitudeGaussianNoise noise;
@@ -307,7 +325,7 @@ void execute(Mode mode,const fs::path& base,const std::string& sha,std::ostream&
     const auto manifest=readText(root/"manifest.json");
     require(manifest.find(sha)!=std::string::npos&&manifest.find("synthetic-input:real-step-independent-delivery")!=std::string::npos&&
         manifest.find("\"completeness\":\"Complete\"")!=std::string::npos,"Persisted synthetic execution identity");
-    verifySaved(root,writer,mode,step.finalReference(),arrays);
+    verifySaved(root,writer,context,mode,step.finalReference(),arrays);
     std::cout<<"Delivery complete mode="<<mode.name<<" valid="<<valid<<" completed="<<result.completed
              <<" steps="<<step.calls<<" normal_draws="<<counts->calls<<'\n';
 }

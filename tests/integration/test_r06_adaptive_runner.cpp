@@ -1,8 +1,9 @@
 #include "../support/flow_fixture.hpp"
 #include "../support/coefficient_fixture.hpp"
 #include "../support/motion_fixture.hpp"
+#include "../support/adaptive_scalar_reference.hpp"
 // 跨 Runner/Session/Writer 的合同测试；替身运动不属于科学结果或 L3 Golden。
-// 默认600帧轨迹的零旋转必须失败；八次聚合使用设计§8.2的固定600行结果。
+// DEC-R6-02/03：原零旋转帧可评价；真实求解失败仍回滚，指标缺测保留固定分母。
 #include "adaptive_aggregation.hpp"
 #include "adaptive_publication.hpp"
 #include "egomotion/estimators/adaptive_step.hpp"
@@ -178,15 +179,18 @@ ReferenceTrajectory referenceTrajectory(const Mode& mode) {
     return {points.value(),motions.value()};
 }
 double angleDegrees(const Vector3& truth,const Vector3& result) {
-    // 与Session的 acos(normalized dot) 独立的同角 atan2 表达式。
     return std::atan2(truth.cross(result).norm(),truth.dot(result))*180.0/std::acos(-1.0);
+}
+double rotationErrorDegrees(const Vector3& truth,const Vector3& result) {
+    return static_cast<double>(adaptive_reference::rotationErrorDegrees(
+        {truth.x(),truth.y(),truth.z()},{result.x(),result.y(),result.z()}));
 }
 double expectedError(const Mode& mode,const trajectory::FrameKinematics& truth,
                      std::size_t row,std::size_t slot,bool rotation) {
     double sum=0;
     for(std::size_t run=0;run<mode.runs;++run){
         const auto motion=syntheticMotion(run,row+1,slot);
-        sum+=rotation?angleDegrees(truth.relative_rotation,motion.rotation()):
+        sum+=rotation?rotationErrorDegrees(truth.relative_rotation,motion.rotation()):
                       angleDegrees(truth.local_translation,motion.translation());
     }
     return sum/static_cast<double>(mode.runs);
@@ -202,7 +206,14 @@ void checkOutput(const Sandbox& sandbox,const Mode& mode,
     const auto reference=referenceTrajectory(mode);
     const auto receipts=sandbox.writer->fileEvidence();
     const auto names=expectedFields(mode);
-    require(receipts.size()==names.size(),"Wrong current-save MAT file count");
+    require(receipts.size()==2*names.size()+1,"Missing policy or validity MAT companion");
+    require(!sandbox.context->manifestDraft().files_writer_confirmed.empty()&&
+            sandbox.context->manifestDraft().files_writer_confirmed.front()=="egomotion_metric_policy",
+            "Metric policy must publish before source fields");
+    const auto policy=io::MatResultReader{}.readNamed(sandbox.path/"egomotion_metric_policy.mat","egomotion_metric_policy");
+    require(policy.hasValue()&&policy.value().info.dimensions==std::vector<std::size_t>{1,4}&&
+            policy.value().values_column_major==std::vector<double>{1,1,1,static_cast<double>(mode.runs)},
+            "Exact metric policy and planned-run identity");
     const auto manifest=textFile(sandbox.path/"manifest.json");
     double max_angle_error=0;
     for(std::size_t field=0;field<names.size();++field){
@@ -211,15 +222,24 @@ void checkOutput(const Sandbox& sandbox,const Mode& mode,
         const auto decoded=io::MatResultReader{}.readNamed(file,name);
         require(decoded.hasValue(),"Cannot read published current-save field");
         const auto& data=decoded.value();
+        const auto validity=io::MatResultReader{}.readNamed(sandbox.path/("valid_"+name+".mat"),"valid_"+name);
+        require(validity.hasValue()&&validity.value().info.dimensions==data.info.dimensions,
+                "Validity companion must match source shape");
         const auto columns=mode.kind==ExperimentKind::AdaptiveUpdateRates&&name!="akrot"?kRates:1;
         require(data.info.dimensions==std::vector<std::size_t>({mode.frames,columns}),"Output shape changed");
         for(std::size_t column=0;column<columns;++column)
             for(std::size_t row=0;row<mode.frames;++row){
                 const double actual=data.values_column_major[row+mode.frames*column];
-                if(row==0||row+1==mode.frames){require(actual==0.0,"Source endpoint zero overwritten");continue;}
+                const auto offset=row+mode.frames*column;
+                const double count=validity.value().values_column_major[offset];
+                if(row==0||row+1==mode.frames){require(actual==0.0&&count==0,"Source endpoint/invalid marker changed");continue;}
+                const auto expected_count=fixed_expected&&!fixed_expected->undefined_metrics.empty()
+                    ?fixed_expected->valid_counts.at(name)[offset]:(name=="rottransratio"?1:mode.runs);
+                require(count==static_cast<double>(expected_count),"Per-cell valid repetition count");
                 if(fixed_expected){
                     const double expected=fixed_expected->fields.at(name).values_column_major[row+mode.frames*column];
-                    require(actual==expected,"Fixed 600-row aggregation/publication value differs");
+                    require(std::isnan(expected)?std::isnan(actual):actual==expected,
+                            "Fixed 600-row aggregation/publication value differs");
                 }else if(name=="akrot"){
                     const double expected=reference.motions[row].relative_rotation.norm()*180.0/std::acos(-1.0);
                     require(std::abs(actual-expected)<=kContractAngleTolerance,"akrot angle/unit mismatch");
@@ -245,7 +265,7 @@ void checkOutput(const Sandbox& sandbox,const Mode& mode,
     }
     std::size_t actual_mats=0;
     for(const auto& file:fs::directory_iterator(sandbox.path))actual_mats+=file.path().extension()==".mat";
-    require(actual_mats==names.size(),"Runner wrote extra HistoricalOnly MAT fields");
+    require(actual_mats==2*names.size()+1,"Runner wrote unexpected fields or lost validity metadata");
     std::cout<<"max_contract_angle_error_deg="<<max_angle_error<<'\n';
 }
 void completeCase(const fs::path& root,const std::string& sha,const Mode& mode) {
@@ -272,6 +292,8 @@ void sourceFailureCase(const fs::path& root,const std::string& sha,const Mode& m
     RandomCounts counts;
     if(rng_failure)counts.fail_on_normal=7; // 第3条观测的x分量，保留0-based ray index=2。
     ScriptedStep selected(mode);
+    constexpr std::size_t injected_failure_frame=152,prior_valid_frames=150;
+    if(!rng_failure)selected.fail_on_call=prior_valid_frames*(mode.comparisons+1)+1;
     Sandbox sandbox(root,sha,mode,counts);
     experiments::ProductionExperimentRunner runner(&selected);
     const auto result=execute(runner,mode,*sandbox.context);
@@ -288,41 +310,41 @@ void sourceFailureCase(const fs::path& root,const std::string& sha,const Mode& m
              <<" steps="<<selected.calls<<" draws="<<counts.normal<<'\n'<<diagnostic;
     require(sandbox.publisher->publishNew("failure-diagnostic.jsonl",diagnostic).hasValue(),
             "Cannot retain actual failure diagnosis");
-    constexpr std::size_t first_undefined_frame=151,prior_valid_frames=149;
     const auto expected_steps=prior_valid_frames*(mode.comparisons+1)+1;
     const auto expected_draws=mode.kind==ExperimentKind::AdaptiveComparison?
         (prior_valid_frames+1)*kLevelFourDirections*kAxes:0;
     require(draft.completed==0&&draft.valid==(rng_failure?0:prior_valid_frames)&&
             draft.attempted==1&&draft.status!=RunStatus::Complete,"Partial progress counts were lost or promoted");
-    require(draft.undefined==(rng_failure?0:1),"Undefined source sample was hidden from RunContext");
+    require(draft.undefined==0,"Zero rotation is valid; a solver failure is not a missing metric");
     require(selected.calls==(rng_failure?0:expected_steps)&&
             counts.normal==(rng_failure?counts.fail_on_normal:expected_draws)&&counts.uniform==0,
             "Failure did not stop at exact solver/RNG call");
     require(sandbox.writer->fileEvidence().empty()&&!fs::exists(sandbox.path/"manifest.json"),
             "Incomplete eight-run data reached Writer or Complete Manifest");
-    require(!sandbox.context->publishCompleteOutcome().hasValue(),"Missing eighth sample passed Complete gate");
-    require(diagnostic.find(rng_failure?"InvalidRandomSample":"UndefinedAngle")!=std::string::npos&&
+    require(!sandbox.context->publishAdaptiveOutcome().hasValue(),"Unfinished solver repetitions passed Adaptive publication gate");
+    require(diagnostic.find(rng_failure?"InvalidRandomSample":"SingularSystem")!=std::string::npos&&
             diagnostic.find("run_matlab_1_based=1")!=std::string::npos&&
-            diagnostic.find("frame_matlab_1_based="+std::to_string(rng_failure?2:first_undefined_frame))!=std::string::npos,
+            diagnostic.find("frame_matlab_1_based="+std::to_string(rng_failure?2:injected_failure_frame))!=std::string::npos,
             "Error lost numerical cause or run/frame identity");
     if(!rng_failure){
         const auto reference=referenceTrajectory(mode);
-        require(reference.motions[first_undefined_frame-1].relative_rotation.norm()==0.0&&
-                syntheticMotion(0,first_undefined_frame,0).rotation().norm()>0,
-                "Undefined-angle diagnosis is not the actual zero truth vector");
+        require(reference.motions[150].relative_rotation.norm()==0.0&&
+                syntheticMotion(0,151,0).rotation().norm()>0,
+                "Fixture must cross the formerly undefined zero-rotation frame before real solve failure");
     }
     require(sandbox.context->publishFailureRecord(result.error()).hasValue(),"Cannot persist failure audit");
     const auto manifest=textFile(sandbox.path/"manifest.json");
     require(manifest.find(rng_failure?"\"completeness\":\"Failed\"":"\"completeness\":\"Incomplete\"")!=std::string::npos&&
             manifest.find("\"expected_repetitions\":"+std::to_string(mode.runs)+",")!=std::string::npos&&
-            manifest.find(rng_failure?"\"undefined\":0,":"\"undefined\":1,")!=std::string::npos&&
+            manifest.find("\"undefined\":0,")!=std::string::npos&&
             manifest.find("\"mat_files\":[]")!=std::string::npos,"Failure audit changed divisor or invented MAT output");
-    std::cout<<"PASS "<<(rng_failure?"RNG-failure":"source-undefined-angle")<<" steps="<<selected.calls
+    std::cout<<"PASS "<<(rng_failure?"RNG-failure":"zero-rotation-then-solver-failure")<<" steps="<<selected.calls
              <<" normal_draws="<<counts.normal<<" diagnostic="<<diagnostic;
 }
 
 AdaptiveData fixedRun(const Mode& mode,std::size_t one_based_run) {
     AdaptiveData data;data.frame_count=mode.frames;data.planned_runs=mode.runs;
+    data.valid_frames=mode.frames-2;
     const auto names=expectedFields(mode);
     for(std::size_t field=0;field<names.size();++field){
         DenseDoubleArray array;
@@ -331,10 +353,14 @@ AdaptiveData fixedRun(const Mode& mode,std::size_t one_based_run) {
         const std::size_t columns=mode.kind==ExperimentKind::AdaptiveUpdateRates&&names[field]!="akrot"?kRates:1;
         array.info.dimensions={mode.frames,columns};array.info.data_bytes=mode.frames*columns*sizeof(double);
         array.values_column_major.assign(mode.frames*columns,0);
+        auto& counts=data.valid_counts[names[field]];
+        counts.assign(mode.frames*columns,0);
         for(std::size_t column=0;column<columns;++column)
-            for(std::size_t row=1;row+1<mode.frames;++row)
+            for(std::size_t row=1;row+1<mode.frames;++row) {
                 array.values_column_major[row+mode.frames*column]=
                     static_cast<double>(4*one_based_run+2*field+column)+static_cast<double>(row)/1024.0;
+                counts[row+mode.frames*column]=1;
+            }
         data.fields.emplace(names[field],std::move(array));
     }
     return data;
@@ -343,6 +369,8 @@ AdaptiveData emptyAggregate(const Mode& mode) {
     auto data=fixedRun(mode,0);
     for(auto& field:data.fields)
         std::fill(field.second.values_column_major.begin(),field.second.values_column_major.end(),0.0);
+    for(auto& field:data.valid_counts)std::fill(field.second.begin(),field.second.end(),0);
+    data.valid_frames=0;
     return data;
 }
 void noteFixedRun(RunContext& context,const Mode& mode) {
@@ -351,7 +379,11 @@ void noteFixedRun(RunContext& context,const Mode& mode) {
     context.noteCompleted();
 }
 void requireUnchanged(const AdaptiveData& actual,const AdaptiveData& before) {
-    require(actual.completed_runs==before.completed_runs,"Rejected run changed completed count");
+    require(actual.completed_runs==before.completed_runs&&actual.valid_counts==before.valid_counts&&
+            actual.valid_frames==before.valid_frames&&actual.undefined_frames==before.undefined_frames&&
+            actual.repetition_fields.size()==before.repetition_fields.size()&&
+            actual.undefined_metrics.size()==before.undefined_metrics.size(),
+            "Rejected run changed counters or retained repetition identity");
     for(const auto& field:before.fields)
         require(actual.fields.at(field.first).values_column_major==field.second.values_column_major,
                 "Rejected run partially modified aggregate");
@@ -405,7 +437,7 @@ void fixedComparisonIncomplete(const fs::path& root,const std::string& sha) {
         requireUnchanged(aggregate,before);
         const auto outcome=experiments::detail::finishAdaptive(finished,*sandbox.context,kComparison.kind);
         require(!outcome.hasValue()&&sandbox.writer->fileEvidence().empty()&&
-                !sandbox.context->publishCompleteOutcome().hasValue(),"Partial aggregate reached MAT/Complete");
+                !sandbox.context->publishAdaptiveOutcome().hasValue(),"Partial aggregate reached MAT/Adaptive publication");
         require(sandbox.context->publishFailureRecord(outcome.error()).hasValue(),"Partial audit did not persist");
         const auto& draft=sandbox.context->manifestDraft();
         require(draft.completed==completed&&draft.attempted==completed+1&&draft.valid==completed*(kFrames-2)&&
@@ -446,11 +478,77 @@ void fixedComparisonIncomplete(const fs::path& root,const std::string& sha) {
     require(sandbox.context->publishFailureRecord(zero_runs.error()).hasValue(),"Zero-count failure audit failed");
     std::cout<<"PASS fixed incomplete prefixes 0..7, invalid eighth ratio/shape, atomic retry and ninth-run rejection\n";
 }
+void fixedComparisonMetricGaps(const fs::path& root,const std::string& sha) {
+    RandomCounts counts;Sandbox sandbox(root,sha,kComparison,counts);
+    auto aggregate=emptyAggregate(kComparison);
+    constexpr std::size_t translation_row=17,ratio_row=42;
+    for(std::size_t run=1;run<=kRuns;++run) {
+        auto one=fixedRun(kComparison,run);
+        const bool missing_translation=run==3,missing_ratio=run==kRuns;
+        if(missing_translation||missing_ratio) {
+            const std::string name=missing_translation?"allemittransfehler":"rottransratio";
+            const auto row=missing_translation?translation_row:ratio_row;
+            one.fields.at(name).values_column_major[row]=std::numeric_limits<double>::quiet_NaN();
+            one.valid_counts.at(name)[row]=0;
+            ErrorDetail reason;reason.stage=ErrorStage::Solve;
+            reason.message=missing_translation?"Fixed zero translation direction":"Fixed undefined ideal component ratio";
+            one.undefined_metrics.push_back({name,run,row+1,1,
+                {NumericalErrorCode::UndefinedAngle,std::move(reason)}});
+            --one.valid_frames;++one.undefined_frames;
+        }
+        sandbox.context->noteAttempt();
+        for(std::size_t row=1;row+1<kFrames;++row) {
+            if((missing_translation&&row==translation_row)||(missing_ratio&&row==ratio_row))
+                sandbox.context->noteUndefined();
+            else sandbox.context->noteValid();
+        }
+        sandbox.context->noteCompleted();
+        require(experiments::detail::accumulateCompleteAdaptiveRun(aggregate,one).hasValue(),
+                "A complete solve with a marked metric gap must be retained");
+    }
+    auto finished=experiments::detail::finishAdaptiveAggregation(std::move(aggregate),true);
+    require(finished.hasValue(),"Completed eight solves with gaps must form a partial-valid result");
+    const auto& data=finished.value();
+    require(data.completed_runs==8&&data.repetition_fields.size()==8&&data.undefined_metrics.size()==2,
+            "Preserve all repetitions and exact missing reasons");
+    require(data.valid_frames==8*(kFrames-2)-2&&data.undefined_frames==2,
+            "Frame validity ledger must not discard missing observations");
+    require(data.valid_counts.at("allemittransfehler")[translation_row]==7&&
+            std::isnan(data.fields.at("allemittransfehler").values_column_major[translation_row]),
+            "Seven valid values must not be divided by seven or by eight to fabricate an average");
+    require(data.valid_counts.at("rottransratio")[ratio_row]==0&&
+            std::isnan(data.fields.at("rottransratio").values_column_major[ratio_row]),
+            "Missing final-run ratio must not fall back to any earlier run");
+    for(std::size_t run=1;run<=8;++run) {
+        const auto& raw=data.repetition_fields[run-1].at("allemittransfehler").values_column_major;
+        require(run==3?std::isnan(raw[translation_row]):
+                raw[translation_row]==4*static_cast<double>(run)+static_cast<double>(translation_row)/1024,
+                "All raw valid and missing per-run values must remain at their source indices");
+    }
+    require(data.fields.at("allemittransfehler").values_column_major[translation_row+1]==
+            18.0+static_cast<double>(translation_row+1)/1024,
+            "Neighbouring fully valid cell keeps the original eight-run average");
+    const auto outcome=experiments::detail::finishAdaptive(finished,*sandbox.context,kComparison.kind);
+    require(outcome.hasValue()&&outcome.value().status==RunStatus::Incomplete&&
+            outcome.value().completed==8&&outcome.value().failed==0&&outcome.value().undefined==2,
+            "Metric gaps yield a delivered Incomplete outcome without converting solves into failures");
+    checkOutput(sandbox,kComparison,&data);
+    const auto manifest=textFile(sandbox.path/"manifest.json");
+    require(manifest.find("egomotion-run-manifest-v2")!=std::string::npos&&
+            manifest.find("\"completeness\":\"Incomplete\"")!=std::string::npos&&
+            manifest.find("Fixed zero translation direction")!=std::string::npos&&
+            manifest.find("Fixed undefined ideal component ratio")!=std::string::npos&&
+            manifest.find("null")!=std::string::npos&&manifest.find(":NaN")==std::string::npos&&
+            manifest.find("[NaN")==std::string::npos&&manifest.find(",NaN")==std::string::npos&&
+            manifest.find(":nan")==std::string::npos&&manifest.find("[nan")==std::string::npos&&
+            manifest.find(",nan")==std::string::npos,
+            "Versioned Manifest must preserve missing values and reasons using valid JSON");
+}
 void fixedUpdateSession(const fs::path& root,const std::string& sha) {
     RandomCounts counts;Sandbox sandbox(root,sha,kUpdateRates,counts);
     ScriptedStep step(kUpdateRates);
     estimators::AdaptiveMfaSession session(estimators::AdaptiveSessionMode::UpdateRates,&step);
-    auto data=emptyAggregate(kUpdateRates);
+    auto data=fixedRun(kUpdateRates,0);
     const Vector3 true_translation(1,2,3),true_rotation(1,-2,3);
     for(std::size_t row=1;row+1<kFrames;++row){
         estimators::AdaptiveFrameInput input;
@@ -461,10 +559,12 @@ void fixedUpdateSession(const fs::path& root,const std::string& sha) {
         require(frame.hasValue(),"Fixed nonzero-truth UpdateRates Session failed");
         for(std::size_t column=0;column<kRates;++column){
             const auto motion=syntheticMotion(0,row+1,column);
-            const double t=frame.value().comparison_translation_error_deg[column];
-            const double r=frame.value().comparison_rotation_error_deg[column];
+            const auto& translation=frame.value().comparison_translation_error_deg[column];
+            const auto& rotation=frame.value().comparison_rotation_error_deg[column];
+            require(translation.hasValue()&&rotation.hasValue(),"Fixed Session metrics must be valid");
+            const double t=translation.value(),r=rotation.value();
             require(std::abs(t-angleDegrees(true_translation,motion.translation()))<=kContractAngleTolerance&&
-                    std::abs(r-angleDegrees(true_rotation,motion.rotation()))<=kContractAngleTolerance,
+                    std::abs(r-rotationErrorDegrees(true_rotation,motion.rotation()))<=kContractAngleTolerance,
                     "Full 600-frame fixed Session angle/column changed");
             data.fields.at("allemittransfehler").values_column_major[row+kFrames*column]=t;
             data.fields.at("allemitrotfehler").values_column_major[row+kFrames*column]=r;
@@ -500,8 +600,9 @@ int main(int argc,char** argv) {
             record("fixed-update-session",[&]{fixedUpdateSession(root,sha);});
         }else if(mode=="incomplete"){
             record("fixed-incomplete-aggregate",[&]{fixedComparisonIncomplete(root,sha);});
+            record("fixed-metric-gaps",[&]{fixedComparisonMetricGaps(root,sha);});
             record("RNG-failure",[&]{sourceFailureCase(root,sha,kComparison,true);});
-        }else if(mode=="undefined"){
+        }else if(mode=="undefined"||mode=="zero-rotation"){
             for(const auto& selected:{kComparison,kUpdateRates})
                 record(selected.name,[&]{sourceFailureCase(root,sha,selected,false);});
         }else{

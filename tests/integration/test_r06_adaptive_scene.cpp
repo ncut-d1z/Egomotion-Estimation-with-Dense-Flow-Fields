@@ -1,5 +1,6 @@
 #include "../support/coefficient_fixture.hpp"
 #include "../support/motion_fixture.hpp"
+#include "../support/adaptive_scalar_reference.hpp"
 // 合成场景贯穿真实Runner/Session/聚合/发布；不是原MATLAB或科学实验Golden。
 #include "egomotion/experiments/production_runner.hpp"
 #include "egomotion/experiments/run_context.hpp"
@@ -203,18 +204,33 @@ Result<RunOutcome,ExperimentErrorCode> run(ProductionExperimentRunner& runner,Mo
     return runner.runAdaptiveUpdateRates({},context);
 }
 void verifyFields(Mode mode,const Writer& writer) {
-    require(writer.arrays.size()==(mode.slots==5?3u:(mode.runs==8?5u:4u)),"Exact current-save set");
+    const auto source_fields=mode.slots==5?3u:(mode.runs==8?5u:4u);
+    require(writer.arrays.size()==2*source_fields+1,"Source fields plus policy and same-shape validity companions");
+    require(writer.receipts.front().variable=="egomotion_metric_policy","Policy publishes first");
     for(const auto& [name,array]:writer.arrays){
-        const auto columns=name=="akrot"||mode.slots==3?1u:4u;
+        if(name=="egomotion_metric_policy") {
+            require(array.info.dimensions==std::vector<std::size_t>{1,4}&&
+                    array.values_column_major==std::vector<double>{1,1,1,static_cast<double>(mode.runs)},
+                    "Synthetic output carries explicit metric and repetition policy");
+            continue;
+        }
+        const bool validity=name.rfind("valid_",0)==0;
+        const auto source=validity?name.substr(6):name;
+        const auto columns=source=="akrot"||mode.slots==3?1u:4u;
         require(array.info.dimensions==std::vector<std::size_t>{mode.frames,columns},"Source column-major shape");
         for(std::size_t c=0;c<columns;++c)for(std::size_t r=0;r<mode.frames;++r){
             double expected=0;
             if(r>0&&r+1<mode.frames){
-                if(name=="rottransratio")expected=0.125; // 最后第8轮，不是八轮比值的均值。
-                else if(name=="akrot")expected=57.2957795130823208768;
-                else if(mode.slots==5)expected=std::array<double,4>{{0,90,180,90}}[c];
-                else if(name=="allemittransfehler")expected=mode.runs==8?45:0;
-                else if(name=="allemitrotfehler")expected=0;
+                if(validity)expected=source=="rottransratio"?1:static_cast<double>(mode.runs);
+                else if(source=="rottransratio")expected=0.125; // 最后第8轮，不是八轮比值的均值。
+                else if(source=="akrot")expected=57.2957795130823208768;
+                else if(source.find("rotfehler")!=std::string::npos) {
+                    const std::array<adaptive_reference::Vec,4> rates{{{0,0,1},{1,0,0},{0,0,-1},{0,1,0}}};
+                    const auto estimate=mode.slots==5?rates[c]:
+                        (source=="allemitrotfehler"?adaptive_reference::Vec{0,0,1}:adaptive_reference::Vec{1,0,0});
+                    expected=static_cast<double>(adaptive_reference::rotationErrorDegrees({0,0,1},estimate));
+                }else if(mode.slots==5)expected=std::array<double,4>{{0,90,180,90}}[c];
+                else if(source=="allemittransfehler")expected=mode.runs==8?45:0;
                 else expected=90;
             }
             near(array.values_column_major[c*mode.frames+r],expected);

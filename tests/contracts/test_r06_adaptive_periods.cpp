@@ -87,9 +87,11 @@ void verifyOneSuccessfulFrame(AdaptiveMfaSession& session,
               "Period baseline solver input uses wrong MATLAB frame or refresh order");
         check(same(session.updateRateBaselines()[j].values()(0,0),expected),
               "Comparison dumi result was committed or source refresh order changed");
-        check(same(observed.value().comparison_translation_error_deg[j],0.0)&&
-              same(observed.value().comparison_rotation_error_deg[j],0.0),
-              "Synthetic identical truth/estimate directions must have zero angular error");
+        const auto& translation=observed.value().comparison_translation_error_deg[j];
+        const auto& rotation=observed.value().comparison_rotation_error_deg[j];
+        check(translation.hasValue()&&rotation.hasValue()&&
+              same(translation.value(),0.0)&&same(rotation.value(),0.0),
+              "Identical translation directions and rotations must have valid zero error");
     }
     check(same(fake.received_primary_coefficient[prior_calls+4],main_before),
           "Primary must run using the current pre-commit main coefficients");

@@ -30,9 +30,27 @@ inline Vec unit(const Vec& v) {
     return {v[0]/length, v[1]/length, v[2]/length};
 }
 inline Real angleDegrees(const Vec& a, const Vec& b) {
-    const Real cosine = dot(unit(a), unit(b));
-    if (std::abs(cosine) > 1) throw std::runtime_error("Reference acos outside domain");
-    return std::acos(cosine) * 180 / pi(); // 不夹断、不隐藏未定义角度。
+    const auto x=unit(a),y=unit(b);
+    const auto perpendicular=cross(x,y);
+    return std::atan2(std::sqrt(dot(perpendicular,perpendicular)),dot(x,y))*180/pi();
+}
+// DEC-R6-02：每帧旋转向量代表Exp(w)，用独立四元数乘法核对SO(3)测地角。
+// 此参考不调用Eigen/Sophus或生产指标函数；零向量映射单位旋转。
+inline Vector<4> rotationQuaternion(const Vec& vector) {
+    const Real length=std::sqrt(dot(vector,vector));
+    if(!std::isfinite(length))throw std::runtime_error("Reference nonfinite rotation");
+    if(length==0)return {1,0,0,0};
+    const Real scale=std::sin(length/2)/length;
+    return {std::cos(length/2),scale*vector[0],scale*vector[1],scale*vector[2]};
+}
+inline Real rotationErrorDegrees(const Vec& a,const Vec& b) {
+    const auto x=rotationQuaternion(a),y=rotationQuaternion(b);
+    const Real scalar=x[0]*y[0]+x[1]*y[1]+x[2]*y[2]+x[3]*y[3];
+    const Vec imaginary{
+        x[0]*y[1]-x[1]*y[0]-x[2]*y[3]+x[3]*y[2],
+        x[0]*y[2]+x[1]*y[3]-x[2]*y[0]-x[3]*y[1],
+        x[0]*y[3]-x[1]*y[2]+x[2]*y[1]-x[3]*y[0]};
+    return 2*std::atan2(std::sqrt(dot(imaginary,imaginary)),std::abs(scalar))*180/pi();
 }
 struct NoisyField {
     Field field;
