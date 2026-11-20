@@ -65,6 +65,11 @@ void numbers(std::ostream& out,const std::vector<double>& values) {
     for(std::size_t i=0;i<values.size();++i){if(i)out<<',';out<<values[i];}
     out<<']';
 }
+void flags(std::ostream& out,std::size_t count,bool value) {
+    out<<'[';
+    for(std::size_t i=0;i<count;++i){if(i)out<<',';out<<(value?"true":"false");}
+    out<<']';
+}
 void input(std::ostream& out,const fs::path& root,const std::string& variable,
            const std::string& role) {
     out<<"{\"path\":";jsonString(out,(root/(variable+".mat")).string());
@@ -81,7 +86,9 @@ struct Oracle {
         require(out.good(),"Cannot create oracle JSON");
         out<<"{\"schema\":\"egomotion-analysis-v1\",\"source_analysis_blob\":\""
            <<(rates?"67cb613328dec10105a6c383ce17025c4901e4c9":
-                     "3924038f0ccd70de5ea7b60c589afe166da9c8fb")<<"\",\"curves\":[";
+                     "3924038f0ccd70de5ea7b60c589afe166da9c8fb")
+           <<"\",\"metric_policy\":\"historical-adaptive-direction-acos\","
+             "\"planned_repetitions\":0,\"curves\":[";
     }
     void curve(const std::string& id,const std::string& panel,Bounds range,
                const std::string& variable,const std::vector<double>& y,bool rates,
@@ -93,11 +100,20 @@ struct Oracle {
         out<<",\"x_unit\":\"MATLAB 1-based frame\",\"y_unit\":";
         jsonString(out,variable=="rottransratio"?"rot/trans flow ratio":"angle error in degree");
         out<<",\"x_scale\":\"linear\",\"y_scale\":\""<<(rates?"linear":"log")
-           <<"\",\"source_begin_matlab\":"<<range.first<<",\"source_end_matlab\":"<<range.last
+           <<"\",\"metric_semantics\":";
+        jsonString(out,variable=="rottransratio"?"source-rotational-translational-flow-ratio":
+            (variable.find("rotfehler")!=std::string::npos?
+             "historical-rotation-direction-acos-degrees":
+             "historical-translation-direction-acos-degrees"));
+        out<<",\"source_begin_matlab\":"<<range.first<<",\"source_end_matlab\":"<<range.last
            <<",\"smoothing_half_window\":"<<half<<",\"x\":[";
         for(auto k=range.first;k<=range.last;++k){if(k!=range.first)out<<',';out<<k;}
         out<<"],\"y\":";numbers(out,y);
+        // 无marker的有限历史夹具：全部值有效，不声明新合同的结构端点。
+        out<<",\"defined\":";flags(out,y.size(),true);
+        out<<",\"structural_endpoint\":";flags(out,y.size(),false);
         out<<",\"smoothing_full\":";numbers(out,full);
+        out<<",\"smoothing_defined\":";flags(out,full.size(),true);
         out<<",\"helper_source_blob_shas\":[";
         if(half>0)out<<"\"eced66659205a6386ec84723e37a46517d06c017\"";
         out<<"]";
