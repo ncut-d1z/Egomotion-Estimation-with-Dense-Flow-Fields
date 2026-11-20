@@ -1,5 +1,7 @@
 # Egomotion Estimation with Dense Flow Fields
 
+> **2026-11-20 R6 接续**：按所有者已确认的 [DEC-R6-01～04](docs/decisions/PROJECT_OWNER_DECISIONS_2026-11-20.md)，实现稳定平移方向角、SO(3) 旋转测地角、Session 指标有效性与求解状态分离，以及方案 B 的部分有效 MAT/Manifest/分析输出。新 Adaptive 输出带版本标记与有效重复次数；新旋转指标不能与历史“旋转轴方向角”直接混用。当前验证状态与环境限制见 [本轮记录](docs/reviews/R6_METRIC_DECISIONS_IMPLEMENTATION_2026-11-20.md)。下面 2026-11-18 的 73/72 项结果只证明其固定旧 SHA，不能外推到本轮实现；科学复现、最终数值资格与正式验收继续延期。
+
 A planned **C++17 reimplementation that directly reads the original MATLAB MAT files** of the scripts accompanying the 2015 research paper *Insect-Inspired Self-Motion Estimation with Dense Flow Fields—An Adaptive Matched Filter Approach*.
 
 > **Permanent evidence policy:** Running MATLAB/Octave or collecting original MATLAB L1 execution traces is **not required** for design, coding, verification, or release. The original scripts are read-only specifications; numerical evidence will use the preserved MAT results (L2), independently checked analytic/reference implementations (L3), and statistical comparisons (L4). See [No MATLAB Execution Policy](docs/golden/NO_MATLAB_EXECUTION_POLICY.md). This change does not authorize C++ builds/tests or imply any numerical acceptance.

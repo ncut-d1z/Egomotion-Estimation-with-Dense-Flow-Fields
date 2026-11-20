@@ -1,5 +1,7 @@
 # 数值一致性证据汇总（NUMERICAL_EQUIVALENCE）
 
+> **2026-11-20 指标版本边界**：所有者批准 DEC-R6-01～04，Adaptive 平移方向角改为稳定 atan2，旋转误差改为 SO(3) 矩阵测地角；新输出标记 `egomotion_metric_policy=[1,1,1,planned_repetitions]`。旧 `3985b05` 等版本的 `abs(acos(c))` / 旋转轴方向角拒绝路径和数值报告保留为历史证据，不能据此宣称新指标已通过同一数值验收。新版本实际执行结果单列于 [本轮记录](reviews/R6_METRIC_DECISIONS_IMPLEMENTATION_2026-11-20.md)。缺测均值不改固定分母，旧 MAT 保持原字节；完整科学实验、L4、最终数值资格继续延期。
+
 `[AI-EDIT]`，2026-11-18。对应 [PLAN P10.6](PLAN.md)、`REQ-NF-NUM-001/002`；本文件汇总已执行证据，**不是数值等价验收、DEC-005 批准或完整论文复现声明**。没有运行 MATLAB/Octave，亦不要求取得 L1；参考级别按 [无需 MATLAB 执行政策](golden/NO_MATLAB_EXECUTION_POLICY.md) 区分。
 
 ## 当前可支持的结论
