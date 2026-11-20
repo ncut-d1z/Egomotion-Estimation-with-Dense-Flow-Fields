@@ -31,9 +31,38 @@ UpdateRates 原分析需要但当前 save 未包含的 `rottransratio` 仍是已
 
 ## 验证状态
 
-源代码与测试源码已静态核对，实际执行结果将在完成远程检查点后登记。当前工作区可见 C++ 编译器及已有 Eigen 头文件；未发现 CMake、matio 或 Sophus 的可用开发依赖。没有安装或下载依赖，也没有用替身替换依赖来声称全工程通过。
+**受测源码：`594a1b11f91028cb7549fef0ab1cd512ee4f7edb`。有限验证 12/12 通过，0 失败、0 阻塞；29 个生产翻译单元及 11 个测试二进制编译成功。** 本地普通 Git 推送因无写入凭据失败后，使用已连接 GitHub 账号按独立逻辑提交创建同内容树，并以非强制快进更新既有 PR 分支；每个源码树 SHA 均与本地提交核对一致。随后以 `git ls-remote` 核实远端受测 SHA，再从该 SHA 的隔离 worktree 编译执行。未改写旧远端历史、未合并 PR。
 
-计划在现有工具范围执行独立指标、Session、部分有效聚合/Manifest、Analyzer/SVG 的有限测试；不把这些结果标为全工程 CMake/CTest 或原科学实验复现。此前固定 `3985b056...` 的 ON 73/73、OFF 72/72 仅是旧版本证据，本轮不继承。
+环境为 **Debian 13.7 / Linux x86_64、GCC 14.2.0、Eigen 3.4.0、C++17 `-O2 -Wall -Wextra -Wpedantic`**。已有 Eigen 来自当前环境；未发现可用 CMake、matio 或 Sophus 开发依赖。没有安装或下载依赖，也没有造替身依赖。本次直接使用已有编译器运行显式子集，**没有执行 CMake/CTest，不构成全工程或原科学实验复现**。此前固定 `3985b056...` 的 ON 73/73、OFF 72/72 不作为本轮通过证据。
+
+RunId：`r6-metric-subset_20261120T043907Z_594a1b11f910_2`；执行时间为 **2026-11-20 12:39:07—12:40:33（Asia/Shanghai）**。命令：
+
+```bash
+bash scripts/verify_r6_metric_subset.sh \
+  /opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/site-packages/casadi/include/eigen3 \
+  /workspace/scratch/0cabe2e08188/r6-validation-594a1b11
+```
+
+工作目录为 `/workspace/scratch/0cabe2e08188/r6-verify-594a1b11`；日志目录内 `commands.tsv`、`tests.tsv`、各命令 `.command.sh/.meta/.stdout/.stderr/.exit`、`source-inputs.sha256`、`remote-checkpoint.json` 保存实际命令、远端身份、时间、输出和退出码。编译/测试退出码均为 0；编译与补充语法检查日志无 warning/error。执行前后源码字节和 Eigen 版本头 SHA-256 均一致，受测 worktree 保持干净。
+
+| 实际执行用例 | 结果与范围 |
+|---|---|
+| `r06_source_motion_errors` | 通过；973 项，覆盖旧 `1±ulp` 域外样本、极端尺度、零方向、SO(3) 零/幅值/非共轴/近 π。 |
+| `r06_adaptive_periods_atomic_commit` | 通过；周期与状态提交合同。 |
+| `r06_coefficient_policy_composition` | 通过；48,523 项策略组合检查。 |
+| `r06_real_session_interleaving` | 通过；11,049 项、252 成功帧与 12 拒绝帧。 |
+| `r06_session_independent_multiframe` | 通过；299,768 项、252 帧、924 次真实 Step、24 回滚；最大指标绝对差 `3.47066125838679795379e-14` 度。 |
+| `r06_noisy_session_independent_multiframe` | 通过；290,951 项、252 帧、756 次真实 Step、24 回滚、9,072 次固定 normal；最大指标绝对差 `5.72181191316190052021e-14` 度。 |
+| `r06_partial_adaptive_output` | 通过；18,166 项，纯内存八轮聚合与 v2 发布门禁，包含一次缺测保留 count 7 / 均值 NaN、逐轮原值、拒绝缩分母及错误证据。 |
+| `r05_manifest_gate` | 通过；完整性、回执和错误发布合同，使用内存替身。 |
+| `r06_partial_analysis` | 通过；政策/次数核对、JSON null、缺测传播及拒绝非法输入。 |
+| `r06_analyzer_service_contract` | 通过；727 项、4 模式、40 个 Reader 故障。 |
+| `r06_analysis_segments_smoothing` | 通过；原分段与平滑合同。 |
+| `r06_svg_source_windows` | 通过；128 项，包含显式缺口、源视窗及新指标可见标签。 |
+
+另在同一受测 SHA 对 **13 个文件执行 `c++ -fsyntax-only`，全部退出 0、无诊断**：4 个生产文件（Adaptive Runner、entries、production runner、CLI application）和 9 个相关测试/辅助程序（Session contract、Runner、scene、真实 Step delivery、I/O faults、masked Writer、CLI values、frame14 trace、RunContext interleaving）。命令和结果保存在 `syntax/`；这只证明语法与接口可编译，不证明链接、MAT I/O 或真实 CLI 运行成功。
+
+真实 `RunMatWriter` 的新掩码读写、完整 CMake/CTest（SVG ON/OFF）、真实原轨迹 CLI 和完整交付尚未在新版本运行。完整 `r06_adaptive_session_transaction` 含 Sophus 场景依赖，整体未执行，没有裁剪测试或伪造通过。原始资料树仍为 `70ee155131c24a50169346d0ffbaff0c01b1c547`，无 `origin/**` 修改。
 
 ## 延期项与后续边界
 
