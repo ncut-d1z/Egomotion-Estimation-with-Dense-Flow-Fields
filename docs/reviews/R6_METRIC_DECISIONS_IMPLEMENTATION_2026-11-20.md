@@ -62,6 +62,18 @@ bash scripts/verify_r6_metric_subset.sh \
 
 另在同一受测 SHA 对 **13 个文件执行 `c++ -fsyntax-only`，全部退出 0、无诊断**：4 个生产文件（Adaptive Runner、entries、production runner、CLI application）和 9 个相关测试/辅助程序（Session contract、Runner、scene、真实 Step delivery、I/O faults、masked Writer、CLI values、frame14 trace、RunContext interleaving）。命令和结果保存在 `syntax/`；这只证明语法与接口可编译，不证明链接、MAT I/O 或真实 CLI 运行成功。
 
+### Session 指标有效性与回滚补充验证
+
+为让 DEC-R6-03 的关键状态合同在现有环境中实际执行，新增独立 `r06_session_metric_validity`，保留原完整 Session 测试。新增测试与 CMake/子集脚本注册已提交并在运行前核实远端 **`2ed5c2d95474eb34977d6998fa70330226437614`**。相对上述 `594a1b11...`，`include/`、`src/` 与 `origin/` 无差异；据此复用该已受测生产静态库，只编译、链接新增测试，没有重复构建未变的生产源码。
+
+**补充用例 1/1 通过：1,706 项检查、48 个成功帧、6 个求解失败回滚案例、3 个策略失败回滚案例，0 失败。** 覆盖三种 Session 模式下的零真平移、零估计平移、双零、后续有效指标恢复、零旋转/非零旋转测地角；纯指标缺测后仍提交主状态并推进帧号，随后比较/主求解或策略失败则逐字节保持全部五组系数与帧时钟，并允许同帧重试。测试使用真实 Session 和系数策略，Step 为可控替身；它验证状态合同，不冒充真实 Step 数值或原轨迹实验。
+
+编译参数、编译器及 Eigen 与主子集相同，编译与执行均退出 0，stderr 为空。执行时间为 **2026-11-20 12:50:13—12:50:16（Asia/Shanghai）**；工作目录 `/workspace/scratch/0cabe2e08188/r6-verify-session`，日志目录 `/workspace/scratch/0cabe2e08188/r6-session-validity-20261120`。该目录保存 `run.txt`、编译/执行命令与 stdout/stderr/exit、`inputs.sha256`、空的 `production-equivalence.diff` 以及执行前后干净工作树记录；生产静态库 SHA-256 为 `ac78cc22c6697790261aefe10b733ae817e3db0f485a09d878d34906d3b7fa95`，新增测试源码 SHA-256 为 `1b173e5aafed93eff5af3e72fbff8bb03ef1f759d85ed027648a2c141abac931`。
+
+**本轮实际执行共 13 个不同用例，证据由 `594a1b11...` 的 12 项和 `2ed5c2d...` 的补充 1 项组成。** 更新后的子集脚本已注册 13 项/12 个测试程序，但本轮没有在 `2ed5c2d...` 重新执行整份脚本，也没有把旧 12 项重复计为新测试。
+
+### 未执行范围
+
 真实 `RunMatWriter` 的新掩码读写、完整 CMake/CTest（SVG ON/OFF）、真实原轨迹 CLI 和完整交付尚未在新版本运行。完整 `r06_adaptive_session_transaction` 含 Sophus 场景依赖，整体未执行，没有裁剪测试或伪造通过。原始资料树仍为 `70ee155131c24a50169346d0ffbaff0c01b1c547`，无 `origin/**` 修改。
 
 ## 延期项与后续边界

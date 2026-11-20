@@ -2,7 +2,7 @@
 
 > **2026-11-20 R6 接续**：按所有者已确认的 [DEC-R6-01～04](docs/decisions/PROJECT_OWNER_DECISIONS_2026-11-20.md)，实现稳定平移方向角、SO(3) 旋转测地角、Session 指标有效性与求解状态分离，以及方案 B 的部分有效 MAT/Manifest/分析输出。新 Adaptive 输出带版本标记与有效重复次数；新旋转指标不能与历史“旋转轴方向角”直接混用。当前验证状态与环境限制见 [本轮记录](docs/reviews/R6_METRIC_DECISIONS_IMPLEMENTATION_2026-11-20.md)。下面 2026-11-18 的 73/72 项结果只证明其固定旧 SHA，不能外推到本轮实现；科学复现、最终数值资格与正式验收继续延期。
 
-> **本轮实际验证**：远端受测 `594a1b11f91028cb7549fef0ab1cd512ee4f7edb` 在 Debian 13.7 / GCC 14.2.0 / Eigen 3.4.0 编译 29 个生产文件、11 个测试程序，有限子集 **12/12 通过**；另 13 个文件编译器语法检查通过。当前环境缺少 CMake、matio、Sophus 开发依赖，未安装依赖、未执行完整 CMake/CTest 或真实新 MAT/CLI，不能将上述子集当作全工程验证。
+> **本轮实际验证**：远端受测 `594a1b11f91028cb7549fef0ab1cd512ee4f7edb` 在 Debian 13.7 / GCC 14.2.0 / Eigen 3.4.0 编译 29 个生产文件、11 个测试程序，有限子集 **12/12 通过**；另 13 个文件编译器语法检查通过。后续 `2ed5c2d95474eb34977d6998fa70330226437614` 在生产源码不变、复用已验证静态库的前提下，新增独立 Session 状态测试 **1/1 通过**（1,706 项、48 成功帧、6 求解回滚、3 策略回滚）。这是分两次运行的 12+1 项，不是完整 CMake/CTest。当前环境缺少 CMake、matio、Sophus 开发依赖，未安装依赖、未执行完整 CMake/CTest 或真实新 MAT/CLI，不能将上述子集当作全工程验证。
 
 A planned **C++17 reimplementation that directly reads the original MATLAB MAT files** of the scripts accompanying the 2015 research paper *Insect-Inspired Self-Motion Estimation with Dense Flow Fields—An Adaptive Matched Filter Approach*.
 

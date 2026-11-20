@@ -4,6 +4,8 @@
 
 **本轮实测**：远端检查点 `594a1b11f91028cb7549fef0ab1cd512ee4f7edb`，Debian 13.7 / GCC 14.2.0 / Eigen 3.4.0，29 个生产文件与 11 个测试程序编译成功，有限子集 **12/12 通过、0 失败/阻塞**；另 13 文件语法检查通过，日志无诊断。源码/依赖头摘要前后不变，原资料树 `70ee155...` 未改。RunId `r6-metric-subset_20261120T043907Z_594a1b11f910_2`；实际命令与明细见 [本轮记录](reviews/R6_METRIC_DECISIONS_IMPLEMENTATION_2026-11-20.md)。环境缺少 CMake/matio/Sophus，完整 CMake/CTest、真实新 MAT/CLI 未执行；没有安装依赖、没有继承旧73/72、没有运行完整科学实验。
 
+**Session 补充实测**：远端检查点 `2ed5c2d95474eb34977d6998fa70330226437614`，新增独立 `r06_session_metric_validity` **1/1 通过**：1,706 项、48 成功帧、6 求解回滚、3 策略回滚，编译/运行均退出 0。生产 `include/src` 与 `594a1b11...` 相同，复用其受测静态库；真实 Session/系数策略搭配可控 Step，直接验证指标缺测继续提交与真实求解/策略失败回滚。原完整 Session 测试保留且未执行。本轮为主子集 12 项加补充 1 项，未重新运行更新后的完整子集脚本；准确身份、命令与限制见 [补充验证](reviews/R6_METRIC_DECISIONS_IMPLEMENTATION_2026-11-20.md#session-指标有效性与回滚补充验证)。
+
 `[HUMAN-EXECUTE/APPROVE]` 所有者已确认 DEC-R6-01～04 并要求继续实现。源码覆盖稳定 atan2 平移方向角、SO(3) 旋转矩阵测地角、求解失败回滚/指标无定义继续、八轮固定分母与逐轮缺测证据、显式掩码 MAT、v2 Manifest、分析 JSON null 与 SVG 缺口。旧 Adaptive 写入接口不能绕过新指标声明；方案 B 成功交付返回实际 Complete/Incomplete，CLI 退出 0 表示交付成功，求解/输出故障仍分别走 5/6。逐项范围和当前实际验证见 [本轮记录](reviews/R6_METRIC_DECISIONS_IMPLEMENTATION_2026-11-20.md)，决定见 [所有者记录](decisions/PROJECT_OWNER_DECISIONS_2026-11-20.md)。下文旧 SHA 的完整 CTest 结果保留历史身份，不充当新版本通过证据。完整科学实验、最终容差/性能资格、冻结和发布继续延期，R6 总体验收未结案。
 
 ## 本次代码与构建验证请求交付复核（2026-11-18）
