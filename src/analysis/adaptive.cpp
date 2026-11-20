@@ -92,6 +92,7 @@ Segments fourSourceSegments(const std::vector<double>& ratio,double threshold) {
         if(x<threshold&&!zone) {
             if(j>=result.size()) {
                 ErrorDetail d;d.stage=ErrorStage::Analyze;
+                d.observation_index=matlab; // 原 MATLAB 1-based 帧号。
                 d.message="Too many threshold crossings for four source regions";
                 return Segments::failure({AnalysisErrorCode::InvalidSegment,std::move(d)});
             }
@@ -101,6 +102,7 @@ Segments fourSourceSegments(const std::vector<double>& ratio,double threshold) {
         if(x>threshold&&zone) {
             if(j>=result.size()) {
                 ErrorDetail d;d.stage=ErrorStage::Analyze;
+                d.observation_index=matlab; // 原 MATLAB 1-based 帧号。
                 d.message="Threshold start would exceed four source regions";
                 return Segments::failure({AnalysisErrorCode::InvalidSegment,std::move(d)});
             }
@@ -286,15 +288,22 @@ DatasetResult AdaptiveResultAnalyzer::analyzeSource(AnalysisKind kind,const std:
     if(marker) {
         const auto defined=maskColumn(ratio.value(),0);
         for(std::size_t matlab=50;matlab<=550;++matlab)
-            if(!defined[matlab-1])
-                return error(AnalysisErrorCode::InvalidSegment,
-                    "Declared missing rottransratio prevents the original four-region segmentation",
-                    root/"rottransratio.mat","rottransratio");
+            if(!defined[matlab-1]) {
+                ErrorDetail d;d.stage=ErrorStage::Analyze;
+                d.source_path=(root/"rottransratio.mat").string();d.variable="rottransratio";
+                d.observation_index=matlab; // 原 MATLAB 1-based 帧号。
+                d.message="Declared missing rottransratio prevents the original four-region segmentation";
+                return DatasetResult::failure({AnalysisErrorCode::InvalidSegment,std::move(d)});
+            }
     }
     const auto threshold=comparison?0.01:0.02;
     auto segments=fourSourceSegments(ratios,threshold);
-    if(!segments.hasValue())
-        return DatasetResult::failure(std::move(segments).error());
+    if(!segments.hasValue()) {
+        auto failure=std::move(segments).error();
+        failure.detail.source_path=(root/"rottransratio.mat").string();
+        failure.detail.variable="rottransratio";
+        return DatasetResult::failure(std::move(failure));
+    }
     out.source_analysis_blob=comparison?
         "3924038f0ccd70de5ea7b60c589afe166da9c8fb":
         "67cb613328dec10105a6c383ce17025c4901e4c9";
@@ -350,7 +359,8 @@ DatasetResult AdaptiveResultAnalyzer::analyzeSource(AnalysisKind kind,const std:
             const std::size_t half=halfwindows[col];
             if(half>0 && sub.size()<=2*half)
                 return error(AnalysisErrorCode::InvalidSegment,
-                             "Rotation segment too short for original smoothing window");
+                             "Rotation segment too short for original smoothing window",
+                             root/"allemitrotfehler.mat","allemitrotfehler");
             auto smoothing=smoothSource(sub,sub_mask,half,root/"allemitrotfehler.mat",
                                         "allemitrotfehler",s.begin);
             if(!smoothing.hasValue())return DatasetResult::failure(std::move(smoothing).error());

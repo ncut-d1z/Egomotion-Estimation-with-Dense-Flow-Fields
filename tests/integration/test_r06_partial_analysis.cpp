@@ -181,6 +181,10 @@ void comparison() {
     const auto unsegmented=analyze(reader,AnalysisKind::AdaptiveComparison);
     require(!unsegmented.hasValue()&&unsegmented.error().code==AnalysisErrorCode::InvalidSegment,
             "A ratio gap in 50:550 must explicitly prevent source segmentation");
+    const auto& reason=unsegmented.error().detail;
+    require(reason.stage==ErrorStage::Analyze&&reason.variable=="rottransratio"&&
+            reason.source_path==(root/"rottransratio.mat").string()&&reason.observation_index==151,
+            "Declared ratio gap retains its exact source and original MATLAB frame");
 }
 void smoothing() {
     auto absent=inputs(AnalysisKind::AdaptiveUpdateRates);

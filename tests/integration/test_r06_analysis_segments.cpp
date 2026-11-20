@@ -167,13 +167,46 @@ void verifyRatesSmoothing() {
 }
 void verifyRejections() {
     analysis::MatResultAnalyzer analyzer;
-    SyntheticReader all_high;
     const fs::path root("r06_invalid_zone");
-    populate(all_high,root,false,std::vector<double>(600,0.03));
-    auto rejected=analyzer.analyze(AnalysisKind::AdaptiveComparison,root,all_high);
-    require(!rejected.hasValue()&&
-            rejected.error().code==AnalysisErrorCode::InvalidSegment,
-            "Missing original four source regions must not silently be repaired");
+    for(const auto kind:{AnalysisKind::AdaptiveComparison,AnalysisKind::AdaptiveUpdateRates}) {
+        const bool rates=kind==AnalysisKind::AdaptiveUpdateRates;
+        SyntheticReader all_high;
+        populate(all_high,root,rates,std::vector<double>(600,0.03));
+        const auto rejected=analyzer.analyze(kind,root,all_high);
+        require(!rejected.hasValue()&&rejected.error().code==AnalysisErrorCode::InvalidSegment,
+                "Missing original four source regions must not silently be repaired");
+        const auto& incomplete=rejected.error().detail;
+        require(incomplete.stage==ErrorStage::Analyze&&
+                incomplete.source_path==(root/"rottransratio.mat").string()&&
+                incomplete.variable=="rottransratio"&&!incomplete.observation_index.has_value(),
+                "Incomplete segment boundaries retain their source without inventing a failing frame");
+
+        SyntheticReader extra_zone;
+        auto extra=sourceRatios();
+        for(std::size_t frame=500;frame<=519;++frame)extra[frame-1]=0.005;
+        populate(extra_zone,root,rates,std::move(extra));
+        const auto crossed=analyzer.analyze(kind,root,extra_zone);
+        require(!crossed.hasValue()&&crossed.error().code==AnalysisErrorCode::InvalidSegment,
+                "An extra region start must preserve the original segmentation rejection");
+        const auto& crossing=crossed.error().detail;
+        require(crossing.stage==ErrorStage::Analyze&&
+                crossing.source_path==(root/"rottransratio.mat").string()&&
+                crossing.variable=="rottransratio"&&crossing.observation_index==520,
+                "Extra region diagnostic retains the exact MATLAB 1-based crossing frame");
+    }
+
+    SyntheticReader short_zone;
+    auto short_ratio=sourceRatios();
+    for(std::size_t frame=51;frame<120;++frame)short_ratio[frame-1]=0.005;
+    populate(short_zone,root,true,std::move(short_ratio));
+    const auto short_segment=analyzer.analyze(AnalysisKind::AdaptiveUpdateRates,root,short_zone);
+    require(!short_segment.hasValue()&&short_segment.error().code==AnalysisErrorCode::InvalidSegment,
+            "Short rotation segment remains invalid for the fixed smoothing window");
+    const auto& short_detail=short_segment.error().detail;
+    require(short_detail.stage==ErrorStage::Analyze&&
+            short_detail.source_path==(root/"allemitrotfehler.mat").string()&&
+            short_detail.variable=="allemitrotfehler"&&!short_detail.observation_index.has_value(),
+            "A too-short whole segment identifies its rotation input without inventing one bad sample");
 
     SyntheticReader nonfinite;
     const fs::path bad_root("r06_invalid_ratio");
