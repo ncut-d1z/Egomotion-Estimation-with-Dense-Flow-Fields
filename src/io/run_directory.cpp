@@ -114,8 +114,12 @@ Result<std::unique_ptr<RunDirectory>,MatErrorCode> RunDirectory::create(
                         "Created RunId directory cannot be reopened safely",actual_root/id->text);
         // The owned fd anchors subsequent writes to the directory inode even
         // if an attacker replaces a path component after this point.
-        return ResultType::success(std::unique_ptr<RunDirectory>(
-            new RunDirectory(*id,actual_root,output.release(),run.release())));
+        // 路径或RunId复制仍可能抛出；构造成功前由局部RAII继续持有fd。
+        auto directory=std::unique_ptr<RunDirectory>(
+            new RunDirectory(*id,actual_root,output.get(),run.get()));
+        output.release();
+        run.release();
+        return ResultType::success(std::move(directory));
     }
     return fail(MatErrorCode::OutputExists,"Random RunId collision limit exceeded",actual_root);
 }
