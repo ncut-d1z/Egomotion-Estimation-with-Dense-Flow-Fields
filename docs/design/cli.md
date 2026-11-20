@@ -1,5 +1,7 @@
 # CLI 参数、退出码与诊断协议：详细设计草案
 
+> **2026-11-21 启动异常接续，未构建/未测试**：真实应用入口的参数构造、服务装配和工作目录获取也纳入既有 std::exception 回退，保留原 what()、OutputFailed/Output/退出6；未预留 RunId 时不虚构身份。直接入口与记录器入口复用同一处理，回归源码覆盖已删除 cwd 的正常失败返回及 application_returned 记录，见 [本批记录](../reviews/R6_STARTUP_MAT_SCAN_CONTINUATION_2026-11-21.md)。不改变信号终止及非标准异常的既有边界，正式冻结状态不变。
+
 > **2026-11-20 记录目录身份接续，未构建/未测试**：进程记录器成功创建独占目录后，若打开或确认该目录失败，保留原操作、errno 和实际记录路径；外层仅在已知 location 非空时附路径，碰撞或尚未创建目录的失败不冒认本次记录。退出码、私有目录/碰撞规则及失败证据保留不变，见 [本批记录](../reviews/R6_ILLUSTRATION_RECORD_CONTINUATION_2026-11-20.md)。目录路径不表示持久化已经确认，正式冻结状态不变。
 
 > **2026-11-20 实验异常记录接续，未构建/未测试**：已预留 RunId 且开始记录已确认后，Runner 抛出的 `std::exception` 由局部边界捕获，保留真实 RunId/原 `what()` 并进入现有失败 Manifest 和结束记录流程。保持原 OutputFailed/Output/退出6，不猜测数值类型、不虚增原因链；既有 Complete 和结束记录禁止覆盖。详见 [本批记录](../reviews/R6_FAILURE_BOUNDARY_CONTINUATION_2026-11-20.md)，正式冻结状态不变。

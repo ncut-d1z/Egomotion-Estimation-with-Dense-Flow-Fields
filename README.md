@@ -1,6 +1,8 @@
 # Egomotion Estimation with Dense Flow Fields
 
-> **最新接续：MAT 名称选择与字典指纹，仅代码（2026-11-20）**。原始 MAT 载荷的变量选择现与 matio 的首个 NUL 截断语义一致，防止选中变量绕过已有 single 存储拒绝规则；FNV 指纹固定 classic locale，保持报告字节稳定。必要回归仅准备源码。对照生产装配与 62 个 CMake 源路径，当前已列明的 R6 代码范围具备源码级闭合条件，未发现其它确定的未实现入口；依据和验证边界见 [本批记录](docs/reviews/R6_MAT_SELECTION_LOCALE_CONTINUATION_2026-11-20.md)。**构建/测试继续延期，没有新增运行证据；R6 总体验收未完成，PR #6 保持 Draft。**
+> **最新接续：启动异常与 MAT 扫描歧义，仅代码（2026-11-21）**。实际应用装配的标准异常现进入既有 OutputFailed/退出6回退；MAT 扫描在按名读取前拒绝重复后端名称，避免把首项结构冒充后续结构。两个既有目标补充回归源码，记录器目标增加真实入口链接；具体依据与边界见 [本批记录](docs/reviews/R6_STARTUP_MAT_SCAN_CONTINUATION_2026-11-21.md)。**构建/测试继续延期，没有新增运行证据；R6 总体验收未完成，PR #6 保持 Draft。**
+
+> **前批接续：MAT 名称选择与字典指纹，仅代码（2026-11-20）**。原始 MAT 载荷的变量选择与 matio 的首个 NUL 截断语义一致，补齐已有 single 存储拒绝规则；FNV 指纹固定 classic locale。该批核对生产装配与 62 个 CMake 源路径，当前已列明的代码范围具备源码级闭合条件；依据见 [前批记录](docs/reviews/R6_MAT_SELECTION_LOCALE_CONTINUATION_2026-11-20.md)。该结论不等于正确性或验收，构建/测试仍未执行。
 
 > **前批接续：输出目录异常所有权，仅代码（2026-11-20）**。修复 RunDirectory 在路径或 RunId 复制失败时可能提前释放并泄漏目录句柄的问题：构造成功后才移交所有权；补充逐分配点故障与正常析构回归源码。具体依据与限定范围见 [前批记录](docs/reviews/R6_DIRECTORY_OWNERSHIP_CONTINUATION_2026-11-20.md)。该批同样没有构建/测试证据。
 
