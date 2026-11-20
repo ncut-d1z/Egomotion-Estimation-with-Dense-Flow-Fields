@@ -49,15 +49,24 @@ bool rightAxis(const AnalysisSeries& s){
 }
 std::string primaryAxisLabel(const std::vector<const AnalysisSeries*>& curves,
                              bool marked_policy,bool logarithmic) {
+    std::vector<std::string> labels;
     if(marked_policy) {
         for(const auto* curve:curves) {
             if(rightAxis(*curve)||curve->y_unit.empty())continue;
             if(curve->metric_semantics=="rotation-so3-geodesic-degrees"||
-               curve->metric_semantics=="translation-direction-atan2-degrees")
-                return curve->y_scale=="log"?"log10("+curve->y_unit+")":curve->y_unit;
+               curve->metric_semantics=="translation-direction-atan2-degrees") {
+                const auto label=curve->y_scale=="log"?"log10("+curve->y_unit+")":curve->y_unit;
+                if(std::find(labels.begin(),labels.end(),label)==labels.end())labels.push_back(label);
+            }
         }
     }
-    return logarithmic?"log10(Y)":"Y";
+    if(labels.empty())return logarithmic?"log10(Y)":"Y";
+    std::string joined;
+    for(const auto& label:labels) {
+        if(!joined.empty())joined+="; ";
+        joined+=label;
+    }
+    return joined;
 }
 struct Bounds{
     double minimum=std::numeric_limits<double>::infinity();

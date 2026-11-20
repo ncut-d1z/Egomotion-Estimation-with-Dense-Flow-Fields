@@ -207,6 +207,15 @@ void declaredGaps(const fs::path& root) {
     check(log_svg.find("<text x=\"95\" y=\"54\" font-size=\"13\">log10(rotation SO(3) geodesic error in degree)</text>")
               !=std::string::npos,
           "Marked logarithmic primary axis visibly names its transform and metric");
+    auto mixed=logarithmic;
+    auto translation=mixed.curves.front();translation.name="translation-in-shared-panel";
+    translation.y_unit="translation direction error in degree";
+    translation.metric_semantics="translation-direction-atan2-degrees";
+    mixed.curves.push_back(translation);mixed.curves.push_back(mixed.curves.front());
+    const auto mixed_svg=render(root,"declared-gap-mixed-label",mixed);
+    check(mixed_svg.find("<text x=\"95\" y=\"54\" font-size=\"13\">log10(rotation SO(3) geodesic error in degree); log10(translation direction error in degree)</text>")
+              !=std::string::npos,
+          "Shared Adaptive panel visibly names both metrics without duplicate units");
     auto historical=data;historical.metric_policy="historical-adaptive-direction-acos";
     historical.curves[0].y[2]=3.0;historical.curves[0].defined.clear();
     historical.curves[0].y_unit="angle error in degree";
