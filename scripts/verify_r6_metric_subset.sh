@@ -81,7 +81,7 @@ executed_tests=0
 passed_tests=0
 failed_tests=0
 blocked_tests=0
-planned_tests=13
+planned_tests=14
 
 finish() {
     local result=$?
@@ -233,6 +233,7 @@ test_sources=(
     tests/integration/test_r06_session_interleaving.cpp
     tests/integration/test_r06_session_l3.cpp
     tests/integration/test_r06_partial_adaptive_output.cpp
+    tests/contracts/test_r06_adaptive_aggregation.cpp
     tests/contracts/test_r05_manifest.cpp
     tests/integration/test_r06_partial_analysis.cpp
     tests/integration/test_r06_analyzer_services.cpp
@@ -248,6 +249,7 @@ test_specs=(
     'r06_session_independent_multiframe:test_r06_session_l3:60s:sandbox'
     'r06_noisy_session_independent_multiframe:test_r06_session_l3:60s:noise'
     'r06_partial_adaptive_output:test_r06_partial_adaptive_output:60s:none'
+    'r06_adaptive_aggregation_evidence:test_r06_adaptive_aggregation:60s:none'
     'r05_manifest_gate:test_r05_manifest:30s:none'
     'r06_partial_analysis:test_r06_partial_analysis:60s:none'
     'r06_analyzer_service_contract:test_r06_analyzer_services:60s:sandbox'

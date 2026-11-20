@@ -818,6 +818,14 @@ if(BUILD_TESTING)
     set_tests_properties(r06_partial_adaptive_output PROPERTIES
         LABELS "r06;runner;partial-metrics;eight-runs;memory-only" TIMEOUT 60)
 
+    add_executable(test_r06_adaptive_aggregation tests/contracts/test_r06_adaptive_aggregation.cpp)
+    target_include_directories(test_r06_adaptive_aggregation PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/experiments")
+    target_link_libraries(test_r06_adaptive_aggregation PRIVATE egomotion_experiments)
+    target_compile_options(test_r06_adaptive_aggregation PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_adaptive_aggregation_evidence COMMAND test_r06_adaptive_aggregation)
+    set_tests_properties(r06_adaptive_aggregation_evidence PROPERTIES
+        LABELS "r06;runner;partial-metrics;eight-runs;memory-only;atomicity" TIMEOUT 60)
+
     add_executable(test_r06_kvd_stopping tests/integration/test_r06_kvd_stopping.cpp)
     target_link_libraries(test_r06_kvd_stopping PRIVATE egomotion_estimators)
     target_compile_options(test_r06_kvd_stopping PRIVATE -Wall -Wextra -Wpedantic)
