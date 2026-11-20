@@ -34,6 +34,33 @@ Result<AdaptiveFrameResult,ExperimentErrorCode> propagate(
     return Result<AdaptiveFrameResult,ExperimentErrorCode>::failure(
         wrapFailure(ExperimentErrorCode::SolverFailed,std::move(outer),child));
 }
+const char* nonFiniteStepField(const AdaptiveStepResult& step) {
+    if(!std::isfinite(step.error_mse))return "error_mse";
+    const auto& trace=step.trace;
+    if(!trace.near_raw.allFinite())return "trace.near_raw";
+    if(!trace.near_after_sign.allFinite())return "trace.near_after_sign";
+    if(!trace.near_normalized.allFinite())return "trace.near_normalized";
+    if(!std::isfinite(trace.original_near_mean))return "trace.original_near_mean";
+    if(!trace.m1.allFinite())return "trace.m1";
+    if(!trace.m2.allFinite())return "trace.m2";
+    if(!trace.m3.allFinite())return "trace.m3";
+    if(!trace.m4.allFinite())return "trace.m4";
+    if(!trace.rhs.allFinite())return "trace.rhs";
+    if(!trace.solved_motion.allFinite())return "trace.solved_motion";
+    if(!trace.system_matrix.allFinite())return "trace.system_matrix";
+    if(!trace.translation_raw.allFinite())return "trace.translation_raw";
+    if(!std::isfinite(trace.error_mse))return "trace.error_mse";
+    if(!trace.recomputed_near.allFinite())return "trace.recomputed_near";
+    return nullptr;
+}
+Result<AdaptiveFrameResult,ExperimentErrorCode> invalidStep(
+    const char* field,std::string message,std::size_t frame_index) {
+    ErrorDetail detail;
+    detail.stage=ErrorStage::Solve;
+    detail.message=std::string("Adaptive Step returned non-finite ")+field;
+    return propagate({NumericalErrorCode::NonFiniteResult,std::move(detail)},
+                     std::move(message),frame_index);
+}
 }  // namespace
 
 AdaptiveMfaSession::AdaptiveMfaSession(
@@ -117,6 +144,10 @@ AdaptiveMfaSession::processFrame(const AdaptiveFrameInput& frame) {
                                  "Adaptive comparison solve failed (baseline="+
                                      std::to_string(j)+")",
                                  frame.matlab_frame_index);
+            // 成功标志不能替代数值合同；不要求替身补齐空 trace 或重算中间量。
+            if(const auto* field=nonFiniteStepField(comparison.value()))
+                return invalidStep(field,"Adaptive comparison result invalid (baseline="+
+                                   std::to_string(j)+")",frame.matlab_frame_index);
             // For UpdateRates the first return (dumi) MUST be discarded.
             // In initialization/comparison the returned coeff is local to this
             // frame only (source anzahlitfuerini=1).
@@ -134,6 +165,9 @@ AdaptiveMfaSession::processFrame(const AdaptiveFrameInput& frame) {
             return propagate(primary_result.error(),
                              "Adaptive primary solve failed; state not committed",
                              frame.matlab_frame_index);
+        if(const auto* field=nonFiniteStepField(primary_result.value()))
+            return invalidStep(field,"Adaptive primary result invalid; state not committed",
+                               frame.matlab_frame_index);
         output.primary_step=std::move(primary_result).value();
         next_primary=output.primary_step.coefficients_next;
         // Construct the full success alternative BEFORE changing persistent

@@ -29,6 +29,8 @@ struct AdaptiveStepResult {
 
 // A narrow, read-only numerical step seam permits deterministic Session
 // transaction tests. A Session never owns a caller-injected solver.
+// 成功载荷的 MSE 及已提供的 trace 数值须有限；Session 在提交前核对，
+// 不要求事务替身填充全部 trace，也不从 trace 重新计算求解结果。
 class IAdaptiveStepSolver {
 public:
     virtual ~IAdaptiveStepSolver() = default;
