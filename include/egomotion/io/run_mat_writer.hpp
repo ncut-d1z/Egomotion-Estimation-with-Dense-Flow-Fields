@@ -26,11 +26,19 @@ public:
     Status<MatErrorCode> saveNewVariable(
         const RunId& run_id,std::string_view name,
         const DenseDoubleArray& value) override;
+    Status<MatErrorCode> saveNewMaskedVariable(
+        const RunId& run_id,std::string_view name,
+        const DenseDoubleArray& value,
+        const std::vector<unsigned char>& defined) override;
     std::vector<FileEvidence> fileEvidence() const override;
     const std::map<std::string,MatFileReceipt>& receipts() const noexcept {
         return receipts_;
     }
 private:
+    Status<MatErrorCode> saveNewValidatedVariable(
+        const RunId& run_id,std::string_view name,
+        const DenseDoubleArray& value,
+        const std::vector<unsigned char>* defined);
     const RunDirectory& directory_;
     std::map<std::string,MatFileReceipt> receipts_;
 };

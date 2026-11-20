@@ -89,7 +89,8 @@ bool safeName(std::string_view name) {
              (c>='0'&&c<='9')||c=='_'))return false;
     return true;
 }
-bool validPayload(std::string_view name,const DenseDoubleArray& a) {
+bool validPayload(std::string_view name,const DenseDoubleArray& a,
+                  const std::vector<unsigned char>* defined) {
     if(!safeName(name)||a.info.name!=name||
        a.info.original_class_type!=static_cast<int>(MAT_C_DOUBLE)||
        a.info.original_data_type!=static_cast<int>(MAT_T_DOUBLE)||
@@ -100,7 +101,13 @@ bool validPayload(std::string_view name,const DenseDoubleArray& a) {
     if(n>std::numeric_limits<std::size_t>::max()/sizeof(double))return false;
     if(a.values_column_major.size()!=n||
        a.info.data_bytes!=n*sizeof(double))return false;
-    for(double x:a.values_column_major)if(!std::isfinite(x))return false;
+    if(defined&&defined->size()!=n)return false;
+    for(std::size_t i=0;i<n;++i) {
+        const auto flag=defined?(*defined)[i]:1;
+        const auto value=a.values_column_major[i];
+        if(flag>1||(flag==1&&!std::isfinite(value))||
+           (flag==0&&!std::isnan(value)))return false;
+    }
     return true;
 }
 bool getRandomName(std::string& out) {
@@ -143,12 +150,24 @@ std::vector<FileEvidence> RunMatWriter::fileEvidence() const {
 Status<MatErrorCode> RunMatWriter::saveNewVariable(
     const RunId& run_id,std::string_view variable_name,
     const DenseDoubleArray& payload) {
+    return saveNewValidatedVariable(run_id,variable_name,payload,nullptr);
+}
+
+Status<MatErrorCode> RunMatWriter::saveNewMaskedVariable(
+    const RunId& run_id,std::string_view variable_name,
+    const DenseDoubleArray& payload,const std::vector<unsigned char>& defined) {
+    return saveNewValidatedVariable(run_id,variable_name,payload,&defined);
+}
+
+Status<MatErrorCode> RunMatWriter::saveNewValidatedVariable(
+    const RunId& run_id,std::string_view variable_name,
+    const DenseDoubleArray& payload,const std::vector<unsigned char>* defined) {
     if(run_id.text!=directory_.runId().text||directory_.runFd()<0)
         return fail(MatErrorCode::OutputPathForbidden,directory_,
                     std::string(variable_name),"RunId does not match reserved output inode");
-    if(!validPayload(variable_name,payload))
+    if(!validPayload(variable_name,payload,defined))
         return fail(MatErrorCode::OutputPathForbidden,directory_,
-                    std::string(variable_name),"Illegal MAT variable name, type, shape or content");
+                    std::string(variable_name),"Illegal MAT variable name, type, shape, content or defined mask");
     try {
         const std::string name(variable_name);
         const std::string final_name=name+".mat";

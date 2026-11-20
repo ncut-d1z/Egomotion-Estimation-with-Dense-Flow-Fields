@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -31,6 +32,21 @@ public:
     virtual Status<MatErrorCode> saveNewVariable(
         const RunId& run_id, std::string_view variable_name,
         const DenseDoubleArray& array) = 0;
+    // 缺测必须显式声明；旧适配器只可承接尺寸正确且全为1的掩码。
+    // 0不是填零许可，也不能让尚未实现此合同的替身伪报部分数据已保存。
+    virtual Status<MatErrorCode> saveNewMaskedVariable(
+        const RunId& run_id, std::string_view variable_name,
+        const DenseDoubleArray& array,
+        const std::vector<unsigned char>& defined) {
+        bool all_defined=defined.size()==array.values_column_major.size();
+        for(const auto flag:defined)all_defined=all_defined&&flag==1;
+        if(all_defined)return saveNewVariable(run_id,variable_name,array);
+        ErrorDetail detail;detail.stage=ErrorStage::Output;detail.run_id=run_id;
+        detail.variable=std::string(variable_name);
+        detail.message="Writer does not support explicitly missing MAT elements or mask is invalid";
+        return Status<MatErrorCode>::failure(
+            {MatErrorCode::WriteFailed,std::move(detail)});
+    }
     // Read-only receipts. These are NOT a claim that a Manifest was saved.
     virtual std::vector<FileEvidence> fileEvidence() const = 0;
 };
