@@ -1,5 +1,7 @@
 # 实验 Runner 与结果写出——详细设计草案
 
+> **2026-11-20 聚合入口接续，未构建/未测试**：累计和与最终结果复用同一严格缺测证据检查；追加之前、候选提交之前和最终化时都核对原值/次数/唯一原因/帧账本，拒绝时原聚合不改变。完整输出仍须全部计划轮次，八轮分母和末轮 ratio 不变。本批实现及尚未执行的回归源码见 [记录](../reviews/R6_CODE_CONTINUATION_2026-11-20.md)；按所有者要求，构建和测试延期，下文固定 SHA 的通过记录不外推到新源码。
+
 > **2026-11-20 现行部分有效方案B**：按 [DEC-R6-01～04](../decisions/PROJECT_OWNER_DECISIONS_2026-11-20.md)，保留全部逐帧、逐轮指标及有效次数/缺测原因；Comparison任一单元缺一轮就保留缺测，不能缩减八轮分母，ratio仍取末轮。全部求解完成但指标缺测允许交付Incomplete；真正求解失败仍按原失败合同中止。Adaptive原MAT字段/shape保留，增加`egomotion_metric_policy=[1,1,1,planned_runs]`及每字段`valid_`同形次数、Manifest v2和逐轮null/原因。标记先发布；新NaN只有与明确有效性合同配套才合法，旧数据定义不变。本段覆盖下文“一律有限、指标失败必使整场无MAT”的旧设计。**受测594a1b11的有限子集12/12通过，包含纯内存八轮聚合和v2发布；真实MAT/CLI及完整CMake/CTest尚未验证，不能继承旧73/72。** 见[本轮验证](../reviews/R6_METRIC_DECISIONS_IMPLEMENTATION_2026-11-20.md)，其它验收与延期不变。
 
 > **2026-11-18 P8.9职责候选增量，未冻结**：`InitializationRunner`、`AdaptiveComparisonRunner`、`UpdateRateRunner`分别接受独立Config，`run`检查本次RunContext种类、绑定进度/Comparison RNG并通过既有发布门禁交付；`compute`使用私有共用逐帧流程。每次调用/每轮仍新建Session和聚合缓冲，Runner只保存借用服务，不能缓存Context或可变系数。ProductionExperimentRunner只作入口装配，旧AdaptiveExperimentRunner为内存兼容分派；不承诺未冻结ABI兼容。共用计算公式、35/600/600帧、八轮固定除数、末轮ratio、错误链及完整输出检查保持；新增交错调用、错误Context、非法Config和第五轮失败后同Runner复用验证。双模式ON63/OFF62、172962项隔离检查实测见 [记录](../reviews/R6_ADAPTIVE_ENTRIES_2026-11-18.md)。关联P8.9及原REQ/TC不变，不改DEC-005容差或验收义务。

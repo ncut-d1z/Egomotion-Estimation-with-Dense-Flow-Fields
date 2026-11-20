@@ -1,5 +1,7 @@
 # MAT 结果分析与可选绘图——详细设计草案
 
+> **2026-11-20 分析边界接续，未构建/未测试**：完整平滑窗口的有限输入求和溢出现在返回 `UndefinedStatistic`，保留源变量/路径/原 MATLAB 帧号；原平滑顺序、窗口、分母与缺测传播不变。SVG 像素换算结果非有限时返回 `InvalidSeries`，在任何面板发布前拒绝，原数值数据不被裁改。实现与待执行回归源码见 [本批记录](../reviews/R6_CODE_CONTINUATION_2026-11-20.md)；构建/测试按所有者最新指令延期，下文旧 SHA 的通过事实不代表当前源码已验证。
+
 > **2026-11-20 现行新结果解释**：按 [DEC-R6-01～04](../decisions/PROJECT_OWNER_DECISIONS_2026-11-20.md)，仅对合法`egomotion_metric_policy`及同形`valid_`次数完整配对的新Adaptive结果解释缺测；旧目录仍维持旧NaN拒绝合同。新旋转曲线为逐帧SO(3)测地角，不能冒称历史轴方向角。原索引/分段/平滑次序保持，缺测保留位置和有效性，JSON用null，SVG断线；不删点、补零或跨缺口连线。**受测594a1b11的有限子集12/12通过，包含部分有效Analyzer/JSON/SVG；新MAT实际读写及完整CMake/CTest尚未验证。下文旧全有限描述仅适用于历史格式，LLD未整体冻结。** 见[本轮验证](../reviews/R6_METRIC_DECISIONS_IMPLEMENTATION_2026-11-20.md)。
 
 > **2026-11-18 P9.8候选实现，未冻结**：`BiasResultAnalyzer::aggregate(root,IResultReader&) const`与`AdaptiveResultAnalyzer::analyze(AnalysisKind,root,IResultReader&) const`分别拥有原Bias汇总和三Adaptive数值分析，借用Reader而不创建Writer/Exporter；结果独立拥有数值和输入来源。`MatResultAnalyzer`只按kind分派到两个组件；空路径与既有四类异常映射由私有共同边界保留。原读取顺序、最后x、分母、分段、平滑、缺失历史字段及NaN拒绝规则不变，纯数值构建不引入SVG实现。具体源码和验证状态见 [职责分离记录](../reviews/R6_ANALYZER_SERVICES_2026-11-18.md)；不冻结以下候选签名或签署完整分析验收。

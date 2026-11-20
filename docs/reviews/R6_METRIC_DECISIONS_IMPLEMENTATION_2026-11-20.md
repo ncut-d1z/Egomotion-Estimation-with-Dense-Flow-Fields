@@ -1,5 +1,7 @@
 # R6 指标决定与部分有效结果实现（2026-11-20）
 
+> **后续同日接续**：所有者随后要求继续代码实现、推迟构建和测试，最新源码修复见 [仅代码接续记录](R6_CODE_CONTINUATION_2026-11-20.md)。本报告保留前阶段固定 `594a1b11...` / `2ed5c2d...` 的实测证据，不代表其后的生产源码已经构建或通过回归。
+
 `[HUMAN-EXECUTE/APPROVE]`。依据项目所有者在当前会话明确确认的 DEC-R6-01～04 和“继续代码实现”，在 Draft [PR #6](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/pull/6) 的现有开发分支接续。起点为 `8f6d46c0fb98ca4b45304bc86876ec35376778bb`；决定记录见 [2026-11-20 所有者决定](../decisions/PROJECT_OWNER_DECISIONS_2026-11-20.md)。本记录不代替 R6 总体验收或正式冻结。
 
 ## 已实现的合同
