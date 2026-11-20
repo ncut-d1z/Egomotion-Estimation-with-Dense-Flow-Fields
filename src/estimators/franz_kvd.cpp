@@ -238,7 +238,12 @@ Result<KvDResult,NumericalErrorCode> KvDIterationEngine::estimate(
             const double previous=previousRms;
             delta=std::abs(previous-rms);
             previousRms=rms;
-            threshold=rms/(params.accuracy_factor*static_cast<double>(count));
+            const double threshold_denominator=params.accuracy_factor*static_cast<double>(count);
+            // 有限 RMS 除以溢出的 Inf 会得到零，不能让它伪装成有效停止阈值。
+            if (!std::isfinite(threshold_denominator))
+                return fail<KvDResult>(NumericalErrorCode::NonFiniteResult,
+                                       "KvD dynamic threshold denominator overflow");
+            threshold=rms/threshold_denominator;
             if (!std::isfinite(mse)||!std::isfinite(rms)||
                 !std::isfinite(delta)||!std::isfinite(threshold))
                 return fail<KvDResult>(NumericalErrorCode::NonFiniteResult,

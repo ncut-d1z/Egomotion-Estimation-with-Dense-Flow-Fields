@@ -192,8 +192,30 @@ void strategyFailures() {
         same(altered.value().trace[i].translation_candidate_normalized,normal.value().trace[i].translation_candidate_normalized,"Normalization belongs to engine once");
     }
 }
+void thresholdOverflow() {
+    OriginalKvDTranslationRule original;ModifiedKvDTranslationRule modified;
+    KvDIterationEngine engine;
+    const std::array<const IKvDTranslationRule*,2> rules{{&original,&modified}};
+    const auto field=axialField();const auto before=field.observations();
+    for(const auto* rule:rules) for(bool retain_trace:{false,true}) {
+        KvDParameters parameters;parameters.retain_trace=retain_trace;
+        parameters.accuracy_factor=std::numeric_limits<double>::max();
+        ObservedRule observed(*rule);
+        const auto result=engine.estimate(field,parameters,observed);
+        require(!result.hasValue()&&result.error().code==NumericalErrorCode::NonFiniteResult&&
+                result.error().detail.stage==ErrorStage::Solve&&
+                result.error().detail.message=="KvD dynamic threshold denominator overflow",
+                "Finite accuracy factor must not hide denominator overflow as a zero threshold");
+        require(observed.calls.size()==1,"Threshold overflow must stop in the first iteration");
+        same(field.observations(),before,"Threshold failure retains input flow");
+        parameters.accuracy_factor=KvDParameters{}.accuracy_factor;
+        require(engine.estimate(field,parameters,*rule).hasValue(),
+                "Threshold failure leaves the same engine reusable with source parameters");
+        same(field.observations(),before,"Recovered solve retains input flow");
+    }
+}
 } // namespace
 int main() {
-    directRules();engineComposition();strategyFailures();
+    directRules();engineComposition();strategyFailures();thresholdOverflow();
     std::cout<<"PASS KvD strategy composition checks="<<checks<<'\n';
 }
