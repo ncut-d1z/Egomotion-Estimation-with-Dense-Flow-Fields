@@ -125,13 +125,14 @@ void biasAnglesBeforeAveraging() {
 
 AdaptiveCondition condition(const std::string& name,std::size_t frames,std::size_t repeats,bool rates) {
     AdaptiveCondition c{name,repeats,{}};
-    constexpr std::array<std::size_t,4> periods{{1,5,10,20}};
+    const std::array<std::size_t,4> periods=name=="update-archive"?
+        std::array<std::size_t,4>{{1,5,11,21}}:std::array<std::size_t,4>{{1,5,10,20}};
     for(std::size_t run=1;run<=repeats;++run)for(std::size_t frame=2;frame<frames;++frame) {
         const auto phase=frame%150;
         const double ratio=phase<=2?0.0:phase==3?0.015:1.0;
         for(std::size_t j=0;j<(rates?4u:2u);++j) {
             auto axis=(frame==151||(run==8 && frame==65 && j==1))?missingAxis():number(20+run);
-            c.samples.push_back({run,frame,j+1,rates?320u:5120u,rates?periods[j]:0,
+            c.samples.push_back({run,frame,j+1,rates||frames==35?320u:5120u,rates?periods[j]:0,
                 rates&&frame%periods[j]==0,ratio,1.0,number(ratio),number(static_cast<double>(frame)),
                 std::move(axis),number(frame==151?0:4)});
         }
@@ -149,21 +150,29 @@ void dualMetricsAndWindows() {
     output.contains("means.tsv","comparison-noise-0\t65\t2\trotation_geodesic_degrees\t8\t8\t4\n");
     output.contains("means.tsv","update-article\t151\t1\trotation_geodesic_degrees\t1\t1\t0\n");
     const std::string axis="fig5-axis-curves.tsv";
-    output.contains(axis,"B  rotation_axis_degrees, noise 0\tAdaptive MFA\tleft\t65\tNA\t0\n");
-    output.contains(axis,"B  rotation_axis_degrees, noise 0\tAdaptive MFA\tleft\t153\t24.5\t1\n");
-    output.contains(axis,"F  rotation_axis_degrees, update-article\tPeriod 10\tleft\t159\t21\t1\n");
+    output.contains(axis,"B  Rotation axis, noise 0\tAdaptive MFA\tleft\t65\tNA\t0\n");
+    output.contains(axis,"B  Rotation axis, noise 0\tAdaptive MFA\tleft\t153\t24.5\t1\n");
+    output.contains(axis,"F  Rotation axis, update-article\tPeriod 10\tleft\t159\t21\t1\n");
+    output.contains("fig5-geodesic-curves.tsv","B  SO(3) rotation distance, noise 0\tAdaptive MFA\tleft\t151\t0\t0\n");
     output.contains(axis,"E  Translation, update-article\tPeriod 20\tleft\t50\t50\t1\n");
     if(svgAvailable()) {
         output.contains("fig5-axis.svg","id=\"panel5\"");
-        output.contains("fig5-geodesic.svg","rotation_geodesic_degrees");
+        output.contains("fig5-geodesic.svg","SO(3) rotation distance");
         output.contains("fig5-axis.svg","Ideal rot/trans flow ratio");
     }
+    study.adaptive.pop_back();
+    study.adaptive.push_back(condition("update-archive",600,1,true));
+    MemoryPublisher archive;Files archive_files{archive,{}};
+    publishFigures({5,svgAvailable(),0,PaperUpdateSchedule::Archive},study,archive_files);
+    archive.contains("fig5-update-archive-axis-linear-curves.tsv","E  Translation, update-archive\tPeriod 21\tleft\t50\t50\t1");
+    if(svgAvailable())require(archive.contents.at("fig5-update-archive-axis-linear.svg").find("10^")==std::string::npos,
+                               "Archive E/F view must use linear axes");
     Study initialization;
     initialization.adaptive.push_back(condition("initialization",35,1,false));
     MemoryPublisher init;Files init_files{init,{}};
     publishFigures({2,svgAvailable(),{},{}},initialization,init_files);
-    init.contains("fig2-axis-curves.tsv","translation_degrees\tleft\t34\t34\t0\n");
-    init.contains("fig2-geodesic-curves.tsv","rotation_geodesic_degrees\tleft\t2\t4\t1\n");
+    init.contains("fig2-axis-curves.tsv","Translation direction\tleft\t34\t34\t0\n");
+    init.contains("fig2-geodesic-curves.tsv","SO(3) rotation distance\tleft\t2\t4\t1\n");
 }
 void commandContract() {
     using cli::parseCommand;

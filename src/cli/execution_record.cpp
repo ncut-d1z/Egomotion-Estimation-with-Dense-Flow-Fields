@@ -83,9 +83,14 @@ std::string parameters(const Command& command) {
         std::string schedule="null";
         if(config.schedule)schedule=*config.schedule==experiments::PaperUpdateSchedule::Article?
             "\"article-1-5-10-20\"":"\"archive-1-5-11-21\"";
-        return "{\"figure\":"+std::to_string(config.figure)+",\"format\":"+jsonQuote(config.svg?"svg":"data")+
+        std::string values="{\"figure\":"+std::to_string(config.figure)+",\"format\":"+jsonQuote(config.svg?"svg":"data")+
             ",\"periods\":"+schedule+",\"comparison_seed\":"+
-            (config.comparison_seed?std::to_string(*config.comparison_seed):"null")+"}";
+            (config.comparison_seed?std::to_string(*config.comparison_seed):"null");
+        if(config.figure==1)values+=",\"bias_profile\":\"archive_source\",\"noise_multipliers\":[0.6,2.4,9.6],"
+            "\"distance_uniform_bounds\":[1,4],\"distance_divisor\":2.5,"
+            "\"article_caption\":{\"distances\":[1,3],\"noise_factors\":[1,3,9],\"noise_mapping\":null}";
+        if(config.figure==4)values+=",\"illustrative_harmonics\":[{\"l\":1,\"m\":1},{\"l\":2,\"m\":1}]";
+        return values+"}";
     }
     if (command.kind == CommandKind::InspectMat) {
         const auto& args = std::get<InspectMatArgs>(command.arguments);

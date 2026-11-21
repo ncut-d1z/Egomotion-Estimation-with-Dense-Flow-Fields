@@ -2,6 +2,7 @@
 
 #include "egomotion/contracts/result.hpp"
 
+#include <array>
 #include <cstddef>
 #include <functional>
 
@@ -18,6 +19,8 @@ struct BiasPaperSample {
 using BiasPaperObserver = std::function<void(const BiasPaperSample&)>;
 
 enum class PaperUpdateSchedule { Archive, Article };
+// Fig. 5E/F 图注给出的逐帧周期。
+inline constexpr std::array<std::size_t,4> kArticleUpdatePeriods{{1,5,10,20}};
 
 // 比较槽从 1 起算。Initialization/Comparison 的两槽依次为原 MFA 和 Adaptive。
 // 两个旋转指标来自同一估计，各自保留数值或缺测原因。period=0 表示非周期实验。

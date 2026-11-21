@@ -47,7 +47,7 @@ void ticks(std::ostream& out,const Range& range,bool horizontal,bool log,bool se
                 <<"\">"<<label.str()<<"</text>\n";
     }
 }
-void line(std::ostream& out,const Curve& curve,const Range& x,const Range& y,bool log_x) {
+void line(std::ostream& out,const Curve& curve,const Range& x,const Range& y,bool log_x,bool log_y) {
     auto path=table();
     path<<std::fixed<<std::setprecision(3);
     std::size_t length=0;
@@ -58,9 +58,9 @@ void line(std::ostream& out,const Curve& curve,const Range& x,const Range& y,boo
     };
     for(const auto& p:curve.points) {
         if(p.starts_segment)flush();
-        if(!p.y||*p.y<=0||(log_x&&p.x<=0)){flush();continue;}
+        if(!p.y||(log_y&&*p.y<=0)||(log_x&&p.x<=0)){flush();continue;}
         const double px=x.position(log_x?std::log10(p.x):p.x,kLeft,kRight);
-        const double py=y.position(std::log10(*p.y),kBottom,kTop);
+        const double py=y.position(log_y?std::log10(*p.y):*p.y,kBottom,kTop);
         if(!std::isfinite(px)||!std::isfinite(py))invalid("Non-finite paper SVG coordinate");
         if(length==0){first_x=px;first_y=py;}
         path<<(length++==0?'M':'L')<<px<<' '<<py<<' ';
@@ -70,7 +70,7 @@ void line(std::ostream& out,const Curve& curve,const Range& x,const Range& y,boo
     if(curve.dashed)out<<" stroke-dasharray=\"6 4\"";
     out<<"><title>"<<escape(curve.label)<<"</title></path>\n";
 }
-void panelSvg(std::ostream& out,const Panel& panel,std::size_t index,bool log_x) {
+void panelSvg(std::ostream& out,const Panel& panel,std::size_t index,bool log_x,bool log_y) {
     Range x,y;
     bool ratio=false;
     for(const auto& curve:panel.curves) {
@@ -78,11 +78,12 @@ void panelSvg(std::ostream& out,const Panel& panel,std::size_t index,bool log_x)
         for(const auto& point:curve.points) {
             if(!std::isfinite(point.x)||(point.y&&!std::isfinite(*point.y)))invalid("Invalid paper curve value");
             if(!log_x||point.x>0)x.include(log_x?std::log10(point.x):point.x);
-            if(!curve.right_axis&&point.y&&*point.y>0)y.include(std::log10(*point.y));
+            if(!curve.right_axis&&point.y&&(!log_y||*point.y>0))
+                y.include(log_y?std::log10(*point.y):*point.y);
         }
     }
-    const bool has_positive=y.populated();
-    x.finish(log_x);y.finish(true);
+    const bool has_values=y.populated();
+    x.finish(log_x);y.finish(log_y);
     const Range ratio_limits{-2,2}; // 图 5A–D 右纵轴 0.01..100。
     out<<"<g transform=\"translate("<<(index%2)*kWidth<<' '<<(index/2)*kHeight<<")\">\n"
        <<"<text x=\""<<kLeft<<"\" y=\"24\" font-size=\"18\">"<<escape(panel.title)<<"</text>\n"
@@ -91,16 +92,16 @@ void panelSvg(std::ostream& out,const Panel& panel,std::size_t index,bool log_x)
        <<kRight-kLeft<<"\" height=\""<<kBottom-kTop<<"\"/></clipPath></defs>\n"
        <<"<g class=\"axis\"><path d=\"M"<<kLeft<<' '<<kTop<<"V"<<kBottom<<"H"<<kRight<<"\"/>\n";
     ticks(out,x,true,log_x);
-    if(has_positive)ticks(out,y,false,true);
+    if(has_values)ticks(out,y,false,log_y);
     if(ratio) {
         out<<"<path d=\"M"<<kRight<<' '<<kTop<<"V"<<kBottom<<"\"/><text x=\""<<kRight
            <<"\" y=\"46\" text-anchor=\"end\">Ideal rot/trans flow ratio</text>\n";
         ticks(out,ratio_limits,false,true,true);
     }
     out<<"</g><g clip-path=\"url(#panel"<<index<<")\">\n";
-    for(const auto& curve:panel.curves)line(out,curve,x,curve.right_axis?ratio_limits:y,log_x);
+    for(const auto& curve:panel.curves)line(out,curve,x,curve.right_axis?ratio_limits:y,log_x,curve.right_axis||log_y);
     out<<"</g>";
-    if(!has_positive)out<<"<text x=\"100\" y=\"110\">No positive defined angle in the displayed window</text>";
+    if(!has_values)out<<"<text x=\"100\" y=\"110\">No defined angle on this scale in the displayed window</text>";
     out<<"<text x=\"333\" y=\"331\" text-anchor=\"middle\">"
        <<(log_x?"Number of sampled directions":"Frame (MATLAB index)")<<"</text>\n";
     // Fig. 1 的三条噪声曲线共享线型，图例明确列出实际乘数。
@@ -127,7 +128,7 @@ std::string chartSvg(const Chart& chart) {
        <<((chart.panels.size()+1)/2)*kHeight<<"\" role=\"img\"><title>"<<escape(chart.name)
        <<"</title><style>svg{font:12px sans-serif;fill:#161616}.axis path{stroke:#333;fill:none}</style>"
          "<rect width=\"100%\" height=\"100%\" fill=\"white\"/>\n";
-    for(std::size_t i=0;i<chart.panels.size();++i)panelSvg(out,chart.panels[i],i,chart.log_x);
+    for(std::size_t i=0;i<chart.panels.size();++i)panelSvg(out,chart.panels[i],i,chart.log_x,chart.log_y);
     out<<"</svg>\n";
     return out.str();
 }

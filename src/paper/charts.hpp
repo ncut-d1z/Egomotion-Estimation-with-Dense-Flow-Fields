@@ -15,6 +15,7 @@ struct Chart {
     std::string name;
     bool log_x=false;
     std::vector<Panel> panels;
+    bool log_y=true;
 };
 
 // data 模式与 SVG 模式共用同一组含缺测标记的数值坐标。

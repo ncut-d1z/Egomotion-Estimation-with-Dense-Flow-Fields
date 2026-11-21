@@ -1,5 +1,6 @@
 #include "charts.hpp"
 #include "../analysis/adaptive_windows.hpp"
+#include "egomotion/estimators/coefficient_update.hpp"
 
 #include <array>
 #include <cmath>
@@ -83,6 +84,8 @@ Chart biasChart(const Study& study,std::ostream& means) {
 enum MetricIndex : std::size_t { Translation,Axis,Geodesic };
 constexpr std::array<const char*,3> kMetricNames{{
     "translation_degrees","rotation_axis_degrees","rotation_geodesic_degrees"}};
+constexpr std::array<const char*,3> kMetricLabels{{
+    "Translation direction","Rotation axis","SO(3) rotation distance"}};
 using Measurements=std::array<Cell,3>;
 struct AdaptiveMeans {
     std::size_t frames,repetitions;
@@ -92,6 +95,7 @@ struct AdaptiveMeans {
 };
 AdaptiveMeans adaptiveMeans(const AdaptiveCondition& condition,bool init,bool rates,std::ostream& out) {
     const std::size_t frames=init?35:600, slots=rates?4:2;
+    if(condition.repetitions!=(init||rates?1u:8u))invalid("Incorrect planned Adaptive repetitions");
     AdaptiveMeans data{frames,condition.repetitions,
         std::vector<std::vector<Measurements>>(slots,std::vector<Measurements>(frames)),
         std::vector<std::size_t>(slots),std::vector<std::optional<double>>(frames)};
@@ -151,7 +155,7 @@ Panel initialization(const AdaptiveMeans& data,MetricIndex rotation) {
     Panel panel{"Initialization",{}};
     const Segment interior{2,data.frames-1};
     for(auto metric:{Translation,rotation}) {
-        Curve line{kMetricNames[metric],metric==Translation?"blue":"red",false,false,{}};
+        Curve line{kMetricLabels[metric],metric==Translation?"blue":"red",false,false,{}};
         appendWindow(line,data,1,metric,interior,interior,0);
         panel.curves.push_back(std::move(line));
     }
@@ -165,8 +169,8 @@ Panel motionPanel(const AdaptiveMeans& data,MetricIndex metric,std::string title
         const std::string label=rates?"Period "+std::to_string(data.periods[j]):j==0?"Original MFA":"Adaptive MFA";
         Curve curve{label,rates?kPeriodColors[j]:j==0?"blue":"red",false,false,{}};
         const std::size_t half=rates?kHalfWindows[j]:0;
-        if(metric==Translation) {
-            // 窗口 50..550 的所有邻居都在有效内部帧，无需把结构端点当样本。
+        if(metric!=Axis) {
+            // 仅旋转轴在零旋转处无定义。测地角保留完整 50..550 窗口。
             appendWindow(curve,data,j,metric,{2,data.frames-1},displayed,half);
         } else {
             for(const auto& segment:windows) {
@@ -225,6 +229,12 @@ void publishFigures(const FigureConfig& config,const Study& study,Files& files) 
         for(std::size_t i=0;i<study.adaptive.size();++i) {
             const bool init=config.figure==2,rates=i==2;
             const auto data=adaptiveMeans(study.adaptive[i],init,rates,means);
+            if(rates) {
+                const auto& expected=config.schedule==experiments::PaperUpdateSchedule::Article?
+                    experiments::kArticleUpdatePeriods:estimators::kAdaptiveUpdatePeriods;
+                for(std::size_t j=0;j<expected.size();++j)
+                    if(data.periods.at(j)!=expected[j])invalid("Measured update period differs from figure configuration");
+            }
             std::array<Segment,4> windows{};
             if(!init)windows=rotationWindows(data,rates);
             for(std::size_t m=0;m<charts.size();++m) {
@@ -236,9 +246,14 @@ void publishFigures(const FigureConfig& config,const Study& study,Files& files) 
                     const std::string letter(1,static_cast<char>('A'+i*2));
                     const std::string next(1,static_cast<char>('B'+i*2));
                     chart.panels.push_back(motionPanel(data,Translation,letter+"  Translation, "+condition,rates,windows));
-                    chart.panels.push_back(motionPanel(data,rotation,next+"  "+kMetricNames[rotation]+", "+condition,rates,windows));
+                    chart.panels.push_back(motionPanel(data,rotation,next+"  "+kMetricLabels[rotation]+", "+condition,rates,windows));
                 }
             }
+        }
+        if(config.figure==5&&config.schedule==experiments::PaperUpdateSchedule::Archive) {
+            // 同一套实测比值和归档周期，另给源脚本的线性纵轴视图。
+            const auto& axis=charts.front().panels;
+            charts.push_back({"fig5-update-archive-axis-linear",false,{axis.at(4),axis.at(5)},false});
         }
     }
     files.save("means.tsv",means.str());

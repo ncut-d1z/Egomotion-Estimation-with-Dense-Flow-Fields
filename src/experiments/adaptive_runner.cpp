@@ -191,8 +191,7 @@ Output computeAdaptive(Mode mode, double noise_scale, IRandomSource* rng,
             return fromNumeric(sampled,"icosahedral sampling",mode,1);
         const DirectionSet& directions=sampled.value();
         // Fig. 5E/F 图注。普通入口始终沿用 many_parameter.m 的 1/5/11/21。
-        constexpr std::array<std::size_t,4> article_periods{{1,5,10,20}};
-        const auto& periods=schedule==PaperUpdateSchedule::Article ? article_periods :
+        const auto& periods=schedule==PaperUpdateSchedule::Article ? kArticleUpdatePeriods :
                                                                     estimators::kAdaptiveUpdatePeriods;
 
         for (std::size_t run=0;run<aggregate.planned_runs;++run) {
