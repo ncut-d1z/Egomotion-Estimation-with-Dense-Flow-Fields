@@ -1,6 +1,8 @@
 # Egomotion Estimation with Dense Flow Fields
 
-> **最新接续：完成状态与子进程回收，仅代码（2026-11-21）**。Bias 的最终 Complete 门禁补齐既有有效样本要求，避免公开计数入口绕过；进程记录器在 fork 前拒绝自动回收子进程的信号设置，父侧阻塞 SIGCHLD，防止退出状态被 handler 提前取走。两个既有目标补充回归源码，详见 [本批记录](docs/reviews/R6_MANIFEST_PROCESS_CONTINUATION_2026-11-21.md)。**构建/测试继续延期，没有新增运行证据；R6 总体验收未完成，PR #6 保持 Draft。**
+> **最新接续：失败记录退出码与元数据输入，仅代码（2026-11-21）**。实验计算失败后若失败 Manifest 也未确认保存，最终退出码与 execution 记录统一为输出错误6，原计算诊断保留；普通 MAT 元数据检查先非阻塞打开并确认普通文件，再通过持有的描述符读取同一文件身份。必要回归仅准备源码，详见 [本批记录](docs/reviews/R6_FAILURE_METADATA_CONTINUATION_2026-11-21.md)。**构建/测试继续延期，没有新增运行证据；R6 总体验收未完成，PR #6 保持 Draft。**
+
+> **前批接续：完成状态与子进程回收，仅代码（2026-11-21）**。Bias 的最终 Complete 门禁补齐既有有效样本要求，避免公开计数入口绕过；进程记录器在 fork 前拒绝自动回收子进程的信号设置，父侧阻塞 SIGCHLD，防止退出状态被 handler 提前取走。两个既有目标补充回归源码，详见 [前批记录](docs/reviews/R6_MANIFEST_PROCESS_CONTINUATION_2026-11-21.md)。该批同样没有构建/测试证据。
 
 > **前批接续：启动异常与 MAT 扫描歧义，仅代码（2026-11-21）**。实际应用装配的标准异常现进入既有 OutputFailed/退出6回退；MAT 扫描在按名读取前拒绝重复后端名称，避免把首项结构冒充后续结构。两个既有目标补充回归源码，记录器目标增加真实入口链接；具体依据与边界见 [前批记录](docs/reviews/R6_STARTUP_MAT_SCAN_CONTINUATION_2026-11-21.md)。该批同样没有构建/测试证据。
 
