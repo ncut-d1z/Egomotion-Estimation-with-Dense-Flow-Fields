@@ -26,6 +26,9 @@ enum class Fault { None, StartLink, StartSync, FinishLink, FinishSync, ChannelSy
 Fault fault = Fault::None;
 int failed_sync_fd = -1;
 bool forked = false;
+bool child_signal_blocked_before_fork = false;
+bool expected_child_signal_blocked = false;
+volatile sig_atomic_t handler_reaped_child = 0;
 std::size_t checks = 0, calls = 0, hits = 0;
 }
 extern "C" int __real_linkat(int, const char*, int, const char*, int);
@@ -59,6 +62,9 @@ extern "C" int __wrap_fsync(int fd) {
 }
 extern "C" pid_t __wrap_fork() {
     if (fault == Fault::Fork) { ++hits; errno = EAGAIN; return -1; }
+    sigset_t mask{};
+    child_signal_blocked_before_fork = ::sigprocmask(SIG_SETMASK, nullptr, &mask) == 0 &&
+        ::sigismember(&mask, SIGCHLD) == 1;
     const auto pid = __real_fork();
     forked = pid > 0;
     return pid;
@@ -115,18 +121,23 @@ Response invoke(const fs::path& root, const char* mode = "ok", bool bad_receipt 
     std::ostringstream receipt, errors;
     if (bad_receipt) receipt.setstate(std::ios::badbit);
     if (bad_errors) errors.setstate(std::ios::badbit);
-    hits = 0; forked = false; failed_sync_fd = -1;
+    hits = 0; forked = false; failed_sync_fd = -1; child_signal_blocked_before_fork = false;
     sigset_t before{}, after{};
     struct sigaction pipe_before{}, pipe_after{};
+    struct sigaction child_before{}, child_after{};
     require(::sigprocmask(SIG_SETMASK, nullptr, &before) == 0, "Read initial mask");
     require(::sigaction(SIGPIPE, nullptr, &pipe_before) == 0, "Read initial pipe action");
+    require(::sigaction(SIGCHLD, nullptr, &child_before) == 0, "Read initial child action");
     const int code = egomotion::cli::recordProcess(2, args, application, root, receipt, errors);
     std::ofstream(root / "fixture-response.txt") << "exit=" << code << "\nhits=" << hits
         << "\nreceipt=" << receipt.str() << "\nerrors=" << errors.str();
     require(::sigprocmask(SIG_SETMASK, nullptr, &after) == 0, "Read restored mask");
     require(::sigaction(SIGPIPE, nullptr, &pipe_after) == 0, "Read restored pipe action");
+    require(::sigaction(SIGCHLD, nullptr, &child_after) == 0, "Read restored child action");
     require(pipe_before.sa_handler == pipe_after.sa_handler, "Do not change caller SIGPIPE disposition");
-    for (const int signal : {SIGINT, SIGTERM, SIGQUIT, SIGHUP, SIGPIPE})
+    require(child_before.sa_handler == child_after.sa_handler && child_before.sa_flags == child_after.sa_flags,
+            "Do not change caller SIGCHLD disposition or flags");
+    for (const int signal : {SIGINT, SIGTERM, SIGQUIT, SIGHUP, SIGPIPE, SIGCHLD})
         require(::sigismember(&before, signal) == ::sigismember(&after, signal), "Restore caller signal mask");
     return {code, receipt.str(), errors.str()};
 }
@@ -140,6 +151,80 @@ fs::path onlyRecord(const fs::path& root) {
     for (const auto& entry : fs::directory_iterator(root / "build-cli-records")) records.push_back(entry.path());
     require(records.size() == 1, "Exactly one exclusive process record");
     return records.front();
+}
+void reapChildren(int) {
+    const int saved_errno = errno;
+    for (;;) {
+        const auto child = ::waitpid(-1, nullptr, WNOHANG);
+        if (child > 0) { handler_reaped_child = 1; continue; }
+        if (child < 0 && errno == EINTR) continue;
+        break;
+    }
+    errno = saved_errno;
+}
+int observeChildSignal(int argc, char** argv, egomotion::cli::IInvocationObserver* observer) {
+    sigset_t mask{};
+    struct sigaction action{};
+    if (::sigprocmask(SIG_SETMASK, nullptr, &mask) != 0 ||
+        ::sigaction(SIGCHLD, nullptr, &action) != 0 || action.sa_handler != reapChildren ||
+        ::sigismember(&mask, SIGCHLD) != static_cast<int>(expected_child_signal_blocked)) return 94;
+    std::ofstream("child-signal-restored") << "original SIGCHLD action and mask\n";
+    return fixture(argc, argv, observer);
+}
+void childSignalDispositions(const fs::path& base) {
+    for (const bool ignore : {false, true}) {
+        struct sigaction action{}, original{};
+        action.sa_handler = ignore ? SIG_IGN : SIG_DFL;
+        action.sa_flags = ignore ? 0 : SA_NOCLDWAIT;
+        ::sigemptyset(&action.sa_mask);
+        require(::sigaction(SIGCHLD, &action, &original) == 0, "Set inherited automatic child reaping");
+        const auto root = newRoot(base, ignore ? "sigchld-ignored" : "sigchld-no-cld-wait");
+        const auto result = invoke(root);
+        require(::sigaction(SIGCHLD, &original, nullptr) == 0, "Restore original child action");
+        require(result.code == 6 && result.receipt.empty(), "Reject unobservable child termination");
+        contains(result.errors, "\"error_code\":\"OutputFailed\"");
+        contains(result.errors, "SIGCHLD ignored or SA_NOCLDWAIT set");
+        require(!forked && !fs::exists(root / "entered"), "Automatic reaping must be rejected before fork");
+        require(!fs::exists(root / "build-cli-records"), "Rejected signal state has no started record");
+    }
+    for (const bool blocked : {false, true}) {
+        struct sigaction action{}, original_action{};
+        action.sa_handler = reapChildren;
+        action.sa_flags = SA_RESTART;
+        ::sigemptyset(&action.sa_mask);
+        sigset_t original_mask{}, mask{};
+        require(::sigprocmask(SIG_SETMASK, nullptr, &original_mask) == 0, "Save caller child signal mask");
+        mask = original_mask;
+        if (blocked) ::sigaddset(&mask, SIGCHLD); else ::sigdelset(&mask, SIGCHLD);
+        require(::sigaction(SIGCHLD, &action, &original_action) == 0, "Set inherited child reaper");
+        require(::sigprocmask(SIG_SETMASK, &mask, nullptr) == 0, "Set inherited child signal mask");
+        expected_child_signal_blocked = blocked;
+        for (const auto* mode : {"137", "forward"}) {
+            handler_reaped_child = 0;
+            const auto root = newRoot(base, std::string("sigchld-handler-") + (blocked ? "blocked-" : "unblocked-") + mode);
+            const auto result = invoke(root, mode, false, false, observeChildSignal);
+            const bool signaled = std::strcmp(mode, "forward") == 0;
+            require(result.code == (signaled ? 128 + SIGTERM : 137) && result.errors.empty(),
+                    "Inherited handler cannot steal actual exit or signal status");
+            require(child_signal_blocked_before_fork && handler_reaped_child == 0,
+                    "Only supervisor waitpid can reap its child");
+            require(fs::exists(root / "child-signal-restored"), "Application sees original SIGCHLD action and mask");
+            const auto finish = read(onlyRecord(root) / "finish.json");
+            contains(finish, signaled ? "\"termination\":\"signaled\"" : "\"termination\":\"exited\"");
+            contains(finish, signaled ? "\"child_exit_code\":null" : "\"child_exit_code\":137");
+            contains(finish, signaled ? "\"signal\":15" : "\"signal\":null");
+            contains(finish, signaled ? "\"forwarded_signals\":[{\"signal\":15,\"kill_errno\":0}]" : "\"forwarded_signals\":[]");
+        }
+        // 原mask阻塞SIGCHLD时，记录器按约定保留pending；由本夹具handler消化后再恢复测试入口状态。
+        ::sigdelset(&mask, SIGCHLD);
+        require(::sigprocmask(SIG_SETMASK, &mask, nullptr) == 0, "Deliver retained fixture child notification");
+        sigset_t pending{};
+        require(::sigpending(&pending) == 0 && ::sigismember(&pending, SIGCHLD) == 0,
+                "No fixture child notification may affect subsequent regression cases");
+        require(handler_reaped_child == 0, "Deferred handler cannot reap already observed child");
+        require(::sigaction(SIGCHLD, &original_action, nullptr) == 0, "Restore original child handler");
+        require(::sigprocmask(SIG_SETMASK, &original_mask, nullptr) == 0, "Restore original child signal mask");
+    }
 }
 int missingWorkingDirectory(int argc, char** argv, egomotion::cli::IInvocationObserver* observer) {
     // 只移除本测试子进程新建的空目录；父进程和已打开的日志目录保持有效。
@@ -369,6 +454,7 @@ int main(int argc, char** argv) {
         const fs::path base(pattern);
         startupFailure(base);
         termination(base);
+        childSignalDispositions(base);
         publicationFaults(base);
         incompleteContexts(base);
         reservationFailure(base);

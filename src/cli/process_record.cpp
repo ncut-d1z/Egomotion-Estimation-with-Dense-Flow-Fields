@@ -34,7 +34,10 @@ public:
         ::sigemptyset(&ignore.sa_mask);
         checked(::sigaction(SIGPIPE, &ignore, &old_pipe_) == 0, "Cannot protect recorder receipt");
         pipe_changed_ = true;
-        if (::sigprocmask(SIG_BLOCK, &watched_, &old_mask_) != 0) {
+        auto blocked = watched_;
+        // 自定义SIGCHLD handler不能抢先wait；它不属于需要转发的信号。
+        ::sigaddset(&blocked, SIGCHLD);
+        if (::sigprocmask(SIG_BLOCK, &blocked, &old_mask_) != 0) {
             restore();
             checked(false, "Cannot block supervisor signals");
         }
@@ -43,6 +46,13 @@ public:
     ~Signals() { restore(); }
     Signals(const Signals&) = delete;
     Signals& operator=(const Signals&) = delete;
+    void requireWaitableChild() const {
+        struct sigaction action{};
+        checked(::sigaction(SIGCHLD, nullptr, &action) == 0, "Cannot inspect SIGCHLD disposition");
+        // 阻塞信号不能阻止这两种内核自动回收模式；fork前拒绝无法观察的执行。
+        if (action.sa_handler == SIG_IGN || (action.sa_flags & SA_NOCLDWAIT))
+            throw std::runtime_error("Cannot observe child termination with SIGCHLD ignored or SA_NOCLDWAIT set");
+    }
     Fd descriptor() const {
         Fd fd(::signalfd(-1, &watched_, SFD_CLOEXEC | SFD_NONBLOCK));
         checked(fd.get() >= 0, "Cannot observe supervisor signals");
@@ -196,6 +206,7 @@ int recordWithSignals(int argc, char** argv, RecordedApplication application,
                       std::ostream& receipt, std::ostream& errors) {
     std::string location;
     try {
+        signals.requireWaitableChild();
         const auto signal_fd = signals.descriptor();
         const Directory directory(trusted_root);
         location = directory.path().string();
