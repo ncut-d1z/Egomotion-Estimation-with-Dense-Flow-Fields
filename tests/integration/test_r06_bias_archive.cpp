@@ -152,7 +152,9 @@ void compareCurves(const AnalysisDataset& data,const GroupReference& ref,const f
         curveMetadata(curve,theoretical?"100/sqrt(xwerte_last)":
                       std::string(kYNames[kind])+".column"+std::to_string(col+1));
         check(curve.y_unit==(theoretical?"reference scaled error":
-              "scaled translation/rotation vector error"),"Wrong metric unit");
+              "stored ywerte (unit unverified)"),"Wrong metric unit");
+        if(!theoretical)check(curve.metric_semantics=="stored-bias-ywerte-unverified-unit",
+            "A bare historical ywerte must not be interpreted as a unit chord or degrees");
         require(curve.inputs.size()==(theoretical?1:kRuns+1),"Missing curve contributors");
         if(!theoretical)
             for(std::size_t k=0;k<kRuns;++k)
@@ -180,6 +182,22 @@ void verifyGroup(const fs::path& archive,const std::string& name,
                  const std::map<std::string,std::string>& inventory) {
     const auto root=archive/"bias_test/produced_data"/name;
     const auto ref=readGroup(archive,root,inventory);
+    const bool proportional=name=="proportional_error";
+    std::size_t above_chord_bound=0,plotted_above_bound=0;
+    for(const auto& trial:ref.runs) {
+        std::size_t rays=proportional?8:6;
+        for(double stored:trial.x.values) {
+            check(stored==static_cast<double>(rays),"Unexpected stored archive direction count");
+            rays*=4;
+        }
+        for(const auto& y:trial.y)for(std::size_t i=0;i<y.values.size();++i)if(y.values[i]>2) {
+            ++above_chord_bound;
+            if(i%kRows+1>=kFirstRow)++plotted_above_bound;
+        }
+    }
+    // 固定 SHA 归档的值域反例数量，不是新的误差容差。
+    check(above_chord_bound==(proportional?3743u:4181u)&&plotted_above_bound==(proportional?2783u:3221u),
+          "Independent archive unit-chord counterexample counts changed");
     RecordingReader reader;
     analysis::MatResultAnalyzer analyzer;
     const auto actual=analyzer.analyze(AnalysisKind::Bias,root,reader);

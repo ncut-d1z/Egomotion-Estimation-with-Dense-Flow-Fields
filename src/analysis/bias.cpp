@@ -136,7 +136,10 @@ DatasetResult BiasResultAnalyzer::aggregateSource(const std::filesystem::path& r
                               "bias-loglog",axis,std::move(actual),
                               std::move(inputs),3,rows);
             curve.x_unit="original MATLAB xwerte";
-            curve.y_unit="scaled translation/rotation vector error";
+            // 裸 MAT 只保存 ywerte 数值。历史全视场及遮挡组均有单次值 > 2，
+            // 不能从当前生成公式或单个样本的范围反推旧文件的单位。
+            curve.y_unit="stored ywerte (unit unverified)";
+            curve.metric_semantics="stored-bias-ywerte-unverified-unit";
             curve.x_scale=curve.y_scale="log";
             out.curves.push_back(std::move(curve));
         }

@@ -50,6 +50,8 @@ bool rightAxis(const AnalysisSeries& s){
 }
 std::string primaryAxisLabel(const std::vector<const AnalysisSeries*>& curves,
                              bool marked_policy,bool logarithmic) {
+    for(const auto* curve:curves)if(curve->metric_semantics=="stored-bias-ywerte-unverified-unit")
+        return logarithmic?"log10(stored ywerte, unit unverified)":"stored ywerte (unit unverified)";
     std::vector<std::string> labels;
     if(marked_policy) {
         for(const auto* curve:curves) {
