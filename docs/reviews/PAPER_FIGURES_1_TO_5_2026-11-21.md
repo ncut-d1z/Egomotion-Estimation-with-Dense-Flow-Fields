@@ -44,3 +44,20 @@ Fig. 5 旋转分段使用同一实验的理想流比，Comparison 阈值为 0.01
 ## 后续证据顺序
 
 恢复验证授权后先核对准确源码 SHA，再按 SVG ON/OFF 两套配置、全 CTest、MAT 安全与指标写回读、错误共现路径取证。科学实验另按 Fig. 2 初始化、Fig. 5 Comparison 两条件及 UpdateRates 两套周期、Fig. 1 两场景各 40 次的顺序登记输入、实际成功/缺测/失败数和独立 L2/L3/L4 比较。DEC-005/006/008、病态输入前向误差、验收签字仍按原计划办理。
+
+## 专项入口与证据文件
+
+`[HUMAN-EXECUTE/APPROVE]`　以下描述源码 `afcaa8ca80b8e5dfbb39202e6e9b41e9d0c0068e` 的行为。当前工作区完成了源码静态审阅，构建、CTest、CLI、导出 SVG 和科学实验均待验证。现有五个 MAT 实验入口继续使用原保存合同。普通 Bias 分析读取裸 MAT 时保留原 ywerte，单位标为待核实。
+
+候选入口为 `egomotion paper-figure --figure N --format data|svg [--run-id ID]`，默认格式为 data。Fig. 5 还需要显式给出 `--seed UINT32` 和 `--periods archive|article`。这两个选项只适用于 Fig. 5。入口会生成新实验或几何数据，Fig. 1 会执行全部 80 个独立试验。下表供恢复相应运行授权后使用。
+
+| 图号 | 数值证据 | 可选 SVG 与解释 |
+|---|---|---|
+| 1 | 遮挡和全视场各 40 个种子，源种子 1–40，细分 0–9。每条件每次一个 TSV，含源 xwerte、实际 N、噪声乘数、源弦长与从向量直接算出的角度。means.tsv 逐单元给出有效数、计划数及均值 | fig1-source-config.svg 使用归档源参数，绘第 2–9 级。调用记录同时列论文参数和归档实际乘数，两者的换算关系待独立来源解释 |
+| 2 | initialization.tsv 同列给出逐帧平移方向角、旋转轴方向角与旋转测地角及各自的状态。第 1/35 帧没有求解样本 | fig2-axis.svg 和 fig2-geodesic.svg 均以原帧号绘完整有效区间，蓝色为平移，红色为相应旋转指标 |
+| 3、4 | geometry-A.json 和 geometry-B.json 含坐标、角度、遮罩、源脚本身份。Fig. 4 本次选用实部 (l,m)=(1,1) 和 (2,1)，系数和次序仅为具名示例 | fig3.svg 和 fig4.svg 各含并排两面板，Fig. 3 显示蓝色轨迹。四边形网格用高度着色，投影与明暗为 C++ 绘制，像素级一致性待验证 |
+| 5 | comparison-noise-0.tsv、comparison-noise-0p1.tsv 和 update-archive.tsv 或 update-article.tsv。两个噪声条件从同一明确种子开始，各自内部八轮连续消费。表中记录帧、比较槽、采样数、两项理想流平均幅值、实测比、实际周期、刷新标记及双指标 | fig5-axis.svg 按归档分段绘旋转轴角，fig5-geodesic.svg 在完整 50–550 窗口绘测地角，包括零旋转帧。两者均为三行两列，左轴对数。选择 archive 时另有 fig5-update-archive-axis-linear.svg，用归档周期、分段、平滑及线性纵轴绘 E/F |
+
+结果根为 `output/<RunId>/`。两种格式都写数值；各曲线 TSV 的 `segment_start` 标记切片边界。均值缺一次就记 NA，并在原 TSV 中保留每次的数值或错误码。有效零度保留为 0，对数显示在该处断线。源码记录用 case-counts.json 区分已尝试、求解完成和求解失败的独立试验，invocation.json 与 execution.json 给出配置、源码身份和交付状态。某次求解中途失败会保留该次已完成的样本与失败诊断；同组其它独立试验继续，整图不会发布成功均值。归档线性视图的输入是本次有身份的 C++ 样本。
+
+源码入口见[采集与发布](../../src/paper/study.cpp)、[聚合与绘图窗口](../../src/paper/charts.cpp)、[可选曲线 SVG](../../src/paper/chart_svg.cpp)和[双面板几何](../../src/illustrations/svg.cpp)。新登记的 `r06_paper_figure_contract` 使用六条合成视线核对理想流比 1/2、零转轴和合法测地角，还检查单次角度先于平均、7/8 缺测、分段边界与两种纵轴。既有 Bias、Session、归档分析和插图用例也补充专项断言。以上均为回归源码，尚无本版测试结果。

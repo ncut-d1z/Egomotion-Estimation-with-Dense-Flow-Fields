@@ -1,5 +1,7 @@
 # 测试设计与验收计划（TEST PLAN）
 
+> **2026-11-21 候选回归范围**　`[AI-DRAFT + HUMAN-APPROVE]`　新增 CTest 名称 `r06_paper_figure_contract`，并扩展既有 Bias、Session 和插图回归源码。覆盖真实方向数、固定 40/8 分母、六方向理想流比、两种旋转指标、两套刷新日程、对数断线及 SVG 开关。恢复运行许可后须在新提交的两个构建配置上先执行 MAT 安全回归，再执行完整 CTest。科学实验与 DEC-005 数值资格另行取证。[专项源码与验收边界](reviews/PAPER_FIGURES_1_TO_5_2026-11-21.md)
+
 > **2026-11-18 最新证据登记（[AI-EDIT]）**：受测源码`3985b056aa19935c8348f0fefa5f5292f9fbd3b4`两模式配置/编译无诊断，**SVG ON73/73、OFF72/72 CTest**；先MAT7项，再66/65项，零失败/跳过/禁用。新增合成固定输入→真实Adaptive Step/Session→完整35/600帧及8轮聚合→MAT交付独立对照：3676721项、17441次Step、12个MAT/8540值通过，保存值最大差5.406439324458240113e-10，沿用原1e-9工程余量。两配置Step JSONL与MAT数值载荷相同，739项输入SHA及21组既有摘要不变。见 [完整交付链证据](reviews/R6_REAL_STEP_DELIVERY_L3_2026-11-18.md)。合成场景不等于原科学实验成功；原轨迹三入口仍Incomplete、无完整科学MAT，L4、病态资格及正式验收未完成。Issue #1–#5开放，已建立[Draft PR #6](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/pull/6)，R6未结案。下列66 TC/AC、阈值与冻结状态不变。
 
 > **测试计划草案 v0.31，未冻结。** 66 项 TC→候选测试实体/CTest→AC 的唯一规范性登记；当前 SRS/HLD/LLD 精确身份见 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md)，真实执行进度见 [PROGRESS.md](PROGRESS.md)，不能以单个已执行 CTest 代替其他 TC。

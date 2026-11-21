@@ -1,5 +1,9 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 论文专项入口和回归源码（2026-11-21）
+
+`[HUMAN-EXECUTE/APPROVE]`　源码检查点 `afcaa8ca80b8e5dfbb39202e6e9b41e9d0c0068e`，开发分支 `dev-plan-P0-P1-mat-dictionary-probe`，[Draft PR #6](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/pull/6)。独立 paper-figure 入口已接入五幅图的采集、聚合和可选 SVG。历史 Bias 的单位标识、按实测周期绘图、流比分段和合法零度的回归源码一并提交。静态核对了 3 个专项生产翻译单元、新测试目标和 13 个上游脚本 blob。本批未配置、编译、执行 CTest 或运行新实验。详见[逐图数据和源码交付](reviews/PAPER_FIGURES_1_TO_5_2026-11-21.md)。
+
 ## 论文 Fig. 1–5 数据来源与绘图合同核对（2026-11-21）
 
 `[AI-DRAFT + HUMAN-APPROVE]` 对照论文原图、归档生成/分析脚本和 582 个 SHA 匹配的 MAT，已按面板登记八项差异。Fig. 1 两组历史 ywerte3–6 中共有 7924/9600 个数超过单位弦长上限 2，全视场组的 40 个历史 xwerte 都已记录实际方向数。Fig. 5 亦已核清两种采样密度各自的旋转窗口。详见[逐图证据和候选合同](reviews/PAPER_FIGURES_1_TO_5_2026-11-21.md)。本项为只读核对，科学实验与新版构建验证待执行。
