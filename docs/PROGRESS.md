@@ -1,6 +1,10 @@
 # 实施进度与证据登记（PROGRESS）
 
-## 最新接续：启动异常与 MAT 扫描歧义，只改代码（2026-11-21）
+## 最新接续：完成状态与子进程回收，只改代码（2026-11-21）
+
+`[HUMAN-EXECUTE/APPROVE]` 从 PR #6 的 `5060783e06214bb697d556de81f64789750736df` 继续。Bias 的 Manifest v1 最终 Complete 门禁增加有效样本非零检查，与既有完成入口一致，拒绝时保留计数、RunId 与全部 MAT 回执；Adaptive v2 的方案 B 保持。进程记录器在目录/开始记录/fork 前拒绝 SIGCHLD=SIG_IGN 或 SA_NOCLDWAIT，父侧将 SIGCHLD 加入阻塞集但不纳入转发集，保留原信号处理及父子 mask 恢复。两个既有测试目标新增两种 Bias 生命周期与六种信号设置调用场景的回归源码，未新增 CMake 目标。具体反例、系统语义与限定静态复核见 [本批记录](reviews/R6_MANIFEST_PROCESS_CONTINUATION_2026-11-21.md)。**未配置、未编译、未做语法编译、未执行测试/CLI/MAT I/O/数值实验。** 四项指标决定及其它延期项保持，无新增即时人类决定，R6 总体验收仍未完成。
+
+## 前批接续：启动异常与 MAT 扫描歧义，只改代码（2026-11-21）
 
 `[HUMAN-EXECUTE/APPROVE]` 从 PR #6 的 `defc4d3664010561094115d241c1e2ffa36b1c5b` 继续。修复两项静态可确认问题：实际应用入口的参数/服务装配及 current_path 标准异常纳入既有 OutputFailed/Output/退出6回退；MAT 扫描在按名读取前检查目录名称唯一性，重复时保留路径和冲突名称并返回 AmbiguousVariable，防止错误复用首项结构。回归源码复用进程记录和 raw payload 两个目标，CMake 仅补前者的真实应用入口链接。具体反例、上游依据及静态复核范围见 [本批记录](reviews/R6_STARTUP_MAT_SCAN_CONTINUATION_2026-11-21.md)。**未配置、未编译、未做语法编译、未执行测试/CLI/MAT I/O/数值实验。** 数值估计器、采样与噪声本轮已读路径未确认新缺口；四项指标决定及其它延期项保持，无新增即时人类决定，R6 总体验收仍未完成。
 

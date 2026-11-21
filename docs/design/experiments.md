@@ -1,5 +1,7 @@
 # 实验 Runner 与结果写出——详细设计草案
 
+> **2026-11-21 Bias 完成门禁接续，未构建/未测试**：Manifest v1 的最终 Complete 检查增加 valid 非零要求，与 noteCompletedMemory 的既有检查一致，避免公开计数接口绕过。拒绝发生在发布前，保留原计数、错误和 MAT 回执；补齐真实有效样本后可复用回执。Adaptive v2 与方案 B 不受影响，详见 [本批记录](../reviews/R6_MANIFEST_PROCESS_CONTINUATION_2026-11-21.md)；未改变统计定义或正式冻结状态。
+
 > **2026-11-20 发布封存接续，未构建/未测试**：Manifest 确认发布后，RunContext 的 Bias 写入/完成入口拒绝重入，既有 void 计数及错误记录入口不再更改审计快照；Complete、方案 B Incomplete 与 Failed 均保留已发布证据。未确认持久化的失败流程和借用 Writer/RNG 接口保持原合同，见 [实现与待执行回归](../reviews/R6_LIFECYCLE_DIAGNOSTICS_CONTINUATION_2026-11-20.md)。本次不改变结果状态定义或正式冻结状态。
 
 > **2026-11-20 失败审计接续，未构建/未测试**：RunContext 失败内存状态与 Manifest 共用同一份 Writer 产物回执；最终文件已发布但持久化未确认时保持 Incomplete 与 `durably_confirmed=false`，没有部分进度/产物的失败仍为 Failed。原 Complete 门禁不放宽，见 [实现和待执行回归](../reviews/R6_FAILURE_BOUNDARY_CONTINUATION_2026-11-20.md)。

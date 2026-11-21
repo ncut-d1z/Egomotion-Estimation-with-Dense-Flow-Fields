@@ -1,5 +1,7 @@
 # CLI 参数、退出码与诊断协议：详细设计草案
 
+> **2026-11-21 子进程回收接续，未构建/未测试**：独立单线程记录器在 Directory/start/fork 前检查 SIGCHLD；显式 SIG_IGN 或 SA_NOCLDWAIT 无法保留真实 wait 状态，沿用 OutputFailed/Output/退出6，且不启动应用或创建本次记录目录。父侧额外阻塞 SIGCHLD，防止自定义 handler 提前回收；signalfd/转发仍仅 INT/TERM/HUP/QUIT。原 SIGCHLD disposition 不改，子进程入口及父进程返回恢复原 mask。依据与未执行回归见 [本批记录](../reviews/R6_MANIFEST_PROCESS_CONTINUATION_2026-11-21.md)；没有增加多线程嵌入承诺、错误枚举或正式冻结。
+
 > **2026-11-21 启动异常接续，未构建/未测试**：真实应用入口的参数构造、服务装配和工作目录获取也纳入既有 std::exception 回退，保留原 what()、OutputFailed/Output/退出6；未预留 RunId 时不虚构身份。直接入口与记录器入口复用同一处理，回归源码覆盖已删除 cwd 的正常失败返回及 application_returned 记录，见 [本批记录](../reviews/R6_STARTUP_MAT_SCAN_CONTINUATION_2026-11-21.md)。不改变信号终止及非标准异常的既有边界，正式冻结状态不变。
 
 > **2026-11-20 记录目录身份接续，未构建/未测试**：进程记录器成功创建独占目录后，若打开或确认该目录失败，保留原操作、errno 和实际记录路径；外层仅在已知 location 非空时附路径，碰撞或尚未创建目录的失败不冒认本次记录。退出码、私有目录/碰撞规则及失败证据保留不变，见 [本批记录](../reviews/R6_ILLUSTRATION_RECORD_CONTINUATION_2026-11-20.md)。目录路径不表示持久化已经确认，正式冻结状态不变。
