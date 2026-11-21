@@ -78,6 +78,15 @@ std::string environment() {
     return json;
 }
 std::string parameters(const Command& command) {
+    if(command.kind==CommandKind::PaperFigure) {
+        const auto& config=std::get<PaperArgs>(command.arguments).config;
+        std::string schedule="null";
+        if(config.schedule)schedule=*config.schedule==experiments::PaperUpdateSchedule::Article?
+            "\"article-1-5-10-20\"":"\"archive-1-5-11-21\"";
+        return "{\"figure\":"+std::to_string(config.figure)+",\"format\":"+jsonQuote(config.svg?"svg":"data")+
+            ",\"periods\":"+schedule+",\"comparison_seed\":"+
+            (config.comparison_seed?std::to_string(*config.comparison_seed):"null")+"}";
+    }
     if (command.kind == CommandKind::InspectMat) {
         const auto& args = std::get<InspectMatArgs>(command.arguments);
         return "{\"file\":" + jsonQuote(args.source.string()) + ",\"variable\":" +
@@ -134,6 +143,7 @@ std::string commandName(CommandKind command) {
     case CommandKind::AdaptiveUpdateRates: return "run-adaptive-update-rates";
     case CommandKind::Plot: return "plot";
     case CommandKind::Illustrate: return "illustrate";
+    case CommandKind::PaperFigure: return "paper-figure";
     default: throw std::invalid_argument("Invocation record requires an output command");
     }
 }
@@ -183,14 +193,26 @@ std::string analysisCurvePrefix(const AnalysisSeries& curve) {
         ",\"y_unit\":" + jsonQuote(curve.y_unit) +
         ",\"helper_source_blob_shas\":" + stringArray(curve.helper_source_blob_shas);
 }
-std::string artifactSuffix() {
-    return ",\"record_scope\":\"artifact_export\",\"algorithm_rng\":{\"engine\":null,\"seed\":null,\"seed_origin\":\"not_used\"}"
-        ",\"environment\":" + environment() +
+std::string artifactSuffix(const std::string& rng="{\"engine\":null,\"seed\":null,\"seed_origin\":\"not_used\"}") {
+    return ",\"record_scope\":\"artifact_export\",\"algorithm_rng\":"+rng+",\"environment\":" + environment() +
         ",\"execution_record\":\"execution.json\",\"calculation_manifest\":null}\n";
 }
 }  // namespace
 
 std::string processTimestamp() { return timestamp(); }
+std::string artifactInvocationRecord(const Command& command,const std::vector<std::string>* argv,
+        const RunId& id,const std::filesystem::path& dir,const paper::FigureConfig& config) {
+    const auto blobs=paper::sourceBlobs(config.figure);
+    auto record=invocationPrefix(command,argv,id,dir,EGOMOTION_BUILD_SOURCE_SHA,blobs.at(0));
+    record+=",\"inputs\":{\"kind\":\"new_cpp_run\",\"mat_files\":[],\"source_blobs\":"+stringArray(blobs)+
+        ",\"article_doi\":\"10.1371/journal.pone.0128413\",\"archive_doi\":\"10.4119/unibi/2736885\"}";
+    if(config.figure==1)return record+artifactSuffix(
+        "{\"engine\":\"std::mt19937\",\"seed_origin\":\"source_trial_ordinal\",\"first_seed\":1,\"last_seed\":40}");
+    if(config.comparison_seed)return record+artifactSuffix(
+        "{\"engine\":\"std::mt19937\",\"seed_origin\":\"config\",\"seed\":"+std::to_string(*config.comparison_seed)+
+        ",\"reseed\":\"once_per_comparison_noise_condition\"}");
+    return record+artifactSuffix();
+}
 std::string processEnvironment() { return environment(); }
 std::string commandObservation(const Command& command) {
     return "{\"command\":" + jsonQuote(commandName(command.kind)) +

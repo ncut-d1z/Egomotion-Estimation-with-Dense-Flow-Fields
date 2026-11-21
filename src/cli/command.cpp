@@ -91,6 +91,7 @@ Result<Command, ExperimentErrorCode> parseCommand(
     else if (name == "analyze") kind = CommandKind::Analyze;
     else if (name == "plot") kind = CommandKind::Plot;
     else if (name == "illustrate") kind = CommandKind::Illustrate;
+    else if (name == "paper-figure") kind = CommandKind::PaperFigure;
     else return invalid("Unknown command: " + name);
 
     // 已知子命令的帮助不要求业务参数，也不进入Reader/Runner装配调用。
@@ -112,6 +113,28 @@ Result<Command, ExperimentErrorCode> parseCommand(
     if (has(options, "--run-id") && !safeRunId(options.at("--run-id")))
         return invalid("Invalid RunId: use 1-64 ASCII letters, digits, _ or -");
     const auto id = requestedRunId(options);
+    if(kind==CommandKind::PaperFigure) {
+        if(!validKeys(options,{"--figure","--format","--seed","--periods","--run-id"})||!has(options,"--figure"))
+            return invalid("paper-figure requires --figure 1..5");
+        const auto& number=options.at("--figure");
+        if(number.size()!=1||number[0]<'1'||number[0]>'5')return invalid("Expected figure 1..5");
+        const auto format=has(options,"--format")?options.at("--format"):"data";
+        if(format!="data"&&format!="svg")return invalid("Expected --format data or svg");
+        paper::FigureConfig config{static_cast<unsigned>(number[0]-'0'),format=="svg",{},{}};
+        if(config.figure==5) {
+            std::uint64_t seed=0;
+            if(!has(options,"--seed")||!unsignedDecimal(options.at("--seed"),
+                    std::numeric_limits<std::uint32_t>::max(),seed)||!has(options,"--periods"))
+                return invalid("Fig. 5 requires --seed UINT32 and --periods archive|article");
+            config.comparison_seed=static_cast<std::uint32_t>(seed);
+            const auto& periods=options.at("--periods");
+            if(periods=="archive")config.schedule=experiments::PaperUpdateSchedule::Archive;
+            else if(periods=="article")config.schedule=experiments::PaperUpdateSchedule::Article;
+            else return invalid("Unknown Fig. 5 period set");
+        } else if(has(options,"--seed")||has(options,"--periods"))
+            return invalid("Only Fig. 5 accepts --seed and --periods");
+        return Result<Command,ExperimentErrorCode>::success({kind,PaperArgs{config,id}});
+    }
     if(kind==CommandKind::Illustrate) {
         if(!validKeys(options,{"--kind","--format","--degree","--order","--run-id"})||
            !has(options,"--kind"))return invalid("illustrate requires --kind circle/sinusoidal/harmonic");

@@ -305,10 +305,31 @@ void strategyFailureRollback(AdaptiveSessionMode mode) {
     successfulFrame(mode,session,solver,input,true,0.0);
     ++policy_failures;
 }
+void paperAndArchiveSchedules() {
+    constexpr std::array<std::size_t,4> article{{1,5,10,20}};
+    for(const auto& periods:{kAdaptiveUpdatePeriods,article}) {
+        ScriptedStep solver(AdaptiveSessionMode::UpdateRates);
+        AdaptiveMfaSession session(AdaptiveSessionMode::UpdateRates,&solver,periods);
+        for(std::size_t i=2;i<=22;++i) {
+            solver.beginAttempt();
+            const auto before=state(session);
+            auto result=session.processFrame(frame(i,false));
+            require(result.hasValue(),"Paper schedule frame unexpectedly failed");
+            for(std::size_t j=0;j<periods.size();++j) {
+                const bool refreshed=i%periods[j]==0;
+                const auto& expected=refreshed?before.primary:before.baselines[j];
+                require(result.value().periodic_refreshed[j]==refreshed &&
+                        (session.updateRateBaselines()[j].values().array()==expected.array()).all(),
+                        "Recorded refresh did not match the committed frame/period");
+            }
+        }
+    }
+}
 } // namespace
 
 int main() {
     try {
+        paperAndArchiveSchedules();
         for(const auto mode:{AdaptiveSessionMode::Initialization,
                              AdaptiveSessionMode::Comparison,AdaptiveSessionMode::UpdateRates}) {
             metricValidity(mode);

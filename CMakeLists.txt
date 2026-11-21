@@ -180,6 +180,16 @@ if(EGOMOTION_ENABLE_SVG)
     target_link_libraries(egomotion_illustration_svg PUBLIC egomotion_illustrations)
 endif()
 
+add_library(egomotion_paper STATIC
+    src/paper/study.cpp
+    src/paper/charts.cpp
+)
+target_link_libraries(egomotion_paper PUBLIC egomotion_experiments egomotion_analysis egomotion_illustrations)
+target_compile_definitions(egomotion_paper PRIVATE "EGOMOTION_ENABLE_SVG=$<BOOL:${EGOMOTION_ENABLE_SVG}>")
+if(EGOMOTION_ENABLE_SVG)
+    target_sources(egomotion_paper PRIVATE src/paper/chart_svg.cpp)
+    target_link_libraries(egomotion_paper PRIVATE egomotion_illustration_svg)
+endif()
 add_library(egomotion_cli STATIC
     src/cli/command.cpp
     src/cli/application.cpp
@@ -189,7 +199,7 @@ add_library(egomotion_cli STATIC
 add_library(egomotion::cli ALIAS egomotion_cli)
 target_link_libraries(egomotion_cli PUBLIC
     egomotion_experiments egomotion_analysis
-    egomotion_matio egomotion_sampling egomotion_contracts egomotion_illustrations)
+    egomotion_matio egomotion_sampling egomotion_contracts egomotion_illustrations egomotion_paper)
 target_compile_features(egomotion_cli PUBLIC cxx_std_17)
 if(EGOMOTION_ENABLE_SVG)
     set(EGOMOTION_SVG_LITERAL true)
@@ -255,7 +265,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     foreach(target IN ITEMS
             egomotion_sampling egomotion_simulation egomotion_estimators
             egomotion_matio egomotion_experiments egomotion_analysis
-            egomotion_plotting egomotion_illustrations egomotion_illustration_svg egomotion_cli egomotion
+            egomotion_plotting egomotion_illustrations egomotion_illustration_svg egomotion_paper egomotion_cli egomotion
             egomotion_application_main egomotion_process_record egomotion-record)
         if(TARGET ${target})
             target_compile_options(${target} PRIVATE -Wall -Wextra -Wpedantic)
@@ -867,6 +877,12 @@ if(BUILD_TESTING)
         "${CMAKE_CURRENT_BINARY_DIR}/r06_run_context_interleaving" "${EGOMOTION_BUILD_SOURCE_SHA}")
     set_tests_properties(r06_run_context_interleaving PROPERTIES
         LABELS "r06;run-context;interleaving;real-io;write-sandbox;synthetic-only" TIMEOUT 60)
+    add_executable(test_r06_paper_figures tests/integration/test_r06_paper_figures.cpp)
+    target_link_libraries(test_r06_paper_figures PRIVATE egomotion_cli)
+    target_compile_options(test_r06_paper_figures PRIVATE -Wall -Wextra -Wpedantic)
+    add_test(NAME r06_paper_figure_contract COMMAND test_r06_paper_figures)
+    set_tests_properties(r06_paper_figure_contract PROPERTIES
+        LABELS "r06;paper;metrics;synthetic-only" TIMEOUT 60)
     add_executable(test_r06_illustrations tests/integration/test_r06_illustrations.cpp)
     target_link_libraries(test_r06_illustrations PRIVATE egomotion_cli)
     target_compile_definitions(test_r06_illustrations PRIVATE "EGOMOTION_ENABLE_SVG=$<BOOL:${EGOMOTION_ENABLE_SVG}>")

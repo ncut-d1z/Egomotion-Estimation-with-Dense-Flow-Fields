@@ -2,6 +2,7 @@
 
 #include "egomotion/analysis/analyzer.hpp"
 #include "egomotion/analysis/plot.hpp"
+#include "egomotion/analysis/paper_figures.hpp"
 #include "egomotion/experiments/runner.hpp"
 #include "egomotion/illustrations/illustration.hpp"
 #include "egomotion/cli/invocation_observer.hpp"
@@ -21,7 +22,7 @@ enum class CommandKind {
     Help, Version, InspectMat,
     BiasOccluded, BiasProportional,
     AdaptiveInitialization, AdaptiveComparison, AdaptiveUpdateRates,
-    Analyze, Plot, Illustrate
+    Analyze, Plot, Illustrate, PaperFigure
 };
 
 struct InspectMatArgs {
@@ -48,10 +49,11 @@ struct IllustrationArgs {
     bool svg=false;
     std::optional<RunId> run_id;
 };
+struct PaperArgs { paper::FigureConfig config; std::optional<RunId> run_id; };
 
 using CommandArguments = std::variant<
     std::monostate, InspectMatArgs, BiasArgs, AdaptiveInitArgs,
-    AdaptiveComparisonArgs, AdaptiveRatesArgs, AnalysisArgs, IllustrationArgs>;
+    AdaptiveComparisonArgs, AdaptiveRatesArgs, AnalysisArgs, IllustrationArgs, PaperArgs>;
 struct Command {
     CommandKind kind;
     CommandArguments arguments;

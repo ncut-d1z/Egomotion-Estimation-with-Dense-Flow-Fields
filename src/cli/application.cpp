@@ -257,6 +257,8 @@ int runExperiment(const Command& command,
     const auto delivery=deliverRecorded(outcomeResponse(result.value()),{},0,context.runId(),out,err);
     return finishRecord(text,context.runId(),delivery,true,err);
 }
+int artifactExit(const Failure<PlotErrorCode>& error) {return plotExit(error.code);}
+int artifactExit(const Failure<ExperimentErrorCode>& error) {return error.detail.stage==ErrorStage::Output?6:5;}
 template<class Data,class Export>
 int exportRecorded(const Command& command,const std::vector<std::string>* args,
                    io::RunDirectory& directory,const Data& data,Export export_artifact,
@@ -281,11 +283,12 @@ int exportRecorded(const Command& command,const std::vector<std::string>* args,
         } else {
             auto exported=export_artifact(publisher);
             if(!exported.hasValue()) {
-                const auto code=plotExit(exported.error().code);
+                const auto code=artifactExit(exported.error());
                 const auto error=detail::withRunIdIfMissing(exported.error(),id);
                 delivery=deliverRecorded({}, {jsonFailure(error,code)+"\n"},code,id,out,err);
             } else {
-                std::string response="{\"run_id\":"+jsonQuote(id.text)+",\"plot_files\":[";
+                std::string response="{\"run_id\":"+jsonQuote(id.text)+
+                    (command.kind==CommandKind::PaperFigure?",\"evidence_files\":[":",\"plot_files\":[");
                 for(std::size_t i=0;i<exported.value().size();++i) {
                     if(i)response+=',';
                     response+=jsonQuote(exported.value()[i]);
@@ -371,7 +374,9 @@ int ApplicationCompositionRoot::dispatch(
         return streams::success(out,err,"Usage: egomotion <command> [--option VALUE]\n"
               "Commands: inspect-mat, run-bias-occluded, run-bias-proportional,\n"
               "  run-adaptive-init, run-adaptive-comparison,\n"
-              "  run-adaptive-update-rates, analyze, plot, illustrate, help, version\n"
+              "  run-adaptive-update-rates, analyze, plot, illustrate, paper-figure, help, version\n"
+              "paper-figure --figure 1..5 [--format data|svg] [--run-id ID]\n"
+              "  Fig. 5 requires --seed UINT32 and --periods archive|article\n"
               "illustrate --kind circle|sinusoidal|harmonic [--format json|svg]\n"
               "  harmonic requires --degree N --order M; --run-id ID is SVG-only\n");
     case CommandKind::Version:
@@ -419,6 +424,16 @@ int ApplicationCompositionRoot::dispatch(
                              trusted_repo_,out,err,invocation_arguments,observer_);
     case CommandKind::Illustrate:
         return illustrate(command,illustrator_,trusted_repo_,out,err,invocation_arguments,observer_);
+    case CommandKind::PaperFigure: {
+        const auto& args=std::get<PaperArgs>(command.arguments);
+        if(args.config.svg&&!paper::svgAvailable())return unavailable(err,"plot","Paper SVG exporter",7);
+        auto reserved=io::RunDirectory::create(trusted_repo_,args.run_id);
+        if(!reserved.hasValue())return streams::report(err,reserved.error(),matExit(reserved.error().code));
+        auto dir=std::move(reserved).value();
+        if(!observeReservation(observer_,*dir))return observationFailure(*observer_,err,&dir->runId());
+        return exportRecorded(command,invocation_arguments,*dir,args.config,
+            [&](ITextPublisher& publisher){return paper::produce(args.config,publisher);},out,err,observer_);
+    }
     default:
         if(!runner_)return unavailable(err,"simulation","Experiment Runner");
         return runExperiment(command,trusted_repo_,*runner_,out,err,invocation_arguments,observer_);

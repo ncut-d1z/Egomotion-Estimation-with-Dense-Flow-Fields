@@ -36,6 +36,8 @@ std::string artifactInvocationRecord(const Command&, const std::vector<std::stri
                                       const illustrations::Data&);
 std::string executionRecord(const RunId&, const CommandDelivery&, bool invocation_confirmed,
                             bool has_calculation_manifest = true);
+std::string artifactInvocationRecord(const Command&,const std::vector<std::string>* argv,
+    const RunId&,const std::filesystem::path&,const paper::FigureConfig&);
 // 日志记录每次尝试的全文及完整交付状态，失败时不捏造已送达字节数。
 CommandDelivery deliverRecorded(std::string stdout_text,
                                 const std::vector<std::string>& diagnostics,
