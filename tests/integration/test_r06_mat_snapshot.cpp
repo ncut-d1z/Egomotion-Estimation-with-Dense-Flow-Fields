@@ -3,6 +3,7 @@
 #include "egomotion/io/sha256.hpp"
 #include <matio.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -14,6 +15,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 extern "C" {
@@ -21,6 +23,7 @@ int __real_memfd_create(const char*,unsigned);
 ssize_t __real_pread(int,void*,size_t,off_t);
 ssize_t __real_write(int,const void*,size_t);
 int __real_fcntl(int,int,...);
+mat_t* __real_Mat_Open(const char*,int);
 matvar_t* __real_Mat_VarRead(mat_t*,const char*);
 }
 namespace {
@@ -28,16 +31,16 @@ using namespace egomotion;
 namespace fs=std::filesystem;
 enum class Fault {None,Create,Read,ReadInterrupted,ReadShort,Write,WriteZero,
     WriteInterrupted,WriteShort,Seal,SealConfirmation,Hash,ChangeDuringCopy,
-    ReplaceBeforeDecode,OverwriteBeforeDecode};
+    ReplaceBeforeDecode,OverwriteBeforeDecode,NonRegularMetadata,ReplaceBeforeMetadata};
 struct Injection {
     bool armed=false,sealed=false;
     Fault fault=Fault::None;
     int snapshot=-1;
-    unsigned triggers=0,creates=0,decoded=0;
+    unsigned triggers=0,creates=0,decoded=0,opened=0;
     bool write_denied=false,shrink_denied=false;
     fs::path source,replacement;
 } injection;
-std::size_t checks=0,cases=0;
+std::size_t checks=0,cases=0,metadata_cases=0;
 void require(bool value,const std::string& why) {
     ++checks;if(!value)throw std::runtime_error(why);
 }
@@ -58,11 +61,11 @@ std::string hash(const fs::path& path) {
     require(fd>=0,"Cannot open fixture hash");const auto result=io::sha256Fd(fd);::close(fd);
     require(result.hasValue(),"Cannot hash fixture");return result.value();
 }
-void fixture(const fs::path& path,double start) {
+void fixture(const fs::path& path,double start,const char* name="alpha") {
     mat_t* mat=Mat_CreateVer(path.c_str(),"R6 fixed snapshot fixture",MAT_FT_MAT5);
     require(mat!=nullptr,"Cannot create isolated MAT fixture");
     size_t dims[2]={2,3};double values[6]={start,start+1,start+2,start+3,start+4,start+5};
-    matvar_t* value=Mat_VarCreate("alpha",MAT_C_DOUBLE,MAT_T_DOUBLE,2,dims,values,0);
+    matvar_t* value=Mat_VarCreate(name,MAT_C_DOUBLE,MAT_T_DOUBLE,2,dims,values,0);
     require(value!=nullptr,"Cannot create fixture array");
     const int written=Mat_VarWrite(mat,value,MAT_COMPRESSION_ZLIB);Mat_VarFree(value);
     const int closed=Mat_Close(mat);require(written==0&&closed==0,"Cannot finish fixture MAT");
@@ -102,6 +105,54 @@ void oneCase(const fs::path& root,Fault fault,bool compatible,bool success,const
         require(hash(source)==hash(root/"B-reference.mat"),"Mutation did not actually replace source bytes");
     std::cout<<"case="<<cases<<" fault="<<static_cast<int>(fault)<<" compatible="<<compatible
              <<" success="<<value.hasValue()<<" triggers="<<injection.triggers<<" path="<<source<<'\n';
+}
+Result<std::vector<MatVariableInfo>,MatErrorCode> metadata(const fs::path& path,bool full_scan) {
+    const io::MatResultReader reader;
+    if(!full_scan)return reader.inspect(path);
+    auto result=reader.scanFile(path,io::ScanMode::MetadataOnly);
+    if(!result.hasValue())return Result<std::vector<MatVariableInfo>,MatErrorCode>::failure(result.error());
+    std::vector<MatVariableInfo> variables;
+    for(const auto& item:result.value().variables){
+        require(item.status=="METADATA_OK","Metadata scan must report the actual metadata status");
+        variables.push_back(item.info);
+    }
+    return Result<std::vector<MatVariableInfo>,MatErrorCode>::success(std::move(variables));
+}
+void metadataInputs(const fs::path& root) {
+    const auto fifo=root/"metadata-fifo",directory=root/"metadata-directory";
+    require(::mkfifo(fifo.c_str(),0600)==0,"Create retained non-regular metadata input");
+    require(fs::create_directory(directory),"Create retained directory input");
+    for(const auto& source:{fifo,directory})for(const bool scan:{false,true}) {
+        ++metadata_cases;const auto before=descriptors();
+        injection=Injection{};injection.armed=true;injection.fault=Fault::NonRegularMetadata;
+        const auto value=metadata(source,scan);injection.armed=false;
+        require(!value.hasValue()&&value.error().code==MatErrorCode::InvalidMatHeader&&
+                value.error().detail.stage==ErrorStage::Read&&value.error().detail.source_path==source.string(),
+                "Metadata input must be a regular file with original path diagnostics");
+        require(injection.opened==0&&injection.creates==0&&injection.decoded==0,
+                "Reject special files before backend open, snapshot or numeric decoding");
+        require(descriptors()==before,"Non-regular metadata rejection leaked an input descriptor");
+    }
+    for(const bool scan:{false,true}) {
+        ++metadata_cases;const auto dir=root/(scan?"metadata-scan-swap":"metadata-inspect-swap");
+        require(fs::create_directory(dir),"Create metadata replacement sandbox");
+        const auto source=dir/"读取 中文.mat",replacement=dir/"replacement.mat";
+        fs::copy_file(root/"A-reference.mat",source);
+        fixture(replacement,11,"replacement");
+        const auto expected=hash(source),changed=hash(replacement);
+        const auto before=descriptors();
+        injection=Injection{};injection.armed=true;injection.fault=Fault::ReplaceBeforeMetadata;
+        injection.source=source;injection.replacement=replacement;
+        const auto value=metadata(source,scan);injection.armed=false;
+        require(value.hasValue()&&value.value().size()==1&&value.value().front().name=="alpha"&&
+                value.value().front().dimensions==std::vector<std::size_t>({2,3}),
+                "Metadata must stay on the checked inode after the input path is replaced");
+        require(injection.opened==1&&injection.triggers==1&&injection.creates==0&&injection.decoded==0,
+                "Metadata replacement must not require a numeric snapshot or decode");
+        require(descriptors()==before,"Metadata success leaked its pinned source descriptor");
+        require(hash(source)==changed&&hash(source.string()+".retained")==expected,
+                "Both replaced pathname and original inode evidence must be retained");
+    }
 }
 } // namespace
 
@@ -147,6 +198,19 @@ extern "C" int __wrap_fcntl(int fd,int command,...) {
     }
     return __real_fcntl(fd,command,value);
 }
+extern "C" mat_t* __wrap_Mat_Open(const char* path,int mode) {
+    if(injection.armed){
+        ++injection.opened;
+        // 旧实现若把FIFO交给后端，确定性拒绝并计数，避免回归自身等待写端。
+        if(once(Fault::NonRegularMetadata)){fail(EINVAL);return nullptr;}
+        if(once(Fault::ReplaceBeforeMetadata)){
+            ++injection.triggers;
+            fs::rename(injection.source,injection.source.string()+".retained");
+            fs::rename(injection.replacement,injection.source);
+        }
+    }
+    return __real_Mat_Open(path,mode);
+}
 extern "C" matvar_t* __wrap_Mat_VarRead(mat_t* mat,const char* name) {
     if(injection.armed) {
         ++injection.decoded;
@@ -178,7 +242,10 @@ int main(int argc,char** argv) {
         const auto metadata=io::MatResultReader{}.inspect(root/"A-reference.mat");injection.armed=false;
         require(metadata.hasValue()&&injection.creates==0&&injection.decoded==0,
                 "Metadata-only inspection must not acquire numeric snapshots or decode values");
+        ++metadata_cases;
+        metadataInputs(root);
         require(hash(root/"A-reference.mat")==expected,"Reference fixture must remain unchanged");
-        std::cout<<"PASS snapshot checks="<<checks<<" numeric_cases="<<cases<<" metadata_cases=1\n";return 0;
+        std::cout<<"PASS snapshot checks="<<checks<<" numeric_cases="<<cases
+                 <<" metadata_cases="<<metadata_cases<<'\n';return 0;
     } catch(const std::exception& error) {injection.armed=false;std::cerr<<error.what()<<'\n';return 1;}
 }

@@ -33,14 +33,20 @@ struct VariableCloser {
 };
 using MatHandle = std::unique_ptr<mat_t, MatCloser>;
 using VariableHandle = std::unique_ptr<matvar_t, VariableCloser>;
+struct ReadDescriptor {
+    int fd=-1;
+    ReadDescriptor()=default;
+    ReadDescriptor(const ReadDescriptor&)=delete;
+    ReadDescriptor& operator=(const ReadDescriptor&)=delete;
+    ReadDescriptor(ReadDescriptor&& other) noexcept:fd(std::exchange(other.fd,-1)){}
+    ~ReadDescriptor(){if(fd>=0)::close(fd);}
+};
 struct MatInput {
+    // 元数据后端也绑定已检查的普通文件；先销毁matio，再释放它保存的fd路径。
+    std::optional<ReadDescriptor> source;
     std::optional<detail::MatReadSnapshot> snapshot;
     MatHandle handle;
     mat_t* get() const noexcept{return handle.get();}
-};
-struct ReadDescriptor {
-    int fd=-1;
-    ~ReadDescriptor(){if(fd>=0)::close(fd);}
 };
 
 template<class Value>
@@ -161,12 +167,14 @@ Result<MatInput, MatErrorCode> openReadOnly(const fs::path& path,bool verify_con
     const bool capture_snapshot=verify_container||observer;
     ReadDescriptor descriptor;
     MatInput input;
-    if(capture_snapshot)descriptor.fd=::open(path.c_str(),O_RDONLY|O_CLOEXEC|O_NONBLOCK);
+    descriptor.fd=::open(path.c_str(),O_RDONLY|O_CLOEXEC|O_NONBLOCK);
     if(descriptor.fd>=0){
         struct stat info{};
         if(::fstat(descriptor.fd,&info)!=0||!S_ISREG(info.st_mode))
             return fail<MatInput>(MatErrorCode::InvalidMatHeader,ErrorStage::Read,path,
-                                   "Recorded or numeric MAT input must be a regular file",std::string(variable));
+                                   "MAT input must be a regular file",std::string(variable));
+    }
+    if(descriptor.fd>=0&&capture_snapshot){
         auto snapshot=detail::snapshotMatInput(descriptor.fd,path,variable);
         if(!snapshot.hasValue())
             return Result<MatInput,MatErrorCode>::failure(std::move(snapshot).error());
@@ -175,6 +183,8 @@ Result<MatInput, MatErrorCode> openReadOnly(const fs::path& path,bool verify_con
             auto observed=observer->snapshotPrepared(path,variable,input.snapshot->sha256(),purpose);
             if(!observed.hasValue())return Result<MatInput,MatErrorCode>::failure(std::move(observed).error());
         }
+    }else if(descriptor.fd>=0){
+        input.source.emplace(std::move(descriptor));
     }
     if(verify_container&&input.snapshot){
         auto unsupported=hasMat73Header(input.snapshot->fd(),path,variable);
@@ -184,10 +194,9 @@ Result<MatInput, MatErrorCode> openReadOnly(const fs::path& path,bool verify_con
             return fail<MatInput>(MatErrorCode::UnsupportedClassOrType,ErrorStage::Decode,path,
                 "Numeric MAT reader supports only MAT v5; MAT v7.3 is unsupported",std::string(variable));
     }
-    const std::string read_path=capture_snapshot?
-        "/proc/self/fd/"+std::to_string(input.snapshot?input.snapshot->fd():-1):path.string();
-    MatHandle handle(capture_snapshot&&descriptor.fd<0?nullptr:
-                     Mat_Open(read_path.c_str(), MAT_ACC_RDONLY));
+    const int read_fd=input.snapshot?input.snapshot->fd():(input.source?input.source->fd:-1);
+    const std::string read_path="/proc/self/fd/"+std::to_string(read_fd);
+    MatHandle handle(read_fd<0?nullptr:Mat_Open(read_path.c_str(), MAT_ACC_RDONLY));
     if (!handle) {
         const int saved_errno = errno;
         // matio may clear errno internally. The supplementary existence probe

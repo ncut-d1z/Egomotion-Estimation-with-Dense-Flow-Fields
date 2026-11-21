@@ -133,6 +133,49 @@ void supportedControl(const fs::path& root) {
         require(digest(path)==hash,"Control read changed v5 input");
     });
 }
+void metadataControl(const fs::path& path) {
+    // 可选HDF5后端的能力由同一普通文件的直接元数据读取给出，不要求安装新后端。
+    bool available=false;
+    {
+        std::unique_ptr<mat_t,decltype(&Mat_Close)> direct(__real_Mat_Open(path.c_str(),MAT_ACC_RDONLY),Mat_Close);
+        if(direct){
+            std::unique_ptr<matvar_t,decltype(&Mat_VarFree)> value(Mat_VarReadInfo(direct.get(),"value"),Mat_VarFree);
+            available=bool(value);
+            if(value)require(value->rank==2&&value->dims&&value->dims[0]==2&&value->dims[1]==3&&
+                             value->class_type==MAT_C_DOUBLE,"Unexpected direct v7.3 fixture metadata");
+        }
+    }
+    std::cout<<"v73_metadata_backend_available="<<available<<'\n';
+    for(const bool scan:{false,true})scenario(scan?"v73-metadata-scan":"v73-metadata-inspect",[&]{
+        const auto before=descriptors();
+        observation={true,false,Fault::None,0,0,0,0};
+        const io::MatResultReader reader;
+        const auto check=[&](const auto& result){
+            require(result.hasValue()==available,"Pinned metadata reader must retain direct backend capability");
+            if(!available)require(result.error().detail.source_path==path.string(),
+                                   "Unavailable metadata backend retains original source path");
+        };
+        const auto info=[](const MatVariableInfo& value){
+            require(value.name=="value"&&value.dimensions==std::vector<std::size_t>({2,3})&&
+                    value.original_class_type==MAT_C_DOUBLE,"Pinned v7.3 metadata differs from fixed fixture");
+        };
+        if(scan){
+            const auto result=reader.scanFile(path,io::ScanMode::MetadataOnly);check(result);
+            if(available){
+                require(result.value().version=="MAT v7.3"&&result.value().variables.size()==1&&
+                        result.value().variables.front().status=="METADATA_OK","Expected v7.3 metadata scan");
+                info(result.value().variables.front().info);
+            }
+        }else{
+            const auto result=reader.inspect(path);check(result);
+            if(available){require(result.value().size()==1,"Expected one v7.3 metadata variable");info(result.value().front());}
+        }
+        observation.armed=false;
+        require(observation.opens==1&&observation.decodes==0&&observation.header_reads==0,
+                "Metadata delegates to the optional backend without numeric decoding or version rejection");
+        require(descriptors()==before,"Metadata backend leaked its pinned source descriptor");
+    });
+}
 }
 extern "C" mat_t* __wrap_Mat_Open(const char* path,int mode) {
     if(observation.armed){++observation.opens;if(observation.deny_backend){errno=EINVAL;return nullptr;}}
@@ -164,7 +207,7 @@ int main(int argc,char** argv) {
         auto allocated=io::RunDirectory::create(root);require(allocated.hasValue(),"Cannot reserve isolated fixture RunId");
         auto run=std::move(allocated).value();const auto directory=run->outputRoot()/run->runId().text;
         std::cout<<"RunId="<<run->runId().text<<" fixture_dir="<<directory<<" SHA256="<<kFixtureSha<<'\n';
-        versionCases(source);variants(directory,bytes);supportedControl(directory);
+        versionCases(source);variants(directory,bytes);supportedControl(directory);metadataControl(source);
         require(digest(source)==kFixtureSha,"Original synthetic fixture changed after tests");
     }catch(const std::exception& e){std::cerr<<"FAIL fixture setup: "<<e.what()<<'\n';return 1;}
     std::cout<<"MAT73 version checks="<<checks<<" cases="<<cases<<" failures="<<failures
