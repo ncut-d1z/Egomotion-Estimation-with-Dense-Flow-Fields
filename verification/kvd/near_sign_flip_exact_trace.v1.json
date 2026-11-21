@@ -1,0 +1,539 @@
+{
+  "schema": "egomotion.kvd.eight_direction_sign_flip_math.v1",
+  "date": "2026-11-09",
+  "status": "WOLFRAM_EXACT_SOURCE_ORDER_EXECUTED_NO_MATLAB_CPP_NOT_RUN_UNAPPROVED",
+  "generator": "verification/kvd/verify_near_sign_flip_exact_trace.wl",
+  "generator_blob_sha": "fcc5ddbb39a91f7a85798826c23a0968930e1470",
+  "source_blobs": {
+    "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/franzeigen.m": "6fe556fd038b983f8d80aac5c76ee2ea11c08f38",
+    "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/zellendefinieren.m": "7132613d27135cfa00664429251da6b95553bb7c",
+    "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/norm_koenderink_iteration.m": "d48048f37b859bfb19402ca85b0f4c20e76afbfd",
+    "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/mue_norm_koenderink_iteration.m": "9ffdac1baaecac06db20bcc6849bf4cdd165a484"
+  },
+  "analytical_symbols": {
+    "epsilon": "1/10^13",
+    "alpha": "1/(1+100 epsilon)",
+    "beta": "1/(1+epsilon)",
+    "unitDirectionS": "1/10",
+    "unitDirectionC": "Sqrt[99]/10"
+  },
+  "fixture": "Four near-axis directions (±sqrt99/10,±1/10,0), plus ±e_y ±e_z; eight tangential optical flow rows given by 10*(e_x-d_x d) near-axis, -(e_x-d_x d) for the four others. Constructed signed field for branch diagnostics, not necessarily positive physical inverse depth.",
+  "expected_exact": {
+    "Franz_translation_x": "90/101",
+    "Franz_rotation": "[0,0,0]",
+    "Franz_translation_responses": "[18/5,0,0]",
+    "Franz_translation_norms": "[101/25,149/25,6]",
+    "first_raw_near": "[-10 alpha (four), beta (four)]",
+    "first_negative_near_sum": "-40 alpha+4 beta<0",
+    "first_near_after_flip": "[10 alpha (four), -beta (four)]",
+    "first_translation_after_flip": "-e_x",
+    "mean_after_flip": "(5 alpha-beta)/2",
+    "Original_a_x": "(alpha+beta)/2",
+    "Original_c_x": "-(99/2)alpha^2",
+    "Original_tRaw_x": "-(alpha+beta+99 alpha^2)/2",
+    "Modified_a_x": "-9/20",
+    "Modified_c_x": "-(99/20)alpha",
+    "Modified_tRaw_x": "-(99 alpha-9)/20",
+    "omega_new": "[0,0,0]",
+    "mse": "((1-alpha)^2+(1-beta)^2)/2",
+    "dynamic_threshold": "RMS/(1000*8)",
+    "sign_flip_sequence": "[true,false,false,false,false,false]",
+    "stopped_after_round": 6,
+    "final_translation_x": "-(5 alpha-beta)/2"
+  },
+  "runtime_math_results": {
+    "Franz": {
+      "tResponse": [
+        3.6,
+        0,
+        0
+      ],
+      "tNorm": [
+        4.04,
+        5.96,
+        6
+      ],
+      "omegaResponse": [
+        0,
+        0,
+        0
+      ],
+      "omegaNorm": [
+        4.04,
+        5.96,
+        6
+      ],
+      "FranzT": [
+        0.8910891089108911,
+        0,
+        0
+      ],
+      "FranzOmega": [
+        0,
+        0,
+        0
+      ]
+    },
+    "Original": {
+      "mode": "Original",
+      "iterationCount": 6,
+      "firstRound": {
+        "rawNear": [
+          -9.9999999999,
+          -9.9999999999,
+          -9.9999999999,
+          -9.9999999999,
+          0.9999999999999,
+          0.9999999999999,
+          0.9999999999999,
+          0.9999999999999
+        ],
+        "nearAfterFlip": [
+          9.9999999999,
+          9.9999999999,
+          9.9999999999,
+          9.9999999999,
+          -0.9999999999999,
+          -0.9999999999999,
+          -0.9999999999999,
+          -0.9999999999999
+        ],
+        "a": [
+          0.99999999999495,
+          0,
+          0
+        ],
+        "b": [
+          0,
+          0,
+          0
+        ],
+        "c": [
+          -49.49999999901,
+          0,
+          0
+        ],
+        "rawCandidate": [
+          -50.49999999900495,
+          0,
+          0
+        ],
+        "nearRawSum": -35.9999999996004,
+        "rotA": [
+          0,
+          0,
+          0
+        ],
+        "rotB": [
+          0,
+          0,
+          0
+        ],
+        "rotC": [
+          0,
+          0,
+          0
+        ],
+        "expectedRawNearAnalytic": [
+          -9.9999999999,
+          -9.9999999999,
+          -9.9999999999,
+          -9.9999999999,
+          0.9999999999999,
+          0.9999999999999,
+          0.9999999999999,
+          0.9999999999999
+        ],
+        "originalCandidateFormulaMatches": true,
+        "MSEFormulaMatches": true
+      },
+      "trace": [
+        {
+          "k": 1,
+          "signFlip": true,
+          "nearMean": 4.49999999995005,
+          "tRawX": -50.49999999900495,
+          "normalizedT": [
+            -1,
+            0,
+            0
+          ],
+          "omega": [
+            0,
+            0,
+            0
+          ],
+          "RMS": 7.071421356346968e-12,
+          "delta": 7.071421356346968e-12,
+          "threshold": 8.839276695433711e-16,
+          "exit": false
+        },
+        {
+          "k": 2,
+          "signFlip": false,
+          "nearMean": 4.49999999995005,
+          "tRawX": -50.49999999900495,
+          "normalizedT": [
+            -1,
+            0,
+            0
+          ],
+          "omega": [
+            0,
+            0,
+            0
+          ],
+          "RMS": 7.071421356346968e-12,
+          "delta": 0,
+          "threshold": 8.839276695433711e-16,
+          "exit": false
+        },
+        {
+          "k": 3,
+          "signFlip": false,
+          "nearMean": 4.49999999995005,
+          "tRawX": -50.49999999900495,
+          "normalizedT": [
+            -1,
+            0,
+            0
+          ],
+          "omega": [
+            0,
+            0,
+            0
+          ],
+          "RMS": 7.071421356346968e-12,
+          "delta": 0,
+          "threshold": 8.839276695433711e-16,
+          "exit": false
+        },
+        {
+          "k": 4,
+          "signFlip": false,
+          "nearMean": 4.49999999995005,
+          "tRawX": -50.49999999900495,
+          "normalizedT": [
+            -1,
+            0,
+            0
+          ],
+          "omega": [
+            0,
+            0,
+            0
+          ],
+          "RMS": 7.071421356346968e-12,
+          "delta": 0,
+          "threshold": 8.839276695433711e-16,
+          "exit": false
+        },
+        {
+          "k": 5,
+          "signFlip": false,
+          "nearMean": 4.49999999995005,
+          "tRawX": -50.49999999900495,
+          "normalizedT": [
+            -1,
+            0,
+            0
+          ],
+          "omega": [
+            0,
+            0,
+            0
+          ],
+          "RMS": 7.071421356346968e-12,
+          "delta": 0,
+          "threshold": 8.839276695433711e-16,
+          "exit": false
+        },
+        {
+          "k": 6,
+          "signFlip": false,
+          "nearMean": 4.49999999995005,
+          "tRawX": -50.49999999900495,
+          "normalizedT": [
+            -1,
+            0,
+            0
+          ],
+          "omega": [
+            0,
+            0,
+            0
+          ],
+          "RMS": 7.071421356346968e-12,
+          "delta": 0,
+          "threshold": 8.839276695433711e-16,
+          "exit": true
+        }
+      ],
+      "signFlipPattern": [
+        true,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "expectedFlipOnlyFirst": true,
+      "firstRoundFormulaChecks": true,
+      "positiveMeanAfterFlip": true,
+      "normalizedDirectionStaysNegativeX": true,
+      "exactSixIterations": true,
+      "finalTranslation": [
+        -4.49999999995005,
+        0,
+        0
+      ],
+      "finalOmega": [
+        0,
+        0,
+        0
+      ]
+    },
+    "Modified": {
+      "mode": "Modified",
+      "iterationCount": 6,
+      "firstRound": {
+        "rawNear": [
+          -9.9999999999,
+          -9.9999999999,
+          -9.9999999999,
+          -9.9999999999,
+          0.9999999999999,
+          0.9999999999999,
+          0.9999999999999,
+          0.9999999999999
+        ],
+        "nearAfterFlip": [
+          9.9999999999,
+          9.9999999999,
+          9.9999999999,
+          9.9999999999,
+          -0.9999999999999,
+          -0.9999999999999,
+          -0.9999999999999,
+          -0.9999999999999
+        ],
+        "a": [
+          -0.45,
+          0,
+          0
+        ],
+        "b": [
+          0,
+          0,
+          0
+        ],
+        "c": [
+          -4.9499999999505,
+          0,
+          0
+        ],
+        "rawCandidate": [
+          -4.4999999999505,
+          0,
+          0
+        ],
+        "nearRawSum": -35.9999999996004,
+        "rotA": [
+          0,
+          0,
+          0
+        ],
+        "rotB": [
+          0,
+          0,
+          0
+        ],
+        "rotC": [
+          0,
+          0,
+          0
+        ],
+        "expectedRawNearAnalytic": [
+          -9.9999999999,
+          -9.9999999999,
+          -9.9999999999,
+          -9.9999999999,
+          0.9999999999999,
+          0.9999999999999,
+          0.9999999999999,
+          0.9999999999999
+        ],
+        "originalCandidateFormulaMatches": true,
+        "MSEFormulaMatches": true
+      },
+      "trace": [
+        {
+          "k": 1,
+          "signFlip": true,
+          "nearMean": 4.49999999995005,
+          "tRawX": -4.4999999999505,
+          "normalizedT": [
+            -1,
+            0,
+            0
+          ],
+          "omega": [
+            0,
+            0,
+            0
+          ],
+          "RMS": 7.071421356346968e-12,
+          "delta": 7.071421356346968e-12,
+          "threshold": 8.839276695433711e-16,
+          "exit": false
+        },
+        {
+          "k": 2,
+          "signFlip": false,
+          "nearMean": 4.49999999995005,
+          "tRawX": -4.4999999999505,
+          "normalizedT": [
+            -1,
+            0,
+            0
+          ],
+          "omega": [
+            0,
+            0,
+            0
+          ],
+          "RMS": 7.071421356346968e-12,
+          "delta": 0,
+          "threshold": 8.839276695433711e-16,
+          "exit": false
+        },
+        {
+          "k": 3,
+          "signFlip": false,
+          "nearMean": 4.49999999995005,
+          "tRawX": -4.4999999999505,
+          "normalizedT": [
+            -1,
+            0,
+            0
+          ],
+          "omega": [
+            0,
+            0,
+            0
+          ],
+          "RMS": 7.071421356346968e-12,
+          "delta": 0,
+          "threshold": 8.839276695433711e-16,
+          "exit": false
+        },
+        {
+          "k": 4,
+          "signFlip": false,
+          "nearMean": 4.49999999995005,
+          "tRawX": -4.4999999999505,
+          "normalizedT": [
+            -1,
+            0,
+            0
+          ],
+          "omega": [
+            0,
+            0,
+            0
+          ],
+          "RMS": 7.071421356346968e-12,
+          "delta": 0,
+          "threshold": 8.839276695433711e-16,
+          "exit": false
+        },
+        {
+          "k": 5,
+          "signFlip": false,
+          "nearMean": 4.49999999995005,
+          "tRawX": -4.4999999999505,
+          "normalizedT": [
+            -1,
+            0,
+            0
+          ],
+          "omega": [
+            0,
+            0,
+            0
+          ],
+          "RMS": 7.071421356346968e-12,
+          "delta": 0,
+          "threshold": 8.839276695433711e-16,
+          "exit": false
+        },
+        {
+          "k": 6,
+          "signFlip": false,
+          "nearMean": 4.49999999995005,
+          "tRawX": -4.4999999999505,
+          "normalizedT": [
+            -1,
+            0,
+            0
+          ],
+          "omega": [
+            0,
+            0,
+            0
+          ],
+          "RMS": 7.071421356346968e-12,
+          "delta": 0,
+          "threshold": 8.839276695433711e-16,
+          "exit": true
+        }
+      ],
+      "signFlipPattern": [
+        true,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "expectedFlipOnlyFirst": true,
+      "firstRoundFormulaChecks": true,
+      "positiveMeanAfterFlip": true,
+      "normalizedDirectionStaysNegativeX": true,
+      "exactSixIterations": true,
+      "finalTranslation": [
+        -4.49999999995005,
+        0,
+        0
+      ],
+      "finalOmega": [
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  "checks": {
+    "count": 11,
+    "passed": 11,
+    "items": {
+      "all first signs negative": true,
+      "first then 5 no flips": true,
+      "6 round exact": true,
+      "expected normalized negative t": true,
+      "expected formulas": true,
+      "positive near after flip": true,
+      "Franz ex 90/101": true,
+      "Franz omega zero": true,
+      "distinct raw candidates": true,
+      "common final t": true,
+      "RMS <1e-7": true
+    }
+  },
+  "limitations": [
+    "Exact-arithmetic source-formula trace, not an original MATLAB run, production C++/CTest or approved numeric tolerance.",
+    "Near-axis true signed nearness -10 and others +1 is a constructed nonphysical mixed-signed input suitable for control-flow proof, not evidence of positive-distance physical reconstruction.",
+    "Not a general convergence or 200-loop upper-bound proof; this fixture requires six rounds because first RMS difference < 1e-7 and thereafter delta=0.",
+    "No original MATLAB source, MAT data, SH production C++ or other module implementation edited."
+  ]
+}

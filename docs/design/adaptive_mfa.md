@@ -1,6 +1,18 @@
 # Adaptive MFA 单步计算与轨迹状态——详细设计草案
 
-> **LLD v0.3：未冻结、未实现、未测。** 已核对原 MATLAB 的 oneit_adaptiv_matched_filter.m 关键表达式，但仍须生成中间量 Golden、确定数值容差与异常状态合同才能进入编码基线。需求：REQ-F-ADAPT-001/002/003、REQ-F-EXP-001/002/003、REQ-DC-ADAPT-001；任务 P7.7–P7.11、P8.1–P8.9。
+> **2026-11-20 Session 失败边界接续，未构建/未测试**：成功 Step 载荷的 MSE 及已提供 trace 数值须有限；Session 在比较指标计算/主状态提交之前拒绝非有限载荷，保留字段名、原帧号及 NonFiniteResult 原因链。空 trace 不被新增禁止，不做形状/重算/容差新门槛；纯指标缺测继续规则保持。实现与待执行回归见 [本批记录](../reviews/R6_FAILURE_BOUNDARY_CONTINUATION_2026-11-20.md)，不以旧通过记录证明新源码或冻结本 LLD。
+
+> **2026-11-20 现行所有者决定**：按 [DEC-R6-01～04](../decisions/PROJECT_OWNER_DECISIONS_2026-11-20.md)，平移非零方向用 atan2，逐帧旋转向量 Exp 后比较 SO(3) 测地角；求解与指标有效性分离，单项指标缺测不阻止成功求解的状态提交，真实策略/比较/主求解失败仍原子回滚。每槽指标返回显式值或原因，零旋转合法、零平移方向仍缺测。本段覆盖下文旧“角度无定义即整帧失败”合同；单步求解公式及周期/弃置次序不变。**受测594a1b11的有限子集12/12通过，包含独立多帧/含噪Session；完整CMake/CTest尚未执行，不继承旧73/72，LLD未整体冻结。** 见[本轮验证](../reviews/R6_METRIC_DECISIONS_IMPLEMENTATION_2026-11-20.md)。
+
+> **2026-11-18 完整交付实测接续 `[AI-EDIT]`**：3985b05 ON73/OFF72通过；显式合成场景保留35/600帧及8轮，以真实Step/Session贯穿聚合和12个MAT回读，17441次Step/8540保存值独立对照，见 [证据](../reviews/R6_REAL_STEP_DELIVERY_L3_2026-11-18.md)。原轨迹仍Incomplete；只补AD-G05/SN-G06合成数值交付子范围，公式、阈值及下文LLD合同未变，未冻结。
+
+> **2026-11-18 含噪实测接续 `[AI-EDIT]`**：928a807 ON72/OFF71通过；固定0/±0.1噪声、252帧、9072 normal及24回滚，290923项独立对照见 [证据](../reviews/R6_NOISY_SESSION_L3_2026-11-18.md)。只补SN-G06/AD-G05有限子范围，原完整含噪/8轮ratio仍缺；公式、工程余量及下文LLD合同不变，未冻结。
+
+> **2026-11-18 实测接续 `[AI-EDIT]`**：源码493ba86新增标准库long double多帧独立参考，299236项/252帧/24真实角度失败回滚通过，ON71/OFF70 CTest，见 [证据](../reviews/R6_SESSION_MULTIFRAME_L3_2026-11-18.md)及 [固定输入/来源](../../verification/adaptive/session_multiframe_reference.md)。仅补AD-G04/05/06的状态/周期子范围；AD-G05完整addederror/八轮ratio、原35/600帧成功及正式Golden/DEC-005仍未完成。沿用工程余量、LLD/API未冻结；下列旧无实现/未测试描述属历史状态。
+
+> **2026-11-18 候选策略接口，未冻结**：已编写`ICoefficientUpdatePolicy`及Reset/Inherit/Periodic三实现，Session默认拥有策略或显式借用注入对象；策略只返回本帧比较候选，Session保留唯一主/基线状态和最终事务提交。现行签名见 [策略公共头](../../include/egomotion/estimators/coefficient_update.hpp)、[Session](../../include/egomotion/estimators/adaptive_session.hpp)，顺序/引用生命周期/独立性及验证状态见 [专项记录](../reviews/R6_COEFFICIENT_POLICY_2026-11-18.md)。不修改本节源公式、周期或错误合同；下列旧“无实现/未执行”描述保留历史语境，不代表当前HEAD。
+
+> **LLD v0.8：未冻结、没有生产Adaptive C++/CTest。** 已逐段核对原 MATLAB 公式；除 AN-G12 理想对称案例外，新增九方向非对称正/负均值近度的独立 Wolfram 逐节点数学参考，并发现 s<0 归一化与 M1 矩阵模型之间存在确定的 2I 差异。一般状态、Session、正式接口及 DEC-005 仍未完成。
 
 ## 1. 单步输入/输出与接口候选
 
@@ -35,7 +47,13 @@ if s < 0: near = -near
 near = near / s
 ~~~
 
-**特别审计点**：s 在符号翻转之前求得，符号翻转后没有重新求 s；负均值时这与先取绝对值归一化不等价。不得无说明地把它“纠正”为 abs(s) 或修改代码顺序。需要为 s>0、s<0、s≈0 分别建立原版对照与异常状态。
+**已核对的精确等价（只限有限 \(s\ne0\)）**：把源代码刚从 `near_aus_koeff` 取得的值记为 \(r_i\)，\(s=N^{-1}\sum_i r_i\)。源码的次序是**先**保存这个原始 \(s\)，\(s<0\) 时**翻转分子**，再除以**未更新的** \(s\)。因此实际得到
+\[
+r_i^{\mathrm{after\ sign}}=\operatorname{sgn}(s)r_i,\qquad
+\mu_i=\frac{r_i^{\mathrm{after\ sign}}}{s}=\frac{r_i}{|s|},\qquad
+\langle\mu\rangle=\operatorname{sgn}(s).
+\]
+这与**原始** \(r_i/|s|\) 在数值数学上等价，但与**翻转之后**的 \(r_i^{\mathrm{after\ sign}}/|s|\)、\(|r_i|/|s|\) 或把均值重新算为正值后再除**不等价**。此前笼统的“与先取绝对值归一化不等价”忽略了分子是原始还是翻转后，现以三个不同名称消除歧义。若编写源码忠实性/浮点顺序测试，仍应按原代码逐节点检查，而非因代数等价就宣称逐位浮点相同。\(s=0\)、NaN/Inf 则不属于上述等价定义域，必须走明确非成功分支；原 MATLAB 的运行传播未实测。参见[均值归一理论专题](ADAPTIVE_MEAN_ZERO_CONDITIONING.md)。
 
 ### 2.2 6×6 块线性系统
 
@@ -73,7 +91,31 @@ M=\begin{bmatrix}M_1&M_2\\M_3&M_4\end{bmatrix},\quad
 \boldsymbol\omega=\boldsymbol z_{4:6}.
 \]
 
-对应源码使用 real(inv(mgesamt)) * vekgesamt。Eigen 的 QR/LDLT/SVD 求解可以作为替代实现候选，但**必须先对固定输入的 M、b、z、t、ω 核对并另记改变**，不能暗中把原方程替换为正则化或其他模型。
+对应源码使用 real(inv(mgesamt)) * vekgesamt。**候选的通用求解器应适用于一般非对称 6×6 方阵**，例如有秩/残差诊断的列主元 QR、全主元 QR 或 SVD；需保持 `M z=b` 原方程，比较固定输入的 M、b、z、t、ω，并记录由 `real(inv(M))*b` 改成求解方程的数值差异。**不得把 Eigen `LDLT` 当作一般替代：它针对自伴（对称/Hermitian）矩阵的某一三角部分，原 M 在合法近度下亦可非对称；对 M 强制对称化、静默忽略另一三角区或施加正则化都会改变原算法。** 仅当某个经证明的受限输入子集保证对称性、另经批准相应求解及失败策略时才可评估 LDLT，不能由简单的 `det M ≠ 0` 推导出其适用性。
+
+### 2.2.1 正近度、可逆但非对称的原矩阵反例（2026-11-11，求解器资格整改）
+
+此例不是对原源算法加新求解规则，而是按 `oneit_adaptiv_matched_filter.m:32–101` 的 **M1/M2/M3/M4 与 RHS 原式**精确构造，排除“只有病态/负近度才不能用 LDLT”的误解。取六条单位方向，依次为 `e_x,-e_x,e_y,-e_y,e_z,-e_z`；原始近度函数取 `r(d)=1+x/2`，它能由原 CS 九基系数 `C(1,1)=sqrt(4*pi)`、`C(2,3)=-(1/2)*sqrt(4*pi/3)`（其余0）准确重建。六条 raw near 为 `(3/2,1/2,1,1,1,1)`，**严格正、均值 s=1**，故原源码归一后 μ 与 raw near 相同。设真实 `t=e_y`、`ω=0`，按源合成切向流公式 `p_i=-μ_i(I-d_i d_i^T)e_y`，输入是合法、有限、切向的 N×6 场。
+
+对每一项独立求和得到：
+
+\[
+M_1=M_4=\frac23I_3,\qquad M_2=0,\qquad
+M_3=\frac16[e_x]_\times,\qquad
+M=\begin{bmatrix}\frac23I_3&0\\\frac16[e_x]_\times&\frac23I_3\end{bmatrix}.
+\]
+
+因为 \(M_3\ne M_2^T\)，**\(M\ne M^T\)**；然而 \(\det M=(2/3)^6=64/729>0\)，满秩且每个近度都为正。源右端为
+
+\[
+\boldsymbol b_t=\frac23e_y,\qquad
+\boldsymbol b_\omega=\frac16e_z,\qquad
+\boldsymbol z=M^{-1}\boldsymbol b=(0,1,0,0,0,0)^T.
+\]
+
+以上每一式可用六行输入的分量有理数计算独立重放：若将矩阵错误地当成块对角（例如只取上三角作为对称输入）求解，则旋转子向量会错误地变为 `+(1/4)e_z`，而正确结果是 `ω=0`。**这是对矩阵装配/非对称求解器的判别性固定反例，不是只有“测试一次是否可逆”就够了**。注意 Eigen LDLT 实际读取的三角区域/解不应仅凭此数值例猜测；验证必须对比完整原 M、rhs、z 和 `||M z - b||`，并用真实代码拒绝不符原方程的路径。
+
+该用例绑定现有 `AD-G01` 的非退化子情形及 `TC-F-ADAPT-001/002`、`TC-DC-ADAPT-001`、`TC-NF-NUM-001/002`，**不增加正式 TC**。此外需覆盖 M 非正规且近奇异的原有理论专题条件，核对以奇异值/矩阵范数评价病态而非仅看行列式或特征值。本文所列有理结果已独立做静态代数复核，**尚不是 MATLAB 原生运行、实际 Eigen/CTest 或批准 Golden**；不能因此关闭整体 DAR-003/004、AF-044 或 DEC-005。
 
 ### 2.3 原返回 error、近度重新估计和系数更新
 
@@ -137,13 +179,43 @@ Result<T,E>、FlowField、FrameMotionContext、状态枚举及构造注入方式
 - **当前这个入口没有调用 transfor_koeff 进行前一帧旋转**；不得因为其他两个入口有旋转就强行加入。
 
 **带/不带噪声对比入口** agent_in_sphere_adaptive_matched_filter_test.m（600 位置、等级 4、8 次运行）：
-- 每帧先按上一帧相对旋转执行 transfor_koeff(akkoeff, R)；然后设置 ohnekoeff/mitkoeff、分别执行单步，最后再更新主 akkoeff。
+- 每帧先按上一帧相对旋转执行 transfor_koeff(akkoeff, R)；然后设置 ohnekoeff/mitkoeff、分别执行单步，最后再更新主 akkoeff。R6集成显式采用 `rotateSourceCoefficients` 与帧输入 `source_coefficient_rotation` 保持原系数动作，不能直接调用物理场适配器；差异证据及 `632139b` 的31/31复测见 [源动作验证](../reviews/R6_SH_SOURCE_ACTION_2026-11-17.md)。
 - 先生成合成光流，再按 addederror 调用 nonpropfehler；保留无噪时参数为零仍会消耗随机调用的事实（需核对执行细节）。
 - 四个误差 MAT 为逐运行求和后除以 8；rottransratio 是循环内赋值的**最后一次运行值**，不在同样位置求八次平均。
 
 **更新频率入口** agent_in_sphere_adaptive_matched_filter_many_parameter.m（600 位置、等级 2、单次运行）：
-- 每帧旋转主 akkoeff 和四组 mitkoeff；在 mod(i, [1,5,11,21])==0 时把对应 mitkoeff 刷新为主 akkoeff，然后分别调用单步，再更新主 akkoeff。
+- 每帧先旋转主 `akkoeff` 与四组 `mitkoeff`；在 `mod(i,[1,5,11,21])==0` 时，用**此帧主 `akkoeff` 更新前的当前值**替换对应 `mitkoeff(:,:,k)`，再调用四组对照单步求解。**原调用第一输出写入废弃变量 `dumi`，不能把对照的 `coefficients_next` 写回 `mitkoeff`。** 只有随后主求解返回值提交到 `akkoeff`。详见§5.0.1的原始赋值代码、测试矩阵；不能把四组对照当四条独立每帧自适应Session。
 - 当前源脚本实际保存 allemittransfehler、allemitrotfehler、akrot 三类 MAT；历史目录还含 alleadaprotfehler、alleadaptransfehler、rottransratio，**历史额外文件不得伪造为当前运行输出**。
+
+### 5.0.1 三入口对照系数的返回值归属矩阵（2026-11-12，实质性控制流纠偏）
+
+原三份只读生成脚本对 `oneit_adaptiv_matched_filter` 返回的**第一个量**采用不同赋值方式，这关系到是否将新近度系数提交到下个求解步骤的输入，不能只看调用的算法类型和最终 `trans/rot` 两个结果：
+
+| 入口与源代码行 | 对照求解前的系数 | 调用第一个返回量绑定 | 当前帧/跨帧是否保存对照输出 |
+|---|---|---|---|
+| `agent_in_sphere_initialization_test.m:97–118`（行号以只读源为准） | 每帧 `ohnekoeff` 从恒一重置、`mitkoeff` 取主旧状态；内层迭代k | `[ohnekoeff,...]` 与 `[mitkoeff,...]` | **同一帧内的下一次 k** 可以读取更新后的两组系数；下一帧重新初始化比较系数；跨帧只保留主 `akkoeff` |
+| `agent_in_sphere_adaptive_matched_filter_test.m:139–162` | 每帧 `ohnekoeff` 重置、`mitkoeff` 从已旋转主状态复制；比较内层k | `[ohnekoeff,...]` 与 `[mitkoeff,...]` | 在同一帧迭代k时**写回**对照系数；下一帧仍重新创建，不将比较系数错当长期主状态 |
+| **`agent_in_sphere_adaptive_matched_filter_many_parameter.m:134–182`** | 先分别旋转当前主系数和四组历史对照系数；每个k在 `mod(i,zeitkonstanten(k))==0` 时从**尚未执行本帧主求解**的 `akkoeff` 刷新 | **`[dumi,mittrans,mitrot,error]`**，其中`dumi`被丢弃、后续代码不使用 | **不提交这次对照求解得到的系数**；对照的`error`返回量仅在循环中被赋值覆盖，存档的`mittransfehler/mitrotfehler`实际由`normrelfehler(besttrans,mittrans)`与`normrelfehler(bestrot,mitrot)`计算；四组 `mitkoeff` 仅受下一帧旋转和周期刷新影响；本帧只有主 `[akkoeff,aktuelltrans,aktuellrot,error]` 写回主系数 |
+
+针对更新率原脚本，精确的候选状态次序是：
+
+~~~text
+rotate(akkoeff, previous_relative_rotation)      // 主状态
+for k=1..4: rotate(mitkoeff[k], previous_relative_rotation)
+for k=1..4:
+    if matlab_frame_i % period[k] == 0:
+        mitkoeff[k] = akkoeff                    // 已旋转、尚未本帧主更新
+for k=1..4:
+    comparison = oneit(mitkoeff[k], flow)
+    record comparison.trans, comparison.rot
+    DISCARD comparison.coefficients_next         // 源返回变量 dumi
+primary = oneit(akkoeff, flow)
+akkoeff = primary.coefficients_next              // 唯一每帧正式自适应提交
+~~~
+
+**判别性固定替身（不要求求解器实际实现）**：令每帧旋转为单位阵，源主系数和四组比较初始均为常数项哨兵 `A=B_k=1`；替身 `oneit(C)` 总返回 `coefficients_next=C+100`、运动值另记录。测试第2、3、5、6帧，**period=1比较输入**应分别为 `[1,101,301,401]`，**period=5比较输入**应为 `[1,1,301,301]`，各帧主求解提交后的状态为 `[101,201,401,501]`（第4帧仍执行一次主求解，所以第5帧前主为301）。若错误地提交比较返回值，第3帧period5将变为101而不是1；若先更新主系数再周期刷新，第5帧period5会变为401而非301。替身仅是系数状态的可追踪值，不假设3×5实矩阵本身为一个标量或存在真实L3结果。
+
+**事务边界**：C++ 已选的单步失败不提交/连续序列中断纪律仍有效。执行这些比较前的旋转/周期复制应在本帧暂存状态中进行：**任何必需比较或主单步失败时不得局部提交已旋转/刷新后的主或四组比较系数**，否则与§5.1的主/基线原子性合同矛盾；仅成功才提交本帧完整状态。该原子性是安全候选，不是源MATLAB原生事务行为。复用 `TC-F-ADAPT-003 / TC-F-EXP-003 / TC-NF-SESSION-001`，不添加新TC，也不声称生产 Session、CTest 已通过。
 
 ### 5.1 会话状态/异常提交合同
 
@@ -158,7 +230,11 @@ Per-run Session (one owner of akkoeff)
         record errors/ratios and preserve file-output contract
 ~~~
 
-**仍需 DEC/Golden 证据**：原 MATLAB 数值无效时是否进行下一轮、是否保留非有限系数、如何处理用户期望的错误状态。不能在忠实模式中默认替换为滤波器“失败回滚”机制。
+**项目所有者已确定失败状态规则**（见 [最新决定](../decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md) 与 [experiments.md §8.1](experiments.md)）：
+
+- StepSolver 返回非成功，不产生可提交的 `coefficients_next`；Session 仅在所有必须计算节点成功且有限时**原子提交下一帧主系数**，否则保持上一次有效主/基线系数，不将无效 near/系数写入状态。
+- 若是依赖上一帧状态的连续序列，且没有经证实安全的恢复路径，则**停止当前轨迹**并标记 `Incomplete`/`Failed`；独立运行/独立样本可以由 Runner 记录失败后继续，不改变有效样本分母。
+- 此策略是**明确的 C++ 安全合同**，不声称已验证原 MATLAB 特定异常时 NaN/Inf 传播；原 MATLAB 无统一事务机制不是强制复现该缺陷的要求。独立 L3 失败输入、状态 before/after 和真实 CTest 仍须完成。
 
 ## 6. 每一步 Golden 跟踪表及验收
 
@@ -171,13 +247,13 @@ Per-run Session (one owner of akkoeff)
 | 更新 | near_new、C_new(3×5) | oneit 第 120–132 行 |
 | 会话 | 前一帧 R、主/基线系数 before/after、频率策略、i、输出误差 | 三个 Adaptive 生成脚本 |
 
-所有黄金值必须有来自原 MATLAB 的输入/输出、对应源 SHA、数值容差及原始结果身份，不能只以 C++ 自算值验证 C++。
+所有黄金值应有**固定输入与独立 L3 数值参考**、原只读 .m 源 SHA、参考生成过程及输出 SHA-256、批准容差和测试记录；**不要求原 MATLAB 实际输出，也不能用被测 C++ 自算值验证自身**。
 
 关联 TC-F-ADAPT-001/002/003、TC-F-EXP-001/002/003、TC-DC-ADAPT-001、TC-NF-SESSION-001；更完整的证据设计见 [TEST_PLAN.md](../TEST_PLAN.md)。
 
 ## 7. 阻塞与批准事项
 
-- 精确 C++ 接口、数值错误枚举、状态机异常提交、Golden 输入、DEC-005 容差及第三方版权尚未冻结。
+- 精确 C++ 接口与错误码实现、状态原子提交的真实测试、独立 L3 参考、DEC-005 最终数值容差和 CTest 尚未完成；**异常不提交原则已确定，不需要再次人类选择**。
 - 本文的伪代码和公式是静态源码审计设计材料；没有编译、MAT 变量全量验证或数值运行证据。
 - **源函数返回 error=MSE，而非 RMS**，未来任何与之不符的计划/SRS/TC 都必须修正后才能作为对照基线。
 
@@ -239,14 +315,14 @@ Candidate interface only, not compiled: FrameResult, Session construction policy
 
 | 故障 | 最少保存的原 MATLAB 证据 | 候选数值状态 | 主系数是否提交 |
 |---|---|---|---|
-| FlowField/coeff 维度或非有限 | N×6、3×5 实际输入 | InvalidShape、NonFiniteInput | 待冻结，不伪造新系数 |
-| near 的原始均值 s 为零、接近零或负数 | near_raw、s、符号翻转、最终归一 | InvalidNearness；负 s 不等价于取 abs(s) | **未决定**，不得默认回滚 |
-| 6×6 退化、数值条件很差 | M1–M4、b、M、z、原版 real(inv(M)) | SingularSystem、IllConditionedSystem | 未决定 |
-| 线性解的 t 长度为零 | raw t、范数、归一化后状态 | ZeroNorm | 未决定 |
-| error_mse、near_new 或系数非有限 | 各数组与原始 MATLAB 运行结果 | NonFiniteResult | 未决定 |
+| FlowField/coeff 维度或非有限 | N×6、3×5 实际输入 | InvalidShape、NonFiniteInput | **禁止提交，无效输入不能产生新系数** |
+| near 的原始均值 s 为零、接近零或负数 | near_raw、s、符号翻转、最终归一 | Zero/near-zero 退化返回 InvalidNearness；**负 s 按原公式处理，不自动当失败** | **仅真正非成功时不提交**；有效负 s 不改变符号算法 |
+| 6×6 退化、数值条件很差 | M1–M4、b、M、z、原版 real(inv(M)) | SingularSystem、IllConditionedSystem（判据待实测） | **非成功不提交；不能安全恢复则终止当前连续序列** |
+| 线性解的 t 长度为零 | raw t、范数、归一化后状态 | ZeroNorm | **非成功不提交** |
+| error_mse、near_new 或系数非有限 | 独立极值/病态输入及明确 C++ 状态 | NonFiniteResult | **非成功不提交；原 MATLAB 运行细节不作强制对照** |
 | MAT 写入中断 | 最后成功帧与独立输出目录 | OutputFailed（Runner 层） | 不由 StepSolver 决定 |
 
-原 MATLAB 没有统一的事务/回滚系统。Session 采用什么安全处理必须记录与原版传播 NaN/Inf 行为的差异，并由项目所有者确认。**单步数值失败、主系数是否提交、整个 RunId 是否失败是三种不同状态**。
+**现行所有者决定优先于旧 H-13 仅起草状态**：StepSolver 计算失败、Session 主系数提交、Runner 整体 RunId 状态是三种不同层次；单步错误不得提交无效系数，不能安全恢复时停止当前连续序列，部分结果可保留审查但不伪装为完成。真实原版异常行为不可证明时按来源限制记录，不运行 MATLAB/Octave。H-10 的实际代码/测试运行仍须另行授权，最终数值容差和状态回归仍待实证。
 
 ## 9. 三个原入口的不同状态语义
 
@@ -284,12 +360,105 @@ C++ 从 0 开始存帧时必须显式转换为源 MATLAB 的 1-based i，周期�
 | Golden ID（计划） | 固定输入及必须保留的值 | 检查点 |
 |---|---|---|
 | AD-G01 | N×6、旧 3×5、near_raw/s/near_after、M1–M4、b、z、t/ω、error_mse、新 near/coeff | 单步的每个数值节点 |
-| AD-G02 | near 平均 s<0 的符号/归一化 | **先翻 near，后除原 s**，不得自动改成 abs(s) |
+| AD-G02 | near 平均 s<0 的符号/归一化 | **先翻 near，后除原 s**；核对 `near_raw/abs(s)` 等价、`near_after_sign/abs(s)` 不等价，以及 s=0 非成功 |
 | AD-G03 | near 平均≈0、奇异或病态 M | 原版失败/非有限值与 C++ 显式状态分别记录 |
 | AD-G04 | init 帧 i=2、3 | 入口没有球谐系数旋转，比较状态每帧处理 |
 | AD-G05 | comparison 的 i=2、3，addederror=0/非零 | 先上一帧旋转、再比较、再主更新；rottransratio 不取八次平均 |
 | AD-G06 | many_parameter i=5、11、21 邻近帧 | 四个周期准确触发，mitkoeff 比较单步不回写 |
 
-每个 Golden 应记录来自 MATLAB 的固定输入、源 blob SHA、 MATLAB 版本、各节点 shape/dtype、数值基准和经 DEC-005 批准的容差。现有 produced_data 不含 M1…M4 的原始逐节点值，**不可把只对照最终 MAT 当作单步数学等价证据**。
+每个 Golden 应记录原只读 MATLAB 函数 blob SHA、**独立固定输入/L3 参考生成方式与 SHA-256**、各节点 shape/dtype、数值基准和经 DEC-005 批准的容差；**不要求运行 MATLAB 或记录 MATLAB 版本**。现有 produced_data 不含 M1…M4 的原始逐节点值，**不可把只对照最终 MAT 当作单步数学等价证据**。
 
-**状态**：此文档定义了算法逐节点检查与入口专属状态合同；Golden、最终错误提交策略、正式 API 及 CTest 均尚未实际形成。
+**现行状态**：此文档定义了算法逐节点检查与入口专属状态合同；**AN-G12 的一个对称理想单步已有独立 Wolfram 全主要数值节点的限定参考**（见§10.2），但完整一般/退化L3、**错误提交策略的实际实现/测试**、正式 API 和 CTest 均尚未形成；设计原则已明确。
+
+### 10.1 负均值近度的可手算分支不变量（AF-044 第一轮）
+
+**源依据**：只读 `oneit_adaptiv_matched_filter.m:19–29` 先取 `s=mean(near_raw)`，`s<0` 时翻转 near，**然后仍用翻转前的 s 除近度**。精确写法是 `near_normalized=near_raw/abs(s)`（有限非零域）；**不是** `near_after_sign/abs(s)` 或 `abs(near_raw)/abs(s)`：
+
+- 对 `s>0` 且有限：`mean(near_normalized)=1`。
+- 对 `s<0` 且有限：`mean(near_normalized)=-1`。例如手算 `near_raw=[-1,-3]`，`s=-2`，翻转为 `[1,3]` 后再除以原 `-2`，结果为 `[-0.5,-1.5]`，均值 **−1**。若在**源代码已翻转的分子**上改用除 `abs(s)`，或“先求新的 s”，就改变原分支；直接对未翻转的原始 `near_raw` 除 `abs(s)` 数学上却与源码等价（浮点运算路径不保证逐位一致）。
+- 对 `s=0`：原源码仍执行除法，不能将它悄然描述为正常归一；C++ 的 `InvalidNearness` 显式失败是另行选定的安全合同，**不能声称已经实测原 MATLAB 的 NaN/Inf 传播**。
+
+**需要保存的区分性中间量**：`near_raw, s, near_after_sign, near_normalized, M1–M4, rhs, z, raw_t, normalized_t, ω, error_mse, near_new, C_new`。由于 `M1=I-⟨μ_i d_i d_iᵀ⟩`，负均值分支的 `μ` 符号还会改变 M1；只比较返回 t/ω 会掩盖这种差异。原 `oneit_adaptiv_matched_filter.m:91–117` 使用 `real(inv(M))` 并返回 **MSE**；`:120–129` 才以 `1e-11` 重估 near/系数，不能用先前求 M1 的近度冒充输出近度。
+
+**L3 资格边界**：该手算两元素例子仅验证归一化的**局部分支代数**，并非已构造一个可使 `near_aus_koeff` 从完整 N×6/3×5 输入产生这些值、且使 6×6 可解的独立 AD-G02 Golden。未来必须使用真实可复现的固定全输入、独立参考和 Source SHA，补 Session 状态 before/after 及 CTest。当前没有执行测试、没有改变用户已选的失败不提交规则；`AF-044` 仍「未整改」。
+
+
+### 10.2 AN-G12 对称20方向单步的独立数值参考（AF-044/055，非生产CTest）
+
+采用原有 `AN-G03` 二十面体 level=0 的20个有序方向，旧近度恒为1、真实平移 `(1,0,0)`、真实旋转为0，输入理想光流为 `p_i=-e_x+(d_{ix})d_i`。严格对照只读 `oneit_adaptiv_matched_filter.m` 的 M1/M2/M3/M4、6×6 RHS、MSE 和 near_new/系数更新的顺序，**独立 Wolfram 15.0.1 已执行** [完整可重放脚本](../../verification/adaptive/verify_AN_G12_symmetric_one_step.wl)，并将当前固定输入的可重算数值保存到 [AN-G12 数值证据](../../verification/adaptive/AN_G12_symmetric_one_step_evidence.v1.json)。它是源公式数学验证，**未创建或运行 Adaptive C++/CTest/Session**。
+
+| 检查节点 | 当前实际独立数值 |
+|---|---|
+| `N` | 20 |
+| `M1, M4` | 与 `(2/3)I` 最大绝对差 `1.1102230246251565e-16` |
+| `M2, M3` | 零阵（当前对称输入） |
+| 右端 `rhs` | 与 `(2/3,0,0,0,0,0)` 最大差 `1.1102230246251565e-16` |
+| 返回 `t, ω` 与 `error_mse` | `t=(1,0,0)`、`ω=(0,0,0)`、MSE=0 |
+| `near_new`（**不是**规范化输入near） | 最小 `0.999999999921459`、最大 `0.99999999999` |
+| `C_new`（源CS九有效项） | 单极项 `3.544907701718864`，其余有限微小偏差；相对原常数近度系数最大绝对差 `9.216760687991155e-11` |
+
+**重要区分**：原源码在 near_new 重新估计时含 `nulldiv=1e-11`，因此即使输入/解运动理想、MSE严格为0，**near_new 与 C_new也只是近似于原常数近度和初始系数，不能在 CTest 里断言精确等于1或原C**。原 `AN-G12` JSON 记为 `near_after_update_approx=1` 是近似描述，不是等式或原 MATLAB 某次实际输出；不擅自修改其 `DRAFT_UNAPPROVED_UNEXECUTED` 状态。此对称理想例无法覆盖一般非对称与近奇异M1～M4、负/零近度均值、错误提交、Session状态、eight-run聚合，也未批准最终DEC-005；AF-044/055继续开放。
+
+### 10.3 非对称正/负均值近度的独立完整单步数学参考（AF-044/055）
+
+为避免只用 AN-G12 的20点中心对称输入，新增九个**非对称、单位且坐标为有理数**的方向：三个正坐标轴、三个负坐标轴，另加 (3/5,4/5,0)、(0,3/5,4/5)、(4/5,0,3/5)。令旧原CS三阶行布局系数的非零项如下（**仅 l≤1，二阶五个系数为0**）：
+
+\[
+C_{00}=\sqrt{4\pi},\quad
+C_{1,-1}=\frac14\sqrt{\frac{4\pi}{3}},\quad
+C_{1,0}=\frac15\sqrt{\frac{4\pi}{3}},\quad
+C_{1,+1}=-\frac13\sqrt{\frac{4\pi}{3}}.
+\]
+
+原球谐定义直接给出不恒一的正近度场：
+
+\[
+\mu_i^+=1+\frac{x_i}{3}-\frac{y_i}{4}+\frac{z_i}{5},\qquad
+s_+=\langle\mu_i^+\rangle=\frac{2819}{2700}>0.
+\]
+
+固定生成运动 τ=e_x、ω=(1/5,-1/7,1/11)，构造切向光流：
+
+\[
+\boldsymbol p_i=-\mu_i^\pm
+\left(\boldsymbol e_x-x_i\boldsymbol d_i\right)
+-\boldsymbol\omega\times\boldsymbol d_i.
+\]
+
+**正均值案例**：将上述原3×5系数、九个方向和流场按原 near_aus_koeff → 原均值归一 → M1～M4/rhs → 6×6 求解 → t/ω → MSE → +1e−11 的 near_new → koeff_aus_near 顺序，使用 Wolfram 精确有理算术计算，得到：
+
+\[
+\boldsymbol z=\left(\frac{2819}{2700},\,0,\,0,\,
+\frac15,\,-\frac17,\,\frac1{11}\right)^\top,\quad
+\boldsymbol t=\boldsymbol e_x,\quad
+\boldsymbol\omega=\left(\frac15,-\frac17,\frac1{11}\right)^\top,\quad
+\mathrm{MSE}=0.
+\]
+
+此时 M2、M3 均非零，M1～M4 存在非对角耦合，det(M)≈0.0580696456535、2-范数条件数≈2.46656。因此**不依赖对称消项或奇异逆矩阵**；还能检查非恒一正近度下该单步几何方程是否正确构造。near_new、C_new 因原分母 +1e−11 并非逐项严格等于旧系数，完整九方向与逐节点数值在下述参考 JSON 中。
+
+**负均值符号分支**：把上述旧3×5系数整体乘 −1，并按相同运动生成新的有符号流场。此时原始 near 全为负，s−=−2819/2700。按原 oneit.m 第19～29行，源先计算 s−，把 near 翻正，随后**仍除以先前的负 s−**，所以最终归一化近度的均值为 −1，而非 +1。设 Pi=I−d_i d_iᵀ，对于任意归一化近度 μ_i，有严格恒等式：
+
+\[
+M_1-\left\langle\mu_i
+\left(I-\boldsymbol d_i\boldsymbol d_i^\top\right)\right\rangle
+=\left(1-\langle\mu_i\rangle\right)I.
+\]
+
+因此原 M1 与按 μ 加权的真实切向投影矩阵的差异，**正均值分支为零、负均值分支为 2I**。这是代数恒等式，不依赖求解器容差，也不能在文档中把源 near/s 偷换为 near/abs(s)。该人工负近度场的6×6矩阵仍可逆，det(M)≈0.8221279399701、2-范数条件数≈2.61270；独立计算得到：
+
+\[
+\boldsymbol t\approx(-0.9958264582,\ 0.0709966776,\ 0.0573509974)^\top,
+\qquad
+\boldsymbol\omega\approx(0.1700641552,\ -0.6211414742,\ 0.2756858501)^\top,
+\qquad
+\mathrm{MSE}\approx0.21140062258.
+\]
+
+该分支未恢复我们用来合成有符号输入流场的生成运动；**不应将其直接外推为任何正距离真实场景都不正确**，因为这里的原始近度全部为负（非物理距离），数学目的在于构造可逆矩阵下的负均值控制流反例。若未来要纠正源负均值行为，必须单独提出数学合同/适用域决策，不能以“符号调好即可”为由在 C++ 移植中悄悄改动。
+
+两套数据的原CS系数、N×6流场、九组近度、M1～M4、rhs、精确六维解、更新近度及九个新系数均已在 [可重放 Wolfram 计算](../../verification/adaptive/verify_asymmetric_signed_near_one_step.wl) 与 [固定逐节点数值](../../verification/adaptive/asymmetric_signed_near_one_step.v1.json) 保存。所有原 .m 均保持只读；本次 **Wolfram 数学实际执行、生产 Adaptive C++/CTest 未执行**，DEC-005 未批准。AF-044/055 的一般动态场景、退化、Session 提交与失败路径仍为未整改。
+
+## 附录 A：无需运行 MATLAB 的证据边界
+
+按 [当前 L2/L3/L4 证据矩阵](../golden/GOLDEN_EVIDENCE_LEVELS_AND_AC_GAPS.md) 和 [长期无需 MATLAB 执行政策](../golden/NO_MATLAB_EXECUTION_POLICY.md)，**不要求原 MATLAB 逐节点/逐调用的 L1，也不因没有 L1 阻塞本模块的设计/编码/测试/验收**。原 `.m` 作为只读公式、分支、时序和数据合同依据；当前应准备模块适用的 **L3 独立固定输入逐节点参考**，L2 历史 MAT 用于最终结果范围，L4 用于统计。需要保留真实 C++/CTest、DEC-005 容差、错误与来源限制记录，不能把 L3 宣称为原 MATLAB 实际运行的完整等价证据。本文及该矩阵均未宣布模块验收通过。

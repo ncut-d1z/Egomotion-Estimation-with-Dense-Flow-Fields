@@ -323,3 +323,7 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 # ===== END github/gitignore/Python.gitignore =====
+
+# H-12: Newly generated experiment MAT data and logs stay local.
+# Applies only to the repository-root output directory; do NOT ignore origin/*.mat.
+/output/

@@ -1,226 +1,156 @@
-# 实球谐、近度拟合及系数旋转——详细设计草案
+# 实球谐、近度重建及系数旋转——详细设计
 
-> **LLD v0.3，未冻结、未实现。** 来源：winkelausvektor.m、kugelflfunc2.m、near_aus_koeff.m、koeff_aus_near.m、transfor_koeff.m、SHRotate.m。第三方版权与 Golden 尚未完整核验。关联 REQ-F-SH-001/002、REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001、P7.1–P7.6/P7.10。
+> **2026-11-18 方向独立拟合实现，候选/未冻结**：HarmonicFitter新增DirectionSet重载，原FlowField重载仅取前三列，两者沿用同一原始逐通道投影叶子。源N×K矩阵可显式提取前三列而不要求光流尾列有效；完整FlowField则要求全部六列有限。尾部Inf、原始叶子、空/非单位方向及独立参考使服务检查增至494项，双模式全回归见 [实测](../reviews/R6_FLOW_VALUE_2026-11-18.md)。原相位/4pi/求和顺序和叶子错误链不变，不签署数值或API验收。
 
-## 1. 坐标系、角度与原实球谐表达式
+> **2026-11-18 P7.10候选实现，未冻结**：`services.hpp`提供三个无状态具体类：`RealSphericalHarmonics`负责源CS基值和近度重建，`HarmonicFitter`负责原逐通道投影，`HarmonicRotator`分别命名物理场动作与原系数动作。原适配函数体分别迁入三个实现文件，公共错误码映射与叶子Frame保留；低阶Eigen公式、相位、4π和运算顺序不变。旧自由函数只转发，Adaptive单步/Session/更新策略使用具体组件；不增加继承、共享可变缓存或实验状态。新`sourceBasis`返回源3×5基值布局（l=0..2、m=-l..l，六项无效填零），沿用叶子方向校验。实施与实测状态见 [职责分离记录](../reviews/R6_HARMONIC_SERVICES_2026-11-18.md)，不代签公共ABI或DEC-005验收。
 
-由单位方向 \(\boldsymbol d=(x,y,z)^\top\) 计算：
+> **2026-11-18 P7.1候选增量，未冻结**：低阶叶子新增`SphericalAngles{theta_radians,phi_radians}`及`sourceAnglesFromDirection`，保持原`winkelausvektor.m`的`atan2(y,x)`后`acos(z)`顺序与弧度轴约定。沿用现有单位方向校验；不归一化或裁剪，范数舍入余量内但z越界仍以`NonFiniteResult`失败。两极方位角不具几何唯一性，C++带符号零行为单独登记，不能推断原MATLAB运行轨迹。现有Cartesian基/拟合/旋转路径不变；实现与验证状态见 [角度记录](../reviews/R6_SOURCE_ANGLES_2026-11-18.md)。不新增跨模块错误码或将此叶子接口冒充已冻结的公共ABI。
+
+> **2026-11-17 R6集成复测（[AI-EDIT]）**：`632139bb0d9dd0d3afa7a11afdb0578224a47f59` 构建无诊断、31/31 CTest通过。物理接口直接用于Session的原系数动作差异已修复：保留本文§3物理叶子合同，业务增加显式源接口，4886项适配/10006项Session检查通过，见 [验证与修复](../reviews/R6_SH_SOURCE_ACTION_2026-11-17.md)。以下历史“业务未实现”不覆盖固定SHA证据；本轮没有冻结LLD或改变DEC-005。
+
+> **LLD v0.16，未冻结、完整业务数值未验收。** 2026-11-09 用户仅开放低阶球谐 C++ 实现与 Wolfram 符号验证，`egomotion::harmonics::low_order` 叶子代码及专项测试已提交；九基直接/递推与 IR96/IR98、Choi1999 的**一般 SO(3) 精确符号验证已执行**。项目所有者又提供了固定 SHA `8eab5dd`、增强回归 `445ed151` 和624四元数/错态压力 `601c74de` 的 Ubuntu/GCC16.2/Eigen3.4 Release **各1/1 CTest Passed** 原生结果；真实最大绝对残差分别为8.8817841970012523e-16（矩阵/向量）、1.0658141036401503e-14（标量），回归比较阈值9.0949470177292824e-13。正式三类公共接口、离散拟合、全业务集成、独立全部边界和最终容差尚未完成。权限见[专项授权](../decisions/SH_ONLY_IMPLEMENTATION_AUTHORIZATION_2026-11-09.md)，证据见[三路报告](../reviews/LOW_ORDER_SH_THREE_ROUTE_VERIFICATION_2026-11-09.md)、[PROGRESS E-DOC-056/057/059](../PROGRESS.md)。
+
+关联REQ-F-SH-001/002、REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001及P7.1–P7.6/P7.10。原`winkelausvektor`、`kugelflfunc2`、`near_aus_koeff`、`koeff_aus_near`、`transfor_koeff`、`SHRotate`仍只读；四篇论文材料齐备，不再以缺PDF阻塞。纯Eigen、C++17、double，禁止sdla；Don Williamson仅辅助参考，无直接代码移入。
+
+## 1. 区分论文的正相位基与原MATLAB-CS基
+
+对单位方向d=(x,y,z)，theta=acos(z)为极角，phi=atan2(y,x)为方位角，单位rad。原MATLAB的`legendre(l,cos(theta))`含Condon–Shortley相位。令q=|m|，原`kugelflfunc2`为
 
 \[
-\theta=\arccos(z),\qquad \phi=\operatorname{atan2}(y,x)
-\]
-（\(\theta\)：极角；\(\phi\)：方位角；单位：rad）。本公式依原 MATLAB 原样记录；对于非单位输入和 acos 越界须单独定义失败状态，不能静默改变原样本。
-
-令 \(q=|m|\)，\(P_l^q(\cos\theta)\) 是 **MATLAB legendre(l,cos(theta)) 返回的 q 阶值**，并保留其相位/符号约定（不能直接采用另一库默认的无 Condon–Shortley 相位定义）。
-
-\[
-A_{lq}=\sqrt{\frac{2l+1}{4\pi}\frac{(l-q)!}{(l+q)!}},
-\]
-\[
-Y_{lm}^{real}(\theta,\phi)=
-\begin{cases}
-\sqrt 2\,A_{lq}\,P_l^q(\cos\theta)\sin(q\phi), &m<0,\\
-A_{l0}\,P_l^0(\cos\theta),&m=0,\\
-\sqrt 2\,A_{lq}\,P_l^q(\cos\theta)\cos(q\phi),&m>0.
+A_{lq}=\sqrt{\frac{2l+1}{4\pi}\frac{(l-q)!}{(l+q)!}},\quad
+Y_{lm}^{source}=\begin{cases}
+\sqrt2 A_{lq}P_l^q(\cos\theta)\sin(q\phi),&m<0,\\
+A_{l0}P_l^0(\cos\theta),&m=0,\\
+\sqrt2 A_{lq}P_l^q(\cos\theta)\cos(q\phi),&m>0.
 \end{cases}
 \]
 
-上式直接对应 kugelflfunc2.m 的 factorial、legendre、sin/cos 分支；未以 MATLAB 固定黄金值验证每个负 m 的符号前，不得把显式多项式实现当作已验证。
+本轮实现的canonical基按2015附录式(59)–(67)排序为`[g0,f1,f2,f3,h1,h2,h3,h4,h5]`，不默认认为它与原MATLAB九项同号同序。
 
-### 1.1 3×5 系数的九个有效索引
-
-| l | m | MATLAB 的 (row,col)，1-based | C++ 0-based (row,col) | 基函数类型 |
-|---:|---:|---|---|---|
-| 0 | 0 | (1,1) | (0,0) | \(Y_{00}\) |
-| 1 | −1 | (2,1) | (1,0) | \(\sin\phi\) |
-| 1 | 0 | (2,2) | (1,1) | 无 φ 因子 |
-| 1 | +1 | (2,3) | (1,2) | \(\cos\phi\) |
-| 2 | −2 | (3,1) | (2,0) | \(\sin(2\phi)\) |
-| 2 | −1 | (3,2) | (2,1) | \(\sin\phi\) |
-| 2 | 0 | (3,3) | (2,2) | 无 φ 因子 |
-| 2 | +1 | (3,4) | (2,3) | \(\cos\phi\) |
-| 2 | +2 | (3,5) | (2,4) | \(\cos(2\phi)\) |
-
-其余 3×5 存储位置不参与 l≤2 有效系数求和。原脚本初始化 (1,1)=1、其余为零，**不能将九项完整表示与八项可独立更新的非零阶信息混淆**。
-
-## 2. 从系数到近度与从近度拟合系数
-
-**near_aus_koeff.m** 逐点重建：
-
-\[
-\mu(\boldsymbol d_i)=\sum_{l=0}^{2}\sum_{m=-l}^{l}a_{lm}Y_{lm}^{real}(\theta_i,\phi_i).
-\]
-
-**koeff_aus_near.m** 对每个有效 (l,m) **独立计算**：
-
-\[
-a_{lm}^{num}=\frac{4\pi}{N}\sum_{i=1}^{N}\mu_iY_{lm}^{real}(\theta_i,\phi_i),\qquad
-a_{lm}^{den}=\frac{4\pi}{N}\sum_{i=1}^{N}(Y_{lm}^{real}(\theta_i,\phi_i))^2,
-\]
-\[
-a_{lm}=a_{lm}^{num}/a_{lm}^{den}.
-\]
-
-这不是把九个系数一起求解的正规方程/联合最小二乘；如果改变了基函数间的耦合关系，可能改变原始实验结果。即使两个 4π 因子可在代数上相消，也应先对照 MATLAB 原先的乘除顺序及浮点误差。
-
-### 2.1 拟议输入输出与不变量
-
-~~~cpp
-// 仅设计草案，不是可调用的已实现 API。
-// HarmonicMatrix 类型别名统一由 contracts.md 维护。
-// HarmonicCoefficients 与 HarmonicMatrix 的唯一合同见 contracts.md。
-// 使用共享 NumericalErrorCode，不另建重复错误类型。
-class RealSphericalHarmonics {
-public:
-    Result<double, NumericalErrorCode> evaluate(int l, int m,
-                                            double theta_rad, double phi_rad) const;
-    Result<Eigen::VectorXd, NumericalErrorCode> reconstruct(
-        const HarmonicCoefficients&, const DirectionSet&) const;
-};
-class HarmonicFitter {
-public:
-    Result<HarmonicCoefficients, NumericalErrorCode> fit(
-        const DirectionSet&, const Eigen::VectorXd& nearness) const;
-};
-~~~
-
-冻结前需决定 DirectionSet 定义、shape 校验、N=0、基函数范数零、非有限 near、非单位方向及异常时数据保持策略。上述 Result<T,E> 是项目建议的 C++17 显式结果约定，非标准库 std::expected。
-
-## 3. l≤2 的球谐系数旋转
-
-**SHRotate.m** 的现有 MATLAB 输入是 3×3 旋转矩阵 r 和 degree=2，输出包含 l=0 的 1×1、l=1 的 3×3、l=2 的 5×5 块；transfor_koeff.m 使用：
-
-\[
-a'_{0,0}=a_{0,0},\quad
-\boldsymbol a'_1=R_3(r)\boldsymbol a_1,\quad
-\boldsymbol a'_2=R_5(r)\boldsymbol a_2.
-\]
-
-两个系数向量以 MATLAB 原存储顺序读取并写回：\((-1,0,+1)\) 与 \((-2,-1,0,+1,+2)\)。不能因为 SHRotate 的 R1 是原矩阵的一个排列，就直接把 R1 替换为通常坐标轴顺序下的 r。
-
-### 3.1 转动块生成规则的可验证边界
-
-- 先处理 l=0 常数块，l=1 依据源 SHRotate 的轴排列构造 R3（注意行、列和符号）。
-- l=2 的 R5 使用 SHRotate 递归辅助函数 M/U/V/W/P 与上一阶旋转块生成；**第三方代码复制与重写的授权状态尚未确认**。
-- 先用对 z 轴的已知旋转检查 m 正负的相位，再分别用 x/y 轴和复合旋转检查 R3/R5 全部元素、正交性、往返一致性和基函数变换方向。
-- “R3/R5 元素/递推系数的逐式复刻”必须建立 Golden 表：旋转向量、输入 R、源输出 R3/R5、输入/输出系数、误差及源 SHA；在版权确认前不从第三方程序逐行照搬公式或实现。
-- 对第二阶旋转的任何替代生成算法，须证明与作者 SHRotate 数值行为和系数顺序一致，并有合法的原创或兼容授权基础。
-
-### 3.2 旋转类接口候选
-
-~~~cpp
-struct HarmonicRotationBlocks {
-    Eigen::Matrix3d degree_one;
-    Eigen::Matrix<double, 5, 5> degree_two;
-};
-class HarmonicRotator {
-public:
-    Result<HarmonicRotationBlocks, NumericalErrorCode> blocks(
-        const Eigen::Matrix3d& rotation) const;
-    Result<HarmonicCoefficients, NumericalErrorCode> rotate(
-        const HarmonicCoefficients&, const Eigen::Matrix3d&) const;
-};
-~~~
-
-需明确是否接受不严格正交的 r、是否允许投影回 SO(3)、奇异输入与未定义旋转的返回状态；**不应未经许可擅自修改原算法**。
-
-## 4. 依赖、资源和可复现测试
-
-- RealSphericalHarmonics、HarmonicFitter、HarmonicRotator 均不持有 MAT 文件句柄和跨帧轨迹状态；Adaptive Session 独占系数历史。
-- 固定球面方向数组 Golden：所有 9 个 l,m 配对值、均匀/非均匀采样下拟合的系数、旋转前后近度差异。
-- 多组旋转 Golden：单位 R、绕 x/y/z 不同角度、复合旋转和逆变换；在指定系数顺序下逐元素检查 R3、R5 的全部 34 个块元素。
-- 测试必须绑定源脚本 SHA、MATLAB 参考输出和经 DEC-005 批准的数值容差；原数据/Golden 若无法合法提交可使用受控外部存储与可审查哈希。
-
-## 5. 冻结与授权阻塞
-
-- 仍需对源关联勒让德相位、SHRotate 块递推、真实黄金样本做独立核验。
-- 第三方 SHRotate.m、rodrigues.m 的代码来源与权利范围待 DEC-003/007；不能仅凭资料页数据库许可推断这些代码可直接复制。
-- C++17 精确签名、错误枚举、异常行为、目标 CMake target 和测试用例未冻结。
-
-**本文件是详细设计草案；没有 C++ 实现、MATLAB 运行或数值验收证据。**
-
-
-## 6. l≤2 九个实球谐分量的显式公式（待 MATLAB Golden 核符号）
-
-取归一化方向 \(x=\sin\theta\cos\phi\)、\(y=\sin\theta\sin\phi\)、\(z=\cos\theta\)，并**按原 MATLAB 的 legendre 默认相位**（含 Condon–Shortley 相位）展开。下列是从 §1 通式得到的数学等价表示，只有经过源 MATLAB 数值检查才能成为冻结的公式 Golden：
-
-| (l,m) | 按源代码约定的 \(Y_{lm}^{real}\) |
-|---|---|
-| (0,0) | \(1/\sqrt{4\pi}\) |
-| (1,−1) | \(-\sqrt{3/(4\pi)}\,y\) |
-| (1,0) | \(+\sqrt{3/(4\pi)}\,z\) |
-| (1,+1) | \(-\sqrt{3/(4\pi)}\,x\) |
-| (2,−2) | \(+\sqrt{15/(4\pi)}\,xy\) |
-| (2,−1) | \(-\sqrt{15/(4\pi)}\,yz\) |
-| (2,0) | \(+\sqrt{5/(16\pi)}(3z^2-1)\) |
-| (2,+1) | \(-\sqrt{15/(4\pi)}\,xz\) |
-| (2,+2) | \(+\sqrt{15/(16\pi)}(x^2-y^2)\) |
-
-**注意**：MATLAB 的函数调用约定含 φ 的 sin/cos 正负号，不可用默认的量子力学 \(Y_l^m\) 次序替换。测试应包含六个坐标轴方向、一般方向 \((1,2,3)/\sqrt{14}\) 和方位角正负边界，逐项核对九个结果及正交/符号关系。
-
-## 7. SHRotate 的旋转块元素与递推生成合同
-
-### 7.1 第 1 阶 R3 的**实际位置映射**
-
-令输入物理旋转矩阵为 \(r=[r_{ij}]_{3\times3}\)，使用 MATLAB 1-based 的 \(r_{ij}\) 表示原始元素。根据 SHRotate.m 对 R{2} 的九处赋值：
-
-\[
-R_3(r)=
-\begin{bmatrix}
-r_{22}&r_{32}&r_{12}\\
-r_{23}&r_{33}&r_{13}\\
-r_{21}&r_{31}&r_{11}
-\end{bmatrix}.
-\]
-
-旋转系数按原顺序 \((m=-1,0,1)\) 组成列向量，再执行 \(a'_1=R_3a_1\)。例如输入
-\(r=R_z(\gamma)=\left[\begin{smallmatrix}\cos\gamma&-\sin\gamma&0\\\sin\gamma&\cos\gamma&0\\0&0&1\end{smallmatrix}\right]\)，得到
-
-\[
-R_3(R_z(\gamma))=
-\begin{bmatrix}\cos\gamma&0&-\sin\gamma\\0&1&0\\\sin\gamma&0&\cos\gamma\end{bmatrix}.
-\]
-
-这是一组**可由源码逐元素交叉检查**的预期矩阵，不能未经说明交换 R3 的行/列。
-
-### 7.2 第 2 阶 R5 的递推合同
-
-源 SHRotate.m 对 degree=2 循环 \(m,n\in\{-2,-1,0,1,2\}\)，以先构造的 \(R_3\) 与下一阶递推函数生成所有 25 个 \(R_5(m,n)\)。
-
-\[
-R_5(m,n)=u_{2mn}U_{2mn}+v_{2mn}V_{2mn}+w_{2mn}W_{2mn}.
-\]
-
-其中 \(D_{ln}=2l(2l-1)\)（当 \(|n|=l\)），否则 \(D_{ln}=l^2-n^2\)；\(d_m=1\) 当 \(m=0\)，否则 \(0\)，相应系数：
-
-\[
-u=\sqrt{(l^2-m^2)/D_{ln}},\quad
-v=\frac{1-2d_m}{2}\sqrt{\frac{(1+d_m)(l+|m|-1)(l+|m|)}{D_{ln}}},
-\]
-\[
-w=-\frac{1-d_m}{2}\sqrt{\frac{(l-|m|-1)(l-|m|)}{D_{ln}}}.
-\]
-
-U/V/W 在不同 m 与 n 边界上组合上一阶 \(R_3\) 条目与递推辅助 P；其**完整分段定义**仍须在 P7.5 审阅源 SHRotate 的第三方版权并建立允许使用的数学描述之后冻结。不能仅把这三行权重当作已经足以实现 R5。验收需对**全部 25 个元素**及其索引和符号提供源 MATLAB Golden，不能只检查正交性或往返。
-
-### 7.3 旋转样本与方向性判定
-
-| 案例 | 预期数学性质 | 需要的源 Golden |
+| 论文项 | 直接Cartesian公式 | 原MATLAB有效位置（1-based）及系数转换 |
 |---|---|---|
-| SH-R00 | r=I 时 R3=I3、R5=I5 | 34 个元素，源 SHA |
-| SH-RZ | 物理 r 绕 z 轴旋转小角及 90° | 输入 r、R3、R5、九个系数 before/after |
-| SH-RXY | 绕 x/y 轴和两轴复合旋转 | 各矩阵 34 元素、向量范数、近度值 |
-| SH-INV | 先 r 后 r⁻¹ | 九个系数和方向采样下近度变化 |
-| SH-BAD | 非正交或非有限输入 | 原函数实际结果及 C++ 明确状态 |
+| g0 | `1/sqrt(4*pi)` | `a_g0=C(1,1)` |
+| f1 | `sqrt(3/(4*pi))*x` | `a_f1=-C(2,3)` |
+| f2 | `sqrt(3/(4*pi))*y` | `a_f2=-C(2,1)` |
+| f3 | `sqrt(3/(4*pi))*z` | `a_f3=C(2,2)` |
+| h1 | `sqrt(5/(16*pi))*(3*z²-1)` | `a_h1=C(3,3)` |
+| h2 | `sqrt(15/(4*pi))*xz` | `a_h2=-C(3,4)` |
+| h3 | `sqrt(15/(4*pi))*yz` | `a_h3=-C(3,2)` |
+| h4 | `sqrt(15/(16*pi))*(x²-y²)` | `a_h4=C(3,5)` |
+| h5 | `sqrt(15/(4*pi))*xy` | `a_h5=C(3,1)` |
 
-**授权状态**：只可以在合法来源和已审核实现范围内实现算法；SHRotate.m 和 rodrigues.m 的第三方文件头仍是版权审核项目。无需复制原程序的代码文本即可描述这些数学关系，但不能用数学等价的猜测代替实测。
+因此原CS m序的一阶为sqrt(3/(4pi))*(-y,z,-x)，二阶为正xy、负yz、h1、负xz、h4；这本身是合法基约定，不是任意可删的负号。上述系数转换及逆转换**对任意九个系数保持同一个标量场**，已由Wolfram精确证明，不只验证往返。3×5无效位置不参与原重建；新转换输出将它们置零。原初始化C(1,1)=1意味着常数近度1/sqrt(4pi)，不是1。
 
-## 8. 异常、生命周期与接口合同
+### 1.1 已验证的基值递推
 
-- 输入 l∈{0,1,2} 且 |m|≤l；方向有限、单位化规则经批准；输入 3×5 系数的非有效位置不应参与计算。
-- 近度拟合遇 \(b_{lm}=0\) 时明确失败；数学输入为 NaN、Inf、零向量或非正交 r 时须输出具体 NumericalErrorCode/细节，不得伪造通过。
-- RealSphericalHarmonics、HarmonicFitter、HarmonicRotator 可为无跨帧可变状态服务；球谐系数是自拥有值对象，由 Session 管理历史。
-- 正式的 Result、HarmonicCoefficients、NumericalErrorCode 以 [contracts.md](contracts.md) 为单一候选；具体 API 签名和 const/复制行为由 P0.8 确认。
-- TC-F-SH-001、TC-F-SH-002、TC-D-SOURCE-002 均需记录 MATLAB 来源函数 SHA、固定输入/输出、逐元素 atol/rtol、条件数和未定义样本数；DEC-003/005/007 未关闭时不得冻结。
+新`basisRecurrence`使用去CS相位的关联Legendre递推，保留`P_l^m*cos(m phi)`与`P_l^m*sin(m phi)`的笛卡尔多项式形式。p11c=x、p11s=y，p20=(3z²−1)/2，p21c=3zx、p21s=3zy、p22c=3(x²−y²)、p22s=6xy；再乘定义给出的归一化系数。
 
-**本模块的已知内容：9 项索引与数学公式、R3 九项映射、R5 的递推结构；缺口：R5 分段递推合法实现、全量 Golden、批准容差与真实代码/CTest。**
+[实际执行脚本](../../verification/harmonics/verify_low_order_basis.wl)已核：直接值与复球谐定义9项差全0；直接值与递推值9项差全0；Gram=I9共81项；对应实体调和多项式Laplacian9项全0。两极由Cartesian连续延拓覆盖，不除sin(theta)、不依赖atan2。
+
+## 2. 近度重建与低阶逐系数离散投影
+
+原`near_aus_koeff.m`的定义仍是
+
+\[
+\mu(d_i)=\sum_{l=0}^{2}\sum_{m=-l}^{l}a_{lm}Y_{lm}^{source}(d_i).
+\]
+
+新叶子的`reconstruct`用论文九基和论文序列系数计算同一个有限展开；使用旧C时必须先`fromMatlabLayout`。
+
+原`koeff_aus_near.m`逐项拟合为
+
+\[
+a^{num}_{lm}=\frac{4\pi}{N}\sum_i\mu_iY_{lm}(d_i),\quad
+ a^{den}_{lm}=\frac{4\pi}{N}\sum_iY_{lm}(d_i)^2,\quad a_{lm}=a^{num}_{lm}/a^{den}_{lm}.
+\]
+
+**当前新增的球谐叶子功能**：`projectSourceCoefficientsOrderTwo(nearness,setofpoints)` 专门复现 `koeff_aus_near.m` 的固定 `ordnung=2` 分支。接受 N>0 的有限近度和 N×K (K≥3) 样本，仅解释前三列的有限单位方向；按原 m 排列的九个源 CS 基函数**分别**求和，先算 `a=(sum(near*Y)/N)*4pi` 与 `b=(sum(Y²)/N)*4pi` 再相除，不将其替换为九元联合 LS；返回 3×5 源布局且无效位置填零。错误返回：空/维度错 `InvalidSampleShape`，近度/方向非有限 `NonFiniteInput`，非单位方向 `NotUnitDirection`，零平方范数 `ZeroProjectionNorm`，累加/比值溢出 `NonFiniteResult`；原 MATLAB 在这些病态数据上的警告/NaN 传播未取证，因此不能主张等价。**一般化跨模块HarmonicFitter、动态阶数、Adaptive/Session接口仍未实现；但这个已存在的受限叶子本身，在固定提交`5e5221988cf093dbfddb88f2f65f06632460f3a1`下，已有用户原生编译及对应专项CTest通过证据。** 该证据不属于公共HarmonicFitter/DEC-005或后续动态HEAD的测试。
+
+**独立精确参考（不是被测实现生成）**：取七个单位方向 `e_x,e_y,e_z,(3/5,4/5,0),(0,3/5,4/5),(4/5,0,3/5),(1/3,2/3,2/3)` 与近度 `(2,-1,4,1/2,-3,5/4,11/2)`。已实际执行 [Wolfram 精确计算](../../verification/harmonics/verify_source_projection_order2.wl)，九项系数差全部为0，所有平方范数分母严格为正；离散 Gram 的非对角项 `G[2,3]≈-0.2206948544` 非零，所以**此固定场能够区分源逐项比值与联合最小二乘**。精确有理/根式值单独保存于 [source_projection_reference.v1.json](../../verification/harmonics/source_projection_reference.v1.json)，其状态是独立数学参考、**非已运行的 C++/批准 Golden**；本模块专有测试 `test_low_order_source_projection.cpp` 覆盖所有九项、六处无效填充、额外流列忽略、零/维度/非有限/非单位/溢出等负例；**现已在5e522198用户原生CTest通过**。
+
+AF-090仍适用：`spherical_harmonic_illustration`的rho=5+3yy/max(abs(yy))是独立图示，不作为核心九基或旋转验证依据，见[分析LLD](analysis_plotting.md)。
+
+### 2.1 已存在的低阶叶子错误类型与未来公共错误链的适配边界（2026-11-14，真实接口交叉整改）
+
+**静态读码事实**：已实际读取固定分支上的`include/egomotion/harmonics/low_order.hpp`（Git blob `8b2a8723d22fec0c7e544cab57952173c8daacfb`）、`low_order_source_projection.cpp`（blob `7d3c7aadc90841c5c66d41ccebcfdfdca11306e5`）及其专项测试文件。受限叶子已有**局部**`egomotion::harmonics::low_order::ErrorCode`和`Result<T>`，不是公共`NumericalErrorCode`及`Result<T,NumericalErrorCode>`。叶子`Result::error() const`自拥有返回局部`Error{code,const char* message}`；访问错误alternative时由`std::get`抛`std::bad_variant_access`。这只是**历史已实现叶子的局部事实**，不能将用户对未来跨模块Result所决定的`std::logic_error`、`ErrorDetail.causes`错误链**追溯声明为叶子已有行为**；未来业务桥接必须正面处理这道类型边界，不能偷偷把局部类型当公共API强转。
+
+| 实际`low_order::ErrorCode`成员（源码有定义） | 错误源事实及适配注意事项 |
+|---|---|
+| `NonFiniteInput`、`NonFiniteResult` | 公共`NumericalErrorCode`有同名候选，但必须保留局部枚举家族`low_order::ErrorCode`作为根因帧，不能只通过字符串同名假设枚举ABI相同 |
+| `InvalidSampleShape`、`NotUnitDirection` | 公共候选分别为`InvalidShape`、`InvalidDirection`，仅语义相近，不能使用`static_cast`按枚举整数映射；由桥接函数逐项检查后转成业务层错误 |
+| `ZeroProjectionNorm` | 原离散投影某通道平方范数为零；公共有`ZeroNorm`/`SingularSystem`，但需明确业务失败资格，不能未经定义就选其一并删除局部Code |
+| `NotProperRotation`、`ComplexResidue`、`InvalidMethod` | 公共`NumericalErrorCode`没有明确一一对应的同义项；特别是**有限复数虚部残余不等于`NonFiniteResult`**，非法旋转矩阵也不自动等于非法单位视线。不可压成模糊`InvalidShape`或自动改成`Result::success` |
+
+**确定的集成边界**（不增加新枚举、不替用户授权实施）：低阶叶子出错时，适配器必须先`if (!leaf_result.hasValue())`再读取`leaf_result.error()`（自拥有局部Error），严禁让局部`std::bad_variant_access`替代正常业务失败；新业务层需要包装Failure时，创建`ErrorFrame{domain="egomotion::harmonics::low_order::ErrorCode",code=local_code,...,stage=Solve,message=leaf_message}`，按已决定的`std::forward_list`规则保留这一真实原始故障层。对于**Runner层**可以将外层类型定为既有`ExperimentErrorCode::SolverFailed`并保留叶子Frame；如未来`HarmonicFitter`直接承诺返回`NumericalErrorCode`，须在接口LLD明确合法一一映射和无法无损映射项的处理，**此处不擅自新建公共ErrorCode或由外层静默硬转**。正常业务失败走Failure，程序员错用叶子Result的`bad_variant_access`也不应被掩盖为科学数值失败。
+
+**已有证据不可混用**：固定`5e522198`用户专项3/3 CTest支持已有叶子的原错误码等局部行为，但**没有**当前公共Result工厂/`std::logic_error`/`std::forward_list<ErrorFrame>`桥接、RunContext、MAT集成的原生测试。建议复用既有`TC-F-SH-001/002`、`TC-NF-OOP-001`、`TC-I-RESULT-001`做未来跨层故障注入；要求对八个局部ErrorCode逐个验证来源家族、Code、stage、message及根因不丢，并对`ComplexResidue/InvalidMethod/NotProperRotation`禁止猜测式公共枚举转换。不会新增正式第67个TC或实施C++，H-10/H-11仍无限期延期。
+
+## 3. 新叶子的唯一旋转合同
+
+\[
+\mu_{new}(d)=\mu_{old}(A d),\quad A\in SO(3),\quad
+ a'_{0}=a_0,\quad a'_1=D_1(A)a_1,\quad a'_2=D_2(A)a_2.
+\]
+
+系数列左乘；论文正xyz基给`D1=A^T`。对应组合为`D(A B)=D(B)D(A)`。具体主动旋转/相机反旋由上层明确传A或A^T，不在叶子猜测，不擅改轨迹或Session。
+
+### 3.1 三条实际实现路线
+
+| 路线/API | 数学来源和独立性 | 当前证据 |
+|---|---|---|
+| `rotationDirect` | 五个对称无迹张量T_i由定义构造，`D2_ij=2 Tr(T_i A^T T_j A)` | 全25项及场作用符号证明 |
+| `rotationIvanic` | IR96式8.1、IR98修正P边界及经定义判别的V加号；B=P A^T P^T，显式行列重排 | 对一般非零实四元数，9+25项与定义路线差全0 |
+| `rotationChoi` | Choi1999式5.4/5.5、6.1/6.9/6.14及W D W^dagger；独立复运算路线，不调用IR | 对同一一般域，9+25项与定义路线差全0 |
+
+l=2的w对全部m精确为0，不求W；u=0先跳过辅助项再访问前阶数组，不用浮点小阈值替代精确零分支。当前只支持l<=2，不为测试W扩大范围。Choi用`adjoint()`，非普通transpose，虚部残留必须检查。
+
+### 3.2 与原SHRotate行为的区别必须明示
+
+原`SHRotate.m`实际R3=P r^T P^T，且`transfor_koeff`直接对原CS系数左乘。若把r解释成当前A而不作CS相位转换，它不等于当前指定的物理场作用。例mu_old=2+z、A=Rx(pi/2)，旧组合为2−y，新明确合同为2+y；在ey处分别1和3。Wolfram已验证这个全正近度反例。
+
+这是**输入/基/系数约定的组合差异**，不据此宣称原实验全部无效，也不自动改写原`origin`或业务调用方。新实现以定义证明的明确合同为准，旧3×5仅通过保持同一场的转换接入。旧AN-G08 z90候选原样保留，它不能独自证明一般旋转。
+
+**R6业务适配（2026-11-17）**：前段指原受限叶子的物理合同，不能据此把原实验改成物理修正版。[专题LLD §3](SH_ROTATION_IVANIC_RUEDENBERG.md)要求业务保留原系数动作。`rotateCoefficients(C,A)`仍为物理源CS动作；新增 `rotateSourceCoefficients(C,r)=S rotateCoefficients(S C,r)`，等于原无CS块直接乘源系数。S只改变四个有效位置的符号，零阶和无效填充规则不变。Adaptive Comparison/UpdateRates显式调用后者，Initialization仍不旋转；输入 `source_coefficient_rotation` 是原上一帧Rodrigues矩阵。两接口不能互换，原文件始终只读。本段记录已授权修复及固定SHA复测范围，不代替一般MATLAB运行时或完整科学实验的等价证明。
+
+## 4. 已核出的论文印刷问题
+
+- IR98 p.9100 Table2负m的V末因子印成sqrt(1−delta_(m,-1))；源码、IR96 Table3、定义和Choi独立路线要求加号。本轮一般符号验证支持加号，Rx45对应元素为sqrt(3)/2，印刷减号给sqrt(3)/4。候选选择已提升为本限定数学域的精确验证，不伪称作者另有正式勘误。
+- 2015 p.30最后d1²/d2²展开与式66定义的h4符号相反。正确xx用`+sqrt(4pi/15)*h4`，yy用负号；印刷xx实际上等于y²，印刷yy等于x²。**式59–67九基本身正确**。本轮不实施/修改耦合矩阵等其他模块。
+
+详见[三路验证报告§7](../reviews/LOW_ORDER_SH_THREE_ROUTE_VERIFICATION_2026-11-09.md)，保留原页面，不静默改原文。
+
+## 5. 本轮代码与未来公共接口分层
+
+| 路径 | 状态与职责 |
+|---|---|
+| `include/egomotion/harmonics/low_order.hpp` | 已创建，论文9系数、有限叶子Result、基值/三旋转路线/重建/布局转换 |
+| `src/harmonics/low_order_detail.hpp` | 已创建，输入SO(3)/单位方向检查、固定排列、有限输出 |
+| `src/harmonics/low_order_basis.cpp` | 已创建，直接/递推基值、重建、旋转列系数与转换 |
+| `src/harmonics/low_order_rotation.cpp` | 已创建，独立张量与IR实现 |
+| `src/harmonics/low_order_choi.cpp` | 已创建，复递推与实基转换 |
+| `src/harmonics/low_order_source_projection.cpp` | 受限二阶源逐系数投影；固定5e522198下用户实际GCC16编译，专项76次检查的CTest通过；原MATLAB并未运行 |
+| `tests/unit/test_low_order_harmonics.cpp` | 已创建，旧版在固定601c74de完成53,532项检查/624四元数及三路线，1/1 CTest通过；更广验证/批准仍开放 |
+| `tests/unit/test_low_order_archived_golden.cpp` | AN-G06/07/08原CS相位与归档R3/R5/3×5候选；5e522198用户原生CTest 176次检查通过 |
+| `tests/unit/test_low_order_source_projection.cpp` | 七方向精确九系数、分母异常/维度/非有限/额外列回归；5e522198用户原生CTest 76次检查通过 |
+
+命名空间为`egomotion::harmonics::low_order`，不冒充已实现[专题§5](SH_ROTATION_IVANIC_RUEDENBERG.md)中旧规划的RealSphericalHarmonics/HarmonicFitter/HarmonicRotator公共ABI。domain/contracts未获实施授权，新叶子不引入这些尚不存在的公共类型；局部Result封装variant，仅是本模块可独立验证的边界。
+
+**固定 `5e5221988cf093dbfddb88f2f65f06632460f3a1` 上三个独立低阶球谐CTest已由用户在Ubuntu GCC16.2实际编译并3/3 Passed**：原回归53,532次检查、归档AN-G06/07/08参考176次、二阶逐系数投影76次。用户提交的完整可见日志记录真实误差，详见[PROGRESS E-DOC-062](../PROGRESS.md)。**这不是通用公共ABI/动态阶数/最终DEC-005验收**，下一提交的新代码不能沿用此前PASS。 HLD 原27条设计DAG未修改、尚未接入其它模块；现有叶子仅依赖 C++17/Eigen、禁 sdla。未来公共三类接口、共享类型/生命周期/ABI/全业务适配仍须核对；增补解析/dyadic/MATLAB相位断言已在 `445ed151` 实测，624非零四元数/错误码/溢出又在 `601c74de` 实测；未来任何新变更不得借用旧 HEAD 通过结果。
+
+## 6. 独立参考、异常与验收
+
+实际数学脚本位于`verification/harmonics/`：九基、全SO(3)三路矩阵、布局同场性各自有脚本；实际结果JSON包含内核版本、来源检查点、全元素零差和独立有理旋转参考。它们不是被测C++自行计算再复制为Expected。
+
+代码拒绝非有限、非单位方向、非SO(3)及反射，不归一化或投影。`128*epsilon(double)`仅输入/虚部舍入检查；`4096*epsilon`仅专项测试源码的比较余量，不替代DEC-005最终阈值。输出矩阵、旋转系数、重建值均检查非有限；全部自拥有，不持有MAT/RNG/Session或可变全局缓存。
+
+测试源码覆盖轴向、一般、近零/近pi、非交换组合、逐基场重建、独立25值参考、旧相位反例、非法输入及增强解析/dyadic/MATLAB相位锚点；**增强版 `445ed151` 和压力版 `601c74de` 均由用户原生执行，CTest各1/1 Passed**。源码逐式复读与Wolfram精确恒等证明不能自动证明编译器/浮点/所有异常行为。
+
+关联TC-F-SH-001/002、TC-NF-NUM-001/002与TC-D-SOURCE-002；既有66TC总量不变，专项子用例不是新TC。AF-045/046/051/055的符号数学部分已有实证，但整体原生、公共接口、其他Golden与批准义务尚缺，继续开放。
+
+**归档候选交叉校验补充（2026-11-09）**：当前 AN-G06 原CS 9基、AN-G07 20个归档方向近度1、AN-G08 原m顺序z90的R3/R5与3×5系数都有**独立字面参考**，不从被测Eigen递推中构造Expected。对其候选值已用独立 Wolfram CS多项式计算核对（全域表达式相应的限定恒等式 `allExact=True`），脚本位于 [verify_archived_sh_candidates.wl](../../verification/harmonics/verify_archived_sh_candidates.wl)。第二个归档CTest已在5e522198实际通过176次检查，但不把该局部证据扩展为全部Golden/TC通过；不代表已实现完整原MATLAB近度离散拟合或全业务源忠实移植，正式 DEC-005/008 仍需批准。对应 [TEST_PLAN](../TEST_PLAN.md) 和 [PROGRESS E-DOC-060](../PROGRESS.md)。
+
+## 7. 后续进入条件
+
+H-10球谐实现与本次Wolfram已授权；**不再等待论文或笼统等待全部代码许可**。球谐叶子三次原生编译/CTest已由用户实际执行并报告通过；代理自行执行全部项目/其它模块仍须独立授权，不因此开放其他模块。正式DEC-005数值验收、跨模块错误适配/ABI与项目集成仍需独立证据；**DEC-008-01～06的设计决定已作出，但未在低阶叶子与公共Result之间实施或验证桥接**。
+
+按[长期政策](../golden/NO_MATLAB_EXECUTION_POLICY.md)，永久不要求MATLAB/Octave/L1。原论文、源码、MAT及旧审查记录保持不变；仅在本文件及PROGRESS/AUDIT维护当前的局部进展与真实限制。

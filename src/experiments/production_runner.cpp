@@ -1,0 +1,121 @@
+#include "egomotion/experiments/production_runner.hpp"
+#include "adaptive_publication.hpp"
+
+#include "egomotion/experiments/adaptive_runner.hpp"
+#include "egomotion/experiments/bias_runner.hpp"
+#include "egomotion/experiments/output_values.hpp"
+#include "egomotion/experiments/run_context.hpp"
+#include "egomotion/sampling/directions.hpp"
+#include "egomotion/simulation/flow.hpp"
+
+#include <cstddef>
+#include <limits>
+#include <new>
+#include <stdexcept>
+#include <string>
+#include <utility>
+
+namespace egomotion::experiments {
+namespace {
+using Outcome=Result<RunOutcome,ExperimentErrorCode>;
+
+Outcome failed(const RunContext& ctx,ExperimentErrorCode code,std::string message) {
+    ErrorDetail d;d.stage=ErrorStage::Simulation;d.message=std::move(message);
+    d.run_id=ctx.runId();
+    return Outcome::failure({code,std::move(d)});
+}
+template<class T>
+Outcome propagate(const Result<T,ExperimentErrorCode>& child,
+                  const RunContext& ctx,std::string message) {
+    ErrorDetail d;d.stage=ErrorStage::Simulation;d.message=std::move(message);
+    d.run_id=ctx.runId();
+    return Outcome::failure(wrapFailure(child.error().code,std::move(d),child.error()));
+}
+Outcome publish(const CurrentOutputBatch& outputs,RunContext& ctx,
+                std::size_t source_repetitions,std::size_t valid_samples) {
+    auto counted=ctx.noteCompletedMemory(source_repetitions,valid_samples);
+    if(!counted.hasValue())return Outcome::failure(std::move(counted).error());
+    auto written=ctx.writeCurrentResults(outputs);
+    if(!written.hasValue())return Outcome::failure(std::move(written).error());
+    return ctx.publishCompleteOutcome();
+}
+Outcome finishBias(const Result<BiasRunData,ExperimentErrorCode>& source,
+                   RunContext& ctx,ExperimentKind kind) {
+    if(!source.hasValue())return propagate(source,ctx,"Bias numerical computation failed");
+    if(source.value().level_count >
+       std::numeric_limits<std::size_t>::max()/3)
+        return failed(ctx,ExperimentErrorCode::DataMismatch,
+                      "Bias level count overflows source sample count");
+    auto packed=makeBiasOutput(kind,source.value());
+    if(!packed.hasValue())return propagate(packed,ctx,"Bias current-save encoding failed");
+    return publish(packed.value(),ctx,1,3*source.value().level_count);
+}
+}  // namespace
+
+Outcome detail::finishAdaptive(const Result<AdaptiveRunData,ExperimentErrorCode>& source,
+                       RunContext& ctx,ExperimentKind kind) {
+    if(!source.hasValue())
+        // 纯指标缺测已由逐帧事件计数；求解失败的原因链不能再次充当指标缺测。
+        return propagate(source,ctx,"Adaptive numerical computation failed");
+    const auto& data=source.value();
+    if(data.frame_count<3||data.planned_runs==0||data.completed_runs!=data.planned_runs||
+       (data.frame_count-2)>
+       std::numeric_limits<std::size_t>::max()/data.planned_runs)
+        return failed(ctx,ExperimentErrorCode::IncompleteRun,
+                      "Adaptive run/valid frame count is incomplete or overflowing");
+    auto packed=makeAdaptiveOutput(kind,data);
+    if(!packed.hasValue())return propagate(packed,ctx,"Adaptive current-save encoding failed");
+    auto counted=ctx.noteAdaptiveCompletedMemory(data);
+    if(!counted.hasValue())return Outcome::failure(std::move(counted).error());
+    auto written=ctx.writeAdaptiveResults(data);
+    if(!written.hasValue())return Outcome::failure(std::move(written).error());
+    return ctx.publishAdaptiveOutcome();
+}
+
+Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runBiasOccluded(
+    const BiasExperimentConfig& config,RunContext& context) {
+    if(context.experimentKind()!=ExperimentKind::BiasOccluded)
+        return failed(context,ExperimentErrorCode::InvalidParameters,
+                      "Composition Root injected wrong Bias experiment kind");
+    sampling::OccludedOctahedralSampler sampler;
+    simulation::MeanMagnitudeGaussianNoise noise;
+    const BiasExperimentRunner calculator(sampler,noise,biasEstimators());
+    context.noteAttempt();
+    auto data=calculator.compute(config,context.randomSource(),[&context]() noexcept {
+        context.noteValid();
+    });
+    if(data.hasValue())context.noteCompleted();
+    return finishBias(data,context,ExperimentKind::BiasOccluded);
+}
+Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runBiasProportional(
+    const BiasExperimentConfig& config,RunContext& context) {
+    if(context.experimentKind()!=ExperimentKind::BiasProportional)
+        return failed(context,ExperimentErrorCode::InvalidParameters,
+                      "Composition Root injected wrong Bias experiment kind");
+    sampling::OctahedralSampler sampler;
+    simulation::ComponentProportionalGaussianNoise noise;
+    const BiasExperimentRunner calculator(sampler,noise,biasEstimators());
+    context.noteAttempt();
+    auto data=calculator.compute(config,context.randomSource(),[&context]() noexcept {
+        context.noteValid();
+    });
+    if(data.hasValue())context.noteCompleted();
+    return finishBias(data,context,ExperimentKind::BiasProportional);
+}
+Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runAdaptiveInitialization(
+    const AdaptiveInitializationConfig& config,RunContext& context) {
+    const InitializationRunner runner(adaptiveSampling(),adaptiveScene(),injected_solver_);
+    return runner.run(config,context);
+}
+Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runAdaptiveComparison(
+    const AdaptiveComparisonConfig& config,RunContext& context) {
+    const AdaptiveComparisonRunner runner(adaptiveSampling(),adaptiveScene(),injected_solver_);
+    return runner.run(config,context);
+}
+Result<RunOutcome,ExperimentErrorCode> ProductionExperimentRunner::runAdaptiveUpdateRates(
+    const AdaptiveUpdateRatesConfig& config,RunContext& context) {
+    const UpdateRateRunner runner(adaptiveSampling(),adaptiveScene(),injected_solver_);
+    return runner.run(config,context);
+}
+
+}  // namespace egomotion::experiments

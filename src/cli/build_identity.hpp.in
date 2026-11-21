@@ -1,0 +1,12 @@
+#pragma once
+
+namespace egomotion::cli::build_identity {
+inline constexpr char compiler_id[] = "@CMAKE_CXX_COMPILER_ID@";
+inline constexpr char compiler_version[] = "@CMAKE_CXX_COMPILER_VERSION@";
+inline constexpr char cmake_version[] = "@CMAKE_VERSION@";
+inline constexpr char eigen_version[] = "@Eigen3_VERSION@";
+inline constexpr char matio_version[] = "@MATIO_VERSION@";
+inline constexpr char zlib_version[] = "@ZLIB_VERSION_STRING@";
+inline constexpr char sophus_version[] = "@Sophus_VERSION@";
+inline constexpr bool svg_enabled = @EGOMOTION_SVG_LITERAL@;
+}  // namespace egomotion::cli::build_identity

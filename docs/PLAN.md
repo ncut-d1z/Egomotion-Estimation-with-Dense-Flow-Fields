@@ -1,38 +1,53 @@
 # Egomotion Estimation with Dense Flow Fields：MATLAB → C++ 源码审计与模块化移植计划
 
+> **2026-11-21 R6 论文 Fig. 1–5 专项**　已核对归档数据和论文定义，并在独立入口实现逐次角度、实际方向数、流比、两套刷新周期与组图。本轮恢复构建和 CTest，已按 SVG ON/OFF 两种配置先跑 MAT 安全回归、再跑完整套件。完整科学实验继续延期。[专项记录](reviews/PAPER_FIGURES_1_TO_5_2026-11-21.md) · [执行证据](PROGRESS.md)
+
+> **2026-11-20 当时的执行范围**：所有者要求继续 R6 代码实现，推迟构建、测试。本次只修源码、准备必要回归源码与构建登记、静态审阅和提交推送；不执行配置、编译（含语法编译）、CTest、项目程序或实验。该指令覆盖下文早期运行安排，已有固定 SHA 的实测记录不外推到新提交。四项指标决定与其它延期边界保持，当前进度以 [PROGRESS](PROGRESS.md) 为准。
+
+> **2026-11-17 状态更新**：用户已明确授权生产代码修改、构建/CTest 和方案文档修改，当前按 [ROADMAP](ROADMAP.md) 执行 R6 原生验证。下文“纯文档阶段”等描述保留其历史语境；当前代码与运行证据以 [PROGRESS](PROGRESS.md) 最新批次为准。此更新不修改需求、验收阈值或正式冻结状态。
+
+> **WBS 草案 v0.8，未形成承诺基线。** 98 项 P 任务的证据要求与可执行进度以 [PROGRESS.md](PROGRESS.md) 为唯一滚动登记；本文件不保存动态 PASS/失败计数。
+
+> **HAR-2026-11-06-001 的可审查补充**：用户审批 JSON 的 H-01～H-16 已拆成 [审批后的设计修订与待审材料包](approval/HAR-2026-11-06-001_REVIEW_PACKAGE.md)，包含 H-05 需求影响、H-06 冻结准备、H-07 历史 MAT 差异、H-08 SHA-256、H-09 Golden、H-13 异常、H-15 里程碑与 H-16 Draft PR 清单。该补充不是 SRS/LLD 冻结或 H-10 解除暂缓，P0～P10 的既有 REQ/TC/AC 义务与任务状态不变。
+
 > **本文件为实际 MATLAB 源码审计后的修订计划，不代表任何 C++ 功能已经实现。**
 >
-> 审计依据：本仓库 main 分支的 origin/egomotion_estimation_dense_flow_fields_matlab_scripts/、AGENTS.md、原始资料自带 readme 和 2015 年论文。原始文件的目录和函数名均已在 GitHub 上核对；MAT 数据的文件头已抽样读取，但全部变量的二进制内容尚未逐个解压、验证。
+> 审计依据：本仓库 main 分支的 origin/egomotion_estimation_dense_flow_fields_matlab_scripts/、AGENTS.md、原始资料自带 readme 和 2015 年论文。原始文件的目录和函数名均已在 GitHub 上核对；MAT 变量已由独立 C++17 matio 探针在 Ubuntu 24.04 上完整读取：582 个文件、582 个变量全部 `READ_OK`，见 [docs/MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md)。这不等于 MATLAB/C++ 算法数值等价。
 >
 > 本文件仅用于规划和跟踪，不构成启动 C++ 开发的授权。后续修改以 AGENTS.md 的工作区、提交、源数据保护及用户授权要求为准；本文档中出现的测试与运行入口均不能视为已实现。
 
+**可推迟的人类输入统一清单**：[docs/TODO.md](TODO.md) 记录论文上传、代码/构建/测试授权、最终数值与性能验收、基线冻结/合并发布的具体原因及建议时间。当前仍是纯文档阶段，不因此启动 C++ 实现或真实运行。
+
 ## 0. 文档定位、需求基线与优先级
 
-- **[docs/REQUIREMENTS.md](docs/REQUIREMENTS.md)** 是独立的软件需求规格说明书（SRS），采用 `REQ-F-*`、`REQ-D-*`、`REQ-I-*`、`REQ-DC-*`、`REQ-NF-*`、`REQ-PROC-*` 编号，逐条定义优先级、依据状态、验收 `AC-*` 与计划测试 `TC-*`，并覆盖 P0–P10 全部 98 项任务。
+- **[docs/REQUIREMENTS.md](REQUIREMENTS.md)** 是独立的软件需求规格说明书（SRS），采用 `REQ-F-*`、`REQ-D-*`、`REQ-I-*`、`REQ-DC-*`、`REQ-NF-*`、`REQ-PROC-*` 编号，逐条定义优先级、依据状态、验收 `AC-*` 与计划测试 `TC-*`，并覆盖 P0–P10 全部 98 项任务。
 - **本 PLAN.md** 只负责源码审计安排、实施分解、任务依赖、进度和验收顺序；P 工作项不能替代系统需求。
-- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** 是 HLD 草案，**[docs/OBJECT_MODEL.md](docs/OBJECT_MODEL.md)** 是类职责与生命周期草案，**[docs/design/README.md](docs/design/README.md)** 索引各模块 LLD 草案；三者均未冻结。
-- **[docs/TEST_PLAN.md](docs/TEST_PLAN.md)** 规划 TC → 拟议测试实体 → AC，尚未创建 C++ 测试或实际 CTest。
-- **[AGENTS.md](AGENTS.md)** 规定 Git 安全、Debian/Ubuntu 支持范围、MAT 原始资料只读保护与 AI Agent 工作要求。
-- SRS 目前是 **v0.2 草案、尚未冻结、尚未验收**；需求项“依据已确认”不等于 C++ 已实现或测试通过。P0 对来源/数据/版权的审计结论与软件需求规格经项目所有者批准后才可冻结。所有未实测性能/内存/构建预算与逐模块容差保持 TBD，不得凭空编造。
-- 原始 45 个 MATLAB 文件的逐文件追踪见 [SRS §9.2](docs/REQUIREMENTS.md#92-原始-matlab-45-文件逐文件追踪清单已核实代码未移植)。下面每项 P 任务已标注至少一个关联需求 ID；后续修改 PLAN 子任务、SRS 需求、数值验收或 MATLAB 数据契约时须同步更新双向追踪矩阵和相关 AC/TC。
+- **[docs/ARCHITECTURE.md](ARCHITECTURE.md)** 是 HLD 草案，**[docs/OBJECT_MODEL.md](OBJECT_MODEL.md)** 是类职责与生命周期草案，**[docs/design/README.md](design/README.md)** 索引各模块 LLD 草案；三者均未冻结。
+- **[docs/TEST_PLAN.md](TEST_PLAN.md)** 规划66个TC→拟议测试实体→AC；**例外事实**：受限球谐叶子已有3个独立CTest且在固定`5e522198`用户原生3/3通过，其余绝大多数业务TC尚无实际C++测试/CTest。
+- **[docs/DOCUMENT_BASELINE_REGISTER.md](DOCUMENT_BASELINE_REGISTER.md)** 是规范文档的类型、当前版本、冻结状态和固定 Git SHA 身份的统一索引；**[docs/PROGRESS.md](PROGRESS.md)** 是实施任务、里程碑、角色、实际验证与未决决定的滚动证据登记；初次静态核查见 [2026-11-06 审查记录](reviews/STATIC_TRACEABILITY_2026-11-06.md)，审查意见后的跨文档更正及连接器复核见 [一致性修订记录](reviews/DOC_CONSISTENCY_RECONCILIATION_2026-11-06.md)；二者均不代表 H-11 的 Bash 现场执行。
+- **[AGENTS.md](../AGENTS.md)** 规定 Git 安全、Debian/Ubuntu 支持范围、MAT 原始资料只读保护与 AI Agent 工作要求。
+- SRS 目前是 **v0.14 草案、尚未冻结、尚未验收**；需求项“依据已确认”不等于 C++ 已实现或测试通过。P0 对来源/数据/版权的审计结论与软件需求规格经项目所有者批准后才可冻结。所有未实测性能/内存/构建预算与逐模块容差保持 TBD，不得凭空编造。
+- 原始45个MATLAB文件的REQ/TC追踪见 [SRS §9.2](REQUIREMENTS.md#92-原始-matlab-45-文件逐文件追踪现行实现证据另列)，当前C++符号/范围及有限测试见 [MIGRATION_MATRIX](MIGRATION_MATRIX.md)。下面每项P任务已标注至少一个关联需求ID；后续修改PLAN子任务、SRS需求、数值验收或MATLAB数据契约时须同步更新双向追踪矩阵和相关AC/TC。实现映射不改变98项任务的验收义务。
 
 ## 1. 目标、不可变约束与完成定义
+
+**长期政策**：[无需 MATLAB 执行](golden/NO_MATLAB_EXECUTION_POLICY.md) 已由项目所有者明确选定：原 `.m` 仅只读审查，**禁止将运行 MATLAB/Octave 或取得 L1 视为任何 P 工作项、里程碑、基线或验收的前置条件**；应以 L2/L3/L4 独立参考、实际 C++ 测试及其明确覆盖范围为准。H-10/H-11 的其他真实执行暂缓仍有效。
 
 本项目以忠实移植（Faithful Port）为首要原则，把 Simon Strübbe、Wolfgang Stürzl、Martin Egelhaaf 的 **Egomotion Estimation with Dense Flow Fields: MATLAB Scripts** 移植为可在 **Debian/Ubuntu** 上独立构建和运行的 **C++17** 程序，复现原始数值实验、数据输出与图表分析流程。
 
 | 事项 | 固定决策 |
 |---|---|
-| C++ / 构建 | C++17、CMake、Eigen 3 |
-| MAT 读写 | matio；原始 MAT 只读，新增 MAT 结果写入独立输出目录 |
+| C++ / 构建 | C++17、CMake、Eigen 3；**H-02 已选用 Sophus SO(3)** 为 Rodrigues 实际调用的替代依赖；球谐 R0/R3/R5 以 Ivanic–Ruedenberg 1996 原论文及 1998 勘误为数学依据，使用 Eigen 独立重写；Don Williamson 仅作代码参考，禁止 sdla 依赖（递推生产实现尚未开始） |
+| MAT 读写 | matio；原始 MAT 只读，未来新 MAT 结果仅写仓库根 `output/<RunId>/` 隔离目录（H-12 已选定，已以 `/output/` 规则忽略上传）；**H-10 仍暂缓代码与执行** |
 | 数据格式 | 保留原始 .mat，不开发 .npz/.npy 转换、不引入 cnpy |
-| 运行环境 | 仅 Debian/Ubuntu；不依赖 MATLAB Runtime、Python、ROS、OpenCV |
+| 运行环境 | 仅 Debian/Ubuntu；**H-04 选定 Ubuntu 24.04.4 VirtualBox/x86_64 开发环境快照**（可用容量已记录，未批准性能通过阈值）；不依赖 MATLAB Runtime、Python、ROS、OpenCV |
 | 数值 | 以 MATLAB 原算法、原参数、原迭代与原始数据为基准；优先 double |
 | 目标方法 | franzeigen 匹配滤波基线、Original KvD、Modified KvD、Adaptive MFA 单次更新 |
 | 目标实验 | 两类 bias test；Adaptive MFA 初始化、含/不含噪声轨迹对比、更新频率扫描 |
 | 图表 | C++ 实验的数值计算与绘图分层；后期复现数据分析及插图，不引入 Python |
 | 原文件 | origin/** 只读、不可移动、改名、清理或覆盖 |
 | Git | 严格遵守 AGENTS.md；源码实施使用开发分支；不强推、不改写历史 |
-| 授权 | 不自动创建 LICENSE，第三方来源需审查版权，特别是 rodrigues.m 和 SHRotate.m |
+| 项目许可证与来源 | **项目所有者直接指定 MIT**，仓库根 [LICENSE](../LICENSE) 已创建；球谐选择原始 Ivanic–Ruedenberg 1996 论文及 1998 勘误作为必读数学依据，Don Williamson 仅供参考，正式递推必须使用 Eigen 且不能依赖 sdla；普通版权审核不再作为开发阻塞，只保留实际上游文件的已有许可告知 |
 
 **完成定义**：所有被原始实验实际调用的数值计算、数据生成、MAT 结果读取、统计分析均有可追溯的 C++ 对应实现；在给定固定输入下能对照原作者 MAT 参考结果；未实现或未核验的功能显式报告。原始 MATLAB 文件本身不做修改。绘图输出的视觉风格不要求像素级一致，但所用数据、坐标、变换和曲线区间必须可核对。
 
@@ -65,7 +80,7 @@
 - adaptive_matched_filter_test/produced_data/many_parameter/：6 个。
 - 合计 280 + 280 + 4 + 5 + 7 + 6 = **582**。
 
-已用 GitHub 直接读取多个代表性 .mat 的 base64 内容和文件头：样本均标识 **MATLAB 5.0 MAT-file**，数据块出现 miCOMPRESSED（类型 15）。所以本项目的 **matio + zlib** 是实际必需路径；**暂不引入 HDF5**，只有在完整清单中查出 MAT v7.3 文件时再依其需求增加。尚未解压检查全部变量的维度和类型，不能将推断的输出结构冒充已经完成的数据校验。
+**matio 全量读取实测**：[docs/MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md) 显示 582/582 MAT v5 + zlib，582 个变量全部 MATLAB class=double、data_type=double、单文件一个同名变量，均 `READ_OK`、失败 0。真实维度分布：10×1（80）、10×3（480）、35×1（4）、600×1（14）、600×4（4）。本批归档无需 HDF5，也不存在需读取的 cell/struct/sparse/complex 类型。独立扫描器不是正式业务 Reader/Writer，未验证列主序值拷贝、异常负例或算法数值等价。
 
 ### 2.2 源文件对应的功能清单（计划中的一对一追踪依据）
 
@@ -110,10 +125,10 @@
 4. **近度符号、尺度**：KvD 使用近度和的符号翻转，并在最后按平均近度缩放平移；Adaptive 单轮先由球谐系数恢复近度、做均值归一化，再经 6×6 联立系统恢复运动，最后重算近度和系数。不能合并为同一无状态求解器。
 5. **球谐表示**：kugelflfunc2 使用 MATLAB legendre 与指定的实球谐 sin/cos 规则；系数以 **3×5** 矩阵存储，其中有效分量数为 1+3+5=9，初始系数 (1,1)=1；8 个独立的非零阶环境参数与完整存储不矛盾。拟合 koeff_aus_near 是按每个基函数分别投影/归一的具体计算，并非可任意替换的通用最小二乘拟合。
 6. **球谐旋转**：transfor_koeff 使用 SHRotate(r,2) 给出的 3×3 与 5×5 块，并保持零阶项。需校验旋转主动/被动方向及真实基函数顺序，不可直接替换为其他球谐库默认约定。
-7. **第三方来源**：rodrigues.m 标注 Perona/Bouguet 的历史版权及修改；SHRotate.m 说明 MATLAB 实现源于外部 C++ 代码与相关论文。P0 必须保留文件头并单独完成这两项的版权/移植来源核查，不能仅依整个资料页的 ODC-By 声明推定可复制代码。
+7. **来源与实现数学依据**：原作者材料及第三方代码保留原出处与现有文件头，项目新代码采用根 MIT。球谐 Eigen 独立重写必须在用户上传 1996 原论文和 1998 勘误后逐式核对；普通版权复核不作为开发/构建的前置门禁，复制已许可的上游文件时保留其既有版权/许可告知即可。
 8. **偏差实验“variance”术语**：脚本注释把 [0.6,2.4,9.6] 称为 variances，但代码把数值直接作为 randn 乘数，并未取方差平方根。忠实模式须执行代码表达式，同时在报告中区分“脚本系数”与统计学方差。
 9. **误差不是一种**：transfehler_div 先把估计向量模长缩放到真值模长，再计算向量差；normrelfehler 计算方向夹角（度）。绝不能以统一的角度误差替换 bias test 的六组输出。
-10. **已有生成结果和脚本可能不完全同步**：with_errors/ 中包含当前生成脚本不保存的 alleadap* 文件；many_parameter/ 含 rottransratio.mat 与 alleadap*，但当前生成脚本未写出这些文件；many_parameter 的绘图脚本又会读取 rottransratio。需要记录这些为“历史工件与当前生成脚本契约不一致，原因尚未确认”，不得悄悄补造值或删去历史文件。
+10. **已有生成结果和脚本可能不完全同步**：with_errors/ 中包含当前生成脚本不保存的 alleadap* 文件；many_parameter/ 含 rottransratio.mat 与 alleadap*，但当前生成脚本未写出这些文件；many_parameter 的绘图脚本又会读取 rottransratio。根据 [DEC-004 最新决定](decisions/DEC-004_HISTORICAL_MAT_FIELDS.md)，**新 Runner 只生成当前有效 save 字段**；历史 MAT 完整只读，额外字段列为 `HistoricalOnly`；原因不明不阻塞开发，缺失分析必需变量时明确失败，不补造或删去历史。
 11. **原代码潜在数值边界**：oneit 使用 real(inv(mgesamt))，并存在零范数、近度均值接近零、逆矩阵病态、acos 输入越界等风险；原 bias 生成函数的 near 输出在循环内作为标量覆写。必须首先忠实记录原行为及可能失败状态，再在单独、显式授权的增强模式中考虑更稳健的数值实现。
 12. **MAT 加载兼容性**：getflowfield(filename) 调用 load 后取第一个变量；当前分析脚本经常不写 .mat 扩展名。MAT 访问模块必须支持按明确变量名严格读取，并提供与旧脚本兼容的“无后缀路径、唯一/首个变量”读取策略；两者不可混淆。
 
@@ -123,37 +138,40 @@
 
 ### 3.1 模块与依赖边界
 
-系统分为 domain/core_math、mat_io、sampling、flow_simulation、Franz/KvD/Adaptive estimators、harmonics、trajectory、experiments、analysis、可选 plotting、CLI/Composition Root。各模块完整职责和组件依赖图见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) §2–4。
+系统分为 domain/core_math、mat_io、sampling、flow_simulation、Franz/KvD/Adaptive estimators、harmonics、trajectory、experiments、analysis、可选 plotting、CLI/Composition Root。各模块完整职责和组件依赖图见 [docs/ARCHITECTURE.md](ARCHITECTURE.md) §2–4。
 
 ### 3.2 数据与接口合同
 
-N×6 球面流场、3×5 实球谐系数、6×6 Adaptive 系统，以及 MATLAB 列主序、原始 MAT 只读、结果目录保护要求均由 [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) 记录为可验证需求。技术接口的候选分层与物理数据流见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)；方法签名需 P0.8 审阅。
+N×6 球面流场、3×5 实球谐系数、6×6 Adaptive 系统，以及 MATLAB 列主序、原始 MAT 只读、结果目录保护要求均由 [docs/REQUIREMENTS.md](REQUIREMENTS.md) 记录为可验证需求。技术接口的候选分层与物理数据流见 [docs/ARCHITECTURE.md](ARCHITECTURE.md)；方法签名需 P0.8 审阅。
 
 ### 3.3 面向对象设计原则
 
-采用**值对象 + RAII + 组合/窄接口 + 无状态求解器与有状态会话分离**。无状态点积、叉积和基函数保留普通函数；不为每个 MATLAB .m 机械创建类。详细设计原则和 ADR 见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) §3/7。
+采用**值对象 + RAII + 组合/窄接口 + 无状态求解器与有状态会话分离**。无状态点积、叉积和基函数保留普通函数；不为每个 MATLAB .m 机械创建类。设计原则参见 [docs/ARCHITECTURE.md §3](ARCHITECTURE.md)，架构决策记录参见其 [§8 ADR](ARCHITECTURE.md)；两者均为未冻结 HLD 草案。
 
 ### 3.4 对象模型与 MATLAB 映射
 
-FlowField、HarmonicCoefficients、MatFileHandle、FranzMatchedFilter、KvDIterationEngine、AdaptiveMfaStepSolver、AdaptiveMfaSession、实验 Runner 的职责与类关系见 [docs/OBJECT_MODEL.md](docs/OBJECT_MODEL.md)；逐文件 MATLAB → REQ → TC 追踪见 [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) §9.2。当前对象模型仅是草案，不代表已建类/方法。
+FlowField、HarmonicCoefficients、MatFileHandle、FranzMatchedFilter、KvDIterationEngine、AdaptiveMfaStepSolver、AdaptiveMfaSession、实验 Runner 的职责与类关系见 [docs/OBJECT_MODEL.md](OBJECT_MODEL.md)；逐文件 MATLAB → REQ → TC 追踪见 [docs/REQUIREMENTS.md](REQUIREMENTS.md) §9.2。当前对象模型仅是草案，不代表已建类/方法。
 
 ### 3.5 所有权、生命周期与依赖注入
 
-MAT RAII 不向数学层暴露 matio 指针；每次 RunContext 拥有独立 RNG、输出 Writer 和会话状态；Adaptive 单步求解与跨帧系数状态分离。生命周期、状态图、接口隔离详见 [docs/OBJECT_MODEL.md](docs/OBJECT_MODEL.md) §2–4。
+MAT RAII 不向数学层暴露 matio 指针；每次 RunContext 拥有独立 RNG、输出 Writer 和会话状态；Adaptive 单步求解与跨帧系数状态分离。生命周期、状态图、接口隔离详见 [docs/OBJECT_MODEL.md](OBJECT_MODEL.md) §2–4。
 
 ### 3.6 架构与详细设计冻结门槛
 
-P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据字典、类/接口责任及所有权、依赖无环、CLI 和错误码、逐模块测试与数值容差**。架构冻结清单见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) §8，LLD 的规范与状态见 [docs/design/README.md](docs/design/README.md)。未核验项不得标记完成。
+P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据字典、类/接口责任及所有权、依赖无环、CLI 和错误码、逐模块测试与数值容差**。架构冻结清单见 [docs/ARCHITECTURE.md](ARCHITECTURE.md) §9（§8 为 ADR），LLD 的规范与状态见 [docs/design/README.md](design/README.md)。未核验项不得标记完成。
 
 ## 4. 规划中的工程文件结构
 
-目录布局、公开/私有头文件边界、CMake target 候选清单统一见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) §4，详细模块的设计草案见 [docs/design/](docs/design/README.md)。核心分层为 include/egomotion 的 domain/contracts/io/math/geometry/simulation/estimators/harmonics/experiments/analysis，与 src/ 对应，另有 tests/unit、tests/contracts、tests/golden、tests/integration、tests/reproduction；命令行 composition root 位于 src/cli。
+目录布局、公开/私有头文件边界、CMake target 候选清单统一见 [docs/ARCHITECTURE.md](ARCHITECTURE.md) §4，详细模块的设计草案见 [docs/design/](design/README.md)。核心分层为 include/egomotion 的 domain/contracts/io/math/geometry/simulation/estimators/harmonics/experiments/analysis，与 src/ 对应，另有 tests/unit、tests/contracts、tests/golden、tests/integration、tests/reproduction；命令行 composition root 位于 src/cli。
 
-现有原始资料仍以 origin/egomotion_estimation_dense_flow_fields_matlab_scripts/ 为唯一来源。新结果必须使用独立 results/<RunId>/ 目录，不能写入 origin。以上目录均为**拟议布局**，当前尚未创建。
+现有原始资料仍以 `origin/egomotion_estimation_dense_flow_fields_matlab_scripts/` 为只读参照。**新输出根固定为仓库根 `output/`，其下每次独占创建 `output/<RunId>/`；CLI 已删除自定义输出根选项**。`--run-id` 可选，无参数使用独立 OS 随机源生成身份（与算法 RNG 分离），重复 ID/目标拒绝覆盖。`.gitignore` 保留 `/output/` 排除。项目 MIT [LICENSE](../LICENSE) 已添加；Don Williamson 仅为算法参考，SH Rotation 通过 Eigen 重写完全移除 sdla，参考源/勘误见 [专门 LLD](design/SH_ROTATION_IVANIC_RUEDENBERG.md)。本轮不创建生产结果或运行测试。
 
 ## 5. 细粒度实施任务（每项均可单独检查并提交）
 
-**本节是 WBS，不代表 C++ 工作已经开始。** 每个 P 任务显式关联 REQ→TC→AC，证据列只描述应收集的证据类别；初始状态均未验收。设计草案/源码可读取并不等价于完成 P 任务。所有完整测试数据与执行记录统一按 [TEST_PLAN.md](docs/TEST_PLAN.md) 管理。
+**WBS 证据列的性质**：本表的 98 个 P 工作项在「证据要求」中使用类别描述，**不表示**候选测试文件/CTest 已创建或分配了完成时间；每个 TC→唯一拟议测试实体/CTest→AC 的对照以 [TEST_PLAN.md §3](TEST_PLAN.md) 为唯一登记来源。关于 LLD 的具体候选路径：P2/P3 参照 [sampling_noise.md §8](design/sampling_noise.md) 的 `test_sampling.cpp`、`test_flow_simulation.cpp`；P5/P8 参照 [experiments.md §8.1](design/experiments.md) 的 `test_bias.cpp`、`test_adaptive_experiments.cpp`；P7 球谐参照 [harmonics.md §4.1](design/harmonics.md) 的 `test_harmonics.cpp`；P1 MAT/RAII 参照 [mat_io.md §5/§8](design/mat_io.md) 的 `test_mat_archive.cpp` 和候选 `test_mat_raii.cpp`。相关实体、CTest 名与调用/环境仍**未批准或运行**，本段不改变任何 P 的 REQ/TC/AC、依赖或状态。
+
+
+**本节是 WBS，不代表全业务C++工作已经开始。** 仅受限低阶球谐叶子曾获实施/测试授权并有固定SHA实测；其余业务模块的代码/测试仍未实施，不可将此模块局部证据扩大到P0–P10的整体验收。 每个 P 任务显式关联 REQ→TC→AC，证据列只描述应收集的证据类别；初始状态均未验收。设计草案/源码可读取并不等价于完成 P 任务。所有完整测试数据与执行记录统一按 [TEST_PLAN.md](TEST_PLAN.md) 管理。
 
 ### P0 — 基线冻结与来源审计（原始资料/设计准备）
 
@@ -162,27 +180,29 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 | P0.1 | 固定本次源代码 commit SHA；清点 45 个 .m、1 个 readme、582 个 .mat，记录 SHA/大小，核验分类，不修改原归档 | — | REQ-D-SOURCE-001 | TC-D-SOURCE-001 / AC-D-SOURCE-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
 | P0.2 | 对 33 个辅助函数及 12 个入口/绘图文件逐一形成函数签名、被谁调用、是否实际用于实验、输入维度、输出变量清单 | P0.1 | REQ-D-SOURCE-001 | TC-D-SOURCE-001 / AC-D-SOURCE-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
 | P0.3 | 建立两套 bias 与四套 adaptive 归档子目录的结果文件清单；对照 MATLAB 的 save、load 和 getflowfield 调用 | P0.1 | REQ-D-SOURCE-001 | TC-D-SOURCE-001 / AC-D-SOURCE-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
-| P0.4 | 核查 rodrigues.m、SHRotate.m 的第三方来源和可移植范围；记录未能确认的版权问题，不擅自添加 LICENSE | P0.1 | REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001 | TC-D-SOURCE-002、TC-NF-COPYRIGHT-001 / AC-D-SOURCE-002、AC-NF-COPYRIGHT-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
-| P0.5 | 制定 582 个 MAT 的文件身份清单、抽样检查、matio/zlib 批量解码和变量字典审计方案；只交付审计规程及未决项。**本项不验收 AC-D-MAT-001 的全量解码结果**，须待 P1.8 实际核验及 P10.4 复核 | P0.1 | REQ-F-MAT-002、REQ-D-MAT-001 | TC-F-MAT-002、TC-D-MAT-001 / AC-F-MAT-002、AC-D-MAT-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
-| P0.6 | 建立/更新 SOURCE_INVENTORY、MAT_DATA_SCHEMA、MIGRATION_MATRIX 的来源清单和**待全量解码**模板，标注每个字段已确认/未核查；关联旧计划参数差异。P0 阶段不得将字典草案误记为 AC-D-MAT-001 已通过 | P0.2、P0.3、P0.5 | REQ-D-MAT-001、REQ-PROC-TRACE-001 | TC-D-MAT-001、TC-PROC-TRACE-001 / AC-D-MAT-001、AC-PROC-TRACE-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
+| P0.4 | 已按项目所有者最新决定创建项目 MIT 根 LICENSE；记录 Sophus、Don Williamson 参考实现与 Ivanic–Ruedenberg 1996 原论文/1998 勘误来源；计划用 Eigen 重写 R5，完全去除 sdla，不以普通版权审查阻塞代码编写 | P0.1 | REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001 | TC-D-SOURCE-002、TC-NF-COPYRIGHT-001 / AC-D-SOURCE-002、AC-NF-COPYRIGHT-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
+| P0.5 | 维护原始 MAT 文件身份、元数据字段及扫描失败分类方案；**MAT_DATA_SCHEMA 已由真实 matio 全量探针生成**。本 P0 审计任务与 AC-D-MAT-001 的完整实测/复核验收分开记录 | P0.1 | REQ-F-MAT-002、REQ-D-MAT-001 | TC-F-MAT-002、TC-D-MAT-001 / AC-F-MAT-002、AC-D-MAT-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
+| P0.6 | 维护 SOURCE_INVENTORY、**真实 MAT_DATA_SCHEMA**、MIGRATION_MATRIX 的追踪与来源；将已实测文件字段与尚需数值/授权/错误合同确认的内容区分。SOURCE_INVENTORY、MIGRATION_MATRIX 已建立 45 文件级静态条目；方法级完整核对/实际代码与验收仍未完成，不自动视为全项验收 | P0.2、P0.3、P0.5 | REQ-D-MAT-001、REQ-PROC-TRACE-001 | TC-D-MAT-001、TC-PROC-TRACE-001 / AC-D-MAT-001、AC-PROC-TRACE-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
 | P0.7 | 复核并完善已有 docs/OBJECT_MODEL.md **草案**，覆盖 45 个 MATLAB 文件→候选方法及对象所有权，不把已有文件视为任务完成 | P0.2 | REQ-DC-DOMAIN-001、REQ-NF-OOP-001 | TC-DC-DOMAIN-001、TC-NF-OOP-001 / AC-DC-DOMAIN-001、AC-NF-OOP-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
-| P0.8 | 评审 HLD/对象模型/LLD 的最小接口与错误合同，明确当前已冻结范围和未决 DEC；不因 582 MAT 尚未全量解码而虚报数据合同冻结 | P0.6、P0.7 | REQ-DC-DOMAIN-001、REQ-NF-OOP-001、REQ-I-CLI-001 | TC-DC-DOMAIN-001、TC-NF-OOP-001、TC-I-CLI-001 / AC-DC-DOMAIN-001、AC-NF-OOP-001、AC-I-CLI-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
+| P0.8 | 评审 HLD/对象模型/LLD 的最小接口与错误合同，明确当前已冻结范围和未决 DEC；不得将独立探针已成功解码 582/582 误写为生产 Reader/Writer、错误合同、数值 Golden 或架构已冻结 | P0.6、P0.7 | REQ-DC-DOMAIN-001、REQ-NF-OOP-001、REQ-I-CLI-001 | TC-DC-DOMAIN-001、TC-NF-OOP-001、TC-I-CLI-001 / AC-DC-DOMAIN-001、AC-NF-OOP-001、AC-I-CLI-001 | 文档、源文件哈希、评审记录；部分审计/草案；未验收 |
 
-**P0 状态**：原始目录/部分函数和文件头已经人工核查，SRS、HLD、OBJECT_MODEL、TEST_PLAN、八份模块 LLD **草案已存在但未冻结**；SOURCE_INVENTORY、MAT_DATA_SCHEMA、MIGRATION_MATRIX 的全量内容尚未完成。P0.5/P0.6 只要求审计规程与字典草案；`AC-D-MAT-001` 的**582 文件实际完整解码与结果记录**由 P1.8 交付，P10.4 进行复核后才能验收。P0 文档审计与 P1 工具实现是不同的通过条件，避免形成 P0↔P1 循环依赖。
+**P0/P1 数据审计现状**：源文件与归档已核对，MAT_DATA_SCHEMA 是**582 文件全量真实 matio 数据字典**；SRS、HLD、OBJECT_MODEL、TEST_PLAN、LLD 仍为未冻结草案，SOURCE_INVENTORY 与 MIGRATION_MATRIX 的文件级集合已建立并与原树/SRS/对象模型对齐，逐函数与测试证据尚未完成。P0 的文档合同、独立 P1 探针执行、生产 Reader/Writer 和 P10.4 审核均为独立门禁，不以扫描器成功替代整阶段验收。
 
 ### P1 — 独立构建、CLI 与 MAT 文件访问
 
+> **已有局部实测**：独立 `src/mat_data_dict_probe.cpp` 已在 Ubuntu 24.04/GCC 13/matio 1.5.26 上编译运行；582 个 MAT 成功解码。完整 CMake 工程、业务 CLI、Reader/Writer、错误路径、写回读和 CTest 尚未验证。
+
 | ID | 单一子任务与验收要点 | 前置 P | REQ | TC / AC | 证据要求与当前状态 |
 |---|---|---|---|---|---|
-| P1.1 | 建立仅针对 Debian/Ubuntu 的 CMake C++17 工程，声明 Eigen 3、matio、zlib 实际依赖；不编译 origin 下 MATLAB 文件 | P0.8 | REQ-NF-PLATFORM-001、REQ-NF-DEPS-001 | TC-NF-PLATFORM-001、TC-NF-DEPS-001 / AC-NF-PLATFORM-001、AC-NF-DEPS-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
-| P1.2 | 建立 CLI 参数解析、退出码与独立输出路径；允许只执行 inspect 而不加载算法 | P1.1 | REQ-F-CLI-001、REQ-DC-EXPERIMENT-001、REQ-NF-PORTABLE-001、REQ-F-CLI-002、REQ-F-CLI-003、REQ-F-CLI-004、REQ-F-CLI-005、REQ-I-CLI-001 | TC-F-CLI-001、TC-DC-EXPERIMENT-001、TC-NF-PORTABLE-001、TC-F-CLI-002、TC-F-CLI-003、TC-F-CLI-004、TC-F-CLI-005、TC-I-CLI-001 / AC-F-CLI-001、AC-DC-EXPERIMENT-001、AC-NF-PORTABLE-001、AC-F-CLI-002、AC-F-CLI-003、AC-F-CLI-004、AC-F-CLI-005、AC-I-CLI-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
+| P1.1 | 待 H-10 解除暂缓后建立 Debian/Ubuntu CMake C++17 工程，声明 Eigen 3、matio、zlib 和 H-02 选定的 Sophus（只在相关 target 私有使用）；球谐旋转须以原论文及勘误为依据使用 Eigen 自行实现、不得引入 sdla；实际采用的第三方文件保留必要来源告知，但一般版权复核不作为开发前置条件；不编译 origin 下 MATLAB 文件 | P0.8 | REQ-NF-PLATFORM-001、REQ-NF-DEPS-001 | TC-NF-PLATFORM-001、TC-NF-DEPS-001 / AC-NF-PLATFORM-001、AC-NF-DEPS-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
+| P1.2 | 依据 docs/design/cli.md 候选并经 P0.8 批准后建立 CLI 参数解析、退出码与独立输出路径；允许只执行 inspect 而不加载算法 | P1.1 | REQ-F-CLI-001、REQ-DC-EXPERIMENT-001、REQ-NF-PORTABLE-001、REQ-F-CLI-002、REQ-F-CLI-003、REQ-F-CLI-004、REQ-F-CLI-005、REQ-I-CLI-001 | TC-F-CLI-001、TC-DC-EXPERIMENT-001、TC-NF-PORTABLE-001、TC-F-CLI-002、TC-F-CLI-003、TC-F-CLI-004、TC-F-CLI-005、TC-I-CLI-001 / AC-F-CLI-001、AC-DC-EXPERIMENT-001、AC-NF-PORTABLE-001、AC-F-CLI-002、AC-F-CLI-003、AC-F-CLI-004、AC-F-CLI-005、AC-I-CLI-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
 | P1.3 | 封装 matio 只读文件句柄和变量句柄的 RAII；错误路径无资源泄漏且不会写源文件 | P1.1 | REQ-F-MAT-001、REQ-DC-IO-001、REQ-NF-SAFETY-001、REQ-I-MAT-001 | TC-F-MAT-001、TC-DC-IO-001、TC-NF-SAFETY-001、TC-I-MAT-001 / AC-F-MAT-001、AC-DC-IO-001、AC-NF-SAFETY-001、AC-I-MAT-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
 | P1.4 | 通过 MAT v5+zlib 读取数值变量的真实 rank、dims、类型、字节数及列主序内容；不静默转置或单精度升级 | P1.3 | REQ-F-CLI-001、REQ-F-MAT-001、REQ-D-MAT-002 | TC-F-CLI-001、TC-F-MAT-001、TC-D-MAT-002 / AC-F-CLI-001、AC-F-MAT-001、AC-D-MAT-002 | 源外构建/IO 合同、测试日志；未实施/未验收 |
-| P1.5 | 递进实现真实数据需要的 struct/cell、复数、逻辑或稀疏类型；未要求的类型明确拒绝，禁止伪称全部支持 | P1.4 | REQ-F-MAT-002 | TC-F-MAT-002 / AC-F-MAT-002 | 源外构建/IO 合同、测试日志；未实施/未验收 |
+| P1.5 | 按已核实的源 MAT v5/zlib + double class/解码double + 五种二维形状确定实际读取范围（物理实部标签502 miDOUBLE/80 miINT32，见[来源事实纠正](reviews/R6_MAT_STORAGE_VALIDATION_2026-11-17.md)）；对非目标 cell/struct/complex/sparse/MAT v7.3 实现清晰的 UnsupportedClassOrType 拒绝和负例测试，避免无需求的扩展 | P1.4 | REQ-F-MAT-002 | TC-F-MAT-002 / AC-F-MAT-002 | 运行证据以PROGRESS为准；未正式验收 |
 | P1.6 | 实现明确变量名加载和 getflowfield 兼容读取（首变量/自动 .mat 后缀）；分别测试，不能混淆 | P1.4 | REQ-F-CLI-001、REQ-F-MAT-003、REQ-I-MAT-001 | TC-F-CLI-001、TC-F-MAT-003、TC-I-MAT-001 / AC-F-CLI-001、AC-F-MAT-003、AC-I-MAT-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
-| P1.7 | 实现**仅向新结果目录**写入 MATLAB 兼容 MAT 的结果文件，写后读取检查变量名、维度与数值 | P1.3 | REQ-F-MAT-004、REQ-NF-SAFETY-001、REQ-I-MAT-001、REQ-I-RESULT-001 | TC-F-MAT-004、TC-NF-SAFETY-001、TC-I-MAT-001、TC-I-RESULT-001 / AC-F-MAT-004、AC-NF-SAFETY-001、AC-I-MAT-001、AC-I-RESULT-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
-| P1.8 | 先用代表样本核对 matio 解码合同，继而**遍历全部 582 份 MAT** 执行真实解压、变量枚举、数据类型/形状/读取状态核查，生成带文件路径、来源 SHA 和失败清单的 MAT_DATA_SCHEMA；AC-D-MAT-001 在该全量检查及 P10.4 复核后才有判定依据 | P1.4 | REQ-F-MAT-001、REQ-D-MAT-001、REQ-NF-RUNTIME-001 | TC-F-MAT-001、TC-D-MAT-001、TC-NF-RUNTIME-001 / AC-F-MAT-001、AC-D-MAT-001、AC-NF-RUNTIME-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
-| P1.9 | 建立 move-only MatFileHandle/MatVariableHandle 与 MatResultReader、RunMatWriter；验证 RAII、无悬垂 Eigen Map、只读原始数据和拒绝覆盖 origin/历史 RunId | P1.3、P1.7 | REQ-F-MAT-001、REQ-F-MAT-004、REQ-DC-IO-001、REQ-NF-SAFETY-001 | TC-F-MAT-001、TC-F-MAT-004、TC-DC-IO-001、TC-NF-SAFETY-001 / AC-F-MAT-001、AC-F-MAT-004、AC-DC-IO-001、AC-NF-SAFETY-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
+| P1.7 | 待重新授权后**仅向 `output/<RunId>/` 新结果目录**写入 MATLAB 兼容 MAT 的结果文件，写后读取检查变量名、维度与数值；H-10 暂缓且 permissions.writeMat=false，本轮不得运行 | P1.3 | REQ-F-MAT-004、REQ-NF-SAFETY-001、REQ-I-MAT-001、REQ-I-RESULT-001 | TC-F-MAT-004、TC-NF-SAFETY-001、TC-I-MAT-001、TC-I-RESULT-001 / AC-F-MAT-004、AC-NF-SAFETY-001、AC-I-MAT-001、AC-I-RESULT-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
+| P1.8 | **已有独立 matio 探针的 582/582 `READ_OK` 正式字典**（文件/变量/class/dtype/dims/压缩/FNV64）；后续核对业务 Reader 的类型/索引/复制/异常处理及独立数据复核，P10.4 完成审查后再判定 AC-D-MAT-001；不得把探针成功算作 Reader 完成 | P1.4 | REQ-F-MAT-001、REQ-D-MAT-001、REQ-NF-RUNTIME-001 | TC-F-MAT-001、TC-D-MAT-001、TC-NF-RUNTIME-001 / AC-F-MAT-001、AC-D-MAT-001、AC-NF-RUNTIME-001 | **扫描子任务已实测；生产 Reader/复核/性能未验收** |
+| P1.9 | 待授权后建立 move-only MatFileHandle/MatVariableHandle 与 MatResultReader、RunMatWriter；以 `output/<RunId>/`/测试副本验证 RAII、无悬垂 Eigen Map、原始数据只读及拒绝覆盖；H-12 仅确认策略，当前无真实执行权限 | P1.3、P1.7 | REQ-F-MAT-001、REQ-F-MAT-004、REQ-DC-IO-001、REQ-NF-SAFETY-001 | TC-F-MAT-001、TC-F-MAT-004、TC-DC-IO-001、TC-NF-SAFETY-001 / AC-F-MAT-001、AC-F-MAT-004、AC-DC-IO-001、AC-NF-SAFETY-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
 | P1.10 | 建立 IResultReader/IResultWriter 的窄接口与内存测试替身，在 composition root 注入；验证 CLI 和求解器均不直接依赖 matio C 指针 | P1.6、P1.7 | REQ-DC-IO-001 | TC-DC-IO-001 / AC-DC-IO-001 | 源外构建/IO 合同、测试日志；未实施/未验收 |
 
 ### P2 — 通用数学、递归采样与数据类型
@@ -224,7 +244,7 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 | P4.5 | mue_norm_koenderink_iteration：保留移除额外 near 因子的**修正平移更新**，不依靠一个容易误配的布尔选项隐藏差异 | P4.3 | REQ-F-KVD-001 | TC-F-KVD-001 / AC-F-KVD-001 | 逐轮近度/t/ω、残差；未实施/未验收 |
 | P4.6 | 精确复现两者至少 6 次迭代、最多 200 次、动态阈值和绝对阈值组合的退出逻辑；输出迭代次数/残差 | P4.4、P4.5 | REQ-F-KVD-002 | TC-F-KVD-002 / AC-F-KVD-002 | 逐轮近度/t/ω、残差；未实施/未验收 |
 | P4.7 | transfehler_div 与 normrelfehler 分别实现与测试；特别验证零范数或 acos 越界的定义和状态 | P2.2 | REQ-F-ERROR-001、REQ-NF-NUM-002 | TC-F-ERROR-001、TC-NF-NUM-002 / AC-F-ERROR-001、AC-NF-NUM-002 | 逐轮近度/t/ω、残差；未实施/未验收 |
-| P4.8 | 用固定 N×6 流场比较 Franz、两种 KvD 的逐轮中间结果；数值等价检查先于批量实验 | P4.6、P4.7 | REQ-F-KVD-002、REQ-NF-NUM-001 | TC-F-KVD-002、TC-NF-NUM-001 / AC-F-KVD-002、AC-NF-NUM-001 | 逐轮近度/t/ω、残差；未实施/未验收 |
+| P4.8 | 用固定 N×6 流场，依据源静态公式建立**独立 L3 逐轮近度/运动/残差/停止**参考，并与 Franz、两种 KvD 的 C++ trace 比较；不要求运行 MATLAB | P4.6、P4.7 | REQ-F-KVD-002、REQ-NF-NUM-001 | TC-F-KVD-002、TC-NF-NUM-001 / AC-F-KVD-002、AC-NF-NUM-001 | 逐轮近度/t/ω、残差；未实施/未验收 |
 | P4.9 | 实现 KvDIterationEngine + IKvDTranslationRule 的组合以及 OriginalKvDEstimator、ModifiedKvDEstimator 两个明确入口；测试算法差异、状态不串扰和停止条件 | P4.4、P4.5、P4.6 | REQ-F-KVD-001、REQ-DC-KVD-001 | TC-F-KVD-001、TC-DC-KVD-001 / AC-F-KVD-001、AC-DC-KVD-001 | 逐轮近度/t/ω、残差；未实施/未验收 |
 | P4.10 | 将 FranzMatchedFilter 做成可独立实例化、无跨样本状态的求解服务，检查其模板存储私有性及 Run 之间的行为一致性 | P4.2 | REQ-F-FILTER-001 | TC-F-FILTER-001 / AC-F-FILTER-001 | 逐轮近度/t/ω、残差；未实施/未验收 |
 
@@ -245,7 +265,7 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 | ID | 单一子任务与验收要点 | 前置 P | REQ | TC / AC | 证据要求与当前状态 |
 |---|---|---|---|---|---|
 | P6.1 | drehvektor_aus_zwei_vektoren：方向间旋转轴角，处理近零与反向向量情形并记录原始 MATLAB 行为 | P2.2 | REQ-F-TRAJ-001 | TC-F-TRAJ-001 / AC-F-TRAJ-001 | 轨迹/旋转黄金向量；未实施/未验收 |
-| P6.2 | rodrigues：优先忠实实现实验实际使用的旋转向量→3×3 旋转矩阵分支；未调用的逆向/Jacobian 功能另外登记，不宣称全函数已完整覆盖 | P2.2 | REQ-F-TRAJ-001 | TC-F-TRAJ-001 / AC-F-TRAJ-001 | 轨迹/旋转黄金向量；未实施/未验收 |
+| P6.2 | **H-02 指定 Sophus `SO3d::exp` 替代 rodrigues** 实际使用的旋转向量→3×3 分支，保留原小角 `eps` 分支、Rᵀ 局部坐标语义并准备独立 L3 固定输入旋转参考（不执行 MATLAB）；未用的逆向/Jacobian 不机械移植；H-10 暂缓实际实现 | P2.2 | REQ-F-TRAJ-001 | TC-F-TRAJ-001 / AC-F-TRAJ-001 | 轨迹/旋转黄金向量；未实施/未验收 |
 | P6.3 | kreis_trajektorie：圆轨迹点序列、半径、高度，避免生成函数含有绘图副作用 | P2.1 | REQ-F-TRAJ-001 | TC-F-TRAJ-001 / AC-F-TRAJ-001 | 轨迹/旋转黄金向量；未实施/未验收 |
 | P6.4 | sinuskurve_trajektorie：正弦轨迹点序列、周期、幅值、长度、高度，保持离散分母和端点语义 | P2.1 | REQ-F-TRAJ-001 | TC-F-TRAJ-001 / AC-F-TRAJ-001 | 轨迹/旋转黄金向量；未实施/未验收 |
 | P6.5 | trajektorie_aus_punkten：相邻位置推导平移、绝对/相对转动并转到原约定坐标系；保留两端未填写元素 | P6.1、P6.2、P6.3、P6.4 | REQ-F-TRAJ-001 | TC-F-TRAJ-001 / AC-F-TRAJ-001 | 轨迹/旋转黄金向量；未实施/未验收 |
@@ -260,8 +280,8 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 | P7.2 | kugelflfunc2：按 MATLAB legendre 的约定计算 l≤2 的实球谐，核对负 m 的 sin 与正 m 的 cos | P7.1 | REQ-F-SH-001 | TC-F-SH-001 / AC-F-SH-001 | 球谐与 6×6 中间量；未实施/未验收 |
 | P7.3 | near_aus_koeff：以 3×5 系数矩阵恢复离散近度；严格限定有效位置 | P7.2 | REQ-F-SH-001 | TC-F-SH-001 / AC-F-SH-001 | 球谐与 6×6 中间量；未实施/未验收 |
 | P7.4 | koeff_aus_near：逐项投影、4π 归一及范数除法，明确其与一般联合最小二乘的差异 | P7.2 | REQ-F-SH-001 | TC-F-SH-001 / AC-F-SH-001 | 球谐与 6×6 中间量；未实施/未验收 |
-| P7.5 | SHRotate：仅移植应用所需的 l=0/1/2 系数旋转，并做第三方来源/实现权核查与基函数顺序验证 | P7.2、P6.2 | REQ-F-SH-002 | TC-F-SH-002 / AC-F-SH-002 | 球谐与 6×6 中间量；未实施/未验收 |
-| P7.6 | transfor_koeff：结合 Rodrigues 旋转矩阵和 SHRotate 的 3×3、5×5 块；检验正向/逆向旋转 | P7.5 | REQ-F-SH-002 | TC-F-SH-002 / AC-F-SH-002 | 球谐与 6×6 中间量；未实施/未验收 |
+| P7.5 | **所有者确定：待上传 Ivanic–Ruedenberg 1996 原论文与 1998 勘误后，参考 Don Williamson 的递推，以 Eigen 完全重写 l=0/1/2 的 R0/R3/R5；禁止 sdla include/link/vendor/间接依赖**，普通版权审查不再阻塞开发；本轮不实施代码 | P7.2、P6.2 | REQ-F-SH-002 | TC-F-SH-002 / AC-F-SH-002 | 球谐与 6×6 中间量；未实施/未验收 |
+| P7.6 | transfor_koeff：结合 **Sophus 输出的 3×3 物理旋转**与 **基于 Ivanic–Ruedenberg 原论文及勘误、由 Eigen 独立实现生成的 R3(3×3)、R5(5×5) 球谐块**，校准 R1 轴置换、R5 的 25 项、m 顺序及正向/逆向旋转；独立 L3 全元素 Golden/批准容差先于数值等价认定 | P7.5 | REQ-F-SH-002 | TC-F-SH-002 / AC-F-SH-002 | 球谐与 6×6 中间量；未实施/未验收 |
 | P7.7 | oneit_adaptiv_matched_filter 的右端向量、四个 3×3 子块与 6×6 联立系统：分别建立可独立对照的数值阶段 | P7.3、P2.2 | REQ-F-ADAPT-001 | TC-F-ADAPT-001 / AC-F-ADAPT-001 | 球谐与 6×6 中间量；未实施/未验收 |
 | P7.8 | 单轮运动向量解析、平移归一化、残差、近度再计算、二阶球谐系数重估；明确状态输入/输出，不混成多帧类 | P7.4、P7.7 | REQ-F-ADAPT-001 | TC-F-ADAPT-001 / AC-F-ADAPT-001 | 球谐与 6×6 中间量；未实施/未验收 |
 | P7.9 | 对照原始 inv/real 的行为和 Eigen 解算差异，记录奇异、零范数及非有限输出，不未经验证更改默认求解结果 | P7.8 | REQ-F-ADAPT-001、REQ-NF-NUM-001、REQ-NF-NUM-002 | TC-F-ADAPT-001、TC-NF-NUM-001、TC-NF-NUM-002 / AC-F-ADAPT-001、AC-NF-NUM-001、AC-NF-NUM-002 | 球谐与 6×6 中间量；未实施/未验收 |
@@ -278,7 +298,7 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 | P8.4 | P8.2 独立 MAT 输出四种误差及 rottransratio，分别对照 with_errors 和 without_errors | P8.2、P1.7 | REQ-F-EXP-002、REQ-I-RESULT-001 | TC-F-EXP-002、TC-I-RESULT-001 / AC-F-EXP-002、AC-I-RESULT-001 | 逐帧会话及输出契约；未实施/未验收 |
 | P8.5 | agent_in_sphere_adaptive_matched_filter_many_parameter：级别 2、更新间隔 **1/5/11/21**、真实更新 akkoeff 与多组冻结/周期刷新 mitkoeff | P8.8、P7.11、P6.5 | REQ-F-ADAPT-003、REQ-F-EXP-003、REQ-F-CLI-003 | TC-F-ADAPT-003、TC-F-EXP-003、TC-F-CLI-003 / AC-F-ADAPT-003、AC-F-EXP-003、AC-F-CLI-003 | 逐帧会话及输出契约；未实施/未验收 |
 | P8.6 | 比较“每步自身求解”和“独立 periodic baseline”的区别，并保存相应 MAT；不得将二者混成一组状态 | P8.5 | REQ-F-ADAPT-003、REQ-F-EXP-003 | TC-F-ADAPT-003、TC-F-EXP-003 / AC-F-ADAPT-003、AC-F-EXP-003 | 逐帧会话及输出契约；未实施/未验收 |
-| P8.7 | 对照历史结果时显式列出脚本没有当前写入、但归档已有的 alleadap*、rottransratio 等文件；先检查来源再决定是否需要额外兼容导出，不能伪造数据 | P8.4、P8.6、P1.8 | REQ-F-EXP-003、REQ-D-MAT-003、REQ-I-RESULT-001 | TC-F-EXP-003、TC-D-MAT-003、TC-I-RESULT-001 / AC-F-EXP-003、AC-D-MAT-003、AC-I-RESULT-001 | 逐帧会话及输出契约；未实施/未验收 |
+| P8.7 | 按已确定 DEC-004，在历史字段映射中将当前不保存但归档已有的 alleadap*、rottransratio 标 `HistoricalOnly`；**当前 C++ Runner 不新增兼容输出**，历史文件只读；新结果进行需要缺失比值的分析时明确报告错误，不等待归因 | P8.4、P8.6、P1.8 | REQ-F-EXP-003、REQ-D-MAT-003、REQ-I-RESULT-001 | TC-F-EXP-003、TC-D-MAT-003、TC-I-RESULT-001 / AC-F-EXP-003、AC-D-MAT-003、AC-I-RESULT-001 | 逐帧会话及输出契约；未实施/未验收 |
 | P8.8 | 引入 AdaptiveMfaSession（唯一主系数所有者）与 ICoefficientUpdatePolicy（重置、继承、周期刷新），以测试替身检验旋转→基线更新→求解→主状态提交的逐帧时序 | P7.11、P7.6 | REQ-F-ADAPT-002、REQ-DC-ADAPT-001 | TC-F-ADAPT-002、TC-DC-ADAPT-001 / AC-F-ADAPT-002、AC-DC-ADAPT-001 | 逐帧会话及输出契约；未实施/未验收 |
 | P8.9 | 为 InitializationRunner、AdaptiveComparisonRunner、UpdateRateRunner 分别提供 RunContext 及独立会话；测试多组更新频率和多次重复运行间不共享可变状态 | P8.1、P8.2、P8.5 | REQ-F-ADAPT-002、REQ-DC-ADAPT-001、REQ-NF-LOG-001、REQ-NF-SESSION-001 | TC-F-ADAPT-002、TC-DC-ADAPT-001、TC-NF-LOG-001、TC-NF-SESSION-001 / AC-F-ADAPT-002、AC-DC-ADAPT-001、AC-NF-LOG-001、AC-NF-SESSION-001 | 逐帧会话及输出契约；未实施/未验收 |
 
@@ -305,12 +325,14 @@ P0.7/P0.8 必须核验**全部 45 个 MATLAB 文件的处理决定、MAT 数据�
 | P10.4 | 分别以原始归档的 560 个 bias MAT 和 22 个 adaptive MAT 核对结果契约；核对历史产物与当前源码的差异，不强求随机逐样本相等 | P1.8、P5.6、P8.7 | REQ-D-MAT-001、REQ-D-MAT-003 | TC-D-MAT-001、TC-D-MAT-003 / AC-D-MAT-001、AC-D-MAT-003 | 需求验收、统计及 PR 记录；未实施/未验收 |
 | P10.5 | 复现论文对应偏差、初始化、轨迹及更新频率实验的数值图表；每组注明实际样本/噪声/状态 | P9.8、P10.3、P10.4 | REQ-NF-NUM-001、REQ-NF-RNG-001 | TC-NF-NUM-001、TC-NF-RNG-001 / AC-NF-NUM-001、AC-NF-RNG-001 | 需求验收、统计及 PR 记录；未实施/未验收 |
 | P10.6 | 汇总 Debian/Ubuntu 的已执行构建、CTest 和实验结果，生成 NUMERICAL_EQUIVALENCE 与 PROGRESS；保留失败样本和未验证平台 | P10.5、P1.1 | REQ-NF-PLATFORM-001、REQ-NF-DEPS-001、REQ-NF-LOG-001、REQ-NF-HEADLESS-001、REQ-NF-PORTABLE-001、REQ-NF-RUNTIME-001 | TC-NF-PLATFORM-001、TC-NF-DEPS-001、TC-NF-LOG-001、TC-NF-HEADLESS-001、TC-NF-PORTABLE-001、TC-NF-RUNTIME-001 / AC-NF-PLATFORM-001、AC-NF-DEPS-001、AC-NF-LOG-001、AC-NF-HEADLESS-001、AC-NF-PORTABLE-001、AC-NF-RUNTIME-001 | 需求验收、统计及 PR 记录；未实施/未验收 |
-| P10.7 | 核查第三方版权及 README 声明，不自动添加 LICENSE、不提交未经确认的新增数据副本 | P0.4、P10.1 | REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001 | TC-D-SOURCE-002、TC-NF-COPYRIGHT-001 / AC-D-SOURCE-002、AC-NF-COPYRIGHT-001 | 需求验收、统计及 PR 记录；未实施/未验收 |
+| P10.7 | 项目根 MIT 已创建；为实际引用上游文件保留必要原 notice/来源 SHA，不将根 MIT 扩展到原始归档数据；不提交 `output/` 生成结果；无需另行版权签字作为正常开发门禁 | P0.4、P10.1 | REQ-D-SOURCE-002、REQ-NF-COPYRIGHT-001 | TC-D-SOURCE-002、TC-NF-COPYRIGHT-001 / AC-D-SOURCE-002、AC-NF-COPYRIGHT-001 | 需求验收、统计及 PR 记录；未实施/未验收 |
 | P10.8 | 创建或更新对应 Draft PR 供审查；不得自动合并 main，按 AGENTS.md 报告 SHA、状态及未办事项 | P10.6、P10.7 | REQ-PROC-TRACE-001 | TC-PROC-TRACE-001 / AC-PROC-TRACE-001 | 需求验收、统计及 PR 记录；未实施/未验收 |
 | P10.9 | 验收 OOP 边界：接口可替换、对象所有权明确、无悬垂 MAT 内存、无跨实验状态泄漏、类方法到全部 MATLAB 函数追踪完整；记录类关系和测试证据 | P10.3、P10.4 | REQ-PROC-TRACE-001、REQ-NF-OOP-001、REQ-NF-SESSION-001 | TC-PROC-TRACE-001、TC-NF-OOP-001、TC-NF-SESSION-001 / AC-PROC-TRACE-001、AC-NF-OOP-001、AC-NF-SESSION-001 | 需求验收、统计及 PR 记录；未实施/未验收 |
 | P10.10 | 检查无过度继承/巨型类/虚假统一求解器；保证纯数学函数不为 OOP 改变求解顺序、精度与实验结果合同 | P10.9 | REQ-PROC-TRACE-001、REQ-NF-OOP-001 | TC-PROC-TRACE-001、TC-NF-OOP-001 / AC-PROC-TRACE-001、AC-NF-OOP-001 | 需求验收、统计及 PR 记录；未实施/未验收 |
 
 ## 6. 子任务依赖、并行、里程碑与进出准则
+
+**审批适用的执行门禁**：上传 JSON H-10 为 `deferred`、H-11 为 `deferred`，全部运行/构建/写入/合并权限位均为 false；本阶段只能更新计划、LLD 和 `.gitignore`，不能编译、运行脚本、**执行** Golden 数值测试、合并 PR 或按已完成数计入 P 项。完整逐项解释见 [审批落实记录](approval/DECISION_IMPLEMENTATION_NOTES.md)。
 
 本计划每个 P 子任务的**直接前置依赖**已在 §5 的表格中列出，共 98 个节点。当前依赖检查依据：每个前置 ID 存在，且图中没有环；这是一份静态的规划图检查，不等于已有 C++ 构建或实现。阶段编号并非实际严格串行顺序，例如 P3.6 的几何求交依赖 P6.2 的 Rodrigues 数学，允许跨阶段依赖。
 
@@ -341,22 +363,24 @@ flowchart LR
   S --> T["P10.8 交付审查"]
 ~~~
 
-模块/target 的 DAG 与接口依赖另由 [ARCHITECTURE.md](docs/ARCHITECTURE.md) §4 维护，本节只负责 P 子任务依赖。多个 Agent 并行实施必须分别使用独立工作区及开发分支；严禁抢占共享 HEAD/暂存区或覆盖其他任务产物。
+模块/target 的 DAG 与接口依赖另由 [ARCHITECTURE.md](ARCHITECTURE.md) §4 维护，本节只负责 P 子任务依赖。多个 Agent 并行实施必须分别使用独立工作区及开发分支；严禁抢占共享 HEAD/暂存区或覆盖其他任务产物。
 
 ### 6.2 里程碑与交付物
 
 | 里程碑 | 交付范围 | 进入条件 | 退出条件和证据 |
 |---|---|---|---|
-| M0 源资料与设计评审门禁 | P0.1–P0.8 的可评审资料、SRS/HLD/LLD 草案 | 原资料目录可只读访问、AGENTS 已核对 | 45 文件来源清单、MAT **全量审计方案但非全量解码结果**、最小接口批准范围和开放 DEC；**当前尚未正式验收** |
-| M1 MAT 只读/新结果写入闭环 | P1 + P2 基础值类型 | M0 最小合同审查、开发分支远程检查点 | MAT 读取、**582 文件完整解压与元数据字典**、类型/shape、路径保护与回写回读的真实测试日志；P10.4 尚须独立复核 |
+| M0 源资料与设计评审门禁 | P0.1–P0.8 的可评审资料、SRS/HLD/LLD 草案 | 原资料目录可只读访问、AGENTS 已核对 | 45 文件来源清单、**已生成的 582/582 MAT 全量 matio 字典及探针证据**、最小接口待批准范围和开放 DEC；**生产 Reader/Writer、异常负例、原始资料身份审查及 P10.4 独立复核尚未完成，M0 尚未正式验收** |
+| M1 MAT 只读/新结果写入闭环 | P1 + P2 基础值类型 | M0 最小合同审查、开发分支远程检查点 | **582/582 MAT 的独立探针读取及类型/shape 字典已有证据**；尚需生产 Reader/Writer、原始只读/结果写入路径保护、异常负例、值校验、写后回读的真实日志及 P10.4 独立复核 |
 | M2 Bias 计算与统计 | P2–P5 的共享数学、噪声、Franz、KvD、Bias | M1 + 相关数学/采样合同 | Original/Modified 每轮对照和两个 40-run 统计，含失败样本 |
-| M3 Adaptive 数值闭环 | P6–P8 轨迹、球谐和自适应 Session | 所需旋转/球谐代码及基准可用，版权障碍已处理 | 35/600 点与 1/5/11/21 更新率实验，合同及错误数有证据 |
+| M3 Adaptive 数值闭环 | P6–P8 轨迹、球谐和自适应 Session | 已选 Sophus 与 Ivanic–Ruedenberg/Eigen-only 数学路线；正式球谐论文核查、代码和独立参考仍须取得 | 35/600 点与 1/5/11/21 更新率实验，合同及错误数有证据 |
 | M4 图表和原文复现 | P9–P10 | M2/M3 必须输出可校验 MAT | 四种分析、三幅插图与论文相关曲线数据复现；容差与例外批准 |
 | M5 可审查交付 | P10 交付、需求/设计/测试映射 | M4 证据已收集或明确批准阻塞 | 真实 SHA/命令/环境/失败日志与 Draft PR 可复核，不自动合并 |
 
-任务没有固定工时承诺；里程碑也不代表已经开始。预算、性能、人员分工应以项目所有者确认的资源和首次实测为依据。
+任务没有固定工时承诺；里程碑也不代表已经开始。预算、性能、人员分工应以项目所有者确认的资源和首次实测为依据。**M0–M5 的当前状态、可用证据、尚缺退出条件在 [PROGRESS.md §3](PROGRESS.md) 更新；没有被批准的日期/预算保持 TBD，不得替代承诺。**
 
 ### 6.3 角色与职责
+
+以下是**角色定义，不是人事任命**。角色的当前签署与证据责任状态见 [PROGRESS.md §4](PROGRESS.md)。
 
 | 角色 | 需要承担的职责 | 是否已指定具体人员 |
 |---|---|---|
@@ -375,17 +399,27 @@ flowchart LR
 - **完成百分比**按“经批准并有实际证据的 P 子任务数 / 98”计算；单项不因撰写草案而自动记作完成。必要时分别报审计/设计完成度与代码/测试完成度，不混用。
 - 对 M 级需求，数值容差、实际数据或版权待决导致的不可判定状态不能统计为验收通过。
 - 任何阶段退出需附该阶段实际 REQ/TC/AC/测试实体/输出 SHA 与失败数；未经真实构建的任务不写“编译成功”。
-- 当前可见的文档提交不代表 98 个 P 任务已验收。具体进行中状态及证据索引后续由 docs/PROGRESS.md 保存，当前文件尚未正式填报。
+- 当前可见的文档提交不代表 98 个 P 任务已验收。**当前进行中状态、里程碑缺口和 E-DATA/E-DOC 证据索引已登记在 [docs/PROGRESS.md](PROGRESS.md)**；后续必须随真实代码、测试、批准记录持续回填，不得将已存在的登记表等同于 98 项任务已验收。
+
+> **Golden 取证与里程碑口径（长期决策）**：以 [无需 MATLAB 执行政策](golden/NO_MATLAB_EXECUTION_POLICY.md) 为当前依据。L1 原 MATLAB 逐节点、RNG 和异常运行记录**永久退出必需证据/里程碑门禁**；L2 作者 582 MAT 最终结果、L3 独立固定输入逐节点解析/重实现、L4 统计是现行可行参考来源。P4/P7/P8/P9/P10 不得以缺 L1 为阻塞理由，但独立 L3 尚需完整覆盖、真实 C++/CTest 和 DEC-005/008 仍未批准，故不能宣称任务或 M0–M5 已验收。未经许可不运行 MATLAB/Octave 或任何受 H-10/H-11 限制的真实命令。
+
+**设计决定已明确，避免重复审批**：Result/Status 采用轻量封装（内含 variant）、ErrorStage 稳定枚举、JSONL；实验每入口独立配置，依赖状态异常不提交、连续序列不能安全恢复则终止、八次聚合缺样本不能改除数、Manifest 区分 Complete/Incomplete/Failed；生产 C++ 实施应等用户上传球谐原文/勘误再启动相关递推。阶段一改代码、二隔离 CMake/CTest、三验收/合并分别授权，不能因选择方案视为已经运行/通过。
+
+### 6.5 AF-052：WBS 追踪和里程碑证据复核（纯文档）
+
+在固定输入 `b75998bc8fc6644d76050bf88d45c75887ce2006` 上通过 GitHub 只读核对：**98/98 个 P 工作项 ID 唯一**，每项前置 ID 均存在且依赖无环；其 REQ、TC、AC 均能在 SRS/TEST_PLAN 中定位，且与 SRS §9.1 的 **98 项反向 REQ 映射一致**。现行 SRS 含 **66 REQ（58 正文 + 8 REQ-DC）**，TEST_PLAN 含 **66 TC（含 8 TC-DC）**。本计划的 **50 条相对 Markdown 文件引用均能在该固定 Git 树解析**；HLD §4.1 的 **27 条静态 target 依赖边无环**，模块所有权仍以 [HLD](ARCHITECTURE.md) 和 [LLD 索引](design/README.md) 为准。
+
+[PROGRESS.md §3](PROGRESS.md) 的 **M0～M5 均为「未通过」**；里程碑退出需要的生产 C++/CTest、L2/L3/L4、DEC-005/006/008 和正式批准仍未取得。这次仅完成**WBS 文档追踪与退出证据“有/无”核对**，没有完成任何 P 或里程碑验收，也不改变原 98 项的任务定义/依赖或承诺工期；后续动态结果只写 PROGRESS。
 
 ## 7. 数值等价与科学复现的验收标准
 
-> 本节是**验证实施规划**。正式需求义务、候选与已批准容差、验收编号和测试编号以 [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) 为需求基线；不得因本节存在文字验收要求就标记相关需求已通过。
+> 本节是**验证实施规划**。正式需求义务、候选与已批准容差、验收编号和测试编号以 [docs/REQUIREMENTS.md](REQUIREMENTS.md) 为需求基线；不得因本节存在文字验收要求就标记相关需求已通过。
 
 1. **结构与对象边界一致**：MAT 变量名、class/type、维度、列主序、数值和压缩格式被正确解释；原始只读/运行输出写入由不同对象管理；MatFileHandle move-only、句柄释放后领域值对象不悬垂。单变量一个文件的旧兼容规则与多变量严格访问规则都有测试。
 2. **几何一致**：三种视线采样都满足原始数量公式、单位范数、递归顺序；光流切向满足 d·p≈0，翻转方向、符号、坐标系由固定黄金样本检验。
 3. **算法一致**：Original KvD 与 Modified KvD 分别保留不同方程；Franz 3 轴模板、Adaptive 6×6 线性系统以及球谐拟合/旋转都可对照逐步结果。
 4. **异常真实**：MAT 损坏、形状不匹配、零模向量、病态求解、非有限数、未定义方向误差必须明确报告，原版异常不应被无声“修复”成通过。
-5. **数据与随机分离**：固定输入对照可先使用相对误差 1e−10 作为候选基线（根据计算顺序和条件数调整）；随机实验先比较脚本规定的统计结果，不要求不同 RNG 的同种子样本逐位一致。
+5. **数据与随机分离**：历史 `rtol=1e-10` 方案不再作为现行候选；固定输入**已选定首轮宽松筛查** `atol=0.01`、`rtol=0.1`，但点数/次序/索引/状态与物理不变量另设严格门禁，最终分模块 PASS 门槛仍待 DEC-005 审定，见 [容差提案](golden/GOLDEN_TOLERANCE_PROPOSAL.md)。随机实验优先用 L4 对照脚本规定的统计结果，不要求不同 RNG 在同种子下逐位一致；独立 L3 参考用于逐节点核验，**无需 MATLAB 运行**。
 6. **实验一致**：bias 的 40 个原始子目录与 Adaptive 的四类数据集彼此独立统计；无噪/含噪、初始化、更新间隔均与对应源码参数一致。
 7. **图表一致**：曲线使用同一结果矩阵、定义与索引；图片格式和外观可不同，但曲线数值、相对比较、纵横轴单位不可改变。
 8. **状态透明**：生成代码、提交远端、构建、CTest、原始数据回归、论文复现、PR 交付均逐项报告，没有执行的内容不能写成通过。
@@ -393,18 +427,20 @@ flowchart LR
 
 ## 8. 实施风险、监测与 DEC 单一来源
 
-需求与待决事项的**唯一正式 DEC 编号、状态和批准条件**见 [REQUIREMENTS.md](docs/REQUIREMENTS.md) §8；本节只列实施风险及应对工作，不复制另一套“已经批准”的决策表。
+需求与待决事项的**唯一正式 DEC 编号、状态和批准条件**见 [REQUIREMENTS.md](REQUIREMENTS.md) §8；本节只列实施风险及应对工作，不复制另一套“已经批准”的决策表。
 
 | 风险 ID | 对应 DEC/需求 | 风险信号 | 实施响应、责任角色与状态 |
 |---|---|---|---|
-| R-01 | DEC-001/002，REQ-D-MAT-001 | 某 MAT 文件不能被当前 matio+zlib 解析 | P1.4/P1.8 补实际类型字典、保持只读和失败数；数据审计负责人；待验证 |
-| R-02 | DEC-003/007，REQ-D-SOURCE-002 | rodrigues/SHRotate 存在外部版权/来源障碍 | P0.4/P10.7 追踪来源并审查可移植范围；项目所有者批准；未解决 |
-| R-03 | DEC-004，REQ-D-MAT-003 | 历史 MAT 与当前 save 列表不一致 | P8.7 三方字段差异表，不补造数据；数值负责人；待归因 |
+| R-01 | DEC-001/002，REQ-D-MAT-001 | 现存归档已 582/582 读取成功，但新增 MAT 或正式 Reader 可能出现未支持类型/形状 | 当前数据边界已经确认；P1.5/1.9 做拒绝负例与 Reader 合同，P10.4 独立复核；未全部验收 |
+| R-02 | DEC-003/007，REQ-D-SOURCE-002、REQ-F-SH-001/002 | **历史未上传论文的阻塞已解除**：IR96/IR98/Choi99已阅读，九项实球谐、R3/R5及相位的数学专题已核验，受限Eigen低阶叶子在固定`5e522198`用户实测3/3 CTest通过；**现存风险是其数学/源约定与未来公共ABI、全业务调用方向、动态状态和最终容差尚未闭合**，不是论文仍未到手 | 保留原只读源码与论文/勘误/相位证据，核对旧`SHRotate`与新场作用定义的差异；后续仅在各自获准的实现/构建范围内完成公共Harmonic*接口、依赖/方向传播、独立L3/集成CTest及DEC-005；不得把局部3/3当全工程通过，也无需重复要求上传论文。实际引用的第三方材料继续保留来源告知，普通版权复核不阻塞研发 |
+| R-03 | DEC-004，REQ-D-MAT-003 | 历史 MAT 与当前 save 列表不一致 | **处理规则已由所有者选定**：当前只写当前 save，历史字段 HistoricalOnly、只读保留；分析缺字段返回错误，来源未知不阻塞研发；仍待 Runner/Analyzer 与 CTest 实施 |
 | R-04 | DEC-005，REQ-NF-NUM-001 | MATLAB/Eigen 计算顺序与奇异边界导致误差 | P4.8/P7.9 固定输入逐轮对照，容差按条件数批准；未冻结 |
 | R-05 | DEC-006，REQ-NF-RUNTIME-001 | 原配置资源消耗大、内存或构建版本不兼容 | P10.6 首测 wall/CPU/RSS、Debian/Ubuntu 版本；未测 |
 | R-06 | REQ-DC-*、REQ-NF-OOP-001 | 状态、I/O 与计算模块耦合 | P0.7/P0.8 对象/target DAG 审查，独立测试；未冻结 |
 | R-07 | REQ-NF-SAFETY-001 | 结果路径与 origin 重叠或误覆盖旧结果 | P1.9 独占新 RunId 输出、符号链接负例；未测试 |
 | R-08 | REQ-NF-RNG-001 | MATLAB/C++ 同 seed 不是同样随机数 | P3.7、P10.5 固定输入和统计复现分开；已知风险，未验证 |
+
+**R-02 的时间线更新（2026-11-12，仅更正计划风险事实）**：原R-02“论文未取得/递推未验证”的风险说明属于2026-11-07早期规划，不再是今天的待办。现行材料状态按 [TODO.md 的 PAPER-SH](TODO.md)、[harmonics.md §1/§5–6](design/harmonics.md) 与 [低阶球谐专项验证报告](reviews/LOW_ORDER_SH_THREE_ROUTE_VERIFICATION_2026-11-09.md)；原始论文、勘误、三路线数学与固定SHA局部CTest已获得限定证据。R-02**没有被整体关闭**：原脚本和新叶子场作用约定有差异，公共接口、全轨迹集成及业务数值验收仍需完成。此修订不改动 HLD 27 条拟议依赖、98 个P工作项或DEC的正式批准状态。
 
 风险发生后应记录对应 P 任务、证据 SHA、影响需求和已采取措施；真正的新缺陷按 AGENTS.md 检索 Issue 后处理，外部临时网络错误不创建项目 Issue。
 
@@ -413,8 +449,8 @@ flowchart LR
 - 原始论文：**Insect-Inspired Self-Motion Estimation with Dense Flow Fields—An Adaptive Matched Filter Approach**，Strübbe / Stürzl / Egelhaaf（2015），https://doi.org/10.1371/journal.pone.0128413
 - MATLAB 原始资料：**Egomotion Estimation with Dense Flow Fields: MATLAB Scripts**，https://doi.org/10.4119/unibi/2736885
 - 本仓库原始文件目录：origin/egomotion_estimation_dense_flow_fields_matlab_scripts/
-- 本项目规则：[AGENTS.md](AGENTS.md)
-- **审计深度**：此前已经逐个读取全部 45 个 MATLAB 文件和 readme；通过 GitHub 仓库树核对 582 个 MAT 路径，抽样检查多个 MAT 文件头；本次复核现有计划及 AGENTS，补齐 OOP 设计；尚未通过 matio 解包校验全部 MAT 变量，也没有编译、运行 MATLAB/C++ 或重做实验。
+- 本项目规则：[AGENTS.md](../AGENTS.md)
+- **审计深度**：45 份 MATLAB 文件与原始目录已核对；独立 matio C++ 探针已在 Ubuntu 24.04 编译运行并逐文件读取 **582/582 MAT、582/582 变量，失败 0**；来源及字段见 [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md)。**尚未**运行原 MATLAB 求解器、编译完整 C++ 业务项目、建立 CTest、复现数值算法或审查完整第三方版权。
 - 本计划只代表后续可执行工作拆分，不视为任何阶段已交付。后续开发须对照实际源码进一步填充函数/数据对照文档，并在产生新事实时以独立提交更新计划。
 
 **最终架构决策：C++17 + Eigen 3 + matio/zlib + CMake；以值对象、RAII、窄接口、策略组合、无状态求解器和有状态实验会话实现面向对象架构；无状态数学公式保留函数形式；保留原始 MAT 文件与完整原始资料目录；按模块移植 45 个 MATLAB 文件所涵盖的数值和分析流程；每个子任务独立验证后集成；目标仅 Debian/Ubuntu。**

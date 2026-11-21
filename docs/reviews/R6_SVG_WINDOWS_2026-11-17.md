@@ -1,0 +1,51 @@
+# R6 原脚本视窗与 SVG 几何验证
+
+**最终补充复测 `[HUMAN-EXECUTE/APPROVE]`**：受测源码 `65d59fe2640aa59768d4bb86386886f1692874d6` 无诊断编译、37/37 CTest。固定视窗不能掩盖空数组/非有限坐标，Exporter显式empty/NaN/Inf拒绝及已知/未知来源两组14个负例全部通过，返回InvalidSeries/plot、零发布、输入位模式不变。合法全零Bias仍输出空图；Analyzer已有非有限拒绝保持通过。SVG专项六有效情境加14负例，共103项检查、0失败；下段早期37/37只代表其固定SHA。
+
+最终RunId `r6-svg-guard-20261117-zp9qajzR`，正常推送及远端SHA核实后运行；cwd、构建目录、环境和命令参数同下段第一版。2026-11-17 UTC+08:00配置19:16:15…19:16:16、编译19:16:16…19:17:26、MAT5/5测试19:17:26…19:17:27（0.97秒）、其余32/32测试19:17:27…19:17:30（3.76秒），四步均exit0且launcher stderr为空。输入完整性19:17:30完成exit0。没有依赖安装或完整实验。
+
+证据 `build/r6-svg-guard-20261117-zp9qajzR/evidence/` 保存命令、环境、分支/提交、原始/参考/测试输入身份、种子索引、时间、退出码、stdout/stderr及JUnit/Testing。MAT stdout SHA-256 `1421eeb9b33dd98f86c4dbbdcc1397e4daa1c1e004df6f16ec8e7314c5b43624`；其余stdout `2e6f6b6ec72fc54e6497dec76a239d7db6655cc1cb742b175fabf8ba75998a14`。SVG/JSON及14个直接Exporter负例记录位于 `build/r6-20261117-KzjFHPDQ/cmake/r06_svg_windows/svg-windows-B3txct/`。固定SVG输入无算法随机数；没有把Exporter负例声称成真实CLI负例。
+
+`[HUMAN-EXECUTE/APPROVE]`：生产修复、构建及CTest已授权。第一版修复源码 `7fc83c1a828b84318b382ad2e052ba735e489ec4` 无诊断构建、37/37 CTest通过；首轮25处失败保留。关联P9.2/P9.4/P9.6、TC-F-BIAS-003、TC-F-CLI-005、TC-F-AN-002、TC-DC-ANALYSIS-001。此次修复既有源行为，不改变数值公式、CLI/JSON合同、容差或冻结状态。
+
+## 第一版修复复测（事实登记 `[AI-EDIT]`）
+
+上述SHA提交/推送及远端分支核实后执行，RunId `r6-svg-final-20261117-p2M56Yrq`，日志 `build/<RunId>/evidence/`，工作目录仓库根；源外增量构建目录及环境同首轮。固定合成SVG数据无算法随机数；其余测试的固定seed见 `randomness-source.txt`，目录名独立随机。没有安装依赖、运行MATLAB/Octave、完整科学实验或性能基准。
+
+| 步骤（2026-11-17 UTC+08:00） | 起止 | 退出码/结果 |
+|---|---|---|
+| configure | 19:07:00…19:07:01 | 0 |
+| build | 19:07:01…19:07:54 | 0，无编译诊断 |
+| MAT CTest | 19:07:54…19:07:55 | 0，5/5，0.75秒 |
+| 其余 CTest | 19:07:55…19:07:58 | 0，32/32，3.22秒 |
+| 输入完整性 | 19:07:58完成 | 0，原始资料/参考/测试源码SHA不变 |
+
+配置 `cmake -S <repo> -B <build-dir> -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DBUILD_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON`，构建 `cmake --build <build-dir> --parallel 4 -- -k`。CTest公共参数 `--test-dir <build-dir> -C Release --verbose --no-tests=error --output-junit <evidence>.xml`，先 `--parallel 2 -R '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values|r06_mat_reader_boundaries|r06_mat_raw_payload_boundaries)$'`，再 `--parallel 4 -E` 同表达式；37项无遗漏。完整命令/环境/源码及输入身份/退出码/分离stdout-stderr/JUnit/Testing快照保留；四步launcher stderr均为空。
+
+MAT stdout SHA-256 `8ecd68e5372b609caa781ec1d4ee0b3b6a33b31bab8b92a22a510f8b9c639cab`；其余stdout `f012fcfe8c37bfeedc4770b339f488ec0fa239164439aee8d6c28f0617bd9dac`。新测试61项检查、0失败，用时0.01秒；六个情境的before/after JSON与实际SVG保存在 `build/r6-20261117-KzjFHPDQ/cmake/r06_svg_windows/svg-windows-LnSkr9/`。现在全零Bias成功产生空曲线图，因此比首轮多执行一项文件数检查；未删除失败断言或改动预期坐标。
+
+R6-SVG-001本轮范围已修复复测；原36项（包括真实CLI、非线性分析及原始NaN拒绝）仍通过。仍不声明MATLAB默认刻度/字体/图例和插图完整视觉等价。全部TC的证据边界与接续工作见 [66项映射](R6_TC_EVIDENCE_MAP_2026-11-17.md)。
+
+## 来源与缺口
+
+原 `graphs_bias_test.m` blob `112aa9eca1fa9728f493d31fc8e59620a8445230` 第70/71行固定 xlim=[100,3000000]、ylim=[0.06,200]，两轴log。Comparison分析 blob `3924038f0ccd70de5ea7b60c589afe166da9c8fb` 对旋转/平移两图右侧ratio轴固定[0.01,100]，左侧角度轴仍自动范围，两侧log。UpdateRates不使用上述固定窗口。
+
+首轮 `svg_plot.cpp` 自动采用数据极值，且没有viewport clip。范围外数据会改变坐标，而log全零Bias会被拒绝。新增第37项测试 `r06_svg_source_windows`：直接解析实际SVG坐标及clipPath绑定，记录6个独立合成情境的输入/输出JSON和SVG。不运行原MATLAB、修改归档、运行完整科学实验或安装图形依赖。
+
+## 可独立复核的几何断言
+
+画布绘图区为左95、右1080、上70、下630（现有实现的像素几何，不是科学数值门槛）。Bias的固定窗口两角应为(95,630)、(1080,70)，几何中心输入 `(sqrt(100*3000000),sqrt(0.06*200))` 应为(587.5,350)。Comparison右轴的ratio=0.01/1/100分别对应y=630/350/70；ratio=0.001/1000应保留投影y=770/−70，再由viewport裁剪；不能由这些离群点扩大右轴，也不能影响左轴。
+
+正的越界端点保留在SVG折线上，使穿过窗口的线段仍可见；clipPath仅裁剪显示，不改动AnalysisDataset。零值在log轴断开曲线，不截断为正数；Bias全零仍有明确固定坐标轴，可输出空曲线图。未知来源即使面板同名也不可套用Bias范围；UpdateRates线性零值仍显示。对现有3位小数SVG坐标按上面可表示的像素值精确比较，不新增或放宽DEC-005科学容差。每情境前后dataset JSON必须逐字节相等。
+
+当前只验证源固定窗口和几何/裁剪语义；不据此声称MATLAB后端默认自动刻度、图例绑定、字体或三份illustration视觉等价。每次测试使用新目录且保留失败SVG，原始资料只读。
+
+## R6-SVG-001 首轮实测与修复
+
+分支 `dev-plan-P0-P1-mat-dictionary-probe`，受测SHA `80ae1acf7caf083fa97aeff76f4f228a56f6dc03` 已提交/推送并经GitHub远端核实。RunId `r6-svg-baseline-20261117-9zMh13gd`，日志位于 `build/<RunId>/evidence/`，源外增量构建目录 `build/r6-20261117-KzjFHPDQ/cmake`。Ubuntu24.04.5/GCC16.2.0/CMake4.3.4/Eigen3.4.0/matio1.5.26，C++17 Release；固定合成输入无算法随机数，隔离目录独立随机命名。
+
+2026-11-17 UTC+08:00：配置19:02:56…19:02:58、编译19:02:58…19:03:38均exit0，无编译诊断；MAT测试19:03:38…19:03:40为5/5、exit0；其余19:03:40…19:03:44为31/32、exit8。新SVG测试60项断言中25项失败；数字数据保持不变、零值断线、未知来源自动缩放及UpdateRates线性坐标本身通过。全零Bias不产生图，另外五个情境实际SVG保留于 `build/r6-20261117-KzjFHPDQ/cmake/r06_svg_windows/svg-windows-uPwJRF/`。原始/测试输入完整性exit0。
+
+MAT stdout SHA-256 `2c9b6336cd04ea3f9ec8683715abf6d656b3f520ac6dfcfc6065cbf4884453bd`；其余stdout `f3072ab7436dc6eaf819fe27d6ad8410fd31eabde790d6e627e3bc523d78e6db`。2026-11-17 GitHub all-state Issue/PR检索为空；以本文R6-SVG-001记录复现→诊断→修复→复测，不创建/关闭Issue/PR。
+
+修复在内部Exporter按已知原分析blob及面板应用上述固定log范围，不新增JSON/公共接口字段；所有曲线绑定viewport clipPath，有限越界点及零值断线规则保留。固定Bias轴在全零情况下仍成立，允许正确的空图，不伪造正值。下一轮必须在新远程SHA下复测全部37项；保留首次失败断言，不改变参考坐标。
