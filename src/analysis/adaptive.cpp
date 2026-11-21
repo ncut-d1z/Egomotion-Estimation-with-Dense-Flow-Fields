@@ -1,5 +1,6 @@
 #include "egomotion/analysis/result_analyzer.hpp"
 #include "analysis_guard.hpp"
+#include "adaptive_windows.hpp"
 
 #include <array>
 #include <cmath>
@@ -70,11 +71,8 @@ std::vector<unsigned char> maskColumn(const MetricArray& array,std::size_t col) 
     return {first,first+static_cast<std::ptrdiff_t>(rows)};
 }
 
-struct Segment {
-    std::size_t begin=0; // source MATLAB 1-based, inclusive
-    std::size_t end=0;
-};
-using Segments=Result<std::array<Segment,4>,AnalysisErrorCode>;
+} // namespace
+namespace detail {
 
 Segments fourSourceSegments(const std::vector<double>& ratio,double threshold) {
     if(ratio.size()!=600) {
@@ -120,11 +118,6 @@ Segments fourSourceSegments(const std::vector<double>& ratio,double threshold) {
     return Segments::success(std::move(result));
 }
 
-struct Smoothed {
-    std::vector<double> values;
-    std::vector<unsigned char> defined;
-};
-using SmoothedResult=Result<Smoothed,AnalysisErrorCode>;
 SmoothedResult smoothSource(const std::vector<double>& input,
                             const std::vector<unsigned char>& defined,std::size_t half,
                             const std::filesystem::path& path,const std::string& variable,
@@ -154,6 +147,11 @@ SmoothedResult smoothSource(const std::vector<double>& input,
     }
     return SmoothedResult::success(std::move(out));
 }
+
+} // namespace detail
+namespace {
+using detail::fourSourceSegments;
+using detail::smoothSource;
 
 std::vector<double> matlabRange(std::size_t first,std::size_t last) {
     std::vector<double> out;
