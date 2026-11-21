@@ -105,6 +105,8 @@ public:
     // 专项分析只交付带周期身份的样本，不能误送入当前归档 MAT 发布接口。
     Status<ExperimentErrorCode> observePaperSchedule(
         PaperUpdateSchedule,const AdaptivePaperObserver&) const;
+    Status<ExperimentErrorCode> observePaperSchedule(
+        PaperUpdateSchedule,const AdaptivePaperObserver&,const AdaptiveProgress&) const;
 private:
     AdaptiveSampling sampling_;
     AdaptiveScene scene_;

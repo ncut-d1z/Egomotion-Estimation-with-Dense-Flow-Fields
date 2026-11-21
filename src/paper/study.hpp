@@ -1,6 +1,7 @@
 #pragma once
 
 #include "egomotion/analysis/paper_figures.hpp"
+#include "egomotion/experiments/adaptive_runner.hpp"
 #include "egomotion/illustrations/illustration.hpp"
 
 #include <iomanip>
@@ -20,6 +21,19 @@ struct AdaptiveCondition {
     std::string name;
     std::size_t repetitions;
     std::vector<experiments::AdaptivePaperSample> samples;
+    std::size_t attempted=0,completed=0;
+    bool succeeded=false;
+
+    // 八轮在一个 RNG 流中顺序执行，后续轮次是否开始只能由 Runner 的事件确定。
+    template<class Run>
+    auto collect(Run&& run) {
+        auto result=run([this](experiments::AdaptiveProgressEvent event) {
+            if(event==experiments::AdaptiveProgressEvent::RunStarted)++attempted;
+            if(event==experiments::AdaptiveProgressEvent::RunCompleted)++completed;
+        },[this](const experiments::AdaptivePaperSample& sample){samples.push_back(sample);});
+        succeeded=result.hasValue();
+        return result;
+    }
 };
 struct Study {
     std::vector<BiasTrial> bias;
@@ -59,5 +73,6 @@ struct Files {
 };
 
 void publishFigures(const FigureConfig&,const Study&,Files&);
+std::string caseCountsJson(std::size_t attempted,std::size_t failed,const Study&);
 
 } // namespace egomotion::paper

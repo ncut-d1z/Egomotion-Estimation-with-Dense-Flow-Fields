@@ -95,13 +95,13 @@ struct Trials {
         const AdaptiveScene scene{generator,kinematics,environment};
         auto collect=[&](const std::string& name,std::size_t repetitions,auto run) {
             AdaptiveCondition condition{name,repetitions,{}};
-            auto result=run([&](const AdaptivePaperSample& s){condition.samples.push_back(s);});
+            auto result=condition.collect(run);
             record(name,result,adaptiveTable(condition));
             study.adaptive.push_back(std::move(condition));
         };
         if(config.figure==2) {
-            collect("initialization",1,[&](const AdaptivePaperObserver& observe){
-                return InitializationRunner(services,scene).compute({}, {},observe);
+            collect("initialization",1,[&](const AdaptiveProgress& progress,const AdaptivePaperObserver& observe){
+                return InitializationRunner(services,scene).compute({},progress,observe);
             });
             return;
         }
@@ -109,13 +109,13 @@ struct Trials {
             // 成对噪声条件从同一明确种子开始，各条件内八轮连续消费。
             sampling::Mt19937RandomSource rng(*config.comparison_seed);
             collect(noise_scale==0?"comparison-noise-0":"comparison-noise-0p1",8,
-                [&](const AdaptivePaperObserver& observe){
-                    return AdaptiveComparisonRunner(services,scene).compute({noise_scale},rng,{},observe);
+                [&](const AdaptiveProgress& progress,const AdaptivePaperObserver& observe){
+                    return AdaptiveComparisonRunner(services,scene).compute({noise_scale},rng,progress,observe);
                 });
         }
         collect(*config.schedule==PaperUpdateSchedule::Article?"update-article":"update-archive",1,
-            [&](const AdaptivePaperObserver& observe){
-                return UpdateRateRunner(services,scene).observePaperSchedule(*config.schedule,observe);
+            [&](const AdaptiveProgress& progress,const AdaptivePaperObserver& observe){
+                return UpdateRateRunner(services,scene).observePaperSchedule(*config.schedule,observe,progress);
             });
     }
 
@@ -151,6 +151,30 @@ struct Trials {
 };
 } // namespace
 
+std::string caseCountsJson(std::size_t attempted,std::size_t failed,const Study& study) {
+    auto out=table();
+    out<<"{\"attempted\":"<<attempted<<",\"completed\":"<<attempted-failed<<",\"failed\":"<<failed;
+    if(!study.adaptive.empty()) {
+        out<<",\"conditions\":[";
+        for(std::size_t i=0;i<study.adaptive.size();++i) {
+            const auto& condition=study.adaptive[i];
+            if(i)out<<',';
+            out<<"{\"name\":"<<jsonQuote(condition.name)
+               <<",\"outcome\":"<<(condition.succeeded?"\"Completed\"":"\"Failed\"")
+               <<",\"planned\":"<<condition.repetitions<<",\"attempted\":"<<condition.attempted
+               <<",\"completed\":"<<condition.completed<<",\"failed\":"<<condition.attempted-condition.completed
+               <<",\"not_started\":"<<condition.repetitions-condition.attempted<<",\"failed_repetition\":";
+            // 启动前或所有轮完成后的失败属于条件，不能归到某一轮。
+            if(condition.attempted>condition.completed)out<<condition.attempted;
+            else out<<"null";
+            out<<'}';
+        }
+        out<<']';
+    }
+    out<<"}\n";
+    return out.str();
+}
+
 std::vector<std::string> sourceBlobs(unsigned figure) {
     switch(figure) {
     case 1:return {"00a3e974fbf068ccd1af4e541a659862beffcad5","fc3c4f0a7a417171415fb5e3d869a744ba24d04f",
@@ -181,9 +205,7 @@ FigureFiles produce(const FigureConfig& config,ITextPublisher& publisher) {
         if(config.figure==1)trials.bias();
         else if(config.figure==2||config.figure==5)trials.adaptive(config);
         else trials.geometry(config.figure);
-        files.save("case-counts.json","{\"attempted\":"+std::to_string(trials.attempted)+
-            ",\"completed\":"+std::to_string(trials.attempted-trials.failed)+
-            ",\"failed\":"+std::to_string(trials.failed)+"}\n");
+        files.save("case-counts.json",caseCountsJson(trials.attempted,trials.failed,trials.study));
         if(trials.first_failure)return FigureFiles::failure(std::move(*trials.first_failure));
         publishFigures(config,trials.study,files);
         return FigureFiles::success(std::move(files.names));

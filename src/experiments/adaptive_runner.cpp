@@ -355,10 +355,15 @@ UpdateRateRunner::compute(
 
 Status<ExperimentErrorCode> UpdateRateRunner::observePaperSchedule(
     PaperUpdateSchedule schedule,const AdaptivePaperObserver& paper) const {
+    return observePaperSchedule(schedule,paper,{});
+}
+
+Status<ExperimentErrorCode> UpdateRateRunner::observePaperSchedule(
+    PaperUpdateSchedule schedule,const AdaptivePaperObserver& paper,const AdaptiveProgress& progress) const {
     if(!paper || (schedule!=PaperUpdateSchedule::Archive && schedule!=PaperUpdateSchedule::Article))
         return Status<ExperimentErrorCode>::failure(
             fail(ExperimentErrorCode::InvalidParameters,"Invalid paper schedule or observer").error());
-    auto result=computeAdaptive(Mode::UpdateRates,0.0,nullptr,{},injected_solver_,sampling_,scene_,paper,schedule);
+    auto result=computeAdaptive(Mode::UpdateRates,0.0,nullptr,progress,injected_solver_,sampling_,scene_,paper,schedule);
     if(!result.hasValue())return Status<ExperimentErrorCode>::failure(std::move(result).error());
     return Status<ExperimentErrorCode>::success();
 }

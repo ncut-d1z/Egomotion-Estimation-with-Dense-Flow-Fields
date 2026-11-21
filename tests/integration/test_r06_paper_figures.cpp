@@ -3,12 +3,14 @@
 #include "egomotion/cli/command.hpp"
 #include "egomotion/experiments/adaptive_runner.hpp"
 #include "egomotion/estimators/adaptive_step.hpp"
+#include "egomotion/sampling/random.hpp"
 #include "egomotion/simulation/flow.hpp"
 #include "../support/motion_fixture.hpp"
 
 #include <array>
 #include <cmath>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <stdexcept>
 
@@ -35,8 +37,10 @@ PaperMetric missingAxis() {
     return PaperMetric::failure({NumericalErrorCode::UndefinedAngle,std::move(detail)});
 }
 struct SixRays : IDirectionSampler {
+    explicit SixRays(int level):expected_level(level) {}
+    int expected_level;
     Result<DirectionSet,NumericalErrorCode> sample(int level) const override {
-        require(level==2,"UpdateRates requested Comparison sampling");
+        require(level==expected_level,"Unexpected sampling level for the paper condition");
         DirectionMatrix axes=DirectionMatrix::Zero(6,3);
         for(int i=0;i<3;++i){axes(i,i)=1;axes(i+3,i)=-1;}
         return DirectionSet::fromOwned(std::move(axes));
@@ -60,12 +64,14 @@ struct KnownMotion : trajectory::ITrajectoryKinematics {
         return Result<std::vector<trajectory::FrameKinematics>,NumericalErrorCode>::success(std::move(frames));
     }
 };
-struct TwoFrames : estimators::IAdaptiveStepSolver {
+struct FailingStep : estimators::IAdaptiveStepSolver {
+    explicit FailingStep(std::size_t at):fail_at(at) {}
+    std::size_t fail_at;
     mutable std::size_t calls=0;
     Result<estimators::AdaptiveStepResult,NumericalErrorCode>
     solve(const HarmonicCoefficients& old,const FlowField&) const override {
         using Output=Result<estimators::AdaptiveStepResult,NumericalErrorCode>;
-        if(++calls==11) return Output::failure({NumericalErrorCode::SingularSystem,{}});
+        if(++calls==fail_at) return Output::failure({NumericalErrorCode::SingularSystem,{}});
         estimators::AdaptiveStepResult result;
         result.motion=test_support::motionValue(Vector3::UnitX(),Vector3(0,0,2));
         result.coefficients_next=old;
@@ -73,17 +79,19 @@ struct TwoFrames : estimators::IAdaptiveStepSolver {
     }
 };
 void actualFrameEvidence() {
-    SixRays rays;UnitDistances environment;KnownMotion truth;TwoFrames solver;
+    SixRays rays(2);UnitDistances environment;KnownMotion truth;FailingStep solver(11);
     trajectory::TrajectoryGenerator generator;simulation::NoNoise noise;
     experiments::UpdateRateRunner runner({rays,noise},{generator,truth,environment},&solver);
-    std::vector<experiments::AdaptivePaperSample> rows;
-    const auto result=runner.observePaperSchedule(PaperUpdateSchedule::Article,
-        [&](const auto& sample){rows.push_back(sample);});
-    require(!result.hasValue()&&solver.calls==11&&rows.size()==8,
+    AdaptiveCondition update{"update-article",1,{}};
+    const auto result=update.collect([&](const auto& progress,const auto& samples) {
+        return runner.observePaperSchedule(PaperUpdateSchedule::Article,samples,progress);
+    });
+    require(!result.hasValue()&&update.attempted==1&&update.completed==0&&
+            solver.calls==11&&update.samples.size()==8,
             "Only the first two committed UpdateRates frames may contribute paper samples");
     const double degrees=180/std::acos(-1.0);
     constexpr double regression_margin=1e-9; // 沿用既有 Session 解析角度回归余量。
-    for(const auto& row:rows) {
+    for(const auto& row:update.samples) {
         const bool stationary=row.matlab_frame==3;
         require(row.direction_count==6&&row.translation_degrees.value()==0,"Sample rays or translation identity");
         require(row.ideal_translation_mean==4.0/3 &&
@@ -96,6 +104,36 @@ void actualFrameEvidence() {
                 "Same frame/estimate geodesic is independently defined");
     }
 }
+void comparisonFailureCounts() {
+    constexpr std::size_t kInteriorFrames=598,kCompleted=4,kSolvesPerFrame=3;
+    FailingStep solver(kCompleted*kInteriorFrames*kSolvesPerFrame+1);
+    SixRays rays(4);UnitDistances environment;KnownMotion truth;
+    trajectory::TrajectoryGenerator generator;simulation::NoNoise noise;
+    experiments::AdaptiveComparisonRunner runner({rays,noise},{generator,truth,environment},&solver);
+    Study study;
+    auto collect=[&](const char* name,double scale) {
+        sampling::Mt19937RandomSource rng(19);
+        study.adaptive.push_back({name,8,{}});
+        return study.adaptive.back().collect([&](const auto& progress,const auto& samples) {
+            return runner.compute({scale},rng,progress,samples);
+        });
+    };
+    require(!collect("preflight",std::numeric_limits<double>::quiet_NaN()).hasValue()&&solver.calls==0,
+            "Preflight failure must precede the first repetition");
+    require(!collect("fifth",0).hasValue()&&solver.calls==solver.fail_at,"Missing injected failure in run five");
+    const auto& samples=study.adaptive.back().samples;
+    require(samples.size()==kCompleted*kInteriorFrames*2&&samples.front().repetition==1&&
+            samples.back().repetition==4&&samples.back().matlab_frame==599,
+            "Incomplete condition must retain exactly the four completed observation sets");
+    require(collect("following",0).hasValue(),"Independent condition after run-five failure must complete");
+    require(caseCountsJson(3,2,study)==
+        R"({"attempted":3,"completed":1,"failed":2,"conditions":[)"
+        R"({"name":"preflight","outcome":"Failed","planned":8,"attempted":0,"completed":0,"failed":0,"not_started":8,"failed_repetition":null},)"
+        R"({"name":"fifth","outcome":"Failed","planned":8,"attempted":5,"completed":4,"failed":1,"not_started":3,"failed_repetition":5},)"
+        R"({"name":"following","outcome":"Completed","planned":8,"attempted":8,"completed":8,"failed":0,"not_started":0,"failed_repetition":null}]})" "\n",
+        "Condition failure, repetition failure and unattempted repetitions must stay distinct");
+}
+
 void biasAnglesBeforeAveraging() {
     Study study;
     constexpr std::array<double,3> noise{{0.6,2.4,9.6}};
@@ -187,8 +225,8 @@ void commandContract() {
 } // namespace
 
 int main() try {
-    commandContract();actualFrameEvidence();biasAnglesBeforeAveraging();dualMetricsAndWindows();
-    std::cout<<"Paper figure synthetic population, metric, period, window and CLI checks passed\n";
+    commandContract();actualFrameEvidence();comparisonFailureCounts();biasAnglesBeforeAveraging();dualMetricsAndWindows();
+    std::cout<<"Paper figure checks passed; injected comparison failure: planned=8 attempted=5 completed=4 failed=1 not_started=3\n";
     return 0;
 } catch(const std::exception& error) {
     std::cerr<<error.what()<<'\n';return 1;
