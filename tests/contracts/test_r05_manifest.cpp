@@ -131,6 +131,40 @@ std::string lifecycleSnapshot(const RunContext& run) {
     snapshot<<run.adaptiveMetricValidityJson();
     return snapshot.str();
 }
+void checkBiasCompletionNeedsValidSamples() {
+    using egomotion::experiments::ExperimentKind;
+    for(const auto kind:{ExperimentKind::BiasOccluded,ExperimentKind::BiasProportional}) {
+        FakeWriter writer;FakePublisher publisher;
+        RunContext run(RunId{"bias_missing_valid_samples"},std::make_unique<FixedRandom>(),
+            writer,publisher,"/R5-UNIT-ONLY",provenance(),kind,1);
+        require(!run.noteCompletedMemory(1,0).hasValue(),
+                "Bias completion requires at least one valid source observation");
+        // 公开进度入口不能绕过完成入口对有效样本的要求；全套 MAT 回执不替代计数。
+        run.noteAttempt();run.noteCompleted();
+        std::map<std::string,DenseDoubleArray> outputs;
+        for(const auto& name:experiments::currentSaveFields(kind))
+            outputs.emplace(name,matrix(name,1,name=="xwerte"?1:3));
+        require(run.writeCurrentResults(outputs).hasValue(),"Prepare all Bias output receipts");
+        const auto before=lifecycleSnapshot(run);
+        const auto written=writer.calls;
+        const auto denied=run.publishCompleteOutcome();
+        require(!denied.hasValue()&&denied.error().code==ExperimentErrorCode::OutputFailed&&
+                denied.error().detail.stage==ErrorStage::Output&&denied.error().detail.run_id&&
+                denied.error().detail.run_id->text==run.runId().text,
+                "Complete publication must reject zero valid Bias samples with RunId");
+        require(publisher.name.empty()&&publisher.contents.empty()&&writer.calls==written&&
+                lifecycleSnapshot(run)==before,
+                "Rejected completion must publish nothing and preserve the existing audit and MAT receipts");
+
+        // 补齐实际三组样本进度后，同一批已确认 MAT 可以正常完成，无须重写。
+        run.noteValid();run.noteValid();run.noteValid();
+        const auto completed=run.publishCompleteOutcome();
+        require(completed.hasValue()&&completed.value().status==RunStatus::Complete&&
+                completed.value().valid==3&&run.manifestDraft().valid==3&&writer.calls==written&&
+                publisher.contents.find("\"valid\":3")!=std::string::npos,
+                "Recorded valid samples must permit Complete with unchanged output receipts");
+    }
+}
 void checkPublishedBiasLifecycle() {
     using egomotion::experiments::ExperimentKind;
     ErrorDetail detail;detail.stage=ErrorStage::Output;
@@ -297,6 +331,7 @@ void checkPublishedButUnconfirmedManifest() {
 int main() {
     using namespace egomotion;
     using egomotion::experiments::ExperimentKind;
+    checkBiasCompletionNeedsValidSamples();
     checkPublishedBiasLifecycle();
     checkFailedWriteAuditStatus();
     checkFailureRunIdentity();

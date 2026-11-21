@@ -122,7 +122,7 @@ Result<std::string,ExperimentErrorCode> makeCompleteManifestJson(
        draft.expected_repetitions==0||
        draft.completed!=draft.expected_repetitions||
        draft.attempted!=draft.expected_repetitions||
-       draft.failed!=0||draft.undefined!=0||!draft.errors.empty())
+       draft.valid==0||draft.failed!=0||draft.undefined!=0||!draft.errors.empty())
         return fail<std::string>(run,"Incomplete run cannot be serialized as Complete");
     try{
         std::map<std::string,FileEvidence> by_name;
