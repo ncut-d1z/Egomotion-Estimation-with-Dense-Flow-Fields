@@ -2,6 +2,7 @@
 
 #include "egomotion/contracts/interfaces.hpp"
 #include "egomotion/experiments/runner.hpp"
+#include "egomotion/experiments/paper_observations.hpp"
 #include "egomotion/trajectory/trajectory.hpp"
 
 #include <cstddef>
@@ -65,7 +66,7 @@ public:
         : sampling_(sampling), scene_(scene), injected_solver_(injected_solver) {}
     Result<AdaptiveRunData,ExperimentErrorCode> compute(
         const AdaptiveInitializationConfig& config = {},
-        const AdaptiveProgress& progress = {}) const;
+        const AdaptiveProgress& progress = {},const AdaptivePaperObserver& paper = {}) const;
     Result<RunOutcome,ExperimentErrorCode> run(
         const AdaptiveInitializationConfig&,RunContext&) const;
 private:
@@ -82,7 +83,7 @@ public:
     // 八轮共用本次外部RNG，不重新播种；noise_scale=0仍消耗原normal序列。
     Result<AdaptiveRunData,ExperimentErrorCode> compute(
         const AdaptiveComparisonConfig&,IRandomSource&,
-        const AdaptiveProgress& progress = {}) const;
+        const AdaptiveProgress& progress = {},const AdaptivePaperObserver& paper = {}) const;
     Result<RunOutcome,ExperimentErrorCode> run(
         const AdaptiveComparisonConfig&,RunContext&) const;
 private:
@@ -101,6 +102,9 @@ public:
         const AdaptiveProgress& progress = {}) const;
     Result<RunOutcome,ExperimentErrorCode> run(
         const AdaptiveUpdateRatesConfig&,RunContext&) const;
+    // 专项分析只交付带周期身份的样本，不能误送入当前归档 MAT 发布接口。
+    Status<ExperimentErrorCode> observePaperSchedule(
+        PaperUpdateSchedule,const AdaptivePaperObserver&) const;
 private:
     AdaptiveSampling sampling_;
     AdaptiveScene scene_;

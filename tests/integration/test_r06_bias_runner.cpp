@@ -141,13 +141,14 @@ double metric(const Vector3& truth,const Vector3& estimate) {
 }
 Result<BiasRunData,ExperimentErrorCode> computeReal(
     const IDirectionSampler& sampler,const IFlowNoiseModel& noise,
-    const BiasExperimentConfig& config,const std::function<void()>& completed) {
+    const BiasExperimentConfig& config,const std::function<void()>& completed,
+    const experiments::BiasPaperObserver& paper={}) {
     const estimators::FranzMatchedFilter franz;
     const estimators::OriginalKvDEstimator original;
     const estimators::ModifiedKvDEstimator modified;
     sampling::Mt19937RandomSource random(config.seed);
     return experiments::BiasExperimentRunner(sampler,noise,{franz,original,modified})
-        .compute(config,random,completed);
+        .compute(config,random,completed,paper);
 }
 BiasRunData observedCompute(ExperimentKind kind,std::uint32_t seed) {
     sampling::OccludedOctahedralSampler missing;sampling::OctahedralSampler full;
@@ -155,11 +156,14 @@ BiasRunData observedCompute(ExperimentKind kind,std::uint32_t seed) {
     ObservedSampler sampler(occluded(kind)?static_cast<const IDirectionSampler&>(missing):full);
     ObservedNoise noise(occluded(kind)?static_cast<const IFlowNoiseModel&>(mean):component,seed);
     std::size_t completed=0;
+    std::vector<experiments::BiasPaperSample> samples;
     const auto result=computeReal(sampler,noise,
-        {seed,static_cast<int>(kLevels)-1},[&]{++completed;});
+        {seed,static_cast<int>(kLevels)-1},[&]{++completed;},
+        [&](const auto& sample){samples.push_back(sample);});
     if(!result.hasValue())throw std::runtime_error("Bounded real Bias compute failed: "+
         std::string(name(kind))+": "+result.error().detail.message);
     check(completed==kLevels*kColumns&&noise.calls==completed,"Complete samples / callbacks");
+    require(samples.size()==completed*4,"Fig. 1 requires four KvD measurements per sample");
     check(result.value().level_count==kLevels&&result.value().noise_coefficients==kNoise,"Bias shape/coefficients");
     const std::size_t base=occluded(kind)?6:8;
     std::size_t normal_expected=0;
@@ -176,6 +180,16 @@ BiasRunData observedCompute(ExperimentKind kind,std::uint32_t seed) {
         const auto m=estimators::ModifiedKvDEstimator{}.estimate(flow,{});
         require(f.hasValue()&&o.hasValue()&&m.hasValue(),"Captured-sample estimator replay failed");
         const std::array<MotionEstimate,3> estimates{{f.value(),o.value().motion,m.value().motion}};
+        for(std::size_t k=0;k<4;++k) {
+            const auto& paper=samples.at(slot*4+k);
+            check(paper.ywerte_number==k+3 && paper.level==level && paper.noise_column==column+1 &&
+                  paper.direction_count==base*factor && paper.source_xwerte==result.value().xwerte[level] &&
+                  paper.noise_multiplier==kNoise[column],"Fig. 1 source and sampler identities");
+            const double chord=result.value().ywerte[k+2][slot];
+            require(paper.source_chord==chord && paper.direction_degrees.hasValue(),"Fig. 1 chord and angle");
+            near(paper.direction_degrees.value(),2*std::asin(chord/2)*(180/std::acos(-1.0)),
+                 "Single-trial unit chord and independent angular reference");
+        }
         for(std::size_t method=0;method<estimates.size();++method) {
             near(result.value().ywerte[method*2].at(slot),metric(noise.translation,estimates[method].translation()),
                  "Translation metric, solver slot and MATLAB column-major output");

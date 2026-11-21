@@ -29,6 +29,7 @@ struct AdaptiveFrameResult {
     // 指标无定义与求解失败分离：仅指标失败不回滚已成功的帧求解。
     std::vector<Result<Scalar,NumericalErrorCode>> comparison_translation_error_deg;
     std::vector<Result<Scalar,NumericalErrorCode>> comparison_rotation_error_deg;
+    std::array<bool,4> periodic_refreshed{};
 };
 
 // Each session owns its own primary and baseline states. It never writes
@@ -40,7 +41,8 @@ public:
     // intended for deterministic tests. The supplied solver must outlive the
     // Session. No change to the scientific algorithm for production callers.
     explicit AdaptiveMfaSession(AdaptiveSessionMode mode,
-                                const IAdaptiveStepSolver* injected_solver = nullptr);
+                                const IAdaptiveStepSolver* injected_solver = nullptr,
+                                const std::array<std::size_t,4>& periods = kAdaptiveUpdatePeriods);
 
     // 显式替换比较策略：前两槽用于Initialization/Comparison，四槽用于
     // UpdateRates。使用的槽不可为空；策略及solver须比Session活得更久。
@@ -72,11 +74,7 @@ private:
     std::array<HarmonicCoefficients,4> baselines_;
     ResetCoefficientUpdatePolicy reset_policy_;
     InheritCoefficientUpdatePolicy inherit_policy_;
-    std::array<PeriodicCoefficientUpdatePolicy,4> periodic_policies_{{
-        PeriodicCoefficientUpdatePolicy{kAdaptiveUpdatePeriods[0]},
-        PeriodicCoefficientUpdatePolicy{kAdaptiveUpdatePeriods[1]},
-        PeriodicCoefficientUpdatePolicy{kAdaptiveUpdatePeriods[2]},
-        PeriodicCoefficientUpdatePolicy{kAdaptiveUpdatePeriods[3]}}};
+    std::array<PeriodicCoefficientUpdatePolicy,4> periodic_policies_;
     AdaptiveCoefficientPolicies policies_{};
     AdaptiveMfaStepSolver production_solver_;
     const IAdaptiveStepSolver* solver_=nullptr;

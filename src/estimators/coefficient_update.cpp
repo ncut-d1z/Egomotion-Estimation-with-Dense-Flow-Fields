@@ -44,7 +44,7 @@ Result<HarmonicCoefficients,NumericalErrorCode> PeriodicCoefficientUpdatePolicy:
     const harmonics::HarmonicRotator rotator;
     auto rotated=rotator.rotateSourceCoefficients(baseline,rotation);
     if(!rotated.hasValue())return rotated;
-    if(frame%period_==0)return inherit(primary);
+    if(refreshesAt(frame))return inherit(primary);
     return rotated;
 }
 } // namespace egomotion::estimators

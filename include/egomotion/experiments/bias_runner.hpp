@@ -1,6 +1,7 @@
 #pragma once
 
 #include "egomotion/experiments/runner.hpp"
+#include "egomotion/experiments/paper_observations.hpp"
 #include "egomotion/estimators/franz_kvd.hpp"
 
 #include <array>
@@ -40,7 +41,8 @@ public:
 
     Result<BiasRunData, ExperimentErrorCode> compute(
         const BiasExperimentConfig& config, IRandomSource& random,
-        const std::function<void()>& sample_completed={}) const;
+        const std::function<void()>& sample_completed={},
+        const BiasPaperObserver& paper_observer={}) const;
 
 private:
     const IDirectionSampler& sampler_;

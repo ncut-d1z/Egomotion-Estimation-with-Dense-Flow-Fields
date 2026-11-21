@@ -1,5 +1,6 @@
 #include "egomotion/experiments/adaptive_runner.hpp"
 #include "adaptive_aggregation.hpp"
+#include "../numerics/source_motion_errors.hpp"
 
 #include "egomotion/estimators/adaptive_session.hpp"
 #include "egomotion/simulation/flow.hpp"
@@ -149,7 +150,9 @@ void write(AdaptiveRunData& data,const std::string& field,
 Output computeAdaptive(Mode mode, double noise_scale, IRandomSource* rng,
                const AdaptiveProgress& progress,
                const estimators::IAdaptiveStepSolver* injected_solver,
-               AdaptiveSampling sampling, AdaptiveScene scene) {
+               AdaptiveSampling sampling, AdaptiveScene scene,
+               const AdaptivePaperObserver& paper={},
+               PaperUpdateSchedule schedule=PaperUpdateSchedule::Archive) {
     if (mode==Mode::Comparison &&
         (!std::isfinite(noise_scale)||rng==nullptr))
         return fail(ExperimentErrorCode::InvalidParameters,
@@ -187,6 +190,10 @@ Output computeAdaptive(Mode mode, double noise_scale, IRandomSource* rng,
         if (!sampled.hasValue())
             return fromNumeric(sampled,"icosahedral sampling",mode,1);
         const DirectionSet& directions=sampled.value();
+        // Fig. 5E/F 图注。普通入口始终沿用 many_parameter.m 的 1/5/11/21。
+        constexpr std::array<std::size_t,4> article_periods{{1,5,10,20}};
+        const auto& periods=schedule==PaperUpdateSchedule::Article ? article_periods :
+                                                                    estimators::kAdaptiveUpdatePeriods;
 
         for (std::size_t run=0;run<aggregate.planned_runs;++run) {
             if(progress)progress(AdaptiveProgressEvent::RunStarted);
@@ -196,7 +203,7 @@ Output computeAdaptive(Mode mode, double noise_scale, IRandomSource* rng,
                 ? estimators::AdaptiveSessionMode::Initialization
                 : (mode==Mode::Comparison
                     ? estimators::AdaptiveSessionMode::Comparison
-                    : estimators::AdaptiveSessionMode::UpdateRates),injected_solver);
+                    : estimators::AdaptiveSessionMode::UpdateRates),injected_solver,periods);
             // MATLAB i=2..N-1 corresponds to C++ j=1..N-2. Row zero and the
             // last row MUST remain original preallocated zeros, not estimates.
             for (std::size_t row=1;row+1<n;++row) {
@@ -273,6 +280,17 @@ Output computeAdaptive(Mode mode, double noise_scale, IRandomSource* rng,
                     return fail(ExperimentErrorCode::DataMismatch,
                                 "Adaptive Session returned wrong baseline count");
 
+                if (paper) {
+                    const auto ratio=componentRatio(numerator,denominator);
+                    const auto count=static_cast<std::size_t>(frame.observations.observations().rows());
+                    for(std::size_t k=0;k<expected;++k)
+                        paper({run+1,matlab_i,k+1,count,mode==Mode::UpdateRates?periods[k]:0,
+                               values.periodic_refreshed[k],numerator,denominator,ratio,
+                               values.comparison_translation_error_deg[k],
+                               source_metrics::sourceDirectionErrorDegrees(frame.truth.rotation(),
+                                   values.comparison_motion.at(k).rotation()),
+                               values.comparison_rotation_error_deg[k]});
+                }
                 if (mode==Mode::UpdateRates) {
                     const double angle_degrees=360.0*frames[row].relative_rotation.norm()/
                         (2.0*std::acos(-1.0));
@@ -321,19 +339,29 @@ Output computeAdaptive(Mode mode, double noise_scale, IRandomSource* rng,
 
 Result<AdaptiveRunData,ExperimentErrorCode>
 InitializationRunner::compute(
-    const AdaptiveInitializationConfig&,const AdaptiveProgress& progress) const {
-    return computeAdaptive(Mode::Initialization,0.0,nullptr,progress,injected_solver_,sampling_,scene_);
+    const AdaptiveInitializationConfig&,const AdaptiveProgress& progress,const AdaptivePaperObserver& paper) const {
+    return computeAdaptive(Mode::Initialization,0.0,nullptr,progress,injected_solver_,sampling_,scene_,paper);
 }
 Result<AdaptiveRunData,ExperimentErrorCode>
 AdaptiveComparisonRunner::compute(
     const AdaptiveComparisonConfig& config,IRandomSource& rng,
-    const AdaptiveProgress& progress) const {
-    return computeAdaptive(Mode::Comparison,config.noise_scale,&rng,progress,injected_solver_,sampling_,scene_);
+    const AdaptiveProgress& progress,const AdaptivePaperObserver& paper) const {
+    return computeAdaptive(Mode::Comparison,config.noise_scale,&rng,progress,injected_solver_,sampling_,scene_,paper);
 }
 Result<AdaptiveRunData,ExperimentErrorCode>
 UpdateRateRunner::compute(
     const AdaptiveUpdateRatesConfig&,const AdaptiveProgress& progress) const {
     return computeAdaptive(Mode::UpdateRates,0.0,nullptr,progress,injected_solver_,sampling_,scene_);
+}
+
+Status<ExperimentErrorCode> UpdateRateRunner::observePaperSchedule(
+    PaperUpdateSchedule schedule,const AdaptivePaperObserver& paper) const {
+    if(!paper || (schedule!=PaperUpdateSchedule::Archive && schedule!=PaperUpdateSchedule::Article))
+        return Status<ExperimentErrorCode>::failure(
+            fail(ExperimentErrorCode::InvalidParameters,"Invalid paper schedule or observer").error());
+    auto result=computeAdaptive(Mode::UpdateRates,0.0,nullptr,{},injected_solver_,sampling_,scene_,paper,schedule);
+    if(!result.hasValue())return Status<ExperimentErrorCode>::failure(std::move(result).error());
+    return Status<ExperimentErrorCode>::success();
 }
 
 Result<AdaptiveRunData,ExperimentErrorCode>

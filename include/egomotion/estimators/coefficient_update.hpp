@@ -37,6 +37,9 @@ public:
 class PeriodicCoefficientUpdatePolicy final : public ICoefficientUpdatePolicy {
 public:
     explicit PeriodicCoefficientUpdatePolicy(std::size_t period) noexcept : period_(period) {}
+    bool refreshesAt(std::size_t matlab_frame) const noexcept {
+        return period_!=0 && matlab_frame>=2 && matlab_frame%period_==0;
+    }
     Result<HarmonicCoefficients,NumericalErrorCode> prepare(
         std::size_t, const HarmonicCoefficients&, const HarmonicCoefficients&,
         const Matrix3&) const override;

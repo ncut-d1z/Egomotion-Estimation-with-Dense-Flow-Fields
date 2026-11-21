@@ -48,7 +48,8 @@ ErrorResult computeImpl(const BiasExperimentConfig& config,
                         const IDirectionSampler& sampler,
                         const IFlowNoiseModel& noise,
                         const BiasEstimators& estimators, IRandomSource& rng,
-                        const std::function<void()>& sample_completed) {
+                        const std::function<void()>& sample_completed,
+                        const BiasPaperObserver& paper_observer) {
     // 保留源脚本的单一嵌套循环及就地失败边界，避免拆分后传递真值/列/层/进度状态。
     // One sample for each (noise coefficient, subdivision level); source
     // uses 3 noise coefficients in this order, then levels 0..maximum.
@@ -132,6 +133,14 @@ ErrorResult computeImpl(const BiasExperimentConfig& config,
                     data.ywerte[metric][v*levels+level]=err.value();
                 }
                 // A Bias sample becomes valid only when all six metrics exist.
+                if (paper_observer) {
+                    // Fig. 1 只画 Original/Modified KvD 的四条方向误差。
+                    constexpr std::size_t first_kvd_metric=2;
+                    for (std::size_t k=first_kvd_metric;k<pairs.size();++k)
+                        paper_observer({level,v+1,static_cast<std::size_t>(flow.observations().rows()),
+                            k+1,data.xwerte[level],data.noise_coefficients[v],data.ywerte[k][v*levels+level],
+                            source_metrics::sourceDirectionErrorDegrees(pairs[k].first,pairs[k].second)});
+                }
                 if(sample_completed)sample_completed();
                 if (level+1<levels) {
                     if (x_count>std::numeric_limits<std::size_t>::max()/4)
@@ -169,8 +178,8 @@ ErrorResult computeImpl(const BiasExperimentConfig& config,
 
 Result<BiasRunData,ExperimentErrorCode> BiasExperimentRunner::compute(
     const BiasExperimentConfig& config, IRandomSource& random,
-    const std::function<void()>& sample_completed) const {
-    return computeImpl(config,sampler_,noise_,estimators_,random,sample_completed);
+    const std::function<void()>& sample_completed,const BiasPaperObserver& paper_observer) const {
+    return computeImpl(config,sampler_,noise_,estimators_,random,sample_completed,paper_observer);
 }
 
 }  // namespace egomotion::experiments

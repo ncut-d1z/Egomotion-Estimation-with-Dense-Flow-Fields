@@ -64,8 +64,13 @@ Result<AdaptiveFrameResult,ExperimentErrorCode> invalidStep(
 }  // namespace
 
 AdaptiveMfaSession::AdaptiveMfaSession(
-    AdaptiveSessionMode mode,const IAdaptiveStepSolver* injected_solver)
+    AdaptiveSessionMode mode,const IAdaptiveStepSolver* injected_solver,
+    const std::array<std::size_t,4>& periods)
     : mode_(mode),primary_(originalInitialCoefficients()),
+      periodic_policies_{{PeriodicCoefficientUpdatePolicy{periods[0]},
+                          PeriodicCoefficientUpdatePolicy{periods[1]},
+                          PeriodicCoefficientUpdatePolicy{periods[2]},
+                          PeriodicCoefficientUpdatePolicy{periods[3]}}},
       solver_(injected_solver ? injected_solver : &production_solver_) {
     baselines_.fill(originalInitialCoefficients());
     if(mode_==AdaptiveSessionMode::UpdateRates) {
@@ -137,6 +142,8 @@ AdaptiveMfaSession::processFrame(const AdaptiveFrameInput& frame) {
         output.comparison_rotation_error_deg.reserve(comparison_count);
         for (std::size_t j=0;j<comparison_count;++j) {
             const HarmonicCoefficients& trial=next_baselines[j];
+            if(policies_[j]==&periodic_policies_[j])
+                output.periodic_refreshed[j]=periodic_policies_[j].refreshesAt(frame.matlab_frame_index);
             // The source does one comparison iteration per frame.
             auto comparison=solver_->solve(trial,frame.observations);
             if (!comparison.hasValue())
