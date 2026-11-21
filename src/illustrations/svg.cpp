@@ -76,14 +76,45 @@ Primitive triangle(const Vector3& a,const Vector3& b,const Vector3& c,
     out<<"\"/>\n";
     return {(points[0].z()+points[1].z()+points[2].z())/3,out.str()};
 }
-std::vector<Primitive> primitives(const Data& data,const Camera& view) {
+Primitive paperQuad(const std::array<Vector3,4>& vertices,const Camera& view,std::size_t face,
+                    double min_z,double max_z) {
+    // 论文原图采用高度着色的四边形网格。数值顶点始终取自源几何。
+    const Vector3 center=(vertices[0]+vertices[1]+vertices[2]+vertices[3])/4.0;
+    const Vector3 normal=(vertices[1]-vertices[0]).cross(vertices[3]-vertices[0]);
+    const double length=normal.norm(),depth=view.forward.dot(center);
+    if(!center.allFinite()||!std::isfinite(length)||!std::isfinite(depth)||!(max_z>min_z))
+        throw std::invalid_argument("Invalid paper surface projection");
+    const double height=(center.z()-min_z)/(max_z-min_z);
+    const double light=length>0?0.55+0.45*std::abs(normal.dot(view.forward)/length):0.55;
+    const auto channel=[&](double peak) {
+        return static_cast<int>(255*light*std::clamp(1.5-std::abs(4*height-peak),0.0,1.0));
+    };
+    std::ostringstream out;
+    out.exceptions(std::ios::badbit|std::ios::failbit);
+    out.imbue(std::locale::classic());out<<std::fixed<<std::setprecision(3);
+    out<<"<polygon data-face=\""<<face<<"\" fill=\"rgb("<<channel(3)<<','<<channel(2)<<','<<channel(1)
+       <<")\" stroke=\"#222\" stroke-width=\"0.65\" points=\"";
+    for(const auto& p:vertices){const auto v=view.project(p);out<<v.x()<<','<<v.y()<<' ';}
+    out<<"\"/>\n";
+    return {depth,out.str()};
+}
+std::vector<Primitive> primitives(const Data& data,const Camera& view,bool paper) {
     std::vector<Primitive> out;
     const auto& s=data.surface;
+    double min_z=std::numeric_limits<double>::infinity(),max_z=-min_z;
+    if(paper)for(std::size_t i=0;i<s.vertices.size();++i)if(!s.z_masked[i]){
+        min_z=std::min(min_z,s.vertices[i].z());max_z=std::max(max_z,s.vertices[i].z());
+    }
     for(std::size_t col=0;col+1<s.columns;++col)
         for(std::size_t row=0;row+1<s.rows;++row) {
             const auto a=col*s.rows+row,b=a+1,c=a+s.rows+1,d=a+s.rows;
             if(s.z_masked[a]||s.z_masked[b]||s.z_masked[c]||s.z_masked[d])continue;
             const auto face=col*(s.rows-1)+row;
+            if(paper) {
+                out.push_back(paperQuad({s.vertices[a],s.vertices[b],s.vertices[c],s.vertices[d]},
+                                         view,face,min_z,max_z));
+                continue;
+            }
             out.push_back(triangle(s.vertices[a],s.vertices[b],s.vertices[c],view,face));
             out.push_back(triangle(s.vertices[a],s.vertices[c],s.vertices[d],view,face));
         }
@@ -93,25 +124,30 @@ std::vector<Primitive> primitives(const Data& data,const Camera& view) {
         line.exceptions(std::ios::badbit|std::ios::failbit);
         line.imbue(std::locale::classic());line<<std::fixed<<std::setprecision(3);
         line<<"<line data-trajectory-segment=\""<<i<<"\" x1=\""<<a.x()<<"\" y1=\""<<a.y()
-            <<"\" x2=\""<<b.x()<<"\" y2=\""<<b.y()<<"\" stroke=\"#ab2637\" stroke-width=\"2.4\"/>\n";
+            <<"\" x2=\""<<b.x()<<"\" y2=\""<<b.y()<<"\" stroke=\""<<(paper?"#304fbe":"#ab2637")
+            <<"\" stroke-width=\"2.4\"/>\n";
         out.push_back({(a.z()+b.z())/2,line.str()});
     }
     std::stable_sort(out.begin(),out.end(),[](const auto& a,const auto& b){return a.depth<b.depth;});
     return out;
 }
-std::string render(const Data& data) {
+std::string render(const Data& data,const std::string& panel={}) {
     const auto view=camera(data);
-    const auto elements=primitives(data,view);
+    const auto elements=primitives(data,view,!panel.empty());
+    const auto clip="scene"+panel;
     std::ostringstream out;out.imbue(std::locale::classic());
     out.exceptions(std::ios::badbit|std::ios::failbit);
     out<<"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"900\" height=\"800\" viewBox=\"0 0 900 800\">\n"
           "<rect width=\"900\" height=\"800\" fill=\"white\"/>\n"
-          "<defs><clipPath id=\"scene\"><rect x=\"30\" y=\"80\" width=\"840\" height=\"680\"/></clipPath></defs>\n";
-    const auto heading=data.source_title.empty()?"spherical harmonic illustration":data.source_title;
+          "<defs><clipPath id=\""<<clip<<"\"><rect x=\"30\" y=\"80\" width=\"840\" height=\"680\"/></clipPath></defs>\n";
+    std::string heading=data.source_title.empty()?"spherical harmonic illustration":data.source_title;
+    if(!panel.empty())heading=panel+"   "+(data.harmonic?
+        (data.harmonic->degree==1?"Monopole and dipole":"Monopole and quadrupole"):
+        (data.kind=="circle"?"Circular trajectory within the sphere":"Sinusoidal trajectory within the sphere"));
     out<<"<text x=\"450\" y=\"34\" text-anchor=\"middle\" font-family=\"sans-serif\" font-size=\"20\">"
        <<xml(heading)<<"</text>\n<text x=\"450\" y=\"60\" text-anchor=\"middle\" font-size=\"14\">"<<xml(data.kind);
     if(data.harmonic)out<<" degree="<<data.harmonic->degree<<" order="<<data.harmonic->order;
-    out<<"</text>\n<g clip-path=\"url(#scene)\">\n";
+    out<<"</text>\n<g clip-path=\"url(#"<<clip<<")\">\n";
     for(const auto& element:elements)out<<element.svg;
     out<<"</g>\n<metadata>source script blob: "<<xml(data.source_script_blob)
        <<"; column-major mesh; orthographic equal-scale projection; flat shading and depth sorting; "
@@ -126,6 +162,22 @@ Files invalid(const Failure<NumericalErrorCode>& cause) {
     return Files::failure(wrapFailure(PlotErrorCode::InvalidSeries,std::move(d),cause));
 }
 } // namespace
+Result<std::string,NumericalErrorCode> paperPairSvg(const Data& left,const Data& right) {
+    using Output=Result<std::string,NumericalErrorCode>;
+    for(const Data* data:{&left,&right}) {
+        auto valid=detail::validate(*data);
+        if(!valid.hasValue())return Output::failure(valid.error());
+    }
+    if(!((left.kind=="circle"&&right.kind=="sinusoidal")||
+         (left.harmonic&&right.harmonic&&left.harmonic->degree==1&&right.harmonic->degree==2)))
+        return Output::failure(detail::failure(NumericalErrorCode::InvalidShape,"Unexpected paper panel pair"));
+    try {
+        return Output::success("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1800 800\">"+
+            render(left,"A")+"<g transform=\"translate(900 0)\">"+render(right,"B")+"</g></svg>\n");
+    }catch(const std::invalid_argument& e) {
+        return Output::failure(detail::failure(NumericalErrorCode::NonFiniteResult,e.what()));
+    }
+}
 Files SvgExporter::exportSvg(const Data& data,ITextPublisher& publisher) {
     auto valid=detail::validate(data);
     if(!valid.hasValue())return invalid(valid.error());

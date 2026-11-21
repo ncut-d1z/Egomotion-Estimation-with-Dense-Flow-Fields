@@ -38,6 +38,8 @@ using DataResult=Result<Data,NumericalErrorCode>;
 // 纯数值几何，无MAT、求解器、RNG、绘图或文件输出副作用。
 DataResult generate(const Config&);
 Result<std::string,NumericalErrorCode> dataJson(const Data&);
+// 仅 SVG 后端。输入为 Fig. 3 的圆/正弦或 Fig. 4 的一阶/二阶球谐。
+Result<std::string,NumericalErrorCode> paperPairSvg(const Data& left,const Data& right);
 
 class IExporter {
 public:

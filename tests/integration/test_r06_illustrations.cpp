@@ -200,6 +200,23 @@ void nonfiniteShading() {
         "<polygon data-face=\"0\" fill=\"rgb(70,130,160)\"")!=std::string::npos,
         "Zero-area triangle retains the original zero-light color");
 }
+void paperPairs() {
+    const auto circle=generated(ill::CircleConfig{}),sinusoidal=generated(ill::SinusoidalConfig{});
+    const auto paths=ill::paperPairSvg(circle,sinusoidal);
+    require(paths.hasValue(),"Fig. 3 geometry must render as a pair");
+    const auto& svg=paths.value();
+    check(svg.find("translate(900 0)")!=svg.npos && svg.find("url(#sceneA)")!=svg.npos &&
+          svg.find("url(#sceneB)")!=svg.npos,"Distinct side-by-side viewports and clipping");
+    check(svg.find("Sinusoidal trajectory within the sphere")!=svg.npos&&svg.find("#304fbe")!=svg.npos,
+          "Fig. 3B identifies the actual blue sinusoidal trajectory");
+    const auto dipole=generated(ill::HarmonicConfig{1,1}),quadrupole=generated(ill::HarmonicConfig{2,1});
+    const auto shapes=ill::paperPairSvg(dipole,quadrupole);
+    require(shapes.hasValue(),"Fig. 4 harmonic geometry must render as a pair");
+    check(shapes.value().find("degree=1 order=1")!=svg.npos&&shapes.value().find("degree=2 order=1")!=svg.npos,
+          "Fig. 4 publishes its chosen harmonic orders");
+    check(!ill::paperPairSvg(quadrupole,dipole).hasValue()&&!ill::paperPairSvg(sinusoidal,circle).hasValue(),
+          "Reject swapped paper panel identities");
+}
 #endif
 void rejectedData(const ill::Data& data) {
     check(!ill::dataJson(data).hasValue(),"Invalid numeric data rejected");
@@ -247,7 +264,7 @@ int main() {
 #if EGOMOTION_ENABLE_SVG
         drawing(ill::CircleConfig{});drawing(ill::SinusoidalConfig{});
         drawing(ill::HarmonicConfig{0,0});drawing(ill::HarmonicConfig{3,2});
-        nonfiniteShading();
+        nonfiniteShading();paperPairs();
 #endif
         negative();optionalBackend();
         std::cout<<std::setprecision(21)<<"checks="<<checks<<" failures="<<failures
