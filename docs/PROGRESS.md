@@ -1,5 +1,32 @@
 # 实施进度与证据登记（PROGRESS）
 
+## 2026-11-22 双配置复测、论文 Fig. 3/4 几何与 Fig. 5 逐轮证据
+
+`[HUMAN-EXECUTE/APPROVE]`　分支 `dev-plan-P0-P1-mat-dictionary-probe` 从 `8b366af0ad67eccead74be3087e1c65ef9088cff` 接续。每批运行前都已核对本地 HEAD、GitHub 分支和 Draft PR #6 的头提交。下表为最终受测源码 `a83682f2e493170521ec3192e9463e3b4fc132cd`，北京时间 01:04:56 至 01:29:49。两个模式分别完成配置、编译和先行 MAT 安全回归，再执行无筛选的完整套件。[Draft PR #6](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/pull/6)
+
+| SVG | Release 配置 / 编译 | 先行 MAT | 完整 CTest | 失败 / 跳过 |
+|---|---|---|---|---|
+| ON | 通过 / 通过 | 8/8，1.14 秒 | 79/79，92.81 秒 | 0 / 0 |
+| OFF | 通过 / 通过 | 8/8，1.25 秒 | 78/78，105.98 秒 | 0 / 0 |
+
+**修复和中断记录。** `877b915f` 用出版图坐标轴重建 Fig. 3 的两组视角，首次双配置使用全新 Ninja 构建目录。此阶段 ON 的首次编译和首次完整 CTest 都由执行器返回 143。前者停在 90/221 步，后者未写出 JUnit，终止原因未能确定。保留原日志后，ON 原目录续编成功，完整 CTest 从头重跑通过 79/79，OFF 通过 78/78。两者的先行 MAT 均为 8/8。目视复核后，`391bdd7` 对齐 Fig. 3A 的印刷刻度方向以及两面板的刻度范围。`a83682f2e493` 在 Fig. 5 各条件记录逐轮开始、完成、失败与未开始计数。两个后续修复均已正常推送，最终复用本轮两套源外构建目录，重新配置、增量编译并测试。最终 8 次配置、编译和 CTest 命令退出码均为 0，配置和编译日志未见告警。 [Fig. 3 问题 #7](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/7) · [Fig. 5 问题 #8](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/8)
+
+**数据和故障证据。** 两套 MAT 回归各核对 582 份原始 MAT 的 SHA-256 和 33,340 个列主序数值，并覆盖 v7.3 拒绝、载荷边界、封存快照及隔离的缺测掩码写回读。Fig. 5 合成回归在第 5 轮首帧注入求解故障，计划 8、尝试 5、完成 4、失败 1、未开始 3，保留四轮共 2,392 帧、每帧两个比较槽的 4,784 条观测。另测首轮开始前拒绝，以及随后独立条件完成 8 轮。输入为六条固定视线，注入已知运动与求解器，种子 19。已有指标、回滚、失败 Manifest 和退出码回归也在完整套件中执行。[决定及指标语义](decisions/PROJECT_OWNER_DECISIONS_2026-11-20.md)
+
+**数值和交付。** 初始化平移字段 `allemittransfehler`、`alleohnetransfehler` 相对历史 L2 的最大绝对差分别为 1.1965e-6°、3.0951e-12°。窄锥固定输入 `h=0.001` 的前向误差为 4.1634e-6，后向误差为 2.3603e-17，两者均为诊断记录。故障回归核对了求解失败时的状态回滚、部分指标的 Incomplete 记录及失败 Manifest 未能确认时的交付退出码 6，同时保留原求解和输出错误。
+
+**图件与 TC。** Fig. 3/4 四面板的几何 JSON 在 ON 数据模式、ON SVG 模式与 OFF 数据模式中逐字节相同。Fig. 3 每面板有 600 个源点。按论文坐标轴对齐后，原图可见蓝线端点到重绘折线的最大距离为 A 0.0512、B 0.0518 PDF 点。Fig. 4 的具名谐波示例及图形比较范围见逐图核对。66 项 TC 已逐项核对，59 项关联实际 CTest，4 项为资料复核，2 项为环境与构建证据，1 项完整实验资源测量延期。[逐图结果](reviews/PAPER_FIGURES_1_TO_5_2026-11-21.md) · [66 项 TC 映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md)
+
+**环境和复核入口。** Ubuntu 24.04.5 LTS x86_64、G++ 16.2.0、CMake/CTest 4.3.4、Ninja 1.11.1、Eigen 3.4.0、matio 1.5.26、zlib 1.3、Sophus 1.24.6。工作目录为仓库根，CTest 清除了显示服务变量。RunId 为 `r6-paper-evidence-20261122-vO8IT7bN`。以下路径相对于 `build/r6-paper-evidence-20261122-vO8IT7bN/`。
+
+- 配置和编译使用 `cmake -S . -B <B> -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DBUILD_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DEGOMOTION_ENABLE_SVG=<ON|OFF>` 和 `cmake --build <B> --parallel 2`，其中 `<B>` 为本次 `cmake-ON` 或 `cmake-OFF` 的仓库相对路径。
+- 使用 `ctest --test-dir <B> -C Release --verbose --output-on-failure --no-tests=error --parallel 2 --output-junit <报告>`。MAT 阶段增加 `-R '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values|r06_mat_reader_boundaries|r06_mat_raw_payload_boundaries|r06_mat_snapshot_identity|r06_mat73_version_rejection|r06_masked_mat_writer)$'`。JUnit 的名称、状态和数量均与登记吻合。ON 单独登记 `r06_svg_source_windows`。
+- `01/` 保存首轮及中断证据。`02/<模式>/<configure|build|mat|full>/` 保存精确命令、源码 SHA、起止时间、退出码、stdout、stderr 及 CTest 的 JUnit、LastTest.log。`02/figures/` 保存绘图与独立投影核对，`02/tc-audit.json` 保存 TC 复核摘要。
+- `r06_adaptive_real_cli` 的初始化、零噪声 Comparison、UpdateRates 均为 Complete，有效内帧分别为 33、4,784、598。该顺序的实际种子在 ON 为 `2388693229 / 2340084206 / 2526840299`，OFF 为 `4131843407 / 4122805836 / 4195884941`。初始化两个平移字段各有 33 个历史 L2 可比值，旋转轴角和测地角的语义分别登记。
+- 两批均在各自受测 SHA 下复核了 746 个输入。`origin/` 的 Git 子树为 `70ee155131c24a50169346d0ffbaff0c01b1c547`，原始数据 SHA-256 一致。根清单 `evidence.sha256` 含 210 项，其自身 SHA-256 为 `448a87738531328dd92a913793778d9493117fd9df29be78b523cef540b50a46`。
+
+完整科学实验、L4 统计、正式数值容差、其他 Debian/Ubuntu 环境及资源资格、冻结及验收签字继续延期。
+
 ## R6 双配置构建、MAT 安全回归与完整 CTest（2026-11-21）
 
 `[HUMAN-EXECUTE/APPROVE]` 开始前已核实工作区干净，开发分支 `dev-plan-P0-P1-mat-dictionary-probe`、GitHub 同名分支及 Draft PR #6 的 HEAD 均为 `8e353ad51732ee0ac3ded0541bed2859ef00c629`。两套全新 Release 构建均记录了这个 SHA。执行时间为北京时间 20:09:38 至 20:29:45。[Draft PR #6](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/pull/6)
