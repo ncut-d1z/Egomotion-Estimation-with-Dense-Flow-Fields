@@ -32,6 +32,7 @@ struct Data {
     std::vector<double> unnormalized_yy,rho; // 同一列主序网格
     double amplitude_scale=0;
     double azimuth_degrees=0,elevation_degrees=0,camera_zoom=1;
+    std::string view_reference; // 专项视角另有出处时随数据、SVG 一并保存。
 };
 
 using DataResult=Result<Data,NumericalErrorCode>;

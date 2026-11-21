@@ -104,7 +104,9 @@ Result<std::string,NumericalErrorCode> dataJson(const Data& data) {
             numbers(out,data.unnormalized_yy);out<<",\"rho\":";numbers(out,data.rho);out<<'}';
         }else out<<"null";
         out<<",\"view\":{\"azimuth_degrees\":"<<data.azimuth_degrees<<",\"elevation_degrees\":"
-           <<data.elevation_degrees<<",\"camera_zoom\":"<<data.camera_zoom<<"}}\n";
+           <<data.elevation_degrees<<",\"camera_zoom\":"<<data.camera_zoom;
+        if(!data.view_reference.empty())out<<",\"source\":"<<jsonQuote(data.view_reference);
+        out<<"}}\n";
         if(!out.good())
             return Json::failure(detail::failure(NumericalErrorCode::ResourceLimitExceeded,
                                                 "Cannot format complete illustration JSON"));

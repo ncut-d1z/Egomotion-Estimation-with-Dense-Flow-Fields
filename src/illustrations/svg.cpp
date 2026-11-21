@@ -28,11 +28,12 @@ std::string xml(const std::string& value) {
 struct Camera {
     Vector3 right,up,forward;
     double scale;
+    double center_y=420;
     Vector3 project(const Vector3& p)const {
-        return {450+scale*right.dot(p),420-scale*up.dot(p),forward.dot(p)};
+        return {450+scale*right.dot(p),center_y-scale*up.dot(p),forward.dot(p)};
     }
 };
-Camera camera(const Data& data) {
+Camera camera(const Data& data,bool paper_trajectory) {
     const double radians=std::acos(-1.0)/180;
     const double az=data.azimuth_degrees*radians,el=data.elevation_degrees*radians;
     // MATLAB azimuth从负y轴起算；相机方向与屏幕基向量正交。
@@ -46,7 +47,13 @@ Camera camera(const Data& data) {
     if(!(radius>0)||!std::isfinite(radius))throw std::invalid_argument("Invalid illustration display extent");
     // 径向面需给原camzoom(1.5)预留画幅；像素尺寸不改变源数值几何。
     constexpr double kTrajectoryViewportRadius=290,kHarmonicViewportRadius=210;
-    const double viewport_radius=data.harmonic?kHarmonicViewportRadius:kTrajectoryViewportRadius;
+    double viewport_radius=data.harmonic?kHarmonicViewportRadius:kTrajectoryViewportRadius;
+    if(paper_trajectory) {
+        // 双面板内为单位球的三条刻度轴预留空间；图形和轴共用等比例投影。
+        constexpr double kPaperUnitRadius=245,kPaperCenterY=370;
+        viewport_radius=kPaperUnitRadius;
+        out.center_y=kPaperCenterY;
+    }
     out.scale=viewport_radius*data.camera_zoom/radius;
     if(!std::isfinite(out.scale))throw std::invalid_argument("Illustration projection scale overflow");
     return out;
@@ -125,14 +132,45 @@ std::vector<Primitive> primitives(const Data& data,const Camera& view,bool paper
         line.imbue(std::locale::classic());line<<std::fixed<<std::setprecision(3);
         line<<"<line data-trajectory-segment=\""<<i<<"\" x1=\""<<a.x()<<"\" y1=\""<<a.y()
             <<"\" x2=\""<<b.x()<<"\" y2=\""<<b.y()<<"\" stroke=\""<<(paper?"#304fbe":"#ab2637")
-            <<"\" stroke-width=\"2.4\"/>\n";
+            <<"\" stroke-width=\""<<(paper?"5":"2.4")<<"\"/>\n";
         out.push_back({(a.z()+b.z())/2,line.str()});
     }
     std::stable_sort(out.begin(),out.end(),[](const auto& a,const auto& b){return a.depth<b.depth;});
     return out;
 }
+void trajectoryAxes(std::ostream& out,const Camera& view) {
+    // Fig. 3 保留单位球底面的 x、y 轴与左侧竖直轴。Fig. 4 源脚本 axis off。
+    const double near_x=std::copysign(1.0,view.forward.x());
+    const double near_y=std::copysign(1.0,view.forward.y());
+    const Vector3 x_end{-near_x,near_y,-1},y_end{near_x,-near_y,-1};
+    const bool x_is_left=view.project(x_end).x()<view.project(y_end).x();
+    const Vector3 vertical=x_is_left?x_end:y_end;
+    auto axis=[&](char name,Eigen::Index dimension,Vector3 point,int per_unit,int last_tick,double dx,double dy) {
+        point[dimension]=-1;
+        const auto start=view.project(point);
+        point[dimension]=1;
+        const auto end=view.project(point);
+        out<<"<g data-axis=\""<<name<<"\"><path d=\"M "<<start.x()<<" "<<start.y()
+           <<" L "<<end.x()<<" "<<end.y()<<"\" stroke=\"#222\"/>\n";
+        for(int index=-last_tick;index<=last_tick;++index) {
+            point[dimension]=static_cast<double>(index)/per_unit;
+            const auto projected=view.project(point);
+            out<<"<path d=\"M "<<projected.x()<<" "<<projected.y()<<" l "<<dx<<" "<<dy
+               <<"\" stroke=\"#222\"/><text x=\""<<projected.x()+2*dx<<"\" y=\""
+               <<projected.y()+2*dy+4<<"\" text-anchor=\""<<(dx<0?"end":"start")
+               <<"\">"<<point[dimension]<<"</text>\n";
+        }
+        out<<"</g>\n";
+    };
+    out<<"<g font-family=\"sans-serif\" font-size=\"14\" fill=\"#222\">\n";
+    axis('x',0,{0,near_y,-1},2,2,x_is_left?-4:4,5);
+    axis('y',1,{near_x,0,-1},2,2,x_is_left?4:-4,5);
+    axis('z',2,vertical,5,4,-6,-2);
+    out<<"</g>\n";
+}
 std::string render(const Data& data,const std::string& panel={}) {
-    const auto view=camera(data);
+    const bool paper_trajectory=!panel.empty()&&!data.harmonic;
+    const auto view=camera(data,paper_trajectory);
     const auto elements=primitives(data,view,!panel.empty());
     const auto clip="scene"+panel;
     std::ostringstream out;out.imbue(std::locale::classic());
@@ -148,11 +186,13 @@ std::string render(const Data& data,const std::string& panel={}) {
        <<xml(heading)<<"</text>\n<text x=\"450\" y=\"60\" text-anchor=\"middle\" font-size=\"14\">"<<xml(data.kind);
     if(data.harmonic)out<<" degree="<<data.harmonic->degree<<" order="<<data.harmonic->order;
     out<<"</text>\n<g clip-path=\"url(#"<<clip<<")\">\n";
+    if(paper_trajectory)trajectoryAxes(out,view);
     for(const auto& element:elements)out<<element.svg;
     out<<"</g>\n<metadata>source script blob: "<<xml(data.source_script_blob)
        <<"; column-major mesh; orthographic equal-scale projection; flat shading and depth sorting; "
          "MATLAB Phong lighting/pixel equivalence not asserted; azimuth="<<data.azimuth_degrees
        <<"; elevation="<<data.elevation_degrees<<"; zoom="<<data.camera_zoom;
+    if(!data.view_reference.empty())out<<"; view source: "<<xml(data.view_reference);
     for(const auto& helper:data.helper_source_blobs)out<<"; helper blob: "<<xml(helper);
     out<<"</metadata>\n</svg>\n";
     return out.str();

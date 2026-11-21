@@ -129,11 +129,21 @@ struct Trials {
             auto data=generate(config);
             if(!data.hasValue())propagate(ExperimentErrorCode::DataMismatch,ErrorStage::Simulation,
                 "Cannot generate paper illustration",data.error());
-            auto json=dataJson(data.value());
+            auto scene=std::move(data).value();
+            if(figure==3) {
+                // Fig. 3A/B 第 15 页底轴投影给出的整度近似。归档轨迹脚本未指定 view。
+                constexpr double kCircleAzimuth=60,kCircleElevation=24;
+                constexpr double kSinusoidalAzimuth=55,kSinusoidalElevation=22;
+                const bool circle=std::holds_alternative<CircleConfig>(config);
+                scene.azimuth_degrees=circle?kCircleAzimuth:kSinusoidalAzimuth;
+                scene.elevation_degrees=circle?kCircleElevation:kSinusoidalElevation;
+                scene.view_reference="10.1371/journal.pone.0128413.g003 (estimated from published axes)";
+            }
+            auto json=dataJson(scene);
             if(!json.hasValue())propagate(ExperimentErrorCode::DataMismatch,ErrorStage::Output,
                 "Cannot encode paper geometry",json.error());
             files.save(study.geometry.empty()?"geometry-A.json":"geometry-B.json",json.value());
-            study.geometry.push_back(std::move(data).value());
+            study.geometry.push_back(std::move(scene));
             ++attempted;
         }
     }
