@@ -18,7 +18,7 @@
 #include <vector>
 
 namespace {
-enum class Fault { None, StartLink, StartSync, FinishLink, FinishSync };
+enum class Fault { None, StartLink, StartSync, FinishLink, FinishSync, ManifestLink, ManifestSync };
 Fault fault = Fault::None;
 int fail_sync_fd = -1;
 std::size_t hits = 0, checks = 0, calls = 0;
@@ -28,11 +28,14 @@ extern "C" int __real_fsync(int);
 extern "C" int __wrap_linkat(int from_fd, const char* from, int to_fd, const char* to, int flags) {
     const bool start = std::strcmp(to, "invocation.json") == 0;
     const bool finish = std::strcmp(to, "execution.json") == 0;
-    if ((start && fault == Fault::StartLink) || (finish && fault == Fault::FinishLink)) {
+    const bool manifest = std::strcmp(to, "manifest.json") == 0;
+    if ((start && fault == Fault::StartLink) || (finish && fault == Fault::FinishLink) ||
+        (manifest && fault == Fault::ManifestLink)) {
         ++hits; errno = EIO; return -1;
     }
     const int result = __real_linkat(from_fd, from, to_fd, to, flags);
-    if (result == 0 && ((start && fault == Fault::StartSync) || (finish && fault == Fault::FinishSync)))
+    if (result == 0 && ((start && fault == Fault::StartSync) || (finish && fault == Fault::FinishSync) ||
+                        (manifest && fault == Fault::ManifestSync)))
         fail_sync_fd = to_fd;
     return result;
 }
@@ -162,6 +165,63 @@ void recordFaults(const fs::path& root) {
                 contains(record, "\"exit_code_if_record_published\":5", "Conditional command status retained");
                 contains(record, "\"exit_code_on_record_failure\":6", "Actual audit failure return described separately");
             } else require(!fs::exists(root / "output" / id / "execution.json"), "Pre-publication error cannot claim record exists");
+        }
+    }
+}
+void failureManifestFaults(const fs::path& root) {
+    const std::vector<std::vector<std::string>> arguments = {
+        {"run-bias-occluded", "--seed", "17", "--level", "2"},
+        {"run-bias-proportional", "--seed", "23", "--level", "4"},
+        {"run-adaptive-init"},
+        {"run-adaptive-comparison", "--noise-scale", "-0.125"},
+        {"run-adaptive-update-rates"}};
+    for (const auto kind : {Fault::ManifestLink, Fault::ManifestSync}) {
+        for (std::size_t index = 0; index < arguments.size(); ++index) {
+            TrackingRunner runner;
+            const auto id = "manifest_fault_" + std::to_string(static_cast<int>(kind)) +
+                '_' + std::to_string(index);
+            auto args = arguments[index];
+            args.insert(args.end(), {"--run-id", id});
+            fault = kind; hits = 0;
+            const auto response = invoke(root, runner, args);
+            fault = Fault::None;
+            require(hits == 1 && runner.invocations == 1,
+                    "Failure Manifest fault must fire after exactly one calculation attempt");
+            require(response.code == 6 && response.out.empty(),
+                    "Unconfirmed failure Manifest must return output failure even when stderr succeeds");
+
+            ErrorDetail original; original.stage = ErrorStage::Simulation; original.run_id = RunId{id};
+            original.message = "Injected \"runner\" failure\n第二行";
+            const auto original_json = jsonFailure(Failure<ExperimentErrorCode>{
+                ExperimentErrorCode::SolverFailed, std::move(original)}, 5);
+            const auto first = original_json + '\n';
+            require(response.err.compare(0, first.size(), first) == 0,
+                    "Original calculation error and exit 5 remain the first independent diagnostic");
+            const auto second = response.err.substr(first.size());
+            contains(second, "\"error_code\":\"OutputFailed\"", "Manifest has its own output failure");
+            contains(second, "\"exit_code\":6", "Manifest failure diagnostic keeps exit 6");
+            contains(second, "\"run_id\":" + jsonQuote(id), "Both errors retain actual RunId");
+            contains(second, "\"variable\":\"manifest.json\"", "Manifest publication cause retains target");
+            contains(second, kind == Fault::ManifestLink ? "\"code\":\"WriteFailed\"" :
+                "\"code\":\"ReadbackMismatch\"", "Retain actual publication or durability failure cause");
+            require(second.find('\n') == second.size() - 1,
+                    "Exactly one complete independent Manifest failure diagnostic follows");
+
+            const auto directory = root / "output" / id;
+            const auto finish = read(directory / "execution.json");
+            contains(finish, "\"invocation_confirmed\":true", "Calculation had a confirmed start");
+            contains(finish, "\"exit_code_if_record_published\":6", "Execution audit matches final output failure");
+            contains(finish, "\"attempted_text\":" + jsonQuote(first), "Keep original calculation event");
+            contains(finish, "\"attempted_text\":" + jsonQuote(second), "Keep separate Manifest failure event");
+            require(finish.find("\"write_and_flush_succeeded\":false") == std::string::npos,
+                    "Successful channel delivery cannot hide independent Manifest failure");
+            if (kind == Fault::ManifestLink) {
+                require(!fs::exists(directory / "manifest.json"), "Unpublished Manifest remains absent");
+            } else {
+                const auto manifest = read(directory / "manifest.json");
+                contains(manifest, "\"completeness\":\"Failed\"", "Retain published but unconfirmed failure evidence");
+                contains(manifest, "\"errors\":[" + original_json + ']', "Manifest keeps original calculation failure");
+            }
         }
     }
 }
@@ -392,7 +452,7 @@ int main(int argc, char** argv) {
     std::string pattern = (fs::path(argv[1]) / "运行记录 中文-XXXXXX").string();
     require(::mkdtemp(pattern.data()) != nullptr, "Cannot reserve new execution sandbox");
     const fs::path root(pattern); fs::create_directory(root / "origin");
-    allEntries(root); recordFaults(root); runnerExceptions(root);
+    allEntries(root); recordFaults(root); failureManifestFaults(root); runnerExceptions(root);
     preserveCompleteAndExisting(root); artifacts(root);
     require(fs::is_empty(root / "origin"), "Original marker untouched");
     std::cout << "PASS execution records checks=" << checks << " calls=" << calls

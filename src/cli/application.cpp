@@ -249,7 +249,9 @@ int runExperiment(const Command& command,
         auto status=context.publishFailureRecord(error);
         std::vector<std::string> diagnostics{jsonFailure(error,code)+"\n"};
         if(!status.hasValue())diagnostics.push_back(jsonFailure(status.error(),6)+"\n");
-        const auto delivery=deliverRecorded({},diagnostics,code,context.runId(),out,err);
+        // 独立审计失败改变最终退出码，原计算诊断仍保留自己的分类和退出码。
+        const auto delivery=deliverRecorded({},diagnostics,status.hasValue()?code:6,
+                                            context.runId(),out,err);
         return finishRecord(text,context.runId(),delivery,invocation.hasValue(),err);
     }
     const auto delivery=deliverRecorded(outcomeResponse(result.value()),{},0,context.runId(),out,err);
