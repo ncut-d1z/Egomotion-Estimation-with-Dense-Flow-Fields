@@ -1,8 +1,8 @@
 # Egomotion Estimation with Dense Flow Fields
 
-论文 Fig. 1–5 的专项入口为 `egomotion paper-figure`。它从同一次求解保留论文旋转轴方向角与 SO(3) 测地角，并支持按实际刷新日程绘图。当前交付为源码，构建与测试延期。使用方式、逐图数据和已知来源差异见[论文图表专项记录](docs/reviews/PAPER_FIGURES_1_TO_5_2026-11-21.md)。
+论文 Fig. 1–5 的专项入口为 `egomotion paper-figure`。它从同一次求解保留论文旋转轴方向角与 SO(3) 测地角，并支持按实际刷新日程绘图。提交 `8e353ad5` 在 SVG ON 和 OFF 下均已编译，并通过 MAT 安全回归及完整 CTest。完整科学实验继续延期。[论文图表专项记录](docs/reviews/PAPER_FIGURES_1_TO_5_2026-11-21.md) · [双配置执行证据](docs/PROGRESS.md)
 
-> **最新接续：失败记录退出码与元数据输入，仅代码（2026-11-21）**。实验计算失败后若失败 Manifest 也未确认保存，最终退出码与 execution 记录统一为输出错误6，原计算诊断保留；普通 MAT 元数据检查先非阻塞打开并确认普通文件，再通过持有的描述符读取同一文件身份。必要回归仅准备源码，详见 [本批记录](docs/reviews/R6_FAILURE_METADATA_CONTINUATION_2026-11-21.md)。**构建/测试继续延期，没有新增运行证据；R6 总体验收未完成，PR #6 保持 Draft。**
+> **前批接续：失败记录退出码与元数据输入，仅代码（2026-11-21）**。实验计算失败后若失败 Manifest 也未确认保存，最终退出码与 execution 记录统一为输出错误6，原计算诊断保留；普通 MAT 元数据检查先非阻塞打开并确认普通文件，再通过持有的描述符读取同一文件身份。该批次只准备了回归源码，当时的构建与测试延期。[本批记录](docs/reviews/R6_FAILURE_METADATA_CONTINUATION_2026-11-21.md)
 
 > **前批接续：完成状态与子进程回收，仅代码（2026-11-21）**。Bias 的最终 Complete 门禁补齐既有有效样本要求，避免公开计数入口绕过；进程记录器在 fork 前拒绝自动回收子进程的信号设置，父侧阻塞 SIGCHLD，防止退出状态被 handler 提前取走。两个既有目标补充回归源码，详见 [前批记录](docs/reviews/R6_MANIFEST_PROCESS_CONTINUATION_2026-11-21.md)。该批同样没有构建/测试证据。
 

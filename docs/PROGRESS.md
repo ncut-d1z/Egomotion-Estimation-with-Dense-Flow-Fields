@@ -1,5 +1,21 @@
 # 实施进度与证据登记（PROGRESS）
 
+## R6 双配置构建、MAT 安全回归与完整 CTest（2026-11-21）
+
+`[HUMAN-EXECUTE/APPROVE]` 开始前已核实工作区干净，开发分支 `dev-plan-P0-P1-mat-dictionary-probe`、GitHub 同名分支及 Draft PR #6 的 HEAD 均为 `8e353ad51732ee0ac3ded0541bed2859ef00c629`。两套全新 Release 构建均记录了这个 SHA。执行时间为北京时间 20:09:38 至 20:29:45。[Draft PR #6](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/pull/6)
+
+| SVG 配置 | CMake 配置 / 编译 | 先行 MAT 安全回归 | 随后的完整 CTest | 完整套件失败 / 跳过 |
+|---|---|---|---|---|
+| ON | 通过 / 通过 | 8/8，3.78 秒 | 79/79，90.38 秒 | 0 / 0 |
+| OFF | 通过 / 通过 | 8/8，3.75 秒 | 78/78，86.11 秒 | 0 / 0 |
+
+两套配置、编译及四次 CTest 的退出码均为 0。配置与编译日志未见警告或错误。JUnit 用例名逐项匹配各轮预期清单。完整套件各自重跑了先行的 8 项，ON 另有 `r06_svg_source_windows`。首次运行全部通过，无需修复或复测。
+
+- **环境与命令**　Ubuntu 24.04.5 LTS x86_64，G++ 16.2.0，CMake/CTest 4.3.4，Ninja 1.11.1，Eigen 3.4.0，matio 1.5.26，zlib 1.3，Sophus 1.24.6。工作目录为仓库根，测试时未设置显示服务环境变量。RunId 为 `r6-paper-verify-20261121-3wKuyZ9U`。各模式的构建目录 `<B>` 为 `build/<RunId>/cmake-ON` 或 `cmake-OFF`（同一父目录）。配置使用 `cmake -S . -B <B> -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DBUILD_TESTING=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DEGOMOTION_ENABLE_SVG=<模式>`，编译使用 `cmake --build <B> --parallel 2`。
+- **先行回归**　两轮均用 `ctest --test-dir <B> -C Release --verbose --output-on-failure --no-tests=error --parallel 2 --output-junit <报告>`。先行轮追加 `-R '^(r02_mat_reader|r06_historical_mat_readonly_schema|r06_mat_independent_storage_values|r06_mat_reader_boundaries|r06_mat_raw_payload_boundaries|r06_mat_snapshot_identity|r06_mat73_version_rejection|r06_masked_mat_writer)$'`。随后执行无筛选的完整套件。两种模式均逐文件核对了 582 份原始 MAT 的 SHA-256，以及按列主序读取的 33,340 个数值，并通过新版缺测掩码写回读。
+- **专项与 Adaptive**　两种模式都通过了 `r06_paper_figure_contract`。完整套件内的 `r06_adaptive_real_cli` 每种模式执行 36 次进程调用。初始化、零噪声 Comparison、UpdateRates 的 Manifest 均为 Complete，有效计数分别为 33、4,784、598，各自失败数为 0。按此顺序，ON 实际种子为 `3258389470 / 3389437758 / 2186188484`，OFF 为 `120594224 / 3057950467 / 4275774270`。完整科学实验、论文图表的定量复现和 R6 正式验收继续延期。
+- **输入与日志**　运行后按 SHA-256 复核全部 746 个登记输入（`origin/`、`verification/`、`tests/`），全部匹配。原始归档 Git 子树为 `70ee155131c24a50169346d0ffbaff0c01b1c547`。本地证据根为 `build/r6-paper-verify-20261121-3wKuyZ9U/`，其中 `01/<模式>/<configure|build|mat|full>/` 保存精确命令、工作目录、起止时间、退出码、stdout 和 stderr。CTest 阶段另存 JUnit 与 LastTest.log。根目录 `evidence.sha256` 索引 55 份证据，清单自身 SHA-256 为 `54bce4be0bee031c71df98917b5141ac905224449b9cad26fa18b062edf3867f`。
+
 ## 论文专项入口和回归源码（2026-11-21）
 
 `[HUMAN-EXECUTE/APPROVE]`　源码检查点 `afcaa8ca80b8e5dfbb39202e6e9b41e9d0c0068e`，开发分支 `dev-plan-P0-P1-mat-dictionary-probe`，[Draft PR #6](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/pull/6)。独立 paper-figure 入口已接入五幅图的采集、聚合和可选 SVG。历史 Bias 的单位标识、按实测周期绘图、流比分段和合法零度的回归源码一并提交。静态核对了 3 个专项生产翻译单元、新测试目标和 13 个上游脚本 blob。本批未配置、编译、执行 CTest 或运行新实验。详见[逐图数据和源码交付](reviews/PAPER_FIGURES_1_TO_5_2026-11-21.md)。

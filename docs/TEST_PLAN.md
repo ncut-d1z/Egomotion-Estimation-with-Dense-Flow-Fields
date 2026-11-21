@@ -1,6 +1,8 @@
 # 测试设计与验收计划（TEST PLAN）
 
-> **2026-11-21 候选回归范围**　`[AI-DRAFT + HUMAN-APPROVE]`　新增 CTest 名称 `r06_paper_figure_contract`，并扩展既有 Bias、Session 和插图回归源码。覆盖真实方向数、固定 40/8 分母、六方向理想流比、两种旋转指标、两套刷新日程、对数断线及 SVG 开关。恢复运行许可后须在新提交的两个构建配置上先执行 MAT 安全回归，再执行完整 CTest。科学实验与 DEC-005 数值资格另行取证。[专项源码与验收边界](reviews/PAPER_FIGURES_1_TO_5_2026-11-21.md)
+> **2026-11-21 双配置执行证据**　`[AI-EDIT]`　受测提交 `8e353ad5` 的两种 Release 配置各通过先行 MAT 安全回归 8/8。随后执行完整 CTest，SVG ON 79/79、OFF 78/78，零失败、零跳过。逐项登记、运行日志位置与输入校验见[实施进度](PROGRESS.md)。
+
+> **2026-11-21 候选回归范围**　`[AI-DRAFT + HUMAN-APPROVE]`　新增 CTest 名称 `r06_paper_figure_contract`，并扩展既有 Bias、Session 和插图回归源码。覆盖真实方向数、固定 40/8 分母、六方向理想流比、两种旋转指标、两套刷新日程、对数断线及 SVG 开关。执行顺序为两种构建配置先跑 MAT 安全回归，再跑完整 CTest。科学实验与 DEC-005 数值资格另行取证。[专项源码与验收边界](reviews/PAPER_FIGURES_1_TO_5_2026-11-21.md)
 
 > **2026-11-18 最新证据登记（[AI-EDIT]）**：受测源码`3985b056aa19935c8348f0fefa5f5292f9fbd3b4`两模式配置/编译无诊断，**SVG ON73/73、OFF72/72 CTest**；先MAT7项，再66/65项，零失败/跳过/禁用。新增合成固定输入→真实Adaptive Step/Session→完整35/600帧及8轮聚合→MAT交付独立对照：3676721项、17441次Step、12个MAT/8540值通过，保存值最大差5.406439324458240113e-10，沿用原1e-9工程余量。两配置Step JSONL与MAT数值载荷相同，739项输入SHA及21组既有摘要不变。见 [完整交付链证据](reviews/R6_REAL_STEP_DELIVERY_L3_2026-11-18.md)。合成场景不等于原科学实验成功；原轨迹三入口仍Incomplete、无完整科学MAT，L4、病态资格及正式验收未完成。Issue #1–#5开放，已建立[Draft PR #6](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/pull/6)，R6未结案。下列66 TC/AC、阈值与冻结状态不变。
 

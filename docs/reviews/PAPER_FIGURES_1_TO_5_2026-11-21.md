@@ -43,11 +43,11 @@ Fig. 5 旋转分段使用同一实验的理想流比，Comparison 阈值为 0.01
 
 ## 后续证据顺序
 
-恢复验证授权后先核对准确源码 SHA，再按 SVG ON/OFF 两套配置、全 CTest、MAT 安全与指标写回读、错误共现路径取证。科学实验另按 Fig. 2 初始化、Fig. 5 Comparison 两条件及 UpdateRates 两套周期、Fig. 1 两场景各 40 次的顺序登记输入、实际成功/缺测/失败数和独立 L2/L3/L4 比较。DEC-005/006/008、病态输入前向误差、验收签字仍按原计划办理。
+已核对源码 SHA，完成 SVG ON/OFF 构建、先行 MAT 安全回归及完整 CTest。完整科学实验继续延期。恢复实验后按 Fig. 2 初始化、Fig. 5 Comparison 两条件及 UpdateRates 两套周期、Fig. 1 两场景各 40 次的顺序登记输入、实际成功/缺测/失败数和独立 L2/L3/L4 比较。DEC-005/006/008、病态输入前向误差、验收签字仍按原计划办理。[本轮执行证据](../PROGRESS.md)
 
 ## 专项入口与证据文件
 
-`[HUMAN-EXECUTE/APPROVE]`　以下描述源码 `afcaa8ca80b8e5dfbb39202e6e9b41e9d0c0068e` 的行为。当前工作区完成了源码静态审阅，构建、CTest、CLI、导出 SVG 和科学实验均待验证。现有五个 MAT 实验入口继续使用原保存合同。普通 Bias 分析读取裸 MAT 时保留原 ywerte，单位标为待核实。
+`[HUMAN-EXECUTE/APPROVE]`　以下描述源码 `afcaa8ca80b8e5dfbb39202e6e9b41e9d0c0068e` 的行为。该源码纳入后续受测提交 `8e353ad5`。现有五个 MAT 实验入口继续使用原保存合同。普通 Bias 分析读取裸 MAT 时保留原 ywerte，单位标为待核实。
 
 候选入口为 `egomotion paper-figure --figure N --format data|svg [--run-id ID]`，默认格式为 data。Fig. 5 还需要显式给出 `--seed UINT32` 和 `--periods archive|article`。这两个选项只适用于 Fig. 5。入口会生成新实验或几何数据，Fig. 1 会执行全部 80 个独立试验。下表供恢复相应运行授权后使用。
 
@@ -60,4 +60,4 @@ Fig. 5 旋转分段使用同一实验的理想流比，Comparison 阈值为 0.01
 
 结果根为 `output/<RunId>/`。两种格式都写数值；各曲线 TSV 的 `segment_start` 标记切片边界。均值缺一次就记 NA，并在原 TSV 中保留每次的数值或错误码。有效零度保留为 0，对数显示在该处断线。源码记录用 case-counts.json 区分已尝试、求解完成和求解失败的独立试验，invocation.json 与 execution.json 给出配置、源码身份和交付状态。某次求解中途失败会保留该次已完成的样本与失败诊断；同组其它独立试验继续，整图不会发布成功均值。归档线性视图的输入是本次有身份的 C++ 样本。
 
-源码入口见[采集与发布](../../src/paper/study.cpp)、[聚合与绘图窗口](../../src/paper/charts.cpp)、[可选曲线 SVG](../../src/paper/chart_svg.cpp)和[双面板几何](../../src/illustrations/svg.cpp)。新登记的 `r06_paper_figure_contract` 使用六条合成视线核对理想流比 1/2、零转轴和合法测地角，还检查单次角度先于平均、7/8 缺测、分段边界与两种纵轴。既有 Bias、Session、归档分析和插图用例也补充专项断言。以上均为回归源码，尚无本版测试结果。
+源码入口见[采集与发布](../../src/paper/study.cpp)、[聚合与绘图窗口](../../src/paper/charts.cpp)、[可选曲线 SVG](../../src/paper/chart_svg.cpp)和[双面板几何](../../src/illustrations/svg.cpp)。新登记的 `r06_paper_figure_contract` 使用六条合成视线核对理想流比 1/2、零转轴和合法测地角，还检查单次角度先于平均、7/8 缺测、分段边界与两种纵轴。既有 Bias、Session、归档分析和插图用例也补充专项断言。这些回归已在两种配置下执行通过。
