@@ -33,6 +33,7 @@ struct Data {
     double amplitude_scale=0;
     double azimuth_degrees=0,elevation_degrees=0,camera_zoom=1;
     std::string view_reference; // 专项视角另有出处时随数据、SVG 一并保存。
+    bool reverse_x_tick_labels=false; // Fig. 3A 印刷底轴的读数为源坐标 -x。
 };
 
 using DataResult=Result<Data,NumericalErrorCode>;

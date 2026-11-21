@@ -105,7 +105,9 @@ Result<std::string,NumericalErrorCode> dataJson(const Data& data) {
         }else out<<"null";
         out<<",\"view\":{\"azimuth_degrees\":"<<data.azimuth_degrees<<",\"elevation_degrees\":"
            <<data.elevation_degrees<<",\"camera_zoom\":"<<data.camera_zoom;
-        if(!data.view_reference.empty())out<<",\"source\":"<<jsonQuote(data.view_reference);
+        if(!data.view_reference.empty())
+            out<<",\"source\":"<<jsonQuote(data.view_reference)
+               <<",\"x_tick_sign\":"<<(data.reverse_x_tick_labels?-1:1);
         out<<"}}\n";
         if(!out.good())
             return Json::failure(detail::failure(NumericalErrorCode::ResourceLimitExceeded,

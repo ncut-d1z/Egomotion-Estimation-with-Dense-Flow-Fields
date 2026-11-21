@@ -137,6 +137,7 @@ struct Trials {
                 const bool circle=std::holds_alternative<CircleConfig>(config);
                 scene.azimuth_degrees=circle?kCircleAzimuth:kSinusoidalAzimuth;
                 scene.elevation_degrees=circle?kCircleElevation:kSinusoidalElevation;
+                scene.reverse_x_tick_labels=circle;
                 scene.view_reference="10.1371/journal.pone.0128413.g003 (estimated from published axes)";
             }
             auto json=dataJson(scene);

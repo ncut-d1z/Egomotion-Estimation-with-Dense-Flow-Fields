@@ -138,7 +138,7 @@ std::vector<Primitive> primitives(const Data& data,const Camera& view,bool paper
     std::stable_sort(out.begin(),out.end(),[](const auto& a,const auto& b){return a.depth<b.depth;});
     return out;
 }
-void trajectoryAxes(std::ostream& out,const Camera& view) {
+void trajectoryAxes(std::ostream& out,const Camera& view,bool reverse_x_labels) {
     // Fig. 3 保留单位球底面的 x、y 轴与左侧竖直轴。Fig. 4 源脚本 axis off。
     const double near_x=std::copysign(1.0,view.forward.x());
     const double near_y=std::copysign(1.0,view.forward.y());
@@ -150,7 +150,8 @@ void trajectoryAxes(std::ostream& out,const Camera& view) {
         const auto start=view.project(point);
         point[dimension]=1;
         const auto end=view.project(point);
-        out<<"<g data-axis=\""<<name<<"\"><path d=\"M "<<start.x()<<" "<<start.y()
+        const int sign=(name=='x'&&reverse_x_labels)?-1:1;
+        out<<"<g data-axis=\""<<name<<"\" data-tick-sign=\""<<sign<<"\"><path d=\"M "<<start.x()<<" "<<start.y()
            <<" L "<<end.x()<<" "<<end.y()<<"\" stroke=\"#222\"/>\n";
         for(int index=-last_tick;index<=last_tick;++index) {
             point[dimension]=static_cast<double>(index)/per_unit;
@@ -158,13 +159,14 @@ void trajectoryAxes(std::ostream& out,const Camera& view) {
             out<<"<path d=\"M "<<projected.x()<<" "<<projected.y()<<" l "<<dx<<" "<<dy
                <<"\" stroke=\"#222\"/><text x=\""<<projected.x()+2*dx<<"\" y=\""
                <<projected.y()+2*dy+4<<"\" text-anchor=\""<<(dx<0?"end":"start")
-               <<"\">"<<point[dimension]<<"</text>\n";
+               <<"\">"<<static_cast<double>(sign*index)/per_unit<<"</text>\n";
         }
         out<<"</g>\n";
     };
     out<<"<g font-family=\"sans-serif\" font-size=\"14\" fill=\"#222\">\n";
-    axis('x',0,{0,near_y,-1},2,2,x_is_left?-4:4,5);
-    axis('y',1,{near_x,0,-1},2,2,x_is_left?4:-4,5);
+    // 原图 A 的 x 底轴只标中间三个刻度，B 的 y 底轴只标中间三个。
+    axis('x',0,{0,near_y,-1},2,reverse_x_labels?1:2,x_is_left?-4:4,5);
+    axis('y',1,{near_x,0,-1},2,reverse_x_labels?2:1,x_is_left?4:-4,5);
     axis('z',2,vertical,5,4,-6,-2);
     out<<"</g>\n";
 }
@@ -186,7 +188,7 @@ std::string render(const Data& data,const std::string& panel={}) {
        <<xml(heading)<<"</text>\n<text x=\"450\" y=\"60\" text-anchor=\"middle\" font-size=\"14\">"<<xml(data.kind);
     if(data.harmonic)out<<" degree="<<data.harmonic->degree<<" order="<<data.harmonic->order;
     out<<"</text>\n<g clip-path=\"url(#"<<clip<<")\">\n";
-    if(paper_trajectory)trajectoryAxes(out,view);
+    if(paper_trajectory)trajectoryAxes(out,view,data.reverse_x_tick_labels);
     for(const auto& element:elements)out<<element.svg;
     out<<"</g>\n<metadata>source script blob: "<<xml(data.source_script_blob)
        <<"; column-major mesh; orthographic equal-scale projection; flat shading and depth sorting; "
