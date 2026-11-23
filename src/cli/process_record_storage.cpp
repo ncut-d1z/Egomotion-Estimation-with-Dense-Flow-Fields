@@ -17,14 +17,18 @@ Fd::Fd(Fd&& other) noexcept : value_(std::exchange(other.value_, -1)) {}
 void checked(bool success, const char* operation) {
     if (!success) throw std::runtime_error(std::string(operation) + "; errno=" + std::to_string(errno));
 }
-void writeAll(int fd, const std::string& contents) {
-    std::size_t written = 0;
-    while (written < contents.size()) {
-        const auto count = ::write(fd, contents.data() + written, contents.size() - written);
+bool tryWriteAll(int fd, std::string_view contents) noexcept {
+    while (!contents.empty()) {
+        const auto count = ::write(fd, contents.data(), contents.size());
         if (count < 0 && errno == EINTR) continue;
-        checked(count > 0, "Cannot write process record");
-        written += static_cast<std::size_t>(count);
+        if (count == 0) errno = EIO;
+        if (count <= 0) return false;
+        contents.remove_prefix(static_cast<std::size_t>(count));
     }
+    return true;
+}
+void writeAll(int fd, const std::string& contents) {
+    checked(tryWriteAll(fd, contents), "Cannot write process record");
 }
 namespace {
 void checkedReservedDirectory(bool success, const char* operation,

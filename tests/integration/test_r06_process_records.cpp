@@ -3,6 +3,7 @@
 #include "egomotion/cli/invocation_observer.hpp"
 #include "egomotion/contracts/diagnostics.hpp"
 
+#include <algorithm>
 #include <cerrno>
 #include <csignal>
 #include <cstdlib>
@@ -22,9 +23,11 @@
 
 namespace {
 enum class Fault { None, StartLink, StartSync, FinishLink, FinishSync, ChannelSync, Fork, Random,
-                   Collision, ContextSync, ReservationSync };
+                   Collision, ContextSync, ReservationSync, SetupWriteRetry, SetupWriteError, SetupWriteZero };
 Fault fault = Fault::None;
 int failed_sync_fd = -1;
+int setup_diagnostic_fd = -1;
+unsigned int setup_write_attempts = 0;
 bool forked = false;
 bool child_signal_blocked_before_fork = false;
 bool expected_child_signal_blocked = false;
@@ -35,6 +38,27 @@ extern "C" int __real_linkat(int, const char*, int, const char*, int);
 extern "C" int __real_fsync(int);
 extern "C" pid_t __real_fork();
 extern "C" ssize_t __real_getrandom(void*, std::size_t, unsigned int);
+extern "C" int __real_dup2(int, int);
+extern "C" ssize_t __real_write(int, const void*, std::size_t);
+extern "C" int __wrap_dup2(int source, int target) {
+    if (target == STDERR_FILENO &&
+        (fault == Fault::SetupWriteRetry || fault == Fault::SetupWriteError || fault == Fault::SetupWriteZero)) {
+        setup_diagnostic_fd = source;
+        errno = EBADF;
+        return -1;
+    }
+    return __real_dup2(source, target);
+}
+extern "C" ssize_t __wrap_write(int fd, const void* bytes, std::size_t size) {
+    if (setup_diagnostic_fd >= 0 && fd == setup_diagnostic_fd) {
+        ++setup_write_attempts;
+        if (setup_write_attempts == 1) { errno = EINTR; return -1; }
+        if (setup_write_attempts == 2) return __real_write(fd, bytes, std::min(size, sizeof("Child ") - 1));
+        if (fault == Fault::SetupWriteError) { errno = EIO; return -1; }
+        if (fault == Fault::SetupWriteZero) return 0;
+    }
+    return __real_write(fd, bytes, size);
+}
 extern "C" int __wrap_linkat(int from, const char* source, int to, const char* name, int flags) {
     const bool start = std::strcmp(name, "start.json") == 0;
     const bool finish = std::strcmp(name, "finish.json") == 0;
@@ -310,6 +334,24 @@ void termination(const fs::path& base) {
         require(!fs::exists(directory / "start.json.pending"), "Successful temporary link cleaned");
     }
 }
+void childSetupDiagnostics(const fs::path& base) {
+    for (const auto kind : {Fault::SetupWriteRetry, Fault::SetupWriteError, Fault::SetupWriteZero}) {
+        const auto root = newRoot(base, "child_setup_" + std::to_string(static_cast<int>(kind)));
+        fault = kind;
+        const auto result = invoke(root);
+        fault = Fault::None;
+        require(result.code == 6 && !result.errors.empty(), "Report child setup failure to the caller");
+        require(!fs::exists(root / "entered"), "Do not enter the application after redirection failed");
+        const auto directory = onlyRecord(root);
+        const auto expected = kind == Fault::SetupWriteRetry
+            ? "Child stream/signal setup failed before application entry\n" : "Child ";
+        require(read(directory / "stderr.bin") == expected, "Retain exactly the diagnostic bytes written");
+        require(read(directory / "context.jsonl").empty(), "No application events before entry");
+        const auto finish = read(directory / "finish.json");
+        contains(finish, "\"child_exit_code\":6");
+        contains(finish, "\"context_return_confirmed\":false");
+    }
+}
 void publicationFaults(const fs::path& base) {
     for (const auto kind : {Fault::StartLink, Fault::StartSync, Fault::FinishLink, Fault::FinishSync,
                             Fault::ChannelSync, Fault::Fork, Fault::Random}) {
@@ -453,6 +495,7 @@ int main(int argc, char** argv) {
         require(::mkdtemp(pattern.data()) != nullptr, "Unique retained sandbox");
         const fs::path base(pattern);
         startupFailure(base);
+        childSetupDiagnostics(base);
         termination(base);
         childSignalDispositions(base);
         publicationFaults(base);

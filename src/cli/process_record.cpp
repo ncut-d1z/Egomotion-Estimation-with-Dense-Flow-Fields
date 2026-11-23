@@ -191,8 +191,8 @@ bool contextReturnConfirmed(int receipt) {
 [[noreturn]] void executeChild(int argc, char** argv, RecordedApplication application,
                                const Signals& signals, int out, int err, ContextJournal& journal, int receipt) noexcept {
     if (::dup2(out, STDOUT_FILENO) < 0 || ::dup2(err, STDERR_FILENO) < 0 || !signals.restoreChild()) {
-        constexpr char failed[] = "Child stream/signal setup failed before application entry\n";
-        (void)::write(err, failed, sizeof(failed) - 1);
+        // stderr 尚未就绪时仍使用原记录 fd；诊断本身写失败也必须按原退出码结束。
+        (void)process_record::tryWriteAll(err, "Child stream/signal setup failed before application entry\n");
         ::_exit(record_failure_exit);
     }
     const int code = invokeObserved(argc, argv, application, journal, receipt);

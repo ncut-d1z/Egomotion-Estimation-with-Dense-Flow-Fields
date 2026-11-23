@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <string>
+#include <string_view>
 
 namespace egomotion::cli::process_record {
 
@@ -33,6 +34,7 @@ private:
 };
 
 void checked(bool success, const char* operation);
+bool tryWriteAll(int fd, std::string_view contents) noexcept;
 void writeAll(int fd, const std::string& contents);
 
 }  // namespace egomotion::cli::process_record

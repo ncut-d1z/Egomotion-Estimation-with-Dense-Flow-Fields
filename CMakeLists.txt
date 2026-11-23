@@ -933,7 +933,8 @@ if(BUILD_TESTING)
     target_include_directories(test_r06_process_records PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/cli")
     target_compile_options(test_r06_process_records PRIVATE -Wall -Wextra -Wpedantic)
     target_link_options(test_r06_process_records PRIVATE
-        "-Wl,--wrap=linkat" "-Wl,--wrap=fsync" "-Wl,--wrap=fork" "-Wl,--wrap=getrandom")
+        "-Wl,--wrap=linkat" "-Wl,--wrap=fsync" "-Wl,--wrap=fork" "-Wl,--wrap=getrandom"
+        "-Wl,--wrap=dup2" "-Wl,--wrap=write")
     add_test(NAME r06_process_records_lifecycle COMMAND test_r06_process_records
         "${CMAKE_CURRENT_BINARY_DIR}/r06_process_records")
     set_tests_properties(r06_process_records_lifecycle PROPERTIES
