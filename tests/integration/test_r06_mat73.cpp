@@ -21,6 +21,9 @@ extern "C" {
 mat_t* __real_Mat_Open(const char*,int);
 matvar_t* __real_Mat_VarRead(mat_t*,const char*);
 ssize_t __real_pread(int,void*,size_t,off_t);
+#ifdef __GLIBC__
+ssize_t __real___pread_chk(int,void*,size_t,__off_t,size_t);
+#endif
 }
 namespace {
 using namespace egomotion;
@@ -76,7 +79,8 @@ void rejected(const fs::path& path,Api api,Fault fault,bool deny_backend) {
     const auto result=read(api,path);observation.armed=false;
     std::cout<<"observed api="<<static_cast<int>(api)<<" deny_backend="<<deny_backend
         <<" fault="<<static_cast<int>(fault)<<" code="<<(result.hasValue()?"SUCCESS":errorName(result.error().code))
-        <<" Mat_Open="<<observation.opens<<" Mat_VarRead="<<observation.decodes<<'\n';
+        <<" Mat_Open="<<observation.opens<<" Mat_VarRead="<<observation.decodes
+        <<" header_reads="<<observation.header_reads<<" triggers="<<observation.triggers<<'\n';
     const bool io_failure=fault==Fault::ReadError;
     require(!result.hasValue()&&result.error().code==(io_failure?MatErrorCode::InvalidMatHeader:MatErrorCode::UnsupportedClassOrType),
         "Reject the unsupported version independently of HDF5, or preserve the actual header read error");
@@ -176,6 +180,18 @@ void metadataControl(const fs::path& path) {
         require(descriptors()==before,"Metadata backend leaked its pinned source descriptor");
     });
 }
+bool prepareHeaderRead(size_t& count, off_t offset) {
+    if (!observation.armed || offset != 0 || count != kHeaderBytes) return true;
+    ++observation.header_reads;
+    if (observation.triggers != 0 || observation.fault == Fault::None) return true;
+    ++observation.triggers;
+    if (observation.fault == Fault::Short) {
+        count = 7;
+        return true;
+    }
+    errno = observation.fault == Fault::Interrupted ? EINTR : EIO;
+    return false;
+}
 }
 extern "C" mat_t* __wrap_Mat_Open(const char* path,int mode) {
     if(observation.armed){++observation.opens;if(observation.deny_backend){errno=EINVAL;return nullptr;}}
@@ -186,16 +202,16 @@ extern "C" matvar_t* __wrap_Mat_VarRead(mat_t* mat,const char* name) {
     return __real_Mat_VarRead(mat,name);
 }
 extern "C" ssize_t __wrap_pread(int fd,void* data,size_t count,off_t offset) {
-    if(observation.armed&&offset==0&&count==kHeaderBytes) {
-        ++observation.header_reads;
-        if(observation.triggers==0&&observation.fault!=Fault::None) {
-            ++observation.triggers;
-            if(observation.fault==Fault::Short)return __real_pread(fd,data,7,offset);
-            errno=observation.fault==Fault::Interrupted?EINTR:EIO;return -1;
-        }
-    }
+    if (!prepareHeaderRead(count, offset)) return -1;
     return __real_pread(fd,data,count,offset);
 }
+#ifdef __GLIBC__
+extern "C" ssize_t __wrap___pread_chk(int fd, void* data, size_t count, __off_t offset, size_t buffer_size) {
+    // 超出目的缓冲区的原请求须交由 glibc 拒绝，短读注入不能掩盖越界。
+    if (count <= buffer_size && !prepareHeaderRead(count, offset)) return -1;
+    return __real___pread_chk(fd, data, count, offset, buffer_size);
+}
+#endif
 int main(int argc,char** argv) {
     try {
         require(argc==3,"Expected fixed fixture and isolated build sandbox");
