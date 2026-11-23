@@ -53,3 +53,20 @@ Fig. 3 和 Fig. 4 的独立生产调用都返回 0。生成的双面板 SVG 与�
 ## 现场文档追踪
 
 首次现场 Bash 核查返回 1。脚本把测试计划中两行场景引用也计作正式 TC，使正确的 66 条登记被计为 68 条。修复 `b3edf0099cf25b9d745969474ad7a2a42e4c2383` 将解析范围限定为第 3 节的登记表。开发分支复测返回 0，核对 66 项 REQ、66 项 TC、98 项 P、45 个源文件和 27 条 HLD 依赖边。另以三个独立负例确认重复登记、删行和 AC 错配均返回 1，额外引用表可正常通过。首次日志、修复复测和反例分别位于 `docs-initial/`、`docs-fixed/`、`trace-fix-evidence/`。[Issue #9](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/9)
+
+## GCC 13 双配置与故障复测
+
+Ubuntu 自带的 G++ 13.3.0 分别从空目录构建 SVG ON 和 OFF，完成 221、214 个 Ninja 步骤。两次均在进程记录器的启动失败路径报告了同一条未检查 `write` 返回值的警告。`528f28eacd8a11817d1022c19a0be4f0541f0982` 复用可处理短写和中断的写入循环，保留失败诊断已写出的字节及退出码 6。进程生命周期测试新增三条实际故障路径，覆盖中断后短写并完成、永久错误、零写。[Issue #10](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/10)
+
+首次两套 MAT 回归都是 7/8，CTest 退出 8，唯一失败项为 `r06_mat73_version_rejection`，其中 34 个场景有 27 个未满足断言。生产 Reader 在此工具链调用 glibc 加固的 `__pread_chk`，原测试只观测了 `pread`。`24691d4a9f0e5e7a404fa8e51397627ebee4cd06` 修复测试的两条读取路径，保留实际缓冲区边界和原断言。原始失败与符号核查保留在科学证据根的 `gcc13-mat-ON/`、`gcc13-mat-OFF-confirm/` 和复测证据根的 `initial-mat-failure/`。[Issue #11](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/11)
+
+本地、远端开发分支和 Draft PR #6 的头提交均核实为上述修复 SHA，再执行 CMake/CTest 4.3.4、Ninja 1.11.1、Release、BUILD_TESTING=ON 的源外复测。两套配置和编译日志均无告警。两套 MAT 均通过后，依次执行进程记录专项和无过滤完整套件。v7.3 用例各确认 34 个场景、319 项检查、零失败。
+
+| SVG | 增量编译用时 | MAT | 进程记录 | 完整 CTest | 失败 / 跳过 |
+|---|---:|---:|---:|---:|---:|
+| ON | 112.87 秒 | 8/8 | 2/2 | 79/79，139.65 秒 | 0 / 0 |
+| OFF | 111.76 秒 | 8/8 | 2/2 | 78/78，146.51 秒 | 0 / 0 |
+
+复测根为 `build/r6-child-setup-20261123-XyFe4q0b/`。每条 CMake/CTest 命令在各目录的 `run.meta`；各测试阶段另有 JUnit 与 LastTest.log。`audit-gcc13/stdout.log` 记录逐目录核验，完整 JUnit 与注册用例逐名匹配。以上两个提交只涉及记录器和测试，科学算法及其输入与科学二进制相同。
+
+首次 GCC 13 ON 编译期间更改了本地日志脚本，外层 Bash 在写结束记录时返回 2。编译子进程的 GNU time 记录为 0，紧接的 `build-ON-confirm` 也返回 0。遮挡种子 5 与比例种子 6 同样缺外层结束行，两次均保有 GNU time 退出 0、完整 manifest 和独立核验的 MAT。此后三者的汇总结束时刻取 GNU time 文件完成时间。原始日志和单独保存的后续记录脚本均保留在科学证据根。

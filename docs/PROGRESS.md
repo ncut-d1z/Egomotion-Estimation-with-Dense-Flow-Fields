@@ -4,6 +4,8 @@
 
 `[HUMAN-EXECUTE/APPROVE]` Fig. 2–5 的实际程序均返回 0。Fig. 5 的两种噪声与两套周期已按逐帧原值独立复算。四个原生 Adaptive 结果共 38 份 MAT，全部通过独立解码和回执核验。两个原生 Bias 入口各完成 40 次，新旧各 560 个 MAT 的 360 个误差统计格全部保有 40 个观测。历史分析遇到 NaN 和缺少历史专用字段时的实际退出码也已登记。文档追踪现场复测通过 66 项 TC。Fig. 1 专项首次写出 42 个试次后执行器退出 143，保留该目录，已以新 RunId 从头运行。[运行、比较指标和证据位置](reviews/FULL_SCIENCE_2026-11-23.md)
 
+GCC 13.3 初次两配置 MAT 均为 7/8，另有一条进程记录器诊断写入警告。修复 `528f28e`、`24691d4` 后两配置无告警，先行 MAT 各 8/8、进程记录各 2/2、完整 CTest 分别 79/79、78/78，零失败和跳过。[编译警告 #10](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/10) · [MAT 测试插桩 #11](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/11)
+
 ## 2026-11-22 双配置复测、论文 Fig. 3/4 几何与 Fig. 5 逐轮证据
 
 `[HUMAN-EXECUTE/APPROVE]`　分支 `dev-plan-P0-P1-mat-dictionary-probe` 从 `8b366af0ad67eccead74be3087e1c65ef9088cff` 接续。每批运行前都已核对本地 HEAD、GitHub 分支和 Draft PR #6 的头提交。下表为最终受测源码 `a83682f2e493170521ec3192e9463e3b4fc132cd`，北京时间 01:04:56 至 01:29:49。两个模式分别完成配置、编译和先行 MAT 安全回归，再执行无筛选的完整套件。[Draft PR #6](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/pull/6)
