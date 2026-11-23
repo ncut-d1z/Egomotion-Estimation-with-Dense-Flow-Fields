@@ -1,10 +1,10 @@
 # 实施进度与证据登记（PROGRESS）
 
-## 2026-11-23 已恢复完整科学实验
+## 2026-11-23 完整科学实验与双编译器验证
 
-`[HUMAN-EXECUTE/APPROVE]` Fig. 2–5 的实际程序均返回 0。Fig. 5 的两种噪声与两套周期已按逐帧原值独立复算。四个原生 Adaptive 结果共 38 份 MAT，全部通过独立解码和回执核验。两个原生 Bias 入口各完成 40 次，新旧各 560 个 MAT 的 360 个误差统计格全部保有 40 个观测。历史分析遇到 NaN 和缺少历史专用字段时的实际退出码也已登记。文档追踪现场复测通过 66 项 TC。Fig. 1 专项首次写出 42 个试次后执行器退出 143，保留该目录，已以新 RunId 从头运行。[运行、比较指标和证据位置](reviews/FULL_SCIENCE_2026-11-23.md)
+`[HUMAN-EXECUTE/APPROVE]` Fig. 1–5 全部生成。Fig. 1 首次写出 42 个试次后执行器返回 143，换新 RunId 从头完成 80/80 次，两次共有的 42 份数据逐字节一致。独立核对了全部 9,600 个方向角、240 个均值及 208 行绘图数据。另行跑完的两个原生 Bias 入口与专项逐种子匹配；新旧各 560 个 MAT 的 360 个误差统计格均保有 40 个观测。Fig. 5 的两种噪声、两套周期已逐帧复算，四个原生 Adaptive 交付共 38 份 MAT。659 项输入身份已复核，文档现场复测通过 66 项 TC。[全量数据、误差趋势、历史输入限制、资源及证据清单](reviews/FULL_SCIENCE_2026-11-23.md)
 
-GCC 13.3 初次两配置 MAT 均为 7/8，另有一条进程记录器诊断写入警告。修复 `528f28e`、`24691d4` 后两配置无告警，先行 MAT 各 8/8、进程记录各 2/2、完整 CTest 分别 79/79、78/78，零失败和跳过。[编译警告 #10](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/10) · [MAT 测试插桩 #11](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/11)
+GCC 13.3 首次两配置 MAT 均为 7/8，另有一条进程记录器诊断写入警告。修复 `528f28e`、`24691d4` 后，同一受测提交 `24691d4a9f0e5e7a404fa8e51397627ebee4cd06` 在 GCC 13.3、GCC 16.2 的 SVG ON/OFF 四种配置上全部编译通过。各配置先行 MAT 8/8、进程记录 2/2，两种编译器的完整 CTest 均为 ON 79/79、OFF 78/78，零失败和跳过。[编译警告 #10](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/10) · [MAT 测试插桩 #11](https://github.com/ncut-d1z/Egomotion-Estimation-with-Dense-Flow-Fields/issues/11)
 
 ## 2026-11-22 双配置复测、论文 Fig. 3/4 几何与 Fig. 5 逐轮证据
 

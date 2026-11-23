@@ -1,6 +1,6 @@
 # Egomotion Estimation with Dense Flow Fields
 
-论文 Fig. 1–5 使用 `egomotion paper-figure`，可输出数值表和 SVG。已恢复全部科学运行，Fig. 2–5 的真实运行与四个原生 Adaptive 交付已完成。实验环境、种子、均值、失败与缺测记录见[完整实验报告](docs/reviews/FULL_SCIENCE_2026-11-23.md)和[实施进度](docs/PROGRESS.md)。
+论文 Fig. 1–5 使用 `egomotion paper-figure` 输出数值表和 SVG。五幅图已在原始规模下跑完，包括 Fig. 1 两组各 40 次试验、Fig. 5 两套刷新周期和两种噪声。六组原生 Bias / Adaptive 交付均已回读。实验参数、误差趋势、历史数据的可比范围和复核命令见[完整实验报告](docs/reviews/FULL_SCIENCE_2026-11-23.md)和[实施进度](docs/PROGRESS.md)。
 
 > **前批接续：失败记录退出码与元数据输入，仅代码（2026-11-21）**。实验计算失败后若失败 Manifest 也未确认保存，最终退出码与 execution 记录统一为输出错误6，原计算诊断保留；普通 MAT 元数据检查先非阻塞打开并确认普通文件，再通过持有的描述符读取同一文件身份。该批次只准备了回归源码，当时的构建与测试延期。[本批记录](docs/reviews/R6_FAILURE_METADATA_CONTINUATION_2026-11-21.md)
 

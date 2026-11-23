@@ -6,6 +6,8 @@ SVG ON 的 79 项与 OFF 的 78 项均通过。先行 MAT 的 8 项在完整套�
 
 ## 逐项映射
 
+2026-11-23 补充了原定延期的 TC-NF-RUNTIME-001。完整规模 CLI 的 wall、CPU、峰值 RSS 与输入规模均已实测，DEC-006 性能预算待人类批准。[原始规模和实测资源](FULL_SCIENCE_2026-11-23.md)
+
 | TC | 本轮真实 CTest 或材料 | 可核对的结果及适用范围 |
 |---|---|---|
 | TC-F-CLI-001 | `r01_cli_contract`、`r06_cli_process_contract`、`r06_context_journal_identity` | 真实 inspect 按变量筛选元数据，缺字段及路径身份错误可定位。 |
@@ -63,7 +65,7 @@ SVG ON 的 79 项与 OFF 的 78 项均通过。先行 MAT 的 8 项在完整套�
 | TC-NF-HEADLESS-001 | `r06_analysis_finite_cli`、`r06_illustrations_real_cli`、`r06_cli_process_contract` | 两种模式都清除显示服务变量。OFF 数值导出成功，SVG 拒绝时无输出目录。 |
 | TC-NF-RECOVERY-001 | `r05_manifest_gate`、`r06_real_manifest_faults`、`r06_cli_output_streams`、`r06_cli_output_real_process`、`r06_process_records_lifecycle`、`r06_process_records_real_cli` | 失败 Manifest、结束记录失败、输出通道错误、重复 RunId 与子进程终止。掉电后最终记录仍有边界。 |
 | TC-NF-PORTABLE-001 | `r06_io_symlink_and_runid_safety`、`r06_illustrations_real_cli`、`r06_adaptive_real_cli` | 本次 Ubuntu 实际在含中文和空格的路径中读写。 |
-| TC-NF-RUNTIME-001 | 延期 | 完整科学实验的 wall、CPU 和峰值 RSS 待测。DEC-006 预算待人类批准。 |
+| TC-NF-RUNTIME-001 | 生产 CLI 与 GNU time | Fig. 1 完成 80 个试次，wall 4,069 秒、CPU 3,671 秒、峰值 RSS 279,828 KiB；其余完整入口见 2026-11-23 补充。 |
 | TC-NF-SESSION-001 | `r06_real_session_interleaving`、`r06_run_context_interleaving`、`r06_adaptive_session_transaction` | 会话及 RunContext 交替、不同实例的 RNG、系数、输出隔离。范围为串行交错。 |
 | TC-NF-COPYRIGHT-001 | [MIT 许可](../../LICENSE)、[来源清单](../SOURCE_INVENTORY.md) | 仓库根 MIT、自有范围和实际上游来源告知有记录。 |
 | TC-F-CLI-002 | `r06_cli_process_contract`、`r06_execution_record_contract`、`r06_bias_runner_publication` | 两个 Bias 的真实入口、有界生成、参数与种子、RunId 和拒覆盖。 |

@@ -586,7 +586,7 @@ regression_tolerance=9.0949470177292824e-13
 | TC-NF-HEADLESS-001 | REQ-NF-HEADLESS-001 | tests/integration/test_headless.cpp | egomotion.headless.* | AC-NF-HEADLESS-001 | 未编写/未运行 |
 | TC-NF-RECOVERY-001 | REQ-NF-RECOVERY-001 | tests/contracts/test_output_safety.cpp | egomotion.safety.* | AC-NF-RECOVERY-001 | 未编写/未运行 |
 | TC-NF-PORTABLE-001 | REQ-NF-PORTABLE-001 | tests/integration/test_deployment.cpp | egomotion.deployment.* | AC-NF-PORTABLE-001 | 未编写/未运行 |
-| TC-NF-RUNTIME-001 | REQ-NF-RUNTIME-001 | tests/benchmarks/benchmark_original_runs.cpp | 非 CTest 基准 | AC-NF-RUNTIME-001 | 未编写/未运行 |
+| TC-NF-RUNTIME-001 | REQ-NF-RUNTIME-001 | 计划路径 `tests/benchmarks/benchmark_original_runs.cpp`；本轮用生产 CLI 与 GNU time [实测](reviews/FULL_SCIENCE_2026-11-23.md) | 非 CTest 基准 | AC-NF-RUNTIME-001 | 已采集 wall、CPU、RSS 及输入规模，DEC-006 预算待批准 |
 | TC-NF-SESSION-001 | REQ-NF-SESSION-001 | tests/contracts/test_state_isolation.cpp | egomotion.isolation.* | AC-NF-SESSION-001 | 未编写/未运行 |
 | TC-NF-COPYRIGHT-001 | REQ-NF-COPYRIGHT-001 | 现有：[OBJECT_MODEL.md](OBJECT_MODEL.md)、[所有者技术决定](decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md)、[LICENSE](../LICENSE)；现有：[SOURCE_INVENTORY.md](SOURCE_INVENTORY.md)（45 个源文件的静态 Git 身份；非测试通过） | 人工设计/来源评审；部分接口需合同测试 | AC-NF-COPYRIGHT-001 | 未编写/未运行 |
 | TC-F-CLI-002 | REQ-F-CLI-002 | tests/integration/test_cli.cpp | egomotion.cli.* | AC-F-CLI-002 | 未编写/未运行 |
