@@ -133,7 +133,13 @@ FILENAME=="docs/REQUIREMENTS.md" {
   next
 }
 FILENAME=="docs/TEST_PLAN.md" {
-  if ($0 ~ /^\|[[:space:]]*TC-[A-Z0-9-]+[[:space:]]*\|/) {
+  # 第 3 节的登记表定义 TC；场景表可重复引用同一个 TC。
+  if ($0 ~ /^##[[:space:]]+/)
+    inTestSection=($0 ~ /^##[[:space:]]+3[.][[:space:]]+/)
+  if ($0 !~ /^\|/) inTestMatrix=0
+  if (inTestSection && $0 ~ /^\|[[:space:]]*TC ID[[:space:]]*\|[[:space:]]*REQ[[:space:]]*\|/)
+    inTestMatrix=1
+  if (inTestMatrix && $0 ~ /^\|[[:space:]]*TC-[A-Z0-9-]+[[:space:]]*\|/) {
     split($0, f, "|")
     id=strip(f[2])
     if (id in tests) issue("TC 重复: " id)
