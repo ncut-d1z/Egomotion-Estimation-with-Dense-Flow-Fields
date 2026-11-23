@@ -1,5 +1,7 @@
 # 测试设计与验收计划（TEST PLAN）
 
+> **2026-11-23 现场证据**　文档追踪脚本首次现场执行发现两个场景引用被重复计数，修复后 66 项 TC 及三类反例均已复测。完整科学实验已恢复。[实测记录](reviews/FULL_SCIENCE_2026-11-23.md)
+
 > **2026-11-22 双配置复测和 66 项 TC 映射**　`[AI-EDIT]`　受测源码 `a83682f2e493170521ec3192e9463e3b4fc132cd` 的 SVG ON/OFF 各通过 8/8 项先行 MAT 安全回归，随后完整 CTest 为 79/79、78/78，零失败、零跳过。专项证据覆盖印刷视角和刻度、Fig. 3/4 四面板及 Fig. 5 在第 5 轮首帧失败时的逐轮计数。每项 TC 的实际测试名、资料或待测边界均已登记。[66 项 TC 映射](reviews/R6_TC_EVIDENCE_MAP_2026-11-17.md) · [命令和运行记录](PROGRESS.md)
 
 > **2026-11-21 双配置执行证据**　`[AI-EDIT]`　受测提交 `8e353ad5` 的两种 Release 配置各通过先行 MAT 安全回归 8/8。随后执行完整 CTest，SVG ON 79/79、OFF 78/78，零失败、零跳过。逐项登记、运行日志位置与输入校验见[实施进度](PROGRESS.md)。
@@ -724,13 +726,13 @@ MAT 全量字典和来源证据**已经生成**：见 [MAT_DATA_SCHEMA.md](MAT_D
 
 ### 8.1 文档追踪静态一致性检查（不等同于执行测试）
 
-**A. 规范要求：待人类授权的 Bash 现场执行（本项未执行）。** 需要完整的 Debian/Ubuntu 仓库检出环境、获准运行和可保存的真实日志。在 REQ、P、TC、AC 或 MATLAB 源文件映射变化后，应使用下列命令执行现场审查：
+**A. Bash 现场执行。** 在完整的 Debian/Ubuntu 检出中，当 REQ、P、TC、AC 或原始源文件映射变化时，运行以下命令并保存实际证据。
 
 ~~~bash
 bash scripts/check_docs_traceability.sh
 ~~~
 
-该脚本只依赖 Debian/Ubuntu 的 Bash、awk、find、sed、sort 和 git；核验下述文档级集合，不编译 C++、不注册或运行 CTest，也不判定算法数值等价。**上面的命令是待执行的操作规程，绝非本次已运行命令。** 现场运行须按 [AGENTS.md §10](../AGENTS.md) 与 [人类授权申请 H-11](approval/HUMAN_APPROVAL_REQUEST.html) 获得适用授权，并保留 stdout、stderr、实际退出码、HEAD SHA、系统/工具版本及执行人。
+脚本核验下列文档集合，使用 Debian/Ubuntu 的 Bash、awk、find、sed、sort 和 git。每次记录 stdout、stderr、退出码、HEAD、环境及执行人。2026-11-23 的实际 Bash 结果见[本批报告](reviews/FULL_SCIENCE_2026-11-23.md)。
 
 1. 解析 REQUIREMENTS §4 的全部 REQ ID，每个 ID 唯一且有对应的 `AC-`；解析 §9 的正向追踪，不允许不存在的需求 ID 或空 P/TC/AC。
 2. 解析 TEST_PLAN §3 的 TC ID，检查 TC 集合严格等于 `{ "TC-" + REQ[4:] }`；对每个 TC 校验其引用的 REQ 和 AC 也完全匹配。人工核查类型不必注册 CTest，但必须有真实证据路径。
@@ -745,15 +747,15 @@ bash scripts/check_docs_traceability.sh
 |---|---|---|
 | GitHub 连接器＋JavaScript 只读静态断言 | **已执行（此前的连接器静态检查）** | [2026-11-06 追踪审查记录](reviews/STATIC_TRACEABILITY_2026-11-06.md)：按固定 Git SHA 核对 66 REQ、66 TC、98 P、45 `.m`、26 条 HLD 边，未发现缺项/环；**没有执行 Bash** |
 | 审查意见后的 GitHub 连接器只读复核 | **已执行（非 Bash、非 CTest）** | [跨文档一致性复核记录](reviews/DOC_CONSISTENCY_RECONCILIATION_2026-11-06.md)：固定提交 `5472c756b983fe002ef6e32143c96b6c6798cde9`，核对 66/66/98、45 `.m` 双向映射、26 条 HLD 静态边与源 `origin` 子树 SHA 未变；**未执行现场 Bash** |
-| `bash scripts/check_docs_traceability.sh` 完整检出现场运行 | **待授权／未执行** | [H-11](approval/HUMAN_APPROVAL_REQUEST.html)；目前无现场 stdout、stderr、真实退出码和执行环境记录，不得写为 PASS |
-| 正式 CMake 业务 targets 的构建、链接与 CTest | **未建立／未执行** | 静态 DAG 无环不能证明真实构建成功；审批与执行记录见 H-10 / [PROGRESS.md](PROGRESS.md) |
+| `bash scripts/check_docs_traceability.sh` 完整检出现场运行 | **已执行** | `b3edf009` 修复后返回 0，66 REQ、66 TC、98 P、45 `.m`、27 条 HLD 边。[实测和负例](reviews/FULL_SCIENCE_2026-11-23.md) |
+| 正式 CMake 业务 targets 的构建、链接与 CTest | **已执行** | SVG ON/OFF 已各跑先行 MAT 及完整套件，固定 SHA 和 JUnit 见[实施进度](PROGRESS.md)。 |
 | 独立 matio 原始归档读取探针 | **此前已实测** | [MAT_DATA_SCHEMA.md](MAT_DATA_SCHEMA.md) 已记录 582/582 READ_OK；**不代表**本次重新运行探针、生产 Reader/Writer、异常负例或数值 Golden 通过 |
 
 **实际现场执行的补录要求**：新建独立证据记录，附所执行命令、真实 HEAD SHA、工具链、stdin（若有）、stdout/stderr 路径、exit code、时间戳和执行人；经人类审阅后再同步 [PROGRESS.md](PROGRESS.md)，不能以本表的“应执行”替代“已执行”。
 
 **当前文档级检查口径**：66 条 REQ、66 项 TC、98 个 P 工作项、45 个 .m 映射是版本化的预期数量；检查器同时验证 ID 唯一性、配对关系、真实路径集合、P 依赖环和 ARCHITECTURE §4.1 target DAG 的**静态环**，不只比对计数。变更基线数量时须同步评审脚本期望值；**静态无环不等于真实 CMake target 已创建或编译通过**。
 
-**本轮实际执行状态**：用户审批 JSON 的 H-11=deferred，因此未运行上文的 Bash 现场脚本；H-10=deferred，因此未运行新的 CMake 配置/编译、CTest、MATLAB、MAT 写回读、负例或性能测量。原来的 582/582 matio 探针属于**早前独立实测**，不在本轮重跑。审批详情与阶段状态参阅 [审批落实记录](approval/DECISION_IMPLEMENTATION_NOTES.md) 和 [PROGRESS.md](PROGRESS.md)。
+**旧审批 JSON 对应阶段的历史状态**：用户审批 JSON 的 H-11=deferred，因此未运行上文的 Bash 现场脚本；H-10=deferred，因此未运行新的 CMake 配置/编译、CTest、MATLAB、MAT 写回读、负例或性能测量。原来的 582/582 matio 探针属于**早前独立实测**，不在本轮重跑。审批详情与阶段状态参阅 [审批落实记录](approval/DECISION_IMPLEMENTATION_NOTES.md) 和 [PROGRESS.md](PROGRESS.md)。
 
 ## 9. 变更与冻结条件
 
