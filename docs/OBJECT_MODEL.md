@@ -1,12 +1,34 @@
 # 对象模型与生命周期合同（Object Model）
 
-> **P0.7 / P0.8 的设计草案，尚未冻结、没有 C++ 对应类实现。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](../PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入。
+> **2026-11-18 FlowField实现追踪，候选/未冻结**：FlowField已封装N×6有限存储、只读访问、检查复制与严格所有权移交；新增1245项布局/有限性/寿命/分配故障检查通过。HarmonicFitter方向入口保留前三列投影语义，球谐服务494项通过，见 [记录](reviews/R6_FLOW_VALUE_2026-11-18.md)。默认0×6空值、有限非物理输入仍由原消费端拒绝或按原语义使用；赋值失败保留旧值，移交失败不消费输入。D1列明四类存储构造已补有限实测，下方旧记录保留历史语境，总体对象/API验收未签署。
+
+> **2026-11-18 DirectionSet实现追踪，候选/未冻结**：DirectionSet已封装N×3有限存储/只读访问，复制工厂和显式所有权移交接入采样/光流/球环境；新增901项形状/非有限/值寿命/分配故障检查及移交类型编译断言通过，见 [记录](reviews/R6_DIRECTION_VALUE_2026-11-18.md)。默认0×3空集合，真实物理模型仍独立判定空/零/单位条件；复制赋值先复制后交换，失败不改旧值，移交工厂只接受原类型非const右值。D1运动/系数/方向已补，FlowField仍待处理；下方旧实现注记保留历史语境，不代签总体对象/API验收。
+
+> **2026-11-18 HarmonicCoefficients实现追踪，候选/未冻结**：HarmonicCoefficients采用检查工厂、私有3×5列主序存储及只读访问，全部15项有限且保留六个未用位置的有限非零值；默认全零、源初始化零阶项为1。新增178项形状/非有限/逐位保存/值寿命检查通过，见 [记录](reviews/R6_COEFFICIENT_VALUE_2026-11-18.md)。左值访问只读，右值返回自拥有矩阵；复制/移动/完整赋值仍支持。拟合/旋转/Session/策略已接入，原算法不变。D1现已落实运动及系数值；FlowField/DirectionSet仍待处理，下方较早实现记录保留历史语境，不代签总体对象验收。
+
+> **2026-11-18 MotionEstimate实现追踪，候选/未冻结**：运动分量已私有，只读getter及检查工厂保证3×1/有限，自拥有固定矩阵、默认静止且允许完整值复制/移动赋值；右值访问按值返回。Franz/KvD/Adaptive生产路径使用工厂，不新增模长/单位/容差限制，零运动可观测性由原算法处理。839项维度/有限性/寿命及全回归见 [记录](reviews/R6_MOTION_VALUE_2026-11-18.md)。这是D1/P2.1/P2.8的MotionEstimate实现；FlowField/DirectionSet/HarmonicCoefficients构造边界仍未完成，Result决定不扩展为所有领域值批准，总体对象验收未签署。
+
+> **2026-11-18 P8.9实现追踪，候选/未冻结**：InitializationRunner、AdaptiveComparisonRunner、UpdateRateRunner各有独立Config的compute/run，run借用当前Context并负责kind检查、进度、Comparison RNG及发布门禁；每次/每轮Session与缓冲仍局部创建。Production只装配分派，旧AdaptiveExperimentRunner仅兼容内存调用。共用逐帧计算没有重复方程。172962项交错/错误Context/第五轮失败后同Runner复用与双模式证据见 [记录](reviews/R6_ADAPTIVE_ENTRIES_2026-11-18.md)。D2列明源码职责缺口已补，领域构造不变量、记录边界及总体对象验收仍保留；下方旧时间注记保留当时状态。
+
+> **2026-11-18 P9.8实现追踪，候选/未冻结**：BiasResultAnalyzer与AdaptiveResultAnalyzer分别拥有Bias统计及三Adaptive分析的原函数体，借用Reader、不创建Writer/Exporter，返回自拥有数值及来源；MatResultAnalyzer仅分派，公共异常边界保持。727项四入口/40故障/结果与导出隔离及双模式实测见 [记录](reviews/R6_ANALYZER_SERVICES_2026-11-18.md)。P9.8源码缺口已补，领域构造不变量、其余Runner职责和总体对象验收仍未关闭。下方日期较早的实现描述保留当时状态。
+
+> **2026-11-18 P7.10实现追踪，候选/未冻结**：RealSphericalHarmonics、HarmonicFitter、HarmonicRotator现各有实现文件，分别拥有源基值/重建、逐通道投影、物理与原系数两种明确旋转动作；原自由函数仅转发。实际Adaptive单步/Session/Periodic策略已使用三个组件，无虚基类、缓存或多帧状态。482项参考/边界及双模式实测见 [记录](reviews/R6_HARMONIC_SERVICES_2026-11-18.md)。这补足P7.10源码职责，不关闭领域构造不变量、其余Runner/Analyzer结构和总体对象验收。
+
+> **2026-11-18 Adaptive注入追踪，候选/未冻结**：内存Runner现在借用`AdaptiveSampling`和`AdaptiveScene`，生产适配拥有默认采样/噪声/轨迹/运动学/球环境或借用外部服务；RNG仍由RunContext独占，Session每次compute新建。新增场景三接口不持有跨帧系数，三入口合成完整场景、八轮状态重置/聚合及故障各88121项检查与双模式实测见 [记录](reviews/R6_ADAPTIVE_SCENE_2026-11-18.md)。已列明的装配源码缺口已补，领域构造不变量及其余职责/正式对象验收仍保留；未把Result工厂决定扩大成全部领域值的批准。
+
+> **2026-11-18 策略实现追踪，候选/未冻结**：KvD已组合引擎与平移规则，见 [实测](reviews/R6_KVD_STRATEGY_2026-11-18.md)；Adaptive Session现增加`ICoefficientUpdatePolicy`的Reset/Inherit/Periodic实现和显式注入，策略仅准备临时比较系数，Session仍独占持久主/基线状态，见 [实现与验证状态](reviews/R6_COEFFICIENT_POLICY_2026-11-18.md)。这不核销其它对象不变量/装配缺口或签署总体设计验收。
+
+> **2026-11-17 当前实现追踪 `[AI-EDIT]`**：45份源文件及50个声明的实际承接位置、融合实现和范围见 [迁移矩阵](MIGRATION_MATRIX.md)；§7保留候选设计分配，不用其旧“未创建”文字否定现有实现。实际四分析入口使用MatResultAnalyzer，三Adaptive入口使用AdaptiveExperimentRunner，低阶球谐采用自由函数/适配层；这些名称差别不代表已批准对象模型冻结。受测代码130a82的48/48及剩余边界见 [复核记录](reviews/R6_SOURCE_IMPLEMENTATION_MAP_2026-11-17.md)。
+
+> **2026-11-17 插图实现事实 `[AI-EDIT]`**：实际公共头 `include/egomotion/illustrations/illustration.hpp` 提供三个独立Config、值对象Data/SurfaceGrid和可选IExporter；generate/dataJson为纯数值函数，SvgExporter消费const Data及ITextPublisher。没有在分析IPlotExporter中新增draw*方法；§7三行映射已据实更新。固定 `8c808be` 的45/45 CTest及限制见 [记录](reviews/R6_ILLUSTRATIONS_2026-11-17.md)，不替代对象模型整体冻结/验收；其余旧“未创建”描述须结合当前PROGRESS读取。
+
+> **对象模型草案 v1.2（修复IFlowNoiseModel图示漏coefficient及Bias模式装配职责）；P0.7/P0.8 待评审，未冻结，拟议业务类与跨模块公共ABI尚未建立。受限低阶球谐叶子C++已独立实现并在固定SHA获得用户原生3/3 CTest证据，不能将其归入下列未创建的公共类。** 依据原始 MATLAB 文件、[ARCHITECTURE.md](ARCHITECTURE.md) 和 [PLAN.md](PLAN.md)；需求义务见 [REQUIREMENTS.md](REQUIREMENTS.md)。本文件作为 HLD 的附件、后续 LLD 的上游输入；各文档当前版本、固定 SHA 和冻结状态统一由 [文档控制矩阵](DOCUMENT_BASELINE_REGISTER.md) 登记，运行结果以 [PROGRESS](PROGRESS.md) 为准。
 
 ## 1. 对象职责和约定
 
 ### 1.1 类、接口、值对象的职责
 
-以下名称是**拟设计的 C++ 类或值类型**，尚未创建；接口细节需在 P0 调用关系与数据形状审计后固定。类型和方法名称只代表职责，不要求必须逐字采用。
+以下名称是**拟设计的业务/公共 C++ 类或值类型**，这些命名的公共类尚未创建；接口细节需在 P0 调用关系与数据形状审计后固定。唯一已构建的受限球谐叶子为 `egomotion::harmonics::low_order`，不是此表的公共 `RealSphericalHarmonics/HarmonicFitter/HarmonicRotator`；类型和方法名称只代表候选职责，不要求必须逐字采用。
 
 | 类/接口/值对象 | 必须封装的状态或职责 | MATLAB 来源与直接依赖 |
 |---|---|---|
@@ -18,7 +40,7 @@
 | **IResultReader** / **IResultWriter**（窄接口） | 为实验/分析层提供按业务含义读取或写入数据的契约；测试可替换成内存存储 | MatResultReader、RunMatWriter；不暴露 matio |
 | **IRandomSource**（接口） | 产生 uniform / normal 样本；每次实验持有独立 RNG；支持固定序列测试替身 | RandStream、rand、randn；具体实现为 Mt19937RandomSource、FixedSequenceRandomSource |
 | **IDirectionSampler**（接口） | 按指定细分级别返回视线集合；实现 OctahedralSampler、OccludedOctahedralSampler、IcosahedralSampler | findeDreiecke 与三个入口采样函数 |
-| **IFlowNoiseModel**（接口） | 只负责从原始流场和随机源生成加噪流场；实现 MeanMagnitudeGaussianNoise、ComponentGaussianNoise、NoNoise | fixed_kugel...、fixed_propfehler...、nonpropfehler |
+| **IFlowNoiseModel**（接口） | 只负责从原始流场和随机源生成加噪流场；实现 MeanMagnitudeGaussianNoise、ComponentProportionalGaussianNoise、NoNoise | fixed_kugel...、fixed_propfehler...、nonpropfehler |
 | **FlowSynthesizer** | 合成平移/旋转切向光流及其平均模长；无跨帧状态 | erzeugeflussausnear；sampling、math3d |
 | **SphereEnvironment** | 单位球体内射线相交与近度计算；不管理轨迹状态 | getnear_in_kugel_Drehung |
 | **FranzMatchedFilter** | 执行三轴平移/旋转模板响应及原版归一化，返回明确运动估计值；无历史状态 | zellendefinieren、franzeigen |
@@ -27,7 +49,7 @@
 | **RealSphericalHarmonics**、**HarmonicFitter**、**HarmonicRotator** | 分别负责基函数/近度重建、逐项拟合、l≤2 旋转；不持有实验历史状态 | kugelflfunc2、near_aus_koeff、koeff_aus_near、SHRotate、transfor_koeff |
 | **AdaptiveMfaStepSolver** | **无状态单轮计算**：从旧系数和 N×6 流场构造 6×6 系统并返回运动、残差、新系数；不继承 KvD | oneit_adaptiv_matched_filter |
 | **AdaptiveMfaSession** | 拥有一次轨迹运行中的当前 akkoeff；执行“上一帧旋转→本帧求解→提交后验系数”的确定时序 | adaptive 三种 data_generation 入口 |
-| **ICoefficientUpdatePolicy**（接口） | 维护只与基线对比相关的更新规则：每帧重置、每帧继承、按 1/5/11/21 帧刷新；不能偷改真正的 akkoeff 主状态 | ohnekoeff、mitkoeff、zeitkonstanten |
+| **ICoefficientUpdatePolicy**（接口） | 维护只与基线对比相关的更新规则：初始化/Comparison对照单步可在同一帧迭代中接受coefficients_next；**UpdateRate四组基线仅旋转/按1/5/11/21从主状态刷新，原单步第一输出绑定dumi并丢弃，绝不作为下一帧比较基线写回**；不能偷改真正的akkoeff主状态 | ohnekoeff、mitkoeff、zeitkonstanten；[Adaptive LLD §5.0.1](design/adaptive_mfa.md) |
 | **TrajectoryGenerator**、**TrajectoryKinematics** | 分别生成圆/正弦点序列，以及绝对/相对旋转和局部平移；不用加载 MAT | kreis_trajektorie、sinuskurve_trajektorie、trajektorie_aus_punkten |
 | **BiasExperimentRunner**、**InitializationRunner**、**AdaptiveComparisonRunner**、**UpdateRateRunner** | **每个入口一个编排对象**；只组合模拟、估计、误差、保存服务，不重复具体算法方程 | 五个 MATLAB data_generation 入口；Bias 的两种模式共享 Runner + 明确配置 |
 | **BiasResultAnalyzer**、**AdaptiveResultAnalyzer** | 读取结果、统计 40 个偏差运行和三类自适应轨迹结果；输出可绘制的数值序列 | 四个 data_analysis 脚本 |
@@ -46,15 +68,25 @@
 | IRandomSource 具体对象 | 每个实验运行的 RunContext | 只在本 RunId 内被消费；严格保留原版 rand/randn 调用先后次序；多运行/多线程不能共享隐式可变 RNG |
 | Estimator / StepSolver | 实验编排对象通过构造注入或组合持有 | 数学求解器尽量无状态；共享只读参数；不保存上一帧会话状态 |
 | AdaptiveMfaSession / 更新策略 | 一个轨迹实例一个会话 | 负责前一帧旋转、主系数状态、对比基线的独立系数、刷新时刻和当前帧结果提交 |
-| RunMatWriter / 结果目录 | 每个 RunContext 独占 | 输出位置在写入前确认不属于 origin/**；默认拒绝覆盖已有实验结果；失败日志独立保存 |
+| RunMatWriter / 结果目录 | **Composition Root拥有Writer并保证其寿命长于本次Runner；RunContext只借用IResultWriter&、独占RunId/计数/Manifest** | 单文件Writer仅回报写入/回读Status；不能将单个文件成功自动升级整个RunOutcome为Complete；固定`output/<RunId>/`非覆盖且origin/**只读 |
 | Analyzer / PlotExporter | 由相应分析命令创建 | 只消费数值结果；生成图表失败不得导致已经计算的结果丢失 |
 
 - **依赖方向**：CLI/实验运行器 → 领域值对象 + 窄接口 → 数学/求解器；MAT、绘图等第三方组件只在基础设施实现层出现；领域层与求解器不得 import/include matio。
 - **结果类型**：业务错误按类别明确返回（MAT 格式不符、找不到变量、维度错误、零范数、近度归一化失败、病态系统、非有限值、无效角度）；可用兼容 C++17 的显式结果值/错误对象，不把数值失败当作正常 0。保留 MATLAB 原版原始行为的证据，安全边界处理单独标注，不暗改基准结果。
 - **不制造通用求解器假象**：Franz 基线、KvD 完整迭代、Adaptive 单步的输入与输出不完全相同；可以共享 FlowField、MotionEstimate 等值对象，但不强制通过一个会丢失 near、coeff 或迭代状态的统一基类。
 - **构造时注入**：BiasExperimentRunner 由采样器、NoiseModel、Franz/KvD 求解器、随机源和结果写入器组成；Adaptive Runner 由轨迹、SphereEnvironment、采样器、StepSolver、状态会话、噪声策略和结果写入器组成。运行器不根据字符串自行 new 具体类型，具体选择集中在 ApplicationCompositionRoot。
-- **迭代和状态更新的顺序**：KvDIterationEngine 的每步残差/停止检查遵循 MATLAB 的原始顺序；AdaptiveMfaSession 在 i 帧首先旋转上一帧系数，再为各个基线按策略更新，然后分别调用无状态单步求解，最后更新主 akkoeff。策略不得越权修改主状态。
+- **迭代和状态更新的顺序**：KvDIterationEngine 的每步残差/停止检查遵循 MATLAB 的原始顺序；AdaptiveMfaSession 在 i 帧先按入口策略旋转主/对照系数，按周期基线刷新规则从**本帧主更新前**状态复制，再运行比较与主求解。**特别禁止对UpdateRate的比较解newcoeff写回mitkoeff**（MATLAB返回绑定dumi并弃置）；初始化/Comparison的帧内迭代比较返回值则应按源本帧覆盖。策略不得越权修改主状态；只有必需节点全部成功才提交本帧主和比较完整状态，否则事务性丢弃本帧所有暂存更改。
 - **测试替身**：纯算法和模拟器测试可以注入 FixedSequenceRandomSource、固定采样器、内存结果读写器；不依赖真实 MAT 文件；MAT 读写集成测试则必须使用原始归档或专门的测试 MAT 并明确测试范围。
+
+**2026-11-12 状态拥有者审计补充**：`ICoefficientUpdatePolicy` 应操作本帧临时的四组比较状态，独立持久拥有者仍是 `AdaptiveMfaSession`；“比较求解器返回新的候选系数”**不是**“策略应提交新系数”。这在 `UpdateRateRunner` 与 `InitializationRunner/AdaptiveComparisonRunner` 中有确定性的不同源代码写回目标（见 [Adaptive LLD §5.0.1](design/adaptive_mfa.md) 与 [Runner §8.0.1](design/experiments.md)）。单一状态机图未画出 `dumi`，不能让图覆盖MATLAB的变量赋值事实。对应既有 `TC-F-ADAPT-003`、`TC-F-EXP-003` 和 `TC-NF-SESSION-001` 的隔离替身资格仍未执行，公共类/签名和ABI没有获得冻结或实现授权。
+
+**2026-11-15 DAR-040 输出字段白名单的能力边界**：现行对象模型中ApplicationCompositionRoot负责选择具体Runner/Writer，`RunMatWriter::saveNewVariable(RunId,name,MatDenseArray)`本身**无ExperimentKind**；所以Writer只能独立检查名字格式、`name==MatDenseArray.info().name`、路径与非覆盖/回读，**不能声称单靠该签名知道当前实验有哪些有效save字段**。每入口的预期字段集合及`HistoricalOnly`禁写由已装配Runner在调用IResultWriter之前验证，错误沿既有`ExperimentErrorCode::DataMismatch`/RunContext链传播；若将来决定要让Writer本身防御恶意跨实验调用，需另议每运行不可变能力配置，不得增加mat_io→experiments反向依赖。原DAR-029对Writer生存期和DAR-038双名称一致性的要求均保留。
+
+**DEC-008-06 已决定的跨模块所有权补正（2026-11-12）**：旧表将“RunMatWriter/结果目录”整体描述为“每个RunContext独占”，与[Runner LLD §6.1](design/experiments.md)写明的`IResultWriter&`**非自拥有**矛盾。现已区分：Composition Root负责真实Writer对象及生命周期；RunContext独占本次RunId、已验证产物目录身份、有效/失败/无定义计数及Manifest；单文件Writer只对一个输出返回Status，不决定整个Complete。整次Runner只有全部必要MAT写出/回读、统计和Manifest成功才返回`Result<RunOutcome,E>::success`；中途失败必须返回带有**完整`std::forward_list<ErrorFrame>`包装历史**的Failure，并保留RunContext中可核实的部分证据。每一层真实包装按`push_front`记录，被包装的既有链不得截断；RunContext的每个独立错误事件持有自己的完整链，Manifest若实际落盘按外→内顺序序列化。Manifest写入失败不能伪称这份链已持久化。主/比较系数的暂存事务同样不因Writer成功而自动提交。此为所有者已确认的设计决议而非已实现C++、CTest、正式冻结。具体测试分层见[TEST_PLAN §2.12.3](TEST_PLAN.md)。
+
+**2026-11-14 Bias噪声依赖注入及签名一致性修复**：本对象模型的类图旧示意为`IFlowNoiseModel::perturb(flow,rng)`，与现行[采样/仿真LLD §3](design/sampling_noise.md)唯一公共候选接口`apply(const FlowField&,double coefficient,IRandomSource&) -> Result<FlowField,NumericalErrorCode>`不一致，且省略原MATLAB必需的噪声系数`fehlerprozent`。现已把图示改为`apply(flow,coefficient,rng)`，不另建`perturb/scale`公开函数。**依既有§1.2的Composition Root注入纪律**，根据CLI已解析的实验入口在创建Runner前绑定匹配的采样器和噪声具体类（BiasOccluded→缺损面/MeanMagnitude，BiasProportional→完整面/ComponentGaussian）；Runner只使用已注入的`IFlowNoiseModel`，不能在单次计算里叠加两种模型，也不从底层读取或导入上层`ExperimentKind/ExperimentErrorCode`。非法入口/冲突的用户参数在抽样前由CLI/Runner层报告`ExperimentErrorCode::InvalidParameters`；**既有接口并无`kind()`自报类型，因此不能声称Runner能在运行时仅凭`IFlowNoiseModel&`检查被注入对象究竟属于哪个具体类**。错误配对必须通过CompositionRoot配置审查及独立注入替身/集成测试发现；不引入RTTI或额外公共enum作为未经批准的新前提。`NumericalErrorCode`只由底层实际数值失败返回，Runner必要时按DEC-008-04以`ErrorFrame`包装。参见[Runner §2](design/experiments.md)和[TEST_PLAN §2.2.2](TEST_PLAN.md)，未实施/运行C++。
+
+**2026-11-14 受限球谐叶子到未来公共接口的实际类型隔离**：已实施的`egomotion::harmonics::low_order`含独立的`ErrorCode`、`Error{code,const char* message}`和`Result<T>`，访问错误alternative时抛`std::bad_variant_access`；全工程候选`NumericalErrorCode`、`Result<T,Code>`及`std::forward_list<ErrorFrame>`尚不存在生产实现，不应在对象图中把二者当同一个类。需要真正用到叶子时，由经批准的**明确Adapter**在业务层接入：先判`hasValue()`，不成功则复制本地Error消息及八个枚举成员原貌到`ErrorFrame`，由调用该适配器的Runner依DEC-008-04进行真实包装；`NotProperRotation/ComplexResidue/InvalidMethod`不能无损映射到现行`NumericalErrorCode`，禁止整数`static_cast`和丢失局部家族。原叶子错误使用`bad_variant_access`不意味着已选的公共Result `logic_error`例外改变，两个边界应分层处理。具体源及异常/矩阵适用范围见[球谐LLD `2.1](design/harmonics.md)和[公共合同 `3.0.3](design/contracts.md)；本段只补对象职责/未来测试映射，不创建新的公共Adapter接口或已执行软件验证。
 
 ## 2. 组件对象关系（设计草案）
 
@@ -84,7 +116,7 @@ classDiagram
  }
  class IFlowNoiseModel {
    <<interface>>
-   perturb(flow, rng)
+   apply(flow, coefficient, rng)
  }
  class IResultReader {
    <<interface>>
@@ -158,15 +190,15 @@ stateDiagram-v2
   Ready --> FrameRotated: 使用上一帧相对旋转
   FrameRotated --> BaselinePrepared: 重置 / 继承 / 周期刷新
   BaselinePrepared --> StepEvaluated: 单步估计
-  StepEvaluated --> Updated: 原 MATLAB 顺序提交 akkoeff
+  StepEvaluated --> Updated: 必需节点成功且有限后按原顺序原子提交 akkoeff
   Updated --> Ready: 下一个帧
-  StepEvaluated --> Failed: 数值错误/无效状态
+  StepEvaluated --> Failed: 数值错误或无效状态，不提交新主系数
   Ready --> Completed: 所有帧完成
   Failed --> [*]
   Completed --> [*]
 ```
 
-**特别说明**：异常时是否提交主系数、是否跳过当前帧、是否终止，需要对原 MATLAB 的真实行为和固定基准验证后冻结；状态图只提出候选边界，不可直接当作代码行为事实。
+**已确定的状态安全原则（不是待决事项）**：Adaptive StepSolver 只有在所需节点全部成功且结果有效时，Session 才按原实验更新次序**原子提交**下一帧主系数；失败不得提交新主系数。若连续序列无法安全恢复，**停止当前轨迹**，由 Runner 将部分运行标记为 Incomplete/Failed 并保留真实有效样本数和错误证据；独立样本可记录失败后继续其他独立样本。图中的 Failed→终止描述**不能安全恢复时的默认路径**，不暗示自动跳过/重试；特殊恢复路径的资格、非有限输入及实际异常测试仍须独立 L3/CTest 核验。设计依据见 [Adaptive LLD](design/adaptive_mfa.md)、[Runner LLD](design/experiments.md) 和 [所有者决定](decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md)。**本状态机尚未实现/执行，不要求 MATLAB L1**。
 
 ## 5. 与模块边界相关的规则
 
@@ -191,20 +223,20 @@ stateDiagram-v2
 
 ## 7. 原 MATLAB 45 文件 → 预定 C++ 类方法/自由函数映射（P0.7）
 
-**这是设计分配表，不是实现清单。** MATLAB 文件名和路径已在源树核对；右列只是拟定责任归属与能力名称，未创建 C++ 类、方法或测试。具体函数签名、参数、source SHA 与对应 REQ/TC 见 SRS §9.2 及模块 LLD，后续要逐项冻结。
+**这是候选设计分配表，保留原草案名称。** MATLAB 文件名和路径已在源树核对；当前真实C++类/自由函数、与旧候选的差别及测试证据以 [MIGRATION_MATRIX](MIGRATION_MATRIX.md) 为准，不能由本表旧状态判断当前实现不存在。具体合同和对应REQ/TC见SRS §9.2及模块LLD，正式冻结仍未完成。
 
 | 原始文件（相对于 origin 数据根目录） | 拟定拥有职责的类/函数 | 设计/验证状态 |
 |---|---|---|
 | `adaptive_matched_filter_test/data_analysis/graph_agent_in_sphere_adaptive_matched_filter_many_parameter.m` | AdaptiveResultAnalyzer::updateRates | 已定位 / 合同待 P0 核验 |
 | `adaptive_matched_filter_test/data_analysis/graph_agent_in_sphere_adaptive_matched_filter_test.m` | AdaptiveResultAnalyzer::comparison | 已定位 / 合同待 P0 核验 |
 | `adaptive_matched_filter_test/data_analysis/graph_agent_in_sphere_initialization_test.m` | AdaptiveResultAnalyzer::initialization | 已定位 / 合同待 P0 核验 |
-| `adaptive_matched_filter_test/data_generation/agent_in_sphere_adaptive_matched_filter_many_parameter.m` | UpdateRateRunner::run | 已定位 / 合同待 P0 核验 |
-| `adaptive_matched_filter_test/data_generation/agent_in_sphere_adaptive_matched_filter_test.m` | AdaptiveComparisonRunner::run | 已定位 / 合同待 P0 核验 |
-| `adaptive_matched_filter_test/data_generation/agent_in_sphere_initialization_test.m` | InitializationRunner::run | 已定位 / 合同待 P0 核验 |
+| `adaptive_matched_filter_test/data_generation/agent_in_sphere_adaptive_matched_filter_many_parameter.m` | UpdateRateRunner::run | P8.9源码职责已落实、有限隔离实测；真实完整成功及正式验收仍缺 |
+| `adaptive_matched_filter_test/data_generation/agent_in_sphere_adaptive_matched_filter_test.m` | AdaptiveComparisonRunner::run | P8.9源码职责已落实、有限隔离实测；真实完整成功及正式验收仍缺 |
+| `adaptive_matched_filter_test/data_generation/agent_in_sphere_initialization_test.m` | InitializationRunner::run | P8.9源码职责已落实、有限隔离实测；真实完整成功及正式验收仍缺 |
 | `bias_test/data_analysis/graphs_bias_test.m` | BiasResultAnalyzer::aggregate | 已定位 / 合同待 P0 核验 |
 | `bias_test/data_generation/bias_test_nonspherical.m` | BiasExperimentRunner::runOccluded | 已定位 / 合同待 P0 核验 |
 | `bias_test/data_generation/bias_test_spherical_prop_error.m` | BiasExperimentRunner::runProportional | 已定位 / 合同待 P0 核验 |
-| `help_functions/SHRotate.m` | HarmonicRotator / buildRotationBlocks | 已定位 / 合同待 P0 核验 |
+| `help_functions/SHRotate.m` | `egomotion::harmonics::HarmonicRotator::blocks(const Eigen::Matrix3d&) const`；通过 [球谐专题 LLD §3](design/SH_ROTATION_IVANIC_RUEDENBERG.md) 的唯一声明生成 R3/R5（R0=1 不存可变成员）；按 Ivanic–Ruedenberg 1996 原文及 1998 勘误 **纯 Eigen 重写**，Don Williamson 仅供参考、禁止 sdla | 实现数学路线已选；此处仅**预定方法声明及源码映射**，未创建 `.hpp/.cpp`、对应低阶球谐叶子论文/勘误数学依据已核、固定`5e522198`下局部3/3 CTest已实际通过；**本行规划的公共HarmonicRotator方法仍未创建/未测试** |
 | `help_functions/drehvektor_aus_zwei_vektoren.m` | math::rotationVectorBetween (自由函数) | 已定位 / 合同待 P0 核验 |
 | `help_functions/erzeugeflussausnear.m` | FlowSynthesizer::synthesize | 已定位 / 合同待 P0 核验 |
 | `help_functions/erzeugekreuzproduktmatrix.m` | math::crossMatrix (自由函数) | 已定位 / 合同待 P0 核验 |
@@ -223,27 +255,27 @@ stateDiagram-v2
 | `help_functions/kugelflfunc2.m` | RealSphericalHarmonics::evaluate | 已定位 / 合同待 P0 核验 |
 | `help_functions/kurveglaetten.m` | analysis::windowMean (自由函数) | 已定位 / 合同待 P0 核验 |
 | `help_functions/mue_norm_koenderink_iteration.m` | ModifiedKvDEstimator::estimate | 已定位 / 合同待 P0 核验 |
-| `help_functions/near_aus_koeff.m` | RealSphericalHarmonics::reconstructNearness | 已定位 / 合同待 P0 核验 |
+| `help_functions/near_aus_koeff.m` | RealSphericalHarmonics::reconstruct | 已定位 / 合同待 P0 核验 |
 | `help_functions/nonpropfehler.m` | MeanMagnitudeGaussianNoise::apply | 已定位 / 合同待 P0 核验 |
 | `help_functions/norm_koenderink_iteration.m` | OriginalKvDEstimator::estimate | 已定位 / 合同待 P0 核验 |
 | `help_functions/normrelfehler.m` | metrics::directionAngleDeg | 已定位 / 合同待 P0 核验 |
 | `help_functions/oneit_adaptiv_matched_filter.m` | AdaptiveMfaStepSolver::solve | 已定位 / 合同待 P0 核验 |
 | `help_functions/richtungsvektoren_icosahedron.m` | IcosahedralSampler::sample | 已定位 / 合同待 P0 核验 |
-| `help_functions/rodrigues.m` | math::rodrigues (实验实际使用的向量→矩阵分支) | 已定位 / 合同待 P0 核验 |
+| `help_functions/rodrigues.m` | math::rotationVectorToMatrix，内层规划调用 Sophus::SO3d::exp()（仅实际使用的向量→矩阵分支） | H-02 已选定 Sophus；零角/小角与 Rᵀ 值待对照，未编码 |
 | `help_functions/sinuskurve_trajektorie.m` | TrajectoryGenerator::sine | 已定位 / 合同待 P0 核验 |
 | `help_functions/skalarprodukt.m` | math::dot (自由函数) | 已定位 / 合同待 P0 核验 |
 | `help_functions/trajektorie_aus_punkten.m` | TrajectoryKinematics::fromPoints | 已定位 / 合同待 P0 核验 |
 | `help_functions/transfehler_div.m` | metrics::scaleAlignedVectorError | 已定位 / 合同待 P0 核验 |
-| `help_functions/transfor_koeff.m` | HarmonicRotator::rotateCoefficients | 已定位 / 合同待 P0 核验 |
+| `help_functions/transfor_koeff.m` | `egomotion::harmonics::HarmonicRotator::rotate`；接口声明见 [球谐专题 LLD §3](design/SH_ROTATION_IVANIC_RUEDENBERG.md) | 已定位 / 仅声明草案，待 P0.8 审阅；没有实现 |
 | `help_functions/winkelausvektor.m` | math::directionToAngles | 已定位 / 合同待 P0 核验 |
 | `help_functions/zellendefinieren.m` | FranzMatchedFilter::axisTemplates | 已定位 / 合同待 P0 核验 |
-| `illustrations/circle_curve_in_the_sphere.m` | IPlotExporter::drawCircleInSphere (可选) | 已定位 / 合同待 P0 核验 |
-| `illustrations/sinosodial_curve_in_the_sphere.m` | IPlotExporter::drawSineInSphere (可选) | 已定位 / 合同待 P0 核验 |
-| `illustrations/spherical_harmonic_illustration.m` | IPlotExporter::drawHarmonic (可选) | 已定位 / 合同待 P0 核验 |
+| `illustrations/circle_curve_in_the_sphere.m` | 实际 `illustrations::generate(CircleConfig)` + 可选 `SvgExporter::exportSvg` | `8c808be` 数值/CLI/SVG已测；正式合同未冻结 |
+| `illustrations/sinosodial_curve_in_the_sphere.m` | 实际 `illustrations::generate(SinusoidalConfig)` + 可选 `SvgExporter::exportSvg` | 同上；原错误标题保留 |
+| `illustrations/spherical_harmonic_illustration.m` | 实际 `illustrations::generate(HarmonicConfig)` + 可选 `SvgExporter::exportSvg` | 同上；未归一化径向插图，与核心九基分离 |
 
 - 无状态的点积、叉积、采样递归、误差公式优先使用自由函数，**不要为了“45/45 面向对象”而强行创建 45 个类**。
 - 实验入口统一由 Runner 调度，但必须保留各自独立的参数和存储合同。历史 MAT 结果的分析与绘图不反向依赖求解器。
-- `rodrigues.m` 与 `SHRotate.m` 有外部来源；C++ 实现范围与授权须在复制原代码前另行核验。
+- 原 `rodrigues.m`、`SHRotate.m` 保持只读源资料。物理旋转采用 Sophus；球谐旋转以 **Ivanic–Ruedenberg 1996 原文和 1998 勘误**为数学依据，**Eigen-only 独立重写** l≤2 的 R0/R3/R5；Don Williamson 仅作为源代码参考，**不得引入 sdla 的头文件、链接库或间接依赖**。仓库原创部分使用 MIT，引用实际第三方文件时保留其现有来源告知；不以一般版权复核阻塞研发。相关**规划中的公共类**C++头/源文件目前仅作声明级设计，尚未创建或实现；与固定`5e522198`真实构建和3/3测试的低阶球谐叶子区分，不对其它业务模块宣称实现。
 - 对一份 MATLAB 文件内多个辅助函数或附加可调用模式，P0.2 必须另列到方法级迁移表；本表仅记录每个文件的首要职责，不等于逐函数审计已全部完成。
 
 ### 7.1 名称一致性与职责边界
@@ -262,15 +294,30 @@ stateDiagram-v2
 
 前两项可先评审其**独立于待测 MAT 数值的已知部分**；这不等于第三项已达到编码基线。无 Golden 和已批准容差的数值模块不得因对象模型图通过而标记数值验收成功。
 
+**证据门禁更新**：对象模型及其接口的冻结**不以运行 MATLAB 或取得 L1 为前提**，使用 [无需 MATLAB 执行政策](golden/NO_MATLAB_EXECUTION_POLICY.md) 所定义 L2/L3/L4 证据；签名、所有权、实际接口测试与 DEC-005 容差仍须核验。未能确认的 MATLAB 运行时异常只能记录为来源限制。
+
 ## 8. 类方法签名冻结门禁
 
 | 设计特性 | 待冻结合同 | 证据 |
 |---|---|---|
-| 数据输入 | 参数名称、单位、维度、存储主序、空输入和归一化约束 | 固定 MATLAB 基准样本 |
+| 数据输入 | 参数名称、单位、维度、存储主序、空输入和归一化约束 | **L2 原作者历史 MAT 输入与 L3 独立固定输入参考**（无需 MATLAB 运行） |
 | 数据输出 | 结果值的类型、有效性、生命周期、必要残差和中间量 | SRS/TC 对照 |
 | 资源拥有 | unique 句柄、复制/移动/异常清理、不可覆盖原始 MAT | 资源测试、只读文件 hash |
 | 状态与线程 | RunContext / Session 唯一写入者，跨帧更新次序，单 Session 并发不承诺 | 独立 Session 回归 |
 | 错误处理 | 业务类别与精确 C++17 result/error 约定，CLI 状态映射 | 含失败路径的合同测试 |
-| 批准 | 原 MATLAB SHA、评审人、批准日期、受影响 REQ/TC、开放 DEC | 架构审查记录 |
+| 批准 | **原只读 MATLAB 源文件 Git blob SHA、L2 原始 MAT 身份与 L3 独立参考生成器/输入 SHA**、评审人、批准日期、受影响 REQ/TC、开放 DEC；不要求 MATLAB 运行 | 架构审查记录 |
 
 **状态仍为草案：本文件尚不包含经批准的可编译类签名，P0.7/P0.8 不能记为完成。**
+
+
+### 8.1 第一轮对象与接口身份复读（AF-039，部分文档工作）
+
+| 对象/能力 | 统一来源 | 保留的边界 |
+|---|---|---|
+| `RunContext` / `IResultReader` / `IResultWriter` | [contracts.md](design/contracts.md)、[experiments.md](design/experiments.md) | RunContext 独占 RNG/RunId；业务接口不持有 matio C 句柄 |
+| `MatDenseArray` / `RunMatWriter` | [mat_io.md](design/mat_io.md) | MAT 资源由 I/O 层拥有，跨层自拥有 double 值，不传裸 `mat_t*` |
+| `AdaptiveMfaStepSolver` / `AdaptiveMfaSession` | [adaptive_mfa.md](design/adaptive_mfa.md)、本文 §4 | 单步无 Session 副作用；失败不提交主系数，单 Session 并发不承诺 |
+| `HarmonicRotator::blocks/rotate` / `RealSphericalHarmonics::reconstruct` | [harmonics.md](design/harmonics.md)、[专题声明](design/SH_ROTATION_IVANIC_RUEDENBERG.md) | Ivanic/1998勘误、Eigen-only 的低阶叶子旋转和基函数已实现并有固定SHA原生测试；该行规划中的公共接口仍未实现、未冻结 |
+| 45 个原 `.m` 的首要职责 | 本文 §7、SRS §9.2 | 仅设计映射，不等于每个辅助函数已验证或实际建立 C++ 类 |
+
+此表不另定 C++ 方法签名，实际头文件、资源/线程回归、P0.7/P0.8 评审与正式批准仍缺；**AF-039 未整改**。

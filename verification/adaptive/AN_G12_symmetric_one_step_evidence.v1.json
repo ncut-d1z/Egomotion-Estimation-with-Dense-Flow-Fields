@@ -1,0 +1,60 @@
+{
+  "schema": "egomotion.adaptive.AN-G12-independent-math-result.v1",
+  "date": "2026-11-09",
+  "status": "WOLFRAM_EXECUTED_EXACT_SOURCE_FORMULAS_NOT_CPP_NOT_APPROVED",
+  "fixture": "AN-G12",
+  "source_reference": "docs/golden/analytic_golden_candidates.v1.json",
+  "reference_blob_sha": "1e6499eff3ce5b55503f8cd913b9f492629da499",
+  "wlscript": "verification/adaptive/verify_AN_G12_symmetric_one_step.wl",
+  "wlscript_blob_sha": "04f547eb6120b6aa72a8496d9fb5efc774b64b29",
+  "original_source": "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/oneit_adaptiv_matched_filter.m",
+  "original_source_blob_sha": "48e51bcd52fb8f27cf35b3fce38b28507af36e55",
+  "input": {
+    "count": 20,
+    "direction_reference": "AN-G03, source-derived icosahedron level 0",
+    "initial_nearness": 1,
+    "initial_translation": [
+      1,
+      0,
+      0
+    ],
+    "initial_rotation": [
+      0,
+      0,
+      0
+    ],
+    "flow": "p=-e_x+(d_x)d"
+  },
+  "checks": {
+    "max_block_difference_against_2I_over3_and_zero": 1.1102230246251565e-16,
+    "estimated_translation": [
+      1,
+      0,
+      0
+    ],
+    "estimated_rotation": [
+      0,
+      0,
+      0
+    ],
+    "mse": 0,
+    "updated_nearness_min": 0.999999999921459,
+    "updated_nearness_max": 0.99999999999,
+    "updated_nearness_not_exactly_one": true,
+    "updated_source_coefficients_order00_1m1_2m2": [
+      3.544907701718864,
+      0,
+      -1.3951473992034527e-16,
+      1.3951473992034527e-16,
+      0,
+      0,
+      5.245837929848937e-11,
+      0,
+      -7.039474304949877e-11
+    ],
+    "max_updated_coefficient_abs_difference_from_original_constant_unit_nearness": 9.216760687991155e-11,
+    "all_expected_symmetric_blocks": true
+  },
+  "source_semantics": "Original oneit.m normalizes t, computes p residual MSE, and near update uses nulldiv=1e-11 in denominator before calling per-channel koeff_aus_near, so updated nearness/coefficient are only approximately one/unchanged.",
+  "limits": "This is an independent Mathematica calculation of the AN-G12 mathematical candidate, not the original MATLAB runtime or any Adaptive/Session production C++ execution; no DEC-005 approval. 20 directions themselves originated from the source-derived AN-G03 JSON; no new randomized inputs or degenerate cases."
+}

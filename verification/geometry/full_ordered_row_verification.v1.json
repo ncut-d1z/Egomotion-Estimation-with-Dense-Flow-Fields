@@ -1,0 +1,97 @@
+{
+  "schema": "egomotion.geometry.full-row-independent-comparison.v1",
+  "date": "2026-11-09",
+  "status": "WOLFRAM_EXECUTED_ALL_714_ROWS_MATCHED_CPP_SAMPLER_NOT_RUN_UNAPPROVED",
+  "purpose": "Read-only source-derived geometry reference validation, not an approved Golden or production C++ sampling result.",
+  "source": "original MATLAB geometry source faces and A/B/C/D midpoint recursion, all source files remain unchanged",
+  "candidate": {
+    "path": "verification/geometry/source_direction_levels_0_2.v1.json",
+    "git_blob_sha": "85998162fb7e32ffed76cfe037e692ae101d9169",
+    "sha256_utf8": "67fde0f3af0eaf62fde607edfa483a85d202818583a0ff40125504cce5e8a434"
+  },
+  "independent_wolfram": {
+    "path": "verification/geometry/verify_full_source_direction_rows.wl",
+    "git_blob_sha": "f63f6f874bc93a2c94cffa87df038638c1933956",
+    "sha256_utf8": "6bf9a98efd6bf3d40a97a942485849fe75fcf3a3dbcc4603c92e2a76a2d11f41",
+    "kernel": "Wolfram Language 15.0.1",
+    "executed": true,
+    "method": "Per-row per-coordinate subtraction, original 20-face icosahedron F order, 30-digit golden ratio, double comparison. The session used ImportString with the same source JSON rows because the GitHub file is not mounted inside Wolfram tool."
+  },
+  "independent_signature_script": {
+    "path": "verification/geometry/verify_source_direction_levels.wl",
+    "git_blob_sha": "d4a448790bd1518c825b221faed039e53c26c5e3",
+    "sha256_utf8": "c025aef1fd596d839b5d39618634e9db227dc6dae8624beb92c536af3dc7d809"
+  },
+  "results": {
+    "face_count_icosa": 20,
+    "total_levels": 9,
+    "total_rows": 714,
+    "total_coordinates": 2142,
+    "max_abs_coordinate_difference": 1.1102230246251565e-16,
+    "coordinates_above_exploratory_1e_minus12": 0,
+    "max_source_Wolfram_squared_norm_error": 2.220446049250313e-16,
+    "levels": [
+      {
+        "category": "octa",
+        "level": 0,
+        "rows": 8,
+        "max_abs_diff": 0
+      },
+      {
+        "category": "octa",
+        "level": 1,
+        "rows": 32,
+        "max_abs_diff": 5.551115123125783e-17
+      },
+      {
+        "category": "octa",
+        "level": 2,
+        "rows": 128,
+        "max_abs_diff": 1.1102230246251565e-16
+      },
+      {
+        "category": "occluded",
+        "level": 0,
+        "rows": 6,
+        "max_abs_diff": 0
+      },
+      {
+        "category": "occluded",
+        "level": 1,
+        "rows": 24,
+        "max_abs_diff": 5.551115123125783e-17
+      },
+      {
+        "category": "occluded",
+        "level": 2,
+        "rows": 96,
+        "max_abs_diff": 1.1102230246251565e-16
+      },
+      {
+        "category": "icosa",
+        "level": 0,
+        "rows": 20,
+        "max_abs_diff": 0
+      },
+      {
+        "category": "icosa",
+        "level": 1,
+        "rows": 80,
+        "max_abs_diff": 1.1102230246251565e-16
+      },
+      {
+        "category": "icosa",
+        "level": 2,
+        "rows": 320,
+        "max_abs_diff": 1.1102230246251565e-16
+      }
+    ]
+  },
+  "footnotes": [
+    "The first attempt accidentally omitted face {11,3,7} in the temporary evaluator code and caused an icosa shape mismatch. It was corrected against the original F table, and the committed replay script explicitly guards face count 20.",
+    "This is actual Mathematica-vs-JavaScript candidate rowwise comparison for all stored 714 rows, not just a row-weighted checksum; it is not independent C++ sampling execution.",
+    "Tolerance 1e-12 is a comparison diagnostic for this independent check, not approved DEC-005 final scientific acceptance.",
+    "No MATLAB/Octave runtime used; no original source files or original archived MAT datasets modified.",
+    "Hashes are SHA-256 of exact UTF-8 file contents retrieved at fixed GitHub blobs and calculated using Wolfram ByteArray; not Git blob SHA values."
+  ]
+}

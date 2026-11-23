@@ -1,0 +1,115 @@
+{
+  "schema": "egomotion.adaptive.mean-and-conditioning-theory.v1",
+  "date": "2026-11-09",
+  "status": "WOLFRAM_SYMBOLIC_AND_HIGH_PRECISION_VERIFIED_NO_CPP_NO_MATLAB_NO_APPROVAL",
+  "baseline_commit": "982537556be1ac5a414af368a0082806a9179d32",
+  "source_path": "origin/egomotion_estimation_dense_flow_fields_matlab_scripts/help_functions/oneit_adaptiv_matched_filter.m",
+  "source_git_blob": "48e51bcd52fb8f27cf35b3fce38b28507af36e55",
+  "generator": "verification/adaptive/verify_zero_mean_conditioning_families.wl",
+  "generator_git_blob": "36eedaf6477d0255b7ab0f12572506970da6847c",
+  "kernel": "15.0.1 for Linux x86 (64-bit) (July 2, 2026)",
+  "inputs": {
+    "six_axes": [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]],
+    "six_axes_raw_nearness": "r_i=a+b*y_i; a>0; b>=0 in verified condition formula",
+    "source_CS_coefficients": "C00=a*sqrt(4*pi), C1,-1=-b*sqrt(4*pi/3), all other l<=2 coefficients zero",
+    "cone_directions": "(+-2h/(1+h^2),0,(1-h^2)/(1+h^2)), (0,+-2h/(1+h^2),(1-h^2)/(1+h^2)); 0<h<=1/2",
+    "cone_raw_nearness": "r_i=1 for all four directions",
+    "scale_true_translation": [1,0,0],
+    "scale_true_rotation_exact": ["1/5","-1/7","1/11"]
+  },
+  "source_normalization": {
+    "variables": "r is the ORIGINAL raw nearness vector; s=mean(r); mu is AFTER sign step and division",
+    "nonzero_mean_identity": "mu=r/abs(s), mean(mu)=sign(s)",
+    "zero_mean": "undefined source normalization; neither a MATLAB runtime trace nor a C++ failure test was executed",
+    "same_sign_finite_perturbation": "mu(r+delta_r)-mu(r)=(delta_r-sign(s)*mu*delta_s)/(abs(s)+sign(s)*delta_s), provided s and s+delta_s have the same nonzero sign",
+    "positive_depth_bound": "r_i>=0 and s>0 imply 0<=mu_i<=N; absolute small s alone is not cancellation",
+    "variable_warning": "Dividing original r by abs(s) is algebraically identical; dividing ALREADY-FLIPPED near_after_sign by abs(s) is a different negative branch. This does not authorize changing source implementation."
+  },
+  "results": {
+    "checkCount": 25,
+    "passedCount": 25,
+    "allChecksPassed": true,
+    "checks": {
+      "rawPositiveBranch": true,
+      "rawNegativeBranch": true,
+      "finitePerturbationBothSigns": true,
+      "sixAxisUnitDirections": true,
+      "rawMeanEqualsA": true,
+      "nonzeroFieldWithZeroMean": true,
+      "CSReconstruction": true,
+      "scaleMatrix": true,
+      "scaleRawMotion": true,
+      "pureRotationZeroTranslation": true,
+      "cancellationConstantDeterminant": true,
+      "cancellationConstantEigenvalues": true,
+      "cancellationGramPolynomial": true,
+      "cancellationAsymptoticGrowth": true,
+      "signedCancellationIndicator": true,
+      "coneUnitDirections": true,
+      "coneSymmetricMatrix": true,
+      "coneSpectrumPolynomial": true,
+      "coneSpectrumOrdering": true,
+      "coneConditionFormula": true,
+      "coneDeterminant": true,
+      "coneWeakMode": true,
+      "coneLimitRankTwo": true,
+      "shearSVDAgrees": true,
+      "coneSVDAgrees": true
+    }
+  },
+  "families": {
+    "uniform_positive_scale": {
+      "domain": "a>0, b=0; six axes; positive inverse depth",
+      "raw_mean": "a",
+      "matrix": "(2/3)*I6",
+      "condition2": 1,
+      "solved_motion": ["a",0,0,"1/5","-1/7","1/11"],
+      "translation_noise_angle": "atan(abs(eta)/a) when raw translation changes from a*e_x to a*e_x+eta*e_y",
+      "at_a_zero": "source divides by mean zero; the finite matrix limit is not an evaluation of the source at zero"
+    },
+    "signed_cancellation": {
+      "domain": "a>0,b>=0; for 0<a<b the field includes negative signed nearness, not a positive-depth physical scene",
+      "matrix": "[[2I/3,0],[(b/(3a))*cross(e_y),2I/3]]",
+      "gamma": "b/(2a)",
+      "determinant_exact": "64/729",
+      "matrix_eigenvalues": "2/3 with algebraic multiplicity six",
+      "condition2": "((sqrt(gamma^2+4)+abs(gamma))/2)^2",
+      "growth": "condition2 ~ b^2/(4a^2) as a->0+ with b>0 fixed",
+      "samples": [
+        {"a":0.1,"b":1,"det":0.0877914951989026,"conditionFormula":26.96291201783626,"conditionSVD":26.96291201783626,"relativeDifference":0.0,"cancellationRatio":0.25},
+        {"a":0.001,"b":1,"det":0.0877914951989026,"conditionFormula":250001.99999600003,"conditionSVD":250001.99999600003,"relativeDifference":0.0,"cancellationRatio":0.0029940119760479044},
+        {"a":0.000001,"b":1,"det":0.0877914951989026,"conditionFormula":250000000002.0,"conditionSVD":250000000002.0,"relativeDifference":0.0,"cancellationRatio":0.000002999994000012}
+      ]
+    },
+    "positive_narrow_cone": {
+      "domain": "0<h<=1/2, all raw nearness=1; physically positive depth",
+      "raw_mean": 1,
+      "matrix_symmetric": true,
+      "eigenvalues_each_multiplicity_two": ["2h^4/(1+h^2)^2","4h^2/(1+h^2)^2","2/(1+h^2)^2"],
+      "condition2_exact": "h^-4",
+      "determinant_exact": "256h^12/(1+h^2)^12",
+      "weak_eigenvector": [1,0,0,0,-1,0],
+      "rank_at_h_zero": 2,
+      "samples": [
+        {"h":0.1,"conditionExact":10000,"conditionSVD":10000.0,"relativeDifference":0.0,"lambdaMin":0.00019605920988138416,"lambdaMax":1.9605920988138419},
+        {"h":0.01,"conditionExact":100000000,"conditionSVD":100000000.0,"relativeDifference":0.0,"lambdaMin":1.999600059992001e-8,"lambdaMax":1.999600059992001},
+        {"h":0.001,"conditionExact":1000000000000,"conditionSVD":1000000000000.0,"relativeDifference":0.0,"lambdaMin":1.999996000006e-12,"lambdaMax":1.999996000006}
+      ]
+    },
+    "pure_rotation": {
+      "directions": "same six axes",
+      "raw_nearness": 1,
+      "matrix": "(2/3)*I6",
+      "condition2": 1,
+      "flow": "p_i=-omega cross d_i",
+      "solved_raw_translation": [0,0,0],
+      "conclusion": "source t_raw/norm(t_raw) is undefined despite nonzero mean and well-conditioned invertible M; no native exception behavior inferred"
+    }
+  },
+  "verification_limits": [
+    "Characteristic-polynomial equalities and parameter identities were checked symbolically, not merely at sample points.",
+    "SingularValueList used 70-digit inputs; sample ratios were compared at a diagnostic relative threshold 1e-35, then displayed as machine-precision JSON numbers. Reported zero differences are at this finite working precision, not a proof of bitwise equality on every machine.",
+    "A preliminary unsimplified limit produced intermediate Power::infy messages; the final script simplifies the growth ratio before the limit and its final execution returned 25/25 checks without those messages.",
+    "No C++/MATLAB/Octave execution, CMake/CTest changes, sampling implementation, MAT writes, solver replacement or DEC-005/008 approval occurred."
+  ]
+}

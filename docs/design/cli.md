@@ -1,0 +1,155 @@
+# CLI 参数、退出码与诊断协议：详细设计草案
+
+> **2026-11-21 失败 Manifest 交付接续，未构建/未测试**：计算失败后，若失败 Manifest 的发布或持久化确认也失败，最终交付码改用既有输出错误6，成功保存的 execution.json 同步记录6；原计算诊断保持自身错误类别、退出码及原因链，Manifest 错误仍为独立事件。Manifest 正常确认时保留原计算退出码。五入口 × 两类输出故障的回归仅准备源码，见 [本批记录](../reviews/R6_FAILURE_METADATA_CONTINUATION_2026-11-21.md)；不改变错误枚举、计算状态或正式冻结。
+
+> **2026-11-21 子进程回收接续，未构建/未测试**：独立单线程记录器在 Directory/start/fork 前检查 SIGCHLD；显式 SIG_IGN 或 SA_NOCLDWAIT 无法保留真实 wait 状态，沿用 OutputFailed/Output/退出6，且不启动应用或创建本次记录目录。父侧额外阻塞 SIGCHLD，防止自定义 handler 提前回收；signalfd/转发仍仅 INT/TERM/HUP/QUIT。原 SIGCHLD disposition 不改，子进程入口及父进程返回恢复原 mask。依据与未执行回归见 [本批记录](../reviews/R6_MANIFEST_PROCESS_CONTINUATION_2026-11-21.md)；没有增加多线程嵌入承诺、错误枚举或正式冻结。
+
+> **2026-11-21 启动异常接续，未构建/未测试**：真实应用入口的参数构造、服务装配和工作目录获取也纳入既有 std::exception 回退，保留原 what()、OutputFailed/Output/退出6；未预留 RunId 时不虚构身份。直接入口与记录器入口复用同一处理，回归源码覆盖已删除 cwd 的正常失败返回及 application_returned 记录，见 [本批记录](../reviews/R6_STARTUP_MAT_SCAN_CONTINUATION_2026-11-21.md)。不改变信号终止及非标准异常的既有边界，正式冻结状态不变。
+
+> **2026-11-20 记录目录身份接续，未构建/未测试**：进程记录器成功创建独占目录后，若打开或确认该目录失败，保留原操作、errno 和实际记录路径；外层仅在已知 location 非空时附路径，碰撞或尚未创建目录的失败不冒认本次记录。退出码、私有目录/碰撞规则及失败证据保留不变，见 [本批记录](../reviews/R6_ILLUSTRATION_RECORD_CONTINUATION_2026-11-20.md)。目录路径不表示持久化已经确认，正式冻结状态不变。
+
+> **2026-11-20 实验异常记录接续，未构建/未测试**：已预留 RunId 且开始记录已确认后，Runner 抛出的 `std::exception` 由局部边界捕获，保留真实 RunId/原 `what()` 并进入现有失败 Manifest 和结束记录流程。保持原 OutputFailed/Output/退出6，不猜测数值类型、不虚增原因链；既有 Complete 和结束记录禁止覆盖。详见 [本批记录](../reviews/R6_FAILURE_BOUNDARY_CONTINUATION_2026-11-20.md)，正式冻结状态不变。
+
+> **2026-11-20 代码接续，未构建/未测试**：`analysis_ready` 与 plot 的 `invocation.json` 直接保留 Analyzer 的 `metric_policy`、`planned_repetitions`，每曲线保留 `metric_semantics`、`y_unit` 及原输入身份。同一原分析脚本可消费不同版本指标，因此源 blob 不再成为日志中唯一的指标解释依据。未知信息原样保留，不读取原路径重新推测；既有记录 schema 增补字段，正式冻结状态不变。按所有者最新指令，构建与测试延期，见 [本批记录](../reviews/R6_CODE_CONTINUATION_2026-11-20.md)。
+
+> **2026-11-18 应用上下文增量 `[AI-DRAFT + HUMAN-APPROVE]`，候选、未冻结；ff8aaa7已完成ON70/OFF69及故障复测，见 [实际证据](../reviews/R6_CONTEXT_JOURNAL_2026-11-18.md)**：进程记录使用`egomotion-process-start-v2`/`finish-v2`，`application_context`改为指向`context.jsonl`及`egomotion-context-event-v1`的对象。通过显式借用的`IInvocationObserver`记录实际事件：应用进入、解析成功后的有效配置、seed选择、成功预留RunId、实际RunContext/导出上下文、MAT快照准备、分析/插图来源、应用返回；序号从1递增，每事件写入后fsync。`seed_selected`不表示算法已消耗随机数，`mat_snapshot_prepared`不表示变量已解码成功。RunContext/导出上下文复用同一份`invocation.json`序列化文本；不通过argv推测RunId，也不事后重新打开MAT路径拼接摘要。普通`egomotion`不注入观察器。
+>
+> 第一个观察失败缓存为Output错误，后续观察不再写入；应用在对应边界停止后续处理并返回6。正常返回事件fsync成功后，子进程通过独立非阻塞管道确认返回；父进程在waitpid后保存`context_return_confirmed`并对三个通道（stdout、stderr、context）保存字节数/SHA-256/fsync结果。正常exit没有确认则外层返回6；信号终止允许保留事件前缀并仍返回128+signal（通道或结束记录失败另返回6）。文件存在、完整JSON行或同名返回事件均不替代确认；确认也不等于科学计算成功或掉电保证。关联D4/P5.3/P8.9/P10.6、REQ/TC-NF-LOG-001；不变更AC、数值阈值、最终错误码或正式冻结状态。下文v1描述为617c7f8历史证据。
+
+> **2026-11-18 进程记录增量 `[AI-DRAFT + HUMAN-APPROVE]`，候选、未冻结**：新增显式入口 `egomotion-record <原egomotion参数>`，在单线程父进程中先确认开始记录，再fork执行同一构建的应用入口。原 `egomotion` 行为保持；记录器的stdout为日志位置/条件退出码收据，子进程stdout/stderr原始字节分别保存，不实时转发。构建/测试日志固定在 `build-cli-records/record_<128位OS随机身份>/`，此RecordId不是实验RunId，不是新MAT/图形输出根；科学产物继续仅允许 `output/<RunId>/`，不增加输出根参数。日志根及每次记录目录必须独占、私有；日志根拒绝符号链接及非私有权限，检出根为应用可信边界，保留失败证据。关联D4/P5.3/P8.9/P10.6、REQ/TC-NF-LOG-001；最终源码617c7f8已完成ON69/OFF68及新增399项/23次受监控调用、12组真实CLI对照，见 [证据](../reviews/R6_PROCESS_RECORDS_2026-11-18.md)；测试不等于正式冻结。
+>
+> `start.json`保存argv、编译时源码SHA、实际cwd、环境白名单及UTC；`finish.json`用waitpid区分正常exit与signal，保存原始wait状态、转发信号、两通道字节数/SHA-256/fsync状态。父进程收到INT/TERM/HUP/QUIT时转发给尚未回收的子进程；子进程恢复调用前的信号状态。正常返回原子进程码，信号返回128+signal；记录/通道/收据失败返回6，结束记录中的返回码是发布与收据成功条件下的值，文件存在不证明最终持久性。开始确认前不得启动应用；父进程SIGKILL、系统掉电和无法写盘仍不能保证结束记录。原应用的RunId/seed/已读取MAT快照身份与错误链仍在应用输出及其既有记录中，外层明确 `application_context=not_observed_by_supervisor`，不从请求参数猜测“实际已分配/已使用”，不据此宣称整个REQ-NF-LOG已满足。记录器捕获通道与直接终端/管道交付是不同运行环境；程序直接写坏管道的语义仍由原入口测试覆盖。
+
+> **2026-11-17 日志实测 `[AI-EDIT]`**：`9eb831531ce04f2bfab8bf813011c36a451ee409` 构建及47/47 CTest通过；已分配RunId的实验、绘图/插图返回错误现补齐缺省顶层身份，保留已有身份及完整causes，未分配时不虚构。见 [修复/验证](../reviews/R6_RUNID_DIAGNOSTICS_2026-11-17.md)。落实既有日志义务，不新增字段或改变正式冻结状态。
+
+> **2026-11-17 Adaptive实测 `[AI-EDIT]`**：`2438a8039a905c7f3d8ab74aba1faeaa9a2387cf` 构建及46/46 CTest通过；三个实际生成入口均exit5/Incomplete，无MAT。初始化第14帧acos越界、比较/更新率第151帧零旋转，完整错误链/计数/拒覆盖已有 [证据](../reviews/R6_ADAPTIVE_CLI_2026-11-17.md)。这是失败合同验证，成功产物分支未执行，CLI及数值验收状态不改变。
+
+> **2026-11-17 插图实测 `[AI-EDIT]`**：候选illustrate入口已在 `8c808be58e25de16da7b3d0c66ce3c0764e74e76` 实际测试，28次进程及全套45/45 CTest通过。JSON/SVG、错误码、路径防覆盖证据见 [记录](../reviews/R6_ILLUSTRATIONS_2026-11-17.md)。本文下方“待构建/未执行”是此前准备状态，CLI/schema正式冻结仍未发生。
+
+> **2026-11-17 执行事实（[AI-EDIT]）**：受测源码 `c42f12f0be89646fd39b93dbb61a79a0ee28e05f` 无诊断构建、35/35 CTest通过，包含57次真实CLI进程；已恢复本LLD规定的八个已知子命令 `--help`，未知命令及混合额外参数仍拒绝。历史分析3组成功、3组因原始NaN拒绝，见 [实际证据与限制](../reviews/R6_CLI_PROCESS_VALIDATION_2026-11-17.md)。后文“未创建/未测试”是历史状态，不替代该固定SHA证据；未改变CLI合同或冻结状态。
+
+> **CLI LLD v0.12（顶层JSONL error_domain与完整causes双重来源校验；仍未创建CLI或运行CTest）。** 对应 REQ-F-CLI-001～005、REQ-I-CLI-001、REQ-I-RESULT-001 和 P0.8/P1.2。来源为 [SRS §6.1](../REQUIREMENTS.md)、[实验 LLD](experiments.md) 与 [跨模块错误合同](contracts.md)。本文是设计评审材料，不代替所有者批准。
+
+## 1. 语法与基本约束
+
+- 进程入口：`egomotion COMMAND [OPTIONS]`。`egomotion --help`、`egomotion COMMAND --help` 和 `egomotion --version` 不读取 MAT、不执行算法、退出 0。
+- 未知命令/选项、缺参数、单值选项重复、非法枚举/整数/浮点数都退出 **2**，不采取“最后值胜出”。
+- **写出根路径为固定内部规则**：本仓库所有新输出只能位于仓库根 `output/<RunId>/`，**CLI 不提供任何自定义输出根选项**。有新输出的命令可以指定 `--run-id ID`；缺省时由与实验 RNG **完全独立**的操作系统随机源创建 128 位随机身份，建议格式 `run_<32位十六进制>`，目录以独占/不覆盖方式创建；若无法取得安全随机值/独占目录则明确失败，不复用旧 RunId。不含新输出的 `inspect-mat`、纯数值 `analyze` 不强制生成 RunId。用户指定 ID 的候选校验为 1–64 个 ASCII 字母/数字/下划线/连字符，路径分隔、回溯和绝对路径一律拒绝。原始 `origin/**` 永远只读，`.gitignore` 的 `/output/` 不替代文件系统安全检查。
+- 解析时不改变 MATLAB 原值：35/600 点、二十面体细分级别、8 次比较、四个更新间隔 1/5/11/21、噪声乘数不擅自改变。
+- 路径保留 Debian/Ubuntu 的 UTF-8/中文/空格语义；不把路径拼接结果当成可靠的防符号链接绕过实现。
+
+## 2. 命令级输入合同
+
+**2026-11-17 插图增量 `[AI-DRAFT + HUMAN-APPROVE]`（候选、未冻结）**：新增 `illustrate --kind circle|sinusoidal|harmonic [--format json|svg]`，默认JSON数值stdout、无RunId；harmonic要求 `--degree N --order M`（完整非负十进制，0≤M≤N≤INT_MAX），轨迹拒绝阶数选项。SVG允许 `--run-id ID` 并复用固定输出根/OS独立随机RunId，数值/图形产物为 `illustration.json` 与 `illustration.svg`，11-18增补的两份运行记录见下文；不接受输出根或更改原固定轨迹参数。数据schema、错误复用与端点/渲染边界见 [插图实现记录](../reviews/R6_ILLUSTRATIONS_2026-11-17.md)。此候选入口落实原P9.7展示范围，未改变数值AC或DEC-008批准状态；限定构建/CTest已执行，正式冻结仍未完成。
+
+| 命令 | 必需选项 | 可选选项 | 已知输出、选择与来源边界 |
+|---|---|---|---|
+| `inspect-mat` | `--file PATH` | `--variable NAME`（可选，仅筛选结构元数据） | **只调用`MatResultReader::inspect(file)`取得结构元数据**：变量名、class/type、rank/dims、元素数等；有NAME只筛选该名称的元数据，不解码、不显示数值元素。未知变量返回MissingVariable。`--mode strict/compat`、`--format`、`--rows/cols/precision`、`--all`不属于该命令参数；无RunId、只读且绝不修改MAT。 |
+| `run-bias-occluded` | `--seed UINT32 --level NONNEG_INT` | `--run-id ID` | 使用缺损八面体、平均光流模长噪声；level 为包含端点的最大递归级别；写 xwerte 和 ywerte1…6 |
+| `run-bias-proportional` | 同上 | `--run-id ID` | 使用完整八面体和逐分量噪声；保留原作者 xwerte 与真实 N 不同的行为 |
+| `run-adaptive-init` | 无 | `--run-id ID` | 35 点、level=2；四类初始化误差 MAT |
+| `run-adaptive-comparison` | `--noise-scale FINITE_DOUBLE` | `--run-id ID` | 600 点、level=4、8 次重复；含噪/无噪比较及 rottransratio，当前五类 MAT；噪声为 0 时仍消耗原有 randn |
+| `run-adaptive-update-rates` | 无 | `--run-id ID` | 600 点、level=2，周期固定 1/5/11/21；当前脚本只写三个 MAT，不伪造历史额外数据 |
+| `analyze` | `--experiment bias/adaptive-init/adaptive-comparison/adaptive-update-rates --input-root DIR` | 无 | 四种分析路径；只读取 MAT，不调用求解器；缺少字段显式失败 |
+| `plot`（S） | 同 analyze | `--run-id ID`（仅当生成持久图像文件时适用） | 绘图后端可缺席（exit=7），不得影响数值与分析命令 |
+
+### 2.0.1 DEC-008-05 已决定：MAT数据结构检查，不显示数值内容（2026-11-13）
+
+**需求纠正与撤销**：项目所有者之前要求检查MAT文件的**数据结构**，而非显示double矩阵元素。原`strict+NAME`/`compat`应读取数据内容、NumPy/pandas式`preview`、`--all`全量打印、`--format`、`--precision/--rows/--cols`均是助手擅自扩展的功能，**已正式从现行CLI设计撤回**；不把之前日志中的虚构需求继续当作开发义务。无需Python/pandas/NumPy运行时或仿制数值表格器。
+
+| 输入 | 只读操作 | 成功/失败及限制 |
+|---|---|---|
+| `inspect-mat --file F` | `MatResultReader::inspect(F)`在同一只读文件身份下枚举**全部真实变量元数据** | 输出变量名、MAT class/type、rank/dims、元素总数及可确证的complex/logical/压缩标志；**不读取、不显示数值载荷** |
+| `inspect-mat --file F --variable NAME` | 先枚举真实结构，再按名称筛选该变量元数据 | 存在则只输出该变量结构，不解码值；不存在返回`MatErrorCode::MissingVariable / read(3)` |
+| 缺少F、空NAME、重复或未知参数 | 先参数解析 | `Parse/exit(2)`；无文件打开/写入 |
+| `--mode`、`--format`、`--all`、`--rows`、`--cols`、`--precision` | 均不是`inspect-mat`参数 | `Parse/exit(2)`，不对原MAT作值读取或显示 |
+
+**Reader与CLI职责必须分开**：`MatResultReader::readNamed(path,name)`和`readFirstCompatible(path)`仍是其它**业务流程/历史getflowfield兼容与数值验证**所需API；它们保持完整数值解码和单次打开来源身份/TOCTOU合同，**但inspect-mat不调用它们**。业务Reader的`strict/compat`含义不能反向推导成结构检查命令的`--mode`参数。结构检查可以报告未获业务解码支持的MAT变量类型，只要头部元数据真实可读；不因此猜想数值是可解码的。
+
+**只读与输出**：仅将结构元数据作为成功stdout文本，错误事件仍使用项目已选JSONL诊断，不生成实验RunId、不变更MAT哈希、不打印元素、也不持久化虚构数据。见[MAT LLD §7.4.2](mat_io.md)和[TEST_PLAN](../TEST_PLAN.md)原`TC-F-CLI-001`。此为设计已决定，不代表命令已经实现/CTest通过。
+
+### 2.1 参数类型与不变量（待 P0.8 签署）
+
+| 类型 | 拟议的精确校验 | 待决定 |
+|---|---|---|
+| UINT32 | 完整十进制输入，0 至 4294967295；禁止负数、溢出和尾随字符 | 固定 seed 的跨 MATLAB/C++ 序列不承诺相同 |
+| NONNEG_INT | 完整十进制非负整数；先检查 4 的幂、样本数量及分配溢出 | 不凭空设定人为最大 level/实验规模 |
+| FINITE_DOUBLE | C locale 完整解析，拒绝 NaN、Inf、尾随内容 | 负噪声系数的 MATLAB 语义及是否接收需批准 |
+| ID | 用户指定的 RunId 为 1–64 个 ASCII 字母/数字/下划线/连字符；拒绝点、空格、路径分隔与回溯 | 缺省由 OS 独立随机源生成 `run_<128bit十六进制>`，不消费实验 RNG；目录和文件独占创建，不覆盖。实现待验证 |
+| 固定输出根（内部，不是 CLI 参数） | 唯一根 `<repo>/output/`，任何新结果仅能使用全新的 `output/<RunId>/` | 由 Composition Root/RunContext/Writer 分层校验，独占创建与 TOCTOU 测试尚未执行 |
+| PATH / DIR（仅输入路径） | 单个非空输入实参，解析实际路径；不用于指定新结果输出根 | 输入保持只读；符号链接/TOCTOU 仍需安全负例验证 |
+
+## 3. 退出码、错误阶段与错误优先级（候选）
+
+**本表是面向命令行使用者的摘要，不是独立枚举映射表。** `MatErrorCode` / `NumericalErrorCode` / `ExperimentErrorCode` / **`AnalysisErrorCode` / `PlotErrorCode`** 到退出码的唯一候选来源是 [contracts.md §3.1](contracts.md)，不得从本表反向定义另一套错误编码；两表不一致时先记录待审差异，不擅自修改已批准的 SRS 义务。
+
+| exit | 类别 | 示例 |
+|---:|---|---|
+| 0 | 成功 | help、version 或正常完成 |
+| 2 | 参数错误 | 未知/重复/缺少参数、非法枚举、整数格式 |
+| 3 | 输入或 MAT 读取错误 | 文件不存在/拒绝访问、坏 MAT 头、损坏压缩块、缺变量（含 Analyzer 发现必需的 rottransratio 缺失）、兼容多变量顺序不明（AmbiguousVariable） |
+| 4 | 变量类型/布局错误 | 不支持的 MAT class/data_type、rank/dims 不匹配、分析变量 ShapeMismatch、长度溢出 |
+| 5 | 数值、实验或分析失败 | SingularSystem、NonFiniteResult、SolverFailed、IncompleteRun；Analyzer 的 InvalidSegment / UndefinedStatistic / NonFiniteInput / UnsupportedExperiment |
+| 6 | 输出路径/结果安全冲突 | origin 路径、已有 RunId、写失败、独立回读不一致 |
+| 7 | 可选功能不可用 | 仅 `plot` 的 `PlotErrorCode::BackendUnavailable`；无效曲线或图表写入失败不属于此类 |
+
+**可选绘图的错误边界（AF-084）**：`IPlotExporter` 的 `PlotErrorCode` 四项由 [分析 LLD §2](analysis_plotting.md) 定义，仅 [contracts §3.1](contracts.md) 决定对外 exit/stage。缺后端、无效曲线、禁止输出和写图失败不得一概报 exit 7；`analyze` 在无绘图后端时仍必须可返回数值。文件系统拒绝/写失败不应破坏原始 MAT 或前一步已产生的只读分析数据。全部为候选，不是实际 CTest 结果。
+
+**分析路径跨层区分（AF-077）**：无效 `--experiment` 由 CLI parse 阶段拒绝（exit 2）；合法命令但缺少必需的分析输入/变量属 read(3)、shape 错误属 decode(4)，读入成功后段界/统计/非有限属 analyze(5)，严格按 [contracts §3.1](contracts.md) 的同一候选表，保留底层源错误身份，不能只按枚举同名就随意转换。
+
+阶段检查顺序为 **parse（2）→ input/read（3）→ decode/schema（4）→ output safety（6）→ solve/analyze（5）→ plot capability（7）**。如果一个请求包含多个问题，报告实际先触发的失败，保留原始错误码及上下文。具体错误枚举映射直接引用 [contracts.md §3.1](contracts.md) 的候选表，待 P0.8/P1.2 人类批准后冻结。
+
+**实际输出交付证据 `[AI-EDIT]`，2026-11-17**：`5a2cedc` 对`egomotion`全部stdout成功输出及stderr诊断检查write/flush，普通流错误退出6；真实RunId保留，stderr不可用时不承诺诊断送达。失败Manifest先于stderr通知保存，默认SIGPIPE终止后审计仍保留；已发布成功产物不因stdout通知失败而重写。两模式50/50、49/49及848项流检查见 [实测](../reviews/R6_CLI_STREAM_OUTPUT_2026-11-17.md)。信号终止仍按系统行为处理，不声称返回6；这是既有输出失败义务的限定实现证据，不冻结候选合同。
+
+**五实验运行记录候选实现，未冻结（2026-11-18登记）**：`4c2973b`在`output/<RunId>/`增加`invocation.json`和`execution.json`，不修改MAT集合。开始记录确认后才调用Runner；有效Config/原参数、seed、源码/环境与输出尝试全文可复核。`execution.json`的`exit_code_if_record_published`仅在记录确认发布时为返回码，记录自身失败返回`exit_code_on_record_failure=6`并独立报错；不能仅凭文件存在判断持久性。输出尝试的全文不代表失败通道实际接收了全部字节；SIGPIPE等终止不伪造结束记录。正式schema冻结及其它入口边界仍待复核，53/53、52/52的限定证据见 [专项](../reviews/R6_EXECUTION_RECORDS_2026-11-17.md)。
+
+**导出运行记录候选实现，未冻结（2026-11-18）**：`plot`及SVG illustration在分析/几何成功、后端存在并预留RunId后增加同名两份记录，确认开始记录后才导出。`record_scope=artifact_export`，不包含此前读取/计算时间；沿用Analyzer快照摘要，科学RNG及计算Manifest为null。开始失败不调用导出器，结束失败返回6并保留已发布产物；只读入口及预留前失败仍由外部执行证据覆盖。具体实现与验证状态见 [专项](../reviews/R6_ARTIFACT_RECORDS_2026-11-18.md)，不代表整体REQ-NF-LOG已验收。
+
+失败诊断最少包含稳定的 `error_code`、`exit_code`、`stage`、`message`；涉及 MAT 需附 `path` 与已知 `variable`，涉及实验需附 RunId、算法与样本下标。正常输出使用 stdout、错误使用 stderr，文件里仍保存原 MATLAB 兼容 MAT。**现行设计已选 JSONL 为结构化诊断格式**：一行一个UTF-8 JSON对象，至少有**顶层`error_domain`、`error_code`**、`stage`、`exit_code`、`message`及按`std::forward_list<ErrorFrame>`顺序序列化的`causes`数组（空链为`[]`），可选`run_id/path/variable/observation_index`；stage 由 `contracts.md` 的稳定 `ErrorStage` 枚举序列化，字符串须正确转义，非有限数值不得输出不合法 JSON。无需大型 JSON 依赖，可实现小型可靠序列化器。**当前只有方案，未创建程序或 JSONL 测试**。
+
+**最新项目所有者决定**：CLI 输出根选项已明确删除；固定 `output/<RunId>/`、独立 RunId、JSONL、稳定错误阶段和轻量封装 Result 为已选择的设计方向（见 [最新决定](../decisions/PROJECT_OWNER_DECISIONS_2026-11-07.md)）。其余 CLI 具体错误码与完整 CTest identity 仍属于 P0.8/DEC-008 的未冻结接口细节；本轮不执行任何命令，也不能把候选接口称为已测试。
+
+### 3.1 第一轮 CLI 冻结前边界矩阵（AF-041，部分文档工作）
+
+| 输入/情境 | 已确定或当前候选 | 未完成的决定/证据 |
+|---|---|---|
+| `--noise-scale` | `FINITE_DOUBLE` 拒绝 NaN/Inf/尾随内容；零噪声**仍按原源消耗 RNG** | 负系数在原 MATLAB 语义下应接收还是拒绝，需独立源码/设计批准与负例测试，不能无依据更改 |
+| `--seed` / `--level` | `UINT32`、`NONNEG_INT` 精确解析；不凭空设置人为规模上限 | 端值、溢出、资源失败状态与异常回退需实际测试 |
+| 手工/自动 RunId | 手工 ASCII 白名单；自动 OS 独立 128 bit、不得消耗实验 RNG；新目录独占，不复用/覆盖 | CSPRNG 失败、重复 RunId、软链接/TOCTOU、路径和回读负例待验证 |
+| 错误与退出码 | 唯一映射在 [contracts.md §3.1](contracts.md)，检查顺序 parse→read→decode→output→solve/analyze→plot | 多错并发出现时先到达阶段、跨层 code/stage 保留与所需退出码需 CTest 确认 |
+| 诊断 JSONL | UTF-8 每行对象、稳定字段、转义引号/反斜杠/控制字符、非有限数值不输出非法 token | 无有效 RunId 时字段省略/空值约定、stderr 与文件日志失败后的状态需批准与真实测试 |
+
+这些是冻结前核对项，**不授权**实现/执行；DEC-008/P0.8/P1.2 尚未批准，`AF-041` 保持「未整改」。
+
+### 3.2 负噪声尺度的原始源码静态边界（AF-041，非批准）
+
+只读原 `help_functions/nonpropfehler.m` 中，每个视线对 p 的三个分量**分别**执行 `randn * fehlerprozent * durchlaenge`，随后将 p 投影回切平面；`agent_in_sphere_adaptive_matched_filter_test.m` 仅将 `addederror` 传入该系数，没有显式的“必须非负”分支。因此：
+
+- `--noise-scale 0` 的数值噪声贡献为零，但 **3N 次正态随机抽样仍发生**；负有限系数以负号乘相同的随机抽样，会改变**固定注入序列**的具体噪声符号，不能为了统计分布相似而默默转成绝对值。
+- **候选忠实行为**：`FINITE_DOUBLE` 校验有限性，不额外对负号作非负拒绝；如将来选择“非负业务限制”，必须作为经 DEC-008 明确批准的外部语义变更，记录相应 TC 差异，不能声称来自原 `.m`。
+- 必须用零/正/负尺度、固定 3N 抽样、精确切向投影及被拒绝的 NaN/Inf 负例验证 CLI/噪声层；当前没有获得正式接口批准，也没有代码/CTest/独立 L3 执行。参见 [采样 LLD §7.2](sampling_noise.md) 与 [静态证明记录](../reviews/AN_G_STATIC_FORMULA_REVIEW_2026-11-08.md)。
+
+### 3.3 DEC-008-02/04/05 的现行已决定行为
+
+**2026-11-13零包装错误家族区分**：直接从MAT Reader报告`InvalidShape`与直接从Numerical Solver报告同名`InvalidShape`时，`causes=[]`，不能仅凭`error_code`或退出码判断是何种类型；必须分别输出`error_domain=MatErrorCode`、`error_domain=NumericalErrorCode`。这个字段由已知C++ `Failure<Code>`的枚举家族映射，**不靠`message`文本、路径或`ErrorStage`猜测**，见[contracts §3.0.2](contracts.md)。只有真的在CLI层新建Failure进行包装时才增加新的ErrorFrame；纯序列化不允许虚加节点。
+
+
+
+- **DEC-008-02**：对Result/Status错误alternative访问，按[contracts `3.A.2](contracts.md)显式检查并抛包含方法与原因的`std::logic_error`；正常业务输入错误仍走Failure。
+- **DEC-008-04**：每次真实跨层包装必须保存完整`std::forward_list<ErrorFrame>`历史，CLI错误JSONL顶层**必须包含`error_domain`**和`error_code`（即使`causes=[]`），各内层帧再以有序`causes`数组（最近内层至最深根因）序列化，不只保存原来单个`source_error_code`。只进行错误输出、不创建新Failure时**不得虚增CLI包装帧**。消息文本不代表机器ErrorCode。
+- **DEC-008-05**：`inspect-mat`只输出结构元数据，**不存在**数值转储/NumPy/pandas预览要求，不能添加未要求的`--mode/--format/--all`选项；真实数值Reader仍只供其它业务使用。
+- CLI格式和Result/错误链是**设计已决定、实现未验证**；其它六项无限期延期许可保持不变。见[TODO `2.2](../TODO.md)与[TEST_PLAN](../TEST_PLAN.md)。
+
+## 4. 验收映射与冻结界线
+
+| TC | 必要测试 | 证据状态 |
+|---|---|---|
+| TC-F-CLI-001 | **strict/compat×有无NAME四分支**，unknown/duplicate解析优先，精确按名/有界首变量/元数据只读、Bad NAME、多变量歧义、源哈希不变；见§2.0.1 | 只有独立 matio 探针 582/582 读取的子项证据；CLI与合成多变量负例未编写/未运行 |
+| TC-F-CLI-002 | 两类 Bias、seed/level、输出安全与变量形状 | 未编写/未运行 |
+| TC-F-CLI-003 | 三种 Adaptive、noise-scale、原更新间隔与当前写出的 MAT | 未编写/未运行 |
+| TC-F-CLI-004 | analyze 四条路径独立运行、不触发估计器、缺字段失败 | 未编写/未运行 |
+| TC-F-CLI-005 | 缺绘图后端 exit=7，核心命令不受影响 | 未编写/未运行 |
+| TC-I-CLI-001 | 帮助、必填与默认值、错误优先级和诊断字段 | 未编写/未运行 |
+| TC-I-RESULT-001 | RunId 不覆盖、变量名/类型/形状、新 MAT 回读 | 未编写/未运行 |
+
+**冻结前必须完成**：项目所有者批准该候选 SHA 与待决定项，SRS/HLD/contracts 同步确认；P1.2 有实际 CLI 代码及 tests/integration/test_cli.cpp/CTest 证据；输出路径负例与原始 MAT 哈希核验。没有这些证据时本文继续是设计草案。

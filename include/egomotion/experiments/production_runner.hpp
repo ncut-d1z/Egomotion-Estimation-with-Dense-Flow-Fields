@@ -1,0 +1,71 @@
+#pragma once
+
+#include "egomotion/experiments/runner.hpp"
+#include "egomotion/experiments/bias_runner.hpp"
+#include "egomotion/experiments/adaptive_runner.hpp"
+#include "egomotion/sampling/directions.hpp"
+#include "egomotion/simulation/flow.hpp"
+
+#include <optional>
+
+namespace egomotion::estimators { class IAdaptiveStepSolver; }
+
+namespace egomotion::experiments {
+
+// Pure business implementation behind the public narrow runner interface.
+// It knows the source current-save sets but has no matio/dirfd dependency.
+class ProductionExperimentRunner final : public IExperimentRunner {
+public:
+    // 注入只用于有确定预期值的合同测试，CLI 默认构造仍选真实数值求解器。
+    explicit ProductionExperimentRunner(
+        const estimators::IAdaptiveStepSolver* injected_solver=nullptr)
+        : injected_solver_(injected_solver) {}
+    // 求解服务借用到调用结束；RNG始终使用每个RunContext独占的实例。
+    explicit ProductionExperimentRunner(BiasEstimators bias_estimators,
+        const estimators::IAdaptiveStepSolver* injected_solver=nullptr)
+        : injected_solver_(injected_solver), injected_bias_(bias_estimators) {}
+    explicit ProductionExperimentRunner(AdaptiveSampling adaptive_sampling,
+        const estimators::IAdaptiveStepSolver* injected_solver=nullptr)
+        : injected_solver_(injected_solver), injected_sampling_(adaptive_sampling) {}
+    ProductionExperimentRunner(AdaptiveSampling adaptive_sampling,AdaptiveScene scene,
+        const estimators::IAdaptiveStepSolver* injected_solver=nullptr)
+        : injected_solver_(injected_solver), injected_sampling_(adaptive_sampling),
+          injected_scene_(scene) {}
+    Result<RunOutcome,ExperimentErrorCode> runBiasOccluded(
+        const BiasExperimentConfig&,RunContext&) override;
+    Result<RunOutcome,ExperimentErrorCode> runBiasProportional(
+        const BiasExperimentConfig&,RunContext&) override;
+    Result<RunOutcome,ExperimentErrorCode> runAdaptiveInitialization(
+        const AdaptiveInitializationConfig&,RunContext&) override;
+    Result<RunOutcome,ExperimentErrorCode> runAdaptiveComparison(
+        const AdaptiveComparisonConfig&,RunContext&) override;
+    Result<RunOutcome,ExperimentErrorCode> runAdaptiveUpdateRates(
+        const AdaptiveUpdateRatesConfig&,RunContext&) override;
+private:
+    BiasEstimators biasEstimators() const noexcept {
+        if(injected_bias_)return *injected_bias_;
+        return {franz_,original_,modified_};
+    }
+    AdaptiveSampling adaptiveSampling() const noexcept {
+        if(injected_sampling_)return *injected_sampling_;
+        return {adaptive_sampler_,adaptive_noise_};
+    }
+    AdaptiveScene adaptiveScene() const noexcept {
+        if(injected_scene_)return *injected_scene_;
+        return {trajectory_,kinematics_,environment_};
+    }
+    const estimators::IAdaptiveStepSolver* injected_solver_;
+    std::optional<BiasEstimators> injected_bias_;
+    std::optional<AdaptiveSampling> injected_sampling_;
+    std::optional<AdaptiveScene> injected_scene_;
+    estimators::FranzMatchedFilter franz_;
+    estimators::OriginalKvDEstimator original_;
+    estimators::ModifiedKvDEstimator modified_;
+    sampling::IcosahedralSampler adaptive_sampler_;
+    simulation::MeanMagnitudeGaussianNoise adaptive_noise_;
+    trajectory::TrajectoryGenerator trajectory_;
+    trajectory::TrajectoryKinematics kinematics_;
+    trajectory::SphereEnvironment environment_;
+};
+
+}  // namespace egomotion::experiments
